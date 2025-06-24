@@ -1,70 +1,99 @@
-
-import json
 from fastapi import FastAPI, Request
-from pydantic import BaseModel
-from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-class KIInput(BaseModel):
-    unternehmen: str
-    name: str
-    email: str
-    datum: str
-    branche: str
-    selbststaendig: str
-
-@app.post("/analyze")
-async def analyze(input: KIInput):
-    # Simulierter GPT-Antwort-Block
-    response = {
-        "score": "7/10",
-        "status": "Fortschrittlich",
-        "bewertung": "Solide KI-Strategie mit kleinen Schwächen.",
-        "executive_summary": "KI bietet hier hohes Potenzial.",
-        "analyse": "Gute Basis, Fokus auf Integration ausbauen.",
-        "empfehlungen": [
-            {
-                "titel": "Pilot starten",
-                "beschreibung": "Start mit MVP in einem Bereich.",
-                "next_step": "Use Case auswählen",
-                "tool": "ChatGPT"
-            }
-        ],
-        "roadmap": {
-            "kurzfristig": "Start MVP",
-            "mittelfristig": "Skalieren auf Abteilungen",
-            "langfristig": "KI als Standard"
-        },
-        "ressourcen": "aiCampus, BMWK Förderkompass",
-        "zukunft": "Steigerung der Effizienz und Qualität",
-        "rueckfragen": ["Wer betreut die KI intern?"],
-        "foerdertipps": [
-            {
-                "programm": "go-digital",
-                "nutzen": "Fördert Implementierung",
-                "zielgruppe": "KMU"
-            }
-        ],
-        "risikoprofil": {
-            "risikoklasse": "Moderat",
-            "begruendung": "Datenschutz relevant",
-            "pflichten": ["Transparenz", "Aufklärung"]
-        },
-        "tooltipps": [
-            {
-                "name": "Notion AI",
-                "einsatz": "Textideen",
-                "warum": "Einfache Nutzung"
-            }
-        ],
-        "branchenvergleich": "Über dem Durchschnitt.",
-        "trendreport": "KI in Content & Support.",
-        "vision": "KI als Wettbewerbsvorteil."
-    }
-    return JSONResponse(content=response)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
-async def root():
-    return {"status": "OK"}
+def read_root():
+    return {"message": "KI-Check API läuft"}
 
+@app.post("/analyze")
+async def analyze(request: Request):
+    data = await request.json()
+    print("Empfangene Daten:", data)
+
+    return {
+        "name": "Max Mustermann",
+        "unternehmen": "Beispiel GmbH",
+        "branche": "Marketing",
+        "email": "max@example.de",
+        "datum": "2025-06-23",
+        "score": "82",
+        "status": "Fortgeschritten",
+        "bewertung": "Gute Grundlagen, punktuell optimierbar",
+        "executive_summary": "Kurzfassung der Bewertung...",
+        "analyse": "Ausführliche Analyse...",
+
+        "empfehlung1": {
+            "titel": "KI starten",
+            "beschreibung": "Pilotprojekt beginnen",
+            "next_step": "Use Case definieren",
+            "tool": "ChatGPT"
+        },
+        "empfehlung2": {
+            "titel": "Kleine Prozesse automatisieren",
+            "beschreibung": "Identifizieren Sie einfache Automatisierungen",
+            "next_step": "Tool auswählen",
+            "tool": "Make.com"
+        },
+        "empfehlung3": {
+            "titel": "Team befähigen",
+            "beschreibung": "Kompetenzzentren aufbauen",
+            "next_step": "Schulung starten",
+            "tool": "aiCampus"
+        },
+
+        "roadmap": {
+            "kurzfristig": "Start",
+            "mittelfristig": "Standards etablieren",
+            "langfristig": "Transformation"
+        },
+
+        "ressourcen": "Plattformen wie aiCampus",
+        "zukunft": "Sie sind auf gutem Kurs",
+
+        "rueckfrage1": "Wie beginnen?",
+        "rueckfrage2": "Welche Tools zuerst?",
+        "rueckfrage3": "Wie integrieren wir das Team?",
+
+        "foerdertipp1": {
+            "programm": "go-digital",
+            "zielgruppe": "KMU",
+            "nutzen": "50% Förderung"
+        },
+        "foerdertipp2": {
+            "programm": "Digital Jetzt",
+            "zielgruppe": "Mittelstand",
+            "nutzen": "Investitionsförderung"
+        },
+
+        "risikoprofil": {
+            "risikoklasse": "Moderat",
+            "begruendung": "KI mit Nutzerdaten"
+        },
+        "risikopflicht1": "Schulung",
+        "risikopflicht2": "Transparenz",
+
+        "tooltipp1": {
+            "name": "Zapier",
+            "einsatz": "Automatisierung",
+            "warum": "Einfache Anbindung"
+        },
+        "tooltipp2": {
+            "name": "Notion AI",
+            "einsatz": "Texterstellung",
+            "warum": "Intuitive Nutzung"
+        },
+
+        "branchenvergleich": "Sie liegen im Mittelfeld",
+        "trendreport": "Große Nachfrage nach KI-Basics",
+        "vision": "Verdopplung der Effizienz"
+    }
