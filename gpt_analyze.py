@@ -2,7 +2,8 @@ import os
 import json
 from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI()
+
 
 def get_analysis(data):
     response = client.chat.completions.create(
