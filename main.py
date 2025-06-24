@@ -63,3 +63,8 @@ async def analyze(input: KIInput):
         "vision": "KI als Wettbewerbsvorteil."
     }
     return JSONResponse(content=response)
+
+@app.get("/")
+async def root():
+    return {"status": "OK"}
+
