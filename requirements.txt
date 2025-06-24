@@ -1,7 +1,4 @@
-flask
-openai
-python-dotenv
-requests
-gunicorn
-
-
+fastapi
+uvicorn[standard]
+openai==1.17.0
+python-dotenv>=1.0.1
