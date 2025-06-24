@@ -1,56 +1,44 @@
-
-from fastapi import FastAPI, Request, HTTPException
+import os
 import json
-import httpx
+import logging
+from flask import Flask, request, jsonify
+from gpt_analyze import get_analysis
 
-app = FastAPI()
+app = Flask(__name__)
 
-MAKE_WEBHOOK_URL = "https://hook.eu2.make.com/gxydz1j89buq91wl1o26noto0eciax5h"
+# Logging
+logging.basicConfig(level=logging.INFO)
 
-REQUIRED_FIELDS = ["name", "unternehmen", "email"]
-MAX_FIELD_LENGTH = 500  # beliebiger Grenzwert
+# Get environment variables
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
 
-@app.post("/analyze")
-async def analyze(request: Request):
+if not OPENAI_API_KEY:
+    raise EnvironmentError("❌ Fehlender OPENAI_API_KEY in Umgebungsvariablen")
+
+@app.route("/analyze", methods=["POST"])
+def analyze():
     try:
-        raw_body = await request.body()
-        json_data = json.loads(raw_body.decode("utf-8"))
-        print("[INFO] JSON empfangen:", json.dumps(json_data, indent=2))
+        data = request.get_json(force=True)
+        logging.info("📩 Empfangene Daten: %s", json.dumps(data, indent=2))
+
+        required_fields = ["email", "unternehmen"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({"error": f"Pflichtfeld fehlt: {field}"}), 400
+
+        result = get_analysis(data, OPENAI_API_KEY)
+
+        logging.info("✅ GPT-Antwort erfolgreich erhalten")
+        return jsonify(result), 200
+
+    except json.JSONDecodeError as e:
+        logging.exception("❌ JSON konnte nicht geparst werden")
+        return jsonify({"error": "Ungültige JSON-Antwort von GPT"}), 500
+
     except Exception as e:
-        print("[ERROR] Fehler beim JSON-Parsing:", e)
-        raise HTTPException(status_code=400, detail=f"Fehler beim JSON-Parsing: {str(e)}")
+        logging.exception("❌ Allgemeiner Fehler im Analyseprozess")
+        return jsonify({"error": str(e)}), 500
 
-    # Pflichtfeldprüfung
-    missing_fields = [field for field in REQUIRED_FIELDS if not json_data.get(field)]
-    if missing_fields:
-        raise HTTPException(status_code=422, detail=f"Fehlende Pflichtfelder: {', '.join(missing_fields)}")
-
-    # Feldprüfung, Kürzen & Fallbacks
-    validated_data = {}
-    for key, value in json_data.items():
-        if isinstance(value, str):
-            value = value.strip()
-            if len(value) > MAX_FIELD_LENGTH:
-                print(f"[WARN] Feld '{key}' war zu lang – wurde gekürzt.")
-                value = value[:MAX_FIELD_LENGTH]
-        validated_data[key] = value or "N/A"
-
-    # Logging: Eingabedaten ausgeben
-    print("[INFO] Validierte Daten:", json.dumps(validated_data, indent=2))
-
-    # Weitergabe an Make
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(MAKE_WEBHOOK_URL, json=validated_data)
-            response.raise_for_status()
-            print("[INFO] Erfolgreich an Make gesendet.")
-    except Exception as e:
-        print("[ERROR] Fehler beim Senden an Make:", e)
-        raise HTTPException(status_code=500, detail=f"Fehler beim Senden an Make: {str(e)}")
-
-    return {
-        "status": "ok",
-        "message": "Payload erfolgreich validiert und weitergeleitet",
-        "fields_checked": len(validated_data),
-        "missing_fields": missing_fields
-    }
+if __name__ == "__main__":
+    app.run(debug=(ENVIRONMENT == "debug"))
