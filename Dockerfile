@@ -1,4 +1,3 @@
-
 # Basis-Image
 FROM python:3.11-slim
 
@@ -12,8 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # App-Code
 COPY . .
 
-# Port (optional, meist für lokale Tests)
+# Port für Railway
 EXPOSE 8000
 
-# Startbefehl für Flask
-CMD ["python", "main.py"]
+# Startbefehl für Production über gunicorn (anstatt python main.py)
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "main:app"]
