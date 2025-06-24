@@ -5,7 +5,14 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def get_analysis(user_input):
     prompt = f"""Erstelle eine strukturierte Analyse für folgende Nutzereingabe:
-{user_input}"
+
+{user_input}
+
+Strukturiere die Antwort sinnvoll und gliedere sie in:
+- Ausgangslage
+- Potenziale
+- Risiken
+- Handlungsempfehlungen"""
 
     response = client.chat.completions.create(
         model="gpt-4",
@@ -17,4 +24,4 @@ def get_analysis(user_input):
         "prompt": prompt,
         "response": response.choices[0].message.content.strip()
     }
-"""
+
