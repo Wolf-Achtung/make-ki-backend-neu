@@ -54,13 +54,18 @@ Gib bitte zurück:
 
 Antwort im JSON-Format mit klaren Feldern wie "analyse", "empfehlungen", "foerdertipps", "compliance", "trendreport", "beratungsempfehlung", "zukunft", etc.
 """
-
+try:
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7
     )
-
     reply = response.choices[0].message.content
-
     return {"gpt_output": reply}
+except Exception as e:
+    print("Fehler beim GPT-Aufruf:", e)
+return {"gpt_output": f"Fehler beim GPT-Aufruf: {e.__class__.__name__} – {str(e)}"}
+
+
+
+    )
