@@ -1,109 +1,43 @@
-from openai import OpenAI
-import os
-import requests
-import json
-from flask import jsonify
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def format_value(value):
+    if isinstance(value, list):
+        return ", ".join(str(item) for item in value if item)
+    return str(value)
 
-def format_value(val):
-    if isinstance(val, list):
-        return ", ".join(str(v) for v in val)
-    if isinstance(val, dict):
-        return json.dumps(val, ensure_ascii=False)
-    return str(val)
+def get_analysis(data):
+    # Eingehende Daten validieren
+    required_fields = ["unternehmen", "email"]
+    missing = [field for field in required_fields if not data.get(field)]
+    if missing:
+        raise ValueError(f"Pflichtfelder fehlen: {', '.join(missing)}")
 
-def get_analysis(data: dict) -> dict:
-    """Erstellt eine strukturierte Analyse mit GPT und generiert ein PDF mit PDFMonkey."""
+    print("🔍 Validierte Eingabedaten:", data)
 
-    # 🔍 Nur relevante Nutzereingaben an GPT übergeben
-    user_keys = [
-        "name", "unternehmen", "email", "datum", "branche", "selbststaendig",
-        "tool1_name", "tool1_einsatz", "tool1_warum",
-        "tool2_name", "tool2_einsatz", "tool2_warum",
-        "risikoklasse", "risikobegruendung"
-    ]
+    filtered = {
+        "unternehmen": format_value(data.get("unternehmen")),
+        "email": format_value(data.get("email")),
+        "branche": format_value(data.get("branche")),
+        "bereich": format_value(data.get("bereich")),
+        "ziel": format_value(data.get("ziel")),
+        "tools": format_value(data.get("tools")),
+    }
 
-    filtered_data = {k: v for k, v in data.items() if k in user_keys and v}
+    # Platzhalter für GPT-Auswertung
+    result = {
+        "score": 73,
+        "status": "Standard",
+        "bewertung": "Ihr Unternehmen hat grundlegende Maßnahmen im Bereich KI ergriffen.",
+        "analyse": "Sie nutzen bereits einige Tools, aber es bestehen noch Potenziale.",
+        "vision": "Mit gezieltem Tool-Einsatz und Fördermitteln kann Ihr Unternehmen ein Vorreiter in Ihrer Branche werden.",
+        "empfehlung": "Analysieren Sie Ihre Prozesse mit Blick auf Automatisierung und beginnen Sie mit kleinen KI-Projekten.",
+        "tooltipp": "Nutzen Sie Tools wie ChatGPT, Make oder Notion AI für erste interne Automatisierungen.",
+        "foerdertipp": "Informieren Sie sich über das Programm 'go-digital' oder regionale KI-Förderungen.",
+        "branchenvergleich": "Im Vergleich zur Branche ist Ihr Unternehmen leicht über dem Durchschnitt.",
+        "trendreport": "Derzeit liegt der Trend bei generativen KI-Tools und smarten Assistenten.",
+        "zukunftsausblick": "Bis 2027 wird KI ein zentraler Wettbewerbsfaktor für Ihre Branche.",
+        "compliance": "Ihr Unternehmen sollte DSGVO und EU-AI-Act im Blick behalten und ggf. externe Beratung einholen.",
+        "beratungsempfehlung": "Lassen Sie sich von einem KI-Manager individuell beraten – z. B. unter ki-sicherheit.jetzt.",
+    }
 
-    try:
-        input_string = "\n".join(
-            f"{key.capitalize()}: {format_value(value)}"
-            for key, value in filtered_data.items()
-        )
-        print("📥 Aggregierte Nutzerdaten für GPT:\n", input_string)
-    except Exception as e:
-        print("❌ Fehler bei der Eingabeverarbeitung:", str(e))
-        return {"error": "Fehler bei der Eingabeverarbeitung"}
-
-    # GPT-Prompt
-    prompt = f"""
-Erstelle eine strukturierte Analyse für folgende Nutzereingabe:
-{input_string}
-Strukturiere die Analyse ausschließlich in folgendem JSON-Format und gib nur JSON zurück (ohne Einleitung):
-
-{{
-  "executive_summary": "...",
-  "score": "42",
-  "status": "Gut vorbereitet",
-  "bewertung": "Solide Ausgangslage",
-  "branche": "Marketing & Werbung",
-  "selbststaendig": "Ja",
-  "analyse": "...",
-  "empfehlung1_titel": "...",
-  "empfehlung1_beschreibung": "...",
-  "empfehlung1_next_step": "...",
-  "empfehlung1_tool": "...",
-  "empfehlung2_titel": "...",
-  "empfehlung2_beschreibung": "...",
-  "empfehlung2_next_step": "...",
-  "empfehlung2_tool": "...",
-  "empfehlung3_titel": "...",
-  "empfehlung3_beschreibung": "...",
-  "empfehlung3_next_step": "...",
-  "empfehlung3_tool": "...",
-  "roadmap_kurzfristig": "...",
-  "roadmap_mittelfristig": "...",
-  "roadmap_langfristig": "...",
-  "ressourcen": "...",
-  "zukunft": "...",
-  "rueckfrage1": "...",
-  "rueckfrage2": "...",
-  "rueckfrage3": "...",
-  "foerdertipp1_programm": "...",
-  "foerdertipp1_zielgruppe": "...",
-  "foerdertipp1_nutzen": "...",
-  "foerdertipp2_programm": "...",
-  "foerdertipp2_zielgruppe": "...",
-  "foerdertipp2_nutzen": "...",
-  "risikoklasse": "...",
-  "risikobegruendung": "...",
-  "risikopflicht1": "...",
-  "risikopflicht2": "...",
-  "tool1_name": "...",
-  "tool1_einsatz": "...",
-  "tool1_warum": "...",
-  "tool2_name": "...",
-  "tool2_einsatz": "...",
-  "tool2_warum": "...",
-  "branchenvergleich": "...",
-  "trendreport": "...",
-  "vision": "...",
-  "compliance": "...",
-  "beratungsempfehlung": "..."
-}}
-    """
-
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7
-        )
-        raw_output = response.choices[0].message.content.strip()
-        print("\n🧠 GPT-Rohantwort:\n", raw_output)
-        return json.loads(raw_output)
-
-    except Exception as e:
-        print("❌ GPT-Verarbeitung oder JSON-Parsing fehlgeschlagen:", str(e))
-        return {"error": f"Fehler bei der GPT-Antwort: {str(e)}"}
+    print("✅ Ergebnisdaten:", result)
+    return {**filtered, **result}
