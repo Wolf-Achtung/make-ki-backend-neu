@@ -1,6 +1,9 @@
 import os
 from openai import OpenAI
+from dotenv import load_dotenv
+import json
 
+load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def analyze_payload(data):
@@ -8,58 +11,54 @@ def analyze_payload(data):
     print(data)
 
     prompt = f"""
-    Du bist ein KI-Berater für kleine Unternehmen, Selbstständige und Freiberufler.
-    Analysiere das folgende Unternehmensprofil und gib konkrete, praxisnahe Empfehlungen zur KI-Nutzung, Förderung und Sicherheit.
+Du bist ein KI-Berater für kleine Unternehmen, Selbstständige und Freiberufler.
+Analysiere die folgenden Unternehmensdaten und gib klare, praxisnahe Empfehlungen zur KI-Nutzung, Förderung und Sicherheit – im JSON-Format.
 
-    ## Basisdaten
-    Name: {data.get("name")}
-    E-Mail: {data.get("email")}
-    Unternehmen: {data.get("unternehmen")}
+## Unternehmensdaten
+Name: {data.get('name')}
+Unternehmen: {data.get('unternehmen')}
+E-Mail: {data.get('email')}
+Branche: {data.get('branche')}
+Bereich: {data.get('bereich')}
+Selbstständig: {data.get('selbststaendig')}
+Ziel: {data.get('ziel')}
+Strategie: {data.get('strategie')}
+Tools: {data.get('tools')}
+Prozesse: {data.get('prozesse')}
+Infrastruktur: {data.get('infrastruktur')}
+Know-how: {data.get('knowhow')}
+Maßnahmen: {data.get('massnahmen')}
+Verantwortung: {data.get('verantwortung')}
+Herausforderung: {data.get('herausforderung')}
+Förderung: {data.get('foerderung')}
+Datenschutz: {data.get('datenschutz')}
 
-    ## Geschäftsbereich
-    Branche: {data.get("branche")}
-    Bereich: {data.get("bereich")}
-    Selbstständig: {data.get("selbststaendig")}
-
-    ## Ziele & Strategie
-    Ziel: {data.get("ziel")}
-    Strategie: {data.get("strategie")}
-
-    ## Infrastruktur & Knowhow
-    Infrastruktur: {data.get("infrastruktur")}
-    Know-how: {data.get("knowhow")}
-    Prozesse: {data.get("prozesse")}
-
-    ## Verantwortung & Datenschutz
-    Verantwortung: {data.get("verantwortung")}
-    Datenschutz: {data.get("datenschutz")}
-
-    ## Herausforderung & Maßnahmen
-    Herausforderung: {data.get("herausforderung")}
-    Geplante Maßnahmen: {data.get("massnahmen")}
-
-    ## Förderung & Tools
-    Förderinteresse: {data.get("foerderung")}
-    Tools im Einsatz: {data.get("tools")}
-
-    Gib bitte zurück im JSON-Format mit den Feldern:
-    "analyse", "empfehlungen", "foerdertipps", "compliance", "trendreport", "beratungsempfehlung", "zukunft", "gamechanger".
-    """
+Gib die Antwort **ausschließlich im gültigen JSON-Format** zurück, mit folgenden Feldern:
+"analyse", "empfehlungen", "foerdertipps", "compliance", "trendreport", "beratungsempfehlung", "zukunft", "gamechanger"
+"""
 
     try:
         print("📡 Sende Anfrage an OpenAI ...")
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "Du bist ein professioneller KI-Analyst ..."},
+                {"role": "system", "content": "Du bist ein professioneller KI-Analyst. Antworte ausschließlich mit JSON – ohne weitere Kommentare."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.7,
+            temperature=0.7
         )
+
         reply = response.choices[0].message.content.strip()
-        print("✅ GPT-Antwort:", reply)
-        return {"gpt_output": reply}
+        print("🤖 GPT-Antwort erhalten:")
+        print(reply)
+
+        # Versuch, das JSON zu parsen
+        try:
+            return json.loads(reply)
+        except json.JSONDecodeError as e:
+            print("⚠️ GPT-Antwort ist kein valides JSON!")
+            return {"error": "Ungültige JSON-Antwort", "raw": reply}
 
     except Exception as e:
-        print("❌ Fehler beim GPT-Aufruf:", type(e).__name__, "-", str(e))
-        return {"gpt_output": f"Fehler: {type(e).__name__} – {str(e)}"}
+        print(f"❌ Fehler beim GPT-Aufruf: {e.__class__.__name__}: {str(e)}")
+        return {"error": str(e)}
