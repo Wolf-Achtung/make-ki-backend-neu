@@ -1,10 +1,10 @@
-import openai
 import os
+from openai import OpenAI
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def analyze_payload(data):
-   prompt = f"""
+    prompt = f"""
 Du bist ein KI-Berater für kleine Unternehmen, Selbstständige und Freiberufler. 
 Analysiere das folgende Unternehmensprofil und gib konkrete, praxisnahe Empfehlungen zur KI-Nutzung, Förderung und Sicherheit.
 
@@ -55,7 +55,7 @@ Gib bitte zurück:
 Antwort im JSON-Format mit klaren Feldern wie "analyse", "empfehlungen", "foerdertipps", "compliance", "trendreport", "beratungsempfehlung", "zukunft", etc.
 """
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7
@@ -63,5 +63,4 @@ Antwort im JSON-Format mit klaren Feldern wie "analyse", "empfehlungen", "foerde
 
     reply = response.choices[0].message.content
 
-    # Optional: Später mit JSON-Parser erweitern
     return {"gpt_output": reply}
