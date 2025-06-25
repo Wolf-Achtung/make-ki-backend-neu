@@ -1,43 +1,67 @@
+import openai
+import os
 
-def format_value(value):
-    if isinstance(value, list):
-        return ", ".join(str(item) for item in value if item)
-    return str(value)
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def get_analysis(data):
-    # Eingehende Daten validieren
-    required_fields = ["unternehmen", "email"]
-    missing = [field for field in required_fields if not data.get(field)]
-    if missing:
-        raise ValueError(f"Pflichtfelder fehlen: {', '.join(missing)}")
+def analyze_payload(data):
+   prompt = f"""
+Du bist ein KI-Berater für kleine Unternehmen, Selbstständige und Freiberufler. 
+Analysiere das folgende Unternehmensprofil und gib konkrete, praxisnahe Empfehlungen zur KI-Nutzung, Förderung und Sicherheit.
 
-    print("🔍 Validierte Eingabedaten:", data)
+## Basisdaten
+Name: {data['name']}
+E-Mail: {data['email']}
+Unternehmen: {data['unternehmen']}
 
-    filtered = {
-        "unternehmen": format_value(data.get("unternehmen")),
-        "email": format_value(data.get("email")),
-        "branche": format_value(data.get("branche")),
-        "bereich": format_value(data.get("bereich")),
-        "ziel": format_value(data.get("ziel")),
-        "tools": format_value(data.get("tools")),
-    }
+## Geschäftliches Umfeld
+Branche: {data['branche']}
+Bereich: {data['bereich']}
+Selbstständig: {data['selbststaendig']}
 
-    # Platzhalter für GPT-Auswertung
-    result = {
-        "score": 73,
-        "status": "Standard",
-        "bewertung": "Ihr Unternehmen hat grundlegende Maßnahmen im Bereich KI ergriffen.",
-        "analyse": "Sie nutzen bereits einige Tools, aber es bestehen noch Potenziale.",
-        "vision": "Mit gezieltem Tool-Einsatz und Fördermitteln kann Ihr Unternehmen ein Vorreiter in Ihrer Branche werden.",
-        "empfehlung": "Analysieren Sie Ihre Prozesse mit Blick auf Automatisierung und beginnen Sie mit kleinen KI-Projekten.",
-        "tooltipp": "Nutzen Sie Tools wie ChatGPT, Make oder Notion AI für erste interne Automatisierungen.",
-        "foerdertipp": "Informieren Sie sich über das Programm 'go-digital' oder regionale KI-Förderungen.",
-        "branchenvergleich": "Im Vergleich zur Branche ist Ihr Unternehmen leicht über dem Durchschnitt.",
-        "trendreport": "Derzeit liegt der Trend bei generativen KI-Tools und smarten Assistenten.",
-        "zukunftsausblick": "Bis 2027 wird KI ein zentraler Wettbewerbsfaktor für Ihre Branche.",
-        "compliance": "Ihr Unternehmen sollte DSGVO und EU-AI-Act im Blick behalten und ggf. externe Beratung einholen.",
-        "beratungsempfehlung": "Lassen Sie sich von einem KI-Manager individuell beraten – z. B. unter ki-sicherheit.jetzt.",
-    }
+## Ziele & Strategie
+Ziel: {data['ziel']}
+Strategie: {data['strategie']}
 
-    print("✅ Ergebnisdaten:", result)
-    return {**filtered, **result}
+## Infrastruktur & Know-how
+Infrastruktur: {data['infrastruktur']}
+Know-how: {data['knowhow']}
+Prozesse: {data['prozesse']}
+
+## Datenschutz & Verantwortung
+Datenschutz: {data['datenschutz']}
+Verantwortung: {data['verantwortung']}
+
+## Herausforderung & Maßnahmen
+Herausforderung: {data['herausforderung']}
+Geplante Maßnahmen: {data['massnahmen']}
+
+## Fördermöglichkeiten
+Förderinteresse: {data['foerderung']}
+
+## Tools
+Eingesetzte Tools: {data['tools']}
+
+Gib bitte zurück:
+- Analyse der Ausgangssituation
+- KI-Empfehlungen (kurz-, mittel-, langfristig)
+- Risiken & rechtliche Hinweise
+- DSGVO- & EU-AI-Act-Konformität
+- Fördertipps (DE/EU)
+- Tool-Kompass mit konkreten Empfehlungen
+- Branchenvergleich & Benchmarks
+- Visionärer Zukunftsausblick (Gamechanger-Idee)
+- Persönliche Beratungsempfehlung
+
+Antwort im JSON-Format mit klaren Feldern wie "analyse", "empfehlungen", "foerdertipps", "compliance", "trendreport", "beratungsempfehlung", "zukunft", etc.
+"""
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+
+    reply = response.choices[0].message.content
+
+    # Optional: Später mit JSON-Parser erweitern
+    return {"gpt_output": reply}
