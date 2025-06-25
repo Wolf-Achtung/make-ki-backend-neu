@@ -17,6 +17,12 @@ def analyze():
             print("\n🚫 Keine JSON-Daten empfangen.")
             return jsonify({"error": "Keine JSON-Daten empfangen."}), 400
 
+        required_fields = ["name", "unternehmen", "email", "branche"]
+        for field in required_fields:
+            if not data.get(field):
+                print(f"\n❗️ Pflichtfeld fehlt oder leer: {field}")
+                return jsonify({"error": f"Pflichtfeld fehlt oder leer: {field}"}), 400
+
         print("\n📥 [EINGANG] Daten von Make:")
         print(json.dumps(data, indent=2, ensure_ascii=False))
 
