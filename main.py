@@ -3,6 +3,7 @@ import os
 from flask import Flask, request, jsonify
 from gpt_analyze import analyze_payload
 import httpx
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -14,8 +15,7 @@ def index():
 def analyze():
     data = request.json
 
-    # Logging: Eingehende Daten mit Zeitstempel in Datei schreiben
-    from datetime import datetime
+    # Logging in Datei
     log_path = "analyze_log.txt"
     with open(log_path, "a") as logfile:
         logfile.write(f"[{datetime.now()}] Eingehende Daten:\n")
@@ -25,60 +25,46 @@ def analyze():
 
     print("📥 Eingehende Daten:", data)
 
-    # GPT-Auswertung
+    # GPT-Auswertung durchführen
     gpt_result = analyze_payload(data)
     print("📤 GPT-Auswertung:", gpt_result)
 
-    # PDFMonkey-Call vorbereiten
+    # HTML-Generierung aus GPT-Auswertung
+    html_content = f"""
+    <html><head><meta charset='UTF-8'><title>KI-Briefing</title></head><body>
+    <h1>KI-Briefing</h1>
+    <h2>Executive Summary</h2><p>{gpt_result['executive_summary']}</p>
+    <h2>Fördertipps</h2><p>{gpt_result['fördertipps']}</p>
+    <h2>Toolkompass</h2><p>{gpt_result['toolkompass']}</p>
+    <h2>Branchenvergleich & Trends</h2><p>{gpt_result['branche_trend']}</p>
+    <h2>Compliance</h2><p>{gpt_result['compliance']}</p>
+    <h2>Beratungsempfehlung</h2><p>{gpt_result['beratungsempfehlung']}</p>
+    <h2>Visionärer Ausblick</h2><p>{gpt_result['vision']}</p>
+    </body></html>
+    """
+
+    # PDFMonkey HTML-Dokument anlegen
     pdfmonkey_api_key = os.getenv("PDFMONKEY_API_KEY")
-    pdfmonkey_template_id = os.getenv("PDFMONKEY_TEMPLATE_ID")
-
-    payload = {
-        "document": {
-            "document_template_id": pdfmonkey_template_id,
-            "payload": {
-                "name": data.get("name"),
-                "unternehmen": data.get("unternehmen"),
-                "email": data.get("email"),
-                "branche": data.get("branche"),
-                "selbststaendig": data.get("selbststaendig"),
-                "ziel": data.get("ziel"),
-                "bereich": data.get("bereich"),
-                "strategie": data.get("strategie"),
-                "tools": data.get("tools"),
-                "prozesse": data.get("prozesse"),
-                "infrastruktur": data.get("infrastruktur"),
-                "knowhow": data.get("knowhow"),
-                "massnahmen": data.get("massnahmen"),
-                "verantwortung": data.get("verantwortung"),
-                "herausforderung": data.get("herausforderung"),
-                "foerderung": data.get("foerderung"),
-                "datenschutz": data.get("datenschutz"),
-                # GPT-Ergebnisse
-                "executive_summary": gpt_result.get("executive_summary", ""),
-                "fördertipps": gpt_result.get("fördertipps", ""),
-                "toolkompass": gpt_result.get("toolkompass", ""),
-                "branche_trend": gpt_result.get("branche_trend", ""),
-                "compliance": gpt_result.get("compliance", ""),
-                "beratungsempfehlung": gpt_result.get("beratungsempfehlung", ""),
-                "vision": gpt_result.get("vision", "")
-            }
-        }
-    }
-
+    pdfmonkey_url = "https://api.pdfmonkey.io/api/v1/documents"
     headers = {
         "Authorization": f"Bearer {pdfmonkey_api_key}",
         "Content-Type": "application/json"
     }
+    payload = {
+        "document": {
+            "document_template": {
+                "content_html": html_content
+            }
+        }
+    }
 
-    response = httpx.post("https://api.pdfmonkey.io/api/v1/documents", json=payload, headers=headers)
+    response = httpx.post(pdfmonkey_url, json=payload, headers=headers)
+    result = response.json()
+    print("📄 PDFMonkey Response:", result)
 
-    if response.status_code == 201:
-        print("✅ PDFMonkey-Dokument erfolgreich erstellt.")
-        return jsonify({"status": "success", "pdf_url": response.json()})
-    else:
-        print("❌ Fehler bei PDFMonkey:", response.text)
-        return jsonify({"status": "error", "details": response.text}), 500
+    # Vorschau-Link zurückgeben
+    download_url = result.get("data", {}).get("attributes", {}).get("download_url")
+    return jsonify({"status": "success", "download_url": download_url})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=8000)
