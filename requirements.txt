@@ -4,3 +4,4 @@ openai>=1.17.0
 requests>=2.0.0
 flask-cors
 python-dotenv
+httpx>=0.24.0

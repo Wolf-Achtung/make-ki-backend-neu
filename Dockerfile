@@ -1,19 +1,18 @@
-# Basis-Image
 FROM python:3.11-slim
 
-# Arbeitsverzeichnis
+# Arbeitsverzeichnis festlegen
 WORKDIR /app
 
-# Abhängigkeiten
+# Requirements kopieren und installieren
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Code kopieren
+# App-Code kopieren
 COPY . .
 
-# Port setzen (für Railway optional, aber üblich)
-ENV PORT=8000
+# Sicherstellen, dass logs-Verzeichnis vorhanden und beschreibbar ist
+RUN mkdir -p /app/logs
 
-# Startbefehl
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "main:app"]
+# Start der App mit gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "main:app"]
 
