@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Placid Template Upload</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f5f8fb;
+    }
+    h1 {
+      color: #003366;
+    }
+    .upload-box {
+      border: 2px dashed #003366;
+      padding: 2rem;
+      background: white;
+      width: 100%;
+      max-width: 600px;
+    }
+    input[type="file"] {
+      margin-top: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background: #003366;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>HTML-Template bei Placid aktualisieren</h1>
+  <form class="upload-box" action="/upload-template" method="post" enctype="multipart/form-data">
+    <label for="htmlFile">Bitte HTML-Datei auswählen:</label><br />
+    <input type="file" name="htmlFile" id="htmlFile" accept=".html" required><br />
+    <button type="submit">Template hochladen</button>
+  </form>
+</body>
+</html>
