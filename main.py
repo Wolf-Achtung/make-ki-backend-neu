@@ -1,7 +1,7 @@
 
 from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.responses import HTMLResponse
-from placid_upload_server import handle_template_upload
+from upload_server import handle_template_upload
 
 app = FastAPI()
 
