@@ -1,71 +1,60 @@
+
 import openai
 import os
-import json
+from dotenv import load_dotenv
 
-def analyze_payload(payload: dict) -> dict:
-    def fallback(key):
-        return payload.get(key) or "nicht angegeben"
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-    prompt = f"""
-    Du bist ein zertifizierter KI-Analyst. Analysiere die folgenden Angaben und liefere ein strukturiertes Briefing für ein PDF:
-
-Nutzerdaten:
-    Name: {fallback('name')}
-    Unternehmen: {fallback('unternehmen')}
-    Branche: {fallback('branche')}
-    Ziel: {fallback('ziel')}
-    Bereich: {fallback('bereich')}
-    Tools: {fallback('tools')}
-    Know-how: {fallback('knowhow')}
-    Prozesse: {fallback('prozesse')}
-    Infrastruktur: {fallback('infrastruktur')}
-    Strategie: {fallback('strategie')}
-    Maßnahmen: {fallback('massnahmen')}
-    Verantwortung: {fallback('verantwortung')}
-    Datenschutz: {fallback('datenschutz')}
-    Förderung: {fallback('foerderung')}
-    Herausforderung: {fallback('herausforderung')}
-
-    Gib bitte als JSON mit genau diesen Feldern aus:
-
-    {{
-      "executive_summary": "...",
-      "fördertipps": "...",
-      "toolkompass": "...",
-      "branche_trend": "...",
-      "compliance": "...",
-      "beratungsempfehlung": "...",
-      "vision": "..."
-    }}
-
-    Vermeide jegliche Erklärtexte oder Zeilen außerhalb des JSON!
-    """
-
+def analyze_with_gpt(data):
     try:
+        unternehmen = data.get("unternehmen", "Ihr Unternehmen")
+        branche = data.get("branche", "Allgemein")
+        ziel = data.get("ziel", "nicht angegeben")
+        tools = data.get("tools", "nicht angegeben")
+        bereich = data.get("bereich", "nicht angegeben")
+
+        prompt = f"""
+Sie sind ein zertifizierter KI-Manager und beraten kleine Unternehmen im deutschsprachigen Raum.
+Analysieren Sie die folgenden Angaben eines Unternehmens und geben Sie Empfehlungen in folgenden Rubriken ab:
+1. executive_summary
+2. fördertipps
+3. toolkompass
+4. branche_trend
+5. compliance
+6. beratungsempfehlung
+7. vision
+
+Unternehmensangaben:
+- Name: {unternehmen}
+- Branche: {branche}
+- Bereich: {bereich}
+- Ziel: {ziel}
+- Eingesetzte Tools: {tools}
+
+Bitte antworten Sie im folgenden JSON-Format:
+
+{{
+"executive_summary": "...",
+"fördertipps": "...",
+"toolkompass": "...",
+"branche_trend": "...",
+"compliance": "...",
+"beratungsempfehlung": "...",
+"vision": "..."
+}}
+"""
+
         response = openai.ChatCompletion.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "Du bist ein KI-Experte für förderfähige KI-Analysen und Beratung."},
-                {"role": "user", "content": prompt}
-            ],
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
             temperature=0.7
         )
-        raw = response.choices[0].message.content
-        json_start = raw.find("{")
-        json_data = raw[json_start:]
-        parsed = json.loads(json_data)
 
-        print("✅ GPT-Antwort erfolgreich geparst.")
-        return parsed
+        # Extrahiere das JSON aus der Antwort
+        output_text = response.choices[0].message.content.strip()
+        result = eval(output_text)  # Verwende hier eval bewusst – Alternativen wie `json.loads()` nur bei gültigem JSON
+        return result
 
     except Exception as e:
-        print("❌ Fehler bei der GPT-Auswertung oder beim Parsen:", e)
-        return {
-            "executive_summary": "Fehler beim Analysieren.",
-            "fördertipps": "",
-            "toolkompass": "",
-            "branche_trend": "",
-            "compliance": "",
-            "beratungsempfehlung": "",
-            "vision": ""
-        }
+        raise RuntimeError(f"Fehler bei der Analyse: {e}")

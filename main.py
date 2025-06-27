@@ -1,42 +1,35 @@
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 from gpt_analyze import analyze_with_gpt
-import uvicorn
+import logging
 
-app = FastAPI()
+app = Flask(__name__)
+CORS(app)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 
+@app.route("/")
+def home():
+    return "KI-Briefing Backend ist aktiv"
 
-@app.post("/briefing")
-async def generate_briefing(request: Request):
+@app.route("/briefing", methods=["POST"])
+def generate_briefing():
     try:
-        data = await request.json()
+        data = request.json
+        logging.info("Eingehende Daten: %s", data)
+
+        if not data:
+            return jsonify({"error": "Keine Daten empfangen"}), 400
+
         result = analyze_with_gpt(data)
-        return result
+        logging.info("GPT-Ergebnis erfolgreich generiert.")
+        return jsonify(result)
+
     except Exception as e:
-        return {"error": str(e)}
-
-
-@app.get("/briefing")
-def dummy_briefing():
-    return {
-        "executive_summary": "Dies ist eine Beispiel-Auswertung.",
-        "fördertipps": "Nutzen Sie Förderprogramme von Bund und Land.",
-        "toolkompass": "Empfohlene Tools: ChatGPT, Notion, Zapier.",
-        "branche_trend": "In Ihrer Branche sind Automatisierung und KI die wichtigsten Trends.",
-        "compliance": "Beachten Sie DSGVO und EU-AI-Act.",
-        "beratungsempfehlung": "Lassen Sie sich zu Datenschutz und Prozessautomatisierung beraten.",
-        "vision": "Ein visionärer Ausblick: Ihre Prozesse laufen bald fast vollautomatisiert."
-    }
-
+        logging.exception("Fehler bei der GPT-Auswertung:")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    app.run(debug=False, host="0.0.0.0", port=8000)
