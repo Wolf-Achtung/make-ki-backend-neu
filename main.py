@@ -1,11 +1,13 @@
 
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import httpx
 from gpt_analyze import analyze_payload
 from html_generator import generate_html
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/", methods=["GET"])
 def index():

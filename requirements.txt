@@ -2,7 +2,7 @@ flask>=2.2.0
 gunicorn>=21.2.0
 openai>=1.17.0
 requests>=2.0.0
-flask-cors
+flask-cors>=3.0.10
 python-dotenv
 httpx>=0.24.0
 fastapi
