@@ -1,44 +1,36 @@
-
-from fastapi import FastAPI, Request, UploadFile, File
-from fastapi.responses import HTMLResponse
-from upload_server import app
-
-app = FastAPI()
-
-@app.get("/upload-template", response_class=HTMLResponse)
-async def get_template_form():
-    with open("placid-upload.html", "r") as f:
-        return f.read()
-
-@app.post("/upload-template")
-async def upload_template(template: UploadFile = File(...)):
-    return await handle_template_upload(template)
-
-
+from fastapi import FastAPI, Request, UploadFile, File, Form
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 import os
-from flask import Flask, request, jsonify
 import httpx
 from gpt_analyze import analyze_payload
 from html_generator import generate_html
 
-app = Flask(__name__)
+app = FastAPI()
+templates = Jinja2Templates(directory=".")
 
-@app.route("/", methods=["GET"])
-def index():
-    return "KI-Briefing Service läuft"
+# === Upload-Seite anzeigen ===
+@app.get("/upload-template", response_class=HTMLResponse)
+async def get_upload_page(request: Request):
+    return templates.TemplateResponse("placid-upload.html", {"request": request})
 
-@app.route("/analyze", methods=["POST"])
-def analyze():
-    data = request.json
+# === Template-Upload verarbeiten ===
+@app.post("/upload-template")
+async def upload_template(template: UploadFile = File(...)):
+    content = await template.read()
+    with open("template.html", "wb") as f:
+        f.write(content)
+    return {"status": "success", "filename": template.filename}
 
-    # GPT-Auswertung
+# === Analyse & PDF-Generierung ===
+@app.post("/analyze")
+async def analyze(request: Request):
+    data = await request.json()
     gpt_result = analyze_payload(data)
-
-    # HTML generieren
     html_content = generate_html(data, gpt_result)
 
-    # PDFMonkey-Upload vorbereiten
     headers = {
         "Authorization": f"Bearer {os.getenv('PDFMONKEY_API_KEY')}",
         "Content-Type": "application/json"
@@ -51,13 +43,20 @@ def analyze():
         }
     }
 
-    response = httpx.post("https://api.pdfmonkey.io/api/v1/documents", json=payload, headers=headers)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://api.pdfmonkey.io/api/v1/documents",
+            json=payload,
+            headers=headers
+        )
 
     if response.status_code == 201:
         url = response.json().get("data", {}).get("download_url", "")
-        return jsonify({ "status": "success", "download_url": url })
+        return JSONResponse({"status": "success", "download_url": url})
     else:
-        return jsonify({ "status": "error", "details": response.text }), 500
+        return JSONResponse({"status": "error", "details": response.text}, status_code=500)
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# === Root Route für Funktionsprüfung ===
+@app.get("/")
+async def root():
+    return {"message": "KI-Briefing Backend läuft ✅"}
