@@ -8,6 +8,5 @@ requests>=2.31.0
 httpx>=0.24.0
 python-dotenv
 python-multipart>=0.0.6
-placid
 jinja2>=3.0.0
 aiofiles>=0.6.0
