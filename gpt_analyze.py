@@ -13,27 +13,40 @@ def analyze_with_gpt(data):
         tools = data.get("tools", "nicht angegeben")
         bereich = data.get("bereich", "nicht angegeben")
 
-        prompt = f"""
-Sie sind ein zertifizierter KI-Manager und beraten kleine Unternehmen im deutschsprachigen Raum.
-Analysieren Sie die folgenden Angaben eines Unternehmens und geben Sie Empfehlungen in folgenden Rubriken ab:
-1. executive_summary
-2. fördertipps
-3. toolkompass
-4. branche_trend
-5. compliance
-6. beratungsempfehlung
-7. vision
+        compliance = []
+        for i in range(1,11):
+            compliance.append(data.get(f"frage{i}", "Nicht beantwortet"))
 
-Unternehmensangaben:
-- Name: {unternehmen}
+        prompt = f"""
+Du bist ein zertifizierter KI-Manager für DSGVO & EU-AI-Act. 
+Analysiere folgende Angaben eines Unternehmens und erstelle:
+
+1. Compliance-Score (Anzahl 'Ja' bei den Fragen)
+2. Badge-Level: 
+   - Gold bei 8-10 'Ja'
+   - Silber bei 5-7 'Ja'
+   - Starter unter 5 'Ja'
+3. Danach die Rubriken:
+- executive_summary
+- fördertipps
+- toolkompass
+- branche_trend
+- compliance
+- beratungsempfehlung
+- vision
+
+Daten:
+- Unternehmen: {unternehmen}
 - Branche: {branche}
 - Bereich: {bereich}
 - Ziel: {ziel}
-- Eingesetzte Tools: {tools}
+- Tools: {tools}
+- Compliance-Fragen: {compliance}
 
-Bitte antworten Sie im folgenden JSON-Format:
-
+Antworte strikt als JSON:
 {{
+"score": ...,
+"badge": "...",
 "executive_summary": "...",
 "fördertipps": "...",
 "toolkompass": "...",
@@ -47,11 +60,11 @@ Bitte antworten Sie im folgenden JSON-Format:
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.7
+            temperature=0.3
         )
 
         output_text = response.choices[0].message.content.strip()
-        result = eval(output_text)  # Alternativ json.loads() wenn GPT sauber JSON liefert
+        result = eval(output_text)
         return result
 
     except Exception as e:
