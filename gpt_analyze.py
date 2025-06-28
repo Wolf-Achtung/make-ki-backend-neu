@@ -1,10 +1,9 @@
-
-import openai
+from openai import OpenAI
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI()
 
 def analyze_with_gpt(data):
     try:
@@ -45,15 +44,14 @@ Bitte antworten Sie im folgenden JSON-Format:
 }}
 """
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7
         )
 
-        # Extrahiere das JSON aus der Antwort
         output_text = response.choices[0].message.content.strip()
-        result = eval(output_text)  # Verwende hier eval bewusst – Alternativen wie `json.loads()` nur bei gültigem JSON
+        result = eval(output_text)  # Alternativ json.loads() wenn GPT sauber JSON liefert
         return result
 
     except Exception as e:
