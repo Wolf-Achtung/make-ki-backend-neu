@@ -5,49 +5,30 @@ import logging
 
 load_dotenv()
 client = OpenAI()
+logger = logging.getLogger(__name__)
 
-logging.basicConfig(level=logging.INFO)
-
-def analyze_with_gpt(data):
+def analyze(data):
+    # Prompt bauen
     prompt = f"""
-    Du bist ein hochqualifizierter Compliance- & Digitalberater für KI-Projekte.
-    Analysiere das folgende Unternehmensprofil tiefgehend im Hinblick auf DSGVO, EU AI Act, ROI, Roadmap und Vision.
+    Bitte analysiere folgende Angaben zu KI-Readiness und Compliance. Gib fundierte, praxisnahe Empfehlungen.
+    Daten: {data}
+    
+    ➡ Bitte berücksichtige:
+    - DSGVO- und EU AI Act-Konformität
+    - ROI-Potenzial und Fördermöglichkeiten
+    - Hinweise speziell für Selbstständige
+    - Motivation / Vision (z.B. 'Ihr Unternehmen kann Vorreiter werden...')
 
-    Name: {data.get('name', '')}
-    Email: {data.get('email', '')}
-    Branche: {data.get('branche', '')}
-    Selbstständig: {data.get('selbststaendig', '')}
-    Geplante Maßnahme: {data.get('massnahme', '')}
-    Einsatzbereich: {data.get('bereich', '')}
-    Ziel: {data.get('ziel', '')}
-    Compliance-Antworten: {[data.get('frage'+str(i), '') for i in range(1,11)]}
-
-    Gib mir eine klare Struktur:
-    - Executive Summary
-    - DSGVO & EU AI Act Risiken
-    - Fördertipps
-    - Tool-Kompass
-    - Compliance-Ampel
-    - Roadmap
-    - ROI & Wettbewerb
-    - Branchentrends
-    - Vision (DAN-Style)
+    Ergebnis als strukturiertes Briefing auf Deutsch.
     """
 
-    try:
-        logging.info("🚀 Starte GPT-Analyse...")
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "Du bist ein KI- und Compliance-Experte."},
-                {"role": "user", "content": prompt}
-            ]
-        )
+    logger.info(f"GPT Prompt:\n{prompt}")
 
-        text = response.choices[0].message.content
-        logging.info(f"📝 GPT-Antwort:\n{text[:300]}...")  # nur die ersten 300 Zeichen anzeigen
-        return text
+    completion = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}]
+    )
 
-    except Exception as e:
-        logging.error(f"❌ Fehler bei der Analyse: {e}")
-        raise RuntimeError(f"Fehler bei der Analyse: {e}")
+    result = completion.choices[0].message.content
+    logger.info(f"GPT Ergebnis:\n{result}")
+    return result

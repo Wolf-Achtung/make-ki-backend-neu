@@ -1,40 +1,34 @@
-from flask import Flask, request, jsonify
-from gpt_analyze import analyze_with_gpt
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from gpt_analyze import analyze
 import logging
 
-app = Flask(__name__)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-@app.route("/briefing", methods=["POST"])
-def generate_briefing():
-    try:
-        data = request.json
-        logging.info(f"📥 Eingehende Daten: {data}")
-        if not data:
-            return jsonify({"error": "Keine Daten erhalten"}), 400
+app = FastAPI()
 
-        result = analyze_with_gpt(data)
-        logging.info("✅ GPT-Analyse fertig.")
+# 🚀 CORS vollständig freischalten (für deine Tests)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-        # GPT Output loggen (nur ersten Teil, damit Logs nicht platzen)
-        if isinstance(result, str):
-            logging.info(f"📝 GPT-Output (erste 300 Zeichen): {result[:300]}...")
-        elif isinstance(result, dict):
-            logging.info(f"📝 GPT-Output Dict Keys: {list(result.keys())}")
+@app.post("/briefing")
+async def create_briefing(request: Request):
+    data = await request.json()
+    logger.info(f"Empfangenes JSON: {data}")
 
-        # Smarte Rückgabe: JSON oder Text
-        if isinstance(result, dict):
-            return jsonify(result), 200, {"Content-Type": "application/json"}
-        else:
-            return result, 200, {"Content-Type": "text/plain; charset=utf-8"}
+    result = analyze(data)
+    logger.info(f"GPT-Auswertung:\n{result}")
 
-    except Exception as e:
-        logging.exception("❌ Fehler bei GPT:")
-        return jsonify({"error": str(e)}), 500
+    return {"briefing": result}
 
-@app.route("/healthz", methods=["GET"])
-def healthcheck():
-    return "ok", 200
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok"}
+
