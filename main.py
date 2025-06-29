@@ -1,38 +1,30 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from gpt_analyze import analyze_with_gpt
 import logging
-from gpt_analyze import generate_briefing
 
-app = FastAPI()
-
-# CORS erlauben
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Templates
-templates = Jinja2Templates(directory="templates")
-
-# Logging
+app = Flask(__name__)
+CORS(app)
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("app")
 
-# Index-Seite
-@app.get("/")
-async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+@app.route("/")
+def home():
+    return "KI-Briefing Backend läuft."
 
-# POST /briefing
-@app.post("/briefing")
-async def briefing(request: Request):
-    data = await request.json()
-    logger.info(f"Empfangene Daten: {data}")
-    result = await generate_briefing(data)
-    logger.info(f"GPT-Antwort: {result}")
-    return JSONResponse(content={"briefing": result})
+@app.route("/briefing", methods=["POST"])
+def generate_briefing():
+    try:
+        data = request.json
+        logging.info(f"Eingehend: {data}")
+        if not data:
+            return jsonify({"error": "Keine Daten erhalten"}), 400
+
+        result = analyze_with_gpt(data)
+        logging.info("GPT-Analyse fertig.")
+        return jsonify(result)
+    except Exception as e:
+        logging.exception("Fehler bei GPT:")
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
