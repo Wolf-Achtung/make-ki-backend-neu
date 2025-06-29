@@ -3,6 +3,3 @@ uvicorn==0.23.2
 gunicorn==23.0.0
 openai>=1.17.0
 python-dotenv==1.0.1
-
-
-

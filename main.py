@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from gpt_analyze import generate_briefing
 
+logging.basicConfig(level=logging.INFO)
+
 app = FastAPI()
 
 app.add_middleware(
@@ -12,16 +14,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.basicConfig(level=logging.INFO)
-
 @app.get("/healthz")
-def healthz():
+def health_check():
     return {"status": "ok"}
 
 @app.post("/briefing")
 async def create_briefing(request: Request):
     data = await request.json()
-    logging.info(f"Received data: {data}")
+    logging.info(f"Received input data: {data}")
     result = generate_briefing(data)
-    logging.info(f"GPT result: {result}")
+    logging.info(f"Generated briefing: {result}")
     return {"briefing": result}
