@@ -1,26 +1,25 @@
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
-import json
 
 load_dotenv()
 client = OpenAI()
 
-def generate_briefing(inputs: dict) -> str:
-    """
-    Erzeugt das Executive Briefing basierend auf den Eingaben
-    """
+def generate_briefing(data):
     prompt = f"""
-    Erstelle ein Executive Briefing für:
-    {json.dumps(inputs, indent=2)}
+    Erstelle eine Executive-Analyse basierend auf folgenden Angaben:
+    Branche: {data.get('branche')}
+    Selbstständig: {data.get('selbststaendig')}
+    Maßnahme: {data.get('massnahme')}
+    Bereich: {data.get('bereich')}
+    Ziel: {data.get('ziel')}
+    DSGVO-Check: {data.get('ds_gvo')}
+    ...
 
-    Fokus: DSGVO, EU AI Act Risiken & Chancen, Empfehlungen für KMU & Selbstständige,
-    ROI-Potenzial, Vision: Wie kann das Unternehmen KI-Vorreiter werden?
+    Bitte antworte detailliert mit ROI-Hinweisen, Förderchancen und Visionen.
     """
-    completion = client.chat.completions.create(
+    response = client.chat.completions.create(
         model="gpt-4o",
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
+        messages=[{"role": "user", "content": prompt}]
     )
-    return completion.choices[0].message.content
+    return response.choices[0].message.content

@@ -1,27 +1,28 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-import logging
 from gpt_analyze import generate_briefing
+import logging
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("ki-cert")
 
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 @app.get("/healthz")
-def health_check():
+def healthz():
     return {"status": "ok"}
 
 @app.post("/briefing")
-async def create_briefing(request: Request):
+async def briefing(request: Request):
     data = await request.json()
-    logging.info(f"Received input data: {data}")
+    logger.info("Empfangene Daten: %s", data)
     result = generate_briefing(data)
-    logging.info(f"Generated briefing: {result}")
-    return {"briefing": result}
+    logger.info("GPT-Antwort: %s", result)
+    return {"result": result}
