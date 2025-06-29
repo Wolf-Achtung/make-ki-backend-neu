@@ -25,4 +25,4 @@ async def briefing(request: Request):
     logger.info("Empfangene Daten: %s", data)
     result = generate_briefing(data)
     logger.info("GPT-Antwort: %s", result)
-    return {"result": result}
+    return {"briefing": result}
