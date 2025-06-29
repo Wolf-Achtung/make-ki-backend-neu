@@ -3,32 +3,49 @@ import os
 from dotenv import load_dotenv
 import logging
 
+# ENV Variablen laden
 load_dotenv()
 client = OpenAI()
-logger = logging.getLogger(__name__)
 
-def analyze(data):
-    # Prompt bauen
+# Logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("ki-check-gpt")
+
+def analyze_with_gpt(data):
+    # Dynamischen Prompt bauen
     prompt = f"""
-    Bitte analysiere folgende Angaben zu KI-Readiness und Compliance. Gib fundierte, praxisnahe Empfehlungen.
-    Daten: {data}
-    
-    ➡ Bitte berücksichtige:
-    - DSGVO- und EU AI Act-Konformität
-    - ROI-Potenzial und Fördermöglichkeiten
-    - Hinweise speziell für Selbstständige
-    - Motivation / Vision (z.B. 'Ihr Unternehmen kann Vorreiter werden...')
+    Du bist ein hochqualifizierter Compliance- und Digitalberater.
+    Analysiere dieses Unternehmensprofil umfassend in Bezug auf DSGVO, EU AI Act, ROI und KI-Readiness.
 
-    Ergebnis als strukturiertes Briefing auf Deutsch.
+    Unternehmensdaten:
+    - Name: {data.get('name')}
+    - Email: {data.get('email')}
+    - Branche: {data.get('branche')}
+    - Selbstständig: {data.get('selbststaendig')}
+    - Maßnahme: {data.get('massnahme')}
+    - Einsatzbereich: {data.get('bereich')}
+    - Ziel: {data.get('ziel')}
+    - Compliance-Antworten: {[data.get('frage'+str(i), '') for i in range(1,11)]}
+
+    Erstelle ein strukturiertes Executive Briefing auf Deutsch mit:
+    - Executive Summary
+    - DSGVO & EU AI Act Risiken
+    - Fördermöglichkeiten & ROI
+    - Empfehlungen speziell für Selbstständige
+    - Motivierende Vision (z.B. 'Ihr Unternehmen kann Vorreiter werden...')
     """
 
-    logger.info(f"GPT Prompt:\n{prompt}")
+    logger.info("\n--- GPT Prompt ---\n%s\n-------------------", prompt)
 
-    completion = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}]
-    )
+    try:
+        completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        result = completion.choices[0].message.content
+        logger.info("\n--- GPT Ergebnis ---\n%s\n---------------------", result)
+        return result
 
-    result = completion.choices[0].message.content
-    logger.info(f"GPT Ergebnis:\n{result}")
-    return result
+    except Exception as e:
+        logger.error(f"❌ Fehler beim GPT-Aufruf: {e}")
+        return "Es gab ein Problem bei der KI-Analyse. Bitte später erneut versuchen."
