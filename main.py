@@ -16,7 +16,13 @@ def generate_briefing():
         result = analyze_with_gpt(data)
         logging.info("✅ GPT-Analyse fertig.")
 
-        # Smarte Ausgabe: wenn result ein dict, jsonify
+        # GPT Output loggen (nur ersten Teil, damit Logs nicht platzen)
+        if isinstance(result, str):
+            logging.info(f"📝 GPT-Output (erste 300 Zeichen): {result[:300]}...")
+        elif isinstance(result, dict):
+            logging.info(f"📝 GPT-Output Dict Keys: {list(result.keys())}")
+
+        # Smarte Rückgabe: JSON oder Text
         if isinstance(result, dict):
             return jsonify(result), 200, {"Content-Type": "application/json"}
         else:
