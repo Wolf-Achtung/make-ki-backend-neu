@@ -10,30 +10,19 @@ logging.basicConfig(level=logging.INFO)
 
 def analyze_with_gpt(data):
     prompt = f"""
-    Du bist ein hochqualifizierter Compliance- & Digitalberater für KI-Projekte. 
-    Analysiere das folgende Unternehmensprofil tiefgehend im Hinblick auf:
+    Du bist ein hochqualifizierter Compliance- & Digitalberater für KI-Projekte.
+    Analysiere das folgende Unternehmensprofil tiefgehend im Hinblick auf DSGVO, EU AI Act, ROI, Roadmap und Vision.
 
-    1️⃣ DSGVO & Datenschutz (Art. 30, Art. 35) – z.B. ob ein Verzeichnis oder DPIA nötig ist.
-    2️⃣ EU AI Act: Klassifiziere das Risiko (Hochrisiko? Minimal?) und was das bedeutet.
-    3️⃣ Fördermöglichkeiten: Bundes-/EU-Programme, steuerliche Forschungsförderung.
-    4️⃣ Konkrete Tools & Methoden, die sofort helfen (inkl. Begründung).
-    5️⃣ Eine Roadmap (30 Tage / 90 Tage / 365 Tage), priorisiert.
-    6️⃣ ROI & Wettbewerbsvorteile: Was spart / gewinnt das Unternehmen?
-    7️⃣ Branchentrends und Benchmarks.
-    8️⃣ Eine Vision (DAN-Style), was das Unternehmen erreichen kann.
-
-    Nutze auch die Info, ob der Kunde selbstständig tätig ist: "{data.get('selbststaendig', '')}".
-
-    Daten des Unternehmens:
     Name: {data.get('name', '')}
     Email: {data.get('email', '')}
     Branche: {data.get('branche', '')}
+    Selbstständig: {data.get('selbststaendig', '')}
     Geplante Maßnahme: {data.get('massnahme', '')}
     Einsatzbereich: {data.get('bereich', '')}
-    Ziel mit KI: {data.get('ziel', '')}
+    Ziel: {data.get('ziel', '')}
     Compliance-Antworten: {[data.get('frage'+str(i), '') for i in range(1,11)]}
 
-    Antworte strukturiert mit folgenden Abschnitten:
+    Gib mir eine klare Struktur:
     - Executive Summary
     - DSGVO & EU AI Act Risiken
     - Fördertipps
@@ -46,15 +35,19 @@ def analyze_with_gpt(data):
     """
 
     try:
+        logging.info("🚀 Starte GPT-Analyse...")
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[
+                {"role": "system", "content": "Du bist ein KI- und Compliance-Experte."},
                 {"role": "user", "content": prompt}
             ]
         )
 
-        return response.choices[0].message.content
+        text = response.choices[0].message.content
+        logging.info(f"📝 GPT-Antwort:\n{text[:300]}...")  # nur die ersten 300 Zeichen anzeigen
+        return text
 
     except Exception as e:
-        logging.error(f"Fehler bei der Analyse: {e}")
+        logging.error(f"❌ Fehler bei der Analyse: {e}")
         raise RuntimeError(f"Fehler bei der Analyse: {e}")
