@@ -8,16 +8,24 @@ client = OpenAI()
 def analyze_with_gpt(data):
     try:
         prompt = f"""
-Sie sind ein zertifizierter KI-Manager und Fördermittelberater 
-und beraten Geschäftsführer von kleinen Unternehmen oder Selbstständige, 
-die wenig technisches Vorwissen haben und sich für den professionellen KI-Einsatz interessieren.
+Sie sind ein zertifizierter KI-Manager und Fördermittelberater.
+Ihre Aufgabe ist es, einen Geschäftsführer oder Selbstständigen professionell zu beraten,
+damit er fundierte Entscheidungen zum Einsatz von KI treffen kann.
 
-Bitte analysieren Sie die folgenden Unternehmensangaben. 
+Bitte berücksichtigen Sie explizit:
+- Branche: "{data.get("branche")}"
+- Geplante Maßnahme: "{data.get("massnahme")}"
+- Unternehmensbereich: "{data.get("bereich")}"
+- Ziel: "{data.get("ziel")}"
+
+Stellen Sie Ihre Empfehlungen, Tool-Tipps, Förderstrategien und Visionen speziell auf diese Angaben ein.
+Formulieren Sie ausschließlich in der Sie-Form, klar und professionell.
+
 Erstellen Sie ausschließlich ein JSON ohne Einleitung oder Abschluss, mit exakt diesen Feldern:
 
 - readiness_analysis: Einschätzung der allgemeinen KI-Readiness des Unternehmens in maximal 3 Sätzen. Danach bitte eine kurze 3-Punkte-Checkliste mit den nächsten konkreten Schritten.
-- compliance_analysis: Eine klare Compliance-Checkliste, die auf den Antworten zu frage1 bis frage10 basiert. Bitte spezifisch auf Defizite eingehen und ToDos geben.
-- use_case_analysis: Eine kompakte Bewertung der geplanten Maßnahme und Ziele, inklusive konkreter Chancen & Risiken für dieses Unternehmen.
+- compliance_analysis: Eine klare Compliance-Checkliste, die auf den Antworten zu frage1 bis frage10 basiert. Bitte spezifisch auf Defizite eingehen und konkrete ToDos geben.
+- use_case_analysis: Eine kompakte Bewertung der geplanten Maßnahme und Ziele, inklusive konkreter Chancen & Risiken für dieses Unternehmen im Vergleich zu ähnlichen Betrieben in dieser Branche.
 - executive_summary: Seriöse Gesamtzusammenfassung in der Sie-Form, maximal 5 Sätze.
 - fördertipps: Konkrete Förderprogramme oder Strategien, die speziell für die Branche "{data.get("branche")}" und die Maßnahme "{data.get("massnahme")}" geeignet sind. Bitte als Bulletpoints.
 - toolkompass: 3 konkrete Tools, Frameworks oder Plattformen, die exakt zu Ziel und Bereich passen, mit je einem Satz Begründung.
@@ -27,6 +35,7 @@ Erstellen Sie ausschließlich ein JSON ohne Einleitung oder Abschluss, mit exakt
 - vision: Eine inspirierende Perspektive, wie KI dieses Unternehmen in den nächsten 3 Jahren transformieren könnte, formuliert als kurzer Absatz.
 
 Unternehmensdaten:
+- Unternehmen: {data.get("unternehmen")}
 - Name: {data.get("name")}
 - E-Mail: {data.get("email")}
 - Branche: {data.get("branche")}
