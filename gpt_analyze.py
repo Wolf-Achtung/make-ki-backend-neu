@@ -1,104 +1,80 @@
-import os
-import json
 from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI()
+
+import json
 
 async def analyze_with_gpt(data):
     try:
-        print("==== Eingehende Form-Daten ====")
-        print(json.dumps(data, indent=2, ensure_ascii=False))
+        prompt = f"""
+Du bist ein Premium-KI-Berater für Datenschutz, KI-Readiness und Förderung. 
+Analysiere bitte die folgenden Unternehmensdaten und erstelle eine individuelle Auswertung. 
+Das Ziel ist, Schwachstellen aufzudecken, Compliance & Datenschutz zu bewerten, Fördermöglichkeiten zu identifizieren und konkrete KI-Tools vorzuschlagen.
 
-        # GPT Prompt zusammenbauen
-prompt = f"""
-Du bist ein deutschsprachiger, hochpräziser KI-Readiness- und Förder-Analyst. 
-Analysiere die Lage des Unternehmens auf Basis folgender Daten und liefere NUR ein gültiges JSON ohne Fließtext oder Erklärungen.
+### Unternehmensdaten:
+- Unternehmen: {data.get("unternehmen")}
+- Name: {data.get("name")}
+- Email: {data.get("email")}
+- Branche: {data.get("branche")}
+- Geplante Maßnahme: {data.get("massnahme")}
+- Bereich: {data.get("bereich")}
 
-Unternehmen: {data.get("unternehmen")}
-Name: {data.get("name")}
-Email: {data.get("email")}
-Branche: {data.get("branche")}
-Geplante Maßnahme: {data.get("massnahme")}
-Bereich: {data.get("bereich")}
-Fragen:
-1: {data.get("frage1")}
-2: {data.get("frage2")}
-3: {data.get("frage3")}
-4: {data.get("frage4")}
-5: {data.get("frage5")}
-6: {data.get("frage6")}
-7: {data.get("frage7")}
-8: {data.get("frage8")}
-9: {data.get("frage9")}
-10: {data.get("frage10")}
+### Datenschutz & KI-Management:
+- Frage 1: {data.get("frage1")}
+- Frage 2: {data.get("frage2")}
+- Frage 3: {data.get("frage3")}
+- Frage 4: {data.get("frage4")}
+- Frage 5: {data.get("frage5")}
+- Frage 6: {data.get("frage6")}
+- Frage 7: {data.get("frage7")}
+- Frage 8: {data.get("frage8")}
+- Frage 9: {data.get("frage9")}
+- Frage 10: {data.get("frage10")}
 
-Gib die Antwort ausschließlich in diesem JSON-Format zurück:
+### Anforderungen an die Analyse:
+1. **Compliance-Analyse:** Beschreibe die Datenschutz- und Compliance-Lage, inkl. Score von 0 bis 10.
+2. **Badge-Level:** Gib eine Einstufung in Bronze, Silber oder Gold. Bronze = viele offene Punkte, Silber = mittel, Gold = sehr gut aufgestellt.
+3. **Readiness-Analyse:** Wie bereit ist das Unternehmen für KI? Berücksichtige Branche, Maßnahme, Bereich & Antworten.
+4. **Use-Case-Analyse:** Schlage konkrete KI-Use-Cases für dieses Unternehmen vor.
+5. **Branche Trend:** Beschreibe kurz relevante Trends in dieser Branche.
+6. **Vision:** Eine inspirierende kurze Vision für das Unternehmen.
+7. **Toolstipps:** Liste 2-4 konkrete Tools, die dem Unternehmen helfen könnten.
+8. **Foerdertipps:** Gib konkrete Förderideen oder Programme an.
+9. **Executive Summary:** Eine knackige Zusammenfassung für die Geschäftsführung.
 
+### Antwortformat:
+Gib deine Antwort bitte in folgendem JSON zurück:
 {{
-    "compliance_score": int,
-    "badge_level": "Bronze|Silber|Gold|Platin",
-    "readiness_analysis": "...",
-    "compliance_analysis": "...",
-    "use_case_analysis": "...",
-    "branche_trend": "...",
-    "vision": "...",
-    "toolstipps": ["...", "..."],
-    "foerdertipps": ["...", "..."],
-    "executive_summary": "..."
+"compliance_score": <int von 0-10>,
+"badge_level": "<Bronze|Silber|Gold>",
+"readiness_analysis": "...",
+"compliance_analysis": "...",
+"use_case_analysis": "...",
+"branche_trend": "...",
+"vision": "...",
+"toolstipps": ["Tool1", "Tool2"],
+"foerdertipps": ["Förder1", "Förder2"],
+"executive_summary": "..."
 }}
 """
-
-
-        print("==== Sende Anfrage an GPT ====")
-        completion = client.chat.completions.create(
+        completion = await client.chat.completions.acreate(
             model="gpt-4o",
-            temperature=0.4,
+            temperature=0.2,
             messages=[
                 {"role": "user", "content": prompt}
             ]
         )
 
-        gpt_content = completion.choices[0].message.content
-        print("==== GPT Roh-Antwort ====")
-        print(gpt_content)
-
+        text = completion.choices[0].message.content
+        # JSON sauber laden
         try:
-            response_data = json.loads(gpt_content)
-        except json.JSONDecodeError as e:
-            print("==== JSON-Parsing Fehler ====")
-            print(str(e))
-            # Fallback JSON
-            response_data = {
-                "compliance_score": 0,
-                "badge_level": "Bronze",
-                "readiness_analysis": "Keine Daten verfügbar",
-                "compliance_analysis": "Keine Daten verfügbar",
-                "use_case_analysis": "Keine Daten verfügbar",
-                "branche_trend": "Keine Daten verfügbar",
-                "vision": "Keine Daten verfügbar",
-                "toolstipps": [],
-                "foerdertipps": [],
-                "executive_summary": "Keine Daten verfügbar"
+            result = json.loads(text)
+        except Exception as parse_err:
+            result = {
+                "error": f"Fehler beim JSON parsen: {parse_err}",
+                "raw_output": text
             }
-
-        print("==== Finale Antwort an Frontend ====")
-        print(json.dumps(response_data, indent=2, ensure_ascii=False))
-
-        return response_data
+        return result
 
     except Exception as e:
-        print("==== Globaler Fehler ====")
-        print(str(e))
-        return {
-            "error": str(e),
-            "compliance_score": 0,
-            "badge_level": "Bronze",
-            "readiness_analysis": "Keine Daten verfügbar",
-            "compliance_analysis": "Keine Daten verfügbar",
-            "use_case_analysis": "Keine Daten verfügbar",
-            "branche_trend": "Keine Daten verfügbar",
-            "vision": "Keine Daten verfügbar",
-            "toolstipps": [],
-            "foerdertipps": [],
-            "executive_summary": "Keine Daten verfügbar"
-        }
+        return {"error": str(e)}
