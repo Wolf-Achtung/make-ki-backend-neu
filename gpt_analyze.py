@@ -15,19 +15,19 @@ Unternehmensdaten:
 - Maßnahme: {data.get('massnahme')}
 - Bereich: {data.get('bereich')}
 
-Datenschutz- und KI-Management-Fragen:
-- Frage 1: {data.get('frage1')}
-- Frage 2: {data.get('frage2')}
-- Frage 3: {data.get('frage3')}
-- Frage 4: {data.get('frage4')}
-- Frage 5: {data.get('frage5')}
-- Frage 6: {data.get('frage6')}
-- Frage 7: {data.get('frage7')}
-- Frage 8: {data.get('frage8')}
-- Frage 9: {data.get('frage9')}
-- Frage 10: {data.get('frage10')}
+Datenschutz- und KI-Management-Fragen mit Antworten:
+- Haben Sie technische Maßnahmen getroffen, z. B. Verschlüsselung, Firewalls oder Zugriffskontrollen? → {data.get('frage1')}
+- Gibt es Schulungen oder Infos für Mitarbeiter zu Datenschutz, KI oder rechtlichen Anforderungen? → {data.get('frage2')}
+- Haben Sie einen Datenschutzbeauftragten oder Verantwortlichen benannt? → {data.get('frage3')}
+- Haben Sie Risiken für den Datenschutz dokumentiert (z. B. Datenschutz-Folgenabschätzung)? → {data.get('frage4')}
+- Gibt es Regeln zur Löschung oder Anonymisierung von personenbezogenen Daten? → {data.get('frage5')}
+- Wissen Ihre Mitarbeiter, was bei einer Datenschutzverletzung zu tun ist? → {data.get('frage6')}
+- Achten Sie darauf, dass Personen ihre Rechte (Auskunft, Löschung, Berichtigung) wahrnehmen können? → {data.get('frage7')}
+- Haben Sie Prozesse zur regelmäßigen Löschung oder Anonymisierung unnötiger Daten? → {data.get('frage8')}
+- Gibt es eine Meldepflicht und klare Abläufe für Datenschutzvorfälle? → {data.get('frage9')}
+- Führen Sie regelmäßige Überprüfungen oder Audits zur Datenschutzkonformität durch? → {data.get('frage10')}
 
-Bitte analysieren Sie diese Daten und geben Sie ausschließlich ein gültiges JSON-Objekt zurück
+Erstellen Sie eine umfassende Analyse und geben Sie ausschließlich ein gültiges JSON-Objekt zurück
 mit folgendem Aufbau:
 
 {{
@@ -40,16 +40,21 @@ mit folgendem Aufbau:
   "vision": "motivierendes Zukunftsbild",
   "toolstipps": ["Tool 1", "Tool 2"],
   "foerdertipps": ["Förderprogramm 1", "Förderprogramm 2"],
-  "executive_summary": "1-2 Sätze, was das Unternehmen als Nächstes tun sollte"
+  "executive_summary": "1-2 Sätze, was das Unternehmen als Nächstes tun sollte",
+  "fragen_audit": [
+    "Frage 1: kurze Bewertung oder Empfehlung",
+    "Frage 2: kurze Bewertung oder Empfehlung",
+    "Frage 3: kurze Bewertung oder Empfehlung",
+    "... bis Frage 10"
+  ]
 }}
 """
     return prompt
 
-async def analyze_with_gpt(data):
-    text_response = ""  # immer initialisieren
+def analyze_with_gpt(data):
+    text_response = ""
     try:
-        # GPT-Aufruf
-        response = await client.chat.completions.acreate(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "user", "content": build_prompt(data)}
@@ -57,7 +62,6 @@ async def analyze_with_gpt(data):
         )
         text_response = response.choices[0].message.content
 
-        # Versuche JSON direkt zu parsen
         json_start = text_response.find('{')
         json_end = text_response.rfind('}') + 1
         json_str = text_response[json_start:json_end]
@@ -65,7 +69,6 @@ async def analyze_with_gpt(data):
         try:
             return json.loads(json_str)
         except json.JSONDecodeError:
-            # JSON konnte nicht geparst werden
             return {
                 "error": "Konnte JSON nicht parsen",
                 "raw": text_response
