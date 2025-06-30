@@ -1,80 +1,55 @@
 from openai import OpenAI
+import json
 
 client = OpenAI()
-
-import json
 
 async def analyze_with_gpt(data):
     try:
         prompt = f"""
-Du bist ein Premium-KI-Berater für Datenschutz, KI-Readiness und Förderung. 
-Analysiere bitte die folgenden Unternehmensdaten und erstelle eine individuelle Auswertung. 
-Das Ziel ist, Schwachstellen aufzudecken, Compliance & Datenschutz zu bewerten, Fördermöglichkeiten zu identifizieren und konkrete KI-Tools vorzuschlagen.
+Sie sind ein KI-Strategieberater für kleine Unternehmen. Analysieren Sie die Angaben des Unternehmens {data['unternehmen']} (Branche: {data['branche']}, Bereich: {data['bereich']}, geplante Maßnahme: {data['massnahme']}) und berücksichtigen Sie dabei:
 
-### Unternehmensdaten:
-- Unternehmen: {data.get("unternehmen")}
-- Name: {data.get("name")}
-- Email: {data.get("email")}
-- Branche: {data.get("branche")}
-- Geplante Maßnahme: {data.get("massnahme")}
-- Bereich: {data.get("bereich")}
+- Frage 1: Haben Sie technische Maßnahmen getroffen, z. B. Verschlüsselung, Firewalls oder Zugriffskontrollen, um Daten zu schützen? Antwort: {data['frage1']}
+- Frage 2: Gibt es in Ihrem Unternehmen schon Schulungen oder Informationen für Mitarbeiter zum Thema Datenschutz, Künstliche Intelligenz oder rechtliche Anforderungen? Antwort: {data['frage2']}
+- Frage 3: Haben Sie einen Datenschutzbeauftragten oder eine verantwortliche Person dafür benannt? Antwort: {data['frage3']}
+- Frage 4: Haben Sie schon einmal geprüft oder dokumentiert, welche Risiken für den Datenschutz entstehen könnten (z. B. durch eine Datenschutz-Folgenabschätzung)? Antwort: {data['frage4']}
+- Frage 5: Gibt es feste Regeln, wann und wie personenbezogene Daten gelöscht oder anonymisiert werden? Antwort: {data['frage5']}
+- Frage 6: Wissen Ihre Mitarbeiter, was zu tun ist, wenn eine Datenschutzverletzung passiert (z. B. durch Hackerangriff)? Antwort: {data['frage6']}
+- Frage 7: Achten Sie darauf, dass Personen, deren Daten Sie speichern, ihre Rechte wahrnehmen können (z. B. Auskunft, Löschung, Berichtigung)? Antwort: {data['frage7']}
+- Frage 8: Haben Sie Prozesse, um die regelmäßige Löschung oder Anonymisierung von Daten sicherzustellen, die nicht mehr benötigt werden? Antwort: {data['frage8']}
+- Frage 9: Gibt es eine Meldepflicht und einen klaren Ablauf für Datenschutzvorfälle in Ihrem Unternehmen? Antwort: {data['frage9']}
+- Frage 10: Führen Sie regelmäßige Überprüfungen oder Audits durch, um sicherzustellen, dass Ihr Unternehmen datenschutzkonform bleibt? Antwort: {data['frage10']}
 
-### Datenschutz & KI-Management:
-- Frage 1: {data.get("frage1")}
-- Frage 2: {data.get("frage2")}
-- Frage 3: {data.get("frage3")}
-- Frage 4: {data.get("frage4")}
-- Frage 5: {data.get("frage5")}
-- Frage 6: {data.get("frage6")}
-- Frage 7: {data.get("frage7")}
-- Frage 8: {data.get("frage8")}
-- Frage 9: {data.get("frage9")}
-- Frage 10: {data.get("frage10")}
-
-### Anforderungen an die Analyse:
-1. **Compliance-Analyse:** Beschreibe die Datenschutz- und Compliance-Lage, inkl. Score von 0 bis 10.
-2. **Badge-Level:** Gib eine Einstufung in Bronze, Silber oder Gold. Bronze = viele offene Punkte, Silber = mittel, Gold = sehr gut aufgestellt.
-3. **Readiness-Analyse:** Wie bereit ist das Unternehmen für KI? Berücksichtige Branche, Maßnahme, Bereich & Antworten.
-4. **Use-Case-Analyse:** Schlage konkrete KI-Use-Cases für dieses Unternehmen vor.
-5. **Branche Trend:** Beschreibe kurz relevante Trends in dieser Branche.
-6. **Vision:** Eine inspirierende kurze Vision für das Unternehmen.
-7. **Toolstipps:** Liste 2-4 konkrete Tools, die dem Unternehmen helfen könnten.
-8. **Foerdertipps:** Gib konkrete Förderideen oder Programme an.
-9. **Executive Summary:** Eine knackige Zusammenfassung für die Geschäftsführung.
-
-### Antwortformat:
-Gib deine Antwort bitte in folgendem JSON zurück:
+Erstellen Sie daraus ein detailliertes JSON mit:
 {{
-"compliance_score": <int von 0-10>,
-"badge_level": "<Bronze|Silber|Gold>",
-"readiness_analysis": "...",
-"compliance_analysis": "...",
-"use_case_analysis": "...",
-"branche_trend": "...",
-"vision": "...",
-"toolstipps": ["Tool1", "Tool2"],
-"foerdertipps": ["Förder1", "Förder2"],
-"executive_summary": "..."
+  "compliance_score": <0-10>,
+  "badge_level": "<Bronze|Silber|Gold>",
+  "readiness_analysis": "<Ihre Einschätzung zur generellen KI-Readiness>",
+  "compliance_analysis": "<Datenschutzanalyse>",
+  "use_case_analysis": "<Empfehlung für konkrete Anwendungsfälle>",
+  "branche_trend": "<Branchentrend>",
+  "vision": "<Zukunftsperspektive für das Unternehmen>",
+  "toolstipps": ["<Tool 1>", "<Tool 2>"],
+  "foerdertipps": ["<Förderung 1>", "<Förderung 2>"],
+  "executive_summary": "<Kurze Zusammenfassung für Entscheider>"
 }}
+
+Antwort nur als JSON, ohne weiteren Text.
 """
-        completion = await client.chat.completions.acreate(
+        
+        completion = client.chat.completions.create(
             model="gpt-4o",
-            temperature=0.2,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            temperature=0.5,
+            messages=[{"role": "user", "content": prompt}]
         )
 
-        text = completion.choices[0].message.content
-        # JSON sauber laden
-        try:
-            result = json.loads(text)
-        except Exception as parse_err:
-            result = {
-                "error": f"Fehler beim JSON parsen: {parse_err}",
-                "raw_output": text
-            }
-        return result
+        response_text = completion.choices[0].message.content
 
+        try:
+            result = json.loads(response_text)
+        except json.JSONDecodeError:
+            result = {"error": "Konnte JSON nicht parsen", "raw": response_text}
+
+        return result
+    
     except Exception as e:
         return {"error": str(e)}
