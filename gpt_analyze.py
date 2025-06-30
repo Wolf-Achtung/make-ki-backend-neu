@@ -10,8 +10,9 @@ async def analyze_with_gpt(data):
         print(json.dumps(data, indent=2, ensure_ascii=False))
 
         # GPT Prompt zusammenbauen
-        prompt = f"""
-Du bist ein KI-Readiness- und Förder-Analyst. Analysiere die Situation eines Unternehmens und gib eine strukturierte, professionelle Auswertung zurück. Nutze die Daten:
+prompt = f"""
+Du bist ein deutschsprachiger, hochpräziser KI-Readiness- und Förder-Analyst. 
+Analysiere die Lage des Unternehmens auf Basis folgender Daten und liefere NUR ein gültiges JSON ohne Fließtext oder Erklärungen.
 
 Unternehmen: {data.get("unternehmen")}
 Name: {data.get("name")}
@@ -31,10 +32,11 @@ Fragen:
 9: {data.get("frage9")}
 10: {data.get("frage10")}
 
-Gib die Antwort als JSON im Format:
+Gib die Antwort ausschließlich in diesem JSON-Format zurück:
+
 {{
     "compliance_score": int,
-    "badge_level": "Bronze/Silber/Gold/Platin",
+    "badge_level": "Bronze|Silber|Gold|Platin",
     "readiness_analysis": "...",
     "compliance_analysis": "...",
     "use_case_analysis": "...",
@@ -45,6 +47,7 @@ Gib die Antwort als JSON im Format:
     "executive_summary": "..."
 }}
 """
+
 
         print("==== Sende Anfrage an GPT ====")
         completion = client.chat.completions.create(
