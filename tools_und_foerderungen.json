@@ -1,0 +1,86 @@
+{
+  "tools": [
+    {
+      "name": "OneTrust",
+      "link": "https://www.onetrust.com/de/"
+    },
+    {
+      "name": "DataGuard",
+      "link": "https://www.dataguard.de/"
+    },
+    {
+      "name": "Mine PrivacyOps",
+      "link": "https://www.saymine.com/privacyops"
+    },
+    {
+      "name": "Scompler AI Content Suite",
+      "link": "https://www.scompler.com/"
+    },
+    {
+      "name": "HubSpot CRM & Marketing Automation",
+      "link": "https://www.hubspot.de/"
+    },
+    {
+      "name": "Piwik PRO (Analytics DSGVO-konform)",
+      "link": "https://piwik.pro/"
+    },
+    {
+      "name": "Legal365 DSGVO-Manager",
+      "link": "https://legal365.de/"
+    },
+    {
+      "name": "Jasper AI (Texterstellung)",
+      "link": "https://www.jasper.ai/"
+    },
+    {
+      "name": "Midjourney (KI-Bildgenerierung)",
+      "link": "https://www.midjourney.com/"
+    },
+    {
+      "name": "Consentmanager (Cookie & Tracking)",
+      "link": "https://www.consentmanager.de/"
+    }
+  ],
+  "foerderungen": [
+    {
+      "name": "Digital Jetzt (BMWK)",
+      "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+    },
+    {
+      "name": "go-digital",
+      "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/go-digital.html"
+    },
+    {
+      "name": "BAFA-Förderung Unternehmensberatung",
+      "link": "https://www.bafa.de/DE/Wirtschafts_Mittelstand/Beratung_Foerderung/beratung_foerderung_node.html"
+    },
+    {
+      "name": "KMU-innovativ (BMBF)",
+      "link": "https://www.kmu-innovativ.de/"
+    },
+    {
+      "name": "INVEST Zuschuss für Wagniskapital",
+      "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Invest/invest-zuschuss-fuer-wagniskapital.html"
+    },
+    {
+      "name": "Zukunftszentrum KI NRW",
+      "link": "https://zukunftszentrum-ki.nrw/"
+    },
+    {
+      "name": "EFRE NRW Innovationsförderung",
+      "link": "https://www.efre.nrw.de/"
+    },
+    {
+      "name": "ERP-Digitalisierungs- und Innovationskredit (KfW)",
+      "link": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Erweitern-Festigen/Innovation/"
+    },
+    {
+      "name": "DigiBonus Bayern",
+      "link": "https://www.stmwi.bayern.de/digitalisierung/digibonus/"
+    },
+    {
+      "name": "IBB Förderung Berlin",
+      "link": "https://www.ibb.de/de/foerderprogramme/innovationsfoerderung.html"
+    }
+  ]
+}
