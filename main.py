@@ -18,7 +18,7 @@ app.add_middleware(
 async def generate_briefing(request: Request):
     data = await request.json()
     try:
-        result = await analyze_with_gpt(data)
+        result = analyze_with_gpt(data)
         return result
     except Exception as e:
         return {"error": str(e)}
