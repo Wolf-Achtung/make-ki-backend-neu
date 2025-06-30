@@ -7,36 +7,41 @@ client = OpenAI()
 
 def analyze_with_gpt(data):
     try:
-        unternehmen = data.get("unternehmen", "Ihr Unternehmen")
-        branche = data.get("branche", "Allgemein")
-        ziel = data.get("ziel", "nicht angegeben")
-        tools = data.get("tools", "nicht angegeben")
-        bereich = data.get("bereich", "nicht angegeben")
-
         prompt = f"""
 Sie sind ein zertifizierter KI-Manager und Fördermittelberater. 
-Bitte analysieren Sie die folgenden Unternehmensdaten und geben Sie 
-ausschließlich ein JSON zurück, ohne Einleitung oder Abschluss.
+Bitte analysieren Sie die folgenden Unternehmensangaben, die über ein Online-Formular übermittelt wurden.
 
-Das JSON MUSS exakt folgende Felder enthalten:
+Erstellen Sie ausschließlich ein JSON, ohne Einleitung oder Abschluss, mit exakt diesen Feldern:
 
-- readiness_analysis: Eine kurze Analyse zur allgemeinen KI-Readiness des Unternehmens
-- compliance_analysis: Einschätzung zum DSGVO- & AI-Act-konformen Einsatz, inkl. möglicher Risiken
-- use_case_analysis: Einschätzung der geplanten KI-Use-Cases inkl. Optimierungstipps
-- executive_summary: Eine Gesamtzusammenfassung
+- readiness_analysis: Einschätzung der allgemeinen KI-Readiness basierend auf Branche, Selbstständigkeit, Maßnahme und Ziel
+- compliance_analysis: Einschätzung der DSGVO-/AI-Act-Konformität basierend auf den Antworten zu frage1 bis frage10
+- use_case_analysis: Bewertung des geplanten Einsatzes und der Ziele inkl. Risiken & Potenziale
+- executive_summary: Zusammenfassung der Lage & Handlungsempfehlungen
 - fördertipps: Konkrete Förderprogramme oder allgemeine Förderstrategien
 - toolkompass: Empfehlungen für Tools, Frameworks oder Plattformen
 - branche_trend: Entwicklungen und Chancen speziell in dieser Branche
-- compliance_score: Eine Zahl von 0 bis 10, die das Datenschutz- & Compliance-Level bewertet
-- badge_level: Entweder "Bronze", "Silber" oder "Gold", basierend auf dem Score
+- compliance_score: Zahl von 0 bis 10 (0 = hohes Risiko, 10 = optimal abgesichert)
+- badge_level: "Bronze", "Silber" oder "Gold" (basierend auf Score)
 - vision: Inspirierende Perspektive, wie KI das Unternehmen transformieren kann
 
 Unternehmensdaten:
-- Name: {unternehmen}
-- Branche: {branche}
-- Bereich: {bereich}
-- Ziel: {ziel}
-- Eingesetzte Tools: {tools}
+- Name: {data.get("name")}
+- E-Mail: {data.get("email")}
+- Branche: {data.get("branche")}
+- Selbstständig: {data.get("selbststaendig")}
+- Maßnahme: {data.get("massnahme")}
+- Bereich: {data.get("bereich")}
+- Ziel: {data.get("ziel")}
+- Frage 1: {data.get("frage1")}
+- Frage 2: {data.get("frage2")}
+- Frage 3: {data.get("frage3")}
+- Frage 4: {data.get("frage4")}
+- Frage 5: {data.get("frage5")}
+- Frage 6: {data.get("frage6")}
+- Frage 7: {data.get("frage7")}
+- Frage 8: {data.get("frage8")}
+- Frage 9: {data.get("frage9")}
+- Frage 10: {data.get("frage10")}
 
 Beispielausgabe:
 {{
@@ -47,8 +52,8 @@ Beispielausgabe:
   "fördertipps": "...",
   "toolkompass": "...",
   "branche_trend": "...",
-  "compliance_score": 7,
-  "badge_level": "Silber",
+  "compliance_score": 8,
+  "badge_level": "Gold",
   "vision": "..."
 }}
 """
