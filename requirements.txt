@@ -1,5 +1,4 @@
-flask>=2.2.0
-flask-cors>=3.0.10
+fastapi
+uvicorn
+openai
 python-dotenv
-openai>=1.17.0
-gunicorn

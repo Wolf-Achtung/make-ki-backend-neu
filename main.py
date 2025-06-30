@@ -1,30 +1,25 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 from gpt_analyze import analyze_with_gpt
-import logging
 
-app = Flask(__name__)
-CORS(app)
-logging.basicConfig(level=logging.INFO)
+app = FastAPI()
 
-@app.route("/")
-def home():
-    return "KI-Briefing Backend läuft."
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.route("/briefing", methods=["POST"])
-def generate_briefing():
+@app.post("/briefing")
+async def generate_briefing(request: Request):
+    data = await request.json()
     try:
-        data = request.json
-        logging.info(f"Eingehend: {data}")
-        if not data:
-            return jsonify({"error": "Keine Daten erhalten"}), 400
-
-        result = analyze_with_gpt(data)
-        logging.info("GPT-Analyse fertig.")
-        return jsonify(result)
+        result = await analyze_with_gpt(data)
+        return result
     except Exception as e:
-        logging.exception("Fehler bei GPT:")
-        return jsonify({"error": str(e)}), 500
+        return {"error": str(e)}
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
