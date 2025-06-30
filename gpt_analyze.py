@@ -46,7 +46,9 @@ mit folgendem Aufbau:
     return prompt
 
 async def analyze_with_gpt(data):
+    text_response = ""  # immer initialisieren
     try:
+        # GPT-Aufruf
         response = await client.chat.completions.acreate(
             model="gpt-4o",
             messages=[
@@ -55,9 +57,22 @@ async def analyze_with_gpt(data):
         )
         text_response = response.choices[0].message.content
 
+        # Versuche JSON direkt zu parsen
         json_start = text_response.find('{')
         json_end = text_response.rfind('}') + 1
         json_str = text_response[json_start:json_end]
-        return json.loads(json_str)
+
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError:
+            # JSON konnte nicht geparst werden
+            return {
+                "error": "Konnte JSON nicht parsen",
+                "raw": text_response
+            }
+
     except Exception as e:
-        return {"error": str(e), "raw": text_response}
+        return {
+            "error": f"Fehler beim GPT-Aufruf: {str(e)}",
+            "raw": text_response
+        }
