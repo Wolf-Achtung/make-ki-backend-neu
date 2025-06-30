@@ -21,10 +21,14 @@ Bitte berücksichtigen Sie explizit:
 Stellen Sie Ihre Empfehlungen, Tool-Tipps, Förderstrategien und Visionen speziell auf diese Angaben ein.
 Formulieren Sie ausschließlich in der Sie-Form, klar und professionell.
 
+Falls in den Antworten „noch unklar“ angegeben ist, gehen Sie bitte besonders darauf ein,
+erklären die Risiken und geben konkrete Empfehlungen, wie das Unternehmen hier Klarheit schaffen kann
+(z. B. welche Dokumente, Audits oder Workshops nötig wären).
+
 Erstellen Sie ausschließlich ein JSON ohne Einleitung oder Abschluss, mit exakt diesen Feldern:
 
 - readiness_analysis: Einschätzung der allgemeinen KI-Readiness des Unternehmens in maximal 3 Sätzen. Danach bitte eine kurze 3-Punkte-Checkliste mit den nächsten konkreten Schritten.
-- compliance_analysis: Eine klare Compliance-Checkliste, die auf den Antworten zu frage1 bis frage10 basiert. Bitte spezifisch auf Defizite eingehen und konkrete ToDos geben.
+- compliance_analysis: Eine klare Compliance-Checkliste, die auf den Antworten zu frage1 bis frage10 basiert. Bitte spezifisch auf Defizite eingehen, auf „noch unklar“ eingehen und konkrete ToDos geben.
 - use_case_analysis: Eine kompakte Bewertung der geplanten Maßnahme und Ziele, inklusive konkreter Chancen & Risiken für dieses Unternehmen im Vergleich zu ähnlichen Betrieben in dieser Branche.
 - executive_summary: Seriöse Gesamtzusammenfassung in der Sie-Form, maximal 5 Sätze.
 - fördertipps: Konkrete Förderprogramme oder Strategien, die speziell für die Branche "{data.get("branche")}" und die Maßnahme "{data.get("massnahme")}" geeignet sind. Bitte als Bulletpoints.
