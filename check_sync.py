@@ -1,23 +1,33 @@
 import json
-import re
 import requests
+from bs4 import BeautifulSoup
 
-# Felder laden
-with open("fields.json", "r") as f:
-    fields = json.load(f)
+def check_sync():
+    try:
+        # Felder aus fields.json laden
+        with open("fields.json", "r") as f:
+            fields = json.load(f)
 
-# Index.html per URL laden
-URL = "https://make.ki-sicherheit.jetzt/formular/index.html"
-response = requests.get(URL)
-html = response.text
+        # HTML-Datei aus Netlify laden
+        url = "https://make.ki-sicherheit.jetzt/formular/index.html"
+        res = requests.get(url)
+        res.raise_for_status()
 
-# Prüfen ob alle Felder vorhanden sind
-missing = []
-for key in fields.keys():
-    if not re.search(f'name=["\']{key}["\']', html):
-        missing.append(key)
+        # Parse HTML
+        soup = BeautifulSoup(res.text, 'html.parser')
+        html_fields = set([tag.get("name") for tag in soup.find_all(["input", "select"]) if tag.get("name")])
 
-if missing:
-    print("🚨 Folgende Felder fehlen oder sind inkonsistent in index.html:", missing)
-else:
-    print("✅ Alle Feldnamen sind synchron!")
+        # Check
+        expected_fields = set(fields)
+        missing_in_html = expected_fields - html_fields
+        extra_in_html = html_fields - expected_fields
+
+        return {
+            "status": "ok",
+            "expected_fields": list(expected_fields),
+            "found_in_html": list(html_fields),
+            "missing_in_html": list(missing_in_html),
+            "extra_in_html": list(extra_in_html)
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
