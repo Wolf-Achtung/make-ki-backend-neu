@@ -3,73 +3,77 @@ from openai import OpenAI
 
 client = OpenAI()
 
-def build_prompt(data):
-    prompt = f"""
-Sie sind ein deutscher KI- und Datenschutzberater für kleine Unternehmen.
+def load_tools_and_grants():
+    with open("tools_und_foerderungen.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def build_prompt(data, context):
+    return f"""
+Sie sind ein TÜV-zertifizierter deutscher KI- und Datenschutzberater.
+Ihre Aufgabe ist es, kleine Unternehmen, Selbstständige und Freiberufler professionell, rechtskonform und inspirierend zu beraten.
 
 Unternehmensdaten:
 - Unternehmen: {data.get('unternehmen')}
-- Name: {data.get('name')}
+- Ansprechpartner: {data.get('name')}
 - E-Mail: {data.get('email')}
 - Branche: {data.get('branche')}
-- Maßnahme: {data.get('massnahme')}
+- Geplante Maßnahme: {data.get('massnahme')}
 - Bereich: {data.get('bereich')}
+- Standort (PLZ): {data.get('plz')}
 
-Antworten auf konkrete Fragen:
-- Haben Sie technische Maßnahmen getroffen (z. B. Verschlüsselung, Firewalls, Zugriffskontrollen)? -> {data.get('frage1')}
-- Gibt es Schulungen oder Infos für Mitarbeiter zu Datenschutz, KI oder rechtlichen Anforderungen? -> {data.get('frage2')}
-- Haben Sie einen Datenschutzbeauftragten oder Verantwortlichen benannt? -> {data.get('frage3')}
-- Haben Sie Risiken für den Datenschutz dokumentiert (z. B. Datenschutz-Folgenabschätzung)? -> {data.get('frage4')}
-- Gibt es Regeln zur Löschung oder Anonymisierung von personenbezogenen Daten? -> {data.get('frage5')}
-- Wissen Ihre Mitarbeiter, was bei einer Datenschutzverletzung zu tun ist? -> {data.get('frage6')}
-- Achten Sie darauf, dass Personen ihre Rechte (Auskunft, Löschung, Berichtigung) wahrnehmen können? -> {data.get('frage7')}
-- Haben Sie Prozesse zur regelmäßigen Löschung oder Anonymisierung unnötiger Daten? -> {data.get('frage8')}
-- Gibt es eine Meldepflicht und klare Abläufe für Datenschutzvorfälle? -> {data.get('frage9')}
-- Führen Sie regelmäßige Überprüfungen oder Audits zur Datenschutzkonformität durch? -> {data.get('frage10')}
+Antworten auf Fragen zur Datenschutz- und KI-Readiness:
+1. Haben Sie technische Maßnahmen (Firewall, Verschlüsselung etc.) umgesetzt? {data.get('frage1')}
+2. Gibt es regelmäßige Schulungen zu Datenschutz, KI und rechtlichen Vorgaben? {data.get('frage2')}
+3. Haben Sie einen Datenschutzbeauftragten benannt? {data.get('frage3')}
+4. Führen Sie Risikoanalysen oder Datenschutz-Folgenabschätzungen durch? {data.get('frage4')}
+5. Gibt es Prozesse zur Datenlöschung oder Anonymisierung? {data.get('frage5')}
+6. Wissen Mitarbeiter, wie bei Datenschutzverletzungen zu handeln ist? {data.get('frage6')}
+7. Werden Betroffenenrechte (Auskunft, Löschung) aktiv umgesetzt? {data.get('frage7')}
+8. Gibt es eine Dokumentation der Datenverarbeitungsprozesse? {data.get('frage8')}
+9. Existieren Meldepflichten und klar geregelte Abläufe bei Datenschutzvorfällen? {data.get('frage9')}
+10. Führen Sie regelmäßige interne Audits zu Datenschutz und KI durch? {data.get('frage10')}
 
-Bitte erstellen Sie nun ein Audit pro Frage und zusätzlich eine Gesamtbewertung.
-Liefern Sie **ausschließlich ein gültiges JSON** mit folgendem Aufbau:
+Verfügbare interne Tools und Förderprogramme:
+{json.dumps(context, ensure_ascii=False, indent=2)}
+
+Bitte analysieren Sie diese Daten und liefern Sie ausschließlich ein gültiges JSON mit folgendem Aufbau, auf Deutsch in der Sie-Form, mit klaren priorisierten Handlungsanweisungen und Roadmap:
 
 {{
   "frage_audit": {{
-    "frage1": "Ihre kurze Analyse dieser Antwort",
+    "frage1": "...",
     "frage2": "...",
-    "frage3": "...",
-    "frage4": "...",
-    "frage5": "...",
-    "frage6": "...",
-    "frage7": "...",
-    "frage8": "...",
-    "frage9": "...",
-    "frage10": "..."
+    "...": "..."
   }},
-  "compliance_score": ganze Zahl von 0 bis 10,
-  "badge_level": "Bronze" | "Silber" | "Gold" | "Platin",
-  "readiness_analysis": "kurze branchenspezifische Einschätzung",
-  "compliance_analysis": "detaillierte Datenschutz-Bewertung in Sie-Form",
-  "use_case_analysis": "Empfehlung für sinnvolle KI-Anwendung",
-  "branche_trend": "kurzer Trendtext für diese Branche",
-  "vision": "motivierendes Zukunftsbild",
-  "toolstipps": ["Tool 1", "Tool 2"],
-  "foerdertipps": ["Förderprogramm 1", "Förderprogramm 2"],
-  "executive_summary": "1-2 Sätze, was das Unternehmen als Nächstes tun sollte"
+  "compliance_score": Zahl von 0 bis 10,
+  "badge_level": "Bronze | Silber | Gold | Platin",
+  "readiness_analysis": "Branchenspezifische Einschätzung",
+  "compliance_analysis": "Detaillierte Datenschutz- und KI-Bewertung mit konkreten Handlungsempfehlungen",
+  "use_case_analysis": "Empfehlung, wie Sie KI sinnvoll einsetzen können.",
+  "branche_trend": "Trendtext für Ihre Branche",
+  "vision": "Operative, inspirierende Vision inkl. Bulletpoints für nächste Schritte (1-3, 4-12, 12-24 Monate) und wichtige EU-Termine.",
+  "quick_wins": ["Quick Win 1", "Quick Win 2"],
+  "toolstipps": ["Tool inkl. Link", "..."],
+  "foerdertipps": ["Förderprogramm inkl. Link", "..."],
+  "executive_summary": "Was Ihr Unternehmen jetzt tun sollte, inkl. Hinweis auf TÜV-zertifiziertes KI-Management bei Wolf Hohl (foerderung@ki-sicherheit.jetzt)"
 }}
 """
-    return prompt
 
+    return prompt
 
 def analyze_with_gpt(data):
     text_response = ""
     try:
+        context = load_tools_and_grants()
+
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "user", "content": build_prompt(data)}
+                {"role": "user", "content": build_prompt(data, context)}
             ]
         )
         text_response = response.choices[0].message.content
 
-        # JSON-Teil aus GPT-Antwort herausfiltern
+        # JSON extrahieren
         json_start = text_response.find('{')
         json_end = text_response.rfind('}') + 1
         json_str = text_response[json_start:json_end]
@@ -87,4 +91,3 @@ def analyze_with_gpt(data):
             "error": f"Fehler beim GPT-Aufruf: {str(e)}",
             "raw": text_response
         }
-
