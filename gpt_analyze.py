@@ -1,60 +1,63 @@
-from openai import OpenAI
 import json
-import os
+from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI()
 
-async def analyze_with_gpt(data):
-    try:
-        unternehmen = data.get("unternehmen", "Ihr Unternehmen")
-        name = data.get("name", "")
-        email = data.get("email", "")
-        branche = data.get("branche", "keine Angabe")
-        massnahme = data.get("massnahme", "keine Angabe")
-        bereich = data.get("bereich", "keine Angabe")
+def build_prompt(data):
+    prompt = f"""
+Sie sind ein deutscher KI- und Datenschutzberater für kleine Unternehmen.
 
-        fragen = [data.get(f"frage{i}", "noch unklar") for i in range(1,11)]
+Unternehmensdaten:
+- Unternehmen: {data.get('unternehmen')}
+- Name: {data.get('name')}
+- E-Mail: {data.get('email')}
+- Branche: {data.get('branche')}
+- Maßnahme: {data.get('massnahme')}
+- Bereich: {data.get('bereich')}
 
-        prompt = f"""
-Sie sind ein deutscher KI-Readiness- und Datenschutzberater. Analysieren Sie bitte folgende Angaben und erstellen Sie eine klare, branchenspezifische Auswertung:
+Datenschutz- und KI-Management-Fragen:
+- Frage 1: {data.get('frage1')}
+- Frage 2: {data.get('frage2')}
+- Frage 3: {data.get('frage3')}
+- Frage 4: {data.get('frage4')}
+- Frage 5: {data.get('frage5')}
+- Frage 6: {data.get('frage6')}
+- Frage 7: {data.get('frage7')}
+- Frage 8: {data.get('frage8')}
+- Frage 9: {data.get('frage9')}
+- Frage 10: {data.get('frage10')}
 
-Unternehmen: {unternehmen}
-Branche: {branche}
-Geplante Maßnahme: {massnahme}
-Bereich: {bereich}
-
-Antworten:
-1: {fragen[0]}, 2: {fragen[1]}, 3: {fragen[2]}, 4: {fragen[3]}, 5: {fragen[4]},
-6: {fragen[5]}, 7: {fragen[6]}, 8: {fragen[7]}, 9: {fragen[8]}, 10: {fragen[9]}
-
-Bitte geben Sie ausschließlich ein validiertes JSON zurück, ohne ``` oder ähnliches, in dieser Struktur:
+Bitte analysieren Sie diese Daten und geben Sie ausschließlich ein gültiges JSON-Objekt zurück
+mit folgendem Aufbau:
 
 {{
   "compliance_score": ganze Zahl von 0 bis 10,
   "badge_level": "Bronze" | "Silber" | "Gold" | "Platin",
-  "readiness_analysis": "Kurze branchenspezifische Einschätzung",
-  "compliance_analysis": "Detailanalyse des Datenschutz-Standes",
-  "use_case_analysis": "Konkrete Empfehlung, wie KI hier helfen kann",
-  "branche_trend": "Branchentrend",
-  "vision": "Motivierendes Zukunftsbild",
+  "readiness_analysis": "kurze branchenspezifische Einschätzung",
+  "compliance_analysis": "detaillierte Datenschutz-Bewertung in Sie-Form",
+  "use_case_analysis": "Empfehlung für sinnvolle KI-Anwendung",
+  "branche_trend": "kurzer Trendtext für diese Branche",
+  "vision": "motivierendes Zukunftsbild",
   "toolstipps": ["Tool 1", "Tool 2"],
   "foerdertipps": ["Förderprogramm 1", "Förderprogramm 2"],
-  "executive_summary": "Zusammenfassung für Entscheider"
+  "executive_summary": "1-2 Sätze, was das Unternehmen als Nächstes tun sollte"
 }}
 """
+    return prompt
 
-        completion = client.chat.completions.create(
+async def analyze_with_gpt(data):
+    try:
+        response = await client.chat.completions.acreate(
             model="gpt-4o",
-            temperature=0.4,
-            messages=[{"role": "user", "content": prompt}]
+            messages=[
+                {"role": "user", "content": build_prompt(data)}
+            ]
         )
+        text_response = response.choices[0].message.content
 
-        text = completion.choices[0].message.content.strip()
-
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            return {"error": "Konnte JSON nicht parsen", "debug_text": text}
-
+        json_start = text_response.find('{')
+        json_end = text_response.rfind('}') + 1
+        json_str = text_response[json_start:json_end]
+        return json.loads(json_str)
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e), "raw": text_response}
