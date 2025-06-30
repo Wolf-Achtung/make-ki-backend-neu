@@ -1,110 +1,67 @@
 import os
-from openai import OpenAI
-from dotenv import load_dotenv
 import json
+from openai import OpenAI
 
-load_dotenv()
-client = OpenAI()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def analyze_with_gpt(data):
+async def analyze_with_gpt(data):
     prompt = f"""
-Du bist ein KI-Strategie- und Förderexperte für kleine Unternehmen, Selbstständige und Freiberufler. 
-Analysiere bitte die folgende Situation, beantworte alle Punkte ausführlich in professionellem Deutsch (Sie-Form). 
-Formuliere so, dass auch KI-Neulinge es verstehen.
-
-### Unternehmensdaten
-- Name: {data['unternehmen']}
-- Ansprechpartner: {data['name']}
-- E-Mail: {data['email']}
+Sie sind ein zertifizierter KI-Experte für Datenschutz, Compliance und Förderberatung.
+Analysieren Sie die Angaben dieses Unternehmens und erstellen Sie ein professionelles Executive Briefing auf Deutsch in der Sie-Form.
+Unternehmensdaten:
+- Unternehmen: {data['unternehmen']}
+- Name: {data['name']}
+- Email: {data['email']}
 - Branche: {data['branche']}
 - Geplante Maßnahme: {data['massnahme']}
 - Bereich: {data['bereich']}
-- Ziel: {data['ziel']}
 
-### Compliance-Check
-- Frage1: {data['frage1']}
-- Frage2: {data['frage2']}
-- Frage3: {data['frage3']}
-- Frage4: {data['frage4']}
-- Frage5: {data['frage5']}
-- Frage6: {data['frage6']}
-- Frage7: {data['frage7']}
-- Frage8: {data['frage8']}
-- Frage9: {data['frage9']}
-- Frage10: {data['frage10']}
+Fragen zum Datenschutz & KI-Management:
+1. {data['frage1']}
+2. {data['frage2']}
+3. {data['frage3']}
+4. {data['frage4']}
+5. {data['frage5']}
+6. {data['frage6']}
+7. {data['frage7']}
+8. {data['frage8']}
+9. {data['frage9']}
+10. {data['frage10']}
 
-### Deine Aufgabe
-- Erstelle eine READINESS-ANALYSE: Wie bereit ist das Unternehmen für KI, mit Blick auf Branche, Maßnahme und Ziele?
-- Erstelle eine COMPLIANCE-ANALYSE: Was läuft gut, was muss verbessert werden? Bewerte mit einem Score von 1-10.
-- Erstelle einen USE CASE-ANALYSE-Block: Wo genau kann KI hier helfen, ganz konkret?
-- Gib einen BRANCHENTREND: Was ist aktuell in dieser Branche in Bezug auf KI relevant?
-- Gib eine inspirierende VISION.
-- Erstelle einen EXECUTIVE SUMMARY: Kurz, prägnant, auf Management-Level.
-
-### Foerdertipps
-- Suche 3 konkrete Förderprogramme (möglichst DE/EU), mit Link und 1-Satz-Beschreibung, die besonders gut zu diesem Vorhaben passen.
-
-### Toolstipps
-- Gib 3 konkrete Tools an (Name, Hersteller, Nutzen), die sofort ausprobiert werden können.
-
-### Badge
-- Vergib einen Badge-Level (Bronze/Silber/Gold) basierend auf dem Compliance-Score.
-- Gib zusätzlich eine kurze badge_info: Warum dieser Level?
-- Generiere optional einen HTML-Embed-Code für ein kleines Badge-Widget (div mit class=\"ki-badge bronze/silber/gold\").
-
-### JSON-Format
-Bitte liefere ausschließlich folgendes JSON zurück (keine Prosa, keine Kommentare):
-
+Geben Sie folgendes JSON zurück:
 {{
 "readiness_analysis": "...",
 "compliance_analysis": "...",
-"compliance_score": 7,
-"badge_level": "Silber",
-"badge_info": "...",
-"badge_code": "<div class='ki-badge silber'>KI-Readiness: Silber</div>",
 "use_case_analysis": "...",
 "branche_trend": "...",
 "vision": "...",
+"toolstipps": ["...", "..."],
+"foerdertipps": ["...", "..."],
 "executive_summary": "...",
-"foerdertipps": [
-    {{"programm":"Digital Jetzt","link":"https://...","kurzbeschreibung":"..."}},
-    {{"programm":"go-digital","link":"https://...","kurzbeschreibung":"..."}},
-    {{"programm":"EU KI-Innovationsfonds","link":"https://...","kurzbeschreibung":"..."}}
-],
-"toolstipps": [
-    {{"name":"HubSpot AI","hersteller":"HubSpot","einsatz":"Kundenkommunikation automatisieren"}},
-    {{"name":"Dialogflow","hersteller":"Google","einsatz":"Chatbots erstellen"}},
-    {{"name":"Notion AI","hersteller":"Notion","einsatz":"Content & Wissensdatenbanken"}}
-]
+"compliance_score": 0,
+"badge_level": "Bronze"
 }}
 """
+
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0.4,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    output_text = response.choices[0].message.content
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            temperature=0.4,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        output_text = response.choices[0].message.content.strip()
-        print("GPT OUTPUT:", output_text)
-
-        # JSON-Parsing versuchen
         result = json.loads(output_text)
-        return result
-
-    except Exception as e:
-        print("Fehler bei JSON-Parsing oder GPT:", e)
-        print("Fallback mit Dummy-Daten.")
-        return {
-            "readiness_analysis": "Keine Daten verfügbar.",
-            "compliance_analysis": "Keine Daten verfügbar.",
-            "compliance_score": 0,
-            "badge_level": "Bronze",
-            "badge_info": "Standard-Stufe aufgrund fehlender Daten.",
-            "badge_code": "<div class='ki-badge bronze'>KI-Readiness: Bronze</div>",
-            "use_case_analysis": "Keine Daten verfügbar.",
-            "branche_trend": "Keine Daten verfügbar.",
-            "vision": "Keine Daten verfügbar.",
-            "executive_summary": "Keine Daten verfügbar.",
+    except json.JSONDecodeError:
+        result = {
+            "readiness_analysis": "Keine Daten verfügbar",
+            "compliance_analysis": "Keine Daten verfügbar",
+            "use_case_analysis": "Keine Daten verfügbar",
+            "branche_trend": "Keine Daten verfügbar",
+            "vision": "Keine Daten verfügbar",
+            "toolstipps": [],
             "foerdertipps": [],
-            "toolstipps": []
+            "executive_summary": "Keine Daten verfügbar",
+            "compliance_score": 0,
+            "badge_level": "Bronze"
         }
+    return result
