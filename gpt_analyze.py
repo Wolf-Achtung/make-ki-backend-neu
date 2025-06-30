@@ -14,11 +14,22 @@ def analyze_with_gpt(data):
         bereich = data.get("bereich", "nicht angegeben")
 
         prompt = f"""
-Du bist ein zertifizierter KI-Manager und Fördermittelberater.
-Bitte analysiere die Unternehmensdaten und gib ausschließlich ein JSON zurück, ohne zusätzliche Erläuterungen.
+Sie sind ein zertifizierter KI-Manager und Fördermittelberater. 
+Bitte analysieren Sie die folgenden Unternehmensdaten und geben Sie 
+ausschließlich ein JSON zurück, ohne Einleitung oder Abschluss.
 
-Das JSON muss exakt diese Felder enthalten:
-executive_summary, fördertipps, toolkompass, branche_trend, compliance, beratungsempfehlung, vision.
+Das JSON MUSS exakt folgende Felder enthalten:
+
+- readiness_analysis: Eine kurze Analyse zur allgemeinen KI-Readiness des Unternehmens
+- compliance_analysis: Einschätzung zum DSGVO- & AI-Act-konformen Einsatz, inkl. möglicher Risiken
+- use_case_analysis: Einschätzung der geplanten KI-Use-Cases inkl. Optimierungstipps
+- executive_summary: Eine Gesamtzusammenfassung
+- fördertipps: Konkrete Förderprogramme oder allgemeine Förderstrategien
+- toolkompass: Empfehlungen für Tools, Frameworks oder Plattformen
+- branche_trend: Entwicklungen und Chancen speziell in dieser Branche
+- compliance_score: Eine Zahl von 0 bis 10, die das Datenschutz- & Compliance-Level bewertet
+- badge_level: Entweder "Bronze", "Silber" oder "Gold", basierend auf dem Score
+- vision: Inspirierende Perspektive, wie KI das Unternehmen transformieren kann
 
 Unternehmensdaten:
 - Name: {unternehmen}
@@ -27,15 +38,18 @@ Unternehmensdaten:
 - Ziel: {ziel}
 - Eingesetzte Tools: {tools}
 
-Beispiel:
+Beispielausgabe:
 {{
-  "executive_summary": "Kurze Zusammenfassung.",
-  "fördertipps": "Tipps zu möglichen Förderprogrammen.",
-  "toolkompass": "Empfohlene Tools und Technologien.",
-  "branche_trend": "Trends in der Branche.",
-  "compliance": "Risiken & DSGVO-Status.",
-  "beratungsempfehlung": "Nächste Schritte.",
-  "vision": "Zukunftsausblick."
+  "readiness_analysis": "...",
+  "compliance_analysis": "...",
+  "use_case_analysis": "...",
+  "executive_summary": "...",
+  "fördertipps": "...",
+  "toolkompass": "...",
+  "branche_trend": "...",
+  "compliance_score": 7,
+  "badge_level": "Silber",
+  "vision": "..."
 }}
 """
 
@@ -46,7 +60,6 @@ Beispiel:
         )
 
         output_text = response.choices[0].message.content.strip()
-        # Nutze eval hier vorsichtig, GPT liefert durch den Prompt aber genau JSON
         result = eval(output_text)
         return result
 
