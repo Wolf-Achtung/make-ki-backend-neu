@@ -9,59 +9,47 @@ with open("tools_und_foerderungen.json") as f:
 
 def build_prompt(data):
     prompt = f"""
-Sie sind ein TÜV-zertifizierter KI-Manager & Datenschutz-Experte in Deutschland.
+Sie sind ein TÜV-zertifizierter KI- und Datenschutz-Manager für kleine Unternehmen, Selbstständige und Freiberufler in Deutschland. 
+Das analysierte Unternehmen heißt {data.get('unternehmen')} und ist in der Branche {data.get('branche')} im Bereich {data.get('bereich')} tätig. 
+Es befindet sich an der Postleitzahl {data.get('plz')} und hat {data.get('mitarbeiter')} Mitarbeiter. 
+Es handelt sich um ein reales, wachstumsorientiertes Unternehmen, das an nachhaltiger, zukunftsweisender Digitalisierung interessiert ist.
 
-Analysieren Sie das folgende Unternehmen sehr detailliert und individuell.
-Generieren Sie ein inspirierendes, praxisnahes Executive-Briefing inkl. klarer Risiken.
-
-Unternehmensdaten:
-- Unternehmen: {data.get('unternehmen')}
-- Name: {data.get('name')}
-- Email: {data.get('email')}
-- PLZ: {data.get('plz')}
-- Branche: {data.get('branche')}
-- Bereich: {data.get('bereich')}
-- Mitarbeiter: {data.get('mitarbeiter')}
-
-Antworten auf Fragen zur Datenschutz- & KI-Readiness:
-1. Technische Maßnahmen? {data.get('frage1')}
-2. Schulungen zu Datenschutz, KI & rechtlichen Vorgaben? {data.get('frage2')}
-3. Datenschutzbeauftragter benannt? {data.get('frage3')}
-4. Risikoanalysen / Folgenabschätzungen? {data.get('frage4')}
-5. Prozesse zur Datenlöschung oder Anonymisierung? {data.get('frage5')}
+Antworten auf Fragen zur Datenschutz- und KI-Readiness:
+1. Haben Sie technische Maßnahmen (Firewall, Verschlüsselung etc.) umgesetzt? {data.get('frage1')}
+2. Gibt es regelmäßige Schulungen zu Datenschutz, KI und rechtlichen Vorgaben? {data.get('frage2')}
+3. Haben Sie einen Datenschutzbeauftragten benannt? {data.get('frage3')}
+4. Führen Sie Risikoanalysen oder Datenschutz-Folgenabschätzungen durch? {data.get('frage4')}
+5. Gibt es Prozesse zur Datenlöschung oder Anonymisierung? {data.get('frage5')}
 6. Wissen Mitarbeiter, wie bei Datenschutzverletzungen zu handeln ist? {data.get('frage6')}
-7. Betroffenenrechte aktiv umgesetzt? {data.get('frage7')}
-8. Dokumentation der Datenverarbeitungsprozesse? {data.get('frage8')}
-9. Meldepflichten & Abläufe bei Datenschutzvorfällen? {data.get('frage9')}
-10. Regelmäßige interne Audits? {data.get('frage10')}
+7. Werden Betroffenenrechte (Auskunft, Löschung) aktiv umgesetzt? {data.get('frage7')}
+8. Gibt es eine Dokumentation der Datenverarbeitungsprozesse? {data.get('frage8')}
+9. Existieren Meldepflichten und klar geregelte Abläufe bei Datenschutzvorfällen? {data.get('frage9')}
+10. Führen Sie regelmäßige interne Audits zu Datenschutz und KI durch? {data.get('frage10')}
 
-Berücksichtigen Sie außerdem folgende Förderprogramme & Tools aus einer aktuellen Marktrecherche:
-
-TOOLS: {db['tools']}
-FÖRDERUNGEN: {db['foerderungen']}
-
-Erstellen Sie ein reines JSON-Objekt (ohne Kommentartext, ohne Einleitung) mit diesem Aufbau:
+Bitte erstellen Sie eine professionelle, deutschsprachige und in der Sie-Form formulierte Auswertung. 
+Die Auswertung soll folgende Rubriken enthalten:
 
 {{
-"compliance_score": ganze Zahl von 0 bis 10,
-"badge_level": "Bronze", "Silber", "Gold" oder "Platin",
-"readiness_analysis": "Branchenspezifische Chancen & Schwächen",
-"compliance_analysis": "Klare Bewertung mit Handlungsempfehlungen",
-"use_case_analysis": "Innovative KI-Use-Cases speziell für diese Branche & Größe",
-"branche_trend": "Trends & Entwicklungen dieser Branche",
-"vision": "Inspirierende, unternehmensindividuelle Zukunftsvision",
-"next_steps": ["Sofort: ...", "3 Monate: ...", "12 Monate: ..."],
-"toolstipps": ["konkretes Tool 1", "konkretes Tool 2", "konkretes Tool 3"],
-"foerdertipps": ["konkretes Förderprogramm 1", "konkretes Förderprogramm 2"],
-"risiko_und_haftung": "Klare Risikobewertung & Haftungsgefahr",
-"executive_summary": "Kurz, was das Unternehmen jetzt tun sollte"
+  "compliance_score": Zahl von 0 bis 10,
+  "badge_level": "Bronze" | "Silber" | "Gold" | "Platin",
+  "readiness_analysis": "Kurze branchenspezifische Einschätzung",
+  "compliance_analysis": "Detaillierte, praxisnahe Datenschutzbewertung mit klaren Empfehlungen",
+  "use_case_analysis": "Konkrete, branchengerechte Vorschläge für KI-Use-Cases",
+  "branche_trend": "Aktuelle KI- und Digitaltrends in dieser Branche",
+  "vision": "Motivierendes Zukunftsbild, individuell auf das Unternehmen zugeschnitten",
+  "next_steps": ["Konkret priorisierte Handlungsschritte (bulletpoints)"],
+  "toolstipps": ["Branchenspezifische Tools inkl. Nischenlösungen"],
+  "foerdertipps": ["Relevante deutsche oder EU-Förderprogramme"],
+  "risiko_und_haftung": "Risiko- und Haftungsanalyse für das Unternehmen",
+  "executive_summary": "Zusammenfassung, was das Unternehmen als Nächstes tun sollte"
 }}
 
-Sprechen Sie das Unternehmen konsequent in der **Sie-Form** an, verwenden Sie professionelles, seriöses Deutsch. 
-Machen Sie keine Links klickbar. 
-Seien Sie kreativ, praxisorientiert, liefern Sie einen Wow-Effekt.
+Vermeiden Sie bitte Formulierungen wie „nicht existentes Unternehmen“, „unternehmenslos“ oder Ähnliches. 
+Gehen Sie immer davon aus, dass es sich um ein echtes, ambitioniertes Unternehmen handelt, das Ihr Fachgutachten wünscht. 
+Liefern Sie ausschließlich ein gültiges JSON-Objekt im beschriebenen Format.
 """
     return prompt
+
 
 
 def analyze_with_gpt(data):
