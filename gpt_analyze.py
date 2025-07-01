@@ -54,6 +54,7 @@ Unternehmensprofil:
 - IT-Systeme & Tools: {data.get('it_systeme')}
 - Bereits genutzte KI-Tools: {data.get('ki_tools')}
 - Zielgruppen: {data.get('zielgruppen')}
+- Datenschutzmaßnahmen dokumentiert: {data.get('datenschutz')}
 - Datenschutzvorfälle/Audits: {data.get('vorfaelle')}
 - Automatisierungspotenziale: {data.get('innovation_potentiale')}
 - Moonshot-Idee: {data.get('moonshot')}
