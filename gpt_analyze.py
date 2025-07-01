@@ -1,16 +1,7 @@
-import json
-from openai import OpenAI
-
-client = OpenAI()
-
-# Lade Tools & Förderungen
-with open("tools_und_foerderungen.json") as f:
-    db = json.load(f)
-
 def build_prompt(data):
     prompt = f"""
-Sie sind ein TÜV-zertifizierter KI- und Datenschutz-Manager für kleine Unternehmen, Selbstständige und Freiberufler in Deutschland. 
-Sie erstellen auf Basis des folgenden Fragebogens eine hochprofessionelle, deutschsprachige Auswertung in der Sie-Form.
+Sie sind ein TÜV-zertifizierter, strategischer KI- und Datenschutz-Manager mit besonderem Fokus auf zukunftsweisende Digitalisierung und Wachstumspotenziale. 
+Ihre Aufgabe ist es, für das folgende Unternehmen ein sehr detailliertes, individuelles Executive-Briefing im Umfang von mindestens 3000 Wörtern zu erstellen.
 
 Das Unternehmen:
 - Name: {data.get('unternehmen')}
@@ -19,20 +10,19 @@ Das Unternehmen:
 - PLZ: {data.get('plz')}
 - Mitarbeiterzahl: {data.get('mitarbeiterzahl')}
 - Geplante Maßnahme: {data.get('massnahme')}
+- Aktuelle Herausforderungen: {data.get('herausforderungen')}
+- 3-Jahres-Ziele: {data.get('ziele_3jahre')}
+- IT-Systeme & Tools: {data.get('it_systeme')}
+- Bereits genutzte KI-Tools: {data.get('ki_tools')}
+- Zielgruppen: {data.get('zielgruppen')}
+- Datenschutzvorfälle/Audits: {data.get('vorfaelle')}
+- Vermutete Automatisierungspotenziale: {data.get('innovation_potentiale')}
+- Moonshot-Idee: {data.get('moonshot')}
 
-Antworten zur Datenschutz- und KI-Readiness:
-1. Technische Maßnahmen: {data.get('frage1')}
-2. Schulungen: {data.get('frage2')}
-3. Datenschutzbeauftragter: {data.get('frage3')}
-4. Risikoanalysen/DSFA: {data.get('frage4')}
-5. Datenlöschung/Anonymisierung: {data.get('frage5')}
-6. Awareness Datenschutzverletzungen: {data.get('frage6')}
-7. Betroffenenrechte: {data.get('frage7')}
-8. Dokumentation: {data.get('frage8')}
-9. Meldepflichten: {data.get('frage9')}
-10. Interne Audits: {data.get('frage10')}
-
-Bitte erstellen Sie ein JSON-Objekt mit folgendem Aufbau:
+Bitte erstellen Sie ein valides JSON-Objekt mit folgendem Aufbau, wobei jede Textsektion mindestens 300-500 Wörter umfassen soll. 
+Gehen Sie dabei besonders auf die individuellen Herausforderungen und Ziele des Unternehmens ein und formulieren Sie konkrete Gamechanger-Ansätze. 
+Analysieren Sie auch, wie durch innovative KI-Use-Cases und Automatisierung nicht nur Effizienz, sondern auch völlig neue Erlösmodelle entstehen könnten. 
+Zeigen Sie Mut zu provokativen Moonshots und DAN-Ansätzen („was wäre möglich, wenn Ressourcen keine Rolle spielen würden“).
 
 {{
   "compliance_score": Zahl von 0 bis 10,
@@ -40,49 +30,21 @@ Bitte erstellen Sie ein JSON-Objekt mit folgendem Aufbau:
   "ds_gvo_level": Zahl von 0 bis 100,
   "ai_act_level": Zahl von 0 bis 100,
   "risk_traffic_light": "grün" | "gelb" | "rot",
-  "readiness_analysis": "Kurze branchenspezifische Einschätzung",
-  "compliance_analysis": "Detaillierte, praxisnahe Datenschutzbewertung mit klaren Empfehlungen",
-  "use_case_analysis": "Konkrete, branchengerechte Vorschläge für KI-Use-Cases",
-  "branche_trend": "Aktuelle KI- und Digitaltrends in dieser Branche",
-  "vision": "Motivierendes Zukunftsbild, das konkrete Chancen illustriert",
-  "next_steps": ["Priorisierte Handlungsschritte inkl. Quick Wins"],
-  "toolstipps": ["Branchenspezifische Tools inkl. Nischenlösungen"],
-  "foerdertipps": ["Relevante deutsche oder EU-Förderprogramme"],
-  "risiko_und_haftung": "Risiko- und Haftungsanalyse inkl. Ampel-Beurteilung",
-  "executive_summary": "Management-Zusammenfassung, was als Nächstes zu tun ist"
+  "executive_summary": "Kurzfassung (max. 300 Wörter) mit den wichtigsten Empfehlungen und ROI-Hebel",
+  "readiness_analysis": "Sehr ausführliche branchenspezifische Analyse der KI-Readiness und Digitalstrategie inkl. SWOT-Elemente",
+  "compliance_analysis": "Detaillierte Datenschutz- & Compliance-Bewertung inkl. individueller Schwachstellen, branchenspezifischer Best Practices und praxisnaher Next Steps",
+  "use_case_analysis": "Konkrete, teils unkonventionelle Use Cases, die weit über Standardlösungen hinausgehen und das Unternehmen differenzieren können",
+  "branche_trend": "Trends & Benchmarks der Branche inkl. Vergleich mit Marktdurchschnitt, Wettbewerbern und typischen Pain Points",
+  "vision": "Ein inspirierendes, aber realistisch erreichbares Zukunftsbild für das Unternehmen in 2-3 Jahren bei optimaler Umsetzung inkl. Umsatz- und Marktpotenzial",
+  "next_steps": ["Priorisierte, direkt umsetzbare Handlungsschritte inkl. Quick Wins und mittelfristigen Projekten"],
+  "toolstipps": ["Branchenspezifische, teils Nischen-Tools inkl. konkretem Business-Mehrwert und ROI-Argument"],
+  "foerdertipps": ["Passende deutsche oder EU-Förderprogramme, bevorzugt regional (passend zur PLZ {data.get('plz')})"],
+  "risiko_und_haftung": "Sehr ausführliche Risikoanalyse inkl. Ampel, finanziellen Szenarien und Compliance-Vorteilen",
+  "dan_inspiration": "Was wäre möglich, wenn das Unternehmen alle Grenzen sprengen und radikal digitalisieren würde? (DAN-Style, disruptive Ideen, provokant, aber realistisch umsetzbar)"
 }}
 
 Hinweise:
-- Beziehen Sie bitte typische Datenschutz- und KI-Risiken in der Branche ein.
-- Geben Sie immer konkrete Tools und Programme aus Deutschland oder der EU an.
-- Vergleichen Sie wo möglich mit dem Branchendurchschnitt (z. B. „12 % unter Standard“).
-- Verwenden Sie Defaultwerte, falls Informationen fehlen.
-- Verwenden Sie ausschließlich ein valides JSON-Objekt im gewünschten Format – ohne zusätzliche Texte oder Erklärungen davor oder danach.
+- Sprechen Sie das Unternehmen immer in der Sie-Form an, professionell und inspirierend.
+- Verwenden Sie ausschließlich ein valides JSON-Objekt ohne Fließtext davor oder danach.
 """
     return prompt
-
-
-
-def analyze_with_gpt(data):
-    text_response = ""
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "user", "content": build_prompt(data)}
-            ]
-        )
-        text_response = response.choices[0].message.content
-
-        # Robust: extrahiere JSON
-        json_start = text_response.find('{')
-        json_end = text_response.rfind('}') + 1
-        json_str = text_response[json_start:json_end]
-
-        return json.loads(json_str)
-
-    except Exception as e:
-        return {
-            "error": f"Fehler beim GPT-Aufruf: {str(e)}",
-            "raw": text_response
-        }
