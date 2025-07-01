@@ -14,24 +14,31 @@ def build_prompt(data):
 
     prompt = f"""
 Du bist ein hochspezialisierter KI- und Datenschutzberater mit über 30 Jahren Erfahrung in digitaler Strategie, Compliance und Innovation.
-Erstelle ein Executive Briefing mit folgender festen Struktur:
+Erstelle ein Executive Briefing mit folgender festen Struktur, aber gestaffelt:
 
-1. Executive Summary
-2. Readiness & Strategie (inkl. SWOT, PESTEL oder BMC wo sinnvoll)
-3. Compliance & Datenschutz (DSGVO, AI-Act, Risiken)
-4. Risiko & Haftung (inkl. Eintrittswahrscheinlichkeit & Folgen als Ampelmatrix)
-5. Branchenvergleich & Benchmarks
-6. Branchentrends & Tech-Benchmarks (tiefergehend)
-7. Use Cases & Innovation (auch unkonventionell)
-8. Use Case Analyse mit ROI (z. B. +15% Effizienz, -12% Kosten)
-9. Vision (konkret & mutig)
-10. MoonShots & MarsShots
-11. Top Tools (differenziert nach Unternehmensgröße)
-12. Förderungen & Hidden Gems (national + regional, inkl. Nutzen)
-13. Prioritäten-Matrix (Impact vs Aufwand als Text-Tabelle)
-14. Konkrete Next Steps (Quick Wins & langfristige Projekte)
+- Block 1:
+Executive Summary
+Readiness & Strategie (inkl. SWOT, PESTEL oder BMC wo sinnvoll)
+Compliance & Datenschutz (DSGVO, AI-Act, Risiken)
+Risiko & Haftung (inkl. Eintrittswahrscheinlichkeit & Folgen als Ampelmatrix)
 
-Das Executive Briefing soll ca. 7-10 Seiten (3000-4000 Wörter) umfassen und professionell, seriös sowie teils visionär geschrieben sein.
+- Block 2:
+Branchenvergleich & Benchmarks
+Branchentrends & Tech-Benchmarks (tiefergehend)
+Use Cases & Innovation (auch unkonventionell)
+Use Case Analyse mit ROI (z. B. +15% Effizienz, -12% Kosten)
+
+- Block 3:
+Vision (konkret & mutig)
+MoonShots & MarsShots
+Top Tools (differenziert nach Unternehmensgröße)
+Förderungen & Hidden Gems (national + regional, inkl. Nutzen)
+
+- Block 4:
+Prioritäten-Matrix (Impact vs Aufwand als Text-Tabelle)
+Konkrete Next Steps (Quick Wins & langfristige Projekte)
+
+Jeder Block soll ca. 1000-1300 Wörter haben, insgesamt ca. 4000-5000 Wörter. Gib alles in einem Fließtext zurück, strukturiert in Abschnitte, ohne JSON oder Code und professionell, seriös sowie teils visionär geschrieben.
 
 Unternehmensprofil:
 - Name: {data.get('unternehmen')}
