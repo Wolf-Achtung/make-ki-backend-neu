@@ -64,19 +64,17 @@ Für größere Unternehmen:
 Nationale Förderungen:
 - {", ".join([f["name"] for f in db["foerderungen"].get("national", [])])}
 
-prompt += """
 Achte darauf:
-– SWOT, PESTEL oder BMC-Elemente einzubauen, wo sinnvoll.
-– ROI grob in % anzugeben (z. B. +12% Umsatz).
-– Prioritäten-Matrix als Texttabelle zu formulieren.
-– MoonShots & MarsShots kreativ und mutig zu gestalten.
+- SWOT, PESTEL oder BMC-Elemente einzubauen, wo sinnvoll.
+- ROI grob in % anzugeben (z. B. +12% Umsatz).
+- Prioritäten-Matrix als Texttabelle zu formulieren.
+- MoonShots & MarsShots kreativ und mutig zu gestalten.
 
 Gib bitte ausschließlich folgendes zurück:
 EIN REINES JSON-OBJEKT, OHNE ```json, OHNE ```-BLOCK, OHNE TEXT DAVOR ODER DANACH, KEINE ERKLÄRUNGEN, KEINE KOMMENTARE.
 NUR DAS JSON-OBJEKT.
 """
-return prompt
-
+    return prompt
 
 def analyze_with_gpt(data):
     try:
