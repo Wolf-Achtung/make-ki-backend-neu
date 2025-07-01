@@ -1,3 +1,12 @@
+import json
+from openai import OpenAI
+
+client = OpenAI()
+
+# Lade Tools & Förderungen
+with open("tools_und_foerderungen.json") as f:
+    db = json.load(f)
+
 def build_prompt(data):
     prompt = f"""
 Sie sind ein TÜV-zertifizierter, strategischer KI- und Datenschutz-Manager mit besonderem Fokus auf zukunftsweisende Digitalisierung und Wachstumspotenziale. 
@@ -48,3 +57,28 @@ Hinweise:
 - Verwenden Sie ausschließlich ein valides JSON-Objekt ohne Fließtext davor oder danach.
 """
     return prompt
+
+
+def analyze_with_gpt(data):
+    text_response = ""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "user", "content": build_prompt(data)}
+            ]
+        )
+        text_response = response.choices[0].message.content
+
+        # Robust: extrahiere JSON
+        json_start = text_response.find('{')
+        json_end = text_response.rfind('}') + 1
+        json_str = text_response[json_start:json_end]
+
+        return json.loads(json_str)
+
+    except Exception as e:
+        return {
+            "error": f"Fehler beim GPT-Aufruf: {str(e)}",
+            "raw": text_response
+        }
