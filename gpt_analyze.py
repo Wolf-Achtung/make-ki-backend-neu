@@ -9,32 +9,29 @@ with open("tools_und_foerderungen.json", encoding="utf-8") as f:
 
 def build_prompt(data):
     prompt = f"""
-Du bist ein hochspezialisierter KI-Berater mit über 30 Jahren Erfahrung.
-Bitte analysiere das folgende Unternehmensprofil und liefere ein JSON mit exakt diesen Feldern:
+Du bist ein hochspezialisierter KI- und Digitalisierungsberater mit über 30 Jahren Erfahrung.
+Analysiere das folgende Unternehmensprofil ausführlich und liefere ein umfassendes Executive-Briefing 
+zu folgenden Themenblöcken (bitte in dieser Reihenfolge, jeweils als Abschnitt mit Überschrift):
 
-{{
-  "compliance_score": "...",
-  "dsgvo_score": "...",
-  "ai_act_score": "...",
-  "trust_badge": "...",
-  "risiko_haftung": "...",
-  "executive_summary": "...",
-  "readiness_strategie": "...",
-  "compliance_datenschutz": "...",
-  "branchenvergleich": "...",
-  "branchentrends": "...",
-  "use_cases_innovation": "...",
-  "use_cases_roi": "...",
-  "vision": "...",
-  "moonshots_marsshots": "...",
-  "top_tools": "...",
-  "foerderungen": "...",
-  "prioritaeten_matrix": "...",
-  "next_steps": "..."
-}}
+- Risiko & Haftung
+- DSGVO / AI-Act / Risiko
+- Executive Summary
+- Readiness & Strategie
+- Compliance & Datenschutz
+- Use Cases & Innovation
+- Use Case Analyse mit ROI
+- Branchenvergleich
+- Branchentrends & Benchmarks
+- Vision
+- MoonShots
+- MarsShots
+- Top Tools (unterscheide KMU/große Unternehmen)
+- Förderungen (national & regionale Hidden Gems inkl. Nutzen)
+- Prioritäten-Matrix Impact vs Aufwand (als Texttabelle)
+- konkrete Next Steps (mindestens 7 konkrete Handlungsempfehlungen)
 
-Die Inhalte sollen zusammen ca. 7-10 Seiten lang sein (3000-4000 Wörter).
-Verteile die Inhalte ausgewogen: ca. 50% harte Analysen (Compliance, Risiken, Benchmarks), 50% visionäre Ansätze.
+Die Inhalte sollen insgesamt 7-10 Seiten lang sein (~3000-4000 Wörter), dabei ca. 50% seriöse Management-Analyse
+und 50% visionäre, mutige Impulse.
 
 Unternehmensdaten:
 - Name: {data.get('unternehmen')}
@@ -57,22 +54,23 @@ Unternehmensdaten:
 
 Tools & Förderungen für kleinere Unternehmen:
 - {", ".join([t["name"] for t in db["tools"].get("kleinere", [])])}
-
 Für größere Unternehmen:
 - {", ".join([t["name"] for t in db["tools"].get("groessere", [])])}
-
 Nationale Förderungen:
 - {", ".join([f["name"] for f in db["foerderungen"].get("national", [])])}
 
 Achte darauf:
-- SWOT, PESTEL oder BMC-Elemente einzubauen, wo sinnvoll.
-- ROI grob in % anzugeben (z. B. +12% Umsatz).
-- Prioritäten-Matrix als Texttabelle zu formulieren.
-- MoonShots & MarsShots kreativ und mutig zu gestalten.
+- SWOT, PESTEL oder BMC-Elemente gelegentlich einbauen.
+- ROI grob in % angeben (z. B. +12% Umsatz).
+- Prioritäten-Matrix als Texttabelle darstellen.
+- MoonShots & MarsShots kreativ und mutig formulieren.
 
-Gib bitte ausschließlich folgendes zurück:
-EIN REINES JSON-OBJEKT, OHNE ```json, OHNE ```-BLOCK, OHNE TEXT DAVOR ODER DANACH, KEINE ERKLÄRUNGEN, KEINE KOMMENTARE.
-NUR DAS JSON-OBJEKT.
+Gib ausschließlich folgendes zurück:
+ein reines JSON-Objekt mit einem einzigen Schlüssel:
+{{
+  "executive_report": "...hier der gesamte Text des Executive Reports..."
+}}
+ohne ```json, ohne ```-Block, ohne jeglichen Text davor oder danach, keine Erklärungen, keine Kommentare.
 """
     return prompt
 
