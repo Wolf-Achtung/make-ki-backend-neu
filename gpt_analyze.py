@@ -1,87 +1,62 @@
-import json
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
+import json
 
+app = FastAPI()
 client = OpenAI()
 
-# Lade Tools & Förderungen
-with open("tools_und_foerderungen.json", encoding="utf-8") as f:
-    db = json.load(f)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def build_prompt(data):
+@app.post("/briefing")
+async def analyze_with_gpt(request: Request):
+    data = await request.json()
+
     prompt = f"""
-Du bist ein hochspezialisierter KI- und Digitalisierungsberater mit über 30 Jahren Erfahrung.
-Analysiere das folgende Unternehmensprofil ausführlich und liefere ein umfassendes Executive-Briefing 
-zu folgenden Themenblöcken (bitte in dieser Reihenfolge, jeweils als Abschnitt mit Überschrift):
+    Sie sind ein professioneller KI- und Digital-Advisor. Erstellen Sie auf Basis dieser Angaben eine tiefgehende Analyse, inklusive Risiko & Haftung, DSGVO / AI-Act Einschätzung, Executive Summary, Readiness & Strategie, Compliance & Datenschutz, Branchenvergleich, Branchentrends & Benchmarks, Use Cases & Innovation, ROI-Analyse, Vision, Moonshots & Marsshots, Top Tools (unterscheidend nach Unternehmensgröße), Förderungen (inkl. Hidden Gems) und einer Prioritäten-Matrix (Impact vs. Aufwand), sowie konkrete Next Steps.
 
-- Risiko & Haftung
-- DSGVO / AI-Act / Risiko
-- Executive Summary
-- Readiness & Strategie
-- Compliance & Datenschutz
-- Use Cases & Innovation
-- Use Case Analyse mit ROI
-- Branchenvergleich
-- Branchentrends & Benchmarks
-- Vision
-- MoonShots
-- MarsShots
-- Top Tools (unterscheide KMU/große Unternehmen)
-- Förderungen (national & regionale Hidden Gems inkl. Nutzen)
-- Prioritäten-Matrix Impact vs Aufwand (als Texttabelle)
-- konkrete Next Steps (mindestens 7 konkrete Handlungsempfehlungen)
+    Stellen Sie die Ergebnisse als reines JSON mit diesen Feldern dar:
+    {{
+      "compliance_score": "",
+      "dsgvo_score": "",
+      "ai_act_score": "",
+      "trust_badge": "",
+      "risiko_haftung": "",
+      "executive_summary": "",
+      "readiness_strategie": "",
+      "compliance_datenschutz": "",
+      "branchenvergleich": "",
+      "branchentrends": "",
+      "use_cases_innovation": "",
+      "use_cases_roi": "",
+      "vision": "",
+      "moonshots_marsshots": "",
+      "top_tools": "",
+      "foerderungen": "",
+      "prioritaeten_matrix": "",
+      "next_steps": ""
+    }}
 
-Die Inhalte sollen insgesamt 7-10 Seiten lang sein (~3000-4000 Wörter), dabei ca. 50% seriöse Management-Analyse
-und 50% visionäre, mutige Impulse.
+    Keine zusätzlichen Erklärungen oder Texte, nur reines JSON.
+    Input Daten: {data}
+    """
 
-Unternehmensdaten:
-- Name: {data.get('unternehmen')}
-- Branche: {data.get('branche')}
-- Bereich: {data.get('bereich')}
-- PLZ: {data.get('plz')}
-- Mitarbeiterzahl: {data.get('mitarbeiterzahl')}
-- Selbständig/Freiberuflich: {data.get('selbststaendig')}
-- Geplante Maßnahme: {data.get('massnahme')}
-- Produkt/Dienstleistung: {data.get('produkt_dienstleistung')}
-- Datenschutz dokumentiert: {data.get('datenschutz')}
-- Aktuelle Herausforderungen: {data.get('herausforderungen')}
-- 3-Jahres-Ziele: {data.get('ziele_3jahre')}
-- IT-Systeme & Tools: {data.get('it_systeme')}
-- Bereits genutzte KI-Tools: {data.get('ki_tools')}
-- Zielgruppen: {data.get('zielgruppen')}
-- Datenschutzvorfälle/Audits: {data.get('vorfaelle')}
-- Automatisierungspotenziale: {data.get('innovation_potentiale')}
-- Moonshot-Idee: {data.get('moonshot')}
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
 
-Tools & Förderungen für kleinere Unternehmen:
-- {", ".join([t["name"] for t in db["tools"].get("kleinere", [])])}
-Für größere Unternehmen:
-- {", ".join([t["name"] for t in db["tools"].get("groessere", [])])}
-Nationale Förderungen:
-- {", ".join([f["name"] for f in db["foerderungen"].get("national", [])])}
+    content = response.choices[0].message.content.strip()
 
-Achte darauf:
-- SWOT, PESTEL oder BMC-Elemente gelegentlich einbauen.
-- ROI grob in % angeben (z. B. +12% Umsatz).
-- Prioritäten-Matrix als Texttabelle darstellen.
-- MoonShots & MarsShots kreativ und mutig formulieren.
+    if content.startswith("```json"):
+        content = content[7:-3].strip()
+    elif content.startswith("```"):
+        content = content[3:-3].strip()
 
-Gib ausschließlich folgendes zurück:
-ein reines JSON-Objekt mit einem einzigen Schlüssel:
-{{
-  "executive_report": "...hier der gesamte Text des Executive Reports..."
-}}
-ohne ```json, ohne ```-Block, ohne jeglichen Text davor oder danach, keine Erklärungen, keine Kommentare.
-"""
-    return prompt
-
-def analyze_with_gpt(data):
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "user", "content": build_prompt(data)}
-            ]
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return json.dumps({"error": str(e)})
+    return json.loads(content)
