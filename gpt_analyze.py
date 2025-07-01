@@ -47,7 +47,7 @@ async def analyze_with_gpt(request: Request):
     Input Daten: {data}
     """
 
-    response = client.chat.completions.create(
+    response = await client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}]
     )
