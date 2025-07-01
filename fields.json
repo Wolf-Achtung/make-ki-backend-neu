@@ -7,6 +7,8 @@
   "bereich": "Bereich",
   "mitarbeiterzahl": "Mitarbeiterzahl",
   "plz": "Postleitzahl",
+  "produkt_dienstleistung": "Was bieten Sie konkret an? (Produkte/Dienstleistungen)",
+  "selbststaendig": "Sind Sie selbständig oder freiberuflich tätig?",
   "frage1": "Haben Sie technische Maßnahmen (Firewall, Verschlüsselung etc.) umgesetzt?",
   "frage2": "Gibt es regelmäßige Schulungen zu Datenschutz, KI und rechtlichen Vorgaben?",
   "frage3": "Haben Sie einen Datenschutzbeauftragten benannt?",
@@ -16,7 +18,7 @@
   "frage7": "Werden Betroffenenrechte (Auskunft, Löschung) aktiv umgesetzt?",
   "frage8": "Gibt es eine Dokumentation der Datenverarbeitungsprozesse?",
   "frage9": "Existieren Meldepflichten und klar geregelte Abläufe bei Datenschutzvorfällen?",
-  "frage10": "Führen Sie regelmäßige interne Audits zu Datenschutz und KI durch?"
+  "frage10": "Führen Sie regelmäßige interne Audits zu Datenschutz und KI durch?",
   "herausforderungen": "Aktuelle geschäftliche Herausforderungen",
   "ziele_3jahre": "3-Jahres-Ziele",
   "it_systeme": "Derzeit eingesetzte IT-Systeme",
@@ -26,3 +28,4 @@
   "innovation_potentiale": "Automatisierungspotenziale",
   "moonshot": "Moonshot-Durchbruch (wenn Geld keine Rolle spielt)"
 }
+

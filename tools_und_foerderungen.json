@@ -1,134 +1,140 @@
 {
-  "tools": [
-    {
-      "name": "OneTrust Datenschutz-Manager",
-      "link": "https://www.onetrust.com/de/"
-    },
-    {
-      "name": "DataGuard Compliance Suite",
-      "link": "https://www.dataguard.de/"
-    },
-    {
-      "name": "GDPR.eu Compliance Guide",
-      "link": "https://gdpr.eu/"
-    },
-    {
-      "name": "Consentmanager (Cookie & Tracking DSGVO)",
-      "link": "https://www.consentmanager.de/"
-    },
-    {
-      "name": "HubSpot CRM & Marketing Automation",
-      "link": "https://www.hubspot.de/"
-    },
-    {
-      "name": "Midjourney (KI-Bildgenerierung)",
-      "link": "https://www.midjourney.com/"
-    },
-    {
-      "name": "Jasper AI (Texterstellung)",
-      "link": "https://www.jasper.ai/"
-    },
-    {
-      "name": "Piwik PRO Analytics",
-      "link": "https://piwik.pro/"
-    },
-    {
-      "name": "Mine PrivacyOps",
-      "link": "https://www.saymine.com/privacyops"
-    },
-    {
-      "name": "Scompler AI Content Suite",
-      "link": "https://www.scompler.com/"
-    },
-    {
-      "name": "Privacy Nexus (Datenschutz & DSFA-Management)",
-      "link": "https://privacynexus.io/"
-    },
-    {
-      "name": "Bertha AI für DSGVO-Audits",
-      "link": "https://www.bertha.ai/"
-    },
-    {
-      "name": "Legal OS (automatisierte Vertragsanalyse)",
-      "link": "https://legalos.io/"
-    },
-    {
-      "name": "Osano Consent Platform",
-      "link": "https://www.osano.com/"
-    },
-    {
-      "name": "Sinequa Data Classification & Governance",
-      "link": "https://www.sinequa.com/"
-    },
-    {
-      "name": "Vanta Security Monitoring",
-      "link": "https://www.vanta.com/"
-    },
-    {
-      "name": "Crowdstrike Endpoint Protection",
-      "link": "https://www.crowdstrike.com/"
-    }
-  ],
-  "foerderungen": [
-    {
-      "name": "go-digital (BMWK)",
-      "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/go-digital.html"
-    },
-    {
-      "name": "Digital Jetzt (BMWK)",
-      "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
-    },
-    {
-      "name": "KMU-innovativ",
-      "link": "https://www.kmu-innovativ.de/"
-    },
-    {
-      "name": "BAFA-Beratungsförderung",
-      "link": "https://www.bafa.de/DE/Wirtschafts_Mittelstand/Beratung_Foerderung/beratung_foerderung_node.html"
-    },
-    {
-      "name": "ERP-Digitalisierungs- und Innovationskredit (KfW)",
-      "link": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Erweitern-Festigen/Innovation/"
-    },
-    {
-      "name": "ZIM Zentrales Innovationsprogramm Mittelstand",
-      "link": "https://www.zim.de/ZIM/Navigation/DE/Home/home.html"
-    },
-    {
-      "name": "Horizon Europe SME Instrument (EU)",
-      "link": "https://ec.europa.eu/programmes/horizon2020/"
-    },
-    {
-      "name": "EIC Accelerator (EU)",
-      "link": "https://eic.ec.europa.eu/"
-    },
-    {
-      "name": "DigiBonus Bayern",
-      "link": "https://www.stmwi.bayern.de/digitalisierung/digibonus/"
-    },
-    {
-      "name": "ProFIT Berlin",
-      "link": "https://www.ibb.de/de/foerderprogramme/innovationsfoerderung.html"
-    },
-    {
-      "name": "Invest BW Baden-Württemberg",
-      "link": "https://www.invest-bw.de/"
-    },
-    {
-      "name": "Digitalprämie Berlin",
-      "link": "https://www.digitalpraemie-berlin.de/"
-    },
-    {
-      "name": "Zukunftszentrum KI NRW",
-      "link": "https://zukunftszentrum-ki.nrw/"
-    },
-    {
-      "name": "ERP-Gründerkredit (KfW) für Selbstständige",
-      "link": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Gründen-Nachfolgen/Finanzierungsangebote/ERP-Gründerkredit/"
-    },
-    {
-      "name": "IBB Förderung Berlin für Start-ups & Freiberufler",
-      "link": "https://www.ibb.de/de/foerderprogramme/innovationsfoerderung.html"
-    }
-  ]
+  "tools": {
+    "kleinere": [
+      {
+        "name": "Piwik PRO Analytics",
+        "link": "https://piwik.pro/"
+      },
+      {
+        "name": "Jasper AI (Texterstellung)",
+        "link": "https://www.jasper.ai/"
+      },
+      {
+        "name": "Midjourney (KI-Bildgenerierung)",
+        "link": "https://www.midjourney.com/"
+      },
+      {
+        "name": "HubSpot CRM (Starter)",
+        "link": "https://www.hubspot.de/"
+      }
+    ],
+    "groessere": [
+      {
+        "name": "OneTrust Datenschutz-Manager",
+        "link": "https://www.onetrust.com/de/"
+      },
+      {
+        "name": "DataGuard Compliance Suite",
+        "link": "https://www.dataguard.de/"
+      },
+      {
+        "name": "GDPR.eu Compliance Guide",
+        "link": "https://gdpr.eu/"
+      },
+      {
+        "name": "Consentmanager (Cookie & Tracking DSGVO)",
+        "link": "https://www.consentmanager.de/"
+      },
+      {
+        "name": "Mine PrivacyOps",
+        "link": "https://www.saymine.com/privacyops"
+      },
+      {
+        "name": "Scompler AI Content Suite",
+        "link": "https://www.scompler.com/"
+      },
+      {
+        "name": "Privacy Nexus (DSFA-Management)",
+        "link": "https://privacynexus.io/"
+      },
+      {
+        "name": "Bertha AI für DSGVO-Audits",
+        "link": "https://www.bertha.ai/"
+      },
+      {
+        "name": "Legal OS (Vertragsanalyse)",
+        "link": "https://legalos.io/"
+      },
+      {
+        "name": "Osano Consent Platform",
+        "link": "https://www.osano.com/"
+      },
+      {
+        "name": "Sinequa Data Classification",
+        "link": "https://www.sinequa.com/"
+      },
+      {
+        "name": "Vanta Security Monitoring",
+        "link": "https://www.vanta.com/"
+      },
+      {
+        "name": "Crowdstrike Endpoint Protection",
+        "link": "https://www.crowdstrike.com/"
+      }
+    ]
+  },
+  "foerderungen": {
+    "national": [
+      {
+        "name": "go-digital (BMWK)",
+        "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/go-digital.html"
+      },
+      {
+        "name": "Digital Jetzt (BMWK)",
+        "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+      },
+      {
+        "name": "KMU-innovativ",
+        "link": "https://www.kmu-innovativ.de/"
+      },
+      {
+        "name": "BAFA-Beratungsförderung",
+        "link": "https://www.bafa.de/DE/Wirtschaft_Mittelstand/Beratung_Foerderung/beratung_foerderung_node.html"
+      },
+      {
+        "name": "ERP-Digitalisierungs- und Innovationskredit (KfW)",
+        "link": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Erweitern-Festigen/Innovation/"
+      },
+      {
+        "name": "ZIM Zentrales Innovationsprogramm Mittelstand",
+        "link": "https://www.zim.de/ZIM/Navigation/DE/Home/home.html"
+      },
+      {
+        "name": "Horizon Europe SME Instrument (EU)",
+        "link": "https://ec.europa.eu/programmes/horizon2020/"
+      },
+      {
+        "name": "EIC Accelerator (EU)",
+        "link": "https://eic.ec.europa.eu/"
+      },
+      {
+        "name": "DigiBonus Bayern",
+        "link": "https://www.stmwi.bayern.de/digitalisierung/digibonus/"
+      },
+      {
+        "name": "ProFIT Berlin",
+        "link": "https://www.ibb.de/de/foerderprogramme/innovationsfoerderung.html"
+      },
+      {
+        "name": "Invest BW Baden-Württemberg",
+        "link": "https://www.invest-bw.de/"
+      },
+      {
+        "name": "Digitalprämie Berlin",
+        "link": "https://www.digitalpraemie-berlin.de/"
+      },
+      {
+        "name": "Zukunftszentrum KI NRW",
+        "link": "https://zukunftszentrum-ki.nrw/"
+      },
+      {
+        "name": "ERP-Gründerkredit (KfW für Selbstständige)",
+        "link": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Gründen-Nachfolgen/Finanzierungsangebote/ERP-Gründerkredit/"
+      },
+      {
+        "name": "IBB Förderung Berlin für Start-ups & Freiberufler",
+        "link": "https://www.ibb.de/de/foerderprogramme/innovationsfoerderung.html"
+      }
+    ]
+  }
 }
