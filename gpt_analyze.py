@@ -10,43 +10,54 @@ with open("tools_und_foerderungen.json") as f:
 def build_prompt(data):
     prompt = f"""
 Sie sind ein TÜV-zertifizierter KI- und Datenschutz-Manager für kleine Unternehmen, Selbstständige und Freiberufler in Deutschland. 
-Das analysierte Unternehmen heißt {data.get('unternehmen')} und ist in der Branche {data.get('branche')} im Bereich {data.get('bereich')} tätig. 
-Es befindet sich an der Postleitzahl {data.get('plz')} und hat {data.get('mitarbeiter')} Mitarbeiter. 
-Es handelt sich um ein reales, wachstumsorientiertes Unternehmen, das an nachhaltiger, zukunftsweisender Digitalisierung interessiert ist.
+Sie erstellen auf Basis des folgenden Fragebogens eine hochprofessionelle, deutschsprachige Auswertung in der Sie-Form.
 
-Antworten auf Fragen zur Datenschutz- und KI-Readiness:
-1. Haben Sie technische Maßnahmen (Firewall, Verschlüsselung etc.) umgesetzt? {data.get('frage1')}
-2. Gibt es regelmäßige Schulungen zu Datenschutz, KI und rechtlichen Vorgaben? {data.get('frage2')}
-3. Haben Sie einen Datenschutzbeauftragten benannt? {data.get('frage3')}
-4. Führen Sie Risikoanalysen oder Datenschutz-Folgenabschätzungen durch? {data.get('frage4')}
-5. Gibt es Prozesse zur Datenlöschung oder Anonymisierung? {data.get('frage5')}
-6. Wissen Mitarbeiter, wie bei Datenschutzverletzungen zu handeln ist? {data.get('frage6')}
-7. Werden Betroffenenrechte (Auskunft, Löschung) aktiv umgesetzt? {data.get('frage7')}
-8. Gibt es eine Dokumentation der Datenverarbeitungsprozesse? {data.get('frage8')}
-9. Existieren Meldepflichten und klar geregelte Abläufe bei Datenschutzvorfällen? {data.get('frage9')}
-10. Führen Sie regelmäßige interne Audits zu Datenschutz und KI durch? {data.get('frage10')}
+Das Unternehmen:
+- Name: {data.get('unternehmen')}
+- Branche: {data.get('branche')}
+- Bereich: {data.get('bereich')}
+- PLZ: {data.get('plz')}
+- Mitarbeiterzahl: {data.get('mitarbeiterzahl')}
+- Geplante Maßnahme: {data.get('massnahme')}
 
-Bitte erstellen Sie eine professionelle, deutschsprachige und in der Sie-Form formulierte Auswertung. 
-Die Auswertung soll folgende Rubriken enthalten:
+Antworten zur Datenschutz- und KI-Readiness:
+1. Technische Maßnahmen: {data.get('frage1')}
+2. Schulungen: {data.get('frage2')}
+3. Datenschutzbeauftragter: {data.get('frage3')}
+4. Risikoanalysen/DSFA: {data.get('frage4')}
+5. Datenlöschung/Anonymisierung: {data.get('frage5')}
+6. Awareness Datenschutzverletzungen: {data.get('frage6')}
+7. Betroffenenrechte: {data.get('frage7')}
+8. Dokumentation: {data.get('frage8')}
+9. Meldepflichten: {data.get('frage9')}
+10. Interne Audits: {data.get('frage10')}
+
+Bitte erstellen Sie ein JSON-Objekt mit folgendem Aufbau:
 
 {{
   "compliance_score": Zahl von 0 bis 10,
   "badge_level": "Bronze" | "Silber" | "Gold" | "Platin",
+  "ds_gvo_level": Zahl von 0 bis 100,
+  "ai_act_level": Zahl von 0 bis 100,
+  "risk_traffic_light": "grün" | "gelb" | "rot",
   "readiness_analysis": "Kurze branchenspezifische Einschätzung",
   "compliance_analysis": "Detaillierte, praxisnahe Datenschutzbewertung mit klaren Empfehlungen",
   "use_case_analysis": "Konkrete, branchengerechte Vorschläge für KI-Use-Cases",
   "branche_trend": "Aktuelle KI- und Digitaltrends in dieser Branche",
-  "vision": "Motivierendes Zukunftsbild, individuell auf das Unternehmen zugeschnitten",
-  "next_steps": ["Konkret priorisierte Handlungsschritte (bulletpoints)"],
+  "vision": "Motivierendes Zukunftsbild, das konkrete Chancen illustriert",
+  "next_steps": ["Priorisierte Handlungsschritte inkl. Quick Wins"],
   "toolstipps": ["Branchenspezifische Tools inkl. Nischenlösungen"],
   "foerdertipps": ["Relevante deutsche oder EU-Förderprogramme"],
-  "risiko_und_haftung": "Risiko- und Haftungsanalyse für das Unternehmen",
-  "executive_summary": "Zusammenfassung, was das Unternehmen als Nächstes tun sollte"
+  "risiko_und_haftung": "Risiko- und Haftungsanalyse inkl. Ampel-Beurteilung",
+  "executive_summary": "Management-Zusammenfassung, was als Nächstes zu tun ist"
 }}
 
-Vermeiden Sie bitte Formulierungen wie „nicht existentes Unternehmen“, „unternehmenslos“ oder Ähnliches. 
-Gehen Sie immer davon aus, dass es sich um ein echtes, ambitioniertes Unternehmen handelt, das Ihr Fachgutachten wünscht. 
-Liefern Sie ausschließlich ein gültiges JSON-Objekt im beschriebenen Format.
+Hinweise:
+- Beziehen Sie bitte typische Datenschutz- und KI-Risiken in der Branche ein.
+- Geben Sie immer konkrete Tools und Programme aus Deutschland oder der EU an.
+- Vergleichen Sie wo möglich mit dem Branchendurchschnitt (z. B. „12 % unter Standard“).
+- Verwenden Sie Defaultwerte, falls Informationen fehlen.
+- Verwenden Sie ausschließlich ein valides JSON-Objekt im gewünschten Format – ohne zusätzliche Texte oder Erklärungen davor oder danach.
 """
     return prompt
 
