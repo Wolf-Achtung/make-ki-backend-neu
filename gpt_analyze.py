@@ -1,62 +1,82 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from openai import OpenAI
 import json
+from openai import OpenAI
 
-app = FastAPI()
 client = OpenAI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+with open("tools_und_foerderungen.json") as f:
+    db = json.load(f)
 
-@app.post("/briefing")
-async def analyze_with_gpt(request: Request):
-    data = await request.json()
-
+def build_prompt(data):
     prompt = f"""
-    Sie sind ein professioneller KI- und Digital-Advisor. Erstellen Sie auf Basis dieser Angaben eine tiefgehende Analyse, inklusive Risiko & Haftung, DSGVO / AI-Act Einschätzung, Executive Summary, Readiness & Strategie, Compliance & Datenschutz, Branchenvergleich, Branchentrends & Benchmarks, Use Cases & Innovation, ROI-Analyse, Vision, Moonshots & Marsshots, Top Tools (unterscheidend nach Unternehmensgröße), Förderungen (inkl. Hidden Gems) und einer Prioritäten-Matrix (Impact vs. Aufwand), sowie konkrete Next Steps.
+Sie sind ein TÜV-zertifizierter, strategischer KI- und Datenschutz-Manager mit über 30 Jahren Erfahrung. 
+Ihre Aufgabe ist es, für das untenstehende Unternehmen ein äußerst detailliertes Executive-Briefing zu erstellen, das alle Felder vollständig ausfüllt.
 
-    Stellen Sie die Ergebnisse als reines JSON mit diesen Feldern dar:
-    {{
-      "compliance_score": "",
-      "dsgvo_score": "",
-      "ai_act_score": "",
-      "trust_badge": "",
-      "risiko_haftung": "",
-      "executive_summary": "",
-      "readiness_strategie": "",
-      "compliance_datenschutz": "",
-      "branchenvergleich": "",
-      "branchentrends": "",
-      "use_cases_innovation": "",
-      "use_cases_roi": "",
-      "vision": "",
-      "moonshots_marsshots": "",
-      "top_tools": "",
-      "foerderungen": "",
-      "prioritaeten_matrix": "",
-      "next_steps": ""
-    }}
+Das Unternehmen:
+- Name: {data.get('unternehmen')}
+- Branche: {data.get('branche')}
+- Bereich: {data.get('bereich')}
+- PLZ: {data.get('plz')}
+- Mitarbeiterzahl: {data.get('mitarbeiterzahl')}
+- Geplante Maßnahme: {data.get('massnahme')}
+- Aktuelle Herausforderungen: {data.get('herausforderungen')}
+- 3-Jahres-Ziele: {data.get('ziele_3jahre')}
+- IT-Systeme & Tools: {data.get('it_systeme')}
+- Bereits genutzte KI-Tools: {data.get('ki_tools')}
+- Zielgruppen: {data.get('zielgruppen')}
+- Datenschutzvorfälle/Audits: {data.get('vorfaelle')}
+- Automatisierungspotenziale: {data.get('innovation_potentiale')}
+- Was bieten sie konkret an: {data.get('produkt_dienstleistung')}
+- Moonshot-Idee: {data.get('moonshot')}
 
-    Keine zusätzlichen Erklärungen oder Texte, nur reines JSON.
-    Input Daten: {data}
-    """
+Falls einzelne Angaben unvollständig oder nicht vorhanden sind, ergänzen Sie diese bitte durch branchenübliche Annahmen, damit das Briefing in jedem Fall vollständig ist.
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
+Bitte liefern Sie ein valides JSON-Objekt ohne Fließtext davor oder danach, exakt in folgendem Format:
 
-    content = response.choices[0].message.content.strip()
+{{
+  "compliance_score": Zahl von 0 bis 10,
+  "badge_level": "Bronze" | "Silber" | "Gold" | "Platin",
+  "ds_gvo_level": Zahl von 0 bis 100,
+  "ai_act_level": Zahl von 0 bis 100,
+  "risk_traffic_light": "grün" | "gelb" | "rot",
+  "executive_summary": "Max. 400 Wörter mit klaren ROI-Hebeln und Top-3-Prioritäten.",
+  "readiness_analysis": "Sehr ausführliche Analyse inkl. SWOT-ähnlicher Stärken/Schwächen.",
+  "compliance_analysis": "Detaillierte Bewertung inkl. Datenschutz, KI-Governance & Haftung.",
+  "use_case_analysis": "Konkrete, kreative Use-Cases, die über Standardlösungen hinausgehen.",
+  "branche_trend": "Trends & Benchmarks mit einem Vergleich zum Wettbewerb.",
+  "vision": "Inspirierendes, aber realistisch erreichbares Zukunftsbild in 2-3 Jahren.",
+  "next_steps": ["Max. 7 direkt umsetzbare Handlungsschritte inkl. Quick Wins."],
+  "toolstipps": ["Max. 5 branchenspezifische Tools inkl. kurzer ROI-Begründung."],
+  "foerdertipps": ["Max. 5 passende deutsche oder EU-Förderprogramme (ggf. regional zu PLZ {data.get('plz')})"],
+  "risiko_und_haftung": "Sehr ausführliche Risikoanalyse inkl. finanzieller Szenarien und Compliance-Vorteilen.",
+  "dan_inspiration": "Radikal-disruptive Moonshot-Ideen, provokant aber umsetzbar (DAN-Style)."
+}}
 
-    if content.startswith("```json"):
-        content = content[7:-3].strip()
-    elif content.startswith("```"):
-        content = content[3:-3].strip()
+Zusätzliche Regeln:
+- Füllen Sie **alle Felder zwingend aus**, auch wenn Annahmen erforderlich sind.
+- Keine Listen länger als 7 Punkte.
+- Verwenden Sie ausschließlich die Sie-Form, professionell und inspirierend.
+"""
+    return prompt
 
-    return json.loads(content)
+def analyze_with_gpt(data):
+    text_response = ""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "user", "content": build_prompt(data)}
+            ]
+        )
+        text_response = response.choices[0].message.content
+
+        json_start = text_response.find('{')
+        json_end = text_response.rfind('}') + 1
+        json_str = text_response[json_start:json_end]
+
+        return json.loads(json_str)
+
+    except Exception as e:
+        return {
+            "error": f"Fehler beim GPT-Aufruf: {str(e)}",
+            "raw": text_response
+        }
