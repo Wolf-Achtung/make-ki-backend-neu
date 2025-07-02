@@ -1,0 +1,67 @@
+pdf_template_html = '''
+<html>
+<head>
+<style>
+  body { font-family: 'IBM Plex Sans', sans-serif; color: #0d2b4a; }
+  h1, h2 { color: #0d2b4a; }
+  .deckblatt { text-align:center; margin-top:100px; }
+  .deckblatt img { max-height: 150px; }
+  .deckblatt h1 { font-size: 2.2em; margin-top: 20px; }
+  .section { page-break-before: always; margin: 60px; }
+  .unterschrift { margin-top:80px; font-style:italic; }
+</style>
+</head>
+<body>
+  <div class="deckblatt">
+    <img src="ki-sicherheit-logo.png" alt="KI Sicherheit Logo" />
+    <h1>Executive KI-Readiness & Compliance Briefing</h1>
+  </div>
+  
+  <div class="section">
+    <h2>Executive Summary</h2>
+    <p>{{ executive_summary }}</p>
+  </div>
+  <div class="section">
+    <h2>Risiko & Haftung</h2>
+    <p>{{ risiko_und_haftung }}</p>
+  </div>
+  <div class="section">
+    <h2>Compliance & Datenschutz</h2>
+    <p>{{ compliance_analysis }}</p>
+  </div>
+  <div class="section">
+    <h2>Readiness & Strategie</h2>
+    <p>{{ readiness_analysis }}</p>
+  </div>
+  <div class="section">
+    <h2>Use Cases & Innovation</h2>
+    <p>{{ use_case_analysis }}</p>
+  </div>
+  <div class="section">
+    <h2>Branchentrends & Benchmarks</h2>
+    <p>{{ branche_trend }}</p>
+  </div>
+  <div class="section">
+    <h2>Vision</h2>
+    <p>{{ vision }}</p>
+  </div>
+  <div class="section">
+    <h2>Priorisierte Next Steps</h2>
+    <ul>{% for step in next_steps %}<li>{{ step }}</li>{% endfor %}</ul>
+  </div>
+  <div class="section">
+    <h2>Toolstipps</h2>
+    <ul>{% for tool in toolstipps %}<li>{{ tool }}</li>{% endfor %}</ul>
+  </div>
+  <div class="section">
+    <h2>Fördertipps</h2>
+    <ul>{% for foerder in foerdertipps %}<li>{{ foerder }}</li>{% endfor %}</ul>
+  </div>
+  <div class="section">
+    <h2>Moonshot-Inspiration (DAN)</h2>
+    <p>{{ dan_inspiration }}</p>
+    <div class="unterschrift">Wolf Hohl, TÜV-zertifiziertes KI-Management</div>
+  </div>
+</body>
+</html>
+'''
