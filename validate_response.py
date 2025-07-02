@@ -1,36 +1,23 @@
-# validate_response.py
+import json
 
-def validate_gpt_response(response: dict, autofix: bool = True):
-    """
-    Prüft, ob alle erwarteten Felder vorhanden sind.
-    Wenn autofix=True, füllt fehlende Felder mit Defaults.
-    """
-    required_keys = {
-        "compliance_score": "n/a",
-        "badge_level": "n/a",
-        "ds_gvo_level": "0%",
-        "ai_act_level": "0%",
-        "risk_traffic_light": "grau",
-        "executive_summary": "n/a",
-        "readiness_analysis": "n/a",
-        "compliance_analysis": "n/a",
-        "use_case_analysis": "n/a",
-        "branche_trend": "n/a",
-        "vision": "n/a",
-        "next_steps": [],
-        "toolstipps": [],
-        "foerdertipps": [],
-        "risiko_und_haftung": "n/a",
-        "dan_inspiration": "n/a"
-    }
+EXPECTED_FIELDS = [
+    "compliance_score", "badge_level", "ds_gvo_level", "ai_act_level",
+    "risk_traffic_light", "executive_summary", "readiness_analysis",
+    "compliance_analysis", "use_case_analysis", "branche_trend",
+    "vision", "next_steps", "toolstipps", "foerdertipps",
+    "risiko_und_haftung", "dan_inspiration"
+]
 
-    missing = [key for key in required_keys if key not in response]
-    
+def validate_gpt_response(response):
+    print("🚀 Validierung des GPT-Outputs gestartet...")
+    missing = []
+    for field in EXPECTED_FIELDS:
+        if field not in response:
+            print(f"⚠️ Feld fehlt: {field}, wird mit Platzhalter gefüllt.")
+            response[field] = "n/a" if not field.endswith("tipps") and field != "next_steps" else []
+            missing.append(field)
     if missing:
-        if autofix:
-            for key in missing:
-                response[key] = required_keys[key]
-        else:
-            raise ValueError(f"Fehlende Felder im GPT-Output: {missing}")
-
+        print("✅ Fehlende Felder auto-aufgefüllt:", missing)
+    else:
+        print("✅ Alle Felder vorhanden.")
     return response

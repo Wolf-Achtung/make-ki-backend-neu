@@ -1,13 +1,13 @@
 from fastapi import FastAPI, Request
-from validate_response import validate_gpt_response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, FileResponse
 import uvicorn
+import os
 
 from gpt_analyze import analyze_with_gpt
-from check_sync import check_sync  # <--- NEU
+from validate_response import validate_gpt_response
 from pdf_export import create_pdf
-from fastapi.responses import FileResponse, JSONResponse
-import os
+from check_sync import check_sync
 
 app = FastAPI()
 
@@ -17,43 +17,39 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 @app.get("/health")
 async def health():
-    return {"status": "ok", "message": "KI-Backend läuft stabil und ist bereit."}
+    return {"status": "ok", "message": "Backend läuft stabil."}
+
+@app.get("/sync-check")
+async def sync_check():
+    return check_sync()
 
 @app.post("/briefing")
 async def generate_briefing(request: Request):
     data = await request.json()
+    print("📥 Formulardaten empfangen:", data)
     try:
         result = analyze_with_gpt(data)
-        validate_gpt_response(result)
-        
-        # PDF erstellen
+        result = validate_gpt_response(result)
         pdf_path = create_pdf(result)
-        
-        # URL zurückgeben (z. B. für deine Thankyou-Page)
+
         return {
             "pdf_url": f"/{pdf_path}",
             "score": result["compliance_score"],
             "badge": result["badge_level"]
         }
     except Exception as e:
-        return {"error": str(e)}
-
-@app.get("/sync-check")  # <--- NEU
-async def run_sync_check():
-    return check_sync()
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/download/{filename}")
 async def download_pdf(filename: str):
     if not filename.lower().endswith(".pdf"):
-        return JSONResponse(status_code=400, content={"error": "Nur PDF-Downloads erlaubt."})
-    
+        return JSONResponse(status_code=400, content={"error": "Nur PDFs erlaubt."})
     file_path = os.path.join("downloads", filename)
-    
     if not os.path.isfile(file_path):
-        return JSONResponse(status_code=404, content={"error": f"Datei '{filename}' nicht gefunden."})
-    
+        return JSONResponse(status_code=404, content={"error": f"Datei {filename} nicht gefunden."})
     return FileResponse(path=file_path, filename=filename, media_type='application/pdf')
 
 if __name__ == "__main__":
