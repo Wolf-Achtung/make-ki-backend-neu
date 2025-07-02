@@ -6,57 +6,39 @@ client = OpenAI()
 with open("tools_und_foerderungen.json") as f:
     db = json.load(f)
 
+# gpt_analyze.py (verbesserter Prompt)
+
 def build_prompt(data):
     prompt = f"""
-Sie sind ein TÜV-zertifizierter, strategischer KI- und Datenschutz-Manager mit über 30 Jahren Erfahrung. 
-Ihre Aufgabe ist es, für das untenstehende Unternehmen ein äußerst detailliertes Executive-Briefing zu erstellen, das alle Felder vollständig ausfüllt.
-
-Das Unternehmen:
-- Name: {data.get('unternehmen')}
-- Branche: {data.get('branche')}
-- Bereich: {data.get('bereich')}
-- PLZ: {data.get('plz')}
-- Mitarbeiterzahl: {data.get('mitarbeiterzahl')}
-- Geplante Maßnahme: {data.get('massnahme')}
-- Aktuelle Herausforderungen: {data.get('herausforderungen')}
-- 3-Jahres-Ziele: {data.get('ziele_3jahre')}
-- IT-Systeme & Tools: {data.get('it_systeme')}
-- Bereits genutzte KI-Tools: {data.get('ki_tools')}
-- Zielgruppen: {data.get('zielgruppen')}
-- Datenschutzvorfälle/Audits: {data.get('vorfaelle')}
-- Automatisierungspotenziale: {data.get('innovation_potentiale')}
-- Was bieten sie konkret an: {data.get('produkt_dienstleistung')}
-- Moonshot-Idee: {data.get('moonshot')}
-
-Falls einzelne Angaben unvollständig oder nicht vorhanden sind, ergänzen Sie diese bitte durch branchenübliche Annahmen, damit das Briefing in jedem Fall vollständig ist.
-
-Bitte liefern Sie ein valides JSON-Objekt ohne Fließtext davor oder danach, exakt in folgendem Format:
-
+Sie sind ein zertifizierter KI- und Datenschutz-Consultant. Ihre Aufgabe:
+Generieren Sie ausschließlich ein JSON mit exakt den folgenden Feldern:
 {{
-  "compliance_score": Zahl von 0 bis 10,
-  "badge_level": "Bronze" | "Silber" | "Gold" | "Platin",
-  "ds_gvo_level": Zahl von 0 bis 100,
-  "ai_act_level": Zahl von 0 bis 100,
-  "risk_traffic_light": "grün" | "gelb" | "rot",
-  "executive_summary": "Max. 400 Wörter mit klaren ROI-Hebeln und Top-3-Prioritäten.",
-  "readiness_analysis": "Sehr ausführliche Analyse inkl. SWOT-ähnlicher Stärken/Schwächen.",
-  "compliance_analysis": "Detaillierte Bewertung inkl. Datenschutz, KI-Governance & Haftung.",
-  "use_case_analysis": "Konkrete, kreative Use-Cases, die über Standardlösungen hinausgehen.",
-  "branche_trend": "Trends & Benchmarks mit einem Vergleich zum Wettbewerb.",
-  "vision": "Inspirierendes, aber realistisch erreichbares Zukunftsbild in 2-3 Jahren.",
-  "next_steps": ["Max. 7 direkt umsetzbare Handlungsschritte inkl. Quick Wins."],
-  "toolstipps": ["Max. 5 branchenspezifische Tools inkl. kurzer ROI-Begründung."],
-  "foerdertipps": ["Max. 5 passende deutsche oder EU-Förderprogramme (ggf. regional zu PLZ {data.get('plz')})"],
-  "risiko_und_haftung": "Sehr ausführliche Risikoanalyse inkl. finanzieller Szenarien und Compliance-Vorteilen.",
-  "dan_inspiration": "Radikal-disruptive Moonshot-Ideen, provokant aber umsetzbar (DAN-Style)."
+  "compliance_score": "...",
+  "badge_level": "...",
+  "ds_gvo_level": "...",
+  "ai_act_level": "...",
+  "risk_traffic_light": "...",
+  "executive_summary": "...",
+  "readiness_analysis": "...",
+  "compliance_analysis": "...",
+  "use_case_analysis": "...",
+  "branche_trend": "...",
+  "vision": "...",
+  "next_steps": ["..."],
+  "toolstipps": ["..."],
+  "foerdertipps": ["..."],
+  "risiko_und_haftung": "...",
+  "dan_inspiration": "..."
 }}
+WICHTIG: Beantworten Sie ausschließlich in JSON ohne Vor- oder Nachtext.
+Falls Sie eines der Felder nicht füllen können, setzen Sie es auf "n/a" bzw. [] bei Listen.
+Alle Felder müssen IMMER enthalten sein, sonst wiederholen Sie die gesamte Antwort vollständig.
 
-Zusätzliche Regeln:
-- Füllen Sie **alle Felder zwingend aus**, auch wenn Annahmen erforderlich sind.
-- Keine Listen länger als 7 Punkte.
-- Verwenden Sie ausschließlich die Sie-Form, professionell und inspirierend.
+Eingabedaten:
+{data}
 """
     return prompt
+
 
 def analyze_with_gpt(data):
     text_response = ""
