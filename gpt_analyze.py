@@ -2,6 +2,10 @@ import json
 from openai import OpenAI
 client = OpenAI()
 
+# 🔥 Tools & Förderungen laden
+with open("tools_und_foerderungen.json") as f:
+    tools_data = json.load(f)
+
 def analyze_with_gpt(data):
     """
     Sendet die Felder an GPT und bekommt eine detaillierte Bewertung zurück.
@@ -9,7 +13,7 @@ def analyze_with_gpt(data):
     # Für Debug
     print("👉 Eingehende Daten für GPT:", json.dumps(data, indent=2))
 
-    # GPT Prompt (du kannst das noch beliebig erweitern)
+    # GPT Prompt (minimal ergänzt)
     prompt = f"""
     Du bist ein KI- und Datenschutz-Experte. Analysiere die folgenden Unternehmensangaben
     und erstelle eine umfassende Bewertung der KI-Readiness sowie Datenschutz-Compliance
@@ -36,6 +40,9 @@ def analyze_with_gpt(data):
 
     Unternehmensdaten:
     {json.dumps(data, indent=2)}
+
+    Zusätzlich findest du hier eine Liste bekannter Tools und Förderprogramme, die du in deine Empfehlungen einfließen lassen kannst:
+    {json.dumps(tools_data, indent=2)}
     """
 
     completion = client.chat.completions.create(
