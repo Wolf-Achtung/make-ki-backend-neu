@@ -1,21 +1,26 @@
 FROM python:3.11-slim
 
-FROM python:3.11-slim
-
-# Install system dependencies incl. wkhtmltopdf
+# Install system dependencies for WeasyPrint (Cairo, Pango, GDK-Pixbuf)
 RUN apt-get update && \
-    apt-get install -y wkhtmltopdf curl && \
+    apt-get install -y \
+        libpango-1.0-0 \
+        libcairo2 \
+        libgdk-pixbuf2.0-0 \
+        libffi-dev \
+        shared-mime-info && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set workdir
 WORKDIR /app
 
-# Copy files
+# Copy your code
 COPY . .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Start the app
+# Expose port
+EXPOSE 8000
+
+# Start your FastAPI app
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
