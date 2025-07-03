@@ -1,46 +1,27 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-from pdf_export import create_pdf
-import os
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
-# Jinja2 Template-Umgebung
-env = Environment(
-    loader=FileSystemLoader("templates"),
-    autoescape=select_autoescape()
-)
-
-# Ordner für Downloads sicherstellen
-os.makedirs("downloads", exist_ok=True)
-
-# StaticFiles einbinden, damit /download/... funktioniert
-app.mount("/download", StaticFiles(directory="downloads"), name="downloads")
-
-# CORS
+# CORS offen für Tests, später auf Domain einschränken
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # oder ["https://make.ki-sicherheit.jetzt"]
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.post("/briefing")
-async def generate_briefing(request: Request):
-    try:
-        data = await request.json()
-        
-        # Template laden & rendern
-        template = env.get_template("pdf_template.html")
-        html_content = template.render(**data)
-        
-        # Jetzt den HTML-String an create_pdf geben
-        filename = create_pdf(html_content)
-        
-        return {"filename": filename, "download_url": f"/download/{filename}"}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+templates = Jinja2Templates(directory="templates")
+
+@app.post("/briefing", response_class=HTMLResponse)
+async def create_briefing(request: Request):
+    data = await request.json()
+    print("📦 Empfangenes JSON:", data)  # Debug-Output
+
+    # Direkte HTML-Response mit dem Template
+    return templates.TemplateResponse("report_template.html", {
+        "request": request,
+        **data
+    })
