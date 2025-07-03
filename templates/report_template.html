@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>KI-Readiness Briefing</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 2em;}
+        h1,h2 { color: #003b5a; }
+    </style>
+</head>
+<body>
+<h1>Executive KI-Readiness & Compliance Briefing</h1>
+
+<h2>Zusammenfassung</h2>
+<p>{{ executive_summary }}</p>
+
+<h2>Readiness Analyse</h2>
+<p>{{ readiness_analysis }}</p>
+
+<h2>Compliance Analyse</h2>
+<p>{{ compliance_analysis }}</p>
+
+<h2>Use Cases & Chancen</h2>
+<p>{{ use_case_analysis }}</p>
+
+<h2>Branchentrends</h2>
+<p>{{ branche_trend }}</p>
+
+<h2>Zukunftsvision</h2>
+<p>{{ vision }}</p>
+
+<h2>Risiko & Haftung</h2>
+<p>{{ risiko_und_haftung }}</p>
+
+<h2>Next Steps</h2>
+<ul>
+{% for step in next_steps %}
+<li>{{ step }}</li>
+{% endfor %}
+</ul>
+
+<h2>Tools & Fördertipps</h2>
+<ul>
+{% for tip in toolstipps %}
+<li>{{ tip }}</li>
+{% endfor %}
+{% for tip in foerdertipps %}
+<li>{{ tip }}</li>
+{% endfor %}
+</ul>
+
+<hr>
+<p style="margin-top:40px;">Wolf Hohl, TÜV-zertifiziertes KI-Management</p>
+</body>
+</html>
