@@ -1,58 +1,32 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
-from jinja2 import Environment, FileSystemLoader
-from datetime import datetime
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from pdf_export import create_pdf
 import os
 
-from gpt_analyze import analyze_with_gpt
-from validate_response import validate_gpt_response
-from pdf_export import create_pdf
-from check_sync import check_sync
-
 app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-env = Environment(loader=FileSystemLoader("templates"))
-
-@app.get("/health")
-async def health():
-    return {"status": "ok", "message": "Backend läuft stabil."}
-
-@app.get("/sync-check")
-async def sync_check():
-    return check_sync()
+# Statischer Ordner für Downloads
+app.mount("/download", StaticFiles(directory="downloads"), name="download")
 
 @app.post("/briefing")
 async def generate_briefing(request: Request):
     data = await request.json()
-    print("📥 Formulardaten empfangen:", data)
-    try:
-        result = analyze_with_gpt(data)
-        result = validate_gpt_response(result)
+    print("Empfangene Daten:", data)
 
-        # PDF erzeugen
-        html_content = env.get_template("pdf_template.html").render(**result)
-        filename = f"KI-Readiness-{datetime.now().strftime('%Y%m%d-%H%M%S')}.pdf"
-        filepath = create_pdf(html_content, filename)
+    # Template rendern
+    html_content = templates.get_template("briefing_dynamic.html").render(data=data)
 
-        return {
-            "pdf_url": f"/download/{filename}",
-            "score": result["compliance_score"],
-            "badge": result["badge_level"]
-        }
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+    # PDF erstellen
+    filename = create_pdf(html_content)
 
-@app.get("/download/{filename}")
-async def download_file(filename: str):
-    file_path = os.path.join("downloads", filename)
-    if os.path.exists(file_path):
-        return FileResponse(path=file_path, filename=filename, media_type='application/pdf')
-    return JSONResponse(status_code=404, content={"error": "File not found"})
+    # URL zurückgeben
+    download_url = f"/download/{filename}"
+    return {"download_url": download_url}
+
+# Test-Route zum manuellen Aufruf
+@app.get("/")
+def root():
+    return {"message": "KI-Readiness-Backend läuft!"}
