@@ -1,45 +1,54 @@
-<!DOCTYPE html>
-<html lang="de">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>KI-Readiness Briefing</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 2em;}
-        h1,h2 { color: #003b5a; }
-    </style>
+<style>
+body { font-family: Arial, sans-serif; line-height: 1.6; margin: 2em;}
+h1 { color: #003b5a; font-size: 2em;}
+h2 { color: #003b5a; margin-top: 1.4em;}
+.score-badge { display: inline-block; background: #e9f6ff; color: #034e7b; border-radius: 10px; padding: 6px 14px; font-weight: bold; margin: 0 8px 8px 0; }
+hr { margin: 2em 0;}
+</style>
 </head>
 <body>
 <h1>Executive KI-Readiness & Compliance Briefing</h1>
 
-<h2>Zusammenfassung</h2>
+<div>
+  <span class="score-badge">Score: {{ compliance_score }}/100</span>
+  <span class="score-badge">Badge: {{ badge_level }}</span>
+  <span class="score-badge">DSGVO: {{ ds_gvo_level }}</span>
+  <span class="score-badge">AI Act: {{ ai_act_level }}</span>
+  <span class="score-badge">Risiko: {{ risk_traffic_light }}</span>
+</div>
+
+<h2>Executive Summary</h2>
 <p>{{ executive_summary }}</p>
 
-<h2>Readiness Analyse</h2>
+<h2>Unternehmens- und Branchenanalyse</h2>
+<p>{{ branchen_und_unternehmensanalyse }}</p>
+
+<h2>Aktuelle KI-Readiness & Innovationspotenziale</h2>
 <p>{{ readiness_analysis }}</p>
 
-<h2>Compliance Analyse</h2>
+<h2>Compliance & Risikoanalyse (inkl. DSGVO/AIACT-Score)</h2>
 <p>{{ compliance_analysis }}</p>
 
-<h2>Use Cases & Chancen</h2>
+<h2>Chancen & neue Geschäftsmodelle für Ihr Unternehmen</h2>
 <p>{{ use_case_analysis }}</p>
 
 <h2>Branchentrends</h2>
 <p>{{ branche_trend }}</p>
 
-<h2>Zukunftsvision</h2>
-<p>{{ vision }}</p>
+<h2>Fördermittel-Check & Zuschuss-Empfehlungen</h2>
+<p>{{ foerdermittel_check }}</p>
 
-<h2>Risiko & Haftung</h2>
-<p>{{ risiko_und_haftung }}</p>
-
-<h2>Next Steps</h2>
+<h2>Individuelle Roadmap & Next Steps</h2>
+<p>{{ roadmap }}</p>
 <ul>
 {% for step in next_steps %}
 <li>{{ step }}</li>
 {% endfor %}
 </ul>
 
-<h2>Tools & Fördertipps</h2>
+<h2>Empfohlene Tools & Fördertipps</h2>
 <ul>
 {% for tip in toolstipps %}
 <li>{{ tip }}</li>
@@ -49,7 +58,17 @@
 {% endfor %}
 </ul>
 
+<h2>Risiko & Haftung</h2>
+<p>{{ risiko_und_haftung }}</p>
+
+<h2>Abschluss</h2>
+<p>{{ abschluss }}</p>
+
 <hr>
-<p style="margin-top:40px;">Wolf Hohl, TÜV-zertifiziertes KI-Management</p>
+<div style="margin-top:40px; color:#888; font-size:0.95em;">
+  <b>Wolf Hohl, TÜV-zertifiziertes KI-Management</b><br>
+  Dieses Executive Briefing wurde mit Hilfe modernster KI-Technologie erstellt.<br>
+  <span style="font-size:0.88em;">(powered by ki-sicherheit.jetzt)</span>
+</div>
 </body>
 </html>
