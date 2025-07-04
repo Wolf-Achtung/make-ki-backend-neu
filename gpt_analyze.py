@@ -6,98 +6,108 @@ client = OpenAI()
 with open("tools_und_foerderungen.json") as f:
     tools_data = json.load(f)
 
-def analyze_with_gpt(data):
-    """
-    Sendet die Felder an GPT und bekommt eine detaillierte, professionelle Standortanalyse zurück.
-    """
-    print("👉 Eingehende Daten für GPT:", json.dumps(data, indent=2))
+def prompt_abschnitt_1(data):
+    return f"""
+Sie sind ein TÜV-zertifizierter KI-Consultant. Analysieren Sie die folgenden Angaben und liefern Sie ausschließlich ein valides JSON mit folgenden Feldern zurück:
 
-    # Neuer, wirtschaftlich, rechtlich und strategisch optimierter Prompt:
-    prompt = f"""
-Sie sind ein TÜV-zertifizierter, wirtschaftlich orientierter KI- und Digitalstrategie-Berater für kleine und mittlere Unternehmen (KMU), Selbstständige und Freiberufler in Deutschland.
+- "executive_summary": 10-15 Zeilen Management-Zusammenfassung zur KI-Readiness, Digitalisierung, Hauptstärken/-schwächen.
+- "unternehmensprofil": Branchen-Zuordnung, Mitarbeiterzahl, Selbstständigkeit, Region, Hauptleistung, Zielgruppen.
+- "status_quo_ki": Stand bei Digitalisierung, Automatisierung, papierlosen Prozessen und aktuellem KI-Einsatz. Wo steht das Unternehmen im Vergleich zum Branchendurchschnitt?
 
-Analysieren Sie die folgende, strukturierte Unternehmens-Selbstauskunft umfassend, individuell und maximal praxisnah. Ihr Ziel ist es, dem Unternehmen einen 7-10-seitigen Executive-Briefing-Report (mindestens 5000 Wörter) zu erstellen – in verständlicher, motivierender Sie-Form.
+Jeglicher erläuternder Text außerhalb des JSON ist untersagt.
 
-**Schwerpunkte und Vorgaben:**
+Nutzerdaten:
+{json.dumps(data, ensure_ascii=False)}
+"""
 
-1. **Score & Badge-Legende:** Erklären Sie zu Beginn des Berichts alle Scores, Badges und Risikoeinstufungen, damit der Leser sie sofort versteht. Vergleichen Sie den Score des Unternehmens mit dem aktuellen Durchschnitt der jeweiligen Branche und Unternehmensgröße (Schätzung erlaubt).
+def prompt_abschnitt_2(data):
+    return f"""
+Sie sind ein TÜV-zertifizierter KI-Consultant. Analysieren Sie die Angaben und liefern Sie ausschließlich ein valides JSON mit folgenden Feldern zurück:
 
-2. **Executive Summary:** Fassen Sie den Ist-Zustand, die wichtigsten Risiken und größten Chancen in max. 300 Wörtern zusammen.
+- "compliance_analysis": Bewertung zu Datenschutzbeauftragtem, technischen Maßnahmen, DSGVO-Status, Meldewegen, Löschregeln, AI-Act-Kenntnis. Welche Risiken bestehen aktuell? Wo besteht akuter Handlungsbedarf?
+- "risikoanalyse": Größte Hemmnisse für KI-Einsatz, rechtliche Stolpersteine, branchenspezifische Risiken.
+- "foerdermittel": Übersicht: Welche Förderprogramme sind realistisch (regional, bundesweit, EU)? Welches Förderbudget ist erreichbar? Gibt es spezielle Chancen für die Unternehmensgröße/Region? Individuelle Tipps.
 
-3. **Unternehmens- und Branchenanalyse:** Analysieren Sie das Geschäftsmodell, die Zielgruppen und die individuelle Stellung im Markt (inkl. Benchmark: „Wie steht Ihr Unternehmen im Vergleich zum Branchendurchschnitt?“).
+Jeglicher erläuternder Text außerhalb des JSON ist untersagt.
 
-4. **Digitalisierungs- & KI-Readiness:** Beschreiben und bewerten Sie den Stand der Digitalisierung und die Bereitschaft zur KI-Integration im Detail. Nennen Sie Beispiele und zeigen Sie Optimierungspotenziale auf.
+Nutzerdaten:
+{json.dumps(data, ensure_ascii=False)}
+"""
 
-5. **Wettbewerbs- und Innovationsvergleich:** Beurteilen Sie, wie das Unternehmen im Vergleich zu anderen in der Branche dasteht (z. B. durch Skalen, Rankings oder einfache Aussagen wie „im oberen Drittel“). Geben Sie Tipps, um in die Top-Liga der Branche zu kommen.
+def prompt_abschnitt_3(data):
+    return f"""
+Sie sind ein TÜV-zertifizierter KI-Consultant. Analysieren Sie die folgenden Angaben und liefern Sie ausschließlich ein valides JSON mit folgenden Feldern zurück:
 
-6. **Compliance- & Risikoanalyse (DSGVO/AI Act):** Analysieren Sie, wie gut das Unternehmen in Sachen Datenschutz, DSGVO und KI-Gesetz aufgestellt ist. Geben Sie eine Ampelbewertung (Rot/Gelb/Grün) und erklären Sie, wo akuter Handlungsbedarf besteht. Nennen Sie konkrete, sofort umsetzbare Maßnahmen.
+- "innovation_analysis": Bewertung der laufenden/geplanten KI-Projekte. Welche Use Cases sind für die Branche am relevantesten? Wo liegt das größte individuelle Potenzial? Welche Benchmarks/Best Practices aus der Branche sind relevant?
+- "chancen": Welche kurzfristigen Quick-Wins und mittel-/langfristigen Chancen ergeben sich?
+- "wettbewerbsanalyse": Wo steht das Unternehmen im Marktvergleich? Gibt es Besonderheiten (Nische, Innovationsgrad, Positionierung)?
 
-7. **Chancen & Innovationspotenziale:** Entwickeln Sie mindestens drei spezifische, individuell zugeschnittene Ideen, wie das Unternehmen KI gewinnbringend einsetzen kann (inkl. mindestens einem White-Label-/Produkt- oder Service-Ansatz).
+Jeglicher erläuternder Text außerhalb des JSON ist untersagt.
 
-8. **DAN-Vision:** Skizzieren Sie eine visionäre, mutige und disruptive Entwicklung ("Was wäre, wenn Sie KI maximal kreativ und transformativ einsetzen?"). Zeigen Sie auf, wie das Unternehmen sich mit KI komplett neu erfinden oder zum Branchen-Gamechanger werden könnte. Nutzen Sie Ihre volle Kreativität!
+Nutzerdaten:
+{json.dumps(data, ensure_ascii=False)}
+"""
 
-9. **Detaillierte Roadmap & Handlungsempfehlungen:** Erstellen Sie einen Schritt-für-Schritt-Plan (quartalsweise oder in Etappen), um Digitalisierung und KI im Unternehmen rechtssicher, effizient und förderfähig einzuführen.
+def prompt_abschnitt_4(data):
+    return f"""
+Sie sind ein TÜV-zertifizierter KI-Consultant. Analysieren Sie die folgenden Angaben und liefern Sie ausschließlich ein valides JSON mit folgenden Feldern zurück:
 
-10. **Fördermittel-Check & Finanzierungsoptionen:** Prüfen Sie, welche aktuellen Förderprogramme (z. B. Digital Jetzt, go-digital, BAFA, EU-Förderung) zum Unternehmensprofil passen könnten. Geben Sie eine Einschätzung, wie hoch die Förderquote realistisch ist und listen Sie mindestens zwei konkrete nächste Schritte zur Antragstellung auf.
+- "vision": Zukunftsbild – Wie könnte das Unternehmen in 2 Jahren mit optimal genutzter KI aussehen? (Fokus: Gamechanger-Effekte, neue Geschäftsmodelle, „Moonshot“-Potenziale)
+- "empfehlungen": Konkrete Next Steps und Roadmap für sofortige und mittelfristige Umsetzung. Welche Tools, Maßnahmen, Kooperationen sollten jetzt gestartet werden? (max. 10 bullet points, praxisnah, priorisiert)
+- "call_to_action": Abschlussbotschaft, die motiviert und auf Umsetzung/Weiterberatung hinweist.
 
-11. **Tool-Tipps, Best Practices & Fehlerquellen:** Listen Sie geeignete Tools, Partner und Förderstellen tabellarisch auf. Nennen Sie typische Fehler, die Unternehmen der Branche bei KI/Digitalisierung machen – und wie man sie vermeidet.
+Jeglicher erläuternder Text außerhalb des JSON ist untersagt.
 
-12. **Abschluss & Motivation:** Fassen Sie das Potenzial zusammen, motivieren Sie den Leser und bieten Sie einen Ausblick ("Ihr individueller KI-Vorsprung – so nutzen Sie ihn jetzt!").
+Nutzerdaten:
+{json.dumps(data, ensure_ascii=False)}
+"""
 
-**Rahmenbedingungen:**
-- Jeder Abschnitt mindestens 300 Wörter, gern mehr.
-- Klare Überschriften/H2-Struktur für jedes Kapitel.
-- Verwenden Sie keine Floskeln, sondern geben Sie klare, handlungsorientierte Empfehlungen und Beispiele.
-- Schreiben Sie stets verständlich, professionell und motivierend.
-- Geben Sie bei jedem Score/Benchmark einen direkten Kontext ("Sie liegen X% über/unter dem Branchendurchschnitt").
-- Fügen Sie, wo sinnvoll, Tabellen oder Listen ein.
-
-Antworten Sie ausschließlich im folgenden JSON-Format:
-{{
-  "score_legend": "...",
-  "compliance_score": ...,
-  "badge_level": "...",
-  "ds_gvo_level": ...,
-  "ai_act_level": ...,
-  "risk_traffic_light": "...",
-  "executive_summary": "...",
-  "branchen_und_unternehmensanalyse": "...",
-  "readiness_analysis": "...",
-  "compliance_analysis": "...",
-  "use_case_analysis": "...",
-  "branche_trend": "...",
-  "wettbewerbsvergleich": "...",
-  "foerdermittel_check": "...",
-  "roadmap": "...",
-  "next_steps": [...],
-  "toolstipps": [...],
-  "foerdertipps": [...],
-  "risiko_und_haftung": "...",
-  "dan_vision": "...",
-  "abschluss": "..."
-}}
-
-Unternehmensdaten:
-{json.dumps(data, indent=2)}
-
-Zusätzlich findest du hier eine Liste bekannter Tools und Förderprogramme, die Sie in die Empfehlungen einfließen lassen können:
-{json.dumps(tools_data, indent=2)}
-    """
-
-    completion = client.chat.completions.create(
-        model="gpt-4",
+def gpt_call(prompt):
+    response = client.chat.completions.create(
+        model="gpt-4o",  # GPT-4o ist empfohlen
         messages=[
-            {"role": "system", "content": "Du bist ein KI-Berater."},
+            {"role": "system", "content": "Sie sind ein deutschsprachiger, zertifizierter KI-Consultant."},
             {"role": "user", "content": prompt}
-        ]
+        ],
+        temperature=0.3,
+        response_format={"type": "json_object"}
     )
+    return response.choices[0].message.content
 
-    content = completion.choices[0].message.content
-    print("✅ GPT Antwort:", content)
+def analyze_briefing(data):
+    results = {}
 
+    # Abschnitt 1: Unternehmensprofil & Status Quo
     try:
-        result = json.loads(content)
-    except json.JSONDecodeError:
-        raise ValueError("GPT hat kein gültiges JSON geliefert.")
+        content1 = gpt_call(prompt_abschnitt_1(data))
+        results.update(json.loads(content1))
+    except Exception:
+        # Retry mit expliziter JSON-Aufforderung
+        content1 = gpt_call(prompt_abschnitt_1(data) + "\n\nAntwort ausschließlich als valides JSON-Objekt!")
+        results.update(json.loads(content1))
 
-    return result
+    # Abschnitt 2: Compliance, Risiken, Fördermittel
+    try:
+        content2 = gpt_call(prompt_abschnitt_2(data))
+        results.update(json.loads(content2))
+    except Exception:
+        content2 = gpt_call(prompt_abschnitt_2(data) + "\n\nAntwort ausschließlich als valides JSON-Objekt!")
+        results.update(json.loads(content2))
+
+    # Abschnitt 3: Innovation, Chancen, Benchmarking
+    try:
+        content3 = gpt_call(prompt_abschnitt_3(data))
+        results.update(json.loads(content3))
+    except Exception:
+        content3 = gpt_call(prompt_abschnitt_3(data) + "\n\nAntwort ausschließlich als valides JSON-Objekt!")
+        results.update(json.loads(content3))
+
+    # Abschnitt 4: Vision, Moonshot, Roadmap
+    try:
+        content4 = gpt_call(prompt_abschnitt_4(data))
+        results.update(json.loads(content4))
+    except Exception:
+        content4 = gpt_call(prompt_abschnitt_4(data) + "\n\nAntwort ausschließlich als valides JSON-Objekt!")
+        results.update(json.loads(content4))
+
+    return results

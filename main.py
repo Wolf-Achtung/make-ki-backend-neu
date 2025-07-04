@@ -4,9 +4,9 @@ from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from gpt_analyze import analyze_with_gpt
-from validate_response import validate_gpt_response
-from pdf_export import create_pdf  # <--- PDF-Export importieren
+from gpt_analyze import analyze_briefing  # <--- Neue Funktion nutzen!
+# from validate_response import validate_gpt_response   # Optional, bei Bedarf einbauen
+from pdf_export import create_pdf  # PDF-Export importieren
 
 import os
 
@@ -23,7 +23,7 @@ origins = [
 ]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://make.ki-sicherheit.jetzt"],  # <-- Deine echte Frontend-URL
+    allow_origins=origins,  # Lokale & Produktiv-URLs freigeben
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,8 +36,9 @@ async def create_briefing(request: Request):
     data = await request.json()
     print("🚀 Empfangenes JSON:", data)
 
-    gpt_result = analyze_with_gpt(data)
-    gpt_result = validate_gpt_response(gpt_result)
+    # GPT-Analyse (mehrstufig)
+    gpt_result = analyze_briefing(data)
+    # gpt_result = validate_gpt_response(gpt_result)   # Nur falls du die Validierung nutzt
 
     # HTML generieren für PDF und Anzeige
     html_content = templates.get_template("pdf_template.html").render(**gpt_result)
