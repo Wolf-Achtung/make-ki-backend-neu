@@ -4,15 +4,14 @@ from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from gpt_analyze import analyze_briefing  # <--- Neue Funktion nutzen!
-# from validate_response import validate_gpt_response   # Optional, bei Bedarf einbauen
-from pdf_export import create_pdf  # PDF-Export importieren
+from gpt_analyze import analyze_briefing
+from pdf_export import create_pdf
 
 import os
 
 app = FastAPI()
 
-# PDF-Ordner als statische Route einbinden (für den Download)
+# Statische Route für PDF-Downloads
 app.mount("/downloads", StaticFiles(directory="downloads"), name="downloads")
 
 origins = [
@@ -23,7 +22,7 @@ origins = [
 ]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Lokale & Produktiv-URLs freigeben
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,16 +37,15 @@ async def create_briefing(request: Request):
 
     # GPT-Analyse (mehrstufig)
     gpt_result = analyze_briefing(data)
-    # gpt_result = validate_gpt_response(gpt_result)   # Nur falls du die Validierung nutzt
+    print("✅ GPT-Ergebnis:", gpt_result)
 
-    # HTML generieren für PDF und Anzeige
+    # HTML-Report generieren
     html_content = templates.get_template("pdf_template.html").render(**gpt_result)
 
-    # PDF erzeugen und Dateinamen zurückbekommen
+    # PDF erzeugen
     pdf_filename = create_pdf(html_content)
     pdf_url = f"/downloads/{pdf_filename}"
 
-    # JSON-Response enthält HTML **und** PDF-URL
     return JSONResponse(content={"html": html_content, "pdf_url": pdf_url})
 
 @app.get("/")
