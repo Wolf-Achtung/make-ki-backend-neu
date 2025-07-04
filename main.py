@@ -3,9 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
+# ➔ NEU: Importiere die GPT-Logik & Validierung
+from gpt_analyze import analyze_with_gpt
+from validate_response import validate_gpt_response
+
 app = FastAPI()
 
-# CORS offen für deine Website
 origins = [
     "https://make.ki-sicherheit.jetzt",
     "http://localhost",
@@ -26,8 +29,12 @@ async def create_briefing(request: Request):
     data = await request.json()
     print("🚀 Empfangenes JSON:", data)
 
-    # Render das HTML mit den Daten
-    html_content = templates.get_template("pdf_template.html").render(**data)
+    # ➔ NEU: GPT-Analyse aufrufen und Ergebnis validieren
+    gpt_result = analyze_with_gpt(data)
+    gpt_result = validate_gpt_response(gpt_result)
+
+    # Render das HTML mit den GPT-Resultaten
+    html_content = templates.get_template("pdf_template.html").render(**gpt_result)
 
     return JSONResponse(content={"html": html_content})
 
