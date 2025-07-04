@@ -14,8 +14,6 @@
     .deck-tuev { width: 170px; margin: 20px 0 10px 0;}
     .deck-footer { color:#999; font-size:1.05em; margin-top: 18px;}
     .copyright { font-size: 1em; color: #555; margin-top: 20px;}
-    .score-badge { display: inline-block; background: #e9f6ff; color: #034e7b; border-radius: 10px; padding: 6px 14px; font-weight: bold; margin: 0 8px 8px 0; }
-    .score-legend { font-size:0.98em; color:#4a4a4a; background:#f6fbff; padding:1em 1.2em; border-radius:10px; margin-bottom:2em; }
     .seitenlogo { width: 135px; float: right; margin: 0 0 0 16px; }
     hr { margin: 2em 0;}
     ul { margin-bottom: 1.2em;}
@@ -36,72 +34,33 @@
   </div>
 </div>
 <hr>
-
-<!-- Logos auf allen Seiten, falls gewünscht -->
 <img src="ki-sicherheit-logo.png" class="seitenlogo" alt="KI-Sicherheit Logo">
-
-<div class="score-legend">
-  <b>Score- & Badge-Erklärung:</b><br>
-  {{ score_legend }}
-</div>
-<div>
-  <span class="score-badge">Score: {{ compliance_score }}/100</span>
-  <span class="score-badge">Badge: {{ badge_level }}</span>
-  <span class="score-badge">DSGVO: {{ ds_gvo_level }}</span>
-  <span class="score-badge">AI Act: {{ ai_act_level }}</span>
-  <span class="score-badge">Risiko: {{ risk_traffic_light }}</span>
-</div>
 
 <h2>Executive Summary</h2>
 <p>{{ executive_summary }}</p>
 
-<h2>Unternehmens- & Branchenanalyse</h2>
-<p>{{ branchen_und_unternehmensanalyse }}</p>
+<h2>Unternehmensprofil & Status Quo Digitalisierung</h2>
+<p>{{ unternehmensprofil }}</p>
+<p>{{ status_quo_ki }}</p>
 
-<h2>Digitalisierungs- & KI-Readiness</h2>
-<p>{{ readiness_analysis }}</p>
-
-<h2>Wettbewerbs- & Innovationsvergleich</h2>
-<p>{{ wettbewerbsvergleich }}</p>
-
-<h2>Compliance- & Risikoanalyse (DSGVO/AI Act)</h2>
+<h2>Compliance, Risiken & Fördermittel</h2>
 <p>{{ compliance_analysis }}</p>
+<p>{{ risikoanalyse }}</p>
+<p>{{ foerdermittel }}</p>
 
-<h2>Chancen & Innovationspotenziale</h2>
-<p>{{ use_case_analysis }}</p>
+<h2>Innovation, Chancen & Benchmarking</h2>
+<p>{{ innovation_analysis }}</p>
+<p>{{ chancen }}</p>
+<p>{{ wettbewerbsanalyse }}</p>
 
-<h2>DAN-Vision: Ihr Gamechanger-Momentum</h2>
-<p>{{ dan_vision }}</p>
+<h2>Vision, Moonshot & Zukunftsbild</h2>
+<p>{{ vision }}</p>
 
-<h2>Branchentrends</h2>
-<p>{{ branche_trend }}</p>
+<h2>Empfehlungen & Roadmap</h2>
+<p>{{ empfehlungen }}</p>
 
-<h2>Fördermittel-Check & Finanzierungsoptionen</h2>
-<p>{{ foerdermittel_check }}</p>
-
-<h2>Detaillierte Roadmap & Handlungsempfehlungen</h2>
-<p>{{ roadmap }}</p>
-<ul>
-  {% for step in next_steps %}
-    <li>{{ step }}</li>
-  {% endfor %}
-</ul>
-
-<h2>Empfohlene Tools & Fördertipps</h2>
-<ul>
-  {% for tip in toolstipps %}
-    <li>{{ tip }}</li>
-  {% endfor %}
-  {% for tip in foerdertipps %}
-    <li>{{ tip }}</li>
-  {% endfor %}
-</ul>
-
-<h2>Risiko & Haftung</h2>
-<p>{{ risiko_und_haftung }}</p>
-
-<h2>Abschluss & Motivation</h2>
-<p>{{ abschluss }}</p>
+<h2>Abschluss & Call to Action</h2>
+<p>{{ call_to_action }}</p>
 
 <hr>
 <div style="margin-top:40px; color:#888; font-size:0.95em;">
