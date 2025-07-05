@@ -1,113 +1,161 @@
 import json
-from openai import OpenAI
-client = OpenAI()
+import openai
+import os
 
-# 🔥 Tools & Förderungen laden
-with open("tools_und_foerderungen.json") as f:
-    tools_data = json.load(f)
+# Optional: Lade API-Key aus Umgebungsvariable oder trage direkt ein
+openai.api_key = os.getenv("OPENAI_API_KEY", "HIER_DEIN_API_KEY")
 
-def prompt_abschnitt_1(data):
+# --- Hilfsfunktion: KI-Readiness-Score berechnen ---
+def calc_readiness_score(data):
+    score = 0
+    try:
+        score += int(data.get("digitalisierungsgrad", 0)) * 2
+        score += int(data.get("risikofreude", 0)) * 2
+        ki_knowhow_list = ["Keine Erfahrung", "Grundkenntnisse", "Mittel", "Fortgeschritten", "Expertenwissen"]
+        score += ki_knowhow_list.index(data.get("ki_knowhow", "Keine Erfahrung")) * 4
+        autom_list = ["Sehr niedrig", "Eher niedrig", "Mittel", "Eher hoch", "Sehr hoch"]
+        score += autom_list.index(data.get("automatisierungsgrad", "Sehr niedrig")) * 4
+        if data.get("ki_projekte", "").strip():
+            score += 8
+        if data.get("folgenabschaetzung") == "Ja":
+            score += 8
+        if data.get("technische_massnahmen") == "Alle relevanten Maßnahmen vorhanden":
+            score += 8
+        score += 12  # Grundwert für Teilnahme/Motivation
+    except Exception:
+        score = 42  # Fallback
+    return min(100, max(0, score))
+
+# --- Prompt-Vorlagen für alle Abschnitte ---
+def prompt_exec_summary(data, score):
     return f"""
-Sie sind ein TÜV-zertifizierter, deutschsprachiger KI-Consultant. Analysieren Sie die folgenden Angaben und liefern Sie ausschließlich ein valides JSON mit diesen Feldern:
+Sie sind ein deutschsprachiger, TÜV-zertifizierter KI-Consultant für Unternehmen der Branche {data.get("branche", "unbekannt")}.
+Nutzen Sie die folgenden Unternehmensdaten, um eine Executive Summary mit **mindestens 1.200 Wörtern** zu verfassen:
 
-- "executive_summary": Prägnante, verständliche Management-Zusammenfassung (10-15 Zeilen), die die wichtigsten Chancen und Herausforderungen der KI-Readiness sowie die Digitalisierungs- und Automatisierungsstärke im Vergleich zum Branchendurchschnitt beschreibt – **ohne Aufzählungszeichen**, sondern als Fließtext!
-- "unternehmensprofil": Menschlich lesbare Beschreibung von Branche, Größe, Selbstständigkeit, Region, Hauptleistung, Zielgruppen – **keine Listen, sondern 2-3 Sätze**.
-- "status_quo_ki": Stand bei Digitalisierung, Automatisierung, papierlosen Prozessen und aktuellem KI-Einsatz – **vergleichend, komprimiert, verständlich**.
+- Heben Sie Stärken, Schwächen, Chancen und Risiken in ausführlichen Absätzen hervor.
+- Berücksichtigen Sie alle Antworten des Fragebogens (siehe unten).
+- Ergänzen Sie Infokästen wie „Praxisbeispiel“, „Expertentipp“, „Checkliste“ und „Fördermittel-Special“.
+- Bauen Sie aktuelle deutsche Branchendaten & Benchmarks ein (z.B. KI-Nutzung, Digitalisierungsgrad laut Statista, Bitkom, IW Consult, etc.).
+- Fügen Sie einen Abschnitt „KI-Readiness-Score: {score}/100“ mit einer kurzen Interpretation hinzu.
 
-Jeglicher erläuternder Text außerhalb des JSON ist untersagt.
-
-Nutzerdaten:
+UNTERNEHMENSDATEN:
 {json.dumps(data, ensure_ascii=False)}
 """
 
-def prompt_abschnitt_2(data):
+def prompt_benchmark(data):
+    branche = data.get("branche", "unbekannt")
     return f"""
-Sie sind ein TÜV-zertifizierter KI-Consultant. Analysieren Sie die Angaben und liefern Sie ausschließlich ein valides JSON mit diesen Feldern:
-
-- "compliance_analysis": Kompakte Bewertung zu Datenschutzbeauftragtem, technischen Maßnahmen, DSGVO-Status, Meldewegen, Löschregeln, AI-Act-Kenntnis. Welche Risiken und akuten Handlungsfelder bestehen? **Konkrete Praxis-Hinweise einbauen!**
-- "risikoanalyse": Die größten Hemmnisse für den KI-Einsatz im Unternehmen, mit mindestens einem branchenspezifischen Beispiel.
-- "foerdermittel": **Klartext!** Welche Förderprogramme (regional/bundesweit/EU) sind realistisch? Förderhöhe? Spezielle Chancen für die Unternehmensgröße/Region? Individuelle Tipps. Praxislink, falls möglich.
-
-Jeglicher erläuternder Text außerhalb des JSON ist untersagt.
-
-Nutzerdaten:
-{json.dumps(data, ensure_ascii=False)}
+Sie sind ein datenbasierter KI-Branchen-Analyst.
+Analysieren Sie die aktuelle Position des Unternehmens in der Branche {branche} anhand aktueller Studien (Bitkom, Statista, IW Consult, BMWK etc.).
+Geben Sie mindestens 800 Wörter aus, nutzen Sie vergleichbare Statistiken (z.B. KI-Nutzungsquote in KMU, Automatisierungsgrad).
+Erstellen Sie eine Tabelle mit mindestens 5 Benchmarks und erläutern Sie, wie das Unternehmen im Vergleich dasteht.
+Fügen Sie 2–3 passende Praxisbeispiele/Stories echter Unternehmen der Branche ein.
 """
 
-def prompt_abschnitt_3(data):
+def prompt_compliance_foerdermittel(data):
+    bundesland = data.get("bundesland", "unbekannt")
+    groesse = data.get("unternehmensgroesse", "unbekannt")
     return f"""
-Sie sind ein TÜV-zertifizierter KI-Consultant. Analysieren Sie die Angaben und liefern Sie ausschließlich ein valides JSON mit diesen Feldern:
-
-- "innovation_analysis": Welche laufenden/geplanten KI-Projekte sind für die Branche und Unternehmensgröße sinnvoll? 2-3 Beispiele als Satz.
-- "chancen": **Quick-Wins und Chancen** in kurzen, prägnanten Bullet-Points (max. 5).
-- "wettbewerbsanalyse": Kurztext zur Marktposition im Vergleich zum Wettbewerb (Innovationsgrad, Positionierung, evtl. Nachholbedarf).
-
-Jeglicher erläuternder Text außerhalb des JSON ist untersagt.
-
-Nutzerdaten:
-{json.dumps(data, ensure_ascii=False)}
+Sie sind Datenschutz- & Fördermittel-Experte.
+Analysieren Sie die Compliance-Situation und identifizieren Sie Risiken, offene Aufgaben und Potenziale (mindestens 800 Wörter).
+Listen Sie alle passenden bundesweiten und landesspezifischen Förderprogramme für {bundesland} und {groesse} auf (bitte mit Namen, Fördersummen, typischem Ablauf, Link).
+Schreiben Sie zu jedem Programm eine Schritt-für-Schritt-Box „So beantragen Sie diese Förderung“ (50–80 Wörter).
+Fügen Sie pro Bereich 2–3 Best-Practice-Praxisbeispiele (je 100–150 Wörter) ein (Datenschutz, Fördermittel).
 """
 
-def prompt_abschnitt_4(data):
+def prompt_innovation_tools(data):
+    branche = data.get("branche", "unbekannt")
+    groesse = data.get("unternehmensgroesse", "unbekannt")
+    projektziel = ", ".join(data.get("projektziel", [])) if isinstance(data.get("projektziel"), list) else data.get("projektziel", "")
     return f"""
-Sie sind ein TÜV-zertifizierter KI-Consultant. Analysieren Sie die folgenden Angaben und liefern Sie ausschließlich ein valides JSON mit diesen Feldern:
-
-- "vision": Ein motivierendes Zukunftsbild, wie das Unternehmen in 2 Jahren mit optimal genutzter KI dastehen könnte (Gamechanger-Effekte, neue Geschäftsmodelle, „Moonshot“-Potenziale), **als inspirierender Absatz**.
-- "empfehlungen": Maximal 10 Next Steps/Bulletpoints, klar priorisiert, mit Tool- und Praxisempfehlungen, sofort umsetzbar.
-- "call_to_action": Abschlussbotschaft, die zur Umsetzung und weiteren Beratung motiviert.
-
-Jeglicher erläuternder Text außerhalb des JSON ist untersagt.
-
-Nutzerdaten:
-{json.dumps(data, ensure_ascii=False)}
+Sie sind ein KI- und Digitalisierungsstratege.
+Analysieren Sie Innovationspotenzial und Wachstumschancen für das Unternehmen (mindestens 900 Wörter).
+Fügen Sie für alle genannten Ziele (z.B. {projektziel}) pro Bereich 2–3 inspirierende Praxisbeispiele aus der deutschen Wirtschaft ein.
+Stellen Sie eine Tool-Liste mit Links zusammen (mindestens 6 KI- und Digitaltools), die zu Branche, Größe und Zielen passen. Jede Tool-Empfehlung soll eine Kurzbeschreibung und einen Link enthalten.
 """
 
-def gpt_call(prompt):
-    response = client.chat.completions.create(
-        model="gpt-4o",  # GPT-4o ist empfohlen
-        messages=[
-            {"role": "system", "content": "Sie sind ein deutschsprachiger, zertifizierter KI-Consultant."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3,
-        response_format={"type": "json_object"}
-    )
-    return response.choices[0].message.content
+def prompt_vision_roadmap(data):
+    return f"""
+Entwickeln Sie eine ausführliche, motivierende KI-Vision & Roadmap für das Unternehmen (mindestens 1.200 Wörter).
+Strukturieren Sie als Zeitstrahl: Monate 1–6, 7–18, 19–24+. Geben Sie zu jeder Phase:
+- konkrete Maßnahmen,
+- Tool-Tipps (mit Links),
+- Praxisbeispiel („So kann es aussehen“),
+- einen „Moonshot“-Abschnitt (Wie sieht echter Durchbruch aus?).
 
-def analyze_briefing(data):
-    results = {}
+Schließen Sie mit einem motivierenden Call-to-Action.
+"""
 
-    # Abschnitt 1: Unternehmensprofil & Status Quo
-    try:
-        content1 = gpt_call(prompt_abschnitt_1(data))
-        results.update(json.loads(content1))
-    except Exception as e:
-        # Retry mit expliziter JSON-Aufforderung
-        content1 = gpt_call(prompt_abschnitt_1(data) + "\n\nAntwort ausschließlich als valides JSON-Objekt!")
-        results.update(json.loads(content1))
+def prompt_glossar_tools_faq(data):
+    return f"""
+Erstellen Sie:
+- Ein Glossar mit 15 zentralen Begriffen zu KI, Digitalisierung, Förderung, Compliance (je Begriff: 1 Satz Erklärung)
+- Eine separate Tabelle mit empfohlenen Tools (Toolname, Zweck, Link)
+- 10 häufige Fragen (FAQ) zum Thema KI in der Branche des Unternehmens, mit prägnanten Antworten.
+"""
 
-    # Abschnitt 2: Compliance, Risiken, Fördermittel
-    try:
-        content2 = gpt_call(prompt_abschnitt_2(data))
-        results.update(json.loads(content2))
-    except Exception as e:
-        content2 = gpt_call(prompt_abschnitt_2(data) + "\n\nAntwort ausschließlich als valides JSON-Objekt!")
-        results.update(json.loads(content2))
+# --- Hauptfunktion: Analyse & Report-Generierung ---
+def generate_report(data):
+    score = calc_readiness_score(data)
+    results = []
 
-    # Abschnitt 3: Innovation, Chancen, Benchmarking
-    try:
-        content3 = gpt_call(prompt_abschnitt_3(data))
-        results.update(json.loads(content3))
-    except Exception as e:
-        content3 = gpt_call(prompt_abschnitt_3(data) + "\n\nAntwort ausschließlich als valides JSON-Objekt!")
-        results.update(json.loads(content3))
+    # Executive Summary & Score
+    summary = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "system", "content": prompt_exec_summary(data, score)}],
+        max_tokens=4000
+    )["choices"][0]["message"]["content"]
+    results.append("## Executive Summary & KI-Readiness-Score\n\n" + summary)
 
-    # Abschnitt 4: Vision, Moonshot, Roadmap
-    try:
-        content4 = gpt_call(prompt_abschnitt_4(data))
-        results.update(json.loads(content4))
-    except Exception as e:
-        content4 = gpt_call(prompt_abschnitt_4(data) + "\n\nAntwort ausschließlich als valides JSON-Objekt!")
-        results.update(json.loads(content4))
+    # Benchmark & Branchenvergleich
+    benchmark = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "system", "content": prompt_benchmark(data)}],
+        max_tokens=3000
+    )["choices"][0]["message"]["content"]
+    results.append("## Branchenvergleich & Benchmarks\n\n" + benchmark)
 
-    return results
+    # Compliance & Fördermittel
+    compliance = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "system", "content": prompt_compliance_foerdermittel(data)}],
+        max_tokens=3000
+    )["choices"][0]["message"]["content"]
+    results.append("## Compliance, Risiken & Fördermittel\n\n" + compliance)
+
+    # Innovation & Tools
+    innovation = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "system", "content": prompt_innovation_tools(data)}],
+        max_tokens=3500
+    )["choices"][0]["message"]["content"]
+    results.append("## Innovation, Chancen & Tool-Tipps\n\n" + innovation)
+
+    # Vision & Roadmap
+    vision = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "system", "content": prompt_vision_roadmap(data)}],
+        max_tokens=3500
+    )["choices"][0]["message"]["content"]
+    results.append("## Ihre Zukunft mit KI: Vision & Roadmap\n\n" + vision)
+
+    # Glossar, Tool-Liste, FAQ
+    glossary = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "system", "content": prompt_glossar_tools_faq(data)}],
+        max_tokens=2000
+    )["choices"][0]["message"]["content"]
+    results.append("## Glossar, Tool-Liste & FAQ\n\n" + glossary)
+
+    # Optional: Zusammenführen für HTML/PDF
+    return "\n\n---\n\n".join(results)
+
+# --- Beispiel für Aufruf (data ist das vom Formular erhaltene JSON) ---
+if __name__ == "__main__":
+    with open("sample_data.json", encoding="utf-8") as f:
+        data = json.load(f)
+    report = generate_report(data)
+    with open("output_report.md", "w", encoding="utf-8") as f:
+        f.write(report)
+    print("Report erfolgreich generiert!")
+
