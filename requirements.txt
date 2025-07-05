@@ -7,4 +7,5 @@ requests
 beautifulsoup4
 weasyprint
 aiofiles
+markdown
 
