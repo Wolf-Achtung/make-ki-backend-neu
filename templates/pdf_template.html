@@ -1,79 +1,103 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Executive KI-Readiness & Compliance Briefing</title>
+  <meta charset="UTF-8" />
+  <title>KI-Readiness & Fördermittel Whitepaper</title>
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 2em;}
-    .deckblatt {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      min-height: 80vh; margin-bottom: 60px; text-align: center;
-    }
-    .hauptlogo { width: 340px; margin: 0 0 24px 0;}
-    .deck-badge { width: 190px; margin-bottom: 14px;}
-    .deck-tuev { width: 170px; margin: 20px 0 10px 0;}
-    .deck-footer { color:#999; font-size:1.05em; margin-top: 18px;}
-    .seitenlogo { width: 135px; float: right; margin: 0 0 0 16px; }
-    hr { margin: 2em 0;}
-    ul { margin-bottom: 1.2em;}
-    .footer { color:#888; font-size:0.95em; margin-top:40px;}
-    h2 { color: #003b5a; margin-top:2.5em;}
+    body { font-family: 'Inter', Arial, sans-serif; color: #19202A; background: #f8fafc; margin: 0; }
+    .cover { background: #003b5a; color: #fff; padding: 48px 32px 32px 32px; text-align: center; }
+    .cover h1 { font-size: 2.7em; margin-bottom: 12px; }
+    .score { background: #fff; color: #003b5a; display: inline-block; border-radius: 40px; padding: 0.8em 2.2em; font-size: 1.5em; margin: 22px 0; box-shadow: 0 4px 16px #003b5a33; }
+    .summary-box { background: #e6eef5; color: #003b5a; padding: 22px 28px; border-radius: 18px; margin: 32px auto 40px auto; max-width: 630px; font-size: 1.17em; box-shadow: 0 2px 16px #003b5a22; }
+    .section { margin: 56px auto 38px auto; max-width: 800px; }
+    h2 { font-size: 2.1em; margin-top: 0; color: #003b5a; }
+    h3 { color: #1e293b; font-size: 1.2em; margin-top: 34px; }
+    .infobox { background: #ffe; border-left: 7px solid #f9a826; padding: 18px 26px; border-radius: 8px; margin: 26px 0; }
+    .tooltable { width: 100%; border-collapse: collapse; font-size: 1.02em; }
+    .tooltable th, .tooltable td { border: 1.5px solid #ddd; padding: 8px 12px; }
+    .tooltable th { background: #e6eef5; }
+    .checklist { background: #e3fbe9; border-left: 7px solid #10b981; padding: 18px 24px; border-radius: 8px; margin: 24px 0; }
+    .qrbox { background: #f1f5f9; border-radius: 9px; display: inline-block; padding: 14px 22px; margin: 12px 0; }
+    .footer { text-align: center; color: #64748b; font-size: 1em; margin: 48px 0 12px 0; }
+    @media print { body { background: #fff; } }
+    a { color: #003b5a; text-decoration: underline; }
+    .toc { background: #f1f5f9; border-radius: 10px; padding: 22px; margin: 38px auto 38px auto; max-width: 720px; font-size: 1.12em; }
+    .toc ul { padding-left: 18px; }
+    .toc li { margin-bottom: 7px; }
+    .pagebreak { page-break-after: always; }
   </style>
 </head>
 <body>
-
-<!-- DECKBLATT -->
-<div class="deckblatt">
-  <img src="ki-sicherheit-logo.png" class="hauptlogo" alt="KI-Sicherheit Logo">
-  <img src="ki-ready-2025.png" class="deck-badge" alt="KI-Ready 2025 Badge">
-  <h1>Executive KI-Readiness & Compliance Briefing<br>
-    <span style="font-size:0.7em;">(individuell & rechtssicher)</span>
-  </h1>
-  <img src="tuev-logo-transparent.png" class="deck-tuev" alt="TÜV zertifiziert">
-  <div class="deck-footer">
-    TÜV-zertifiziertes KI-Management: Wolf Hohl<br>
-    Copyright 2025 ki-sicherheit.jetzt<br>
-    <span style="font-size:0.9em;">
-      Mit freundlicher Unterstützung von dsgvo-konformen & EU AI Act-ready Lösungen
-    </span>
+  <!-- Deckblatt -->
+  <div class="cover">
+    <img src="https://dein-logo-url.de/logo.png" style="height:60px; margin-bottom:20px;" alt="Logo" />
+    <h1>KI-Readiness & Fördermittel Whitepaper</h1>
+    <div class="score">KI-Readiness-Score: <strong>{{KI_SCORE}}</strong> / 100</div>
+    <div class="summary-box">
+      {{EXEC_SUMMARY}}
+    </div>
+    <div style="margin-top:38px; font-size:1.15em;">Datum: {{DATUM}}<br>Für: {{UNTERNEHMEN}} ({{BRANCHE}})</div>
   </div>
-</div>
-<hr>
-<img src="ki-sicherheit-logo.png" class="seitenlogo" alt="KI-Sicherheit Logo">
 
-<h2>Executive Summary</h2>
-<p>{{ executive_summary }}</p>
+  <!-- Inhaltsverzeichnis -->
+  <div class="toc pagebreak">
+    <strong>Inhaltsverzeichnis</strong>
+    <ul>
+      <li>1. Executive Summary & Score</li>
+      <li>2. Branchen-Benchmark & Best Practices</li>
+      <li>3. Compliance, Risiken & Fördermittel</li>
+      <li>4. Innovation, Chancen & Tool-Tipps</li>
+      <li>5. Vision & Roadmap</li>
+      <li>6. Glossar, FAQ & Tool-Liste</li>
+    </ul>
+  </div>
 
-<h2>Unternehmensprofil & Status Quo Digitalisierung</h2>
-<p>{{ unternehmensprofil }}</p>
-<p>{{ status_quo_ki }}</p>
+  <!-- Abschnitte dynamisch einfügen -->
+  <div class="section">
+    <h2>1. Executive Summary & Score</h2>
+    {{EXEC_SUMMARY}}
+  </div>
 
-<h2>Compliance, Risiken & Fördermittel</h2>
-<p>{{ compliance_analysis }}</p>
-<p>{{ risikoanalyse }}</p>
-<p>{{ foerdermittel }}</p>
+  <div class="section pagebreak">
+    <h2>2. Branchen-Benchmark & Best Practices</h2>
+    {{BENCHMARK}}
+  </div>
 
-<h2>Innovation, Chancen & Benchmark</h2>
-<p>{{ innovation_analysis }}</p>
-<p>{{ chancen }}</p>
-<p>{{ wettbewerbsanalyse }}</p>
+  <div class="section pagebreak">
+    <h2>3. Compliance, Risiken & Fördermittel</h2>
+    {{COMPLIANCE}}
+  </div>
 
-<h2>Ihre Zukunft mit KI: Vision & Roadmap</h2>
-<p>{{ vision }}</p>
-<ul>
-  {% if empfehlungen %}
-    {% for step in empfehlungen %}
-      <li>{{ step }}</li>
-    {% endfor %}
-  {% endif %}
-</ul>
-<p><b>{{ call_to_action }}</b></p>
+  <div class="section pagebreak">
+    <h2>4. Innovation, Chancen & Tool-Tipps</h2>
+    {{INNOVATION}}
+    <h3>Empfohlene Tools (mit Links)</h3>
+    <table class="tooltable">
+      <tr><th>Tool</th><th>Zweck</th><th>Link</th></tr>
+      {{TOOLS}}
+    </table>
+  </div>
 
-<hr>
-<div class="footer">
-  <img src="tuev-logo-transparent.png" style="width:80px;vertical-align:middle;margin-right:15px;">
-  TÜV-zertifiziertes KI-Management: Wolf Hohl<br>
-  Copyright 2025 ki-sicherheit.jetzt
-</div>
+  <div class="section pagebreak">
+    <h2>5. Vision & Roadmap</h2>
+    {{VISION}}
+  </div>
+
+  <div class="section pagebreak">
+    <h2>6. Glossar, FAQ & Tool-Liste</h2>
+    <h3>Glossar</h3>
+    {{GLOSSAR}}
+    <h3>FAQ</h3>
+    {{FAQ}}
+    <h3>Tool-Liste (kompakt)</h3>
+    <table class="tooltable">
+      <tr><th>Tool</th><th>Zweck</th><th>Link</th></tr>
+      {{TOOLS_COMPACT}}
+    </table>
+  </div>
+
+  <div class="footer">
+    Erstellt mit KI | <a href="https://dein-projekt-url.de">ki-sicherheit.jetzt</a>
+  </div>
 </body>
 </html>
