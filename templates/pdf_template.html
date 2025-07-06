@@ -25,6 +25,7 @@
     .toc ul { padding-left: 18px; }
     .toc li { margin-bottom: 7px; }
     .pagebreak { page-break-after: always; }
+    .lizenz { color: #64748b; font-size: 0.97em; margin-top: 22px; line-height: 1.7; }
   </style>
 </head>
 <body>
@@ -44,60 +45,98 @@
     <strong>Inhaltsverzeichnis</strong>
     <ul>
       <li>1. Executive Summary & Score</li>
-      <li>2. Branchen-Benchmark & Best Practices</li>
-      <li>3. Compliance, Risiken & Fördermittel</li>
-      <li>4. Innovation, Chancen & Tool-Tipps</li>
-      <li>5. Vision & Roadmap</li>
-      <li>6. Glossar, FAQ & Tool-Liste</li>
+      <li>2. Score-Visualisierung</li>
+      <li>3. Branchen-Benchmark & Best Practices</li>
+      <li>4. Compliance, Risiken & Fördermittel</li>
+      <li>5. Innovation, Chancen & Tool-Tipps</li>
+      <li>6. Vision & Roadmap</li>
+      <li>7. Checklisten</li>
+      <li>8. Praxisbeispiele</li>
+      <li>9. Fördermittel-Programme</li>
+      <li>10. Glossar, FAQ & Tool-Liste</li>
+      <li>11. Rechtliche Hinweise & Copyright</li>
     </ul>
   </div>
 
-  <!-- Abschnitte dynamisch einfügen -->
+  <!-- Executive Summary -->
   <div class="section">
     <h2>1. Executive Summary & Score</h2>
     {{EXEC_SUMMARY}}
   </div>
 
+  <!-- Score-Visualisierung -->
   <div class="section pagebreak">
-    <h2>2. Branchen-Benchmark & Best Practices</h2>
+    <h2>2. Score-Visualisierung</h2>
+    {{SCORE_VISUALISIERUNG}}
+  </div>
+
+  <!-- Benchmark & Best Practices -->
+  <div class="section pagebreak">
+    <h2>3. Branchen-Benchmark & Best Practices</h2>
     {{BENCHMARK}}
   </div>
 
+  <!-- Compliance & Fördermittel -->
   <div class="section pagebreak">
-    <h2>3. Compliance, Risiken & Fördermittel</h2>
+    <h2>4. Compliance, Risiken & Fördermittel</h2>
     {{COMPLIANCE}}
   </div>
 
+  <!-- Innovation, Chancen & Tools -->
   <div class="section pagebreak">
-    <h2>4. Innovation, Chancen & Tool-Tipps</h2>
+    <h2>5. Innovation, Chancen & Tool-Tipps</h2>
     {{INNOVATION}}
     <h3>Empfohlene Tools (mit Links)</h3>
-    <table class="tooltable">
-      <tr><th>Tool</th><th>Zweck</th><th>Link</th></tr>
-      {{TOOLS}}
-    </table>
+    <div>{{TOOLS}}</div>
   </div>
 
+  <!-- Vision & Roadmap -->
   <div class="section pagebreak">
-    <h2>5. Vision & Roadmap</h2>
+    <h2>6. Vision & Roadmap</h2>
     {{VISION}}
   </div>
 
+  <!-- Checklisten -->
   <div class="section pagebreak">
-    <h2>6. Glossar, FAQ & Tool-Liste</h2>
+    <h2>7. Checklisten</h2>
+    {{CHECKLISTEN}}
+  </div>
+
+  <!-- Praxisbeispiele -->
+  <div class="section pagebreak">
+    <h2>8. Branchennahe Praxisbeispiele</h2>
+    {{PRAXISBEISPIELE}}
+  </div>
+
+  <!-- Fördermittel-Programme -->
+  <div class="section pagebreak">
+    <h2>9. Fördermittel-Programme (regional & national)</h2>
+    <div>{{FOERDERMITTEL_TAB}}</div>
+    <div>{{FOERDERMITTEL_MD}}</div>
+  </div>
+
+  <!-- Glossar, FAQ & Tool-Liste -->
+  <div class="section pagebreak">
+    <h2>10. Glossar, FAQ & Tool-Liste</h2>
     <h3>Glossar</h3>
     {{GLOSSAR}}
     <h3>FAQ</h3>
     {{FAQ}}
     <h3>Tool-Liste (kompakt)</h3>
-    <table class="tooltable">
-      <tr><th>Tool</th><th>Zweck</th><th>Link</th></tr>
-      {{TOOLS_COMPACT}}
-    </table>
+    <div>{{TOOLS_COMPACT}}</div>
   </div>
 
-  <div class="footer">
-    Erstellt mit KI | <a href="https://dein-projekt-url.de">ki-sicherheit.jetzt</a>
+  <!-- Footer & Rechtliches -->
+  <div class="footer pagebreak">
+    Erstellt mit KI | <a href="https://ki-sicherheit.jetzt">ki-sicherheit.jetzt</a><br>
+    <img src="ki-sicherheit-logo.png" alt="Logo" style="height:28px;vertical-align:middle; margin:0 8px;"/>
+    <div class="lizenz">
+      &copy; KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025<br>
+      Alle Inhalte ausschließlich zur Nutzung im Rahmen der KI-Readiness- und Datenschutzberatung.<br>
+      Weitergabe oder Veröffentlichung nur mit schriftlicher Genehmigung.<br>
+      Alle Logos und Design-Elemente sind urheberrechtlich geschützt.<br>
+      Die Nutzung und Bearbeitung der bereitgestellten Listen, Templates und Prompts ist ausschließlich Kunden und Partnern von KI-Sicherheit.jetzt vorbehalten.
+    </div>
   </div>
 </body>
 </html>
