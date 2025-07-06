@@ -1,5 +1,6 @@
 import json
 import os
+import pandas as pd
 from openai import OpenAI
 
 client = OpenAI()  # API-Key wird aus Umgebungsvariable gelesen
@@ -25,6 +26,54 @@ def calc_readiness_score(data):
         score = 42  # Fallback
     return min(100, max(0, score))
 
+
+# --- Hilfsfunktionen für Datenintegration ---
+def read_csv_html(path, filter_dict=None, columns=None):
+    try:
+        df = pd.read_csv(path)
+        if filter_dict:
+            for key, value in filter_dict.items():
+                if key in df.columns and value:
+                    df = df[df[key].astype(str).str.contains(value, case=False, na=False)]
+        if columns:
+            df = df[columns]
+        if df.empty:
+            return "<i>Keine passenden Einträge gefunden.</i>"
+        return df.to_html(index=False, justify='left', escape=False)
+    except Exception as e:
+        return f"<i>Fehler beim Lesen der CSV {path}: {e}</i>"
+
+def read_markdown(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        return f"_Datei nicht gefunden: {path}_"
+
+def get_tools_table(data):
+    filter_dict = {
+        'Branche': data.get("branche", ""),
+        'Unternehmensgröße': data.get("unternehmensgroesse", "")
+    }
+    return read_csv_html('data/tools.csv', filter_dict=filter_dict, columns=['Tool', 'Zweck', 'Link', 'Aufwand'])
+
+def get_foerdermittel_table(data):
+    filter_dict = {
+        'Region': data.get("bundesland", ""),
+        'Zielgruppe': data.get("unternehmensgroesse", "")
+    }
+    return read_csv_html('data/foerdermittel.csv', filter_dict=filter_dict, columns=['Programm', 'Region', 'Fördersumme', 'Link', 'Aufwand'])
+
+def get_praxisbeispiele(data):
+    inhalt = read_markdown('data/praxisbeispiele.md')
+    branche = data.get("branche", "").lower()
+    matches = [block.strip() for block in inhalt.split('---') if branche in block.lower()]
+    return "<br><br>".join(matches[:2]) if matches else "<i>Keine Praxisbeispiele für Ihre Branche gefunden.</i>"
+
+def get_checkliste(name):
+    return read_markdown(f'data/{name}.md')
+
+# --- Prompt-Vorlagen für alle Abschnitte (wie gehabt, keine Änderung nötig) ---
 # --- Prompt-Vorlagen für alle Abschnitte ---
 def prompt_exec_summary(data, score):
     return f"""
@@ -146,4 +195,34 @@ def generate_report(data):
     ).choices[0].message.content
     results.append("## Glossar, Tool-Liste & FAQ\n\n" + glossary)
 
+    # --- Eigene Datenintegration nach KI-Ausgabe ---
+
+    # Score-Visualisierung (Markdown)
+    score_vis = read_markdown('data/score_visualisierung.md')
+    results.append("## Score-Visualisierung & Interpretation\n\n" + score_vis)
+
+    # Alle Checklisten integrieren
+    checklisten_namen = [
+        "check_ki_readiness",
+        "check_datenschutz",
+        "check_compliance_eu_ai_act",
+        "check_foerdermittel",
+        "check_umsetzungsplan_ki",
+        "check_innovationspotenzial"
+    ]
+    for name in checklisten_namen:
+        content = get_checkliste(name)
+        if content.strip():
+            results.append(f"## Checkliste: {name.replace('check_', '').replace('_', ' ').title()}\n\n{content}")
+
+    # Tool-Tabelle, nach Branche/Größe
+    results.append("## Empfohlene Tools (gefiltert nach Branche & Größe)\n\n" + get_tools_table(data))
+
+    # Fördermittel-Tabelle, nach Bundesland/Größe
+    results.append("## Förderprogramme (regional & national)\n\n" + get_foerdermittel_table(data))
+
+    # Praxisbeispiele (nach Branche gefiltert)
+    results.append("## Branchennahe Praxisbeispiele\n\n" + get_praxisbeispiele(data))
+
     return "\n\n---\n\n".join(results)
+
