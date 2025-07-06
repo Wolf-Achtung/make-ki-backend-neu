@@ -86,7 +86,7 @@ async def create_briefing(request: Request):
     sections["BRANCHE"] = data.get("branche", "")
 
     # Lade dein HTML-Template
-    with open("pdf_template.html", encoding="utf-8") as f:
+    with open("templates/pdf_template.html", encoding="utf-8") as f:
         template = Template(f.read())
     html_content = template.render(**sections)
 
