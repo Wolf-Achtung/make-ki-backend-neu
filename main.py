@@ -16,10 +16,9 @@ app = FastAPI()
 
 app.mount("/downloads", StaticFiles(directory="downloads"), name="downloads")
 
-# Nur diese Origin ist erlaubt (deine Frontend-URL!)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://make.ki-sicherheit.jetzt"],
+    allow_origins=["https://make.ki-sicherheit.jetzt"],  # ggf. Frontend-URL anpassen!
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,10 +27,6 @@ app.add_middleware(
 templates = Jinja2Templates(directory="templates")
 
 def extract_sections(markdown_text):
-    """
-    Extrahiert die wichtigsten Abschnitte aus dem Markdown-Report.
-    Gibt ein Dict für die Template-Platzhalter zurück.
-    """
     sections = {
         "EXEC_SUMMARY": "",
         "BENCHMARK": "",
@@ -45,9 +40,13 @@ def extract_sections(markdown_text):
         "KI_SCORE": "",
         "DATUM": "",
         "UNTERNEHMEN": "",
-        "BRANCHE": ""
+        "BRANCHE": "",
+        "CHECKLISTEN": "",
+        "SCORE_VISUALISIERUNG": "",
+        "PRAXISBEISPIELE": "",
+        "FOERDERMITTEL_TAB": "",
+        "FOERDERMITTEL_MD": ""
     }
-    # Regex für Abschnitte (Passe ggf. an, je nach GPT-Formatierung)
     patterns = {
         "EXEC_SUMMARY": r"## Executive Summary[^\n]*\n+(.*?)(?=\n##|\Z)",
         "BENCHMARK": r"## Branchenvergleich[^\n]*\n+(.*?)(?=\n##|\Z)",
@@ -55,7 +54,6 @@ def extract_sections(markdown_text):
         "INNOVATION": r"## Innovation[^\n]*\n+(.*?)(?=\n##|\Z)",
         "VISION": r"## Ihre Zukunft mit KI[^\n]*\n+(.*?)(?=\n##|\Z)",
         "GLOSSAR": r"## Glossar[^\n]*\n+(.*?)(?=(##|\Z))",
-        # Optional weitere: FAQ, Tools, etc.
     }
     for key, pat in patterns.items():
         match = re.search(pat, markdown_text, re.DOTALL)
@@ -91,29 +89,30 @@ async def create_briefing(request: Request):
     html_content = template.render(**sections)
 
     # PDF erzeugen
-  pdf_filename = create_pdf_from_template(
-    html_content,                        # Das HTML-Template mit allen {{PLATZHALTERN}}
-    sections.get("EXEC_SUMMARY", ""),    # Executive Summary-Text
-    sections.get("KI_SCORE", ""),        # Score-Visualisierung (Chart oder Text)
-    sections.get("BENCHMARK", ""),       # Branchenvergleich/Benchmarks
-    sections.get("COMPLIANCE", ""),      # Compliance & Fördermittel
-    sections.get("INNOVATION", ""),      # Innovation & Chancen
-    sections.get("TOOLS", ""),           # Tool-Tipps (kompakt oder ausführlich)
-    sections.get("VISION", ""),          # Vision & Roadmap
-    sections.get("CHECKLISTEN", ""),     # Checklisten (dynamisch)
-    sections.get("SCORE_VISUALISIERUNG", ""), # Score-Chart-HTML oder Markdown
-    sections.get("PRAXISBEISPIELE", ""), # Praxisbeispiele
-    sections.get("FOERDERMITTEL_TAB", ""), # Fördermitteltabelle (CSV)
-    sections.get("FOERDERMITTEL_MD", ""),  # Fördermittel (Markdown)
-    sections.get("GLOSSAR", ""),         # Glossar
-    sections.get("FAQ", ""),             # FAQ
-    sections.get("TOOLS_COMPACT", ""),   # Tool-Liste kompakt
-    copyright_text="© KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025"
-)
-except Exception as e:
-    return JSONResponse({"error": f"PDF-Export fehlgeschlagen: {str(e)}"}, status_code=500)
-    pdf_url = f"/downloads/{pdf_filename}"
+    try:
+        pdf_filename = create_pdf_from_template(
+            html_content,                        # Das HTML-Template mit allen {{PLATZHALTERN}}
+            sections.get("EXEC_SUMMARY", ""),    # Executive Summary-Text
+            sections.get("KI_SCORE", ""),        # Score-Visualisierung (Chart oder Text)
+            sections.get("BENCHMARK", ""),       # Branchenvergleich/Benchmarks
+            sections.get("COMPLIANCE", ""),      # Compliance & Fördermittel
+            sections.get("INNOVATION", ""),      # Innovation & Chancen
+            sections.get("TOOLS", ""),           # Tool-Tipps (kompakt oder ausführlich)
+            sections.get("VISION", ""),          # Vision & Roadmap
+            sections.get("CHECKLISTEN", ""),     # Checklisten (dynamisch)
+            sections.get("SCORE_VISUALISIERUNG", ""), # Score-Chart-HTML oder Markdown
+            sections.get("PRAXISBEISPIELE", ""), # Praxisbeispiele
+            sections.get("FOERDERMITTEL_TAB", ""), # Fördermitteltabelle (CSV)
+            sections.get("FOERDERMITTEL_MD", ""),  # Fördermittel (Markdown)
+            sections.get("GLOSSAR", ""),         # Glossar
+            sections.get("FAQ", ""),             # FAQ
+            sections.get("TOOLS_COMPACT", ""),   # Tool-Liste kompakt
+            copyright_text="© KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025"
+        )
+    except Exception as e:
+        return JSONResponse({"error": f"PDF-Export fehlgeschlagen: {str(e)}"}, status_code=500)
 
+    pdf_url = f"/downloads/{pdf_filename}"
     return JSONResponse(content={"html": html_content, "pdf_url": pdf_url})
 
 @app.get("/")
