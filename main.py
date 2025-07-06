@@ -16,12 +16,7 @@ app = FastAPI()
 
 app.mount("/downloads", StaticFiles(directory="downloads"), name="downloads")
 
-origins = [
-    "https://make.ki-sicherheit.jetzt",
-    "http://localhost",
-    "http://localhost:3000",
-    "http://127.0.0.1:8000"
-]
+# Nur diese Origin ist erlaubt (deine Frontend-URL!)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://make.ki-sicherheit.jetzt"],
@@ -52,7 +47,7 @@ def extract_sections(markdown_text):
         "UNTERNEHMEN": "",
         "BRANCHE": ""
     }
-    # Einfache Regex für Abschnitte
+    # Regex für Abschnitte (Passe ggf. an, je nach GPT-Formatierung)
     patterns = {
         "EXEC_SUMMARY": r"## Executive Summary[^\n]*\n+(.*?)(?=\n##|\Z)",
         "BENCHMARK": r"## Branchenvergleich[^\n]*\n+(.*?)(?=\n##|\Z)",
@@ -73,6 +68,10 @@ async def create_briefing(request: Request):
     data = await request.json()
     print("🚀 Empfangenes JSON:", data)
 
+    # DSGVO/Datenschutz prüfen
+    if not data.get("datenschutz_ok"):
+        return JSONResponse({"error": "Datenschutzerklärung nicht akzeptiert."}, status_code=400)
+
     # GPT-Analyse
     report_markdown = generate_report(data)
     print("✅ GPT-Report (Markdown):", report_markdown[:600])  # Preview
@@ -80,7 +79,7 @@ async def create_briefing(request: Request):
     # Extrahiere Abschnitte für Template
     sections = extract_sections(report_markdown)
 
-    # Werte für KI-Score etc. (berechne ggf. in gpt_analyze.py, oder ziehe aus Report)
+    # Werte für KI-Score etc.
     sections["KI_SCORE"] = data.get("ki_score", "—")
     sections["DATUM"] = data.get("datum", "")
     sections["UNTERNEHMEN"] = data.get("unternehmen", "")

@@ -1,9 +1,8 @@
 import json
-import openai
 import os
+from openai import OpenAI
 
-# Optional: Lade API-Key aus Umgebungsvariable oder trage direkt ein
-openai.api_key = os.getenv("OPENAI_API_KEY", "HIER_DEIN_API_KEY")
+client = OpenAI()  # API-Key wird aus Umgebungsvariable gelesen
 
 # --- Hilfsfunktion: KI-Readiness-Score berechnen ---
 def calc_readiness_score(data):
@@ -100,62 +99,51 @@ def generate_report(data):
     results = []
 
     # Executive Summary & Score
-    summary = openai.ChatCompletion.create(
+    summary = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "system", "content": prompt_exec_summary(data, score)}],
         max_tokens=4000
-    )["choices"][0]["message"]["content"]
+    ).choices[0].message.content
     results.append("## Executive Summary & KI-Readiness-Score\n\n" + summary)
 
     # Benchmark & Branchenvergleich
-    benchmark = openai.ChatCompletion.create(
+    benchmark = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "system", "content": prompt_benchmark(data)}],
         max_tokens=3000
-    )["choices"][0]["message"]["content"]
+    ).choices[0].message.content
     results.append("## Branchenvergleich & Benchmarks\n\n" + benchmark)
 
     # Compliance & Fördermittel
-    compliance = openai.ChatCompletion.create(
+    compliance = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "system", "content": prompt_compliance_foerdermittel(data)}],
         max_tokens=3000
-    )["choices"][0]["message"]["content"]
+    ).choices[0].message.content
     results.append("## Compliance, Risiken & Fördermittel\n\n" + compliance)
 
     # Innovation & Tools
-    innovation = openai.ChatCompletion.create(
+    innovation = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "system", "content": prompt_innovation_tools(data)}],
         max_tokens=3500
-    )["choices"][0]["message"]["content"]
+    ).choices[0].message.content
     results.append("## Innovation, Chancen & Tool-Tipps\n\n" + innovation)
 
     # Vision & Roadmap
-    vision = openai.ChatCompletion.create(
+    vision = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "system", "content": prompt_vision_roadmap(data)}],
         max_tokens=3500
-    )["choices"][0]["message"]["content"]
+    ).choices[0].message.content
     results.append("## Ihre Zukunft mit KI: Vision & Roadmap\n\n" + vision)
 
     # Glossar, Tool-Liste, FAQ
-    glossary = openai.ChatCompletion.create(
+    glossary = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "system", "content": prompt_glossar_tools_faq(data)}],
         max_tokens=2000
-    )["choices"][0]["message"]["content"]
+    ).choices[0].message.content
     results.append("## Glossar, Tool-Liste & FAQ\n\n" + glossary)
 
-    # Optional: Zusammenführen für HTML/PDF
     return "\n\n---\n\n".join(results)
-
-# --- Beispiel für Aufruf (data ist das vom Formular erhaltene JSON) ---
-if __name__ == "__main__":
-    with open("sample_data.json", encoding="utf-8") as f:
-        data = json.load(f)
-    report = generate_report(data)
-    with open("output_report.md", "w", encoding="utf-8") as f:
-        f.write(report)
-    print("Report erfolgreich generiert!")
-
