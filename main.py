@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from jinja2 import Template
 
 from gpt_analyze import generate_report
-from pdf_export import create_pdf
+from pdf_export import create_pdf_from_template
 
 import os
 import markdown
