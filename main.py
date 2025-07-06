@@ -91,7 +91,27 @@ async def create_briefing(request: Request):
     html_content = template.render(**sections)
 
     # PDF erzeugen
-    pdf_filename = create_pdf(html_content)
+  pdf_filename = create_pdf_from_template(
+    html_content,                        # Das HTML-Template mit allen {{PLATZHALTERN}}
+    sections.get("EXEC_SUMMARY", ""),    # Executive Summary-Text
+    sections.get("KI_SCORE", ""),        # Score-Visualisierung (Chart oder Text)
+    sections.get("BENCHMARK", ""),       # Branchenvergleich/Benchmarks
+    sections.get("COMPLIANCE", ""),      # Compliance & Fördermittel
+    sections.get("INNOVATION", ""),      # Innovation & Chancen
+    sections.get("TOOLS", ""),           # Tool-Tipps (kompakt oder ausführlich)
+    sections.get("VISION", ""),          # Vision & Roadmap
+    sections.get("CHECKLISTEN", ""),     # Checklisten (dynamisch)
+    sections.get("SCORE_VISUALISIERUNG", ""), # Score-Chart-HTML oder Markdown
+    sections.get("PRAXISBEISPIELE", ""), # Praxisbeispiele
+    sections.get("FOERDERMITTEL_TAB", ""), # Fördermitteltabelle (CSV)
+    sections.get("FOERDERMITTEL_MD", ""),  # Fördermittel (Markdown)
+    sections.get("GLOSSAR", ""),         # Glossar
+    sections.get("FAQ", ""),             # FAQ
+    sections.get("TOOLS_COMPACT", ""),   # Tool-Liste kompakt
+    copyright_text="© KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025"
+)
+except Exception as e:
+    return JSONResponse({"error": f"PDF-Export fehlgeschlagen: {str(e)}"}, status_code=500)
     pdf_url = f"/downloads/{pdf_filename}"
 
     return JSONResponse(content={"html": html_content, "pdf_url": pdf_url})
