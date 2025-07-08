@@ -18,7 +18,7 @@ app.mount("/downloads", StaticFiles(directory="downloads"), name="downloads")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://make.ki-sicherheit.jetzt"],  # ggf. Frontend-URL anpassen!
+    allow_origins=["https://make.ki-sicherheit.jetzt"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,53 +66,59 @@ async def create_briefing(request: Request):
     data = await request.json()
     print("🚀 Empfangenes JSON:", data)
 
-    # DSGVO/Datenschutz prüfen
     if not data.get("datenschutz_ok"):
         return JSONResponse({"error": "Datenschutzerklärung nicht akzeptiert."}, status_code=400)
 
     # GPT-Analyse
-    report_markdown = generate_report(data)
-    print("✅ GPT-Report (Markdown):", report_markdown[:600])  # Preview
+    try:
+        report_markdown = generate_report(data)
+        print("✅ GPT-Report (Markdown):", report_markdown[:600])
+    except Exception as e:
+        print(f"❌ Fehler bei GPT-Analyse: {e}")
+        return JSONResponse({"error": f"GPT-Analyse fehlgeschlagen: {str(e)}"}, status_code=500)
 
-    # Extrahiere Abschnitte für Template
     sections = extract_sections(report_markdown)
-
-    # Werte für KI-Score etc.
     sections["KI_SCORE"] = data.get("ki_score", "—")
     sections["DATUM"] = data.get("datum", "")
     sections["UNTERNEHMEN"] = data.get("unternehmen", "")
     sections["BRANCHE"] = data.get("branche", "")
 
-    # Lade dein HTML-Template
-    with open("templates/pdf_template.html", encoding="utf-8") as f:
-        template = Template(f.read())
-    html_content = template.render(**sections)
+    # HTML-Template laden
+    try:
+        with open("templates/pdf_template.html", encoding="utf-8") as f:
+            template = Template(f.read())
+        html_content = template.render(**sections)
+    except Exception as e:
+        print(f"❌ Fehler beim Rendern des Templates: {e}")
+        return JSONResponse({"error": f"Template-Rendering fehlgeschlagen: {str(e)}"}, status_code=500)
 
     # PDF erzeugen
     try:
         pdf_filename = create_pdf_from_template(
-            html_content,                        # Das HTML-Template mit allen {{PLATZHALTERN}}
-            sections.get("EXEC_SUMMARY", ""),    # Executive Summary-Text
-            sections.get("KI_SCORE", ""),        # Score-Visualisierung (Chart oder Text)
-            sections.get("BENCHMARK", ""),       # Branchenvergleich/Benchmarks
-            sections.get("COMPLIANCE", ""),      # Compliance & Fördermittel
-            sections.get("INNOVATION", ""),      # Innovation & Chancen
-            sections.get("TOOLS", ""),           # Tool-Tipps (kompakt oder ausführlich)
-            sections.get("VISION", ""),          # Vision & Roadmap
-            sections.get("CHECKLISTEN", ""),     # Checklisten (dynamisch)
-            sections.get("SCORE_VISUALISIERUNG", ""), # Score-Chart-HTML oder Markdown
-            sections.get("PRAXISBEISPIELE", ""), # Praxisbeispiele
-            sections.get("FOERDERMITTEL_TAB", ""), # Fördermitteltabelle (CSV)
-            sections.get("FOERDERMITTEL_MD", ""),  # Fördermittel (Markdown)
-            sections.get("GLOSSAR", ""),         # Glossar
-            sections.get("FAQ", ""),             # FAQ
-            sections.get("TOOLS_COMPACT", ""),   # Tool-Liste kompakt
+            html_content,
+            sections.get("EXEC_SUMMARY", ""),
+            sections.get("KI_SCORE", ""),
+            sections.get("BENCHMARK", ""),
+            sections.get("COMPLIANCE", ""),
+            sections.get("INNOVATION", ""),
+            sections.get("TOOLS", ""),
+            sections.get("VISION", ""),
+            sections.get("CHECKLISTEN", ""),
+            sections.get("SCORE_VISUALISIERUNG", ""),
+            sections.get("PRAXISBEISPIELE", ""),
+            sections.get("FOERDERMITTEL_TAB", ""),
+            sections.get("FOERDERMITTEL_MD", ""),
+            sections.get("GLOSSAR", ""),
+            sections.get("FAQ", ""),
+            sections.get("TOOLS_COMPACT", ""),
             copyright_text="© KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025"
         )
     except Exception as e:
+        print(f"❌ Fehler beim PDF-Export: {e}")
         return JSONResponse({"error": f"PDF-Export fehlgeschlagen: {str(e)}"}, status_code=500)
 
-    pdf_url = f"/downloads/{pdf_filename}"
+    # Hier absolute URL zurückgeben
+    pdf_url = f"https://make-ki-backend-neu-production.up.railway.app/downloads/{pdf_filename}"
     return JSONResponse(content={"html": html_content, "pdf_url": pdf_url})
 
 @app.get("/")
