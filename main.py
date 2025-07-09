@@ -47,27 +47,9 @@ async def create_briefing(request: Request):
         print(f"❌ Fehler beim Rendern des Templates: {e}")
         return JSONResponse({"error": f"Template-Rendering fehlgeschlagen: {str(e)}"}, status_code=500)
 
-    # PDF erzeugen
+    # PDF erzeugen (nur noch html_content notwendig)
     try:
-        pdf_filename = create_pdf_from_template(
-            html_content,
-            report_data.get("summary", ""),
-            report_data.get("check_readiness", ""),
-            report_data.get("check_compliance", ""),
-            report_data.get("check_ds", ""),
-            report_data.get("innovation", ""),
-            report_data.get("tools", ""),
-            report_data.get("roadmap", ""),
-            report_data.get("check_roadmap", ""),
-            report_data.get("score_vis", ""),
-            report_data.get("praxis", ""),
-            report_data.get("check_foerder", ""),
-            report_data.get("foerder_programme", ""),
-            report_data.get("foerder", ""),
-            report_data.get("compliance", ""),
-            report_data.get("check_inno", ""),
-            copyright_text="© KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025"
-        )
+        pdf_filename = create_pdf_from_template(html_content)
     except Exception as e:
         print(f"❌ Fehler beim PDF-Export: {e}")
         return JSONResponse({"error": f"PDF-Export fehlgeschlagen: {str(e)}"}, status_code=500)

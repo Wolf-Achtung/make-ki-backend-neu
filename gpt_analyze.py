@@ -68,20 +68,37 @@ def gpt_block(data, topic):
             {"role": "system", "content": "Du bist ein TÜV-zertifizierter KI-Manager und Experte."},
             {"role": "user", "content":
 f"""
-Erstelle einen ausführlichen Analyseabschnitt mit mindestens 1200 Wörtern zum Thema: {topic}.
+Erstelle einen ausführlichen Analyseabschnitt (mindestens 1200 Wörter) zum Thema: {topic}.
 
-Berücksichtige diese Felder:
-- ki_potenzial, ki_hemmnisse, innovationsprozess, marktposition, moonshot, ai_act_kenntnis, interesse_foerderung, bisherige_foerdermittel
+Berücksichtige Felder wie ki_potenzial, ki_hemmnisse, innovationsprozess, marktposition, moonshot, ai_act_kenntnis, interesse_foerderung, bisherige_foerdermittel.
 
-Baue eine strukturierte SWOT-Analyse (Stärken, Schwächen, Chancen, Risiken) ein, dazu konkrete Handlungsempfehlungen und relevante Praxisbeispiele.
+Gib auch eine SWOT-Analyse zurück, formatiert so:
+- SWOT Stärken: ...
+- SWOT Schwächen: ...
+- SWOT Chancen: ...
+- SWOT Risiken: ...
 
-Hier sind die strukturierten Antworten:
+Und schließe klare Handlungsempfehlungen und Praxisbeispiele ein.
+
+Hier die strukturierten Antworten:
 {json.dumps(data, indent=2)}
 """
             }
         ]
     )
     return response.choices[0].message.content.strip()
+
+def extract_swot(full_text):
+    import re
+    def find(pattern):
+        m = re.search(pattern, full_text, re.DOTALL | re.IGNORECASE)
+        return m.group(1).strip() if m else ""
+    return {
+        "swot_strengths": find(r"SWOT Stärken:(.*?)(?:SWOT|$)"),
+        "swot_weaknesses": find(r"SWOT Schwächen:(.*?)(?:SWOT|$)"),
+        "swot_opportunities": find(r"SWOT Chancen:(.*?)(?:SWOT|$)"),
+        "swot_threats": find(r"SWOT Risiken:(.*?)(?:SWOT|$)")
+    }
 
 def read_markdown_file(path):
     try:
@@ -103,7 +120,14 @@ def analyze_full_report(data):
     roadmap = gpt_block(data, "Empfohlene Roadmap")
     foerder = gpt_block(data, "Förderprogramme & Finanzierung")
 
-    # Checklisten & Module laden
+    # SWOT extrahieren (einmal aus Innovation ziehen)
+    swot_parts = extract_swot(innovation)
+
+    # Score berechnen
+    score = calc_readiness_score(data)
+    score_percent = score * 10
+
+    # Checks & Praxis
     check_readiness = read_markdown_file("check_ki_readiness.md")
     score_vis = read_markdown_file("score_visualisierung.md")
     check_compliance = read_markdown_file("check_compliance_eu_ai_act.md")
@@ -125,6 +149,8 @@ def analyze_full_report(data):
         "moonshot": moonshot,
         "roadmap": roadmap,
         "foerder": foerder,
+        "score_percent": score_percent,
+        **swot_parts,
         "check_readiness": check_readiness,
         "score_vis": score_vis,
         "check_compliance": check_compliance,
