@@ -2,254 +2,62 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>KI-Readiness & Fördermittel Whitepaper</title>
+  <title>KI-Readiness Report</title>
   <style>
-    body {
-      font-family: 'Inter', Arial, sans-serif;
-      color: #19202A;
-      background: #f8fafc;
-      margin: 0;
-    }
-    .cover {
-      background: #003b5a;
-      color: #fff;
-      padding: 48px 32px 32px 32px;
-      text-align: center;
-    }
-    .cover h1 {
-      font-size: 2.7em;
-      margin-bottom: 12px;
-    }
-    .score {
-      background: #fff;
-      color: #003b5a;
-      display: inline-block;
-      border-radius: 40px;
-      padding: 0.8em 2.2em;
-      font-size: 1.5em;
-      margin: 22px 0;
-      box-shadow: 0 4px 16px #003b5a33;
-    }
-    .summary-box {
-      background: #e6eef5;
-      color: #003b5a;
-      padding: 22px 28px;
-      border-radius: 18px;
-      margin: 32px auto 40px auto;
-      max-width: 630px;
-      font-size: 1.17em;
-      box-shadow: 0 2px 16px #003b5a22;
-    }
-    .section {
-      margin: 56px auto 38px auto;
-      max-width: 800px;
-    }
-    h2 {
-      font-size: 2.1em;
-      margin-top: 0;
-      color: #003b5a;
-    }
-    h3 {
-      color: #1e293b;
-      font-size: 1.2em;
-      margin-top: 34px;
-    }
-    .infobox {
-      background: #ffe;
-      border-left: 7px solid #f9a826;
-      padding: 18px 26px;
-      border-radius: 8px;
-      margin: 26px 0;
-    }
-    .tooltable {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 1.02em;
-    }
-    .tooltable th, .tooltable td {
-      border: 1.5px solid #ddd;
-      padding: 8px 12px;
-    }
-    .tooltable th {
-      background: #e6eef5;
-    }
-    .checklist {
-      background: #e3fbe9;
-      border-left: 7px solid #10b981;
-      padding: 18px 24px;
-      border-radius: 8px;
-      margin: 24px 0;
-    }
-    .qrbox {
-      background: #f1f5f9;
-      border-radius: 9px;
-      display: inline-block;
-      padding: 14px 22px;
-      margin: 12px 0;
-    }
-    .footer {
-      width: 100vw;
-      background: #f7fbfd;
-      color: #124066;
-      font-size: 0.97rem;
-      padding: 18px 0 8px 0;
-      border-top: 2px solid #0369a1;
-      text-align: center;
-      letter-spacing: 0.01em;
-      box-shadow: 0 -2px 16px #0369a119;
-      margin-top: 44px;
-    }
-    .footer a {
-      color: #0369a1;
-      font-weight: 600;
-      text-decoration: underline dotted;
-      transition: color 0.18s;
-    }
-    .footer a:hover {
-      color: #093d56;
-    }
-    .footer img {
-      margin-top: 9px;
-      margin-bottom: 9px;
-      background: #fff;
-      border-radius: 7px;
-      box-shadow: 0 2px 8px #0369a126;
-    }
-    .lizenz {
-      margin-top: 7px;
-      color: #175082;
-      font-size: 0.9rem;
-      line-height: 1.3;
-    }
-    @media (max-width: 600px) {
-      .section { padding: 0 2vw; }
-      .footer { font-size: 0.91rem; padding: 12px 0 6px 0; }
-      .lizenz { font-size: 0.79rem; }
-    }
-    @media print { body { background: #fff; } }
-    a { color: #003b5a; text-decoration: underline; }
-    .toc {
-      background: #f1f5f9;
-      border-radius: 10px;
-      padding: 22px;
-      margin: 38px auto 38px auto;
-      max-width: 720px;
-      font-size: 1.12em;
-    }
-    .toc ul { padding-left: 18px; }
-    .toc li { margin-bottom: 7px; }
-    .pagebreak { page-break-after: always; }
+    body { font-family: sans-serif; color: #333; background: white; line-height: 1.6; }
+    h1,h2 { color: #007acc; }
+    .section { page-break-after: always; }
+    img.chart { width: 80%; margin: 20px auto; display: block; }
   </style>
 </head>
 <body>
-  <!-- Deckblatt -->
-  <div class="cover">
-    <img src="ki-sicherheit-logo.png" style="height:60px; margin-bottom:20px;" alt="Logo" />
-    <h1>KI-Readiness & Fördermittel Whitepaper</h1>
-    <div class="score">KI-Readiness-Score: <strong>{{KI_SCORE}}</strong> / 100</div>
-    <div class="summary-box">
-      {{EXEC_SUMMARY}}
-    </div>
-    <div style="margin-top:38px; font-size:1.15em;">Datum: {{DATUM}}<br>Für: {{UNTERNEHMEN}} ({{BRANCHE}})</div>
-  </div>
+  <h1>KI-Readiness Report</h1>
+  <p>TÜV-zertifiziertes KI-Management • www.ki-sicherheit.jetzt</p>
 
-  <!-- Inhaltsverzeichnis -->
-  <div class="toc pagebreak">
-    <strong>Inhaltsverzeichnis</strong>
-    <ul>
-      <li>1. Executive Summary & Score</li>
-      <li>2. Score-Visualisierung</li>
-      <li>3. Branchen-Benchmark & Best Practices</li>
-      <li>4. Compliance, Risiken & Fördermittel</li>
-      <li>5. Innovation, Chancen & Tool-Tipps</li>
-      <li>6. Vision & Roadmap</li>
-      <li>7. Checklisten</li>
-      <li>8. Praxisbeispiele</li>
-      <li>9. Fördermittel-Programme</li>
-      <li>10. Glossar, FAQ & Tool-Liste</li>
-      <li>11. Rechtliche Hinweise & Copyright</li>
-    </ul>
-  </div>
-
-  <!-- Executive Summary -->
   <div class="section">
-    <h2>1. Executive Summary & Score</h2>
-    {{EXEC_SUMMARY}}
+    <h2>Executive Summary</h2>
+    <p>{{summary}}</p>
   </div>
 
-  <!-- Score-Visualisierung -->
-  <div class="section pagebreak">
-    <h2>2. Score-Visualisierung</h2>
-    {{SCORE_VISUALISIERUNG}}
+  <div class="section">
+    <h2>Score-Visualisierung</h2>
+    <img src="static/chart.png" class="chart" />
+    <p>{{score_vis}}</p>
   </div>
 
-  <!-- Benchmark & Best Practices -->
-  <div class="section pagebreak">
-    <h2>3. Branchen-Benchmark & Best Practices</h2>
-    {{BENCHMARK}}
+  <div class="section">
+    <h2>Compliance & Datenschutz</h2>
+    <p>{{compliance}}</p>
   </div>
 
-  <!-- Compliance & Fördermittel -->
-  <div class="section pagebreak">
-    <h2>4. Compliance, Risiken & Fördermittel</h2>
-    {{COMPLIANCE}}
+  <div class="section">
+    <h2>Innovation & Moonshot</h2>
+    <p>{{innovation}}</p>
   </div>
 
-  <!-- Innovation & Tools -->
-  <div class="section pagebreak">
-    <h2>5. Innovation, Chancen & Tool-Tipps</h2>
-    {{INNOVATION}}
-    <h3>Empfohlene Tools (mit Links)</h3>
-    <div>{{TOOLS}}</div>
+  <div class="section">
+    <h2>Empfohlene Roadmap</h2>
+    <p>{{roadmap}}</p>
   </div>
 
-  <!-- Vision & Roadmap -->
-  <div class="section pagebreak">
-    <h2>6. Vision & Roadmap</h2>
-    {{VISION}}
+  <div class="section">
+    <h2>Fördermittel & Programme</h2>
+    <p>{{foerder}}</p>
   </div>
 
-  <!-- Checklisten -->
-  <div class="section pagebreak">
-    <h2>7. Checklisten</h2>
-    {{CHECKLISTEN}}
+  <div class="section">
+    <h2>Empfohlene Tools</h2>
+    <p>{{tools}}</p>
   </div>
 
-  <!-- Praxisbeispiele -->
-  <div class="section pagebreak">
-    <h2>8. Branchennahe Praxisbeispiele</h2>
-    {{PRAXISBEISPIELE}}
+  <div class="section">
+    <h2>Checklisten</h2>
+    <p>{{checklist}}</p>
   </div>
 
-  <!-- Fördermittel-Programme -->
-  <div class="section pagebreak">
-    <h2>9. Fördermittel-Programme (regional & national)</h2>
-    <div>{{FOERDERMITTEL_TAB}}</div>
-    <div>{{FOERDERMITTEL_MD}}</div>
+  <div class="section">
+    <h2>Praxisbeispiele</h2>
+    <p>{{praxis}}</p>
   </div>
-
-  <!-- Glossar, FAQ & Tool-Liste -->
-  <div class="section pagebreak">
-    <h2>10. Glossar, FAQ & Tool-Liste</h2>
-    <h3>Glossar</h3>
-    {{GLOSSAR}}
-    <h3>FAQ</h3>
-    {{FAQ}}
-    <h3>Tool-Liste (kompakt)</h3>
-    <div>{{TOOLS_COMPACT}}</div>
-  </div>
-
-  <!-- Footer & Rechtliches -->
-  <footer class="footer pagebreak">
-    Erstellt mit KI | <a href="https://ki-sicherheit.jetzt" target="_blank">ki-sicherheit.jetzt</a><br>
-    <img src="ki-sicherheit-logo.png" alt="Logo" style="height:28px;vertical-align:middle; margin:0 8px;"/>
-    <div class="lizenz">
-      &copy; KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025<br>
-      Alle Inhalte ausschließlich zur Nutzung im Rahmen der KI-Readiness- und Datenschutzberatung.<br>
-      Weitergabe oder Veröffentlichung nur mit schriftlicher Genehmigung.<br>
-      Alle Logos und Design-Elemente sind urheberrechtlich geschützt.<br>
-      Die Nutzung und Bearbeitung der bereitgestellten Listen, Templates und Prompts ist ausschließlich Kunden und Partnern von KI-Sicherheit.jetzt vorbehalten.
-    </div>
-  </footer>
 </body>
 </html>
