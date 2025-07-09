@@ -8,15 +8,26 @@
     h1,h2 { color: #007acc; }
     .section { page-break-after: always; }
     img.chart { width: 80%; margin: 20px auto; display: block; }
+    .progress-bar { width: 80%; background: #eee; border-radius: 5px; margin: 20px auto; height: 20px; }
+    .progress-fill { height: 100%; background: #4a90e2; border-radius: 5px; text-align: center; color: white; }
+    .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .swot-item { border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
+    .callout { background: #f0f8ff; border-left: 5px solid #007acc; padding: 10px; margin: 15px 0; }
+    ul.checklist { list-style: none; padding: 0; }
+    ul.checklist li:before { content: "✓ "; color: green; }
   </style>
 </head>
 <body>
   <h1>KI-Readiness Report</h1>
-  <p>TÜV-zertifiziertes KI-Management • www.ki-sicherheit.jetzt</p>
+  <p><img src="static/logo.png" alt="Logo" style="height:50px;"> &nbsp; www.ki-sicherheit.jetzt</p>
+  <p>Erstellt am: {{datum}}</p>
 
   <div class="section">
     <h2>Executive Summary</h2>
     <p>{{summary}}</p>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: {{score_percent}}%">{{score_percent}}%</div>
+    </div>
     <p>{{check_readiness}}</p>
     <p>{{score_vis}}</p>
   </div>
@@ -24,6 +35,7 @@
   <div class="section">
     <h2>Gesamtstrategie</h2>
     <p>{{strategie}}</p>
+    <div class="callout">Top-Empfehlung: Setzen Sie kurzfristig auf strategische Quick-Wins!</div>
   </div>
 
   <div class="section">
@@ -52,6 +64,12 @@
     <h2>Innovation & Wettbewerbsfähigkeit</h2>
     <p>{{innovation}}</p>
     <p>{{check_inno}}</p>
+    <div class="swot-grid">
+      <div class="swot-item"><strong>Stärken</strong><br>{{swot_strengths}}</div>
+      <div class="swot-item"><strong>Schwächen</strong><br>{{swot_weaknesses}}</div>
+      <div class="swot-item"><strong>Chancen</strong><br>{{swot_opportunities}}</div>
+      <div class="swot-item"><strong>Risiken</strong><br>{{swot_threats}}</div>
+    </div>
     <p>{{praxis}}</p>
   </div>
 
@@ -63,6 +81,11 @@
   <div class="section">
     <h2>Empfohlene Roadmap & Umsetzung</h2>
     <p>{{roadmap}}</p>
+    <ul class="checklist">
+      <li>Quick Wins sofort umsetzen</li>
+      <li>Mid-Term Projekte vorbereiten</li>
+      <li>Moonshot langfristig planen</li>
+    </ul>
     <p>{{check_roadmap}}</p>
   </div>
 
