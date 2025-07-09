@@ -101,11 +101,17 @@ def analyze_full_report(data):
     roadmap = gpt_block(data, "Empfohlene Roadmap")
     foerder = gpt_block(data, "Förderprogramme & Finanzierung")
 
-    # Aus externen Markdown-Dateien
-    tools = read_markdown_file("tools.md")
-    checklist = read_markdown_file("checklisten.md")
+    # Alle deine Dateien systematisch einladen
+    check_readiness = read_markdown_file("check_ki_readiness.md")
+    score_vis = read_markdown_file("score_visualisierung.md")
+    check_compliance = read_markdown_file("check_compliance_eu_ai_act.md")
+    check_ds = read_markdown_file("check_datenschutz.md")
+    check_inno = read_markdown_file("check_innovationspotenzial.md")
     praxis = read_markdown_file("praxisbeispiele.md")
-    vis = read_markdown_file("score_visualisierung.md")
+    check_roadmap = read_markdown_file("check_umsetzungsplan_ki.md")
+    check_foerder = read_markdown_file("check_foerdermittel.md")
+    foerder_programme = read_markdown_file("foerdermittel.md")
+    tools = read_markdown_file("tools.md")
 
     return {
         "summary": summary,
@@ -113,8 +119,14 @@ def analyze_full_report(data):
         "innovation": innovation,
         "roadmap": roadmap,
         "foerder": foerder,
-        "tools": tools,
-        "checklist": checklist,
+        "check_readiness": check_readiness,
+        "score_vis": score_vis,
+        "check_compliance": check_compliance,
+        "check_ds": check_ds,
+        "check_inno": check_inno,
         "praxis": praxis,
-        "score_vis": vis
+        "check_roadmap": check_roadmap,
+        "check_foerder": check_foerder,
+        "foerder_programme": foerder_programme,
+        "tools": tools
     }
