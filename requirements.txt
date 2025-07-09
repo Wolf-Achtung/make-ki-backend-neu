@@ -9,4 +9,5 @@ weasyprint
 aiofiles
 markdown
 pandas
+matplotlib
 
