@@ -1,7 +1,9 @@
 import json
-import openai
 import pandas as pd
 import matplotlib.pyplot as plt
+from openai import OpenAI
+
+client = OpenAI()
 
 def calc_readiness_score(data):
     score = 0
@@ -60,22 +62,18 @@ def generate_chart(data):
     plt.savefig("static/chart.png", bbox_inches='tight')
 
 def gpt_block(data, topic):
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "Du bist ein TÜV-zertifizierter KI-Manager mit Expertise in Strategie, Compliance, Förderung, Benchmarking und Innovation."},
+            {"role": "system", "content": "Du bist ein TÜV-zertifizierter KI-Manager und Experte."},
             {"role": "user", "content":
 f"""
 Erstelle einen ausführlichen Analyseabschnitt mit mindestens 1200 Wörtern zum Thema: {topic}.
 
-Berücksichtige dabei die folgenden Felder:
+Berücksichtige diese Felder:
 - ki_potenzial, ki_hemmnisse, innovationsprozess, marktposition, moonshot, ai_act_kenntnis, interesse_foerderung, bisherige_foerdermittel
 
-Nutze eine strukturierte Gliederung mit:
-- SWOT-Analyse (Stärken, Schwächen, Chancen, Risiken)
-- Handlungsempfehlungen
-- ggf. Fördermöglichkeiten
-- praxisnahe Beispiele
+Baue eine strukturierte SWOT-Analyse (Stärken, Schwächen, Chancen, Risiken) ein, dazu konkrete Handlungsempfehlungen und relevante Praxisbeispiele.
 
 Hier sind die strukturierten Antworten:
 {json.dumps(data, indent=2)}
@@ -95,13 +93,17 @@ def read_markdown_file(path):
 def analyze_full_report(data):
     generate_chart(data)
 
-    summary = gpt_block(data, "Executive Summary & Gesamtstrategie")
-    compliance = gpt_block(data, "Compliance, Datenschutz & AI Act")
-    innovation = gpt_block(data, "Innovation, Moonshot & Wettbewerb")
+    summary = gpt_block(data, "Executive Summary")
+    strategie = gpt_block(data, "Gesamtstrategie")
+    compliance = gpt_block(data, "Compliance")
+    datenschutz = gpt_block(data, "Datenschutz")
+    ai_act = gpt_block(data, "EU AI Act")
+    innovation = gpt_block(data, "Innovation")
+    moonshot = gpt_block(data, "Moonshot & Vision")
     roadmap = gpt_block(data, "Empfohlene Roadmap")
     foerder = gpt_block(data, "Förderprogramme & Finanzierung")
 
-    # Alle deine Dateien systematisch einladen
+    # Checklisten & Module laden
     check_readiness = read_markdown_file("check_ki_readiness.md")
     score_vis = read_markdown_file("score_visualisierung.md")
     check_compliance = read_markdown_file("check_compliance_eu_ai_act.md")
@@ -115,8 +117,12 @@ def analyze_full_report(data):
 
     return {
         "summary": summary,
+        "strategie": strategie,
         "compliance": compliance,
+        "datenschutz": datenschutz,
+        "ai_act": ai_act,
         "innovation": innovation,
+        "moonshot": moonshot,
         "roadmap": roadmap,
         "foerder": foerder,
         "check_readiness": check_readiness,
