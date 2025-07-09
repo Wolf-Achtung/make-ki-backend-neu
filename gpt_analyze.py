@@ -1,4 +1,184 @@
 import json
+import openai
+import pandas as pd
+
+def calc_readiness_score(data):
+    score = 0
+    if data.get("digitalisierungsgrad") in ["Sehr hoch", "Eher hoch"]:
+        score += 2
+    elif data.get("digitalisierungsgrad") == "Mittel":
+        score += 1
+
+    if data.get("risikofreude") in ["Sehr risikobereit", "Eher risikobereit"]:
+        score += 2
+    elif data.get("risikofreude") == "Durchschnittlich":
+        score += 1
+
+    if data.get("ki_knowhow") in ["Sehr hoch", "Eher hoch"]:
+        score += 2
+    elif data.get("ki_knowhow") == "Mittel":
+        score += 1
+
+    if data.get("automatisierungsgrad") in ["Sehr hoch", "Eher hoch"]:
+        score += 2
+    elif data.get("automatisierungsgrad") == "Mittel":
+        score += 1
+
+    if data.get("ki_projekte"):
+        score += 2
+
+    # 🔥 NEU: Marktposition & Innovationsprozess fließen mit ein
+    if data.get("marktposition") in ["Marktführer", "Im oberen Drittel"]:
+        score += 2
+    elif data.get("marktposition") == "Mittelfeld":
+        score += 1
+
+    if data.get("innovationsprozess") in ["Durch internes Innovationsteam", "Durch Mitarbeitende", "In Zusammenarbeit mit Kunden"]:
+        score += 2
+
+    return min(12, score)  # jetzt maximal 12 Punkte
+
+def analyze_strategy(data):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "Du bist ein TÜV-zertifizierter KI-Manager und Experte für Unternehmensstrategien."},
+            {"role": "user", "content": 
+             f"""
+Erstelle eine Executive Summary auf Basis folgender Unternehmensdaten:
+{json.dumps(data, indent=2)}
+
+Fokussiere besonders auf die Felder:
+- digitalisierungsgrad
+- ki_projekte
+- ki_usecases
+- ki_potenzial
+- ki_hemmnisse
+- marktposition
+- innovationsprozess
+- bisherige_foerdermittel
+- interesse_foerderung
+- ai_act_kenntnis
+- risikofreude
+
+Gib klare Chancen, Risiken und strategische Empfehlungen. Maximal 12 Sätze.
+"""}
+        ]
+    )
+    return response.choices[0].message.content.strip()
+
+def analyze_foerderung(data):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "Du bist TÜV-zertifizierter Fördermittel-Experte."},
+            {"role": "user", "content": 
+             f"""
+Analysiere speziell die Felder bisherige_foerdermittel, interesse_foerderung und bundesland:
+{json.dumps(data, indent=2)}
+
+Bewerte, ob Potenzial für Förderprogramme (Digitalisierung, KI, Innovation) besteht.
+"""}
+        ]
+    )
+    return response.choices[0].message.content.strip()
+
+def analyze_compliance(data):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "Du bist ein TÜV-zertifizierter Experte für Datenschutz und den EU AI Act."},
+            {"role": "user", "content": 
+             f"""
+Analysiere die Felder:
+- ai_act_kenntnis
+- datenschutzbeauftragter
+- technische_massnahmen
+- folgenabschaetzung
+- meldewege
+- loeschregeln
+
+Erstelle eine Compliance-Kurzanalyse und weise auf mögliche Risiken oder Lücken hin.
+"""}
+        ]
+    )
+    return response.choices[0].message.content.strip()
+
+def analyze_innovation(data):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "Du bist ein TÜV-zertifizierter Innovationsberater."},
+            {"role": "user", "content": 
+             f"""
+Bewerte basierend auf:
+- risikofreude
+- innovationsprozess
+- marktposition
+- benchmark_wettbewerb
+- ki_hemmnisse
+- ki_potenzial
+- moonshot
+
+Wie innovationsfähig ist das Unternehmen und wo gibt es Verbesserungspotenzial?
+"""}
+        ]
+    )
+    return response.choices[0].message.content.strip()
+
+def build_roadmap(data):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "Du bist TÜV-zertifizierter strategischer KI-Consultant."},
+            {"role": "user", "content": 
+             f"""
+Erstelle eine dreistufige Roadmap für die nächsten 12-18 Monate zur Verbesserung von
+Digitalisierung und KI-Readiness, unter Berücksichtigung von:
+- ki_potenzial
+- ki_projekte
+- ki_hemmnisse
+- digitalisierungsgrad
+- risikofreude
+- innovationsprozess
+"""}
+        ]
+    )
+    return response.choices[0].message.content.strip()
+
+def glossary(data):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "Du bist ein TÜV-zertifizierter technischer Redakteur."},
+            {"role": "user", "content": 
+             """
+Erstelle ein Glossar der 8 wichtigsten Begriffe zu KI, Digitalisierung und Förderprogrammen,
+jeweils mit einer Satz-Erklärung.
+"""
+            }
+        ]
+    )
+    return response.choices[0].message.content.strip()
+
+def analyze_tools_and_checklists():
+    df_tools = pd.read_csv("tools.csv")
+    df_foerder = pd.read_csv("foerdermittel.csv")
+
+    tools_md = df_tools.to_markdown(index=False)
+    foerder_md = df_foerder.to_markdown(index=False)
+
+    with open("checklisten.md") as f:
+        checklist = f.read()
+
+    with open("praxisbeispiele.md") as f:
+        praxis = f.read()
+
+    with open("score_visualisierung.md") as f:
+        vis = f.read()
+
+    return tools_md, foerder_md, checklist, praxis, vis
+import json
 import os
 import pandas as pd
 from openai import OpenAI
