@@ -1,104 +1,94 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>KI-Readiness Report</title>
-  <style>
-    body { font-family: sans-serif; color: #333; background: white; line-height: 1.6; }
-    h1,h2 { color: #007acc; }
-    .section { page-break-after: always; }
-    img.chart { width: 80%; margin: 20px auto; display: block; }
-    .progress-bar { width: 80%; background: #eee; border-radius: 5px; margin: 20px auto; height: 20px; }
-    .progress-fill { height: 100%; background: #4a90e2; border-radius: 5px; text-align: center; color: white; }
-    .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .swot-item { border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
-    .callout { background: #f0f8ff; border-left: 5px solid #007acc; padding: 10px; margin: 15px 0; }
-    ul.checklist { list-style: none; padding: 0; }
-    ul.checklist li:before { content: "✓ "; color: green; }
-  </style>
+    <meta charset="UTF-8">
+    <title>KI-Readiness Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.7; color: #002b4d; margin: 40px; }
+        h1, h2, h3 { color: #004b8d; }
+        h1 { font-size: 28px; margin-top: 20px; }
+        h2 { font-size: 24px; margin-top: 30px; }
+        h3 { font-size: 20px; margin-top: 25px; }
+        .logo { height: 60px; margin-bottom: 20px; }
+        .progress-container { background: #e0eaf3; border-radius: 30px; overflow: hidden; width: 100%; margin: 20px 0; }
+        .progress-bar { height: 25px; background: #004b8d; text-align: center; color: white; line-height: 25px; }
+        .swot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0; }
+        .swot-box { background: #f4f8fb; padding: 15px; border-left: 5px solid #004b8d; }
+        .checklist { margin: 20px 0; }
+        .checklist li { list-style: '✔ '; margin-bottom: 8px; }
+        .pagebreak { page-break-before: always; }
+        img.chart { width: 100%; margin: 20px 0; }
+        .toc { border: 2px solid #004b8d; padding: 15px; margin: 20px 0; }
+    </style>
 </head>
 <body>
-  <h1>KI-Readiness Report</h1>
-  <p><img src="static/logo.png" alt="Logo" style="height:50px;"> &nbsp; www.ki-sicherheit.jetzt</p>
-  <p>Erstellt am: {{datum}}</p>
-
-  <div class="section">
-    <h2>Executive Summary</h2>
-    <p>{{summary}}</p>
-    <div class="progress-bar">
-      <div class="progress-fill" style="width: {{score_percent}}%">{{score_percent}}%</div>
+    <img src="/static/ki-sicherheit-logo.png" alt="Logo" class="logo">
+    <h1>KI-Readiness Executive Poster</h1>
+    <div class="progress-container">
+        <div class="progress-bar" style="width: {{score}}%">{{score}} / 100</div>
     </div>
-    <p>{{check_readiness}}</p>
-    <p>{{score_vis}}</p>
-  </div>
 
-  <div class="section">
-    <h2>Gesamtstrategie</h2>
-    <p>{{strategie}}</p>
-    <div class="callout">Top-Empfehlung: Setzen Sie kurzfristig auf strategische Quick-Wins!</div>
-  </div>
-
-  <div class="section">
-    <h2>Score-Visualisierung</h2>
-    <img src="static/chart.png" class="chart" />
-  </div>
-
-  <div class="section">
-    <h2>Compliance</h2>
-    <p>{{compliance}}</p>
-    <p>{{check_compliance}}</p>
-  </div>
-
-  <div class="section">
-    <h2>Datenschutz</h2>
-    <p>{{datenschutz}}</p>
-    <p>{{check_ds}}</p>
-  </div>
-
-  <div class="section">
-    <h2>EU AI Act</h2>
-    <p>{{ai_act}}</p>
-  </div>
-
-  <div class="section">
-    <h2>Innovation & Wettbewerbsfähigkeit</h2>
-    <p>{{innovation}}</p>
-    <p>{{check_inno}}</p>
-    <div class="swot-grid">
-      <div class="swot-item"><strong>Stärken</strong><br>{{swot_strengths}}</div>
-      <div class="swot-item"><strong>Schwächen</strong><br>{{swot_weaknesses}}</div>
-      <div class="swot-item"><strong>Chancen</strong><br>{{swot_opportunities}}</div>
-      <div class="swot-item"><strong>Risiken</strong><br>{{swot_threats}}</div>
-    </div>
-    <p>{{praxis}}</p>
-  </div>
-
-  <div class="section">
-    <h2>Moonshot & Vision</h2>
-    <p>{{moonshot}}</p>
-  </div>
-
-  <div class="section">
-    <h2>Empfohlene Roadmap & Umsetzung</h2>
-    <p>{{roadmap}}</p>
-    <ul class="checklist">
-      <li>Quick Wins sofort umsetzen</li>
-      <li>Mid-Term Projekte vorbereiten</li>
-      <li>Moonshot langfristig planen</li>
+    <h2>Top 3 Insights</h2>
+    <ul>
+        <li>{{top_insight_1}}</li>
+        <li>{{top_insight_2}}</li>
+        <li>{{top_insight_3}}</li>
     </ul>
-    <p>{{check_roadmap}}</p>
-  </div>
 
-  <div class="section">
-    <h2>Förderprogramme & Finanzierung</h2>
+    <div class="pagebreak"></div>
+
+    <h1>Inhaltsverzeichnis</h1>
+    <div class="toc">
+        <p>1. Executive Poster</p>
+        <p>2. Zusammenfassung</p>
+        <p>3. SWOT-Analyse</p>
+        <p>4. Bereichsanalysen</p>
+        <p>5. Handlungsempfehlungen & Next Steps</p>
+    </div>
+
+    <div class="pagebreak"></div>
+
+    <h1>Executive Summary</h1>
+    <p>{{summary}}</p>
+
+    <div class="pagebreak"></div>
+
+    <h2>SWOT-Analyse</h2>
+    <div class="swot-grid">
+        <div class="swot-box"><h3>Stärken</h3><p>{{swot_strengths}}</p></div>
+        <div class="swot-box"><h3>Schwächen</h3><p>{{swot_weaknesses}}</p></div>
+        <div class="swot-box"><h3>Chancen</h3><p>{{swot_opportunities}}</p></div>
+        <div class="swot-box"><h3>Risiken</h3><p>{{swot_threats}}</p></div>
+    </div>
+
+    <img src="/static/chart.png" alt="Chart" class="chart">
+
+    <div class="pagebreak"></div>
+
+    <h2>Empfohlene Next Steps</h2>
+    <ul class="checklist">
+        <li>{{quick_win_1}}</li>
+        <li>{{quick_win_2}}</li>
+        <li>{{mid_term_1}}</li>
+        <li>{{moonshot}}</li>
+    </ul>
+
+    <div class="pagebreak"></div>
+
+    <h2>Detaillierte Analyse</h2>
+    <h3>Compliance & Datenschutz</h3>
+    <p>{{compliance}}</p>
+    <div class="pagebreak"></div>
+
+    <h3>Innovation & Wettbewerbsfähigkeit</h3>
+    <p>{{innovation}}</p>
+    <div class="pagebreak"></div>
+
+    <h3>Roadmap & Umsetzung</h3>
+    <p>{{roadmap}}</p>
+    <div class="pagebreak"></div>
+
+    <h3>Fördermittel & Finanzierung</h3>
     <p>{{foerder}}</p>
-    <p>{{check_foerder}}</p>
-    <p>{{foerder_programme}}</p>
-  </div>
-
-  <div class="section">
-    <h2>Empfohlene Tools & Best Practices</h2>
-    <p>{{tools}}</p>
-  </div>
 </body>
 </html>
