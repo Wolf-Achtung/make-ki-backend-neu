@@ -1,5 +1,6 @@
 import json
 import pandas as pd
+Import os
 import matplotlib.pyplot as plt
 from openai import OpenAI
 
@@ -100,11 +101,13 @@ def extract_swot(full_text):
         "swot_threats": find(r"SWOT Risiken:(.*?)(?:SWOT|$)")
     }
 
-def read_markdown_file(path):
+def read_markdown_file(filename):
+    path = os.path.join("data", filename)
     try:
         with open(path, encoding="utf-8") as f:
             return f.read()
-    except:
+    except Exception as e:
+        print(f"Fehler beim Lesen von {path}: {e}")
         return ""
 
 def analyze_full_report(data):
