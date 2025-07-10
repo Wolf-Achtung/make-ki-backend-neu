@@ -34,6 +34,11 @@ async def create_briefing(request: Request):
 
     print("🚀 Empfangenes JSON:", json.dumps(data, ensure_ascii=False, indent=2))
 
+    # 🔥 Dynamischer Fix: wandelt alle str-Felder, die nur aus Ziffern bestehen, in int um
+    for key, value in data.items():
+        if isinstance(value, str) and value.isdigit():
+            data[key] = int(value)
+
     if not data.get("datenschutz_ok"):
         return JSONResponse({"error": "Datenschutzerklärung nicht akzeptiert."}, status_code=400)
 
