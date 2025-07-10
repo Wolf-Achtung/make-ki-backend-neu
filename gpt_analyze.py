@@ -110,8 +110,7 @@ def gpt_block(data, topic, branch, size, checklisten=None, benchmark=None):
             },
             {"role": "user", "content": prompt}
         ],
-        temperature=0.3,
-        request_timeout=120
+        temperature=0.3
     )
     return response.choices[0].message.content.strip()
 
