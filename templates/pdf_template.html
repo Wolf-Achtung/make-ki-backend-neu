@@ -2,93 +2,91 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>KI-Readiness Report</title>
+    <title>KI-Readiness-Report</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.7; color: #002b4d; margin: 40px; }
-        h1, h2, h3 { color: #004b8d; }
-        h1 { font-size: 28px; margin-top: 20px; }
-        h2 { font-size: 24px; margin-top: 30px; }
-        h3 { font-size: 20px; margin-top: 25px; }
-        .logo { height: 60px; margin-bottom: 20px; }
-        .progress-container { background: #e0eaf3; border-radius: 30px; overflow: hidden; width: 100%; margin: 20px 0; }
-        .progress-bar { height: 25px; background: #004b8d; text-align: center; color: white; line-height: 25px; }
-        .swot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0; }
-        .swot-box { background: #f4f8fb; padding: 15px; border-left: 5px solid #004b8d; }
-        .checklist { margin: 20px 0; }
-        .checklist li { list-style: '✔ '; margin-bottom: 8px; }
-        .pagebreak { page-break-before: always; }
-        img.chart { width: 100%; margin: 20px 0; }
-        .toc { border: 2px solid #004b8d; padding: 15px; margin: 20px 0; }
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        h1, h2 { color: #2257a7; }
+        .score { font-size: 2em; font-weight: bold; color: #0a872a; }
+        .swot { margin-top: 1em; }
+        .swot h3 { margin-bottom: 0.2em; }
+        table { border-collapse: collapse; margin-top: 1em; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 6px; }
+        th { background: #f4f7fa; }
+        .benchmark { margin-top: 2em; }
+        .section { margin-bottom: 2em; }
+        .empfehlung { background: #f1ffe6; border-left: 4px solid #76b900; padding: 0.5em 1em; margin: 1em 0;}
     </style>
 </head>
 <body>
-    <img src="/static/ki-sicherheit-logo.png" alt="Logo" class="logo">
-    <h1>KI-Readiness Executive Poster</h1>
-    <div class="progress-container">
-        <div class="progress-bar" style="width: {{score}}%">{{score}} / 100</div>
+    <h1>KI-Readiness-Report</h1>
+    <p><b>Branche:</b> {{ branche }}<br>
+    <b>Unternehmensgröße:</b> {{ unternehmensgroesse }}</p>
+
+    <div class="section">
+        <h2>Score</h2>
+        <div class="score">{{ score_percent or "n/a" }}%</div>
     </div>
 
-    <h2>Top 3 Insights</h2>
-    <ul>
-        <li>{{top_insight_1}}</li>
-        <li>{{top_insight_2}}</li>
-        <li>{{top_insight_3}}</li>
-    </ul>
-
-    <div class="pagebreak"></div>
-
-    <h1>Inhaltsverzeichnis</h1>
-    <div class="toc">
-        <p>1. Executive Poster</p>
-        <p>2. Zusammenfassung</p>
-        <p>3. SWOT-Analyse</p>
-        <p>4. Bereichsanalysen</p>
-        <p>5. Handlungsempfehlungen & Next Steps</p>
+    <div class="section">
+        <h2>Executive Summary</h2>
+        {{ summary | safe }}
     </div>
 
-    <div class="pagebreak"></div>
-
-    <h1>Executive Summary</h1>
-    <p>{{summary}}</p>
-
-    <div class="pagebreak"></div>
-
-    <h2>SWOT-Analyse</h2>
-    <div class="swot-grid">
-        <div class="swot-box"><h3>Stärken</h3><p>{{swot_strengths}}</p></div>
-        <div class="swot-box"><h3>Schwächen</h3><p>{{swot_weaknesses}}</p></div>
-        <div class="swot-box"><h3>Chancen</h3><p>{{swot_opportunities}}</p></div>
-        <div class="swot-box"><h3>Risiken</h3><p>{{swot_threats}}</p></div>
+    <div class="section">
+        <h2>Strategie</h2>
+        {{ strategie | safe }}
     </div>
 
-    <img src="/static/chart.png" alt="Chart" class="chart">
+    <div class="section">
+        <h2>Compliance & Datenschutz</h2>
+        {{ compliance | safe }}
+    </div>
 
-    <div class="pagebreak"></div>
+    <div class="section">
+        <h2>Innovation & SWOT</h2>
+        {{ innovation | safe }}
+        <div class="swot">
+            <h3>SWOT:</h3>
+            <ul>
+                <li><b>Stärken:</b> {{ swot_strengths or "" }}</li>
+                <li><b>Schwächen:</b> {{ swot_weaknesses or "" }}</li>
+                <li><b>Chancen:</b> {{ swot_opportunities or "" }}</li>
+                <li><b>Risiken:</b> {{ swot_threats or "" }}</li>
+            </ul>
+        </div>
+    </div>
 
-    <h2>Empfohlene Next Steps</h2>
-    <ul class="checklist">
-        <li>{{quick_win_1}}</li>
-        <li>{{quick_win_2}}</li>
-        <li>{{mid_term_1}}</li>
-        <li>{{moonshot}}</li>
-    </ul>
+    <div class="section">
+        <h2>Branchen-Benchmark</h2>
+        {% if benchmark %}
+        <table class="benchmark">
+            <tr>
+                <th>Kategorie</th>
+                <th>Wert (Ø)</th>
+                <th>Kurzbeschreibung</th>
+            </tr>
+            {% for row in benchmark %}
+            <tr>
+                <td>{{ row.Kategorie }}</td>
+                <td>{{ row.Wert_Durchschnitt }}</td>
+                <td>{{ row.Kurzbeschreibung }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>Keine Benchmark-Daten verfügbar.</p>
+        {% endif %}
+    </div>
 
-    <div class="pagebreak"></div>
+    <div class="section">
+        <h2>Handlungsempfehlungen & Roadmap</h2>
+        {{ roadmap | safe }}
+    </div>
 
-    <h2>Detaillierte Analyse</h2>
-    <h3>Compliance & Datenschutz</h3>
-    <p>{{compliance}}</p>
-    <div class="pagebreak"></div>
-
-    <h3>Innovation & Wettbewerbsfähigkeit</h3>
-    <p>{{innovation}}</p>
-    <div class="pagebreak"></div>
-
-    <h3>Roadmap & Umsetzung</h3>
-    <p>{{roadmap}}</p>
-    <div class="pagebreak"></div>
-
-    <h3>Fördermittel & Finanzierung</h3>
-    <p>{{foerder}}</p>
+    <div class="section">
+        <h2>Praxisbeispiele & Tools</h2>
+        {{ praxis or "" }}
+        {{ tools or "" }}
+    </div>
 </body>
 </html>
