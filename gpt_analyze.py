@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-Import os
+import os
 import matplotlib.pyplot as plt
 from openai import OpenAI
 
