@@ -1,17 +1,21 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
-from jinja2 import Template
-import json
-import os
+from fastapi.responses import JSONResponse, FileResponse
+from dotenv import load_dotenv
 
 from gpt_analyze import analyze_full_report
-from pdf_export import create_pdf_from_template
+from pdf_export import export_pdf  # Siehe nächster Schritt
+
+import tempfile
+import uuid
+
+load_dotenv()
+
+# Konfiguration (Netlify-Frontend erlauben)
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://make.ki-sicherheit.jetzt, http://localhost:8888").split(",")
 
 app = FastAPI()
-
-app.mount("/downloads", StaticFiles(directory="downloads"), name="downloads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,50 +29,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/health")
+def healthcheck():
+    return {"status": "ok"}
+
 @app.post("/briefing")
 async def create_briefing(request: Request):
     try:
         data = await request.json()
-    except Exception as e:
-        return JSONResponse({"error": f"Ungültiges JSON: {str(e)}"}, status_code=400)
+        print("[INFO] Neue Anfrage erhalten")
+        print("[INFO] Daten:", data)
 
-    print("🚀 Empfangenes JSON:", json.dumps(data, ensure_ascii=False, indent=2))
-
-    # 🔥 Dynamischer Fix: wandelt alle str-Felder, die nur aus Ziffern bestehen, in int um
-    for key, value in data.items():
-        if isinstance(value, str) and value.isdigit():
-            data[key] = int(value)
-
-    if not data.get("datenschutz_ok"):
-        return JSONResponse({"error": "Datenschutzerklärung nicht akzeptiert."}, status_code=400)
-
-    # GPT Analyse
-    try:
+        # Analyse starten (returns dict mit Texten etc.)
         report_data = analyze_full_report(data)
-        print("✅ GPT-Report-Data:", json.dumps(report_data, indent=2)[:800])
+        print("[INFO] Analyse abgeschlossen")
+
+        # PDF generieren (gibt Pfad zurück)
+        pdf_path = export_pdf(report_data)
+        print("[INFO] PDF erstellt:", pdf_path)
+
+        # Download-Link erzeugen (einmaliger Temp-Link)
+        # Alternativ: File direkt zurückgeben
+        return JSONResponse({"pdf_url": f"/download/{os.path.basename(pdf_path)}"})
+
     except Exception as e:
-        print(f"❌ Fehler bei GPT-Analyse: {e}")
-        return JSONResponse({"error": f"GPT-Analyse fehlgeschlagen: {str(e)}"}, status_code=500)
+        print("[ERROR] Fehler beim Erstellen des Reports:", str(e))
+        return JSONResponse({"error": str(e)}, status_code=500)
 
-    # HTML rendern
-    try:
-        with open("templates/pdf_template.html", encoding="utf-8") as f:
-            template = Template(f.read())
-        html_content = template.render(**report_data)
-    except Exception as e:
-        print(f"❌ Fehler beim Rendern des Templates: {e}")
-        return JSONResponse({"error": f"Template-Rendering fehlgeschlagen: {str(e)}"}, status_code=500)
-
-    # PDF erzeugen
-    try:
-        pdf_filename = create_pdf_from_template(html_content)
-    except Exception as e:
-        print(f"❌ Fehler beim PDF-Export: {e}")
-        return JSONResponse({"error": f"PDF-Export fehlgeschlagen: {str(e)}"}, status_code=500)
-
-    pdf_url = f"https://make-ki-backend-neu-production.up.railway.app/downloads/{pdf_filename}"
-    return JSONResponse(content={"html": html_content, "pdf_url": pdf_url})
-
-@app.get("/")
-async def root():
-    return {"message": "KI-Readiness Backend läuft!"}
+# Einfacher Download-Endpoint für generierte PDFs
+@app.get("/download/{pdf_file}")
+def download(pdf_file: str):
+    file_path = os.path.join(tempfile.gettempdir(), pdf_file)
+    if os.path.exists(file_path):
+        return FileResponse(path=file_path, media_type='application/pdf', filename=pdf_file)
+    return JSONResponse({"error": "Datei nicht gefunden"}, status_code=404)

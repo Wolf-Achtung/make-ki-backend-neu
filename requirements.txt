@@ -1,13 +1,23 @@
+# API-Framework & Server
 fastapi
 uvicorn
+
+# OpenAI-API
 openai>=1.0
+
+# Templating & PDF
 jinja2
-python-dotenv
-requests
-beautifulsoup4
 weasyprint
+
+# Umgebungsvariablen & Utils
+python-dotenv
 aiofiles
+requests
 markdown
+beautifulsoup4
+
+# Datenverarbeitung & Visualisierung
 pandas
 matplotlib
+
 

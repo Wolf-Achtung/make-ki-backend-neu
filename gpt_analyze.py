@@ -1,106 +1,40 @@
+import os
 import json
 import pandas as pd
-import os
-import matplotlib.pyplot as plt
+from concurrent.futures import ThreadPoolExecutor
 from openai import OpenAI
 
 client = OpenAI()
 
-def calc_readiness_score(data):
-    score = 0
-    if data.get("digitalisierungsgrad") in ["Sehr hoch", "Eher hoch"]:
-        score += 2
-    elif data.get("digitalisierungsgrad") == "Mittel":
-        score += 1
-
-    if data.get("risikofreude") in ["Sehr risikobereit", "Eher risikobereit"]:
-        score += 2
-    elif data.get("risikofreude") == "Durchschnittlich":
-        score += 1
-
-    if data.get("ki_knowhow") in ["Sehr hoch", "Eher hoch"]:
-        score += 2
-    elif data.get("ki_knowhow") == "Mittel":
-        score += 1
-
-    if data.get("automatisierungsgrad") in ["Sehr hoch", "Eher hoch"]:
-        score += 2
-    elif data.get("automatisierungsgrad") == "Mittel":
-        score += 1
-
-    if data.get("ki_projekte"):
-        score += 2
-
-    return min(10, score)
-
-def generate_chart(data):
-    label_map = {
-        "digitalisierungsgrad": "Digitalisierung",
-        "automatisierungsgrad": "Automatisierung",
-        "risikofreude": "Risikofreude"
+# ---------------------------------------------------------
+# 1. Hilfsfunktion: Benchmark für die Branche laden
+# ---------------------------------------------------------
+def load_benchmark(branch):
+    """
+    Lädt die passende Benchmark-CSV für die übergebene Branche.
+    Gibt eine Liste von Dicts zurück.
+    """
+    # Dateinamen nach deinem Namensschema
+    branch_map = {
+        "Marketing & Werbung": "benchmark_marketing.csv",
+        "Beratung & Dienstleistungen": "benchmark_beratung.csv",
+        "IT & Software": "benchmark_it.csv",
+        "Finanzen & Versicherungen": "benchmark_finanzen.csv"
     }
+    fn = branch_map.get(branch, None)
+    if not fn:
+        return []
+    path = os.path.join("data", fn)
+    try:
+        df = pd.read_csv(path)
+        return df.to_dict(orient="records")
+    except Exception as e:
+        print(f"Benchmark-Loading Error: {e}")
+        return []
 
-    score_map = {
-        "Sehr hoch": 10, "Eher hoch": 8, "Mittel": 5,
-        "Eher niedrig": 3, "Sehr niedrig": 1,
-        "Sehr risikobereit": 10, "Eher risikobereit": 8,
-        "Durchschnittlich": 5, "Eher vorsichtig": 3, "Sehr zurückhaltend": 1
-    }
-
-    values = []
-    labels = []
-
-    for key, label in label_map.items():
-        value = score_map.get(data.get(key), 5)
-        values.append(value)
-        labels.append(label)
-
-    plt.figure(figsize=(6,4))
-    plt.bar(labels, values, color="#4a90e2")
-    plt.ylim(0, 10)
-    plt.title("KI-Readiness Indikatoren")
-    plt.ylabel("Score")
-    plt.savefig("static/chart.png", bbox_inches='tight')
-
-def gpt_block(data, topic):
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": "Du bist ein TÜV-zertifizierter KI-Manager und Experte."},
-            {"role": "user", "content":
-f"""
-Erstelle einen ausführlichen Analyseabschnitt (mindestens 1200 Wörter) zum Thema: {topic}.
-
-Berücksichtige Felder wie ki_potenzial, ki_hemmnisse, innovationsprozess, marktposition, moonshot, ai_act_kenntnis, interesse_foerderung, bisherige_foerdermittel.
-
-Gib auch eine SWOT-Analyse zurück, formatiert so:
-- SWOT Stärken: ...
-- SWOT Schwächen: ...
-- SWOT Chancen: ...
-- SWOT Risiken: ...
-
-Und schließe klare Handlungsempfehlungen und Praxisbeispiele ein.
-
-Hier die strukturierten Antworten:
-{json.dumps(data, indent=2)}
-"""
-            }
-        ]
-    )
-    return response.choices[0].message.content.strip()
-
-def extract_swot(full_text):
-    import re
-    def find(pattern):
-        m = re.search(pattern, full_text, re.DOTALL | re.IGNORECASE)
-        return m.group(1).strip() if m else ""
-    return {
-        "swot_strengths": find(r"SWOT Stärken:(.*?)(?:SWOT|$)"),
-        "swot_weaknesses": find(r"SWOT Schwächen:(.*?)(?:SWOT|$)"),
-        "swot_opportunities": find(r"SWOT Chancen:(.*?)(?:SWOT|$)"),
-        "swot_threats": find(r"SWOT Risiken:(.*?)(?:SWOT|$)")
-    }
-
+# ---------------------------------------------------------
+# 2. Hilfsfunktion: Checklisten/Markdown laden
+# ---------------------------------------------------------
 def read_markdown_file(filename):
     path = os.path.join("data", filename)
     try:
@@ -110,58 +44,116 @@ def read_markdown_file(filename):
         print(f"Fehler beim Lesen von {path}: {e}")
         return ""
 
+# ---------------------------------------------------------
+# 3. Prompt-Template je Analysebereich (vereinfacht, editierbar!)
+# ---------------------------------------------------------
+PROMPT_TEMPLATES = {
+    "Executive Summary": (
+        "Erstelle eine prägnante, verständliche Executive Summary zur digitalen Reife, KI-Readiness und "
+        "Regulatorik auf Basis der folgenden Daten. Gehe auf besondere Stärken und Schwächen ein und vergleiche "
+        "mit dem typischen Branchendurchschnitt, wenn möglich."
+    ),
+    "Strategie": (
+        "Analysiere die Digital- und KI-Strategie dieses Unternehmens. Erkenne Chancen, Schwächen und Handlungsfelder. "
+        "Beziehe die Branchenbenchmarks und typische Best Practices ein."
+    ),
+    "Compliance": (
+        "Bewerte die Compliance-Strategie des Unternehmens (DSGVO, EU AI Act, interne Meldewege, Datenschutz etc.) "
+        "und gib konkrete Empfehlungen für kritische Lücken."
+    ),
+    "Innovation": (
+        "Analysiere das Innovationspotenzial, die bisherigen KI-Einsatzbereiche und die wichtigsten Zukunftschancen. "
+        "Gib eine SWOT-Analyse und priorisiere Quick Wins."
+    ),
+    # ... beliebig erweiterbar für weitere Bereiche ...
+}
+
+# ---------------------------------------------------------
+# 4. Promptbuilder: Pro Bereich den Kontext maßschneidern
+# ---------------------------------------------------------
+def build_prompt(data, topic, branch, size, checklisten=None, benchmark=None):
+    base = PROMPT_TEMPLATES.get(topic, "")
+    bench_txt = ""
+    if benchmark:
+        # Kompakte Benchmark-Tabelleninfo als String bauen:
+        bench_txt = "Branchen-Benchmark:\n" + "\n".join(
+            f"- {row['Kategorie']}: {row['Wert_Durchschnitt']} ({row['Kurzbeschreibung']})"
+            for row in benchmark
+        )
+    prompt = (
+        f"{base}\n"
+        f"Branche: {branch}\n"
+        f"Unternehmensgröße: {size}\n"
+        f"Userdaten:\n{json.dumps(data, indent=2)}\n"
+        f"{bench_txt}\n"
+        f"Checkliste:\n{checklisten or ''}\n"
+        "\nStrukturiere die Antwort in: Analyse, Benchmark-Vergleich, Empfehlungen, SWOT.\n"
+        "Gib die SWOT als Liste zurück (Stärken, Schwächen, Chancen, Risiken)."
+    )
+    return prompt
+
+# ---------------------------------------------------------
+# 5. GPT-Aufruf (gpt-4o)
+# ---------------------------------------------------------
+def gpt_block(data, topic, branch, size, checklisten=None, benchmark=None):
+    prompt = build_prompt(data, topic, branch, size, checklisten, benchmark)
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Du bist ein TÜV-zertifizierter KI-Manager, KI-Strategieberater und Datenschutz-Experte. "
+                    "Du analysierst, bewertest und empfiehlst ausschließlich nach europäischen Best Practices, "
+                    "unter besonderer Berücksichtigung von Mittelstand, KMU und regulatorischer Sicherheit."
+                )
+            },
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,
+        request_timeout=120
+    )
+    return response.choices[0].message.content.strip()
+
+# ---------------------------------------------------------
+# 6. Parallele Analyse: Alle Abschnitte in Threads ausführen
+# ---------------------------------------------------------
 def analyze_full_report(data):
-    generate_chart(data)
+    branch = data.get("branche", "Sonstige").strip()
+    size = data.get("unternehmensgroesse", "KMU").strip()
 
-    summary = gpt_block(data, "Executive Summary")
-    strategie = gpt_block(data, "Gesamtstrategie")
-    compliance = gpt_block(data, "Compliance")
-    datenschutz = gpt_block(data, "Datenschutz")
-    ai_act = gpt_block(data, "EU AI Act")
-    innovation = gpt_block(data, "Innovation")
-    moonshot = gpt_block(data, "Moonshot & Vision")
-    roadmap = gpt_block(data, "Empfohlene Roadmap")
-    foerder = gpt_block(data, "Förderprogramme & Finanzierung")
-
-    # SWOT extrahieren (einmal aus Innovation ziehen)
-    swot_parts = extract_swot(innovation)
-
-    # Score berechnen
-    score = calc_readiness_score(data)
-    score_percent = score * 10
-
-    # Checks & Praxis
+    benchmark = load_benchmark(branch)
     check_readiness = read_markdown_file("check_ki_readiness.md")
-    score_vis = read_markdown_file("score_visualisierung.md")
     check_compliance = read_markdown_file("check_compliance_eu_ai_act.md")
-    check_ds = read_markdown_file("check_datenschutz.md")
     check_inno = read_markdown_file("check_innovationspotenzial.md")
-    praxis = read_markdown_file("praxisbeispiele.md")
-    check_roadmap = read_markdown_file("check_umsetzungsplan_ki.md")
-    check_foerder = read_markdown_file("check_foerdermittel.md")
-    foerder_programme = read_markdown_file("foerdermittel.md")
-    tools = read_markdown_file("tools.md")
+    # ... weitere Checklisten nach Bedarf ...
 
+    # GPT-Aufrufe parallelisieren
+    with ThreadPoolExecutor() as pool:
+        futures = {
+            "summary": pool.submit(gpt_block, data, "Executive Summary", branch, size, check_readiness, benchmark),
+            "strategie": pool.submit(gpt_block, data, "Strategie", branch, size, check_readiness, benchmark),
+            "compliance": pool.submit(gpt_block, data, "Compliance", branch, size, check_compliance, benchmark),
+            "innovation": pool.submit(gpt_block, data, "Innovation", branch, size, check_inno, benchmark),
+            # weitere Bereiche (roadmap, förderung, etc.) analog
+        }
+        results = {k: f.result() for k, f in futures.items()}
+
+    # Hier könntest du Score, SWOT-Extract usw. ergänzen
+    return results
+
+# ---------------------------------------------------------
+# 7. SWOT-Extractor als Option (z.B. für Innovation)
+# ---------------------------------------------------------
+import re
+def extract_swot(full_text):
+    def find(pattern):
+        m = re.search(pattern, full_text, re.DOTALL | re.IGNORECASE)
+        return m.group(1).strip() if m else ""
     return {
-        "summary": summary,
-        "strategie": strategie,
-        "compliance": compliance,
-        "datenschutz": datenschutz,
-        "ai_act": ai_act,
-        "innovation": innovation,
-        "moonshot": moonshot,
-        "roadmap": roadmap,
-        "foerder": foerder,
-        "score_percent": score_percent,
-        **swot_parts,
-        "check_readiness": check_readiness,
-        "score_vis": score_vis,
-        "check_compliance": check_compliance,
-        "check_ds": check_ds,
-        "check_inno": check_inno,
-        "praxis": praxis,
-        "check_roadmap": check_roadmap,
-        "check_foerder": check_foerder,
-        "foerder_programme": foerder_programme,
-        "tools": tools
+        "swot_strengths": find(r"Stärken:(.*?)(?:Schwächen:|Chancen:|Risiken:|$)"),
+        "swot_weaknesses": find(r"Schwächen:(.*?)(?:Chancen:|Risiken:|$)"),
+        "swot_opportunities": find(r"Chancen:(.*?)(?:Risiken:|$)"),
+        "swot_threats": find(r"Risiken:(.*?)(?:$)"),
     }
+
