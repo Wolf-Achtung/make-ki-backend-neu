@@ -34,6 +34,7 @@ def healthcheck():
     return {"status": "ok"}
 
 @app.post("/briefing")
+@app.post("/briefing")
 async def create_briefing(request: Request):
     try:
         data = await request.json()
@@ -52,7 +53,7 @@ async def create_briefing(request: Request):
             "benchmark_diagramm",
             "benchmark_tabelle",
             "checklisten",
-            "score_percent"   # <-- Nur diese Zeile ist NEU!
+            "score_percent"  # <-- Diese Zeile hinzugefügt!
         ]
         for key in placeholder_keys:
             report_data.setdefault(key, "")
