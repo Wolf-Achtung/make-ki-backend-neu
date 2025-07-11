@@ -3,25 +3,35 @@ import json
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 from openai import OpenAI
+import re
 
 client = OpenAI()
 
 # ---------------------------------------------------------
-# 1. Hilfsfunktion: Benchmark für die Branche laden
+# 1. Prompt-Loader: Holt branchenspezifisches oder Default-Prompt
 # ---------------------------------------------------------
-def load_benchmark(branch):
-    """
-    Lädt die passende Benchmark-CSV für die übergebene Branche.
-    Gibt eine Liste von Dicts zurück.
-    """
-    # Dateinamen nach deinem Namensschema
+def load_prompt(branche, abschnitt):
+    bn = branche.lower().replace("&", "und").replace(" ", "")
+    path = os.path.join("prompts", bn, f"{abschnitt}.md")
+    if not os.path.exists(path):
+        path = os.path.join("prompts", "default", f"{abschnitt}.md")
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+# ---------------------------------------------------------
+# 2. Benchmark-Loader: Holt die richtige Benchmark-Tabelle
+# ---------------------------------------------------------
+def load_benchmark(branche):
     branch_map = {
         "Marketing & Werbung": "benchmark_marketing.csv",
         "Beratung & Dienstleistungen": "benchmark_beratung.csv",
         "IT & Software": "benchmark_it.csv",
-        "Finanzen & Versicherungen": "benchmark_finanzen.csv"
+        "Finanzen & Versicherungen": "benchmark_finanzen.csv",
+        "Handel & E-Commerce": "benchmark_handel.csv",
+        "Bildung": "benchmark_bildung.csv",
+        "Verwaltung": "benchmark_verwaltung.csv",
     }
-    fn = branch_map.get(branch, None)
+    fn = branch_map.get(branche, None)
     if not fn:
         return []
     path = os.path.join("data", fn)
@@ -33,7 +43,7 @@ def load_benchmark(branch):
         return []
 
 # ---------------------------------------------------------
-# 2. Hilfsfunktion: Checklisten/Markdown laden
+# 3. Markdown-/Checklisten-Loader
 # ---------------------------------------------------------
 def read_markdown_file(filename):
     path = os.path.join("data", filename)
@@ -45,58 +55,64 @@ def read_markdown_file(filename):
         return ""
 
 # ---------------------------------------------------------
-# 3. Prompt-Template je Analysebereich (vereinfacht, editierbar!)
+# 4. Tools & Förderungen-Loader (JSON)
 # ---------------------------------------------------------
-PROMPT_TEMPLATES = {
-    "Executive Summary": (
-        "Erstelle eine prägnante, verständliche Executive Summary zur digitalen Reife, KI-Readiness und "
-        "Regulatorik auf Basis der folgenden Daten. Gehe auf besondere Stärken und Schwächen ein und vergleiche "
-        "mit dem typischen Branchendurchschnitt, wenn möglich."
-    ),
-    "Strategie": (
-        "Analysiere die Digital- und KI-Strategie dieses Unternehmens. Erkenne Chancen, Schwächen und Handlungsfelder. "
-        "Beziehe die Branchenbenchmarks und typische Best Practices ein."
-    ),
-    "Compliance": (
-        "Bewerte die Compliance-Strategie des Unternehmens (DSGVO, EU AI Act, interne Meldewege, Datenschutz etc.) "
-        "und gib konkrete Empfehlungen für kritische Lücken."
-    ),
-    "Innovation": (
-        "Analysiere das Innovationspotenzial, die bisherigen KI-Einsatzbereiche und die wichtigsten Zukunftschancen. "
-        "Gib eine SWOT-Analyse und priorisiere Quick Wins."
-    ),
-    # ... beliebig erweiterbar für weitere Bereiche ...
-}
+def load_tools_und_foerderungen():
+    path = "tools_und_foerderungen.json"
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Fehler beim Lesen von {path}: {e}")
+        return {"tools": {}, "foerderungen": {}}
+
+TOOLS_FOERDER = load_tools_und_foerderungen()
 
 # ---------------------------------------------------------
-# 4. Promptbuilder: Pro Bereich den Kontext maßschneidern
+# 5. Prompt-Builder (setzt alles zusammen)
 # ---------------------------------------------------------
-def build_prompt(data, topic, branch, size, checklisten=None, benchmark=None):
-    base = PROMPT_TEMPLATES.get(topic, "")
+def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, tools_text="", foerder_text=""):
+    prompt_raw = load_prompt(branche, abschnitt)
     bench_txt = ""
     if benchmark:
-        # Kompakte Benchmark-Tabelleninfo als String bauen:
-        bench_txt = "Branchen-Benchmark:\n" + "\n".join(
-            f"- {row['Kategorie']}: {row['Wert_Durchschnitt']} ({row['Kurzbeschreibung']})"
+        bench_txt = "\nBranchen-Benchmark:\n" + "\n".join(
+            f"- {row.get('Kategorie', '')}: {row.get('Wert_Durchschnitt', '')} ({row.get('Kurzbeschreibung', '')})"
             for row in benchmark
         )
-    prompt = (
-        f"{base}\n"
-        f"Branche: {branch}\n"
-        f"Unternehmensgröße: {size}\n"
-        f"Userdaten:\n{json.dumps(data, indent=2)}\n"
-        f"{bench_txt}\n"
-        f"Checkliste:\n{checklisten or ''}\n"
-        "\nStrukturiere die Antwort in: Analyse, Benchmark-Vergleich, Empfehlungen, SWOT.\n"
-        "Gib die SWOT als Liste zurück (Stärken, Schwächen, Chancen, Risiken)."
+    prompt = prompt_raw.format(
+        branche=branche,
+        unternehmensgroesse=groesse,
+        daten=json.dumps(data, indent=2),
+        checklisten=checklisten or "",
+        benchmark=bench_txt,
+        tools=tools_text,
+        foerderungen=foerder_text,
     )
     return prompt
 
 # ---------------------------------------------------------
-# 5. GPT-Aufruf (gpt-4o)
+# 6. Tools & Förderungen für Prompt aufbereiten
 # ---------------------------------------------------------
-def gpt_block(data, topic, branch, size, checklisten=None, benchmark=None):
-    prompt = build_prompt(data, topic, branch, size, checklisten, benchmark)
+def get_tools_und_foerderungen(data):
+    groesse = data.get("unternehmensgroesse", "").lower()
+    # Tools nach Größe (vereinfacht, je nach Struktur in deiner JSON ggf. anpassen!)
+    if "1" in groesse or "solo" in groesse or "klein" in groesse:
+        tools_list = TOOLS_FOERDER.get("tools", {}).get("kleinere", [])
+    else:
+        tools_list = TOOLS_FOERDER.get("tools", {}).get("groessere", [])
+    tools_text = "\n".join([f"- [{t['name']}]({t['link']})" for t in tools_list]) if tools_list else "Keine spezifischen Tools gefunden."
+
+    # Förderprogramme (kannst du nach Bundesland/Branche aufteilen, hier einfach national)
+    foerder_list = TOOLS_FOERDER.get("foerderungen", {}).get("national", [])
+    foerder_text = "\n".join([f"- [{f['name']}]({f['link']})" for f in foerder_list]) if foerder_list else "Keine Förderprogramme gefunden."
+    return tools_text, foerder_text
+
+# ---------------------------------------------------------
+# 7. GPT-Aufruf (gpt-4o)
+# ---------------------------------------------------------
+def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=None):
+    tools_text, foerder_text = get_tools_und_foerderungen(data)
+    prompt = build_prompt(data, abschnitt, branche, groesse, checklisten, benchmark, tools_text, foerder_text)
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
@@ -104,47 +120,58 @@ def gpt_block(data, topic, branch, size, checklisten=None, benchmark=None):
                 "role": "system",
                 "content": (
                     "Du bist ein TÜV-zertifizierter KI-Manager, KI-Strategieberater und Datenschutz-Experte. "
-                    "Du analysierst, bewertest und empfiehlst ausschließlich nach europäischen Best Practices, "
-                    "unter besonderer Berücksichtigung von Mittelstand, KMU und regulatorischer Sicherheit."
+                    "Deine Empfehlungen sind stets aktuell, rechtssicher und praxisorientiert für den Mittelstand, "
+                    "unter besonderer Berücksichtigung von DSGVO, EU AI Act und Markt-Benchmarks."
                 )
             },
             {"role": "user", "content": prompt}
         ],
-        temperature=0.3
+        temperature=0.3,
     )
     return response.choices[0].message.content.strip()
 
 # ---------------------------------------------------------
-# 6. Parallele Analyse: Alle Abschnitte in Threads ausführen
+# 8. Parallele Analyse für alle Abschnitte
 # ---------------------------------------------------------
 def analyze_full_report(data):
-    branch = data.get("branche", "Sonstige").strip()
-    size = data.get("unternehmensgroesse", "KMU").strip()
+    branche = data.get("branche", "Sonstige").strip()
+    groesse = data.get("unternehmensgroesse", "KMU").strip()
 
-    benchmark = load_benchmark(branch)
+    benchmark = load_benchmark(branche)
     check_readiness = read_markdown_file("check_ki_readiness.md")
     check_compliance = read_markdown_file("check_compliance_eu_ai_act.md")
     check_inno = read_markdown_file("check_innovationspotenzial.md")
+    check_datenschutz = read_markdown_file("check_datenschutz.md")
+    check_roadmap = read_markdown_file("check_umsetzungsplan_ki.md")
+    praxisbeispiele = read_markdown_file("praxisbeispiele.md")
+    tools = read_markdown_file("tools.md")
     # ... weitere Checklisten nach Bedarf ...
 
-    # GPT-Aufrufe parallelisieren
+    abschnitte = [
+        ("ExecutiveSummary", check_readiness),
+        ("Strategie", check_readiness),
+        ("Compliance", check_compliance),
+        ("Innovation", check_inno),
+        ("Datenschutz", check_datenschutz),
+        ("Roadmap", check_roadmap),
+        ("Praxisbeispiele", praxisbeispiele),
+        ("Tools", tools),
+    ]
+
     with ThreadPoolExecutor() as pool:
         futures = {
-            "summary": pool.submit(gpt_block, data, "Executive Summary", branch, size, check_readiness, benchmark),
-            "strategie": pool.submit(gpt_block, data, "Strategie", branch, size, check_readiness, benchmark),
-            "compliance": pool.submit(gpt_block, data, "Compliance", branch, size, check_compliance, benchmark),
-            "innovation": pool.submit(gpt_block, data, "Innovation", branch, size, check_inno, benchmark),
-            # weitere Bereiche (roadmap, förderung, etc.) analog
+            abschnitt: pool.submit(
+                gpt_block, data, abschnitt, branche, groesse, checklisten, benchmark
+            )
+            for abschnitt, checklisten in abschnitte
         }
         results = {k: f.result() for k, f in futures.items()}
 
-    # Hier könntest du Score, SWOT-Extract usw. ergänzen
     return results
 
 # ---------------------------------------------------------
-# 7. SWOT-Extractor als Option (z.B. für Innovation)
+# 9. SWOT-Extractor (optional)
 # ---------------------------------------------------------
-import re
 def extract_swot(full_text):
     def find(pattern):
         m = re.search(pattern, full_text, re.DOTALL | re.IGNORECASE)
@@ -155,4 +182,3 @@ def extract_swot(full_text):
         "swot_opportunities": find(r"Chancen:(.*?)(?:Risiken:|$)"),
         "swot_threats": find(r"Risiken:(.*?)(?:$)"),
     }
-

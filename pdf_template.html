@@ -1,92 +1,126 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <title>KI-Readiness-Report</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2em; }
-        h1, h2 { color: #2257a7; }
-        .score { font-size: 2em; font-weight: bold; color: #0a872a; }
-        .swot { margin-top: 1em; }
-        .swot h3 { margin-bottom: 0.2em; }
-        table { border-collapse: collapse; margin-top: 1em; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 6px; }
-        th { background: #f4f7fa; }
-        .benchmark { margin-top: 2em; }
-        .section { margin-bottom: 2em; }
-        .empfehlung { background: #f1ffe6; border-left: 4px solid #76b900; padding: 0.5em 1em; margin: 1em 0;}
-    </style>
-</head>
-<body>
-    <h1>KI-Readiness-Report</h1>
-    <p><b>Branche:</b> {{ branche }}<br>
-    <b>Unternehmensgröße:</b> {{ unternehmensgroesse }}</p>
+Sehr gerne! Ein klarer, priorisierter **Action-Plan** ist jetzt der Schlüssel, damit wir effizient vorankommen, keine Baustellen übersehen und am Ende ein wirklich professionelles, produktives und skalierbares System bekommen.
 
-    <div class="section">
-        <h2>Score</h2>
-        <div class="score">{{ score_percent or "n/a" }}%</div>
-    </div>
+---
 
-    <div class="section">
-        <h2>Executive Summary</h2>
-        {{ summary | safe }}
-    </div>
+# **Roadmap für deinen KI-Readiness-Report**
 
-    <div class="section">
-        <h2>Strategie</h2>
-        {{ strategie | safe }}
-    </div>
+*(Branchenfähig, Testuser-ready, skalierbar)*
 
-    <div class="section">
-        <h2>Compliance & Datenschutz</h2>
-        {{ compliance | safe }}
-    </div>
+---
 
-    <div class="section">
-        <h2>Innovation & SWOT</h2>
-        {{ innovation | safe }}
-        <div class="swot">
-            <h3>SWOT:</h3>
-            <ul>
-                <li><b>Stärken:</b> {{ swot_strengths or "" }}</li>
-                <li><b>Schwächen:</b> {{ swot_weaknesses or "" }}</li>
-                <li><b>Chancen:</b> {{ swot_opportunities or "" }}</li>
-                <li><b>Risiken:</b> {{ swot_threats or "" }}</li>
-            </ul>
-        </div>
-    </div>
+## **PHASE 1: Basis & Qualität sichern**
 
-    <div class="section">
-        <h2>Branchen-Benchmark</h2>
-        {% if benchmark %}
-        <table class="benchmark">
-            <tr>
-                <th>Kategorie</th>
-                <th>Wert (Ø)</th>
-                <th>Kurzbeschreibung</th>
-            </tr>
-            {% for row in benchmark %}
-            <tr>
-                <td>{{ row.Kategorie }}</td>
-                <td>{{ row.Wert_Durchschnitt }}</td>
-                <td>{{ row.Kurzbeschreibung }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-        {% else %}
-        <p>Keine Benchmark-Daten verfügbar.</p>
-        {% endif %}
-    </div>
+**Ziel:** Inhaltlich und technisch finalisieren, Testuser können realistische Berichte generieren.
 
-    <div class="section">
-        <h2>Handlungsempfehlungen & Roadmap</h2>
-        {{ roadmap | safe }}
-    </div>
+**1. Benchmarking & Best Practices vorbereiten**
 
-    <div class="section">
-        <h2>Praxisbeispiele & Tools</h2>
-        {{ praxis or "" }}
-        {{ tools or "" }}
-    </div>
-</body>
-</html>
+* [ ] Für jede Branche & Größe: Benchmark-Daten (CSV), Best-Practice-Listen, Tools-Listen (Markdown)
+* [ ] Beispielhafte Praxisbeispiele/Erfolgsgeschichten zusammentragen
+
+**2. Prompts & Produktlogik finalisieren**
+
+* [ ] Branchen-/größenabhängige Prompt-Templates (Markdown/YAML)
+* [ ] Prompts so bauen, dass sie Score, Benchmark, SWOT, Roadmap, Checklisten, Empfehlungen etc. abdecken
+* [ ] Notfall-Prompts/Standard-Texte für den Fall, dass keine Daten vorliegen
+
+**3. Report-Layout & PDF-Template**
+
+* [ ] Corporate Design: Farben, Schriften, Logo einbauen
+* [ ] Professionelles, leserfreundliches Layout (Karten, Abschnitte, Diagramme)
+* [ ] Footer & DSGVO-Hinweise sauber platzieren
+* [ ] Beispiel-Reports für jede Branche/Größe durchspielen (Testing)
+
+**4. Score-Berechnung & Datenqualität prüfen**
+
+* [ ] Score-Logik und Benchmark-Vergleich checken und debuggen
+* [ ] Plausibilität prüfen: Werden alle Eingaben sinnvoll in die Auswertung übernommen?
+* [ ] Notfall-Meldungen einbauen: z. B. „Keine Benchmarkdaten vorhanden“
+
+---
+
+## **PHASE 2: User Experience & Produktivität**
+
+**Ziel:** Test-User können reibungslos Reports erstellen, Feedback geben und System iterieren.
+
+**5. Frontend-Feedback & User-Flow**
+
+* [ ] Klare Bestätigung nach Report-Erstellung („Report erfolgreich erstellt“)
+* [ ] Möglichkeit, Report als PDF zu öffnen/downloaden
+* [ ] Kurzes Feedback-Feld für Testuser („Was hat gefehlt?“)
+
+**6. Statische Seiten & Rechtliches**
+
+* [ ] DSGVO- und Rechtshinweise (statische Seite, leicht verständlich)
+* [ ] Impressum, Kontakt, Info über KI-Sicherheit.jetzt
+
+**7. Systematischer Test aller Varianten**
+
+* [ ] Für jede Branche & Größe ein Test-Report erzeugen und kritisch prüfen
+* [ ] Bugs, Layout-Fehler, Verständlichkeit dokumentieren
+
+---
+
+## **PHASE 3: Skalierbarkeit & Ausbaustufe**
+
+**Ziel:** System bereit für mehr Branchen, Deep-Dives, Wachstum.
+
+**8. Branchenspezifische Deep-Dives vorbereiten**
+
+* [ ] Optional: Für GF, IT, Datenschutz, HR etc. spezialisierte Report-Abschnitte (Prompt-Erweiterung)
+* [ ] KI-generierte Best-Practice-Abschnitte pro Bereich
+
+**9. Diagramme, Grafiken & Visuals**
+
+* [ ] Matplotlib/Plotly für Score/Benchmarks, Roadmap, SWOT als Grafik
+* [ ] Automatisiert in PDF einbinden
+
+**10. Admin/Redaktions-Interface (optional)**
+
+* [ ] Einfache Bearbeitung von Prompts, Benchmarks, Textbausteinen
+* [ ] Snapshot-Test-Funktion für Prompts/Benchmarks
+
+**11. Multilingual vorbereiten (abgeschlossen, wenn deutsch final)**
+
+---
+
+## **PHASE 4: Add-ons & Monetarisierung**
+
+**Ziel:** Produkt „goes live“ mit realen Kunden, Payment, Analytics, User-Accounts
+
+**12. Payment/Account-Gate einbauen**
+
+* [ ] Paywall, Stripe/Paypal, User-Accounts
+* [ ] Report erst nach Zahlung freischalten
+
+**13. Analytics, Monitoring, Optimierung**
+
+* [ ] Nutzungsauswertung (Matomo, Plausible o. ä.)
+* [ ] Fehler- und Feedbackauswertung
+
+---
+
+## **Kurz und knapp: Reihenfolge (Sprint-Board-Style)**
+
+**1. Benchmarks & Prompts**
+**2. PDF-Layout finalisieren**
+**3. Score-Logik fixen**
+**4. Best Practices & Tools (Markdown)**
+**5. Frontend-Feedback einbauen**
+**6. DSGVO/Impressum statisch**
+**7. Systematischer Test (alle Branchen/Größen)**
+**8. Deep-Dive-Abschnitte/Visuals**
+**9. Admin-Interface (optional)**
+**10. Multilingual (optional)**
+**11. Payment & Analytics (optional, wenn alles rund läuft)**
+
+---
+
+### **Was brauchst du als nächstes?**
+
+* **Prompt-Vorlagen für alle Abschnitte?**
+* **PDF-Template-Update?**
+* **Beispiel-Benchmarks?**
+* **Testing-Checkliste?**
+* **Fragen zur Score-Logik oder Datenstruktur?**
+
+**Sag einfach „Go“ – dann erstelle ich sofort die gewünschten Dateien und Next-Steps!**
