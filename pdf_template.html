@@ -1,126 +1,210 @@
-Sehr gerne! Ein klarer, priorisierter **Action-Plan** ist jetzt der Schlüssel, damit wir effizient vorankommen, keine Baustellen übersehen und am Ende ein wirklich professionelles, produktives und skalierbares System bekommen.
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>KI-Readiness-Report</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            color: #222a36;
+            background: #f7fafd;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 860px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 22px;
+            box-shadow: 0 6px 28px rgba(44, 61, 108, 0.13);
+            padding: 48px 54px 40px 54px;
+        }
+        .logo {
+            width: 220px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #173d77;
+            font-size: 2.6em;
+            margin-bottom: 0.2em;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+        h2 {
+            color: #265fa3;
+            margin-top: 2em;
+            margin-bottom: 0.6em;
+            font-size: 1.6em;
+            font-weight: 700;
+            border-bottom: 2px solid #e0ebf7;
+            padding-bottom: 0.18em;
+        }
+        h3 {
+            color: #377fc2;
+            font-size: 1.12em;
+            margin-top: 1.2em;
+        }
+        .section {
+            background: #f2f6fa;
+            border-left: 8px solid #4a90e2;
+            border-radius: 14px;
+            margin-bottom: 2.6em;
+            padding: 28px 32px 20px 30px;
+            box-shadow: 0 2px 10px rgba(44, 61, 108, 0.07);
+        }
+        .score-visual {
+            background: linear-gradient(90deg, #e3effa 0%, #b2d2f4 100%);
+            color: #16466b;
+            font-size: 1.25em;
+            font-weight: 700;
+            border-radius: 10px;
+            padding: 16px 32px;
+            margin: 24px 0;
+            text-align: center;
+            letter-spacing: 0.04em;
+        }
+        .footer {
+            font-size: 0.92em;
+            color: #557095;
+            text-align: center;
+            margin-top: 44px;
+            padding-top: 20px;
+            border-top: 1.5px solid #e0ebf7;
+        }
+        .checklist {
+            background: #eaf6ff;
+            border-left: 4px solid #2987cd;
+            border-radius: 7px;
+            padding: 12px 16px 10px 18px;
+            margin: 16px 0 10px 0;
+            font-size: 1.05em;
+        }
+        .tools-table, .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0 16px 0;
+            font-size: 0.97em;
+        }
+        .tools-table th, .tools-table td,
+        .benchmark-table th, .benchmark-table td {
+            border: 1px solid #d3e2f3;
+            padding: 9px 12px;
+        }
+        .tools-table th, .benchmark-table th {
+            background: #e6f1fa;
+            color: #16466b;
+            font-weight: 700;
+        }
+        .highlight {
+            color: #1472d3;
+            font-weight: 600;
+        }
+        .diagram {
+            margin: 24px 0 18px 0;
+            text-align: center;
+        }
+        ul, ol {
+            margin-top: 0.3em;
+            margin-bottom: 0.9em;
+            padding-left: 1.5em;
+        }
+        li {
+            margin-bottom: 0.25em;
+        }
+        .pagebreak { page-break-after: always; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <img src="static/img/ki-sicherheit-logo.png" class="logo" alt="KI-Sicherheit.jetzt Logo">
 
----
+    <h1>KI-Readiness-Report</h1>
+    <div class="score-visual">
+        {{ ScoreVisualisierung|safe }}
+    </div>
 
-# **Roadmap für deinen KI-Readiness-Report**
+    <div class="section">
+        <h2>Executive Summary</h2>
+        {{ executive_summary|safe }}
+    </div>
 
-*(Branchenfähig, Testuser-ready, skalierbar)*
+    <div class="section">
+        <h2>Gesamtstrategie</h2>
+        {{ gesamtstrategie|safe }}
+    </div>
 
----
+    <div class="section">
+        <h2>Compliance & Rechtssicherheit</h2>
+        {{ compliance|safe }}
+    </div>
 
-## **PHASE 1: Basis & Qualität sichern**
+    <div class="section">
+        <h2>EU AI Act – Bewertung & Anforderungen</h2>
+        {{ eu_ai_act|safe }}
+    </div>
 
-**Ziel:** Inhaltlich und technisch finalisieren, Testuser können realistische Berichte generieren.
+    <div class="section">
+        <h2>Datenschutz</h2>
+        {{ datenschutz|safe }}
+    </div>
 
-**1. Benchmarking & Best Practices vorbereiten**
+    <div class="section">
+        <h2>Innovation & KI-Potenzial</h2>
+        {{ innovation|safe }}
+    </div>
 
-* [ ] Für jede Branche & Größe: Benchmark-Daten (CSV), Best-Practice-Listen, Tools-Listen (Markdown)
-* [ ] Beispielhafte Praxisbeispiele/Erfolgsgeschichten zusammentragen
+    <div class="section">
+        <h2>Moonshot & Vision</h2>
+        {{ moonshot_vision|safe }}
+    </div>
 
-**2. Prompts & Produktlogik finalisieren**
+    <div class="section">
+        <h2>Roadmap</h2>
+        {{ roadmap|safe }}
+    </div>
 
-* [ ] Branchen-/größenabhängige Prompt-Templates (Markdown/YAML)
-* [ ] Prompts so bauen, dass sie Score, Benchmark, SWOT, Roadmap, Checklisten, Empfehlungen etc. abdecken
-* [ ] Notfall-Prompts/Standard-Texte für den Fall, dass keine Daten vorliegen
+    <div class="section">
+        <h2>Förderprogramme & Finanzierung</h2>
+        {{ foerderprogramme|safe }}
+    </div>
 
-**3. Report-Layout & PDF-Template**
+    <div class="section">
+        <h2>Praxisbeispiele</h2>
+        {{ praxisbeispiele|safe }}
+    </div>
 
-* [ ] Corporate Design: Farben, Schriften, Logo einbauen
-* [ ] Professionelles, leserfreundliches Layout (Karten, Abschnitte, Diagramme)
-* [ ] Footer & DSGVO-Hinweise sauber platzieren
-* [ ] Beispiel-Reports für jede Branche/Größe durchspielen (Testing)
+    <div class="section">
+        <h2>Tools & Best Practices</h2>
+        {{ tools|safe }}
+        <table class="tools-table">
+            {{ tools_tabelle|safe }}
+        </table>
+    </div>
 
-**4. Score-Berechnung & Datenqualität prüfen**
+    <div class="section">
+        <h2>Benchmarks & Score</h2>
+        <div class="diagram">
+            {{ benchmark_diagramm|safe }}
+        </div>
+        <table class="benchmark-table">
+            {{ benchmark_tabelle|safe }}
+        </table>
+    </div>
 
-* [ ] Score-Logik und Benchmark-Vergleich checken und debuggen
-* [ ] Plausibilität prüfen: Werden alle Eingaben sinnvoll in die Auswertung übernommen?
-* [ ] Notfall-Meldungen einbauen: z. B. „Keine Benchmarkdaten vorhanden“
+    <div class="section">
+        <h2>Checklisten</h2>
+        <div class="checklist">
+            {{ checklisten|safe }}
+        </div>
+    </div>
 
----
-
-## **PHASE 2: User Experience & Produktivität**
-
-**Ziel:** Test-User können reibungslos Reports erstellen, Feedback geben und System iterieren.
-
-**5. Frontend-Feedback & User-Flow**
-
-* [ ] Klare Bestätigung nach Report-Erstellung („Report erfolgreich erstellt“)
-* [ ] Möglichkeit, Report als PDF zu öffnen/downloaden
-* [ ] Kurzes Feedback-Feld für Testuser („Was hat gefehlt?“)
-
-**6. Statische Seiten & Rechtliches**
-
-* [ ] DSGVO- und Rechtshinweise (statische Seite, leicht verständlich)
-* [ ] Impressum, Kontakt, Info über KI-Sicherheit.jetzt
-
-**7. Systematischer Test aller Varianten**
-
-* [ ] Für jede Branche & Größe ein Test-Report erzeugen und kritisch prüfen
-* [ ] Bugs, Layout-Fehler, Verständlichkeit dokumentieren
-
----
-
-## **PHASE 3: Skalierbarkeit & Ausbaustufe**
-
-**Ziel:** System bereit für mehr Branchen, Deep-Dives, Wachstum.
-
-**8. Branchenspezifische Deep-Dives vorbereiten**
-
-* [ ] Optional: Für GF, IT, Datenschutz, HR etc. spezialisierte Report-Abschnitte (Prompt-Erweiterung)
-* [ ] KI-generierte Best-Practice-Abschnitte pro Bereich
-
-**9. Diagramme, Grafiken & Visuals**
-
-* [ ] Matplotlib/Plotly für Score/Benchmarks, Roadmap, SWOT als Grafik
-* [ ] Automatisiert in PDF einbinden
-
-**10. Admin/Redaktions-Interface (optional)**
-
-* [ ] Einfache Bearbeitung von Prompts, Benchmarks, Textbausteinen
-* [ ] Snapshot-Test-Funktion für Prompts/Benchmarks
-
-**11. Multilingual vorbereiten (abgeschlossen, wenn deutsch final)**
-
----
-
-## **PHASE 4: Add-ons & Monetarisierung**
-
-**Ziel:** Produkt „goes live“ mit realen Kunden, Payment, Analytics, User-Accounts
-
-**12. Payment/Account-Gate einbauen**
-
-* [ ] Paywall, Stripe/Paypal, User-Accounts
-* [ ] Report erst nach Zahlung freischalten
-
-**13. Analytics, Monitoring, Optimierung**
-
-* [ ] Nutzungsauswertung (Matomo, Plausible o. ä.)
-* [ ] Fehler- und Feedbackauswertung
-
----
-
-## **Kurz und knapp: Reihenfolge (Sprint-Board-Style)**
-
-**1. Benchmarks & Prompts**
-**2. PDF-Layout finalisieren**
-**3. Score-Logik fixen**
-**4. Best Practices & Tools (Markdown)**
-**5. Frontend-Feedback einbauen**
-**6. DSGVO/Impressum statisch**
-**7. Systematischer Test (alle Branchen/Größen)**
-**8. Deep-Dive-Abschnitte/Visuals**
-**9. Admin-Interface (optional)**
-**10. Multilingual (optional)**
-**11. Payment & Analytics (optional, wenn alles rund läuft)**
-
----
-
-### **Was brauchst du als nächstes?**
-
-* **Prompt-Vorlagen für alle Abschnitte?**
-* **PDF-Template-Update?**
-* **Beispiel-Benchmarks?**
-* **Testing-Checkliste?**
-* **Fragen zur Score-Logik oder Datenstruktur?**
-
-**Sag einfach „Go“ – dann erstelle ich sofort die gewünschten Dateien und Next-Steps!**
+    <div class="footer">
+        © KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025<br>
+        Alle Inhalte ausschließlich zur Nutzung im Rahmen der KI-Readiness- und Datenschutzberatung.<br>
+        Weitergabe oder Veröffentlichung nur mit schriftlicher Genehmigung.<br>
+        Logos & Design sind urheberrechtlich geschützt. Nutzung & Bearbeitung der bereitgestellten Listen, Templates und Prompts ausschließlich für Kunden & Partner von KI-Sicherheit.jetzt.
+    </div>
+</div>
+</body>
+</html>

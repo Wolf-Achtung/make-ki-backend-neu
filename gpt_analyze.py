@@ -7,34 +7,20 @@ import re
 
 client = OpenAI()
 
-# ---------------------------------------------------------
-# 1. Prompt-Loader: Holt branchenspezifisches oder Default-Prompt
-# ---------------------------------------------------------
+# --- 1. Branchenspezifisches Prompt-Loader ---
 def load_prompt(branche, abschnitt):
-    bn = branche.lower().replace("&", "und").replace(" ", "")
-    path = os.path.join("prompts", bn, f"{abschnitt}.md")
+    path = os.path.join("prompts", branche, f"{abschnitt}.md")
     if not os.path.exists(path):
         path = os.path.join("prompts", "default", f"{abschnitt}.md")
     with open(path, encoding="utf-8") as f:
         return f.read()
 
-# ---------------------------------------------------------
-# 2. Benchmark-Loader: Holt die richtige Benchmark-Tabelle
-# ---------------------------------------------------------
+# --- 2. Benchmark-Loader (Value-Keys!) ---
 def load_benchmark(branche):
-    branch_map = {
-        "Marketing & Werbung": "benchmark_marketing.csv",
-        "Beratung & Dienstleistungen": "benchmark_beratung.csv",
-        "IT & Software": "benchmark_it.csv",
-        "Finanzen & Versicherungen": "benchmark_finanzen.csv",
-        "Handel & E-Commerce": "benchmark_handel.csv",
-        "Bildung": "benchmark_bildung.csv",
-        "Verwaltung": "benchmark_verwaltung.csv",
-    }
-    fn = branch_map.get(branche, None)
-    if not fn:
-        return []
+    fn = f"benchmark_{branche}.csv"
     path = os.path.join("data", fn)
+    if not os.path.exists(path):
+        return []
     try:
         df = pd.read_csv(path)
         return df.to_dict(orient="records")
@@ -42,9 +28,7 @@ def load_benchmark(branche):
         print(f"Benchmark-Loading Error: {e}")
         return []
 
-# ---------------------------------------------------------
-# 3. Markdown-/Checklisten-Loader
-# ---------------------------------------------------------
+# --- 3. Markdown-/Checklisten-Loader ---
 def read_markdown_file(filename):
     path = os.path.join("data", filename)
     try:
@@ -54,9 +38,7 @@ def read_markdown_file(filename):
         print(f"Fehler beim Lesen von {path}: {e}")
         return ""
 
-# ---------------------------------------------------------
-# 4. Tools & Förderungen-Loader (JSON)
-# ---------------------------------------------------------
+# --- 4. Tools & Förderungen-Loader (JSON) ---
 def load_tools_und_foerderungen():
     path = "tools_und_foerderungen.json"
     try:
@@ -68,9 +50,7 @@ def load_tools_und_foerderungen():
 
 TOOLS_FOERDER = load_tools_und_foerderungen()
 
-# ---------------------------------------------------------
-# 5. Prompt-Builder (setzt alles zusammen)
-# ---------------------------------------------------------
+# --- 5. Prompt-Builder ---
 def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, tools_text="", foerder_text=""):
     prompt_raw = load_prompt(branche, abschnitt)
     bench_txt = ""
@@ -90,26 +70,25 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
     )
     return prompt
 
-# ---------------------------------------------------------
-# 6. Tools & Förderungen für Prompt aufbereiten
-# ---------------------------------------------------------
+# --- 6. Tools & Förderungen für Prompt ---
 def get_tools_und_foerderungen(data):
     groesse = data.get("unternehmensgroesse", "").lower()
-    # Tools nach Größe (vereinfacht, je nach Struktur in deiner JSON ggf. anpassen!)
-    if "1" in groesse or "solo" in groesse or "klein" in groesse:
-        tools_list = TOOLS_FOERDER.get("tools", {}).get("kleinere", [])
+    branche = data.get("branche", "")
+    # Flexible Logik: spezifisch für Branche/Größe
+    if "1" in groesse or "solo" in groesse:
+        tools_list = TOOLS_FOERDER.get("tools", {}).get("solo", []) + TOOLS_FOERDER.get("tools", {}).get(branche, [])
+    elif "kmu" in groesse or "team" in groesse or "klein" in groesse:
+        tools_list = TOOLS_FOERDER.get("tools", {}).get("kmu", []) + TOOLS_FOERDER.get("tools", {}).get(branche, [])
     else:
-        tools_list = TOOLS_FOERDER.get("tools", {}).get("groessere", [])
+        tools_list = TOOLS_FOERDER.get("tools", {}).get("allgemein", []) + TOOLS_FOERDER.get("tools", {}).get(branche, [])
     tools_text = "\n".join([f"- [{t['name']}]({t['link']})" for t in tools_list]) if tools_list else "Keine spezifischen Tools gefunden."
 
-    # Förderprogramme (kannst du nach Bundesland/Branche aufteilen, hier einfach national)
-    foerder_list = TOOLS_FOERDER.get("foerderungen", {}).get("national", [])
+    # Förderprogramme
+    foerder_list = TOOLS_FOERDER.get("foerderungen", {}).get(branche, []) + TOOLS_FOERDER.get("foerderungen", {}).get("national", [])
     foerder_text = "\n".join([f"- [{f['name']}]({f['link']})" for f in foerder_list]) if foerder_list else "Keine Förderprogramme gefunden."
     return tools_text, foerder_text
 
-# ---------------------------------------------------------
-# 7. GPT-Aufruf (gpt-4o)
-# ---------------------------------------------------------
+# --- 7. GPT-Block ---
 def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=None):
     tools_text, foerder_text = get_tools_und_foerderungen(data)
     prompt = build_prompt(data, abschnitt, branche, groesse, checklisten, benchmark, tools_text, foerder_text)
@@ -130,12 +109,10 @@ def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=Non
     )
     return response.choices[0].message.content.strip()
 
-# ---------------------------------------------------------
-# 8. Parallele Analyse für alle Abschnitte
-# ---------------------------------------------------------
+# --- 8. Analyse für alle Abschnitte ---
 def analyze_full_report(data):
-    branche = data.get("branche", "Sonstige").strip()
-    groesse = data.get("unternehmensgroesse", "KMU").strip()
+    branche = data.get("branche", "default").strip()
+    groesse = data.get("unternehmensgroesse", "kmu").strip()
 
     benchmark = load_benchmark(branche)
     check_readiness = read_markdown_file("check_ki_readiness.md")
@@ -145,17 +122,19 @@ def analyze_full_report(data):
     check_roadmap = read_markdown_file("check_umsetzungsplan_ki.md")
     praxisbeispiele = read_markdown_file("praxisbeispiele.md")
     tools = read_markdown_file("tools.md")
-    # ... weitere Checklisten nach Bedarf ...
 
     abschnitte = [
-        ("ExecutiveSummary", check_readiness),
-        ("Strategie", check_readiness),
-        ("Compliance", check_compliance),
-        ("Innovation", check_inno),
-        ("Datenschutz", check_datenschutz),
-        ("Roadmap", check_roadmap),
-        ("Praxisbeispiele", praxisbeispiele),
-        ("Tools", tools),
+        ("executive_summary", check_readiness),
+        ("gesamtstrategie", check_readiness),
+        ("compliance", check_compliance),
+        ("innovation", check_inno),
+        ("datenschutz", check_datenschutz),
+        ("roadmap", check_roadmap),
+        ("praxisbeispiele", praxisbeispiele),
+        ("tools", tools),
+        ("foerderprogramme", ""),  # ggf. individuell befüllt
+        ("moonshot_vision", ""),
+        ("eu_ai_act", check_compliance),
     ]
 
     with ThreadPoolExecutor() as pool:
@@ -169,9 +148,7 @@ def analyze_full_report(data):
 
     return results
 
-# ---------------------------------------------------------
-# 9. SWOT-Extractor (optional)
-# ---------------------------------------------------------
+# --- 9. SWOT-Extractor ---
 def extract_swot(full_text):
     def find(pattern):
         m = re.search(pattern, full_text, re.DOTALL | re.IGNORECASE)

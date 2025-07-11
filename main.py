@@ -5,14 +5,14 @@ from fastapi.responses import JSONResponse, FileResponse
 from dotenv import load_dotenv
 
 from gpt_analyze import analyze_full_report
-from pdf_export import export_pdf  # Siehe nächster Schritt
+from pdf_export import export_pdf
 
 import tempfile
 import uuid
 
 load_dotenv()
 
-# Konfiguration (Netlify-Frontend erlauben)
+# Konfiguration
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://make.ki-sicherheit.jetzt, http://localhost:8888").split(",")
 
 app = FastAPI()
@@ -40,6 +40,7 @@ async def create_briefing(request: Request):
         print("[INFO] Neue Anfrage erhalten")
         print("[INFO] Daten:", data)
 
+        # NEU: Wir gehen immer von Value-Keys aus (siehe Formbuilder!)
         # Analyse starten (returns dict mit Texten etc.)
         report_data = analyze_full_report(data)
         print("[INFO] Analyse abgeschlossen")
@@ -48,15 +49,14 @@ async def create_briefing(request: Request):
         pdf_path = export_pdf(report_data)
         print("[INFO] PDF erstellt:", pdf_path)
 
-        # Download-Link erzeugen (einmaliger Temp-Link)
-        # Alternativ: File direkt zurückgeben
+        # Download-Link erzeugen
         return JSONResponse({"pdf_url": f"/download/{os.path.basename(pdf_path)}"})
 
     except Exception as e:
         print("[ERROR] Fehler beim Erstellen des Reports:", str(e))
         return JSONResponse({"error": str(e)}, status_code=500)
 
-# Einfacher Download-Endpoint für generierte PDFs
+# Download-Endpoint für PDFs
 @app.get("/download/{pdf_file}")
 def download(pdf_file: str):
     file_path = os.path.join(tempfile.gettempdir(), pdf_file)
