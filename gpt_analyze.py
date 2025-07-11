@@ -46,7 +46,7 @@ def load_tools_und_foerderungen():
             return json.load(f)
     except Exception as e:
         print(f"Fehler beim Lesen von {path}: {e}")
-        return {"tools": {}, "foerderungen": {}}
+        return {}
 
 TOOLS_FOERDER = load_tools_und_foerderungen()
 
@@ -73,19 +73,67 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
 # --- 6. Tools & Förderungen für Prompt ---
 def get_tools_und_foerderungen(data):
     groesse = data.get("unternehmensgroesse", "").lower()
-    branche = data.get("branche", "")
-    # Flexible Logik: spezifisch für Branche/Größe
-    if "1" in groesse or "solo" in groesse:
-        tools_list = TOOLS_FOERDER.get("tools", {}).get("solo", []) + TOOLS_FOERDER.get("tools", {}).get(branche, [])
-    elif "kmu" in groesse or "team" in groesse or "klein" in groesse:
-        tools_list = TOOLS_FOERDER.get("tools", {}).get("kmu", []) + TOOLS_FOERDER.get("tools", {}).get(branche, [])
-    else:
-        tools_list = TOOLS_FOERDER.get("tools", {}).get("allgemein", []) + TOOLS_FOERDER.get("tools", {}).get(branche, [])
-    tools_text = "\n".join([f"- [{t['name']}]({t['link']})" for t in tools_list]) if tools_list else "Keine spezifischen Tools gefunden."
+    branche = data.get("branche", "").lower()
+    tools_text = "Keine spezifischen Tools gefunden."
+    foerder_text = "Keine Förderprogramme gefunden."
 
-    # Förderprogramme
-    foerder_list = TOOLS_FOERDER.get("foerderungen", {}).get(branche, []) + TOOLS_FOERDER.get("foerderungen", {}).get("national", [])
-    foerder_text = "\n".join([f"- [{f['name']}]({f['link']})" for f in foerder_list]) if foerder_list else "Keine Förderprogramme gefunden."
+    # ---- TOOLS LOGIK ----
+    tools_data = TOOLS_FOERDER.get(branche, {}) or TOOLS_FOERDER.get("default", {})
+    tools_list = []
+    if isinstance(tools_data, dict):
+        # Suche nach Groessenschlüssel (solo, klein, mittel, ...)
+        if groesse in tools_data:
+            tools_list.extend(tools_data[groesse])
+        # Falls nichts gefunden, versuche "solo" als Fallback für Einzelunternehmer
+        if "solo" in tools_data and groesse != "solo":
+            tools_list.extend(tools_data["solo"])
+        # Fallback zu Default, falls vorhanden
+        if branche != "default" and TOOLS_FOERDER.get("default", {}).get(groesse):
+            tools_list.extend(TOOLS_FOERDER["default"][groesse])
+    if tools_list:
+        tools_text = "\n".join([f"- [{t['name']}]({t['link']})" for t in tools_list])
+
+    # ---- FÖRDERUNGEN LOGIK ----
+    foerderungen = TOOLS_FOERDER.get("foerderungen", {})
+    foerder_list = []
+
+    # 1. Branchenspezifische Förderungen (alle Keys listen: z.B. "national", "solo", ...)
+    if branche in foerderungen and isinstance(foerderungen[branche], dict):
+        for key, value in foerderungen[branche].items():
+            if isinstance(value, list):
+                foerder_list.extend(value)
+
+    # 2. Nationale Förderungen für die Branche ("national" unter foerderungen[branche])
+    if branche in foerderungen and isinstance(foerderungen[branche], dict):
+        national_branch = foerderungen[branche].get("national", [])
+        if isinstance(national_branch, list):
+            foerder_list.extend(national_branch)
+
+    # 3. Nationale Standardförderungen ("default"->"national")
+    if "default" in foerderungen and "national" in foerderungen["default"]:
+        default_national = foerderungen["default"]["national"]
+        if isinstance(default_national, list):
+            foerder_list.extend(default_national)
+
+    # 4. Top-Level "national" (kann in manchen JSON-Varianten vorkommen)
+    if "national" in foerderungen and isinstance(foerderungen["national"], list):
+        foerder_list.extend(foerderungen["national"])
+    elif "national" in foerderungen and isinstance(foerderungen["national"], dict):
+        for v in foerderungen["national"].values():
+            if isinstance(v, list):
+                foerder_list.extend(v)
+
+    # Dubletten entfernen (gleiche name+link Kombination)
+    unique = {}
+    for f in foerder_list:
+        key = (f.get("name", ""), f.get("link", ""))
+        if key not in unique:
+            unique[key] = f
+    foerder_list = list(unique.values())
+
+    if foerder_list:
+        foerder_text = "\n".join([f"- [{f['name']}]({f['link']})" for f in foerder_list])
+
     return tools_text, foerder_text
 
 # --- 7. GPT-Block ---
