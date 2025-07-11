@@ -46,16 +46,22 @@ async def create_briefing(request: Request):
         print("[INFO] Analyse abgeschlossen")
 
         # --- Ergänze alle Platzhalter für das PDF-Template ---
-        # Liste aller Keys, die im Template verwendet werden (dummy/default, bis echte Logik gebaut ist)
         placeholder_keys = [
             "ScoreVisualisierung",
             "tools_tabelle",
             "benchmark_diagramm",
             "benchmark_tabelle",
-            "checklisten"
+            "checklisten",
+            "score_percent"   # <-- Nur diese Zeile ist NEU!
         ]
         for key in placeholder_keys:
             report_data.setdefault(key, "")
+
+        # ScoreVisualisierung notfalls dynamisch aus score_percent füllen
+        if not report_data["ScoreVisualisierung"]:
+            report_data["ScoreVisualisierung"] = f"<b>Score: {report_data['score_percent']}%</b>"
+        if report_data["score_percent"] == "":
+            report_data["score_percent"] = 0
 
         # PDF generieren (gibt Pfad zurück)
         pdf_path = export_pdf(report_data)
