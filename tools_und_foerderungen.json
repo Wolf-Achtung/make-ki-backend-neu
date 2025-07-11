@@ -1,107 +1,245 @@
 {
-  "tools": {
-    "marketing": {
-      "solo": [
-        { "name": "Canva KI Designer", "link": "https://www.canva.com/de_de/funktionen/ki-tools/" },
-        { "name": "Piwik PRO Analytics", "link": "https://piwik.pro/" },
-        { "name": "Jasper AI (Texterstellung)", "link": "https://www.jasper.ai/" }
-      ],
-      "klein": [
-        { "name": "HubSpot CRM (Starter)", "link": "https://www.hubspot.de/" },
-        { "name": "Midjourney (Bild KI)", "link": "https://www.midjourney.com/" },
-        { "name": "Scompler Content Suite", "link": "https://www.scompler.com/" }
-      ],
-      "mittel": [
-        { "name": "Legal OS (Vertragsanalyse)", "link": "https://legalos.io/" },
-        { "name": "DataGuard Compliance Suite", "link": "https://www.dataguard.de/" }
-      ]
-    },
-    "beratung": {
-      "solo": [
-        { "name": "Jasper AI (Texterstellung)", "link": "https://www.jasper.ai/" },
-        { "name": "Piwik PRO Analytics", "link": "https://piwik.pro/" }
-      ],
-      "klein": [
-        { "name": "HubSpot CRM (Starter)", "link": "https://www.hubspot.de/" },
-        { "name": "Mine PrivacyOps", "link": "https://www.saymine.com/privacyops" }
-      ],
-      "mittel": [
-        { "name": "OneTrust Datenschutz-Manager", "link": "https://www.onetrust.com/de/" },
-        { "name": "DataGuard Compliance Suite", "link": "https://www.dataguard.de/" },
-        { "name": "Legal OS (Vertragsanalyse)", "link": "https://legalos.io/" }
-      ]
-    },
-    "it": {
-      "solo": [
-        { "name": "Piwik PRO Analytics", "link": "https://piwik.pro/" }
-      ],
-      "klein": [
-        { "name": "GDPR.eu Compliance Guide", "link": "https://gdpr.eu/" },
-        { "name": "Consentmanager", "link": "https://www.consentmanager.de/" }
-      ],
-      "mittel": [
-        { "name": "Vanta Security Monitoring", "link": "https://www.vanta.com/" },
-        { "name": "Crowdstrike Endpoint Protection", "link": "https://www.crowdstrike.com/" }
-      ]
-    },
-    "finanzen": {
-      "solo": [
-        { "name": "Piwik PRO Analytics", "link": "https://piwik.pro/" }
-      ],
-      "klein": [
-        { "name": "Consentmanager", "link": "https://www.consentmanager.de/" },
-        { "name": "Mine PrivacyOps", "link": "https://www.saymine.com/privacyops" }
-      ],
-      "mittel": [
-        { "name": "OneTrust Datenschutz-Manager", "link": "https://www.onetrust.com/de/" },
-        { "name": "Legal OS (Vertragsanalyse)", "link": "https://legalos.io/" }
-      ]
-    },
-    "default": {
-      "solo": [
-        { "name": "Piwik PRO Analytics", "link": "https://piwik.pro/" }
-      ],
-      "klein": [
-        { "name": "HubSpot CRM (Starter)", "link": "https://www.hubspot.de/" }
-      ],
-      "mittel": [
-        { "name": "Legal OS (Vertragsanalyse)", "link": "https://legalos.io/" }
-      ]
-    }
+  "marketing": {
+    "solo": [
+      { "name": "Canva AI", "link": "https://www.canva.com/de_de/ai-tools/" },
+      { "name": "Copy.ai", "link": "https://www.copy.ai/" }
+    ],
+    "klein": [
+      { "name": "HubSpot Marketing Hub", "link": "https://www.hubspot.de/products/marketing" }
+    ],
+    "mittel": [
+      { "name": "Adobe Experience Cloud", "link": "https://business.adobe.com/de/products/experience-cloud.html" }
+    ]
+  },
+  "beratung": {
+    "solo": [
+      { "name": "Miro (KI-Whiteboards)", "link": "https://miro.com/" },
+      { "name": "Notion AI", "link": "https://www.notion.so/product/ai" }
+    ],
+    "klein": [
+      { "name": "Asana KI-Projektmanagement", "link": "https://asana.com/de/features/ai" }
+    ],
+    "mittel": [
+      { "name": "Monday.com Work OS", "link": "https://monday.com/de/features/ki" }
+    ]
+  },
+  "it": {
+    "solo": [
+      { "name": "GitHub Copilot", "link": "https://github.com/features/copilot" },
+      { "name": "Raycast", "link": "https://www.raycast.com/" }
+    ],
+    "klein": [
+      { "name": "JetBrains AI Assistant", "link": "https://www.jetbrains.com/ai/" }
+    ],
+    "mittel": [
+      { "name": "Datadog AIOps", "link": "https://www.datadoghq.com/aiops/" }
+    ]
+  },
+  "finanzen": {
+    "solo": [
+      { "name": "lexoffice KI-Buchhaltung", "link": "https://www.lexoffice.de/" }
+    ],
+    "klein": [
+      { "name": "sevDesk KI", "link": "https://sevdesk.de/ki-buchhaltung/" }
+    ],
+    "mittel": [
+      { "name": "SAP Business AI", "link": "https://www.sap.com/germany/products/artificial-intelligence.html" }
+    ]
+  },
+  "handel": {
+    "solo": [
+      { "name": "Shopify Magic", "link": "https://www.shopify.com/tools/ai" }
+    ],
+    "klein": [
+      { "name": "JTL-Wawi KI", "link": "https://www.jtl-software.de/" }
+    ],
+    "mittel": [
+      { "name": "Tradebyte AI", "link": "https://www.tradebyte.com/" }
+    ]
+  },
+  "bildung": {
+    "solo": [
+      { "name": "Sofatutor KI", "link": "https://www.sofatutor.com/" }
+    ],
+    "klein": [
+      { "name": "Moodle AI-Plugins", "link": "https://moodle.org/plugins/?q=ai" }
+    ],
+    "mittel": [
+      { "name": "Microsoft Education Copilot", "link": "https://education.microsoft.com/" }
+    ]
+  },
+  "verwaltung": {
+    "solo": [
+      { "name": "Datenlotsen GovTech", "link": "https://datenlotsen.de/" }
+    ],
+    "klein": [
+      { "name": "Mach AG eAkte KI", "link": "https://www.mach.de/produkte/eaakte" }
+    ],
+    "mittel": [
+      { "name": "Komm.ONE AI-Lösungen", "link": "https://www.komm.one/" }
+    ]
+  },
+  "gesundheit": {
+    "solo": [
+      { "name": "Doctolib KI", "link": "https://www.doctolib.de/" }
+    ],
+    "klein": [
+      { "name": "m.Doc HealthCloud", "link": "https://mdoc.one/" }
+    ],
+    "mittel": [
+      { "name": "Infermedica (KI-Anamnese)", "link": "https://infermedica.com/de/" }
+    ]
+  },
+  "bau": {
+    "solo": [
+      { "name": "PlanRadar", "link": "https://www.planradar.com/de/" }
+    ],
+    "klein": [
+      { "name": "Procore", "link": "https://www.procore.com/" }
+    ],
+    "mittel": [
+      { "name": "Autodesk Construction Cloud", "link": "https://construction.autodesk.eu/" }
+    ]
+  },
+  "medien": {
+    "solo": [
+      { "name": "Descript AI (Audio/Video)", "link": "https://www.descript.com/ai" }
+    ],
+    "klein": [
+      { "name": "StoryChief KI", "link": "https://storychief.io/de" }
+    ],
+    "mittel": [
+      { "name": "Adobe Creative Cloud mit Firefly", "link": "https://www.adobe.com/de/products/firefly.html" }
+    ]
+  },
+  "industrie": {
+    "solo": [
+      { "name": "Octoplant", "link": "https://www.auvesy-mdt.com/de/octoplant.html" }
+    ],
+    "klein": [
+      { "name": "Siemens MindSphere", "link": "https://siemens.mindsphere.io/" }
+    ],
+    "mittel": [
+      { "name": "PTC ThingWorx", "link": "https://www.ptc.com/en/products/thingworx" }
+    ]
+  },
+  "logistik": {
+    "solo": [
+      { "name": "ParcelLab", "link": "https://www.parcellab.com/de/" }
+    ],
+    "klein": [
+      { "name": "Transporeon", "link": "https://www.transporeon.com/de/" }
+    ],
+    "mittel": [
+      { "name": "Blue Yonder", "link": "https://blueyonder.com/" }
+    ]
+  },
+  "default": {
+    "solo": [
+      { "name": "Microsoft 365 Copilot", "link": "https://www.microsoft.com/de-de/microsoft-365/copilot" },
+      { "name": "ChatGPT (OpenAI)", "link": "https://chat.openai.com/" }
+    ],
+    "klein": [
+      { "name": "Zapier KI-Automation", "link": "https://zapier.com/" }
+    ],
+    "mittel": [
+      { "name": "Google Workspace AI", "link": "https://workspace.google.com/intl/de/products/ai/" }
+    ]
   },
   "foerderungen": {
     "marketing": {
       "national": [
-        { "name": "go-digital (BMWK)", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/go-digital.html" },
-        { "name": "Digital Jetzt (BMWK)", "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html" }
+        { "name": "go-digital", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/foerderprogramm-go-digital.html" }
       ],
       "solo": [
-        { "name": "ERP-Gründerkredit (KfW für Selbstständige)", "link": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Gründen-Nachfolgen/Finanzierungsangebote/ERP-Gründerkredit/" }
+        { "name": "EXIST-Gründerstipendium", "link": "https://www.exist.de/DE/Programm/Exist-Gruenderstipendium/inhalt.html" }
       ]
     },
     "beratung": {
       "national": [
-        { "name": "BAFA-Beratungsförderung", "link": "https://www.bafa.de/DE/Wirtschaft_Mittelstand/Beratung_Foerderung/beratung_foerderung_node.html" },
-        { "name": "KMU-innovativ", "link": "https://www.kmu-innovativ.de/" }
+        { "name": "BAFA-Förderung Unternehmensberatung", "link": "https://www.bafa.de/DE/Wirtschaft/Beratung/Förderung_beratender_Berufe/beratung_node.html" }
       ],
       "solo": [
-        { "name": "IBB Förderung Berlin für Start-ups & Freiberufler", "link": "https://www.ibb.de/de/foerderprogramme/innovationsfoerderung.html" }
+        { "name": "Gründungszuschuss (Agentur für Arbeit)", "link": "https://www.arbeitsagentur.de/unternehmen/finanziell/gruendungszuschuss" }
       ]
     },
     "it": {
       "national": [
-        { "name": "ZIM Innovationsprogramm", "link": "https://www.zim.de/ZIM/Navigation/DE/Home/home.html" }
+        { "name": "KMU-innovativ: IT", "link": "https://www.kmu-innovativ.de/" }
+      ],
+      "solo": [
+        { "name": "Digital Jetzt", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/foerderprogramm-digital-jetzt.html" }
       ]
     },
     "finanzen": {
       "national": [
-        { "name": "ERP-Digitalisierungs- und Innovationskredit (KfW)", "link": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Erweitern-Festigen/Innovation/" }
+        { "name": "INVEST – Zuschuss für Wagniskapital", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Mittelstand/invest.html" }
+      ],
+      "solo": [
+        { "name": "ERP-Gründerkredit", "link": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Gründen-Erweitern/Finanzierungsangebote/ERP-Gründerkredit-StartGeld-(067)/" }
+      ]
+    },
+    "handel": {
+      "national": [
+        { "name": "go-digital", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/foerderprogramm-go-digital.html" }
+      ],
+      "solo": [
+        { "name": "EXIST-Gründerstipendium", "link": "https://www.exist.de/DE/Programm/Exist-Gruenderstipendium/inhalt.html" }
+      ]
+    },
+    "bildung": {
+      "national": [
+        { "name": "DigitalPakt Schule", "link": "https://www.digitalpaktschule.de/de/" }
+      ],
+      "solo": [
+        { "name": "Erasmus+ Förderungen", "link": "https://www.erasmusplus.de/" }
+      ]
+    },
+    "verwaltung": {
+      "national": [
+        { "name": "E-Government-Initiative BMI", "link": "https://www.bmi.bund.de/DE/themen/moderne-verwaltung/verwaltungsmodernisierung/e-government/e-government-initiative/e-government-initiative-node.html" }
+      ]
+    },
+    "gesundheit": {
+      "national": [
+        { "name": "KHZG – Krankenhauszukunftsgesetz", "link": "https://www.bundesgesundheitsministerium.de/krankenhauszukunftsgesetz.html" }
+      ],
+      "solo": [
+        { "name": "Zukunftsprogramm Krankenhäuser", "link": "https://www.bundesgesundheitsministerium.de/themen/krankenhaus/krankenhauszukunftsfonds.html" }
+      ]
+    },
+    "bau": {
+      "national": [
+        { "name": "Digitalisierung Bauwirtschaft (BMWK)", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Bauen/foerderprogramme.html" }
+      ]
+    },
+    "medien": {
+      "national": [
+        { "name": "Medien- und Kreativförderung", "link": "https://www.kreativ-bund.de/" }
+      ],
+      "solo": [
+        { "name": "VG Wort Förderprogramm", "link": "https://www.vgwort.de/" }
+      ]
+    },
+    "industrie": {
+      "national": [
+        { "name": "Industrie 4.0-Förderprogramme", "link": "https://www.plattform-i40.de/I40/Navigation/DE/Home/home.html" }
+      ],
+      "solo": [
+        { "name": "go-inno (BMWK)", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Innovation/go-inno.html" }
+      ]
+    },
+    "logistik": {
+      "national": [
+        { "name": "Innovative Hafentechnologien (IHATEC)", "link": "https://www.bmvi.de/SharedDocs/DE/Artikel/G/innovative-hafentechnologien.html" }
       ]
     },
     "default": {
       "national": [
-        { "name": "Digitalprämie Berlin", "link": "https://www.digitalpraemie-berlin.de/" },
-        { "name": "Invest BW Baden-Württemberg", "link": "https://www.invest-bw.de/" }
+        { "name": "Digital Jetzt", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/foerderprogramm-digital-jetzt.html" }
+      ],
+      "solo": [
+        { "name": "EXIST-Gründerstipendium", "link": "https://www.exist.de/DE/Programm/Exist-Gruenderstipendium/inhalt.html" }
       ]
     }
   }
