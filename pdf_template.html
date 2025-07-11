@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>KI-Readiness-Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        h1, h2 { color: #2257a7; }
+        .score { font-size: 2em; font-weight: bold; color: #0a872a; }
+        .swot { margin-top: 1em; }
+        .swot h3 { margin-bottom: 0.2em; }
+        table { border-collapse: collapse; margin-top: 1em; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 6px; }
+        th { background: #f4f7fa; }
+        .benchmark { margin-top: 2em; }
+        .section { margin-bottom: 2em; }
+        .empfehlung { background: #f1ffe6; border-left: 4px solid #76b900; padding: 0.5em 1em; margin: 1em 0;}
+    </style>
+</head>
+<body>
+    <h1>KI-Readiness-Report</h1>
+    <p><b>Branche:</b> {{ branche }}<br>
+    <b>Unternehmensgröße:</b> {{ unternehmensgroesse }}</p>
+
+    <div class="section">
+        <h2>Score</h2>
+        <div class="score">{{ score_percent or "n/a" }}%</div>
+    </div>
+
+    <div class="section">
+        <h2>Executive Summary</h2>
+        {{ summary | safe }}
+    </div>
+
+    <div class="section">
+        <h2>Strategie</h2>
+        {{ strategie | safe }}
+    </div>
+
+    <div class="section">
+        <h2>Compliance & Datenschutz</h2>
+        {{ compliance | safe }}
+    </div>
+
+    <div class="section">
+        <h2>Innovation & SWOT</h2>
+        {{ innovation | safe }}
+        <div class="swot">
+            <h3>SWOT:</h3>
+            <ul>
+                <li><b>Stärken:</b> {{ swot_strengths or "" }}</li>
+                <li><b>Schwächen:</b> {{ swot_weaknesses or "" }}</li>
+                <li><b>Chancen:</b> {{ swot_opportunities or "" }}</li>
+                <li><b>Risiken:</b> {{ swot_threats or "" }}</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Branchen-Benchmark</h2>
+        {% if benchmark %}
+        <table class="benchmark">
+            <tr>
+                <th>Kategorie</th>
+                <th>Wert (Ø)</th>
+                <th>Kurzbeschreibung</th>
+            </tr>
+            {% for row in benchmark %}
+            <tr>
+                <td>{{ row.Kategorie }}</td>
+                <td>{{ row.Wert_Durchschnitt }}</td>
+                <td>{{ row.Kurzbeschreibung }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>Keine Benchmark-Daten verfügbar.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Handlungsempfehlungen & Roadmap</h2>
+        {{ roadmap | safe }}
+    </div>
+
+    <div class="section">
+        <h2>Praxisbeispiele & Tools</h2>
+        {{ praxis or "" }}
+        {{ tools or "" }}
+    </div>
+</body>
+</html>
