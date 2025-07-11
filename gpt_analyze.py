@@ -135,7 +135,6 @@ def get_tools_und_foerderungen(data):
         foerder_text = "\n".join([f"- [{f['name']}]({f['link']})" for f in foerder_list])
 
     return tools_text, foerder_text
-
 # --- 7. GPT-Block ---
 def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=None):
     tools_text, foerder_text = get_tools_und_foerderungen(data)
@@ -194,6 +193,8 @@ def analyze_full_report(data):
         }
         results = {k: f.result() for k, f in futures.items()}
 
+    # Score-Berechnung ergänzen!
+    results["score_percent"] = calc_score_percent(data)
     return results
 
 # --- 9. SWOT-Extractor ---
@@ -207,3 +208,56 @@ def extract_swot(full_text):
         "swot_opportunities": find(r"Chancen:(.*?)(?:Risiken:|$)"),
         "swot_threats": find(r"Risiken:(.*?)(?:$)"),
     }
+
+# --- 10. KI-Readiness Score Minimalberechnung ---
+def calc_score_percent(data):
+    score = 0
+    max_score = 35  # Summe aller Teilpunkte
+
+    # Digitalisierung (10 Punkte, 1-10 Skala)
+    try:
+        score += int(data.get("digitalisierungsgrad", 1))
+    except Exception:
+        score += 1
+
+    # Automatisierungsgrad (0-5)
+    autogr = data.get("automatisierungsgrad", "")
+    auto_map = {
+        "sehr_niedrig": 0,
+        "eher_niedrig": 1,
+        "mittel": 3,
+        "eher_hoch": 4,
+        "sehr_hoch": 5
+    }
+    score += auto_map.get(autogr, 0)
+
+    # Prozesse papierlos (0-5)
+    papierlos = data.get("prozesse_papierlos", "0-20")
+    pap_map = {
+        "0-20": 1,
+        "21-50": 2,
+        "51-80": 4,
+        "81-100": 5
+    }
+    score += pap_map.get(papierlos, 0)
+
+    # KI-Knowhow (0-5)
+    ki_knowhow = data.get("ki_knowhow", "keine")
+    know_map = {
+        "keine": 0,
+        "grundkenntnisse": 1,
+        "mittel": 3,
+        "fortgeschritten": 4,
+        "expertenwissen": 5
+    }
+    score += know_map.get(ki_knowhow, 0)
+
+    # Risikofreude (0-5)
+    try:
+        score += int(data.get("risikofreude", 1))
+    except Exception:
+        score += 1
+
+    # Normieren auf 0-100
+    percent = int((score / max_score) * 100)
+    return percent
