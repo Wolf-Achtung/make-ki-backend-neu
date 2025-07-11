@@ -45,6 +45,18 @@ async def create_briefing(request: Request):
         report_data = analyze_full_report(data)
         print("[INFO] Analyse abgeschlossen")
 
+        # --- Ergänze alle Platzhalter für das PDF-Template ---
+        # Liste aller Keys, die im Template verwendet werden (dummy/default, bis echte Logik gebaut ist)
+        placeholder_keys = [
+            "ScoreVisualisierung",
+            "tools_tabelle",
+            "benchmark_diagramm",
+            "benchmark_tabelle",
+            "checklisten"
+        ]
+        for key in placeholder_keys:
+            report_data.setdefault(key, "")
+
         # PDF generieren (gibt Pfad zurück)
         pdf_path = export_pdf(report_data)
         print("[INFO] PDF erstellt:", pdf_path)
