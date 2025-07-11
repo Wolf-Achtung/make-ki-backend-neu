@@ -1,6 +1,22 @@
-Formuliere eine konkrete Roadmap für die nächsten 6-12 Monate zur Erreichung der wichtigsten KI-Ziele für ein Handels- oder E-Commerce-Unternehmen der Größe {unternehmensgroesse}.
-Gliedere sie in sinnvolle Phasen, Meilensteine und erste Umsetzungsschritte.
+# Roadmap – Handel & E-Commerce, {unternehmensgroesse}
 
-Nutze auch folgende aktuelle Tools und Förderprogramme:
-{tools}
-{foerderungen}
+## Ihre empfohlene KI-Implementierungs-Roadmap
+
+{roadmap_report}
+
+## Schritt-für-Schritt-Plan
+
+1. Status-Quo klären ({score_percent}, {benchmark_score})
+2. Quick-Wins im Shop und der Logistik umsetzen
+3. Mitarbeitende schulen und Datenschutz verankern
+4. Consent-Management & Compliance prüfen (DSGVO, AI Act)
+5. Automatisierung für Lager, Versand und Zahlungsabgleich ausbauen
+6. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
+
+## Roadmap-Checkliste
+
+{check_umsetzungsplan}
+
+---
+
+_Tipp: Halten Sie die Roadmap als lebendiges Dokument im Team!_
