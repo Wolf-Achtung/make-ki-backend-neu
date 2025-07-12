@@ -44,6 +44,7 @@ async def create_briefing(request: Request):
         # NEU: Wir gehen immer von Value-Keys aus (siehe Formbuilder!)
         # Analyse starten (returns dict mit Texten etc.)
         report_data = analyze_full_report(data)
+        print("[DEBUG] report_data nach analyze_full_report:", report_data)
         print("[INFO] Analyse abgeschlossen")
 
         # --- Ergänze alle Platzhalter für das PDF-Template ---
