@@ -1,6 +1,6 @@
-Formuliere eine inspirierende Moonshot-Vision für KI im Marketingunternehmen ({selbststaendig}, Größe {unternehmensgroesse}).
+Skizziere eine ambitionierte, aber realistische Moonshot-Vision für das Marketing der Zukunft: Wie sieht ein KI- und datengetriebenes, innovatives Marketingteam aus? Was sind die Gamechanger durch KI und Automatisierung, und welche kulturellen, organisatorischen und technologischen Sprünge sind nötig?
 
-- Was wäre ein echter Gamechanger?
+
 - Welche neuen Geschäftsmodelle, Produkte oder Services werden durch KI möglich?
 - Wie kann sich Ihr Unternehmen durch KI differenzieren?
 

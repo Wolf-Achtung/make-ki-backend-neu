@@ -1,11 +1,14 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für ein Unternehmen im Bereich Marketing & Werbung ({selbststaendig}, Größe {unternehmensgroesse}).
+# EU AI Act-Analyse & Empfehlungen für das Marketing
 
-- Analysiere aktuelle KI-Anwendungen (siehe Userdaten)
-- Bewerte Notwendigkeit von Risikoabschätzung, Dokumentation, Compliance
-- Besonderheiten für kleine Unternehmen/Freiberufler ansprechen
+Bewerte die Bedeutung und konkreten Anforderungen des EU AI Act speziell für Marketingteams und Agenturen. Analysiere, welche Anwendungsfälle besonders betroffen sind (z. B. Personalisierung, Profiling, Chatbots), und gib Empfehlungen für die Umsetzung.
 
-Userdaten:
+**Fokussiert auf:**
+- Risikomanagement, Dokumentationspflichten, Transparenz
+- Chancen für Innovation und Compliance
+- Quick Wins und Praxistipps
+
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}

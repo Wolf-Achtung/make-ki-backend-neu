@@ -1,18 +1,23 @@
-Bewerte die Datenschutzsituation für das Unternehmen:
+# Datenschutz-Analyse & Empfehlungen für Marketing
 
-- Branche: Marketing & Werbung
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+Analysiere den aktuellen Status der Datenschutz-Organisation im Marketing. Identifiziere Lücken, Risiken, Sofortmaßnahmen und priorisierte Handlungsfelder für eine rechtskonforme, moderne Marketing-Organisation.
 
-**Schwachstellen und Risiken:**  
-- Tracking und personenbezogene Daten  
-- Drittanbieter-Tools ohne DSGVO-Konformität  
-- Fehlende Dokumentation für Opt-In/Opt-Out
+**Fokussiere auf:**
+- Umgang mit Kundendaten, Einwilligungen, Consent Management
+- Bewertung von Tracking-Tools, Profiling, KI-gesteuerten Personalisierungen
+- Lückenanalyse (z. B. bei Löschregeln, Meldewegen, Transparenz)
+- Quick Wins und Empfehlungen zur Stärkung der Datenschutz-Readiness
 
-**Empfehlungen:**  
-- Consent-Management implementieren  
-- Datenspeicherung und -übertragung absichern  
-- DSGVO und AI Act regelmäßig prüfen
+**Format:** Geschärft auf die Praxis im Marketing.
 
-Checkliste Datenschutz:
-{check_datenschutz}
+---
+
+## Datenschutz-Check
+
+Nutzerdaten (JSON):
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}

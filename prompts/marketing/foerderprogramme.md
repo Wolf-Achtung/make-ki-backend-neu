@@ -1,14 +1,13 @@
-# Förderprogramme & Finanzierung – Marketing & Werbung, {unternehmensgroesse}
+# Förderprogramme für Marketingunternehmen
 
-Nenne alle relevanten Förderprogramme und Finanzierungsmöglichkeiten für KI-Projekte in Marketing & Werbung ({selbststaendig}, Größe {unternehmensgroesse}).
+Liste und beschreibe konkrete Förderprogramme auf Landes-, Bundes- und EU-Ebene für Digitalisierung und KI im Marketing.
 
-Berücksichtige:
-- Bundesland
-- Innovationsgrad und geplante Projekte
-- Förderprogramme aus den aktuellen Daten:
-{foerderungen}
+- Zielgruppe
+- Maximale Förderung
+- Voraussetzungen und Tipps
 
-**Hinweise zur Antragstellung:**  
-- Frühzeitig Förderbedingungen prüfen  
-- Projektziele klar definieren  
-- Beratung von Verbänden oder Experten nutzen
+---
+
+## Förderprogramme
+
+{foerderprogramme}

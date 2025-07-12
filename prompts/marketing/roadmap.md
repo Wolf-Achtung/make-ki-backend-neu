@@ -1,22 +1,20 @@
-# Roadmap – Marketing & Werbung, {unternehmensgroesse}
+# Roadmap & Umsetzungsplan für KI und Digitalisierung im Marketing
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Erstelle auf Basis der Analyse und Nutzerdaten eine modulare Roadmap für die KI- und Digitaltransformation im Marketing.
 
-{roadmap_report}
+**Strukturiere nach:**
+1. Prozessautomatisierung (z. B. Kampagnenmanagement, Lead Scoring, Content Creation)
+2. Customer Experience-Optimierung durch KI
+3. Datenschutz- und Compliance-Maßnahmen
+4. Upskilling- und Weiterbildungsprogramme für das Team
+5. Fördermittel-Beschaffung
 
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo klären ({score_percent}, {benchmark_score})
-2. Quick-Wins in der Content-Produktion umsetzen
-3. Marketing-Automation einführen
-4. Consent-Management & Compliance prüfen (DSGVO, AI Act)
-5. Erfolgsmessung mit KI-Analytics optimieren
-6. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Abhängigkeiten und Ressourcen.
 
 ---
 
-_Tipp: Halten Sie die Roadmap als Team-Kommunikationswerkzeug aktuell!_
+## Roadmap
+
+Nutzerdaten (JSON):
+
+{daten}

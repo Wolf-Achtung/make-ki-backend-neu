@@ -1,73 +1,27 @@
-# Executive Summary – KI-Readiness: Marketing & Werbung
+# Executive Summary: KI-Readiness & Handlungsempfehlungen für das Marketing
 
-**Ihr maßgeschneiderter KI-Readiness-Report für die Marketing- und Werbebranche**  
-_Strategisch. Innovativ. Zukunftssicher._
+Du bist ein erfahrener, strategisch denkender KI- und Digitalberater für Unternehmen im Bereich Marketing, Kommunikation und Werbung. Deine Aufgabe ist es, basierend auf den folgenden Nutzerdaten und Kontextinformationen, eine professionelle, unternehmensrelevante Executive Summary zu erstellen.
 
----
+**Leiste einen echten Mehrwert, indem du:**
+- Den aktuellen Digitalisierungs- und KI-Readiness-Status der Marketing-Organisation einschätzt (inkl. Stärken und Schwächen bei datengetriebenen Prozessen, MarTech, Automatisierung, Personalisierung etc.)
+- Den KI-Readiness-Score und relevante Benchmarks herausstellst (entnehme diese dem JSON-Block)
+- 3–5 zentrale Chancen und Gamechanger-Möglichkeiten für KI im Marketing identifizierst (z. B. Automatisierung von Kampagnen, Content Creation, Personalisierung, Predictive Analytics)
+- Konkrete, priorisierte Next Steps und Quick Wins vorschlägst, die sofort Wirkung entfalten können
+- Risiken, typische Fehler („Anti-Pattern“) und regulatorische Anforderungen (z. B. Datenschutz, KI-Transparenz) kritisch bewertest
+- Optional: Passende Tools, Frameworks oder Förderprogramme für Marketing-Unternehmen anführen
 
-## 1. Aktueller Status & Benchmark
-
-- **KI-Readiness-Score:** {score_percent}
-- **Branchendurchschnitt:** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Typische Anti-Pattern:**  
-  1. Fokus auf kreative Tools, aber keine Integration in Workflows  
-  2. Unklare Datengrundlage für Kampagnen  
-  3. Datenschutz/DSGVO als Nebenthema behandelt  
-  4. Nur Pilotprojekte, keine Skalierung der KI-Lösungen
+**Sprache:** Prägnant, strategisch, auf Entscheiderebene. Keine Aufzählungen ohne geschäftlichen Kontext. Jedes Statement muss einen konkreten Nutzen stiften.
 
 ---
 
-## 3. Handlungsempfehlungen & Best Practices
+## Analyse & Bewertung
 
-- Aufbau einer umfassenden KI-Strategie für Content, Kampagnen, Analysen und Kundenservice
-- Data-Governance etablieren: Tracking, Einwilligungen, Consent-Management
-- KI-Tools für Content-Generierung, Targeting, Marketingautomatisierung einsetzen
-- Kampagnenerfolg mit KI-Monitoring/Analytics laufend optimieren
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- Personalisierte KI-Content-Strategie  
-- Automatisierte Leadqualifizierung mit KI  
-- Skalierte A/B-Tests für Werbemittel
+{daten}
 
----
-
-## 4. Individuelle Tools, Förderprogramme & Checklisten
-
-{tools_and_foerderungen}
+Zusatzmaterialien (falls bereitgestellt):
 
 {checklisten}
-
----
-
-## 5. Score & Benchmark-Visualisierung
-
-- Visualisierung: {score_vis}
-- Benchmark-Daten: {benchmark_table}
-- {diagramme}
-
----
-
-## 6. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 7. Next Steps & Deep Dive
-
-- Mindestens 2 KI-Tools im Live-Betrieb testen  
-- Datenschutz-Folgenabschätzung für alle Marketing-Kanäle  
-- Fördermittel und Beratung gezielt einholen
-
----
-
-_Für Rückfragen, Deep Dives und Beratung: [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)_
+{tools_und_foerderungen}
+{praxisbeispiele}

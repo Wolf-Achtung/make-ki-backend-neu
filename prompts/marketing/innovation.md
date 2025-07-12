@@ -1,30 +1,16 @@
-# Innovationspotenzial – Marketing & Werbung, {unternehmensgroesse}
+# Innovationspotenziale & Zukunftschancen für das Marketing
 
-## SWOT-Innovation
+Du bist ein KI- und Innovationsberater für Marketing-Teams. Identifiziere für die Marketing-Organisation die wichtigsten Innovationsfelder, Quick Wins und strategischen Chancen, die sich durch KI und Digitalisierung bieten.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie & Beispiele
-
-{innovation_report}
+**Analysiere:**
+- Wo liegen die größten Hebel für Effizienz, Kreativität und Performance durch KI (z. B. Automatisierung, Content-Generierung, Analytics, Campaign Orchestration)?
+- Welche Barrieren (z. B. Skills, Daten, Akzeptanz, Budgets) behindern die Umsetzung – und wie lassen sich diese überwinden?
+- Konkrete Pilotprojekte, Quick Wins und Use Cases vorschlagen
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten (JSON):
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Fördern Sie innovative Ideenwettbewerbe und Cross-Team-Projekte!_
+{daten}
