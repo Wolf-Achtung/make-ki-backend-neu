@@ -1,24 +1,12 @@
-# Compliance & Datenschutz – {branche}, {unternehmensgroesse}
+# Compliance-Status & Empfehlungen
 
-## Zusammenfassung
+Erstelle eine umfassende, aber fokussierte Bewertung des aktuellen Compliance-Status im Unternehmen bezüglich KI, Datenschutz, IT-Sicherheit und regulatorischer Vorgaben.
 
-{compliance_report}
+- Analysiere kritische Gaps (z. B. fehlende Dokumentation, DSFA, Verantwortlichkeiten)
+- Bewerte die Prozessangemessenheit und Sofortmaßnahmen zur Erhöhung der Konformität
+- Leite konkrete, priorisierte To-Dos und strategische Empfehlungen ab
+- Berücksichtige aktuelle und kommende Regulatorik (DSGVO, EU AI Act)
 
-## EU AI Act – Auswirkungen auf Ihre Praxis
-
-- {eu_ai_act}
-- Aktuelle ToDos und Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Datenschutzbeauftragten benennen (ab 5 Mitarbeitende)
-- Regelmäßige Datenschutz-Schulungen
-- Technische & organisatorische Maßnahmen fortlaufend dokumentieren
-
----
-
-_Tipp: Sichern Sie sich regelmäßig Updates zu Compliance auf [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)._
+Daten-Input (JSON):  
+{daten}
+{checklisten}

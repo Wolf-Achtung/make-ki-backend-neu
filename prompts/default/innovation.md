@@ -1,30 +1,12 @@
-# Innovationspotenzial – {branche}, {unternehmensgroesse}
+# Innovationspotenziale & Zukunftschancen
 
-## SWOT-Innovation
+Analysiere das Innovationspotenzial und die strategischen Zukunftschancen für das Unternehmen durch KI und Digitalisierung.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
+- Beschreibe Gamechanger-Segmente, Use Cases und Pilotprojekte mit dem höchsten Nutzenpotenzial
+- Benenne Innovationshemmnisse (z. B. Mindset, IT-Legacy, Datenschutz) und zeige Wege zu deren Überwindung auf
+- Mach konkrete, umsetzbare Vorschläge für Pilotprojekte, Quick-Wins, neue Geschäftsmodelle und Fördermittel
 
----
-
-## Innovationsstrategie
-
-{innovation_report}
-
----
-
-## Empfohlene Tools/Methoden
-
-{tools_and_foerderungen}
-
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Fördern Sie eine offene Fehlerkultur, kreative Teamarbeit und schnelle Prototypen in Ihrem Unternehmen!_
+Input:  
+{daten}
+{checklisten}
+{praxisbeispiele}

@@ -1,14 +1,12 @@
-# Förderprogramme & Finanzierung – {branche}, {unternehmensgroesse}
+# Förderprogramme für Unternehmen
 
-Liste alle relevanten Förderprogramme und Finanzierungsmöglichkeiten für KI-Projekte in Ihrer Branche ({selbststaendig}, Größe {unternehmensgroesse}) auf.
+Gib einen tabellarischen Überblick über aktuelle Förderprogramme (max. 5), inkl.:
+- Name & Link
+- Zielgruppe
+- Förderhöhe/Nutzen
+- Typische Stolpersteine
+- Erfolgsfaktoren für die Antragstellung
 
-Berücksichtige:
-- Bundesland
-- Innovationsgrad und geplante Projekte
-- Förderprogramme aus den aktuellen Daten:
-{foerderungen}
-
-Praktische Hinweise zur Antragstellung:
-- Frühzeitig recherchieren
-- Projekte klar und verständlich beschreiben
-- Unbedingt externe Beratungsangebote nutzen
+Input:  
+{foerderprogramme}
+{daten}

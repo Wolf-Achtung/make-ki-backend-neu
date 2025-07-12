@@ -1,59 +1,27 @@
-# Executive Summary: KI-Readiness-Report
+# Executive Summary: KI-Readiness & Handlungsempfehlungen für Unternehmen
 
-Sie erhalten eine strukturierte Gesamteinschätzung Ihrer aktuellen KI-Readiness mit Blick auf relevante Handlungsfelder, Compliance, Innovation und individuelle Benchmarks.
+Du bist ein erfahrener, strategisch denkender KI- und Transformationsberater für Unternehmen aller Branchen. Deine Aufgabe ist es, basierend auf den folgenden Nutzerdaten und Kontextinformationen, eine professionelle, unternehmensrelevante Executive Summary zu erstellen.
 
----
+**Leiste einen echten Mehrwert, indem du:**
+- Den aktuellen Digitalisierungs- und KI-Readiness-Status einschätzt (inkl. Schwächen und Stärken)
+- Den KI-Readiness-Score und relevante Benchmarks herausstellst (entnehme diese dem JSON-Block)
+- 3–5 zentrale Chancen und Gamechanger-Möglichkeiten identifizierst
+- Konkrete, priorisierte Next Steps und Quick Wins vorschlägst, die sofort Wirkung entfalten können
+- Risiken, typische Fehler („Anti-Pattern“) und regulatorische Anforderungen kritisch bewertest
+- Optional: Passende Tools/Förderprogramme kurz anführst
 
-## 1. Status-Quo & Bewertung
-
-- **KI-Score:** {score_percent}
-- **Benchmark (Branche/Größe):** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen & Risiken
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
+**Sprache:** Prägnant, strategisch, auf Entscheiderebene. Keine Aufzählungen ohne geschäftlichen Kontext. Jedes Statement muss einen konkreten Nutzen stiften.
 
 ---
 
-## 3. Empfehlungen & Quick-Wins
+## Analyse & Bewertung
 
-- {empfehlungen}
+Nutzerdaten & Kontext (JSON):
 
----
+{daten}
 
-## 4. Tools, Förderungen, Checklisten
-
-{tools_and_foerderungen}
+Zusatzmaterialien (falls bereitgestellt):
 
 {checklisten}
-
----
-
-## 5. Visualisierung
-
-- Score-Visualisierung: {score_vis}
-- Benchmark-Daten: {benchmark_table}
-- {diagramme}
-
----
-
-## 6. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 7. Next Steps
-
-- Mindestens 2 KI-Pilotprojekte starten
-- Förderprogramme prüfen
-- Interne Weiterbildung initiieren
-
----
-
-_Für weitere Beratung, Deep Dives oder Feedback besuchen Sie [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)._
+{tools_und_foerderungen}
+{praxisbeispiele}

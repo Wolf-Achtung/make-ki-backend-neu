@@ -1,8 +1,6 @@
-Formuliere eine inspirierende Moonshot-Vision für den KI-Einsatz im Unternehmen ({branche}, {selbststaendig}, Größe {unternehmensgroesse}).
+# Moonshot Vision: Zukunftsszenario
 
-- Was wäre ein echter Gamechanger?
-- Welche neuen Geschäftsmodelle, Produkte oder Services werden durch KI möglich?
-- Wie kann sich Ihr Unternehmen mit KI differenzieren?
+Skizziere eine „Moonshot Vision“ für das Unternehmen – wie könnte es durch konsequente Digitalisierung und KI in 3–5 Jahren zum Vorreiter seiner Branche werden? Hebe kulturelle, organisatorische und technologische Sprünge hervor.
 
-Angaben:
+Input:  
 {daten}

@@ -1,12 +1,10 @@
-Bewerte die Datenschutzsituation für das Unternehmen:
-- Branche: {branche}
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+# EU AI Act: Analyse & Empfehlungen
 
-Analysiere Schwachstellen und Risiken (siehe Antworten und Checkliste), beziehe aktuelle Rechtslage und branchenspezifische Besonderheiten mit ein.
-Gehe auch auf Herausforderungen und Chancen für kleine Unternehmen, Selbstständige oder spezielle Kundengruppen ein.
+Bewerte, was der EU AI Act konkret für das Unternehmen bedeutet.
 
-Checkliste Datenschutz:
-{check_datenschutz}
+- Lege dar, welche KI-Anwendungen in welche Risikoklasse fallen könnten
+- Zeige Compliance-Maßnahmen, Chancen und Risiken
+- Formuliere Empfehlungen für ein proaktives, regulatorik-gestütztes Innovationsmanagement
 
-Gib konkrete Empfehlungen.
+Input:  
+{daten}

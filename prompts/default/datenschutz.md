@@ -1,12 +1,12 @@
-Bewerte die Datenschutzsituation für das Unternehmen:
-- Branche: {branche}
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+# Datenschutz-Analyse & Empfehlungen
 
-Analysiere Schwachstellen und Risiken (siehe Antworten und Checkliste), beziehe aktuelle Rechtslage und branchenspezifische Besonderheiten mit ein.
-Gehe auch auf Herausforderungen und Chancen für kleine Unternehmen, Selbstständige oder spezielle Kundengruppen ein.
+Erstelle eine fundierte Bewertung des Datenschutz-Status im Unternehmen im Kontext von Digitalisierung und KI.
 
-Checkliste Datenschutz:
-{check_datenschutz}
+- Hebe vorhandene Stärken und Risiken hervor
+- Benenne kritische Pain Points (z. B. DSFA, Löschregeln, Meldewege, Risikobewertung)
+- Leite priorisierte Handlungsfelder und praxisnahe Empfehlungen ab
+- Zeige branchentypische Fehlerquellen und Lösungswege auf
 
-Gib konkrete Empfehlungen.
+Daten-Input (JSON):  
+{daten}
+{checklisten}

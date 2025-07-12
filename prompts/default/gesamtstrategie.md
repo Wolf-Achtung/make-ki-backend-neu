@@ -1,15 +1,18 @@
-# Gesamtstrategie – {branche}, {unternehmensgroesse}
+# Strategische Gesamtempfehlung: KI-Einsatz & Digitale Transformation
 
-Entwickle eine Gesamtstrategie für die nachhaltige Einführung und den Ausbau von KI-Lösungen in einem Unternehmen der Branche {branche}, Größe {unternehmensgroesse}, {selbststaendig}.
+Du bist ein ganzheitlich denkender Unternehmensberater und KI-Stratege. Erstelle aus den bereitgestellten Nutzerdaten eine praxisorientierte, unternehmensweite Strategie zur digitalen Transformation und KI-Readiness.
 
-Berücksichtige:
-- Digitale Reife und KI-Readiness (aus Userdaten)
-- Unternehmensziele & Prioritäten
-- Markt- und Wettbewerbsumfeld
-- Rechtliche Vorgaben (DSGVO, AI Act)
-- Fördermittel und Ressourcenbedarf
+- Fasse die Ausgangslage (Digitalisierungsgrad, Automatisierung, Know-how, Hürden) zusammen.
+- Skizziere eine Roadmap (kurz-, mittel- und langfristige Schritte)
+- Leite zentrale Initiativen, Meilensteine und Schlüsselfaktoren für nachhaltigen Erfolg ab.
+- Weise auf Stolpersteine (rechtlich, organisatorisch, kulturell) und branchentypische Risiken hin.
+- Gib für jede Phase konkrete Handlungsempfehlungen, die Wert und Nutzen stiften.
 
-Strukturiere die Strategie in sinnvolle Abschnitte und fasse die wichtigsten Empfehlungen am Ende zusammen.
+Berücksichtige alle relevanten Managementebenen und nenne sinnvolle KPIs/Messgrößen.
 
-Daten:
+Nutzerdaten (JSON):  
 {daten}
+
+Zusatzmaterialien (z. B. Checklisten, Praxisbeispiele):  
+{checklisten}
+{praxisbeispiele}
