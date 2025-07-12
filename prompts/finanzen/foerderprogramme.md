@@ -1,14 +1,10 @@
-# Förderprogramme & Finanzierung – Finanzen & Versicherungen, {unternehmensgroesse}
+<!-- foerderprogramme.md -->
+# Förderprogramme für die Finanzbranche
 
-Liste alle relevanten Förderprogramme und Finanzierungsmöglichkeiten für KI-Projekte in Ihrer Branche ({selbststaendig}, Größe {unternehmensgroesse}) auf.
+Beschreibe relevante Förderprogramme für Digitalisierung & KI in Finanzunternehmen (EU, Bund, Länder). Zielgruppe, Voraussetzungen, Höhe, Praxistipps.
 
-Berücksichtige:
-- Bundesland
-- Innovationsgrad und geplante Projekte
-- Förderprogramme aus den aktuellen Daten:
-{foerderungen}
+---
 
-**Hinweise zur Antragstellung:**  
-- Frühzeitig Förderbedingungen prüfen  
-- Nachweisführung und Projektbeschreibung vorbereiten  
-- Beratungsangebote nutzen (z. B. Kammern, Verbände, KI-Sicherheit.jetzt)
+## Förderprogramme
+
+{foerderprogramme}

@@ -1,11 +1,10 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für ein Unternehmen in Finanzen & Versicherungen ({selbststaendig}, Größe {unternehmensgroesse}).
+<!-- eu_ai_act.md -->
+# EU AI Act-Analyse & Empfehlungen für die Finanzbranche
 
-- Analysiere aktuelle KI-Anwendungen (siehe Userdaten)
-- Bewerte Notwendigkeit von Risikoabschätzung, Dokumentation, Compliance (insb. BaFin, AI Act)
-- Besonderheiten für kleine Unternehmen/Freiberufler ansprechen
+Analysiere Bedeutung und Anforderungen des EU AI Act für Banken, Versicherungen und Fintechs: Use Cases (Kredit, Scoring, Fraud Detection, Robo-Advisor), Risiken, Pflichten, Chancen, Quick Wins.
 
-Userdaten:
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}

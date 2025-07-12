@@ -1,24 +1,22 @@
-# Compliance & Datenschutz – Finanzen & Versicherungen, {unternehmensgroesse}
+<!-- compliance.md -->
+# Compliance-Status & Empfehlungen für die Finanzbranche
 
-## Zusammenfassung
+Bewerte die Einhaltung regulatorischer Anforderungen (DSGVO, MaRisk, BAIT, BaFin, EU AI Act) und liefere branchenspezifische Compliance-Empfehlungen.
 
-{compliance_report}
-
-## EU AI Act – Auswirkungen auf Ihre Praxis
-
-- {eu_ai_act}
-- Aktuelle ToDos, Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Datenschutzbeauftragten benennen (gesetzlich meist Pflicht, v. a. mit Kundendaten)
-- Compliance-Audits jährlich durchführen (intern/extern)
-- Technische & organisatorische Maßnahmen klar dokumentieren
+**Schwerpunkte:**
+- Datenschutz, KYC/AML, Risikomanagement, Meldepflichten
+- Herausforderungen bei Automatisierung, Outsourcing, Cloud-Nutzung
+- Sofortmaßnahmen & strategische Empfehlungen für Compliance-Readiness
 
 ---
 
-_Tipp: BaFin-Rundschreiben zu KI und IT regelmäßig sichten!_
+## Compliance-Analyse
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
+{tools_und_foerderungen}

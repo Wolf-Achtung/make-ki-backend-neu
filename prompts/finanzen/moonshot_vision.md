@@ -1,11 +1,10 @@
-Formuliere eine inspirierende Moonshot-Vision für KI im Unternehmen (Finanzen & Versicherungen, {selbststaendig}, Größe {unternehmensgroesse}).
+<!-- moonshot_vision.md -->
+# Moonshot Vision: Finanzbranche der Zukunft
 
-- Was wäre ein echter Gamechanger?
-- Welche neuen Geschäftsmodelle, Produkte oder Services werden durch KI möglich?
-- Wie kann sich Ihr Unternehmen mit KI differenzieren?
+Beschreibe die Vision einer KI-getriebenen, digitalisierten Finanzbranche in 3–5 Jahren – Fokus: Automatisierung, Compliance, Customer Centricity, Effizienz, Innovation.
 
-**Beispiel:**  
-„Innerhalb von drei Jahren soll 80 % der Schadensbearbeitung automatisiert KI-basiert erfolgen – mit 99,9 % Compliance und zufriedeneren Kunden.“
+---
 
-Userdaten:
+## Moonshot Vision
+
 {daten}

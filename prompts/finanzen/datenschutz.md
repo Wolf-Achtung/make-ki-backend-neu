@@ -1,18 +1,21 @@
-Bewerte die Datenschutzsituation für das Unternehmen:
+<!-- datenschutz.md -->
+# Datenschutz-Analyse & Empfehlungen im Finanzsektor
 
-- Branche: Finanzen & Versicherungen
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+Analysiere die Umsetzung des Datenschutzes in Banken, Versicherungen, Fintechs: Datenzugriff, Kundenrechte, Einwilligungsmanagement, Cloud, internationale Transfers.
 
-**Schwachstellen und Risiken:**  
-- Datenzugriff durch Drittanbieter/Cloud  
-- Outsourcing von IT oder Buchhaltung  
-- Fehlende Dokumentation von Einwilligungen
+**Fokus:**
+- Kundendaten, Transaktionsdaten, Profiling, Big Data, Scoring, Cloud-Nutzung
+- Kritische Lücken & Risiken
+- Sofortmaßnahmen & praxisnahe Empfehlungen
 
-**Empfehlungen:**  
-- Verschlüsselte Datenspeicherung  
-- Klare Richtlinien für Datenexport und -löschung  
-- DSGVO, BaFin und AI Act regelmäßig prüfen
+---
 
-Checkliste Datenschutz:
-{check_datenschutz}
+## Datenschutz-Check
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}

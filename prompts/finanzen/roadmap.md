@@ -1,22 +1,22 @@
-# Roadmap – Finanzen & Versicherungen, {unternehmensgroesse}
+<!-- roadmap.md -->
+# Roadmap & Umsetzungsplan für KI im Finanzsektor
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Strukturiere eine Roadmap für die erfolgreiche KI-Einführung in Banken/Versicherungen.
 
-{roadmap_report}
+**Module:**
+1. Automatisierung & Prozessoptimierung
+2. Risikomanagement & Fraud Detection
+3. Kundenerlebnis & Omnikanal
+4. Compliance & Datenschutz
+5. Mitarbeiterschulungen & Change Management
+6. Fördermittel & Investitionen
 
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo klären ({score_percent}, {benchmark_score})
-2. Quick-Wins umsetzen (z. B. Dokumentenmanagement automatisieren)
-3. Mitarbeitende einbinden, schulen und Datenschutz dokumentieren
-4. Compliance-Prüfung (BaFin, DSGVO, AI Act)
-5. Innovationsprojekte nach Priorität starten
-6. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourcen.
 
 ---
 
-_Tipp: Halten Sie die Roadmap als lebendiges Dokument mit Verantwortlichen und Review-Terminen._
+## Roadmap
+
+Nutzerdaten:
+
+{daten}

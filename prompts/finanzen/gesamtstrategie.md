@@ -1,20 +1,23 @@
-# Gesamtstrategie – Finanzen & Versicherungen, {unternehmensgroesse}
+<!-- gesamtstrategie.md -->
+# Strategische Gesamtempfehlung für den Finanzsektor: KI-Einsatz & digitale Transformation
 
-Entwickle eine umfassende Gesamtstrategie für die nachhaltige Einführung und den Ausbau von KI-Lösungen in einem Unternehmen der Finanz-/Versicherungsbranche ({selbststaendig}, Größe {unternehmensgroesse}).
+Erarbeite eine umfassende Strategie für den nachhaltigen Einsatz von KI und Digitalisierung in Banken, Versicherungen & Finanzdienstleistern.
 
-**Leitfragen für die Strategie:**  
-- Wie unterstützt KI Ihre Geschäftsziele?  
-- Welche Prozesse haben das höchste Automatisierungspotenzial?  
-- Wie sichern Sie Compliance (BaFin, DSGVO, AI Act) langfristig?  
-- Wie werden Mitarbeitende eingebunden, wie wird Know-how aufgebaut?  
-- Wie kann KI Ihr Geschäftsmodell differenzieren?
+**Fokuspunkte:**
+- Ausgangslage & Herausforderungen (Legacy-IT, Regulierung, Datensilos, Kosten, Wettbewerbsdruck)
+- Hebel: Automatisierung, Risikomanagement, Compliance, Kundenerlebnis, neue Geschäftsmodelle, Data Governance
+- Roadmap mit kurz-, mittel- und langfristigen Prioritäten, Meilensteinen und Abhängigkeiten
+- Kritische Erfolgsfaktoren, typische Fehler, Lessons Learned
 
-**Struktur:**  
-1. Status-Quo und Zielbild  
-2. Priorisierte Maßnahmen (kurz-, mittel-, langfristig)  
-3. Compliance- & Datenschutz-Plan  
-4. Förder- & Innovationspartnerschaften  
-5. Kommunikation & Monitoring
+---
 
-**Empfehlungen:**  
+## Strategie-Analyse
+
+Nutzerdaten:
+
 {daten}
+
+Zusatzmaterialien:
+
+{tools_und_foerderungen}
+{praxisbeispiele}

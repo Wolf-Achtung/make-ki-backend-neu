@@ -1,30 +1,17 @@
-# Innovationspotenzial – Finanzen & Versicherungen, {unternehmensgroesse}
+<!-- innovation.md -->
+# Innovationspotenziale & Zukunftschancen in der Finanzbranche
 
-## SWOT-Innovation
+Stelle heraus, wie KI und Digitalisierung neue Chancen schaffen: automatisierte Kreditvergabe, Robo-Advisor, Fraud Detection, Chatbots, Customer Analytics.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie & Beispiele
-
-{innovation_report}
+**Für jedes Feld:**
+- Business Value & Effizienzgewinn
+- Hürden, regulatorische Barrieren, Überwindung
+- Pilotprojekte & Quick Wins
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten:
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Fördern Sie „fail fast“-Prototypen und bauen Sie gezielt Innovationspartnerschaften auf!_
+{daten}
