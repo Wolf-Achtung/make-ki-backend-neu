@@ -1,11 +1,9 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für ein IT-/Softwareunternehmen ({selbststaendig}, Größe {unternehmensgroesse}).
+# EU AI Act-Analyse & Empfehlungen für die IT-Branche
 
-- Analysiere aktuelle KI-Anwendungen (siehe Userdaten)
-- Bewerte Notwendigkeit von Risikoabschätzung, Modell-Governance, Compliance
-- Besonderheiten für kleine Unternehmen/Freiberufler ansprechen
+Analysiere die Bedeutung und Anforderungen des EU AI Act speziell für die IT-Branche und IT-Abteilungen. Identifiziere kritische Use Cases (z. B. Security, Automatisierung, Monitoring), Risiken und Quick Wins.
 
-Userdaten:
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}

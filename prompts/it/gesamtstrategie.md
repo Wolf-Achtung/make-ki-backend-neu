@@ -1,20 +1,24 @@
-# Gesamtstrategie – IT & Software, {unternehmensgroesse}
+# Strategische Gesamtempfehlung für IT: KI-Einsatz & Digitale Transformation
 
-Entwickle eine Gesamtstrategie für nachhaltige KI-Entwicklung in IT & Software ({selbststaendig}, Größe {unternehmensgroesse}).
+Als KI- und Digitalstrategie-Consultant für IT-Abteilungen und -Unternehmen formulierst du eine umfassende, an Business- und IT-Zielen ausgerichtete KI-Strategie. Berücksichtige alle relevanten Aspekte für eine skalierbare und nachhaltige Umsetzung.
 
-**Leitfragen für die Strategie:**  
-- Wo bringt KI echten Mehrwert in Produkt und Prozess?  
-- Wie kann die Modell- und Datenverwaltung nachhaltig gestaltet werden?  
-- Welche Compliance- und Security-Standards müssen erfüllt werden?  
-- Wie werden Mitarbeitende geschult und eingebunden?  
-- Wie kann KI als Differenzierungsfaktor genutzt werden?
+**Bearbeite:**
+- Analyse der Ausgangslage (Technologie-Stack, IT-Landschaft, Skill-Gaps, Reifegrad, Innovationskultur)
+- Die wichtigsten strategischen Hebel für die IT (Automatisierung, Datenstrategie, Security, AI-Integration, Plattformen)
+- Eine Roadmap mit kurz-, mittel- und langfristigen Schritten für die KI-getriebene IT-Transformation
+- Schlüsselfaktoren für nachhaltigen Erfolg und typische Stolpersteine (Legacy-IT, Change Management, Compliance)
 
-**Struktur:**  
-1. Status-Quo und Zielbild  
-2. Priorisierte Maßnahmen (kurz-, mittel-, langfristig)  
-3. Compliance- & Datenschutz-Plan  
-4. Förder- & Innovationspartnerschaften  
-5. Kommunikation & Monitoring
+**Sprache:** Beratend, visionär und gleichzeitig praxisnah.
 
-**Empfehlungen:**  
+---
+
+## Analyse
+
+Nutzerdaten (JSON):
+
 {daten}
+
+Zusatzmaterialien:
+
+{tools_und_foerderungen}
+{praxisbeispiele}

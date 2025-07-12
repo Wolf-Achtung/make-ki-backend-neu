@@ -1,11 +1,9 @@
-Formuliere eine inspirierende Moonshot-Vision für KI im IT-/Softwareunternehmen ({selbststaendig}, Größe {unternehmensgroesse}).
+# Moonshot Vision: IT-Organisation der Zukunft
 
-- Was wäre ein echter Gamechanger?
-- Welche neuen Geschäftsmodelle, Produkte oder Services werden durch KI möglich?
-- Wie kann sich Ihr Unternehmen durch KI differenzieren?
+Beschreibe die Vision einer hochinnovativen, KI-gestützten IT-Organisation in 3–5 Jahren. Fokussiere auf Kulturelles, Technologisches, Organisatorisches und die Rolle von KI.
 
-**Beispiel:**  
-„In zwei Jahren werden 70 % aller Routine-Code-Reviews, Testings und Deployments KI-gesteuert mit lückenloser Compliance.“
+---
 
-Userdaten:
+## Moonshot Vision
+
 {daten}

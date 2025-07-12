@@ -1,14 +1,11 @@
-# Förderprogramme & Finanzierung – IT & Software, {unternehmensgroesse}
+# Förderprogramme für IT-Unternehmen
 
-Nenne alle relevanten Förderprogramme und Finanzierungsmöglichkeiten für KI-Projekte in IT & Software ({selbststaendig}, Größe {unternehmensgroesse}).
+Beschreibe relevante Förderprogramme (EU, Bund, Länder) für Digitalisierung und KI in der IT-Branche.
 
-Berücksichtige:
-- Bundesland
-- Innovationsgrad und geplante Projekte
-- Förderprogramme aus den aktuellen Daten:
-{foerderungen}
+- Zielgruppe, Höhe, Voraussetzungen, Tipps
 
-**Hinweise zur Antragstellung:**  
-- Förderbedingungen und Deadlines beachten  
-- Projektskizzen frühzeitig einreichen  
-- Beratung und Netzwerke (z. B. Bitkom, KI-Bundesverband) nutzen
+---
+
+## Förderprogramme
+
+{foerderprogramme}

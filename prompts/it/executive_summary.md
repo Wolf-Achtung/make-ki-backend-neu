@@ -1,73 +1,27 @@
-# Executive Summary – KI-Readiness: IT & Software
+# Executive Summary: KI-Readiness & Handlungsempfehlungen für die IT-Branche
 
-**Individueller Report zur KI-Readiness für IT- und Softwareunternehmen**  
-_Technologisch. Zukunftsweisend. Sicher._
+Du bist ein strategischer KI- und IT-Transformationsberater für IT-Unternehmen, IT-Abteilungen und Tech-Firmen. Deine Aufgabe ist es, auf Basis der nachfolgenden Nutzerdaten eine professionelle, handlungsorientierte Executive Summary zu formulieren.
 
----
+**Bearbeite insbesondere:**
+- Den aktuellen Digitalisierungs- und KI-Readiness-Status (IT-Infrastruktur, Automatisierungsgrad, Cloud/Multi-Cloud, Datenstrategie, Modernisierung, Skills)
+- Den KI-Readiness-Score und branchenspezifische Benchmarks (entnehme diese dem JSON-Block)
+- 3–5 zentrale Chancen und Gamechanger für KI in der IT (z. B. Service-Automatisierung, Predictive Maintenance, Security, DevOps, Datenanalyse, Prozessoptimierung)
+- Konkrete, priorisierte Next Steps und Quick Wins – sofort umsetzbar und mit klarer Wirkung auf Effizienz, Sicherheit, Innovation oder Marktposition
+- Typische Risiken, Fehlerquellen („Anti-Pattern“) und regulatorische Anforderungen (z. B. Datenschutz, IT-Sicherheit, Compliance) kritisch bewerten
+- Optional: Passende KI-/IT-Tools, Frameworks oder Förderprogramme nennen
 
-## 1. Aktueller Status & Benchmark
-
-- **KI-Readiness-Score:** {score_percent}
-- **Branchendurchschnitt:** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Typische Anti-Pattern:**  
-  1. KI/ML wird nur in einzelnen Projekten, nicht strategisch genutzt  
-  2. Fehlende Dokumentation und Modell-Governance  
-  3. Legacy-Systeme verhindern Integration moderner KI-Tools  
-  4. Security by Design wird nicht konsequent umgesetzt
+**Sprache:** Geschäftlich, auf Management-Level, klar, faktenbasiert. Jedes Statement soll einen geschäftlichen Mehrwert stiften.
 
 ---
 
-## 3. Handlungsempfehlungen & Best Practices
+## Analyse & Bewertung
 
-- Entwicklung einer KI-Strategie als integraler Bestandteil der Produktentwicklung
-- Aufbau einer robusten ML-Ops/DevOps-Infrastruktur
-- Standards für Datenschutz, Explainability & Modell-Transparenz definieren
-- Early Adopter: Prompt-Engineering & GenAI intern systematisch etablieren
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- End-to-End-Automatisierung (Code-Analyse, Testing, Deployment)  
-- Kontinuierliches Compliance-Monitoring (EU AI Act, DSGVO)  
-- KI-gestützte Sicherheitsüberwachung (Anomalieerkennung)
+{daten}
 
----
-
-## 4. Tools, Förderprogramme & Checklisten
-
-{tools_and_foerderungen}
+Zusatzmaterialien (falls bereitgestellt):
 
 {checklisten}
-
----
-
-## 5. Score & Benchmark-Visualisierung
-
-- Visualisierung: {score_vis}
-- Benchmark-Daten: {benchmark_table}
-- {diagramme}
-
----
-
-## 6. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 7. Next Steps & Deep Dive
-
-- KI-Roadmap mit Fokus auf Produkt, Infrastruktur und Team aufsetzen  
-- Förderprogramme für Innovation und Weiterbildung prüfen  
-- Standardisierung & Zertifizierung (z. B. ISO/IEC, TÜV AI) anstreben
-
----
-
-_Für individuelle Beratung: [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)_
+{tools_und_foerderungen}
+{praxisbeispiele}

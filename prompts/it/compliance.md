@@ -1,24 +1,24 @@
-# Compliance & Datenschutz – IT & Software, {unternehmensgroesse}
+# Compliance-Status & Empfehlungen für KI in der IT-Branche
 
-## Zusammenfassung
+Analysiere die aktuelle IT- und KI-Compliance (DSGVO, IT-Sicherheitsgesetz, EU AI Act) auf Basis der Nutzerdaten. Gib gezielte, praxisnahe Empfehlungen für die Einhaltung regulatorischer Anforderungen bei KI- und Digitalprojekten in der IT.
 
-{compliance_report}
+**Bearbeite:**
+- Datenschutz- und Datensicherheitsstatus, Rollen, Verantwortlichkeiten
+- Technische und organisatorische Maßnahmen (TOMs) im Kontext von KI
+- KI-spezifische Pflichten (Transparenz, Dokumentation, Nachvollziehbarkeit)
+- Quick Wins und strategische Next Steps zur Steigerung der Compliance-Readiness
 
-## EU AI Act – Auswirkungen auf Ihre Praxis
-
-- {eu_ai_act}
-- Aktuelle ToDos, Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Datenschutzverantwortliche:r für alle Projekte benennen  
-- Modell-Governance und Security-Dokumentation einführen  
-- Compliance-Audits regelmäßig durchführen (AI Act, DSGVO)
+**Sprache:** Klar, risikoorientiert, mit Business-Relevanz.
 
 ---
 
-_Tipp: Nutzen Sie die neuesten Compliance-Frameworks und Security-Benchmarks!_
+## Compliance-Analyse
+
+Nutzerdaten (JSON):
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
+{tools_und_foerderungen}

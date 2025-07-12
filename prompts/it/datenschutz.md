@@ -1,18 +1,21 @@
-Bewerte die Datenschutzsituation für das Unternehmen:
+# Datenschutz-Analyse & Empfehlungen für die IT-Branche
 
-- Branche: IT & Software
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+Analysiere den Datenschutzstatus in der IT-Organisation. Identifiziere kritische Lücken, Risiken, Sofortmaßnahmen und priorisierte Handlungsfelder für rechtssicheren und modernen Datenschutz.
 
-**Schwachstellen und Risiken:**  
-- Zugriff Dritter auf Trainings- und Testdaten  
-- Fehlende Dokumentation der Datenquellen  
-- Open Source-Komponenten ohne Compliance-Prüfung
+**Fokussiere auf:**
+- Umgang mit Nutzerdaten, Berechtigungskonzepte, Datenverschlüsselung
+- Bewertung von Cloud-Nutzung, KI-gestützter Datenverarbeitung, Drittanbieter-APIs
+- Lückenanalyse bei Meldewegen, Löschkonzepten, Transparenz und Consent Management
+- Quick Wins und Empfehlungen zur Stärkung der Datenschutz-Readiness
 
-**Empfehlungen:**  
-- Datenschutz in alle Projektprozesse einbinden  
-- Data Governance mit klarer Verantwortlichkeit  
-- DSGVO, AI Act und nationale Vorgaben regelmäßig prüfen
+---
 
-Checkliste Datenschutz:
-{check_datenschutz}
+## Datenschutz-Check
+
+Nutzerdaten (JSON):
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}

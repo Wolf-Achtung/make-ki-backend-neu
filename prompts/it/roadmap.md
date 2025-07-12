@@ -1,22 +1,20 @@
-# Roadmap – IT & Software, {unternehmensgroesse}
+# Roadmap & Umsetzungsplan für KI und Digitalisierung in der IT
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Erstelle eine modulare Roadmap zur erfolgreichen Einführung und Skalierung von KI-Technologien in der IT-Organisation.
 
-{roadmap_report}
+**Blöcke:**
+1. Automatisierung von IT-Services (z. B. Monitoring, Incident Response, DevOps)
+2. Optimierung der Infrastruktur durch KI (Cloud, Netzwerk, Security)
+3. Datenschutz- und Compliance-Maßnahmen (DSGVO, EU AI Act, IT-SiG)
+4. Upskilling und Change Management für das IT-Team
+5. Fördermittel- und Investitionsstrategie
 
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo & Benchmark klären ({score_percent}, {benchmark_score})
-2. MLOps/DevOps-Prozesse einrichten
-3. Mitarbeitende zu KI & Security schulen
-4. Modell- und Daten-Governance etablieren
-5. Compliance & AI Act/DSGVO checken
-6. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Abhängigkeiten, Ressourcen.
 
 ---
 
-_Tipp: Nutzen Sie die Roadmap als zentrales Kommunikationswerkzeug für alle KI-Projekte!_
+## Roadmap
+
+Nutzerdaten (JSON):
+
+{daten}

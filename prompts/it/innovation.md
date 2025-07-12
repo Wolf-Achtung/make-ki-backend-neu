@@ -1,30 +1,16 @@
-# Innovationspotenzial – IT & Software, {unternehmensgroesse}
+# Innovationspotenziale & Zukunftschancen für die IT-Branche
 
-## SWOT-Innovation
+Identifiziere die wichtigsten Innovationsfelder, Quick Wins und strategische Chancen durch KI und Digitalisierung für IT-Unternehmen und -Abteilungen.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie & Beispiele
-
-{innovation_report}
+**Bearbeite:**
+- Die größten Hebel für Effizienz, Skalierbarkeit, Qualität und Innovationskraft (z. B. Automatisierung von IT-Services, intelligente Fehlererkennung, KI-gestütztes Monitoring, AI-Ops, Security)
+- Barrieren (z. B. Legacy-IT, Datenqualität, Skill-Gaps) und wie sie überwunden werden können
+- Konkrete Pilotprojekte und Use Cases für KI in der IT (praktisch und direkt adaptierbar)
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten (JSON):
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Fördern Sie „Innovation Sprints“ und investieren Sie in KI-Weiterbildung!_
+{daten}
