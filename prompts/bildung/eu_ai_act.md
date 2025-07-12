@@ -1,11 +1,10 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für ein Bildungsunternehmen ({selbststaendig}, Größe {unternehmensgroesse}).
+<!-- eu_ai_act.md -->
+# EU AI Act-Analyse & Empfehlungen für den Bildungsbereich
 
-- Analysiere die aktuelle Nutzung von KI-Anwendungen im Unternehmen (siehe Userdaten)
-- Bewerte die Notwendigkeit von Risikoabschätzung, Dokumentation und Compliance-Maßnahmen.
-- Weisen Sie auf mögliche Erleichterungen oder Pflichten für Selbstständige und kleine Teams hin.
+Analysiere die Bedeutung und Anforderungen des EU AI Act für den Bildungsbereich: adaptive Lernsysteme, automatisiertes Feedback, Datenanalyse, Risiken, Chancen, Quick Wins.
 
-Userdaten:
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}

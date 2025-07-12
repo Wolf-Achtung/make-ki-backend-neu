@@ -1,8 +1,10 @@
-Formuliere eine inspirierende Moonshot-Vision für den KI-Einsatz in einem Bildungsunternehmen ({selbststaendig}, Größe {unternehmensgroesse}).
+<!-- moonshot_vision.md -->
+# Moonshot Vision: Zukunft der Bildung
 
-- Was wäre ein echter Gamechanger?
-- Welche neuen Bildungsmodelle, Lernformate oder Services werden durch KI möglich?
-- Wie kann sich Ihre Bildungseinrichtung mit KI differenzieren?
+Beschreibe eine inspirierende Vision für eine KI-getriebene, digitale Bildungswelt: personalisiertes Lernen, Bildungsgerechtigkeit, Innovation, smarte Lernumgebungen.
 
-Angaben:
+---
+
+## Moonshot Vision
+
 {daten}

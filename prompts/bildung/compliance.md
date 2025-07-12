@@ -1,24 +1,22 @@
-# Compliance & Datenschutz – Bildung, {unternehmensgroesse}
+<!-- compliance.md -->
+# Compliance-Status & Empfehlungen für Bildungseinrichtungen
 
-## Zusammenfassung
+Bewerte die Einhaltung gesetzlicher und regulatorischer Vorgaben (DSGVO, Schulgesetze, Hochschulgesetze, Urheberrecht, Datenschutz bei Minderjährigen) und gib praxisnahe Empfehlungen.
 
-{compliance_report}
-
-## EU AI Act – Auswirkungen auf Ihre Praxis
-
-- {eu_ai_act}
-- Aktuelle ToDos und Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Aufbau eines Datenschutz-Teams/Beauftragten (ab 5 Mitarbeitende)
-- Regelmäßige Datenschutz-Schulungen
-- Technische & organisatorische Maßnahmen fortlaufend dokumentieren
+**Fokus:**
+- Datenverarbeitung von Schüler*innen/Studierenden
+- Nutzung cloudbasierter Systeme, Einwilligungen, Zugriffsrechte
+- Sofortmaßnahmen & strategische Empfehlungen zur Compliance-Readiness
 
 ---
 
-_Tipp: Sichern Sie sich regelmäßig Updates zu Compliance auf [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)._
+## Compliance-Analyse
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
+{tools_und_foerderungen}

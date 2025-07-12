@@ -1,22 +1,22 @@
-# Roadmap – Bildung, {unternehmensgroesse}
+<!-- roadmap.md -->
+# Roadmap & Umsetzungsplan für KI in der Bildung
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Baue eine Roadmap für die Einführung und Skalierung von KI-Anwendungen in Bildungsorganisationen auf.
 
-{roadmap_report}
+**Module:**
+1. Infrastruktur & Basisdigitalisierung
+2. Didaktische Innovation & adaptives Lernen
+3. Verwaltung & Prüfungsmanagement
+4. Datenschutz & Compliance
+5. Schulungen & Change Management
+6. Fördermittel & Partnerschaften
 
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo klären ({score_percent}, {benchmark_score})
-2. Quick-Wins umsetzen
-3. Mitarbeitende und Lernende einbeziehen
-4. Datenschutz & Compliance sicherstellen
-5. Innovationsprojekte priorisieren
-6. Förderprogramme nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourcen.
 
 ---
 
-_Tipp: Nutzen Sie Ihre Roadmap als Kommunikations- und Steuerungstool im Team!_
+## Roadmap
+
+Nutzerdaten:
+
+{daten}

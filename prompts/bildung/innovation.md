@@ -1,30 +1,17 @@
-# Innovationspotenzial – Bildung, {unternehmensgroesse}
+<!-- innovation.md -->
+# Innovationspotenziale & Zukunftschancen für Bildungseinrichtungen
 
-## SWOT-Innovation
+Zeige, wie KI und Digitalisierung den Bildungsbereich revolutionieren können: personalisierte Lernpfade, Lernanalytik, adaptive Systeme, automatisiertes Feedback, Sprach- und Schreibtools, virtuelle Klassenzimmer.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie
-
-{innovation_report}
+**Für jedes Feld:**
+- Business/Nutzen Value & Qualitätsgewinn
+- Hemmnisse und wie sie überwunden werden können
+- Pilotprojekte & Quick Wins
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten:
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Fördern Sie eine offene Fehlerkultur, kreative Teamarbeit und schnelle Prototypen in Ihrem Bildungsumfeld!_
+{daten}

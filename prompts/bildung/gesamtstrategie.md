@@ -1,13 +1,23 @@
-Entwickle eine Gesamtstrategie für die nachhaltige Einführung und den Ausbau von KI-Lösungen in einem Bildungsunternehmen der Größe {unternehmensgroesse}, das {selbststaendig} selbstständig/freiberuflich geführt ist.
+<!-- gesamtstrategie.md -->
+# Strategische Gesamtempfehlung für Bildungseinrichtungen: KI-Einsatz & digitale Transformation
 
-Berücksichtige:
-- Digitale Reife und KI-Readiness (aus Userdaten)
-- Unternehmensziele & Prioritäten
-- Markt- und Wettbewerbsumfeld
-- Rechtliche Vorgaben (DSGVO, AI Act)
-- Fördermittel und Ressourcenbedarf, speziell für Selbstständige falls relevant.
+Entwickle eine ganzheitliche Strategie für den nachhaltigen Einsatz von KI und Digitalisierung im Bildungssektor.
 
-Strukturiere die Strategie in sinnvolle Abschnitte und fasse die wichtigsten Empfehlungen am Ende zusammen.
+**Schwerpunkte:**
+- Ausgangslage & Herausforderungen (digitale Infrastruktur, Fachkräftemangel, Datenschutz, Heterogenität der Systeme)
+- Schlüsselhebel: Automatisierung, Lernanalytik, individuelle Förderung, Verwaltung, Prüfungsmanagement, Didaktik-Innovation
+- Roadmap: kurz-, mittel-, langfristige Ziele, Meilensteine, Abhängigkeiten
+- Erfolgsfaktoren, typische Fehlerquellen, Lessons Learned
 
-Daten:
+---
+
+## Strategie-Analyse
+
+Nutzerdaten:
+
 {daten}
+
+Zusatzmaterialien:
+
+{tools_und_foerderungen}
+{praxisbeispiele}

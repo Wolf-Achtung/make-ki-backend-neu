@@ -1,9 +1,10 @@
-Liste alle relevanten Förderprogramme und Finanzierungsmöglichkeiten für KI-Projekte im Bildungsbereich ({selbststaendig}, Größe {unternehmensgroesse}) auf.
+<!-- foerderprogramme.md -->
+# Förderprogramme für die Bildungsbranche
 
-Berücksichtige:
-- Bundesland
-- Innovationsgrad und geplante Projekte
-- Förderprogramme aus den aktuellen Daten:
-{foerderungen}
+Erstelle eine Übersicht relevanter Förderprogramme für Schulen, Hochschulen und Weiterbildung (z. B. Bund, Länder, EU, Stiftungen). Zielgruppen, Förderhöhe, Voraussetzungen, Praxistipps.
 
-2–3 praktische Hinweise zur Antragstellung am Ende.
+---
+
+## Förderprogramme
+
+{foerderprogramme}

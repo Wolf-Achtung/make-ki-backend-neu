@@ -1,12 +1,21 @@
-Bewerte die Datenschutzsituation für das Unternehmen:
-- Branche: Bildung
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+<!-- datenschutz.md -->
+# Datenschutz-Analyse & Empfehlungen im Bildungssektor
 
-Analysiere Schwachstellen und Risiken (siehe Antworten und Checkliste), beziehe aktuelle Rechtslage und branchenspezifische Besonderheiten mit ein.
-Gehe auch auf Herausforderungen und Chancen für Selbstständige und Einrichtungen mit Kindern/Jugendlichen ein.
+Bewerte und analysiere den Datenschutz: Sensible Daten, Zugriffsrechte, Speicherung, Übermittlung, Nutzung von Cloud-/EdTech-Lösungen, Transparenz gegenüber Eltern/Studierenden.
 
-Checkliste Datenschutz:
-{check_datenschutz}
+**Inhalte:**
+- Besondere Risiken im Umgang mit Schüler-/Studiendaten
+- Kritische Schwachstellen & Empfehlungen zur Absicherung
+- Konkrete Sofortmaßnahmen
 
-Gib konkrete Empfehlungen.
+---
+
+## Datenschutz-Check
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
