@@ -1,11 +1,9 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für ein Bauunternehmen/Büro ({selbststaendig}, Größe {unternehmensgroesse}).
+# EU AI Act-Analyse & Empfehlungen für Bauwesen und Architektur
 
-- Analysiere aktuelle KI-Anwendungen (siehe Userdaten)
-- Bewerte Notwendigkeit von Risikoabschätzung, Compliance, Vergabe- und Vertragsrecht
-- Besonderheiten für kleine Unternehmen und Handwerk ansprechen
+Analysiere die Relevanz des EU AI Act für die Branche: Datenmanagement (BIM), Transparenz bei automatisierten Planungen, Dokumentationspflichten, KI-gestützte Prognosen.
 
-Userdaten:
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}

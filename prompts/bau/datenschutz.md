@@ -1,18 +1,20 @@
-Bewerte die Datenschutzsituation für Bauwesen & Architektur:
+# Datenschutz-Analyse & Empfehlungen für Bauwesen und Architektur
 
-- Bereich: Bauwesen & Architektur
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+Analysiere Risiken beim Umgang mit personenbezogenen Daten, Projektdaten, BIM-Cloud-Lösungen, Drohnen-/Sensorik-Daten, externen Partnern.
 
-**Schwachstellen und Risiken:**  
-- Verarbeitung von Kunden-, Mitarbeiter-, Bauprojekt-, Planungsdaten  
-- Schnittstellen zu Auftraggebern, Nachunternehmen, Plattformen  
-- Fehlende Dokumentation der Datenflüsse
+**Inhalte:**
+- Datenschutzrisiken in Planung/Bauausführung (z. B. Baustellenkameras, Mitarbeiterdaten, Lieferantendaten)
+- Schwachstellen & Absicherung
+- Sofortmaßnahmen für DSGVO-Konformität
 
-**Empfehlungen:**  
-- Datenschutzverantwortliche und Prozesse verpflichtend etablieren  
-- Datenschutz-Folgeabschätzung regelmäßig durchführen  
-- DSGVO und AI Act laufend prüfen
+---
 
-Checkliste Datenschutz:
-{check_datenschutz}
+## Datenschutz-Check
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}

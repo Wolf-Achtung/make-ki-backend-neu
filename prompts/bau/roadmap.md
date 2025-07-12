@@ -1,21 +1,19 @@
-# Roadmap – Bauwesen & Architektur, {unternehmensgroesse}
+# Roadmap & Umsetzungsplan für KI und Digitalisierung im Bauwesen und in der Architektur
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Strukturiere eine Roadmap für die digitale und KI-Transformation: Datenintegration, BIM, Automatisierung, Simulation, Digital Twin, Compliance.
 
-{roadmap_report}
-
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo & Benchmark prüfen ({score_percent}, {benchmark_score})
-2. KI-Pilotprojekt wählen (z. B. Kalkulation, Bauzeitenplanung, Mängeldokumentation)
-3. Datenschutz & Compliance (DSGVO, Bauvertragsrecht, Vergaberecht) frühzeitig einbinden
-4. Fortbildung & Change Management starten
-5. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+**Module:**
+1. Datengrundlagen & BIM-Einführung
+2. Automatisierung & KI-Tools in Planung/Ausführung
+3. Datenschutz & Compliance
+4. Digitale Kollaborationsplattformen
+5. Change Management & Schulungen
+6. Fördermittel & Partnerschaften
 
 ---
 
-_Tipp: Die Roadmap ist Ihr Steuerungsinstrument für die digitale Transformation auf der Baustelle!_
+## Roadmap
+
+Nutzerdaten:
+
+{daten}

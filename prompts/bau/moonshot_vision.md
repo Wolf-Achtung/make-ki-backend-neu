@@ -1,11 +1,9 @@
-Formuliere eine inspirierende Moonshot-Vision für KI im Bauwesen ({selbststaendig}, Größe {unternehmensgroesse}).
+# Moonshot Vision: Zukunft Bauwesen & Architektur
 
-- Was wäre ein echter Gamechanger?
-- Welche neuen Prozesse, Wertschöpfungsketten, Services werden durch KI möglich?
-- Wie kann sich Ihr Unternehmen/Team mit KI differenzieren?
+Entwerfe eine inspirierende Vision für die digitale, KI-gestützte Zukunft der Branche: vollautomatisierte Planung, digitales Baucontrolling, Plattform-Geschäftsmodelle, 3D-Druck, Smart Construction.
 
-**Beispiel:**  
-„In 3 Jahren laufen 90 % der Angebots-, Planungs- und Bauprozesse KI-gestützt, fehlerfrei und ressourceneffizient ab.“
+---
 
-Userdaten:
+## Moonshot Vision
+
 {daten}

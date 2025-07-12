@@ -1,25 +1,21 @@
-# Compliance & Datenschutz – Bauwesen & Architektur, {unternehmensgroesse}
+# Compliance-Status & Empfehlungen für Bauwesen und Architektur
 
-## Zusammenfassung
+Bewerte branchenspezifische Compliance: Datenschutz, BIM-Datenmanagement, Projekt- und Vertragsdokumentation, Urheberrecht, Haftung, Arbeitsschutz, Ausschreibungen.
 
-{compliance_report}
-
-## EU AI Act & Branchenspezifika
-
-- {eu_ai_act}
-- Vergaberecht, Vertragsrecht, ISO-Normen (9001, 19650, 27001)
-- ToDos & Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Compliance- und Datenschutzmanagement etablieren  
-- Nachweisführung für alle Daten und Projekte  
-- Regelmäßige Audits und Updates
+**Fokus:**
+- Umgang mit sensiblen Projektdaten, 3D-/BIM-Modellen, Subunternehmerdaten
+- Dokumentationspflichten, Nachvollziehbarkeit, digitale Signaturen
+- Sofortmaßnahmen und Empfehlungen
 
 ---
 
-_Tipp: Compliance sichert Rechtssicherheit und stärkt den Projekterfolg!_
+## Compliance-Analyse
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
+{tools_und_foerderungen}

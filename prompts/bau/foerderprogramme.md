@@ -1,14 +1,9 @@
-# Förderprogramme & Finanzierung – Bauwesen & Architektur, {unternehmensgroesse}
+# Förderprogramme für Bauwesen und Architektur
 
-Nenne alle relevanten Förderprogramme und Finanzierungsmöglichkeiten für KI-Projekte im Bauwesen ({selbststaendig}, Größe {unternehmensgroesse}).
+Strukturierter Überblick zu relevanten Förderprogrammen (z. B. Innovationsförderung Bau, Digital Jetzt, KfW, Bauwirtschaft Digital). Zielgruppen, Förderhöhe, Voraussetzungen, Praxistipps.
 
-Berücksichtige:
-- Bundesland
-- Bausparte & Innovationsgrad
-- Förderprogramme aus den aktuellen Daten:
-{foerderungen}
+---
 
-**Hinweise zur Antragstellung:**  
-- Förderbedingungen, Nachweise & Fristen beachten  
-- Beratung über Kammern, Plattformen, Verbände nutzen  
-- Projektskizzen & Use-Cases einreichen
+## Förderprogramme
+
+{foerderprogramme}

@@ -1,30 +1,16 @@
-# Innovationspotenzial – Bauwesen & Architektur, {unternehmensgroesse}
+# Innovationspotenziale & Zukunftschancen für Bauwesen und Architektur
 
-## SWOT-Innovation
+Zeige auf, wie KI und Digitalisierung die Branche verändern: KI-gestützte Entwurfsplanung, Ressourcenoptimierung, Predictive Maintenance, Automatisierung von Ausschreibungen, Simulationen.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie & Beispiele
-
-{innovation_report}
+**Für jedes Innovationsfeld:**
+- Business Value & Nutzen
+- Hemmnisse & Lösungen
+- Pilotprojekte & Quick Wins
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten:
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Innovationspartnerschaften mit Planern, Plattformen und Handwerksbetrieben eröffnen neue Märkte!_
+{daten}
