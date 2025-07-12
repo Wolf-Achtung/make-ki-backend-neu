@@ -9,6 +9,10 @@ client = OpenAI()
 
 # --- 1. Branchenspezifisches Prompt-Loader ---
 def load_prompt(branche, abschnitt):
+    """
+    Lädt den spezifischen Prompt für einen Abschnitt einer Branche.
+    Fallback auf default, falls nicht vorhanden.
+    """
     path = os.path.join("prompts", branche, f"{abschnitt}.md")
     if not os.path.exists(path):
         path = os.path.join("prompts", "default", f"{abschnitt}.md")
@@ -49,7 +53,6 @@ def load_tools_und_foerderungen():
         return {}
 
 TOOLS_FOERDER = load_tools_und_foerderungen()
-
 # --- 5. Prompt-Builder ---
 def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, tools_text="", foerder_text=""):
     prompt_raw = load_prompt(branche, abschnitt)
@@ -77,7 +80,6 @@ def get_tools_und_foerderungen(data):
     tools_text = "Keine spezifischen Tools gefunden."
     foerder_text = "Keine Förderprogramme gefunden."
 
-    # ---- TOOLS LOGIK ----
     tools_data = TOOLS_FOERDER.get(branche, {}) or TOOLS_FOERDER.get("default", {})
     tools_list = []
     if isinstance(tools_data, dict):
@@ -90,7 +92,6 @@ def get_tools_und_foerderungen(data):
     if tools_list:
         tools_text = "\n".join([f"- [{t['name']}]({t['link']})" for t in tools_list])
 
-    # ---- FÖRDERUNGEN LOGIK ----
     foerderungen = TOOLS_FOERDER.get("foerderungen", {})
     foerder_list = []
 
@@ -98,17 +99,14 @@ def get_tools_und_foerderungen(data):
         for key, value in foerderungen[branche].items():
             if isinstance(value, list):
                 foerder_list.extend(value)
-
     if branche in foerderungen and isinstance(foerderungen[branche], dict):
         national_branch = foerderungen[branche].get("national", [])
         if isinstance(national_branch, list):
             foerder_list.extend(national_branch)
-
     if "default" in foerderungen and "national" in foerderungen["default"]:
         default_national = foerderungen["default"]["national"]
         if isinstance(default_national, list):
             foerder_list.extend(default_national)
-
     if "national" in foerderungen and isinstance(foerderungen["national"], list):
         foerder_list.extend(foerderungen["national"])
     elif "national" in foerderungen and isinstance(foerderungen["national"], dict):
@@ -122,16 +120,24 @@ def get_tools_und_foerderungen(data):
         if key not in unique:
             unique[key] = f
     foerder_list = list(unique.values())
-
     if foerder_list:
         foerder_text = "\n".join([f"- [{f['name']}]({f['link']})" for f in foerder_list])
 
     return tools_text, foerder_text
 
 # --- 7. GPT-Block ---
-def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=None):
+def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, prior_results=None):
+    """
+    GPT-Aufruf, jetzt prompt-chaining-ready: prior_results kann als Kontext übergeben werden.
+    """
     tools_text, foerder_text = get_tools_und_foerderungen(data)
-    prompt = build_prompt(data, abschnitt, branche, groesse, checklisten, benchmark, tools_text, foerder_text)
+    # Prompt-Template bekommt bei Bedarf bereits vorige Resultate als Kontext.
+    prompt = build_prompt(
+        data, abschnitt, branche, groesse, checklisten, benchmark, tools_text, foerder_text
+    )
+    if prior_results:
+        prompt += "\n\n[Vorherige Analyse-Ergebnisse als Kontext]:\n"
+        prompt += json.dumps(prior_results, indent=2, ensure_ascii=False)
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
@@ -148,12 +154,10 @@ def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=Non
         temperature=0.3,
     )
     return response.choices[0].message.content.strip()
-
-# --- 8. Analyse für alle Abschnitte ---
+# --- 8. Modularer Analyse-Flow (Prompt-Chaining) ---
 def analyze_full_report(data):
-    print("### DEBUG: analyze_full_report AUFGERUFEN ###")
-    branche = data.get("branche", "default").strip()
-    groesse = data.get("unternehmensgroesse", "kmu").strip()
+    branche = data.get("branche", "default").strip().lower()
+    groesse = data.get("unternehmensgroesse", "kmu").strip().lower()
 
     benchmark = load_benchmark(branche)
     check_readiness = read_markdown_file("check_ki_readiness.md")
@@ -164,7 +168,9 @@ def analyze_full_report(data):
     praxisbeispiele = read_markdown_file("praxisbeispiele.md")
     tools = read_markdown_file("tools.md")
 
-    abschnitte = [
+    abschnittsreihenfolge = [
+        # score_percent/Readiness zuerst!
+        ("score_percent", None),  # <-- Zuerst, keine Checkliste nötig
         ("executive_summary", check_readiness),
         ("gesamtstrategie", check_readiness),
         ("compliance", check_compliance),
@@ -178,29 +184,34 @@ def analyze_full_report(data):
         ("eu_ai_act", check_compliance),
     ]
 
-    with ThreadPoolExecutor() as pool:
-        futures = {
-            abschnitt: pool.submit(
-                gpt_block, data, abschnitt, branche, groesse, checklisten, benchmark
+    results = {}
+    prior_results = {}
+    for abschnitt, checklisten in abschnittsreihenfolge:
+        try:
+            if abschnitt == "score_percent":
+                # Minimal-Scoring als erstes (nie via GPT!)
+                percent = calc_score_percent(data)
+                results["score_percent"] = percent
+                prior_results["score_percent"] = percent
+                print(f"### DEBUG: score_percent berechnet: {percent}")
+                continue
+            # Alle anderen Abschnitte: Prompt-Chain!
+            text = gpt_block(
+                data, abschnitt, branche, groesse, checklisten, benchmark, prior_results
             )
-            for abschnitt, checklisten in abschnitte
-        }
-        results = {}
-        for k, f in futures.items():
-            try:
-                results[k] = f.result()
-            except Exception as e:
-                print(f"### ERROR in Abschnitt {k}: {e}")
-                results[k] = f"[ERROR in Abschnitt {k}: {e}]"
-        print("### DEBUG: Alle Ergebnisse gesammelt:", results)
+            results[abschnitt] = text
+            prior_results[abschnitt] = text
+        except Exception as e:
+            msg = f"[ERROR in Abschnitt {abschnitt}: {e}]"
+            print(msg)
+            results[abschnitt] = msg
+            prior_results[abschnitt] = msg
 
-    # Score-Berechnung debuggen!
-    print("### DEBUG: calc_score_percent(data) wird ausgeführt ###")
-    results["score_percent"] = calc_score_percent(data)
-    print("### DEBUG: score_percent gesetzt:", results["score_percent"])
+    # Rückgabe: jedes Modul separat!
+    print("### DEBUG: Alle Ergebnisse gesammelt:", results)
     return results
 
-# --- 9. SWOT-Extractor ---
+# --- 9. SWOT-Extractor (Optional, falls im Prompt benötigt) ---
 def extract_swot(full_text):
     def find(pattern):
         m = re.search(pattern, full_text, re.DOTALL | re.IGNORECASE)
@@ -212,9 +223,9 @@ def extract_swot(full_text):
         "swot_threats": find(r"Risiken:(.*?)(?:$)"),
     }
 
-# --- 10. KI-Readiness Score Minimalberechnung ---
+# --- 10. KI-Readiness Score Minimalberechnung (unverändert) ---
 def calc_score_percent(data):
-    print("### DEBUG: calc_score_percent AUFGERUFEN mit:", data)
+    print("### DEBUG: calc_score_percent(data) wird ausgeführt ###")
     score = 0
     max_score = 35  # Summe aller Teilpunkte
 
@@ -258,5 +269,8 @@ def calc_score_percent(data):
         score += 1
 
     percent = int((score / max_score) * 100)
-    print("### DEBUG: score_percent berechnet:", percent)
+    print(f"### DEBUG: calc_score_percent AUFGERUFEN mit: {data}")
+    print(f"### DEBUG: score_percent gesetzt: {percent}")
     return percent
+
+# --- Fertig: alles modular, branchenübergreifend, prompt-chaining-fähig! ---
