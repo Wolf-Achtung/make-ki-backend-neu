@@ -1,8 +1,9 @@
 import os
-import pdfkit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from weasyprint import HTML
 
 def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
+    # Zielordner: downloads
     downloads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "downloads"))
     os.makedirs(downloads_dir, exist_ok=True)
 
@@ -25,9 +26,9 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
     pdf_path = os.path.join(downloads_dir, filename)
     print(f"[PDF_EXPORT] Geplante PDF-Datei: {pdf_path}")
 
-    # PDF Export
+    # PDF Export mit WeasyPrint
     try:
-        pdfkit.from_string(html_content, pdf_path)
+        HTML(string=html_content).write_pdf(pdf_path)
         print(f"[PDF_EXPORT] PDF erfolgreich erzeugt: {pdf_path}")
     except Exception as e:
         print(f"[PDF_EXPORT][ERROR] PDF-Erstellung fehlgeschlagen: {e}")
