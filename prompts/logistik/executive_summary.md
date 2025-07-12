@@ -1,74 +1,27 @@
-# Executive Summary – KI-Readiness: Logistik & Transport
+# Executive Summary: KI-Readiness & Handlungsempfehlungen für Logistik und Transport
 
-**KI-Readiness-Report für Transport, Logistik, Spedition, Lager, Supply Chain**  
-_Effizient. Flexibel. Zukunftssicher. Rechtssicher._
+Du bist ein erfahrener, strategisch denkender KI- und Transformationsberater für Logistik-, Speditions- und Transportdienstleister. Deine Aufgabe: Erstelle eine professionelle Executive Summary, die den Digitalisierungsgrad, die größten Potenziale und konkrete Handlungsempfehlungen für Logistikunternehmen aufzeigt.
 
----
+**Inhalte:**
+- Aktueller Digitalisierungs- und KI-Readiness-Status (Automatisierungsgrad in Disposition, Tracking, Flottenmanagement, Lager, Frachtenvermittlung, Echtzeit-Optimierung)
+- KI-Readiness-Score & relevante Benchmarks (aus JSON-Block)
+- 3–5 zentrale Chancen und Gamechanger (z. B. Routenoptimierung, Predictive Maintenance, autonome Fahrzeuge, Kapazitätsmanagement, Supply Chain Visibility)
+- Priorisierte Next Steps & Quick Wins für direkten Geschäftsnutzen
+- Risiken, typische Fehler (Anti-Pattern), regulatorische Herausforderungen (z. B. Logistikdatenschutz, Lieferkettengesetz, Fahrerdaten)
+- Optional: Passende Tools & Förderprogramme für Logistik
 
-## 1. Aktueller Status & Benchmark
-
-- **KI-Readiness-Score:** {score_percent}
-- **Branchendurchschnitt:** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Typische Anti-Pattern:**  
-  1. Digitalisierung nur für Sendungsverfolgung, keine End-to-End-Innovation  
-  2. Fehlende Datenintegration zwischen Transport, Lager und Kunden  
-  3. Compliance (z. B. Zoll, Exportkontrolle, Datenschutz) wird als „Nice-to-have“ behandelt  
-  4. Hohe Prozessabhängigkeit von einzelnen Key-Usern/IT-Insellösungen
+**Sprache:** Prägnant, strategisch, handlungsorientiert. Jeder Absatz liefert greifbaren Business-Nutzen.
 
 ---
 
-## 3. Handlungsempfehlungen & Best Practices
+## Analyse & Bewertung
 
-- Zentrale Digitalstrategie für Logistik, Transport, Lager und Kundenschnittstellen entwickeln
-- Einführung von KI für Routenoptimierung, Echtzeitverfolgung, Lagerautomatisierung, Anomalieerkennung
-- Frühzeitige Einbindung von Compliance- und Datenschutzverantwortlichen
-- Partnerschaften mit Tech-Anbietern (IoT, Telematik, KI-Startups) prüfen
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- KI-gestützte Routen- und Tourenplanung  
-- Automatisierte ETA-Berechnung & Kundenkommunikation  
-- Vorhersage von Lieferverzögerungen und Wartungsbedarf  
-- KI-unterstützte Lagerhaltung und Pick-Optimierung
+{daten}
 
----
-
-## 4. Tools, Förderprogramme & Checklisten
-
-{tools_and_foerderungen}
+Zusatzmaterialien (falls bereitgestellt):
 
 {checklisten}
-
----
-
-## 5. Score & Benchmark-Visualisierung
-
-- Visualisierung: {score_vis}
-- Benchmark-Daten: {benchmark_table}
-- {diagramme}
-
----
-
-## 6. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 7. Next Steps & Deep Dive
-
-- Mindestens ein KI-Pilotprojekt (z. B. Routenplanung, Lagerlogistik) umsetzen
-- Förderprogramme und Kooperationspartner prüfen
-- Datenschutz und IT-Sicherheit dokumentieren
-
----
-
-_Für individuelle Beratung: [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)_
+{tools_und_foerderungen}
+{praxisbeispiele}

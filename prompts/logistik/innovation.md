@@ -1,30 +1,16 @@
-# Innovationspotenzial – Logistik & Transport, {unternehmensgroesse}
+# Innovationspotenziale & Zukunftschancen für Logistik und Transport
 
-## SWOT-Innovation
+Zeige auf, wie KI und Digitalisierung Transport, Spedition und Supply Chain revolutionieren: Predictive Analytics, smarte Lagerhaltung, autonome Logistik, Real-Time Visibility, automatisiertes Pricing.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie & Beispiele
-
-{innovation_report}
+**Für jedes Feld:**
+- Business-/Nutzen Value & Wettbewerbsvorteil
+- Hemmnisse & Lösungsansätze
+- Pilotprojekte & Quick Wins
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten:
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: KI frühzeitig für Planung, Flotte und Kundenservice einsetzen!_
+{daten}

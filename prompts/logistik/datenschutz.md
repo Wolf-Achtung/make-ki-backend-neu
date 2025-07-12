@@ -1,18 +1,20 @@
-Bewerte die Datenschutzsituation für Logistik & Transport:
+# Datenschutz-Analyse & Empfehlungen für Logistik und Transport
 
-- Bereich: Logistik & Transport
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+Analysiere Risiken und Herausforderungen beim Umgang mit Betriebs- und Kundendaten: Telematik, GPS-Tracking, Fahrerdaten, Echtzeit-Analytics.
 
-**Schwachstellen und Risiken:**  
-- Verarbeitung von sensiblen Fahrer-, Sendungs-, Kundendaten  
-- Schnittstellen zu Plattformen, Kunden, Behörden  
-- Fehlende Dokumentation der Datenflüsse
+**Inhalte:**
+- Datenschutzrisiken bei Routen, Kunden, Fahrern, Tracking
+- Schwachstellenanalyse & Absicherung
+- Sofortmaßnahmen für Datenschutz und DSGVO-Konformität
 
-**Empfehlungen:**  
-- Datenschutzverantwortliche und Prozesse systematisch etablieren  
-- Dokumentation und Nachweisführung für alle Datenverarbeitungen  
-- DSGVO und AI Act regelmäßig prüfen
+---
 
-Checkliste Datenschutz:
-{check_datenschutz}
+## Datenschutz-Check
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}

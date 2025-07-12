@@ -1,14 +1,9 @@
-# Förderprogramme & Finanzierung – Logistik & Transport, {unternehmensgroesse}
+# Förderprogramme für Logistik & Transport
 
-Nenne alle relevanten Förderprogramme und Finanzierungsmöglichkeiten für KI-Projekte in Logistik & Transport ({selbststaendig}, Größe {unternehmensgroesse}).
+Gib einen strukturierten Überblick zu relevanten Förderprogrammen (z. B. Bund, Länder, EU, Programme für Flottenmodernisierung, E-Mobility, Digitalisierung, Green Logistics). Zielgruppen, Förderhöhe, Voraussetzungen, Praxistipps.
 
-Berücksichtige:
-- Bundesland
-- Flottengröße und Innovationsgrad
-- Förderprogramme aus den aktuellen Daten:
-{foerderungen}
+---
 
-**Hinweise zur Antragstellung:**  
-- Förderbedingungen, Fristen und Nachweisführung beachten  
-- Beratung über Verbände, Kammern, Plattformen nutzen  
-- Projektskizzen mit klaren Mehrwerten einreichen
+## Förderprogramme
+
+{foerderprogramme}

@@ -1,19 +1,22 @@
-# Gesamtstrategie – Logistik & Transport, {unternehmensgroesse}
+# Strategische Gesamtempfehlung für Logistik und Transport: KI-Einsatz & Digitalisierung
 
-Entwickle eine Gesamtstrategie für nachhaltige KI- und Digitalisierungsprojekte in Logistik & Transport ({selbststaendig}, Größe {unternehmensgroesse}).
+Formuliere eine umfassende Strategie für nachhaltigen KI- und Digitalisierungserfolg im Logistik-/Transportsektor.
 
-**Leitfragen für die Strategie:**  
-- Wo bringt KI den größten Nutzen für Transport, Lager und Kundenservice?  
-- Wie können Daten, Prozesse, Compliance & Innovation integriert werden?  
-- Wie werden Mitarbeitende und Kunden in die Transformation eingebunden?  
-- Welche Innovationspartnerschaften sind sinnvoll (Plattformen, Startups, OEMs)?
+**Schwerpunkte:**
+- Ausgangslage & Herausforderungen (Margendruck, Kosteneffizienz, volatile Nachfrage, Umweltauflagen)
+- Schlüsselhebel: Prozessautomatisierung, vorausschauende Planung, smarte Routen, datengestütztes Flottenmanagement, Transparenz in der Lieferkette
+- Roadmap: kurz-, mittel-, langfristige Ziele und Meilensteine
+- Erfolgsfaktoren, Risiken, Lessons Learned
 
-**Struktur:**  
-1. Status-Quo und Zielbild  
-2. Priorisierte Maßnahmen (kurz-, mittel-, langfristig)  
-3. Compliance- & Datenschutz-Plan  
-4. Förder- & Innovationspartnerschaften  
-5. Fortbildung & Kommunikation
+---
 
-**Empfehlungen:**  
+## Strategie-Analyse
+
+Nutzerdaten:
+
 {daten}
+
+Zusatzmaterialien:
+
+{tools_und_foerderungen}
+{praxisbeispiele}

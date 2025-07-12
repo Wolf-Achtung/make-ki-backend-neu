@@ -1,21 +1,21 @@
-# Roadmap – Logistik & Transport, {unternehmensgroesse}
+# Roadmap & Umsetzungsplan für KI und Digitalisierung in Logistik & Transport
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Strukturiere eine Roadmap für KI-Einführung und -Skalierung – von Dateninfrastruktur über operative Prozesse, Flottenmanagement, Kundenservice bis zu Analytics.
 
-{roadmap_report}
+**Module:**
+1. Technologiebasis & Datenintegration
+2. Automatisierung von Disposition & Routen
+3. Lager- und Frachtmanagement
+4. Datenschutz & Compliance
+5. Schulungen & Change Management
+6. Fördermittel & Partnerschaften
 
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo & Benchmark klären ({score_percent}, {benchmark_score})
-2. KI-Pilotprojekt wählen (z. B. Routenoptimierung, automatisierte Lagerprozesse)
-3. Datenschutz & Compliance von Anfang an prüfen (DSGVO, TISAX, Zoll)
-4. Fortbildung & Change Management aufsetzen
-5. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourcen.
 
 ---
 
-_Tipp: Die Roadmap ist Ihr Wegweiser zu effizienten, KI-gestützten Logistikprozessen!_
+## Roadmap
+
+Nutzerdaten:
+
+{daten}

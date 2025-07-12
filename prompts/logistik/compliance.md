@@ -1,25 +1,21 @@
-# Compliance & Datenschutz – Logistik & Transport, {unternehmensgroesse}
+# Compliance-Status & Empfehlungen für Logistik- und Transportunternehmen
 
-## Zusammenfassung
+Bewerte die Einhaltung von branchenspezifischen Regularien: Lieferkettengesetz, DSGVO, Fahrerdaten, Telematik, Gefahrgutverordnung, Zoll, E-Mobility-Vorgaben.
 
-{compliance_report}
-
-## EU AI Act & Branchenspezifika
-
-- {eu_ai_act}
-- DSGVO, Exportkontrolle, Zollvorschriften
-- ToDos & Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Datenschutz- und Compliance-Beauftragte einbinden  
-- Prozesse für Nachweisführung, Dokumentation und Auditfähigkeit etablieren  
-- Compliance-Trainings und Audits regelmäßig durchführen
+**Fokus:**
+- Datennutzung und Datenschutz im Tracking, Telematik und Kundendaten
+- Prozesse für Lieferkettentransparenz und Reporting
+- Sofortmaßnahmen & strategische Empfehlungen zur Compliance-Readiness
 
 ---
 
-_Tipp: Compliance von Anfang an mitdenken, um Risiken und Bußgelder zu vermeiden!_
+## Compliance-Analyse
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
+{tools_und_foerderungen}

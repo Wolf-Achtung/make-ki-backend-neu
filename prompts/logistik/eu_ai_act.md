@@ -1,11 +1,9 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für ein Unternehmen/Team in der Logistik ({selbststaendig}, Größe {unternehmensgroesse}).
+# EU AI Act-Analyse & Empfehlungen für Logistik und Transport
 
-- Analysiere aktuelle KI-Anwendungen (siehe Userdaten)
-- Bewerte Notwendigkeit von Risikoabschätzung, Compliance, Exportkontrolle
-- Besonderheiten für kleine Unternehmen und Flotten ansprechen
+Analysiere, wie der EU AI Act die Logistik- und Transportbranche betrifft: KI-gestützte Routenplanung, automatisierte Disposition, Fahrerdaten, Transparenz- und Dokumentationspflichten.
 
-Userdaten:
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}
