@@ -1,296 +1,234 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>KI-Readiness-Report</title>
-        <style>
-        body {
-            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-            color: #163356;
-            background: #f7fafd;
-            margin: 0;
-            padding: 0;
-        }
-        .logo-bar {
-            display: flex;
-            align-items: center;
-            padding: 36px 0 0 48px;
-            background: none;
-        }
-        .logo-bar img {
-            height: 52px;
-            margin-right: 36px;
-        }
-        .badge-bar {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin: 20px 48px 0 0;
-            justify-content: flex-end;
-        }
-        .badge-bar img {
-            height: 38px;
-        }
-        .report-title {
-            font-size: 2.8em;
-            font-family: 'Fira Mono', 'Menlo', monospace;
-            letter-spacing: 0.01em;
-            font-weight: 700;
-            margin: 34px 0 10px 0;
-            text-align: center;
-        }
-        .score-badge {
-            background: #edf3fc;
-            color: #2166c2;
-            border-radius: 16px;
-            display: inline-block;
-            font-size: 1.5em;
-            font-weight: 700;
-            padding: 10px 32px;
-            margin: 0 auto 16px auto;
-            text-align: center;
-        }
-        .toc {
-            background: #e5effb;
-            border-radius: 8px;
-            padding: 18px 36px;
-            margin: 32px auto 26px auto;
-            font-size: 1.12em;
-            display: flex;
-            justify-content: center;
-            gap: 38px;
-            font-family: 'Fira Mono', monospace;
-        }
-        .section {
-            background: #fff;
-            border-radius: 18px;
-            margin: 32px 48px 32px 48px;
-            padding: 40px 44px 38px 44px;
-            box-shadow: 0 2px 16px 0 #e3e8f7;
-            page-break-inside: avoid;
-        }
-        h1, h2, h3 {
-            color: #193f70;
-            margin-top: 0;
-        }
-        h1 {
-            font-size: 2.1em;
-            font-weight: 700;
-        }
-        h2 {
-            font-size: 1.4em;
-            font-weight: 700;
-            margin-bottom: 18px;
-        }
-        h3 {
-            font-size: 1.15em;
-            font-weight: 600;
-        }
-        .box {
-            background: #e9f0fb;
-            border-radius: 10px;
-            padding: 18px 24px;
-            margin: 24px 0;
-            color: #163356;
-            font-size: 1.08em;
-        }
-        .timeline {
-            display: flex;
-            align-items: flex-start;
-            gap: 32px;
-            margin: 44px 0 18px 0;
-        }
-        .timeline-step {
-            background: #2166c2;
-            color: #fff;
-            border-radius: 24px;
-            padding: 12px 28px;
-            font-size: 1em;
-            font-weight: 600;
-            min-width: 160px;
-            text-align: center;
-            position: relative;
-        }
-        .timeline-step:not(:last-child)::after {
-            content: "";
-            position: absolute;
-            right: -32px;
-            top: 50%;
-            width: 28px;
-            height: 4px;
-            background: #c1d8f5;
-            border-radius: 2px;
-            transform: translateY(-50%);
-            z-index: 1;
-        }
-        .footer {
-            font-size: 0.92em;
-            color: #5471a3;
-            background: none;
-            text-align: center;
-            margin: 66px 0 16px 0;
-            padding-bottom: 18px;
-            line-height: 1.3;
-        }
-        .pagebreak {
-            page-break-before: always;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>KI-Readiness-Report</title>
+  <style>
+    @page {
+      margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+    }
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: #f7fafd;
+      color: #1c345a;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 32px 40px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px 0 rgba(33,70,194,0.06);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      border-bottom: 1px solid #e6ebf5;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+    }
+    header img {
+      height: 52px;
+      margin-right: 20px;
+    }
+    h1 {
+      color: #1c345a;
+      font-size: 2.8em;
+      font-weight: 700;
+      margin-bottom: 0.2em;
+    }
+    .score-box {
+      display: inline-block;
+      background: #2166c2;
+      color: #fff;
+      font-size: 1.6em;
+      border-radius: 12px;
+      padding: 18px 36px;
+      margin-top: 16px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px 0 rgba(33,102,194,0.09);
+    }
+    .section {
+      margin-top: 42px;
+      margin-bottom: 38px;
+      padding: 0 8px;
+    }
+    h2, .section-title {
+      color: #2166c2;
+      margin-top: 0;
+      margin-bottom: 18px;
+      font-size: 1.45em;
+      border-left: 6px solid #e5eefb;
+      padding-left: 14px;
+      font-weight: 600;
+    }
+    h3 {
+      color: #194075;
+      margin-bottom: 10px;
+      font-size: 1.13em;
+    }
+    ul, ol {
+      padding-left: 28px;
+      margin-bottom: 0.7em;
+    }
+    .benchmarks-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      margin-bottom: 18px;
+      font-size: 1em;
+      background: #f8fafb;
+    }
+    .benchmarks-table th,
+    .benchmarks-table td {
+      border: 1px solid #dde7f2;
+      padding: 9px 14px;
+      text-align: left;
+    }
+    .benchmarks-table th {
+      background: #e6f0fa;
+      color: #194075;
+      font-weight: 600;
+    }
+    .footer {
+      font-size: 0.93em;
+      color: #7993af;
+      text-align: center;
+      margin: 35px 0 0 0;
+      padding-top: 12px;
+      border-top: 1px solid #dde7f2;
+    }
+    /* Optional: Titelseite etwas anders gestalten */
+    .titlepage {
+      margin-top: 70px;
+      text-align: center;
+      padding: 60px 30px 40px 30px;
+      background: linear-gradient(110deg, #f7fafd 68%, #e5eefb 100%);
+      border-radius: 18px;
+      box-shadow: 0 2px 24px 0 rgba(33,102,194,0.07);
+    }
+    .titlepage h1 {
+      font-size: 2.8em;
+      margin-bottom: 12px;
+    }
+    .titlepage .score-box {
+      font-size: 2.1em;
+      padding: 24px 48px;
+      margin-top: 32px;
+      margin-bottom: 12px;
+    }
+    .logo-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 22px;
+      margin-top: 32px;
+      margin-bottom: 8px;
+    }
+    .logo-bar img {
+      height: 32px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px 0 rgba(33,102,194,0.09);
+      padding: 3px 10px;
+    }
+    /* Media-Queries für bessere PDF-Layouts */
+    @media (max-width: 900px) {
+      .container { padding: 14px 4vw; }
+      .titlepage { padding: 14px 2vw; }
+    }
+  </style>
 </head>
 <body>
-
+  <!-- Titelseite -->
+  <div class="container titlepage">
+    <header>
+      <img src="ki-sicherheit-logo.png" alt="KI-Sicherheit Logo">
+      <div>
+        <h1>KI-Readiness-Report</h1>
+        <div class="score-box">KI-Readiness-Score: {{ score_percent }}%</div>
+      </div>
+    </header>
     <div class="logo-bar">
-        <img src="ki-sicherheit-logo.png" alt="KI-Sicherheit Logo">
-        <span style="font-size:1.6em; font-weight:700; color:#163356;">KI-Readiness-Report</span>
+      <img src="dsgvo.svg" alt="DSGVO-konform" title="DSGVO-konform">
+      <img src="eu-ai.svg" alt="EU AI Act Ready" title="EU AI Act Ready">
+      <img src="ki-ready-2025.png" alt="KI-Ready 2025" title="KI-Ready 2025">
     </div>
-    <div class="badge-bar">
-        <img src="dsgvo.svg" alt="DSGVO-konform" title="DSGVO-konform">
-        <img src="eu-ai.svg" alt="EU AI Act Ready" title="EU AI Act Ready">
-        <img src="ki-ready-2025.png" alt="KI-Ready 2025" title="KI-Ready 2025">
-    </div>
-    <div class="report-title">Ihr individueller KI-Readiness-Report</div>
-    <div class="score-badge">KI-Readiness-Score: 72%</div>
-    <div class="toc">
-        <span>Executive Summary</span>
-        <span>Gesamtstrategie</span>
-        <span>Innovation</span>
-        <span>Compliance</span>
-        <span>Datenschutz</span>
-        <span>Benchmarks</span>
-        <span>Roadmap</span>
-        <span>Praxis</span>
-        <span>Tools</span>
-        <span>Förderung</span>
-        <span>Checklisten</span>
+  </div>
+
+  <!-- Inhaltscontainer -->
+  <div class="container">
+    <!-- Inhaltsverzeichnis -->
+    <div class="section" style="margin-top: 0;">
+      <strong>Inhalt:</strong>
+      <span>Executive Summary | Strategie | Innovation | Compliance | Datenschutz | Benchmarks | Roadmap | Praxis | Tools | Förderung | Moonshot | EU AI Act | Checklisten</span>
     </div>
 
+    <!-- Haupt-Report-Bereiche -->
     <div class="section">
-        <h1>Executive Summary</h1>
-        Ihre Organisation ist auf dem Weg zu einer verantwortungsvollen und sicheren KI-Nutzung. Die wichtigsten Chancen liegen in der gezielten Automatisierung, Datenanalyse und der Entwicklung neuer, KI-gestützter Services.<br>
-        **Stärken:** Hohe Bereitschaft der Mitarbeitenden, klare Digitalstrategie.<br>
-        **Schwächen:** Lücken bei Compliance und Datenschutz.<br>
-        **Empfohlene Quick Wins:** Interne Schulungen, Low-Code-Tools testen, erste Prozesse automatisieren.<br>
-        **Risiken:** Fehlende Dokumentation, mangelnde Transparenz.
+      <div class="section-title">Executive Summary</div>
+      {{ executive_summary | safe }}
     </div>
-
     <div class="section">
-        <h2>Strategische Gesamtempfehlung</h2>
-        Richten Sie Ihre KI-Initiativen gezielt an Ihrer Geschäftsstrategie aus. Setzen Sie auf Pilotprojekte mit klar messbarem Nutzen und achten Sie auf frühzeitige Compliance-Prüfung. Schaffen Sie ein interdisziplinäres Team mit KI-Verantwortung.
+      <div class="section-title">Strategische Gesamtempfehlung</div>
+      {{ gesamtstrategie | safe }}
     </div>
-
     <div class="section">
-        <h2>Innovationspotenziale & Chancen</h2>
-        <div class="box">
-            <strong>Top 3 Chancen für Ihr Unternehmen:</strong>
-            <ol>
-                <li>Automatisierung repetitiver Marketingaufgaben</li>
-                <li>Datengetriebene Kampagnen-Optimierung</li>
-                <li>Entwicklung KI-gestützter Digitalprodukte</li>
-            </ol>
-        </div>
-        Künstliche Intelligenz ermöglicht es, neue Geschäftsfelder zu erschließen und Wettbewerbsvorteile zu sichern – vorausgesetzt, die Integration erfolgt verantwortungsvoll und unter Beachtung der regulatorischen Rahmenbedingungen.
+      <div class="section-title">Innovationspotenziale & Chancen</div>
+      {{ innovation | safe }}
     </div>
-
     <div class="section">
-        <h2>Compliance & Regulatorik</h2>
-        Prüfen Sie Ihre bestehenden Prozesse auf Konformität mit DSGVO, EU AI Act und branchenspezifischen Standards. Dokumentieren Sie alle KI-Anwendungen und führen Sie regelmäßige Risikoprüfungen durch.
+      <div class="section-title">Compliance & Regulatorik</div>
+      {{ compliance | safe }}
     </div>
-
     <div class="section">
-        <h2>Datenschutz & Risiken</h2>
-        Datenschutz ist ein Muss: Schützen Sie Kundendaten, sorgen Sie für Transparenz und ermöglichen Sie jederzeit die Kontrolle über KI-Ausgaben und Trainingsdaten. Führen Sie Datenschutzfolgenabschätzungen ein.
+      <div class="section-title">Datenschutz & Risiken</div>
+      {{ datenschutz | safe }}
     </div>
-
     <div class="section">
-        <h2>Benchmarks & Score</h2>
-        <img src="benchmark_diagramm.png" alt="Benchmark-Diagramm" style="max-width: 400px; display:block; margin-bottom:16px;">
-        <br>
-        <table style="width:100%;border-collapse:collapse;">
-            <tr style="background:#e5effb;font-weight:bold;">
-                <td>Kriterium</td><td>Ihr Wert</td><td>Branchen-Benchmark</td>
-            </tr>
-            <tr>
-                <td>Automatisierungsgrad</td><td>57%</td><td>53%</td>
-            </tr>
-            <tr>
-                <td>KI-Strategie vorhanden</td><td>Ja</td><td>48%</td>
-            </tr>
-            <tr>
-                <td>DSGVO-Compliance</td><td>Teilerfüllt</td><td>64%</td>
-            </tr>
-        </table>
+      <div class="section-title">Benchmarks & Score</div>
+      {{ benchmark_tabelle | safe }}
+      {% if benchmark_diagramm %}
+      <div style="margin-top:14px;">{{ benchmark_diagramm | safe }}</div>
+      {% endif %}
+      {{ ScoreVisualisierung | safe }}
     </div>
-
-    <div class="section pagebreak">
-        <h2>Roadmap & Umsetzung</h2>
-        <div class="timeline">
-            <div class="timeline-step">Q3: Kickoff & Team</div>
-            <div class="timeline-step">Q4: Pilotprojekt</div>
-            <div class="timeline-step">Q1: Skalierung</div>
-            <div class="timeline-step">Q2: Abschluss</div>
-        </div>
-        <ul>
-            <li>Jetzt: Auswahl erster Anwendungsfälle, Kickoff-Meeting</li>
-            <li>Nächster Schritt: Proof-of-Concept starten, Team qualifizieren</li>
-            <li>In 6 Monaten: Skalierung erfolgreicher Piloten</li>
-            <li>Langfristig: KI fest im Geschäftsmodell verankern</li>
-        </ul>
-    </div>
-
-    <div class="section pagebreak">
-        <h2>Praxisbeispiele</h2>
-        <ul>
-            <li>Automatisierte Lead-Generierung durch KI-Chatbots</li>
-            <li>Personalisierte Newsletter mit KI-basierter Segmentierung</li>
-            <li>Rechtssichere Texterstellung für Websites</li>
-        </ul>
-    </div>
-
     <div class="section">
-        <h2>Tools & KI-Lösungen</h2>
-        Empfohlene Tools:<br>
-        <ul>
-            <li>HubSpot KI-Suite</li>
-            <li>Microsoft Copilot</li>
-            <li>Grammarly Business</li>
-        </ul>
+      <div class="section-title">Roadmap & Umsetzung</div>
+      {{ roadmap | safe }}
     </div>
-
-    <div class="section pagebreak">
-        <h2>Förderprogramme & Finanzierung</h2>
-        <ul>
-            <li>go-digital (BMWK)</li>
-            <li>Digital Jetzt</li>
-            <li>KMU-Innovativ</li>
-        </ul>
-    </div>
-
     <div class="section">
-        <h2>Moonshot Vision: Zukunft der KI</h2>
-        In 5 Jahren könnten KI-Systeme im Marketing eigene Kampagnen vollautomatisch entwickeln und ausspielen – mit voller Compliance und Echtzeit-Auswertung.
+      <div class="section-title">Praxisbeispiele</div>
+      {{ praxisbeispiele | safe }}
     </div>
-
     <div class="section">
-        <h2>EU AI Act: Überblick & Handlungspflichten</h2>
-        Sie müssen alle eingesetzten KI-Anwendungen dokumentieren und Risiken regelmäßig evaluieren. Ein Chief AI Officer empfiehlt sich als Verantwortlicher.
+      <div class="section-title">Tools & KI-Lösungen</div>
+      {{ tools_tabelle | safe }}
+      {{ tools | safe }}
     </div>
-
-    <div class="section pagebreak">
-        <h2>Checklisten</h2>
-        <ul>
-            <li>Haben Sie Ihre KI-Anwendungen dokumentiert?</li>
-            <li>Existiert eine Datenschutz-Folgenabschätzung?</li>
-            <li>Sind alle Mitarbeiter im Umgang mit KI geschult?</li>
-            <li>Werden Risiken laufend geprüft?</li>
-        </ul>
+    <div class="section">
+      <div class="section-title">Förderprogramme & Finanzierung</div>
+      {{ foerderprogramme | safe }}
     </div>
-
+    <div class="section">
+      <div class="section-title">Moonshot Vision: Zukunft der KI</div>
+      {{ moonshot_vision | safe }}
+    </div>
+    <div class="section">
+      <div class="section-title">EU AI Act: Überblick & Handlungspflichten</div>
+      {{ eu_ai_act | safe }}
+    </div>
+    <div class="section">
+      <div class="section-title">Checklisten</div>
+      {{ checklisten | safe }}
+    </div>
     <div class="footer">
-        © KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025<br>
-        Inhalte ausschließlich zur Nutzung im Rahmen der KI-Readiness- und Datenschutzberatung.<br>
-        Nutzung, Weitergabe oder Veröffentlichung nur mit schriftlicher Genehmigung.<br>
-        Logos & Design urheberrechtlich geschützt. Listen & Prompts ausschließlich für Kunden von KI-Sicherheit.jetzt.
+      © KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025<br>
+      Inhalte ausschließlich zur Nutzung im Rahmen der KI-Readiness- und Datenschutzberatung. Logos & Design urheberrechtlich geschützt. Listen & Prompts ausschließlich für Kunden von KI-Sicherheit.jetzt.
     </div>
-
+  </div>
 </body>
 </html>
