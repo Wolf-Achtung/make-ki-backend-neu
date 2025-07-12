@@ -1,7 +1,7 @@
 import os
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML
-import markdown  # NEU!
+import markdown
 
 def markdown_to_html(text):
     """Hilfsfunktion, um Markdown in HTML zu konvertieren (mit einfachen Einstellungen)."""
@@ -39,6 +39,19 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
         if key in report_data_html:
             report_data_html[key] = markdown_to_html(report_data_html[key])
 
+    # --- NEU: Checklisten laden und als HTML einbinden ---
+    checklisten_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
+    checklisten_html = {}
+    for fname in os.listdir(checklisten_dir):
+        if fname.startswith("check_") and fname.endswith(".md"):
+            pfad = os.path.join(checklisten_dir, fname)
+            with open(pfad, "r", encoding="utf-8") as f:
+                md_inhalt = f.read()
+                html_inhalt = markdown_to_html(md_inhalt)
+                checklisten_html[fname[:-3]] = html_inhalt  # z.B. "check_datenschutz"
+
+    report_data_html["checklisten_html"] = checklisten_html
+
     # HTML Rendering
     try:
         env = Environment(
@@ -67,3 +80,4 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
         print(f"[PDF_EXPORT][ERROR] PDF-Datei fehlt nach Export! ({pdf_path})")
 
     return pdf_path
+
