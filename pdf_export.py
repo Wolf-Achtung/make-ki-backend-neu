@@ -1,10 +1,8 @@
 import os
 import uuid
-import tempfile
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 
-# Setze den Pfad zu deinen Templates
 TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "pdf_template.html")
 
 def export_pdf(report_data):
@@ -15,9 +13,11 @@ def export_pdf(report_data):
     # Daten für das Template
     html_content = template.render(**report_data)
 
-    # PDF-Name + Temp-Pfad
+    # PDF-Name + Zielpfad im downloads-Ordner
+    downloads_dir = os.path.join(os.path.dirname(__file__), "downloads")
+    os.makedirs(downloads_dir, exist_ok=True)
     pdf_filename = f"KI-Readiness-Report_{uuid.uuid4().hex[:8]}.pdf"
-    pdf_path = os.path.join(tempfile.gettempdir(), pdf_filename)
+    pdf_path = os.path.join(downloads_dir, pdf_filename)
 
     # PDF generieren
     HTML(string=html_content).write_pdf(pdf_path)

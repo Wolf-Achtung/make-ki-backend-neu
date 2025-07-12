@@ -79,7 +79,8 @@ async def create_briefing(request: Request):
 # Download-Endpoint für PDFs
 @app.get("/download/{pdf_file}")
 def download(pdf_file: str):
-    file_path = os.path.join(tempfile.gettempdir(), pdf_file)
+    downloads_dir = os.path.join(os.path.dirname(__file__), "downloads")
+    file_path = os.path.join(downloads_dir, pdf_file)
     if os.path.exists(file_path):
         return FileResponse(path=file_path, media_type='application/pdf', filename=pdf_file)
     return JSONResponse({"error": "Datei nicht gefunden"}, status_code=404)
