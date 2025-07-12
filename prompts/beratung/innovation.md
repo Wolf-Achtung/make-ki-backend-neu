@@ -1,30 +1,16 @@
-# Innovationspotenzial – Beratung & Dienstleistungen, {unternehmensgroesse}
+# Innovationspotenziale & Zukunftschancen für Beratungs-Dienstleistungen
 
-## SWOT-Innovation
+Zeige auf, wie KI und Digitalisierung Beratungsleistungen neu erfinden können: Automatisierung, smarte Wissensdatenbanken, KI-gestützte Analyse und Prognosen, digitale Beratungsprodukte, Self-Service, Mandantenportale.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie & Beispiele
-
-{innovation_report}
+**Für jedes Feld:**
+- Nutzenpotenziale & Business Value
+- Hemmnisse & Lösungsansätze
+- Pilotprojekte & Quick Wins
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten:
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Innovationspartnerschaften mit Hochschulen, Plattformen, Startups nutzen!_
+{daten}

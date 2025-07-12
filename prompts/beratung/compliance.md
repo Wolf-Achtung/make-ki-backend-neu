@@ -1,25 +1,21 @@
-# Compliance & Datenschutz – Beratung & Dienstleistungen, {unternehmensgroesse}
+# Compliance-Status & Empfehlungen für Beratungs-Dienstleistungen
 
-## Zusammenfassung
+Bewerte die Einhaltung branchenspezifischer Vorgaben: Datenschutz, Geheimhaltung, Mandanten-/Kunden-Compliance, IT-Sicherheit, Compliance im Fördergeschäft, Dokumentationspflichten.
 
-{compliance_report}
-
-## EU AI Act & Branchenspezifika
-
-- {eu_ai_act}
-- Mandantenschutz, Berufsgeheimnis, ISO-Normen (9001, 27001)
-- ToDos & Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Compliance- und Datenschutzmanagement etablieren  
-- Nachweisführung für alle Beratungsprojekte  
-- Regelmäßige Audits und Updates
+**Fokus:**
+- Datennutzung, Mandantenschutz, sichere Kommunikation
+- Prozesse für Dokumentation und Nachvollziehbarkeit
+- Sofortmaßnahmen & strategische Empfehlungen zur Compliance-Readiness
 
 ---
 
-_Tipp: Compliance ist Ihre Basis für vertrauensvolle Kundenbeziehungen!_
+## Compliance-Analyse
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
+{tools_und_foerderungen}

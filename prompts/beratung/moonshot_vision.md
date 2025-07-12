@@ -1,11 +1,9 @@
-Formuliere eine inspirierende Moonshot-Vision für KI in Beratung & Dienstleistungen ({selbststaendig}, Größe {unternehmensgroesse}).
+# Moonshot Vision: Zukunft der Beratungs-Dienstleistungen
 
-- Was wäre ein echter Gamechanger?
-- Welche neuen Beratungsmodelle, Prozesse, Services werden durch KI möglich?
-- Wie kann sich Ihr Unternehmen/Team mit KI differenzieren?
+Beschreibe eine inspirierende, visionäre Zukunft für Beratungsunternehmen durch KI und Digitalisierung: vollautomatisierte Analyse, skalierbare digitale Produkte, intelligente Kundenportale, adaptive Beratung, Plattform-Geschäftsmodelle.
 
-**Beispiel:**  
-„In 3 Jahren sind 90 % der Beratungsleistung und des Kundenservices KI-gestützt, automatisiert und rechtssicher dokumentiert.“
+---
 
-Userdaten:
+## Moonshot Vision
+
 {daten}

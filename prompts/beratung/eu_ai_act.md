@@ -1,11 +1,9 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für ein Beratungsunternehmen ({selbststaendig}, Größe {unternehmensgroesse}).
+# EU AI Act-Analyse & Empfehlungen für Beratungs-Dienstleistungen
 
-- Analysiere aktuelle KI-Anwendungen (siehe Userdaten)
-- Bewerte Notwendigkeit von Risikoabschätzung, Compliance, Mandantenschutz, Datenschutz
-- Besonderheiten für kleine Unternehmen, Solo-Berater und Dienstleister ansprechen
+Analysiere die Relevanz des EU AI Act für Beratung: Umgang mit sensiblen Daten, Transparenz, Dokumentationspflichten, KI-gestützte Analyse, Compliance im Beratungsalltag.
 
-Userdaten:
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}

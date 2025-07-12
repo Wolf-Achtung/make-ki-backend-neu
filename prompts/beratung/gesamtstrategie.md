@@ -1,19 +1,22 @@
-# Gesamtstrategie – Beratung & Dienstleistungen, {unternehmensgroesse}
+# Strategische Gesamtempfehlung für Beratungs-Dienstleistungen: KI-Einsatz & Digitalisierung
 
-Entwickle eine Gesamtstrategie für nachhaltige KI- und Digitalisierungsprojekte im Beratungs- und Dienstleistungssektor ({selbststaendig}, Größe {unternehmensgroesse}).
+Formuliere eine umfassende, zukunftsfähige Strategie zur Digitalisierung und für den KI-Einsatz in Beratungsunternehmen.
 
-**Leitfragen für die Strategie:**  
-- Wo bringt KI den größten Nutzen für Akquise, Beratung, Delivery, Nachbetreuung?  
-- Wie werden Daten, Prozesse, Compliance & Innovation integriert?  
-- Wie werden Mitarbeitende/Teams in die Transformation eingebunden?  
-- Welche Partnerschaften sind sinnvoll (Verbände, Plattformen, Hochschulen)?
+**Fokus:**
+- Ausgangslage und Herausforderungen (Skalierbarkeit, Personalknappheit, Wettbewerb, Beratungsqualität, Kundenbindung)
+- Schlüsselhebel: Automatisierung repetitiver Tätigkeiten, Self-Service-Tools, KI-gestützte Analyse, Wissensdatenbanken, Mandantenportale, digitale Produkte
+- Roadmap mit kurz-, mittel- und langfristigen Zielen & Meilensteinen
+- Erfolgsfaktoren, Risiken, Lessons Learned
 
-**Struktur:**  
-1. Status-Quo und Zielbild  
-2. Priorisierte Maßnahmen (kurz-, mittel-, langfristig)  
-3. Compliance- & Datenschutz-Plan  
-4. Förder- & Innovationspartnerschaften  
-5. Qualifizierung & Kommunikation
+---
 
-**Empfehlungen:**  
+## Strategie-Analyse
+
+Nutzerdaten:
+
 {daten}
+
+Zusatzmaterialien:
+
+{tools_und_foerderungen}
+{praxisbeispiele}

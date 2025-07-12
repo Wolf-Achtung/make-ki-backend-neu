@@ -1,21 +1,19 @@
-# Roadmap – Beratung & Dienstleistungen, {unternehmensgroesse}
+# Roadmap & Umsetzungsplan für KI und Digitalisierung in Beratungs-Dienstleistungen
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Strukturiere eine Roadmap für den schrittweisen Ausbau von KI- und Digitaltechnologien: Prozessautomatisierung, Wissensmanagement, digitale Produkte, Compliance, Change Management.
 
-{roadmap_report}
-
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo & Benchmark analysieren ({score_percent}, {benchmark_score})
-2. Pilotprojekt wählen (z. B. Angebotsmanagement, Analyse, Kundenservice)
-3. Datenschutz & Compliance (DSGVO, Mandantenschutz, AI Act) frühzeitig einbinden
-4. Fortbildung & Change Management starten
-5. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+**Module:**
+1. Technologiebasis & Datenintegration
+2. Automatisierung und KI-Tools
+3. Datenschutz & Compliance
+4. Produktentwicklung (digitale Beratung)
+5. Schulungen & Change Management
+6. Fördermittel & Partnerschaften
 
 ---
 
-_Tipp: Die Roadmap ist Ihr Steuerungstool für die digitale Beratungs-Transformation!_
+## Roadmap
+
+Nutzerdaten:
+
+{daten}

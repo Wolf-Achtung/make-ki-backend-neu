@@ -1,18 +1,20 @@
-Bewerte die Datenschutzsituation für Beratung & Dienstleistungen:
+# Datenschutz-Analyse & Empfehlungen für Beratungs-Dienstleistungen
 
-- Bereich: Beratung & Dienstleistungen
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+Analysiere Risiken und Herausforderungen im Umgang mit sensiblen Kunden- und Mandantendaten, Beratungs- und Förderdaten, personenbezogenen Informationen.
 
-**Schwachstellen und Risiken:**  
-- Verarbeitung von Kunden-, Mandanten-, Projektdaten  
-- Schnittstellen zu Partnern, Tools, Plattformen  
-- Fehlende Nachweisführung für Datenschutz, Mandantenschutz, AI Act
+**Inhalte:**
+- Datenschutzrisiken in Beratung, Datenweitergabe, Cloud-/Remote-Tools
+- Schwachstellenanalyse & Absicherung
+- Sofortmaßnahmen für Datenschutz und DSGVO-Konformität
 
-**Empfehlungen:**  
-- Datenschutzverantwortliche und Prozesse verpflichtend etablieren  
-- Datenschutz-Folgeabschätzung regelmäßig durchführen  
-- DSGVO, AI Act und Mandantenschutz laufend prüfen
+---
 
-Checkliste Datenschutz:
-{check_datenschutz}
+## Datenschutz-Check
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}

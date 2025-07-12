@@ -1,74 +1,27 @@
-# Executive Summary – KI-Readiness: Beratung & Dienstleistungen
+# Executive Summary: KI-Readiness & Handlungsempfehlungen für Beratungs-Dienstleistungen
 
-**KI-Readiness-Report für Unternehmensberatung, Agenturen, Coaches, Freelancer & Dienstleistungsunternehmen**  
-_Analyse, Strategie, Rechtssicherheit und Praxistipps – sofort umsetzbar._
+Du bist ein erfahrener, strategischer KI- und Digitalisierungsberater für Beratungsunternehmen (z. B. Unternehmens-, Förder- oder KI-Beratung). Deine Aufgabe: Erstelle eine Executive Summary, die den digitalen Reifegrad, die wichtigsten Chancen und priorisierten Handlungsempfehlungen für Beratungsdienstleister prägnant und geschäftsrelevant aufzeigt.
 
----
+**Enthalten sein müssen:**
+- Einschätzung des Digitalisierungs- und KI-Readiness-Status (Automatisierung Beratungsprozesse, Wissensmanagement, digitale Produkte, Tooling, Self-Service, Datenkompetenz)
+- KI-Readiness-Score & relevante Benchmarks (aus JSON-Block)
+- 3–5 zentrale Chancen und Gamechanger (z. B. Automatisierung von Analyse- & Reporting, Skalierung Beratungsleistungen durch digitale Produkte, Individualisierung durch KI, Kundenzentrierung)
+- Konkrete, priorisierte Next Steps und Quick Wins, die sofort Wirkung entfalten können
+- Risiken, typische Fehler (Anti-Pattern), regulatorische Anforderungen (z. B. Vertraulichkeit, Datenschutz, geistiges Eigentum, Compliance bei Förderberatung)
+- Optional: Passende Tools/Förderprogramme für Beratungsunternehmen
 
-## 1. Aktueller Status & Benchmark
-
-- **KI-Readiness-Score:** {score_percent}
-- **Branchendurchschnitt:** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Typische Anti-Pattern:**  
-  1. KI wird nur als Gimmick für Marketing, nicht für Wertschöpfung genutzt  
-  2. Keine durchgängige Integration in Beratungs- oder Serviceprozesse  
-  3. Datenschutz & Compliance werden zu spät adressiert  
-  4. Kein methodischer Ansatz für Wissensmanagement & Automatisierung
+**Sprache:** Prägnant, strategisch, business-orientiert. Jeder Absatz liefert einen direkten Mehrwert für Entscheider.
 
 ---
 
-## 3. Handlungsempfehlungen & Best Practices
+## Analyse & Bewertung
 
-- Entwicklung einer KI-/Digitalstrategie für Akquise, Beratung, Delivery & Nachbetreuung
-- KI für Analyse, Kundenservice, Prozessautomatisierung und Wissensmanagement einsetzen
-- Datenschutz, Compliance und Mandantenschutz als Wettbewerbsvorteil gestalten
-- Kooperationen mit Plattformen, Tools, Hochschulen und Branchennetzwerken
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- KI-gestützte Beratungsanalysen & Benchmarks  
-- Automatisierte Berichte, Angebotserstellung & Kundenkommunikation  
-- Chatbots & intelligente Wissensdatenbanken  
-- Workflow-Automatisierung
+{daten}
 
----
-
-## 4. Tools, Förderprogramme & Checklisten
-
-{tools_and_foerderungen}
+Zusatzmaterialien (falls bereitgestellt):
 
 {checklisten}
-
----
-
-## 5. Score & Benchmark-Visualisierung
-
-- Visualisierung: {score_vis}
-- Benchmark-Daten: {benchmark_table}
-- {diagramme}
-
----
-
-## 6. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 7. Next Steps & Deep Dive
-
-- KI-Pilotprojekt (z. B. Angebotsmanagement, Analyseautomatisierung) starten
-- Förderprogramme & Innovationspartnerschaften prüfen
-- Datenschutz und Compliance von Beginn an einbinden
-
----
-
-_Für individuelle Beratung: [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)_
+{tools_und_foerderungen}
+{praxisbeispiele}
