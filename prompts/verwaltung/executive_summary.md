@@ -1,73 +1,27 @@
-# Executive Summary – KI-Readiness: Verwaltung & öffentliche Institutionen
+# Executive Summary: KI-Readiness & Handlungsempfehlungen für die Verwaltung
 
-**Ihr individueller KI-Readiness-Report für Verwaltung und Behörden**  
-_Effizient. Sicher. Rechtskonform. Zukunftsorientiert._
+Du bist ein erfahrener, strategisch denkender KI- und Transformationsberater für Behörden, Verwaltungen und den öffentlichen Sektor. Deine Aufgabe ist es, basierend auf den folgenden Nutzerdaten und Kontextinformationen, eine professionelle, unternehmensrelevante Executive Summary zu erstellen.
 
----
+**Leiste einen echten Mehrwert, indem du:**
+- Den aktuellen Digitalisierungs- und KI-Readiness-Status einschätzt (inkl. Schwächen und Stärken)
+- Den KI-Readiness-Score und relevante Benchmarks herausstellst (entnehme diese dem JSON-Block)
+- 3–5 zentrale Chancen und Gamechanger-Möglichkeiten identifizierst
+- Konkrete, priorisierte Next Steps und Quick Wins vorschlägst, die sofort Wirkung entfalten können
+- Risiken, typische Fehler („Anti-Pattern“) und regulatorische Anforderungen kritisch bewertest
+- Optional: Passende Tools/Förderprogramme für Verwaltungen kurz anführst
 
-## 1. Aktueller Status & Benchmark
-
-- **KI-Readiness-Score:** {score_percent}
-- **Branchendurchschnitt:** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Typische Anti-Pattern:**  
-  1. Einzelne Digitalisierungsprojekte, aber fehlende Gesamtstrategie  
-  2. Geringe Datenintegration zwischen Abteilungen  
-  3. Keine eindeutigen Verantwortlichkeiten für Datenschutz/KI  
-  4. KI-Pilotprojekte ohne nachhaltige Integration in Prozesse
+**Sprache:** Prägnant, strategisch, auf Entscheiderebene. Keine Aufzählungen ohne geschäftlichen Kontext. Jedes Statement muss einen konkreten Nutzen stiften.
 
 ---
 
-## 3. Handlungsempfehlungen & Best Practices
+## Analyse & Bewertung
 
-- Aufbau einer zentralen KI- und Digitalisierungsstrategie für die gesamte Verwaltungseinheit  
-- Einführung von Prozessautomatisierung für Antragsbearbeitung, Sachbearbeitung und Kommunikation  
-- Frühzeitige Einbindung von Datenschutzbeauftragten und Compliance-Teams  
-- Qualifizierung aller Mitarbeitenden im Umgang mit KI-Systemen (Fortbildungen, Change Management)
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- Automatisierte Posteingangsbearbeitung (z. B. Scan & Klassifikation)  
-- Bürgerkommunikation via Chatbot/Assistent  
-- Monitoring- und Controlling-Dashboards für Prozess-Performance
+{daten}
 
----
-
-## 4. Tools, Förderprogramme & Checklisten
-
-{tools_and_foerderungen}
+Zusatzmaterialien (falls bereitgestellt):
 
 {checklisten}
-
----
-
-## 5. Score & Benchmark-Visualisierung
-
-- Visualisierung: {score_vis}
-- Benchmark-Daten: {benchmark_table}
-- {diagramme}
-
----
-
-## 6. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 7. Next Steps & Deep Dive
-
-- Mindestens ein KI-Pilotprojekt umsetzen (z. B. in der Bürgerkommunikation oder Sachbearbeitung)  
-- Förderprogramme und Kooperationspartner prüfen  
-- Datenschutzprozesse und Verantwortlichkeiten schriftlich dokumentieren
-
----
-
-_Für individuelle Beratung: [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)_
+{tools_and_foerderungen}
+{praxisbeispiele}

@@ -1,76 +1,25 @@
-# Executive Summary – Verwaltung (Einzelakteur/Projektleitung)
+# Kurzbewertung & Empfehlungen: KI-Readiness für Einzel- oder Kleinst-Verwaltungen
 
-**KI-Readiness-Analyse und praxisnahe Handlungsempfehlungen**  
-_Bereich: Verwaltung – Einzelperson oder Leitung kleiner Projekte_
+Du bist spezialisierte:r Berater:in für sehr kleine Verwaltungseinheiten oder Einzelpersonen im öffentlichen Bereich. Fasse auf Basis der bereitgestellten Daten den Stand der Digitalisierung und KI-Nutzung kompakt zusammen und liefere gezielte, sofort umsetzbare Tipps.
 
----
+**Deine Aufgabe:**
+- Analysiere die aktuelle KI-Readiness und Digitalisierungsbereitschaft anhand der Datenlage
+- Mache 2–3 pragmatische Vorschläge, wie Digitalisierung und KI-Nutzung auch mit sehr begrenzten Ressourcen sofort vorangebracht werden können
+- Weisen Sie auf typische Risiken oder Fehlerquellen für Einzelakteure hin (z. B. fehlende Vertretung, Knowhow-Lücken)
+- Empfehle explizit Tools oder Förderprogramme, die für Solo-Akteure oder kleine Teams besonders geeignet sind
 
-## 1. Kurzbewertung
-
-- **KI-Readiness-Score:** {score_percent}
-- **Benchmark (Verwaltung):** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen & Risiken für Einzelakteure
-
-- **Chancen:** {swot_opportunities}
-- **Risiken / typische Fehler:** {swot_threats}
-- **Anti-Pattern:**  
-  1. Digitalisierungsmaßnahmen ohne Einbindung aller Stakeholder  
-  2. IT-Sicherheit und Datenschutz als reine Pflichtübung  
-  3. Überforderung mit KI-Tools ohne Fortbildung  
-  4. Kein Erfahrungsaustausch im Netzwerk
+**Sprache:**  
+Extrem kompakt, lösungsorientiert, motivierend. Direkt umsetzbar für Einzelpersonen im Verwaltungsalltag.
 
 ---
 
-## 3. Empfehlungen & Sofort-Maßnahmen
+## Kurzbewertung & Empfehlungen
 
-**Top-Handlungsempfehlungen:**  
-- Schulung zu KI-Tools (z. B. automatisierte Aktenbearbeitung) belegen  
-- Pilotprojekte mit klarem Verantwortlichen und Zielbild starten  
-- Rechtliche Rahmenbedingungen (Datenschutz, AI Act) vorab prüfen  
-- Förderprogramme für Digitalisierungs- und Weiterbildungsprojekte nutzen
+Nutzerdaten & Kontext (JSON):
 
-**Quick-Wins & Best Practices:**  
-- Automatisierte Terminverwaltung  
-- E-Mail-Klassifikation und Dokumentenmanagement mit KI  
-- Netzwerk mit anderen Verwaltungen aufbauen
+{daten}
 
----
-
-## 4. Tools & Förderungen
+Zusätzliche Materialien:
 
 {tools_and_foerderungen}
-
----
-
-## 5. Umsetzungs-Checkliste
-
 {checklisten}
-
----
-
-## 6. Benchmark & Visualisierung
-
-- Score im Vergleich: {score_vis}
-- Branchen-Durchschnitt: {benchmark_table}
-- {diagramme}
-
----
-
-## 7. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 8. Follow-up & Deep Dive
-
-- KI-Use Case für eigene Arbeit definieren  
-- Wissen gezielt aufbauen  
-- Förderprogramme regelmäßig prüfen
-
----

@@ -1,74 +1,25 @@
-# Executive Summary – Verwaltung, Kleines Team (2–5 Personen)
+# Kurzbewertung & Quick Wins: KI-Readiness für kleine Verwaltungseinheiten
 
-**KI-Readiness-Analyse & Empfehlungen**
+Du bist Berater:in für kleine und mittelgroße Behörden/Verwaltungen. Fasse auf Basis der bereitgestellten Daten den Status quo knapp zusammen und zeige praxisnahe, sofort wirksame Hebel und Quick Wins auf.
 
----
+**Deine Aufgabe:**
+- Skizziere den aktuellen Stand der Digitalisierung und KI-Readiness (Stärken, Schwächen, Handlungsbedarf)
+- Leite daraus 2–3 direkt umsetzbare Quick Wins ab, die speziell für kleinere Verwaltungseinheiten funktionieren
+- Benenne Risiken oder typische Stolpersteine, die kleine Organisationen vermeiden sollten
+- Weise auf passende Förderprogramme oder Tools hin, die besonders hilfreich für kleine Verwaltungen sind
 
-## 1. Status & Benchmark
-
-- **KI-Score:** {score_percent}
-- **Benchmark (Verwaltung):** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Anti-Pattern für kleine Teams:**  
-  1. Keine gemeinsame Datenbasis, jeder arbeitet für sich  
-  2. Keine Schnittstellen zwischen Fachverfahren  
-  3. Datenschutz unklar geregelt  
-  4. Innovation bleibt Einzelinitiative
+**Sprache:**  
+Sehr kompakt, lösungsfokussiert, leicht verständlich – für Entscheider:innen mit wenig Zeit.
 
 ---
 
-## 3. Empfehlungen & Quick-Wins
+## Kurzbewertung & Empfehlungen
 
-- Zentrale Datendrehscheibe einrichten (Dokumentenmanagement)  
-- Automatisierte Post- und Aktenbearbeitung testen  
-- Datenschutzbeauftragten einbinden  
-- Fördermittel für Prozessautomatisierung nutzen
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- KI-gestützte Antrags- und Fallbearbeitung  
-- Wissensaustausch mit anderen Verwaltungen  
-- Checklisten für neue KI-Prozesse
+{daten}
 
----
-
-## 4. Tools & Förderungen
+Zusätzliche Materialien:
 
 {tools_and_foerderungen}
-
----
-
-## 5. Umsetzungs-Checkliste
-
 {checklisten}
-
----
-
-## 6. Score & Benchmark-Visualisierung
-
-- Score: {score_vis}
-- Benchmark: {benchmark_table}
-- {diagramme}
-
----
-
-## 7. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 8. Follow-up
-
-- KI-Pilotprojekt gemeinsam im Team starten  
-- Fördermittel beantragen  
-- Aufgaben & Verantwortlichkeiten klar zuordnen
-
----

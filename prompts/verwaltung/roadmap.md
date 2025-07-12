@@ -1,21 +1,27 @@
-# Roadmap – Verwaltung, {unternehmensgroesse}
+# Roadmap & Umsetzungsplan für KI und Digitalisierung in der Verwaltung
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Du bist ein erfahrener Strategie- und Projektmanager mit Fokus auf digitale Verwaltungsmodernisierung. Entwickle basierend auf den vorliegenden Daten eine prägnante, priorisierte Roadmap für die nächsten 12–18 Monate.
 
-{roadmap_report}
+**Deine Aufgabe:**
+- Definiere die 5–7 wichtigsten Arbeitspakete (Projekte, Initiativen, Maßnahmen) zur Steigerung von KI-Readiness und Digitalisierung
+- Beschreibe konkrete Meilensteine, Verantwortlichkeiten und Erfolgsfaktoren
+- Berücksichtige relevante Scores, Benchmarks, Pain Points und aktuelle Herausforderungen der Organisation aus dem JSON-Block
+- Weisen Sie auf kritische Abhängigkeiten und notwendige Ressourcen (Personal, Tools, Förderungen) hin
+- Mache Vorschläge für ein wirksames Change-Management und schnelle Quick-Wins
 
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo & Benchmark klären ({score_percent}, {benchmark_score})
-2. Erste KI-Pilotprojekte starten (z. B. Dokumentenmanagement, Chatbots)
-3. Datenschutz & Compliance von Beginn an einbinden
-4. Kommunikation und Schulung für Mitarbeitende aufsetzen
-5. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+**Sprache:**  
+Kurz, klar, priorisierend. Der Plan muss für Management, Politik und operative Leitung direkt verständlich und umsetzbar sein.
 
 ---
 
-_Tipp: Die Roadmap als zentrales Projektmanagement-Tool nutzen!_
+## Roadmap & Maßnahmen
+
+Nutzerdaten & Kontext (JSON):
+
+{daten}
+
+Ergänzende Materialien (z. B. Checklisten, Tools, Praxisbeispiele):
+
+{checklisten}
+{tools_and_foerderungen}
+{praxisbeispiele}

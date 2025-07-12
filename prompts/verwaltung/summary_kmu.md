@@ -1,74 +1,26 @@
-# Executive Summary – Verwaltung, KMU (6–100 Personen)
+# Kurzbewertung & Empfehlungen: KI-Readiness in der Verwaltung (KMU-Kontext)
 
-**KI-Readiness, Benchmark und strategische Handlungsempfehlungen für Verwaltungs-KMU**
+Du bist ein unabhängiger Digitalberater mit Fokus auf kleine und mittlere Verwaltungseinheiten. Erstelle auf Basis der bereitgestellten Daten eine prägnante Bewertung des Status quo und liefere direkt umsetzbare Empfehlungen, die für Entscheider:innen im öffentlichen Sektor maximal relevant sind.
 
----
+**Deine Aufgabe:**
+- Bewerte den aktuellen KI-Readiness-Status und Digitalisierungsgrad (inkl. Benchmarks, Scores, Pain Points)
+- Identifiziere Stärken und Schwächen der Organisation und leite daraus gezielte Maßnahmen ab
+- Gib 2–3 Quick-Wins und mittelfristige Hebel für mehr Effizienz, Compliance oder Bürgernutzen
+- Weisen Sie auf zentrale Risiken, typische Fehlerquellen sowie regulatorische Fallstricke für KMU-nahe Verwaltungen hin
+- Optional: Nenne passende Tools oder Förderprogramme, die den Einstieg erleichtern
 
-## 1. KI-Readiness & Benchmark
-
-- **Score:** {score_percent}
-- **Benchmark:** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Anti-Pattern für KMU:**  
-  1. Keine zentrale KI-Strategie für die gesamte Verwaltung  
-  2. Silodenken – wenig Kommunikation zwischen Bereichen  
-  3. Compliance nur reaktiv, nicht proaktiv  
-  4. Change Management wird unterschätzt
+**Sprache:**  
+Klar, kompakt, lösungsorientiert. Jeder Abschnitt bringt direkt verwertbaren Nutzen für die Praxis.
 
 ---
 
-## 3. Handlungsempfehlungen
+## Bewertung & Handlungsempfehlungen
 
-- Entwicklung einer zentralen KI-Strategie mit Stakeholder-Einbindung  
-- Prozessautomatisierung (Akten, Anträge, Serviceprozesse) systematisch ausrollen  
-- Datenschutz und Compliance proaktiv managen  
-- Innovationspartnerschaften mit Tech-Anbietern und Forschungseinrichtungen
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- KI-Chatbots für Bürger- oder Mitarbeiterkommunikation  
-- Monitoring der Prozessperformance  
-- Schulungen und Change-Programme für Mitarbeitende
+{daten}
 
----
-
-## 4. Tools & Förderungen
+Ergänzende Materialien:
 
 {tools_and_foerderungen}
-
----
-
-## 5. Umsetzungs-Checkliste
-
 {checklisten}
-
----
-
-## 6. Benchmark-Visualisierung
-
-- Score-Vergleich: {score_vis}
-- Benchmark: {benchmark_table}
-- {diagramme}
-
----
-
-## 7. Compliance & Datenschutz für KMU
-
-{compliance_snippet}
-
----
-
-## 8. Follow-up
-
-- Fördermittel beantragen  
-- Innovationsprojekte starten  
-- Score und Roadmap regelmäßig reviewen
-
----

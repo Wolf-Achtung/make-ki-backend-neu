@@ -1,20 +1,26 @@
-# Gesamtstrategie – Verwaltung, {unternehmensgroesse}
+# Strategische Gesamtempfehlung für die Verwaltung: KI-Einsatz & digitale Transformation
 
-Entwickle eine Gesamtstrategie für nachhaltige KI- und Digitalisierungsvorhaben in der Verwaltung ({selbststaendig}, Größe {unternehmensgroesse}).
+Du bist ein erfahrener Transformationsberater und Spezialist für die Digitalisierung und KI-Integration im öffentlichen Sektor. Entwickle auf Basis der bereitgestellten Nutzerdaten eine klare, praxisorientierte Gesamtstrategie für die Verwaltung.
 
-**Leitfragen für die Strategie:**  
-- Wo bietet KI den größten Nutzen (Antragsbearbeitung, Bürgerkommunikation, interne Abläufe)?  
-- Wie können Prozesse und Daten digital vereinheitlicht werden?  
-- Wie sichern Sie langfristig Compliance und Datenschutz?  
-- Wie werden Mitarbeitende beteiligt und qualifiziert?  
-- Welche Kooperationen sind sinnvoll (andere Verwaltungen, Tech-Anbieter, Wissenschaft)?
+**Deine Aufgabe:**
+- Analysiere die Ausgangslage der Organisation (KI-Readiness, Digitalisierungsgrad, aktuelle Herausforderungen)
+- Zeige, wie Verwaltungseinheiten zu digitalen Vorreitern werden können – entlang der wichtigsten Benchmarks, Scores und Pain Points aus dem JSON-Block
+- Leite eine strategische KI-Roadmap ab: Wo stehen wir? Was sind die wichtigsten Meilensteine? Welche Hebel wirken besonders schnell?
+- Benenne Schlüsselfaktoren für nachhaltigen Erfolg, mögliche Stolpersteine und kritische Erfolgsfaktoren
+- Priorisiere Initiativen und Programme mit dem größten Hebel für Effizienz, Bürgernutzen und regulatorische Sicherheit
 
-**Struktur:**  
-1. Status-Quo und Zielbild  
-2. Priorisierte Maßnahmen (kurz-, mittel-, langfristig)  
-3. Compliance- & Datenschutz-Plan  
-4. Förder- & Innovationspartnerschaften  
-5. Change- und Kommunikationskonzept
+**Sprache:**  
+Kurz, klar, mit unternehmerischem Fokus. Jedes Statement ist ein handlungsorientierter Tipp für Leitungsebene oder C-Level.
 
-**Empfehlungen:**  
+---
+
+## KI-Strategie & Roadmap
+
+Nutzerdaten & Kontext (JSON):
+
 {daten}
+
+Ergänzende Materialien (z. B. Checklisten, Tools, Förderungen):
+
+{checklisten}
+{tools_and_foerderungen}
