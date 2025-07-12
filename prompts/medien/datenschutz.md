@@ -1,18 +1,21 @@
-Bewerte die Datenschutzsituation für Medien & Kreativwirtschaft:
+<!-- datenschutz.md -->
+# Datenschutz-Analyse & Empfehlungen für Medien und Kreativdienstleister
 
-- Bereich: Medien & Kreativwirtschaft
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+Analysiere Risiken und Herausforderungen im Umgang mit Daten in der Medienproduktion: Tracking, User-Daten, Rechteverwaltung, personenbezogene Inhalte.
 
-**Schwachstellen und Risiken:**  
-- Verarbeitung von Kunden-, Nutzerdaten, Content- und Produktionsdaten  
-- Schnittstellen zu Plattformen, Dienstleistern, Netzwerken  
-- Fehlende Nachweisführung für Content-Provenance
+**Inhalte:**
+- Datenschutzrisiken (insb. bei Personalisierung, User-Generated Content, KI-Content)
+- Schwachstellenanalyse & Absicherung
+- Sofortmaßnahmen für Datenschutz und DSGVO-Konformität
 
-**Empfehlungen:**  
-- Datenschutzverantwortliche und Prozesse etablieren  
-- Datenschutz-Folgeabschätzung regelmäßig durchführen  
-- DSGVO, AI Act und Urheberrecht laufend prüfen
+---
 
-Checkliste Datenschutz:
-{check_datenschutz}
+## Datenschutz-Check
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}

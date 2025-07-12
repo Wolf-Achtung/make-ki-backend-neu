@@ -1,11 +1,10 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für Medien & Kreativunternehmen ({selbststaendig}, Größe {unternehmensgroesse}).
+<!-- eu_ai_act.md -->
+# EU AI Act-Analyse & Empfehlungen für Medien und Kreativdienstleistungen
 
-- Analysiere aktuelle KI-Anwendungen (siehe Userdaten)
-- Bewerte Notwendigkeit von Risikoabschätzung, Compliance, Urheber- und Datenschutz
-- Besonderheiten für kleine Unternehmen, Freie und Agenturen ansprechen
+Analysiere, wie der EU AI Act die Medien- und Kreativbranche betrifft: KI-generierter Content, Urheberrecht, Transparenz, Risiken und Chancen, praktische Umsetzung.
 
-Userdaten:
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}

@@ -1,25 +1,22 @@
-# Compliance & Datenschutz – Medien & Kreativwirtschaft, {unternehmensgroesse}
+<!-- compliance.md -->
+# Compliance-Status & Empfehlungen für Medien- und Kreativunternehmen
 
-## Zusammenfassung
+Bewerte die Einhaltung von Urheberrecht, Medienrecht, DSGVO, Persönlichkeitsrecht sowie branchenspezifischer Regularien (z. B. Lizenzmanagement, Datenschutz im Content, Nutzungsrechte).
 
-{compliance_report}
-
-## EU AI Act & Branchenspezifika
-
-- {eu_ai_act}
-- Urheberrecht, Persönlichkeitsrechte, ISO-Normen (9001, 27001)
-- ToDos & Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Compliance- und Datenschutzmanagement in alle Medien-Workflows einbinden  
-- Rechtliche Prüfungen automatisieren  
-- Audits und Fortbildungen laufend aktualisieren
+**Fokus:**
+- KI-Nutzung für Content: Rechteklärung, Urheber, Lizenzen
+- Umgang mit personenbezogenen Daten (Zielgruppenanalyse, Tracking)
+- Sofortmaßnahmen & strategische Empfehlungen zur Compliance-Readiness
 
 ---
 
-_Tipp: Recht & Compliance sind der Schlüssel für nachhaltigen Innovationserfolg!_
+## Compliance-Analyse
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
+{tools_und_foerderungen}

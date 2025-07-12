@@ -1,30 +1,17 @@
-# Innovationspotenzial – Medien & Kreativwirtschaft, {unternehmensgroesse}
+<!-- innovation.md -->
+# Innovationspotenziale & Zukunftschancen für Medien- und Kreativunternehmen
 
-## SWOT-Innovation
+Zeige auf, wie KI und Digitalisierung die Medienwelt und Kreativarbeit verändern: generative KI, automatisiertes Editing, Hyperpersonalisierung, KI-gestützte Recherche, Predictive Analytics, smarte Distribution.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie & Beispiele
-
-{innovation_report}
+**Für jedes Feld:**
+- Business/Nutzen Value & Wettbewerbsvorteil
+- Hemmnisse & Lösungsansätze
+- Pilotprojekte & Quick Wins
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten:
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Kooperationen mit Creator-Plattformen, Startups und Tech-Unternehmen pushen Innovation!_
+{daten}

@@ -1,74 +1,28 @@
-# Executive Summary – KI-Readiness: Medien & Kreativwirtschaft
+<!-- executive_summary.md -->
+# Executive Summary: KI-Readiness & Handlungsempfehlungen für Medien und Kreativdienstleistungen
 
-**KI-Readiness-Report für Agenturen, Medienhäuser, Content-Creator, Publisher, Werbe- & Design-Teams**  
-_Innovativ. Schnell. Rechtssicher. Zukunftsweisend._
+Du bist ein erfahrener, strategisch denkender KI- und Innovationsberater für Medienunternehmen, Kreativagenturen und Content-Producer. Deine Aufgabe: Erstelle eine professionelle Executive Summary, die den aktuellen Status, die größten Potenziale und konkrete Handlungsempfehlungen für Medien- und Kreativunternehmen sichtbar macht.
 
----
+**Inhalte:**
+- Aktueller Digitalisierungs- und KI-Status (z. B. Automatisierung in Content-Erstellung, Distribution, Workflow, Rechteverwaltung, Customer Experience, Produktionsprozesse)
+- KI-Readiness-Score & relevante Benchmarks (aus JSON-Block)
+- 3–5 zentrale Chancen und Gamechanger (z. B. KI-generierte Inhalte, Hyperpersonalisierung, automatisiertes Editing, Kreativautomation, Audience Analytics)
+- Konkrete, priorisierte Next Steps und Quick Wins für sofortigen Impact
+- Risiken, typische Fehler (Anti-Pattern), Regulatorik (Urheberrecht, DSGVO, Mediengesetze)
+- Optional: Passende Tools/Förderprogramme für Medien- & Kreativunternehmen
 
-## 1. Aktueller Status & Benchmark
-
-- **KI-Readiness-Score:** {score_percent}
-- **Branchendurchschnitt:** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Typische Anti-Pattern:**  
-  1. KI wird nur als Gimmick für Texterstellung oder Bildgenerierung genutzt  
-  2. Kreative und Tech-Teams arbeiten nicht integriert  
-  3. Urheberrecht und Datenschutz werden erst im Nachgang adressiert  
-  4. Zu wenig Automatisierung und Integration in Workflows
+**Sprache:** Prägnant, entscheidungsrelevant, kreativwirtschaftsnah. Jeder Absatz bringt einen Mehrwert und klare Implikation.
 
 ---
 
-## 3. Handlungsempfehlungen & Best Practices
+## Analyse & Bewertung
 
-- Entwicklung einer unternehmensweiten KI-Strategie für Content, Kreation, Distribution, Vermarktung
-- KI für Content-Generierung, Audience-Targeting, Monitoring und Distribution einsetzen
-- Recht & Compliance (Urheberrecht, DSGVO, AI Act) von Anfang an einbinden
-- Partnerschaften mit Plattformen, Creator-Netzwerken und Startups prüfen
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- KI-gestützte Texterstellung, Bild-/Videogenerierung  
-- Automatisiertes Monitoring & Social Listening  
-- KI für Targeting, Personalisierung & A/B-Testing  
-- Automatisierte Rechteprüfung
+{daten}
 
----
-
-## 4. Tools, Förderprogramme & Checklisten
-
-{tools_and_foerderungen}
+Zusatzmaterialien (falls bereitgestellt):
 
 {checklisten}
-
----
-
-## 5. Score & Benchmark-Visualisierung
-
-- Visualisierung: {score_vis}
-- Benchmark-Daten: {benchmark_table}
-- {diagramme}
-
----
-
-## 6. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 7. Next Steps & Deep Dive
-
-- KI-Pilotprojekt (z. B. Content-Generierung, Monitoring, Bildanalyse) starten
-- Förderprogramme & Kooperationsprojekte prüfen
-- Urheberrecht und DSGVO laufend reviewen
-
----
-
-_Für individuelle Beratung: [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)_
+{tools_und_foerderungen}
+{praxisbeispiele}

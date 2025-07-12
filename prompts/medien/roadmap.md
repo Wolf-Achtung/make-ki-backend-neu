@@ -1,21 +1,22 @@
-# Roadmap – Medien & Kreativwirtschaft, {unternehmensgroesse}
+<!-- roadmap.md -->
+# Roadmap & Umsetzungsplan für KI und Digitalisierung in Medien & Kreativdienstleistungen
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Strukturiere eine Roadmap für KI-Einführung und -Skalierung – von Infrastruktur über Content, Rechte, Distribution bis zu Analytics.
 
-{roadmap_report}
+**Module:**
+1. Technologiebasis & Infrastruktur
+2. Automatisierung in Produktion & Distribution
+3. Content-Rechte & Lizenzmanagement
+4. Datenschutz & Compliance
+5. Schulungen & Change Management
+6. Fördermittel & Partnerschaften
 
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo & Benchmark analysieren ({score_percent}, {benchmark_score})
-2. Pilotprojekt wählen (z. B. KI-Content, Distribution, Monitoring)
-3. Recht & Compliance (Urheberrecht, DSGVO, AI Act) frühzeitig einbinden
-4. Fortbildung & Change Management starten
-5. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourcen.
 
 ---
 
-_Tipp: Die Roadmap ist Ihr Steuerungstool für nachhaltige digitale Medienprozesse!_
+## Roadmap
+
+Nutzerdaten:
+
+{daten}

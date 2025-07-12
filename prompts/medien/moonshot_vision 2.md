@@ -1,11 +1,10 @@
-Formuliere eine inspirierende Moonshot-Vision für KI in Medien & Kreativwirtschaft ({selbststaendig}, Größe {unternehmensgroesse}).
+<!-- moonshot_vision.md -->
+# Moonshot Vision: Zukunft der Medien- und Kreativbranche
 
-- Was wäre ein echter Gamechanger?
-- Welche neuen Workflows, Formate, Services werden durch KI möglich?
-- Wie kann sich Ihr Unternehmen/Team mit KI differenzieren?
+Beschreibe eine visionäre, inspirierende Zukunft für die Medien- und Kreativwirtschaft durch KI: Hyperpersonalisierung, Content-on-Demand, Demokratisierung der Produktion, neue Geschäftsmodelle, kreative Kollaboration.
 
-**Beispiel:**  
-„In 3 Jahren wird 90 % der Content-Produktion, Verwertung und Distribution KI-gestützt, personalisiert und rechtskonform ablaufen.“
+---
 
-Userdaten:
+## Moonshot Vision
+
 {daten}
