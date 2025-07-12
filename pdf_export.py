@@ -15,7 +15,7 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
             loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates")),
             autoescape=select_autoescape(["html", "xml"])
         )
-        template = env.get_template("report_template.html")
+        template = env.get_template("pdf_template.html")
         html_content = template.render(**report_data)
     except Exception as e:
         print(f"[PDF_EXPORT][ERROR] HTML-Rendering fehlgeschlagen: {e}")
