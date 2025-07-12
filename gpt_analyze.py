@@ -81,13 +81,10 @@ def get_tools_und_foerderungen(data):
     tools_data = TOOLS_FOERDER.get(branche, {}) or TOOLS_FOERDER.get("default", {})
     tools_list = []
     if isinstance(tools_data, dict):
-        # Suche nach Groessenschlüssel (solo, klein, mittel, ...)
         if groesse in tools_data:
             tools_list.extend(tools_data[groesse])
-        # Falls nichts gefunden, versuche "solo" als Fallback für Einzelunternehmer
         if "solo" in tools_data and groesse != "solo":
             tools_list.extend(tools_data["solo"])
-        # Fallback zu Default, falls vorhanden
         if branche != "default" and TOOLS_FOERDER.get("default", {}).get(groesse):
             tools_list.extend(TOOLS_FOERDER["default"][groesse])
     if tools_list:
@@ -97,25 +94,21 @@ def get_tools_und_foerderungen(data):
     foerderungen = TOOLS_FOERDER.get("foerderungen", {})
     foerder_list = []
 
-    # 1. Branchenspezifische Förderungen (alle Keys listen: z.B. "national", "solo", ...)
     if branche in foerderungen and isinstance(foerderungen[branche], dict):
         for key, value in foerderungen[branche].items():
             if isinstance(value, list):
                 foerder_list.extend(value)
 
-    # 2. Nationale Förderungen für die Branche ("national" unter foerderungen[branche])
     if branche in foerderungen and isinstance(foerderungen[branche], dict):
         national_branch = foerderungen[branche].get("national", [])
         if isinstance(national_branch, list):
             foerder_list.extend(national_branch)
 
-    # 3. Nationale Standardförderungen ("default"->"national")
     if "default" in foerderungen and "national" in foerderungen["default"]:
         default_national = foerderungen["default"]["national"]
         if isinstance(default_national, list):
             foerder_list.extend(default_national)
 
-    # 4. Top-Level "national" (kann in manchen JSON-Varianten vorkommen)
     if "national" in foerderungen and isinstance(foerderungen["national"], list):
         foerder_list.extend(foerderungen["national"])
     elif "national" in foerderungen and isinstance(foerderungen["national"], dict):
@@ -123,7 +116,6 @@ def get_tools_und_foerderungen(data):
             if isinstance(v, list):
                 foerder_list.extend(v)
 
-    # Dubletten entfernen (gleiche name+link Kombination)
     unique = {}
     for f in foerder_list:
         key = (f.get("name", ""), f.get("link", ""))
@@ -135,6 +127,7 @@ def get_tools_und_foerderungen(data):
         foerder_text = "\n".join([f"- [{f['name']}]({f['link']})" for f in foerder_list])
 
     return tools_text, foerder_text
+
 # --- 7. GPT-Block ---
 def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=None):
     tools_text, foerder_text = get_tools_und_foerderungen(data)
@@ -158,6 +151,7 @@ def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=Non
 
 # --- 8. Analyse für alle Abschnitte ---
 def analyze_full_report(data):
+    print("### DEBUG: analyze_full_report AUFGERUFEN ###")
     branche = data.get("branche", "default").strip()
     groesse = data.get("unternehmensgroesse", "kmu").strip()
 
@@ -193,8 +187,10 @@ def analyze_full_report(data):
         }
         results = {k: f.result() for k, f in futures.items()}
 
-    # Score-Berechnung ergänzen!
+    # Score-Berechnung debuggen!
+    print("### DEBUG: calc_score_percent(data) wird ausgeführt ###")
     results["score_percent"] = calc_score_percent(data)
+    print("### DEBUG: score_percent gesetzt:", results["score_percent"])
     return results
 
 # --- 9. SWOT-Extractor ---
@@ -211,16 +207,15 @@ def extract_swot(full_text):
 
 # --- 10. KI-Readiness Score Minimalberechnung ---
 def calc_score_percent(data):
+    print("### DEBUG: calc_score_percent AUFGERUFEN mit:", data)
     score = 0
     max_score = 35  # Summe aller Teilpunkte
 
-    # Digitalisierung (10 Punkte, 1-10 Skala)
     try:
         score += int(data.get("digitalisierungsgrad", 1))
     except Exception:
         score += 1
 
-    # Automatisierungsgrad (0-5)
     autogr = data.get("automatisierungsgrad", "")
     auto_map = {
         "sehr_niedrig": 0,
@@ -231,7 +226,6 @@ def calc_score_percent(data):
     }
     score += auto_map.get(autogr, 0)
 
-    # Prozesse papierlos (0-5)
     papierlos = data.get("prozesse_papierlos", "0-20")
     pap_map = {
         "0-20": 1,
@@ -241,7 +235,6 @@ def calc_score_percent(data):
     }
     score += pap_map.get(papierlos, 0)
 
-    # KI-Knowhow (0-5)
     ki_knowhow = data.get("ki_knowhow", "keine")
     know_map = {
         "keine": 0,
@@ -252,12 +245,11 @@ def calc_score_percent(data):
     }
     score += know_map.get(ki_knowhow, 0)
 
-    # Risikofreude (0-5)
     try:
         score += int(data.get("risikofreude", 1))
     except Exception:
         score += 1
 
-    # Normieren auf 0-100
     percent = int((score / max_score) * 100)
+    print("### DEBUG: score_percent berechnet:", percent)
     return percent
