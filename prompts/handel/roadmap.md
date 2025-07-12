@@ -1,22 +1,20 @@
-# Roadmap – Handel & E-Commerce, {unternehmensgroesse}
+# Roadmap & Umsetzungsplan für KI im Handel
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Erstelle eine Roadmap für ein Handelsunternehmen, um KI-Technologien und Digitalisierung erfolgreich einzuführen.
 
-{roadmap_report}
+**Module:**
+1. Personalisierung & Recommendations (Quick Win)
+2. Automatisierung Warenmanagement, Logistik, Supply Chain
+3. Datenschutz & Consent Management (Kunden, Online & Offline)
+4. Upskilling, Change Management
+5. Fördermittel, Investitionsstrategie
 
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo klären ({score_percent}, {benchmark_score})
-2. Quick-Wins im Shop und der Logistik umsetzen
-3. Mitarbeitende schulen und Datenschutz verankern
-4. Consent-Management & Compliance prüfen (DSGVO, AI Act)
-5. Automatisierung für Lager, Versand und Zahlungsabgleich ausbauen
-6. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Abhängigkeiten, Ressourcen.
 
 ---
 
-_Tipp: Halten Sie die Roadmap als lebendiges Dokument im Team!_
+## Roadmap
+
+Nutzerdaten:
+
+{daten}

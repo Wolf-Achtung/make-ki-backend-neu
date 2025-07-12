@@ -1,11 +1,9 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für ein Handelsunternehmen ({selbststaendig}, Größe {unternehmensgroesse}).
+# EU AI Act-Analyse & Empfehlungen für den Handel
 
-- Analysiere aktuelle KI-Anwendungen (siehe Userdaten)
-- Bewerte Notwendigkeit von Risikoabschätzung, Dokumentation, Compliance
-- Besonderheiten für kleine Unternehmen/Freiberufler ansprechen
+Analysiere die Bedeutung und Anforderungen des EU AI Act speziell für Handelsunternehmen (Use Cases: Personalisierung, Dynamic Pricing, Kundenanalyse, Recommendation Engines). Risiken, Pflichten, Quick Wins.
 
-Userdaten:
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}

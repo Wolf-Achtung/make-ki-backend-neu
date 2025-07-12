@@ -1,73 +1,27 @@
-# Executive Summary – KI-Readiness: Handel & E-Commerce
+# Executive Summary: KI-Readiness & Handlungsempfehlungen für den Handel
 
-**Ihr individueller Report zur KI-Readiness für Handel & E-Commerce**  
-_Handlungsorientiert. Rechtssicher. Innovationsstark._
+Du bist ein erfahrener, strategisch denkender KI- und Transformationsberater für Handelsunternehmen (Einzelhandel, Großhandel, E-Commerce). Deine Aufgabe ist es, auf Basis der nachfolgenden Nutzerdaten und Kontexte eine fundierte Executive Summary zu formulieren.
 
----
+**Berücksichtige dabei insbesondere:**
+- Einschätzung des Digitalisierungs- und KI-Readiness-Status im Handel (z. B. Omnichannel-Strategie, Filial-/Online-Verzahnung, Automatisierung, Bestandsmanagement, Personalisierung, Kundendaten)
+- KI-Readiness-Score & Benchmarks (aus Nutzerdaten entnehmen)
+- 3–5 zentrale Chancen & Gamechanger für den Handel (z. B. Recommendation Engines, Warenlogistik, Dynamic Pricing, Supply Chain, Kundenbindung)
+- Konkrete, priorisierte Next Steps und Quick Wins für mehr Effizienz, Umsatz oder Kundennähe
+- Risiken, Fehler („Anti-Pattern“), regulatorische Hürden (DSGVO, KI-Transparenz, Kundendatenschutz)
+- Optional: Passende Tools/Förderprogramme oder Best Practices nennen
 
-## 1. Aktueller Status & Benchmark
-
-- **KI-Readiness-Score:** {score_percent}
-- **Branchendurchschnitt:** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Typische Anti-Pattern:**  
-  1. KI nur für Marketing, nicht für Lager/Logistik oder Service genutzt  
-  2. Keine zentrale Datenstrategie – Insellösungen  
-  3. Veraltete Shopsysteme, keine Schnittstellen für KI  
-  4. Datenschutz & Consent-Management nicht einheitlich
+**Sprache:** Klar, handlungsorientiert, geschäftlich — jede Aussage muss einen Mehrwert bieten!
 
 ---
 
-## 3. Handlungsempfehlungen & Best Practices
+## Analyse & Bewertung
 
-- KI-gestützte Absatz-, Preis- und Nachfrageprognosen einführen  
-- Automatisierte Prozesse für Lager, Versand, Retouren und Zahlungsabgleich nutzen  
-- Omnichannel-Ansätze mit KI-Personalisierung ausbauen  
-- Consent-Management und DSGVO-Konformität durchgängig absichern
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- KI-Chatbots für Service, Up- und Cross-Selling  
-- KI-gestützte Produktempfehlungen im Shop  
-- Automatisiertes E-Mail-Targeting
+{daten}
 
----
-
-## 4. Tools, Förderprogramme & Checklisten
-
-{tools_and_foerderungen}
+Zusatzmaterialien:
 
 {checklisten}
-
----
-
-## 5. Score & Benchmark-Visualisierung
-
-- Visualisierung: {score_vis}
-- Benchmark-Daten: {benchmark_table}
-- {diagramme}
-
----
-
-## 6. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 7. Next Steps & Deep Dive
-
-- 2 Pilotprojekte starten (z. B. automatisierte Lagerdisposition, Kundenservice-Chatbot)  
-- Förderprogramme und Netzwerkpartner prüfen  
-- Interne Datenschutz- und Compliance-Schulungen
-
----
-
-_Für vertiefte Beratung: [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)_
+{tools_und_foerderungen}
+{praxisbeispiele}

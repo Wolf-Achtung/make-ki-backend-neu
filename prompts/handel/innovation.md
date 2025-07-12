@@ -1,30 +1,16 @@
-# Innovationspotenzial – Handel & E-Commerce, {unternehmensgroesse}
+# Innovationspotenziale & Zukunftschancen für den Handel
 
-## SWOT-Innovation
+Identifiziere die wichtigsten Innovationsfelder für Handelsunternehmen, die durch KI & Digitalisierung besonders profitabel oder wettbewerbsentscheidend werden.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie & Beispiele
-
-{innovation_report}
+**Beispiele:** 
+- Personalisierung & Recommendations, Supply-Chain-Optimierung, Dynamic Pricing, In-Store Analytics, Visual Search, Self-Checkout, Smart Stores
+- Barrieren & wie sie überwunden werden können (Akzeptanz, IT, Datenschutz)
+- Konkrete Pilotprojekte & direkt umsetzbare Quick Wins
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten:
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Innovationsbudgets reservieren & gezielte KI-Pilotprojekte fördern!_
+{daten}

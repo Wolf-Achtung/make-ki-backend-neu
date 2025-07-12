@@ -1,24 +1,22 @@
-# Compliance & Datenschutz – Handel & E-Commerce, {unternehmensgroesse}
+# Compliance-Status & Empfehlungen für KI im Handel
 
-## Zusammenfassung
+Analysiere die Compliance-Lage in einem Handelsunternehmen, v. a. DSGVO, KI-Transparenz, Datenschutz bei Kundenanalysen, Kassensystemen, Loyalty-Programmen.
 
-{compliance_report}
-
-## EU AI Act – Auswirkungen auf Ihre Praxis
-
-- {eu_ai_act}
-- Aktuelle ToDos, Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Datenschutzverantwortliche:r benennen  
-- Consent-Management für Online-Shops einführen  
-- Maßnahmen dokumentieren (DSGVO, AI Act)
+**Themenschwerpunkte:**
+- Datenschutz- & Datensicherheits-Status, Verantwortlichkeiten
+- Umsetzung von Consent Management & Kundenrechte (z. B. bei Recommendation Engines, CRM)
+- KI-spezifische Anforderungen (Dokumentation, Fairness, Transparenz)
+- Sofortmaßnahmen & strategische Schritte zur Compliance-Readiness
 
 ---
 
-_Tipp: Prüfen Sie alle KI- und Shop-Tools regelmäßig auf DSGVO- und AI-Act-Konformität!_
+## Compliance-Analyse
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
+{tools_und_foerderungen}

@@ -1,11 +1,9 @@
-Formuliere eine inspirierende Moonshot-Vision für KI im Handelsunternehmen ({selbststaendig}, Größe {unternehmensgroesse}).
+# Moonshot Vision: Handel der Zukunft
 
-- Was wäre ein echter Gamechanger?
-- Welche neuen Geschäftsmodelle, Produkte oder Services werden durch KI möglich?
-- Wie kann sich Ihr Unternehmen durch KI differenzieren?
+Beschreibe die Vision eines KI-gestützten, komplett digitalisierten Handelsunternehmens in 3–5 Jahren — Kulturell, technologisch, organisatorisch. Fokus: Kundennähe, Innovation, Effizienz, neue Geschäftsmodelle.
 
-**Beispiel:**  
-„In drei Jahren erfolgt 90 % der Lagerlogistik KI-gesteuert und alle Kundenkommunikation wird automatisiert personalisiert – mit 30 % schnellerem Versand.“
+---
 
-Userdaten:
+## Moonshot Vision
+
 {daten}

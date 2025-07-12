@@ -1,18 +1,21 @@
-Bewerte die Datenschutzsituation für das Unternehmen:
+# Datenschutz-Analyse & Empfehlungen für den Handel
 
-- Branche: Handel & E-Commerce
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+Bewerte den Datenschutz im Handelskontext, identifiziere kritische Lücken & Sofortmaßnahmen.
 
-**Schwachstellen und Risiken:**  
-- Kundendaten in Shop- und CRM-Systemen  
-- Drittanbieter-Tools (Tracking, Payment)  
-- Fehlende Dokumentation für Opt-In/Opt-Out
+**Fokus:**
+- Kundendatenmanagement, Anonymisierung, Einwilligung
+- Herausforderungen bei Online-Tracking, Omnichannel, Payment- und Kassensystemen
+- Lückenanalyse bei Meldewegen, Löschkonzept, Einwilligungen, Consent-Management
+- Quick Wins & Empfehlungen für moderne Datenschutzprozesse
 
-**Empfehlungen:**  
-- Consent-Management für alle Kanäle einführen  
-- Datenspeicherung und -übertragung absichern  
-- DSGVO und AI Act regelmäßig prüfen
+---
 
-Checkliste Datenschutz:
-{check_datenschutz}
+## Datenschutz-Check
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}

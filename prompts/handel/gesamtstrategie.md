@@ -1,20 +1,22 @@
-# Gesamtstrategie – Handel & E-Commerce, {unternehmensgroesse}
+# Strategische Gesamtempfehlung für den Handel: KI-Einsatz & Digitalisierung
 
-Entwickle eine Gesamtstrategie für die nachhaltige Einführung und den Ausbau von KI-Lösungen im Handel ({selbststaendig}, Größe {unternehmensgroesse}).
+Formuliere eine ganzheitliche KI- und Digitalstrategie für Handelsunternehmen. Fokussiere auf Geschäftsnutzen, Kundenbindung und operative Exzellenz.
 
-**Leitfragen für die Strategie:**  
-- Welche Prozesse bieten das größte KI-Potenzial (Shop, Lager, Logistik, Marketing, Service)?  
-- Wie kann eine zentrale Datenstrategie etabliert werden?  
-- Wie sichern Sie langfristig Compliance (DSGVO, AI Act)?  
-- Wie werden Mitarbeitende geschult und eingebunden?  
-- Wie differenziert sich Ihr Geschäftsmodell durch KI?
+**Schwerpunkte:**
+- Ausgangslage & Herausforderungen (Kanalvielfalt, Datenqualität, Kosten-/Margendruck, Online-/Offline-Integration)
+- Strategische Hebel: Automatisierung (z. B. Warenwirtschaft, Pricing, Prognosen), personalisierte Kundenerlebnisse, Datenstrategie, Omnichannel-Konzepte, KI-basierte Services
+- Roadmap mit kurz-, mittel- und langfristigen Schritten (inkl. Prioritäten)
+- Kritische Erfolgsfaktoren und typische Stolpersteine (Akzeptanz, IT-Altlasten, Datenschutz, Change Management)
 
-**Struktur:**  
-1. Status-Quo und Zielbild  
-2. Priorisierte Maßnahmen (kurz-, mittel-, langfristig)  
-3. Compliance- & Datenschutz-Plan  
-4. Förder- & Innovationspartnerschaften  
-5. Kommunikation & Monitoring
+---
 
-**Empfehlungen:**  
+## Strategie-Analyse
+
+Nutzerdaten:
+
 {daten}
+
+Zusatzmaterialien:
+
+{tools_und_foerderungen}
+{praxisbeispiele}
