@@ -53,7 +53,8 @@ def load_tools_und_foerderungen():
         return {}
 
 TOOLS_FOERDER = load_tools_und_foerderungen()
-# --- 5. Prompt-Builder ---
+
+# --- 5. Prompt-Builder (KeyError-sicher!) ---
 def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, tools_text="", foerder_text=""):
     prompt_raw = load_prompt(branche, abschnitt)
     bench_txt = ""
@@ -62,15 +63,26 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
             f"- {row.get('Kategorie', '')}: {row.get('Wert_Durchschnitt', '')} ({row.get('Kurzbeschreibung', '')})"
             for row in benchmark
         )
-    prompt = prompt_raw.format(
-        branche=branche,
-        unternehmensgroesse=groesse,
-        daten=json.dumps(data, indent=2),
-        checklisten=checklisten or "",
-        benchmark=bench_txt,
-        tools=tools_text,
-        foerderungen=foerder_text,
-    )
+    # Alle potentiellen Platzhalter:
+    prompt_vars = {
+        "branche": branche,
+        "unternehmensgroesse": groesse,
+        "daten": json.dumps(data, indent=2, ensure_ascii=False),
+        "checklisten": checklisten or "",
+        "benchmark": bench_txt,
+        "tools": tools_text or "",
+        "tools_und_foerderungen": tools_text or "",
+        "foerderungen": foerder_text or "",
+        "praxisbeispiele": "",
+        "score_percent": data.get("score_percent", ""),
+        # Füge bei Bedarf weitere Platzhalter hier hinzu!
+    }
+    # Alle im Prompt vorkommenden {}-Platzhalter werden mit mindestens "" ersetzt (KeyError-sicher)
+    keys_in_prompt = set(re.findall(r"{([a-zA-Z0-9_]+)}", prompt_raw))
+    for key in keys_in_prompt:
+        if key not in prompt_vars:
+            prompt_vars[key] = ""
+    prompt = prompt_raw.format(**prompt_vars)
     return prompt
 
 # --- 6. Tools & Förderungen für Prompt ---
@@ -124,11 +136,10 @@ def get_tools_und_foerderungen(data):
         foerder_text = "\n".join([f"- [{f['name']}]({f['link']})" for f in foerder_list])
 
     return tools_text, foerder_text
-
 # --- 7. GPT-Block ---
 def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, prior_results=None):
     """
-    GPT-Aufruf, jetzt prompt-chaining-ready: prior_results kann als Kontext übergeben werden.
+    GPT-Aufruf, prompt-chaining-ready: prior_results kann als Kontext übergeben werden.
     """
     tools_text, foerder_text = get_tools_und_foerderungen(data)
     # Prompt-Template bekommt bei Bedarf bereits vorige Resultate als Kontext.
@@ -154,6 +165,7 @@ def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=Non
         temperature=0.3,
     )
     return response.choices[0].message.content.strip()
+
 # --- 8. Modularer Analyse-Flow (Prompt-Chaining) ---
 def analyze_full_report(data):
     branche = data.get("branche", "default").strip().lower()
@@ -169,8 +181,7 @@ def analyze_full_report(data):
     tools = read_markdown_file("tools.md")
 
     abschnittsreihenfolge = [
-        # score_percent/Readiness zuerst!
-        ("score_percent", None),  # <-- Zuerst, keine Checkliste nötig
+        ("score_percent", None),  # Score immer zuerst!
         ("executive_summary", check_readiness),
         ("gesamtstrategie", check_readiness),
         ("compliance", check_compliance),
@@ -179,7 +190,7 @@ def analyze_full_report(data):
         ("roadmap", check_roadmap),
         ("praxisbeispiele", praxisbeispiele),
         ("tools", tools),
-        ("foerderprogramme", ""),  # ggf. individuell befüllt
+        ("foerderprogramme", ""),  # individuell befüllt
         ("moonshot_vision", ""),
         ("eu_ai_act", check_compliance),
     ]
@@ -189,13 +200,11 @@ def analyze_full_report(data):
     for abschnitt, checklisten in abschnittsreihenfolge:
         try:
             if abschnitt == "score_percent":
-                # Minimal-Scoring als erstes (nie via GPT!)
                 percent = calc_score_percent(data)
                 results["score_percent"] = percent
                 prior_results["score_percent"] = percent
                 print(f"### DEBUG: score_percent berechnet: {percent}")
                 continue
-            # Alle anderen Abschnitte: Prompt-Chain!
             text = gpt_block(
                 data, abschnitt, branche, groesse, checklisten, benchmark, prior_results
             )
@@ -207,7 +216,6 @@ def analyze_full_report(data):
             results[abschnitt] = msg
             prior_results[abschnitt] = msg
 
-    # Rückgabe: jedes Modul separat!
     print("### DEBUG: Alle Ergebnisse gesammelt:", results)
     return results
 
@@ -223,7 +231,7 @@ def extract_swot(full_text):
         "swot_threats": find(r"Risiken:(.*?)(?:$)"),
     }
 
-# --- 10. KI-Readiness Score Minimalberechnung (unverändert) ---
+# --- 10. KI-Readiness Score Minimalberechnung ---
 def calc_score_percent(data):
     print("### DEBUG: calc_score_percent(data) wird ausgeführt ###")
     score = 0
