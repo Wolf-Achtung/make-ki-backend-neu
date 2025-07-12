@@ -7,23 +7,20 @@ from dotenv import load_dotenv
 from gpt_analyze import analyze_full_report
 from pdf_export import export_pdf
 
-import tempfile
-import uuid
-
 load_dotenv()
 
-# Konfiguration
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://make.ki-sicherheit.jetzt, http://localhost:8888").split(",")
+# --- CORS-Konfiguration ---
+ALLOWED_ORIGINS = [
+    "https://make.ki-sicherheit.jetzt",
+    "http://localhost",
+    "http://127.0.0.1"
+]
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://make.ki-sicherheit.jetzt",
-        "http://localhost",
-        "http://127.0.0.1"
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,49 +31,46 @@ def healthcheck():
     return {"status": "ok"}
 
 @app.post("/briefing")
-@app.post("/briefing")
 async def create_briefing(request: Request):
     try:
         data = await request.json()
         print("[INFO] Neue Anfrage erhalten")
         print("[INFO] Daten:", data)
 
-        # NEU: Wir gehen immer von Value-Keys aus (siehe Formbuilder!)
-        # Analyse starten (returns dict mit Texten etc.)
+        # Analyse starten (liefert dict mit allen Report-Abschnitten)
         report_data = analyze_full_report(data)
         print("[DEBUG] report_data nach analyze_full_report:", report_data)
         print("[INFO] Analyse abgeschlossen")
 
-        # --- Ergänze alle Platzhalter für das PDF-Template ---
+        # --- Platzhalter für PDF-Template sicherstellen ---
         placeholder_keys = [
             "ScoreVisualisierung",
             "tools_tabelle",
             "benchmark_diagramm",
             "benchmark_tabelle",
             "checklisten",
-            "score_percent"  # <-- Diese Zeile hinzugefügt!
+            "score_percent"
         ]
         for key in placeholder_keys:
             report_data.setdefault(key, "")
 
-        # ScoreVisualisierung notfalls dynamisch aus score_percent füllen
         if not report_data["ScoreVisualisierung"]:
             report_data["ScoreVisualisierung"] = f"<b>Score: {report_data['score_percent']}%</b>"
         if report_data["score_percent"] == "":
             report_data["score_percent"] = 0
 
-        # PDF generieren (gibt Pfad zurück)
+        # --- PDF erstellen: Speichert IMMER im "downloads"-Ordner ---
         pdf_path = export_pdf(report_data)
         print("[INFO] PDF erstellt:", pdf_path)
 
-        # Download-Link erzeugen
+        # --- Download-Link zurückgeben ---
         return JSONResponse({"pdf_url": f"/download/{os.path.basename(pdf_path)}"})
 
     except Exception as e:
         print("[ERROR] Fehler beim Erstellen des Reports:", str(e))
         return JSONResponse({"error": str(e)}, status_code=500)
 
-# Download-Endpoint für PDFs
+# --- Download-Endpoint für PDFs ---
 @app.get("/download/{pdf_file}")
 def download(pdf_file: str):
     downloads_dir = os.path.join(os.path.dirname(__file__), "downloads")
