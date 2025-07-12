@@ -185,7 +185,14 @@ def analyze_full_report(data):
             )
             for abschnitt, checklisten in abschnitte
         }
-        results = {k: f.result() for k, f in futures.items()}
+        results = {}
+        for k, f in futures.items():
+            try:
+                results[k] = f.result()
+            except Exception as e:
+                print(f"### ERROR in Abschnitt {k}: {e}")
+                results[k] = f"[ERROR in Abschnitt {k}: {e}]"
+        print("### DEBUG: Alle Ergebnisse gesammelt:", results)
 
     # Score-Berechnung debuggen!
     print("### DEBUG: calc_score_percent(data) wird ausgeführt ###")
