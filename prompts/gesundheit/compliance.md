@@ -1,25 +1,23 @@
-# Compliance & Datenschutz – Gesundheit & Pflege, {unternehmensgroesse}
+<!-- compliance.md -->
+# Compliance-Status & Empfehlungen im Gesundheitswesen
 
-## Zusammenfassung
+Analysiere die Compliance-Lage in Gesundheitseinrichtungen mit Fokus auf KI, Datenschutz, medizinische Zulassung, Dokumentation und Transparenz.
 
-{compliance_report}
-
-## EU AI Act & medizinrechtliche Besonderheiten
-
-- {eu_ai_act}
-- MDR, BfArM-Anforderungen, ISO-Normen (z. B. 13485, 27799)
-- ToDos & Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Datenschutz- und IT-Beauftragte einbinden  
-- Compliance-Management und Fortbildungen systematisch etablieren  
-- Nachweispflicht und Dokumentation digitalisieren
+**Schwerpunkte:**
+- Datenschutz (DSGVO, ärztliche Schweigepflicht, Patientendatenmanagement)
+- Medizingeräteverordnung (MDR), IT-Sicherheitsgesetz, EU AI Act
+- Einwilligungsmanagement, Rollen und Verantwortlichkeiten
+- Sofortmaßnahmen & strategische Empfehlungen für Compliance-Readiness
 
 ---
 
-_Tipp: Compliance-Fragen in allen KI-Pilotprojekten von Anfang an klären!_
+## Compliance-Analyse
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
+{tools_und_foerderungen}

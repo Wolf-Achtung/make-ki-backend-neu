@@ -1,21 +1,21 @@
-# Roadmap – Gesundheit & Pflege, {unternehmensgroesse}
+<!-- roadmap.md -->
+# Roadmap & Umsetzungsplan für KI im Gesundheitswesen
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Strukturiere eine Roadmap zur erfolgreichen Einführung von KI-Technologien im Gesundheitsbereich.
 
-{roadmap_report}
+**Module:**
+1. Digitales Patientenmanagement & Automatisierung
+2. Intelligente Diagnostik, Bilderkennung, Frühwarnsysteme
+3. Datenschutz, Compliance & Einwilligungsmanagement
+4. Mitarbeiterschulungen, Change Management
+5. Fördermittel, Investitionen
 
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo & Benchmark klären ({score_percent}, {benchmark_score})
-2. Pilotprojekt (z. B. automatisierte Dokumentation, Telemedizin) auswählen
-3. Datenschutz & Compliance von Anfang an prüfen (MDR, BfArM, DSGVO, AI Act)
-4. Fortbildung und Change Management initiieren
-5. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Abhängigkeiten, Ressourcen.
 
 ---
 
-_Tipp: Nutzen Sie die Roadmap als zentrales Steuerungstool für die Digitalisierung!_
+## Roadmap
+
+Nutzerdaten:
+
+{daten}

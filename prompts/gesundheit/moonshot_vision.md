@@ -1,11 +1,10 @@
-Formuliere eine inspirierende Moonshot-Vision für KI im Gesundheitswesen ({selbststaendig}, Größe {unternehmensgroesse}).
+<!-- moonshot_vision.md -->
+# Moonshot Vision: Gesundheitswesen der Zukunft
 
-- Was wäre ein echter Gamechanger?
-- Welche neuen Versorgungsmodelle, Diagnosen, Abläufe oder Services werden durch KI möglich?
-- Wie kann sich Ihr Unternehmen/Einrichtung durch KI differenzieren?
+Beschreibe die Vision eines KI-gestützten, komplett digitalisierten Gesundheitswesens in 3–5 Jahren – kulturell, technologisch, organisatorisch. Fokus: Patientenwohl, Effizienz, Forschung, Prävention, neue Versorgungsmodelle.
 
-**Beispiel:**  
-„In 3 Jahren werden 90 % der administrativen Routinetätigkeiten, Bildauswertungen und Patientendokumentation KI-gestützt ablaufen – rechtssicher, effizient, patientenzentriert.“
+---
 
-Userdaten:
+## Moonshot Vision
+
 {daten}

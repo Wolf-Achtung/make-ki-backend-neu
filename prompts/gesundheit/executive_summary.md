@@ -1,74 +1,28 @@
-# Executive Summary – KI-Readiness: Gesundheit & Pflege
+<!-- executive_summary.md -->
+# Executive Summary: KI-Readiness & Handlungsempfehlungen für das Gesundheitswesen
 
-**Ihr KI-Readiness-Report für Gesundheit, Pflege, Medizin, Praxen, Labore, Kliniken**  
-_Sicher. Innovativ. Patientenorientiert. Rechtssicher._
+Du bist ein erfahrener, strategisch denkender KI- und Digitalisierungsberater für das Gesundheitswesen (Kliniken, Praxen, Pharma, Pflege, Diagnostik, Life Sciences). Deine Aufgabe: Erstelle auf Basis der Nutzerdaten und Kontexte eine Executive Summary, die echten Mehrwert stiftet.
 
----
+**Beziehe ein:**
+- Einschätzung Digitalisierungs- und KI-Status (Prozessautomatisierung, Telemedizin, Datenintegration, Patientenservice, Forschung, Medizincontrolling)
+- KI-Readiness-Score & Benchmarks (aus Datenblock)
+- 3–5 zentrale Chancen & Gamechanger (z. B. KI-unterstützte Diagnostik, Patienten- und Prozessoptimierung, Frühwarnsysteme, Personalentlastung, Kosteneffizienz)
+- Konkrete, priorisierte Next Steps, Quick Wins, um Qualität, Effizienz und Compliance zu steigern
+- Risiken, Fehler (Anti-Pattern), regulatorische Anforderungen (z. B. DSGVO, MDR, EU AI Act, ärztliche Schweigepflicht)
+- Optional: Tools/Förderprogramme für die Branche
 
-## 1. Aktueller Status & Benchmark
-
-- **KI-Readiness-Score:** {score_percent}
-- **Branchendurchschnitt:** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Typische Anti-Pattern:**  
-  1. Digitalisierung nur für Dokumentation, nicht für echte Prozessinnovation  
-  2. Fehlende Interoperabilität und Systembrüche  
-  3. Datenschutz als Blocker statt Enabler verstanden  
-  4. KI-Tools werden ohne medizinische Supervision eingeführt
+**Sprache:** Fachlich, prägnant, auf Entscheiderebene. Jedes Statement muss einen direkten Nutzen stiften.
 
 ---
 
-## 3. Handlungsempfehlungen & Best Practices
+## Analyse & Bewertung
 
-- Aufbau einer ganzheitlichen Digitalisierungs- und KI-Strategie (inkl. Versorgung, Verwaltung, Kommunikation)
-- Einbindung aller Stakeholder (Medizin, IT, Datenschutz, Patientenvertretung)
-- Zertifizierte, medizinisch validierte KI-Tools priorisieren
-- Fokus auf Prozesse: Automatisierte Dokumentation, Anamnese, Bildauswertung, Terminmanagement
-- Compliance: Medizinprodukterecht, DSGVO, BfArM, MDR, EU AI Act
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- E-Rezept, ePA-Integration, digitale Aufklärung, KI-gestützte Diagnoseunterstützung
-- Medizinische Data Governance & Aufklärung der Patient:innen
-- Weiterbildungsprogramme für KI in der Medizin
+{daten}
 
----
-
-## 4. Tools, Förderprogramme & Checklisten
-
-{tools_and_foerderungen}
+Zusatzmaterialien:
 
 {checklisten}
-
----
-
-## 5. Score & Benchmark-Visualisierung
-
-- Visualisierung: {score_vis}
-- Benchmark-Daten: {benchmark_table}
-- {diagramme}
-
----
-
-## 6. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 7. Next Steps & Deep Dive
-
-- KI-Pilotprojekt z. B. für Bildauswertung, Abrechnung oder Patientenservice starten
-- Förderprogramme, Digital Health Hubs & Netzwerke nutzen
-- Datenschutzprozesse, medizinrechtliche Anforderungen prüfen
-
----
-
-_Für individuelle Beratung: [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)_
+{tools_und_foerderungen}
+{praxisbeispiele}

@@ -1,11 +1,10 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für eine Einrichtung im Gesundheitswesen ({selbststaendig}, Größe {unternehmensgroesse}).
+<!-- eu_ai_act.md -->
+# EU AI Act-Analyse & Empfehlungen für das Gesundheitswesen
 
-- Analysiere aktuelle KI-Anwendungen (siehe Userdaten)
-- Bewerte Notwendigkeit von Risikoabschätzung, Zulassung, Compliance, BfArM/MDR
-- Besonderheiten für kleine Einrichtungen, Praxen und Pflegedienste ansprechen
+Analysiere die Bedeutung und Anforderungen des EU AI Act speziell für Gesundheitseinrichtungen (Use Cases: Diagnostik, Patientenmanagement, Bildgebung, Forschung, Wearables). Risiken, Pflichten, Chancen, Quick Wins.
 
-Userdaten:
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}

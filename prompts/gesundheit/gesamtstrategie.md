@@ -1,20 +1,23 @@
-# Gesamtstrategie – Gesundheit & Pflege, {unternehmensgroesse}
+<!-- gesamtstrategie.md -->
+# Strategische Gesamtempfehlung für das Gesundheitswesen: KI-Einsatz & Digitalisierung
 
-Entwickle eine Gesamtstrategie für nachhaltige KI- und Digitalisierungsprojekte im Gesundheitswesen ({selbststaendig}, Größe {unternehmensgroesse}).
+Formuliere eine umfassende Strategie für die digitale Transformation im Gesundheitssektor.
 
-**Leitfragen für die Strategie:**  
-- Wo bietet KI größten Nutzen für Versorgung, Administration und Patienten?  
-- Wie können Daten, Prozesse, Compliance & Kommunikation integriert werden?  
-- Wie wird Qualität und Ethik der KI-Nutzung sichergestellt?  
-- Wie werden Mitarbeitende und Patient:innen beteiligt und qualifiziert?  
-- Welche Kooperations- und Innovationspartner (Kassen, Verbände, Startups) sind sinnvoll?
+**Fokuspunkte:**
+- Ausgangslage & Herausforderungen (Datenmanagement, Interoperabilität, Datenschutz, Kostendruck, Fachkräftemangel)
+- Strategische Hebel: Prozessautomatisierung, intelligente Diagnostik, Patienten-Interaktion, Forschung & Entwicklung, Schnittstellenmanagement
+- Roadmap mit kurz-, mittel-, langfristigen Schritten und Prioritäten
+- Kritische Erfolgsfaktoren und typische Stolpersteine (z. B. Ethik, Datenschutz, Technologieakzeptanz, Budget, Schulung)
 
-**Struktur:**  
-1. Status-Quo und Zielbild  
-2. Priorisierte Maßnahmen (kurz-, mittel-, langfristig)  
-3. Compliance- & Datenschutz-Plan  
-4. Förder- & Innovationspartnerschaften  
-5. Fortbildung & Kommunikation
+---
 
-**Empfehlungen:**  
+## Strategie-Analyse
+
+Nutzerdaten:
+
 {daten}
+
+Zusatzmaterialien:
+
+{tools_und_foerderungen}
+{praxisbeispiele}

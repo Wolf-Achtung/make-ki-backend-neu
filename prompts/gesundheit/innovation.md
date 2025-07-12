@@ -1,30 +1,17 @@
-# Innovationspotenzial – Gesundheit & Pflege, {unternehmensgroesse}
+<!-- innovation.md -->
+# Innovationspotenziale & Zukunftschancen im Gesundheitswesen
 
-## SWOT-Innovation
+Zeige auf, welche KI-Innovationen die Branche prägen: Diagnostik, Bildgebung, Robotik, Patientenmanagement, Forschung, Predictive Analytics.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie & Beispiele
-
-{innovation_report}
+**Für jeden Bereich:**
+- Business Value und Wettbewerbsvorteil
+- Barrieren & Überwindung (Daten, Ethik, Akzeptanz)
+- Pilotprojekte und Quick Wins mit maximaler Wirkung
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten:
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Digitale Versorgungsmodelle und KI-Partnerschaften frühzeitig prüfen!_
+{daten}

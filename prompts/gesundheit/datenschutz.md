@@ -1,18 +1,21 @@
-Bewerte die Datenschutzsituation für das Gesundheitswesen:
+<!-- datenschutz.md -->
+# Datenschutz-Analyse & Empfehlungen für das Gesundheitswesen
 
-- Bereich: Gesundheit & Pflege
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+Bewerte den Datenschutzstatus: Patientenakten, Telemedizin, Forschung, Cloud- & Datenintegration.
 
-**Schwachstellen und Risiken:**  
-- Verarbeitung von besonders sensiblen Gesundheitsdaten  
-- Schnittstellen zu Kassen, Praxen, Laboren, Behörden  
-- Fehlende Nachweisdokumentation für Datenverarbeitung und Einwilligungen
+**Fokus:**
+- Verwaltung & Sicherung sensibler Gesundheitsdaten, Zugriffsmanagement
+- Herausforderungen bei Einwilligung, Datenweitergabe, Aufbewahrungsfristen, Notfalldatenmanagement
+- Lückenanalyse, Sofortmaßnahmen & praxisnahe Empfehlungen
 
-**Empfehlungen:**  
-- Datenschutzverantwortliche und Dokumentation verpflichtend etablieren  
-- Prozesse für Nachweisführung, Patientenrechte und Datenlöschung definieren  
-- MDR, DSGVO und AI Act regelmäßig prüfen
+---
 
-Checkliste Datenschutz:
-{check_datenschutz}
+## Datenschutz-Check
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
