@@ -22,4 +22,4 @@ Nutzerdaten & Kontext (JSON):
 Ergänzende Checklisten & Materialien:
 
 {checklisten}
-{tools_and_foerderungen}
+{tools_und_foerderungen}

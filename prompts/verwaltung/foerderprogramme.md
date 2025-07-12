@@ -21,5 +21,5 @@ Nutzerdaten & Kontext (JSON):
 
 Ergänzende Förder- und Tool-Listen:
 
-{tools_and_foerderungen}
+{tools_und_foerderungen}
 {checklisten}

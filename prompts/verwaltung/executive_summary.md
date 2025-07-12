@@ -23,5 +23,5 @@ Nutzerdaten & Kontext (JSON):
 Zusatzmaterialien (falls bereitgestellt):
 
 {checklisten}
-{tools_and_foerderungen}
+{tools_und_foerderungen}
 {praxisbeispiele}

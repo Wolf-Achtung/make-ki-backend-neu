@@ -23,4 +23,4 @@ Nutzerdaten & Kontext (JSON):
 Ergänzende Materialien (z. B. Checklisten, Tools, Förderungen):
 
 {checklisten}
-{tools_and_foerderungen}
+{tools_und_foerderungen}
