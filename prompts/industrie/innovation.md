@@ -1,30 +1,16 @@
-# Innovationspotenzial – Industrie & Produktion, {unternehmensgroesse}
+# Innovationspotenziale & Zukunftschancen für Industrie & Produktion
 
-## SWOT-Innovation
+Zeige auf, wie KI und Digitalisierung Fertigung, Prozesse, Qualität und Supply Chain transformieren: Smart Factory, Predictive Maintenance, digitale Zwillinge, Qualitätsprüfung, adaptive Produktion.
 
-**Stärken:** {swot_strengths}  
-**Schwächen:** {swot_weaknesses}  
-**Chancen:** {swot_opportunities}  
-**Risiken:** {swot_threats}
-
----
-
-## Innovationsstrategie & Beispiele
-
-{innovation_report}
+**Für jedes Feld:**
+- Business-/Nutzen Value & Wettbewerbsvorteil
+- Hemmnisse & Lösungsansätze
+- Pilotprojekte & Quick Wins
 
 ---
 
-## Empfohlene Tools/Methoden
+## Innovationsanalyse
 
-{tools_and_foerderungen}
+Nutzerdaten:
 
----
-
-## Innovation-Checkliste
-
-{check_innovationspotenzial}
-
----
-
-_Tipp: Partnerschaften mit Hochschulen, Plattformen, Startups für maximale Innovationskraft!_
+{daten}

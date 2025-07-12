@@ -1,25 +1,21 @@
-# Compliance & Datenschutz – Industrie & Produktion, {unternehmensgroesse}
+# Compliance-Status & Empfehlungen für Industrie & Produktion
 
-## Zusammenfassung
+Bewerte die Einhaltung branchenspezifischer Regularien: Arbeitssicherheitsgesetze, Maschinenschutz, Produktionsdatenschutz, Exportkontrolle, IoT-Security, Lieferkettenverordnung, Nachhaltigkeitsregeln.
 
-{compliance_report}
-
-## EU AI Act & Branchenspezifika
-
-- {eu_ai_act}
-- Maschinenrichtlinie, Produkthaftung, ISO-Normen (9001, 27001, 45001, 50001)
-- ToDos & Fristen (Stand: {aktuelles_jahr})
-
-## Datenschutz-Checkliste
-
-{check_datenschutz}
-
-## Empfehlungen
-
-- Compliance- und Datenschutzmanagement als laufenden Prozess aufsetzen  
-- Frühzeitige Einbindung von IT-Sicherheit, Betriebsrat, Qualitätsmanagement  
-- Kontinuierliche Auditierung & Nachweisführung
+**Fokus:**
+- Datennutzung, Maschinendaten & Prozessdaten
+- Prozesse für Qualitätssicherung und Nachweispflichten
+- Sofortmaßnahmen & strategische Empfehlungen zur Compliance-Readiness
 
 ---
 
-_Tipp: Compliance immer als Chance für Effizienz, Rechtssicherheit & Reputation begreifen!_
+## Compliance-Analyse
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}
+{tools_und_foerderungen}

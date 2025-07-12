@@ -1,18 +1,20 @@
-Bewerte die Datenschutzsituation für Industrie & Produktion:
+# Datenschutz-Analyse & Empfehlungen für Industrie & Produktion
 
-- Bereich: Industrie & Produktion
-- Unternehmensgröße: {unternehmensgroesse}
-- Selbstständig/Freiberuflich: {selbststaendig}
+Analysiere Risiken und Herausforderungen im Umgang mit Produktionsdaten, Maschinendaten, Mitarbeiter- und Kundendaten, IoT-Tracking.
 
-**Schwachstellen und Risiken:**  
-- Verarbeitung von Betriebs-, Produktions-, Mitarbeiterdaten  
-- Schnittstellen zu Kunden, Zulieferern, Plattformen  
-- Fehlende Dokumentation von Datenflüssen
+**Inhalte:**
+- Datenschutzrisiken bei Sensorik, Remote-Monitoring, Fertigungssteuerung
+- Schwachstellenanalyse & Absicherung
+- Sofortmaßnahmen für Datenschutz und DSGVO-Konformität
 
-**Empfehlungen:**  
-- Datenschutzverantwortliche und Prozesse verpflichtend etablieren  
-- Datenschutz-Folgeabschätzung und Nachweisführung regelmäßig durchführen  
-- DSGVO, Produkthaftung und AI Act laufend prüfen
+---
 
-Checkliste Datenschutz:
-{check_datenschutz}
+## Datenschutz-Check
+
+Nutzerdaten:
+
+{daten}
+
+Zusatzmaterialien:
+
+{checklisten}

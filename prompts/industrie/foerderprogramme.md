@@ -1,14 +1,9 @@
-# Förderprogramme & Finanzierung – Industrie & Produktion, {unternehmensgroesse}
+# Förderprogramme für Industrie & Produktion
 
-Nenne alle relevanten Förderprogramme und Finanzierungsmöglichkeiten für KI-Projekte in Industrie & Produktion ({selbststaendig}, Größe {unternehmensgroesse}).
+Gib einen strukturierten Überblick zu relevanten Förderprogrammen (z. B. Bund, Länder, EU, Programme für Produktionsdigitalisierung, Industrie 4.0, Nachhaltigkeit). Zielgruppen, Förderhöhe, Voraussetzungen, Praxistipps.
 
-Berücksichtige:
-- Bundesland
-- Produktionsbereich & Innovationsgrad
-- Förderprogramme aus den aktuellen Daten:
-{foerderungen}
+---
 
-**Hinweise zur Antragstellung:**  
-- Förderbedingungen, Nachweise & Fristen beachten  
-- Beratung über Verbände, Plattformen, Kammern nutzen  
-- Projektskizzen & Use-Cases einreichen
+## Förderprogramme
+
+{foerderprogramme}

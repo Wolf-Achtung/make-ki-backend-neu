@@ -1,11 +1,9 @@
-Erläutere die wichtigsten Anforderungen und Auswirkungen des EU AI Act für ein Industrie-/Produktionsunternehmen ({selbststaendig}, Größe {unternehmensgroesse}).
+# EU AI Act-Analyse & Empfehlungen für Industrie & Produktion
 
-- Analysiere aktuelle KI-Anwendungen (siehe Userdaten)
-- Bewerte Notwendigkeit von Risikoabschätzung, Compliance, Produkthaftung, Maschinenrichtlinie
-- Besonderheiten für kleine Unternehmen und Mittelständler ansprechen
+Analysiere, wie der EU AI Act die industrielle Wertschöpfung betrifft: Automatisierte Fertigungssteuerung, Maschinendaten, KI-gestützte Qualitätssicherung, Transparenz- und Dokumentationspflichten, Sicherheit.
 
-Userdaten:
+---
+
+## EU AI Act-Analyse
+
 {daten}
-
-Checkliste:
-{check_compliance}

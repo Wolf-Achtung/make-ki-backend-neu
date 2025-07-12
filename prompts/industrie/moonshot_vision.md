@@ -1,11 +1,9 @@
-Formuliere eine inspirierende Moonshot-Vision für KI in der Industrie & Produktion ({selbststaendig}, Größe {unternehmensgroesse}).
+# Moonshot Vision: Zukunft der Industrie & Produktion
 
-- Was wäre ein echter Gamechanger?
-- Welche neuen Prozesse, Wertschöpfungsmodelle, Services werden durch KI möglich?
-- Wie kann sich Ihr Unternehmen/Team mit KI differenzieren?
+Beschreibe eine visionäre, inspirierende Zukunft für Industrie durch KI: vollautomatisierte Smart Factory, digitale Zwillinge, Echtzeit-Qualitätsmanagement, autonome Supply Chains, nachhaltige Produktion.
 
-**Beispiel:**  
-„In 3 Jahren laufen 85 % der Produktions-, Wartungs- und Qualitätsprozesse KI-gestützt, vollautomatisiert und ressourceneffizient ab.“
+---
 
-Userdaten:
+## Moonshot Vision
+
 {daten}

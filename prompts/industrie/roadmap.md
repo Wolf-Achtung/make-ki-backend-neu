@@ -1,21 +1,21 @@
-# Roadmap – Industrie & Produktion, {unternehmensgroesse}
+# Roadmap & Umsetzungsplan für KI und Digitalisierung in der Industrie
 
-## Ihre empfohlene KI-Implementierungs-Roadmap
+Strukturiere eine Roadmap für KI-Einführung und -Skalierung in der Industrie – von Dateninfrastruktur über Produktion, Qualitätssicherung, Instandhaltung bis zu Supply Chain und Analytics.
 
-{roadmap_report}
+**Module:**
+1. Technologiebasis & Datenintegration
+2. Automatisierung & Smart Factory
+3. Predictive Maintenance & Qualitätssicherung
+4. Datenschutz & Compliance
+5. Schulungen & Change Management
+6. Fördermittel & Innovationspartnerschaften
 
-## Schritt-für-Schritt-Plan
-
-1. Status-Quo & Benchmark analysieren ({score_percent}, {benchmark_score})
-2. Pilotprojekt wählen (z. B. Predictive Maintenance, Qualitätskontrolle)
-3. Datenschutz & Compliance von Anfang an prüfen (DSGVO, Maschinenrichtlinie, Produkthaftung, AI Act)
-4. Qualifizierung & Change Management starten
-5. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
-
-## Roadmap-Checkliste
-
-{check_umsetzungsplan}
+Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourcen.
 
 ---
 
-_Tipp: Nutzen Sie die Roadmap als Steuerungstool für die digitale Transformation!_
+## Roadmap
+
+Nutzerdaten:
+
+{daten}

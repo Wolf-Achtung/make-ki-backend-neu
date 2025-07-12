@@ -1,74 +1,27 @@
-# Executive Summary – KI-Readiness: Industrie & Produktion
+# Executive Summary: KI-Readiness & Handlungsempfehlungen für Industrie & Produktion
 
-**KI-Readiness-Report für Maschinenbau, Fertigung, Automotive, Chemie, Prozessindustrie**  
-_Effizient. Innovativ. Sicher. Zukunftsfähig._
+Du bist ein erfahrener, strategisch denkender KI- und Digitalberater für Industrie, Fertigung und produzierende Unternehmen. Deine Aufgabe: Erstelle eine Executive Summary, die prägnant den Digitalisierungsgrad, die größten Chancen und konkrete Handlungsempfehlungen für industrielle Unternehmen aufzeigt.
 
----
+**Inhalte:**
+- Aktueller Digitalisierungs- und KI-Readiness-Status (Automatisierungsgrad Fertigung, Smart Factory, Predictive Maintenance, Prozessintegration, IoT-Einsatz)
+- KI-Readiness-Score & relevante Benchmarks (aus JSON-Block)
+- 3–5 zentrale Chancen und Gamechanger (z. B. vorausschauende Wartung, Produktionsoptimierung, Qualitätskontrolle, Supply Chain Analytics, digitale Zwillinge)
+- Priorisierte Next Steps & Quick Wins für messbaren Geschäftsnutzen
+- Risiken, typische Fehler (Anti-Pattern), regulatorische Anforderungen (z. B. Maschinendatenschutz, Arbeitssicherheit, Datenintegrität)
+- Optional: Passende Tools & Förderprogramme für Industrieunternehmen
 
-## 1. Aktueller Status & Benchmark
-
-- **KI-Readiness-Score:** {score_percent}
-- **Branchendurchschnitt:** {benchmark_score}
-- **Stärken:** {swot_strengths}
-- **Schwächen:** {swot_weaknesses}
-
----
-
-## 2. Chancen, Risiken & Anti-Pattern
-
-- **Chancen:** {swot_opportunities}
-- **Risiken:** {swot_threats}
-- **Typische Anti-Pattern:**  
-  1. KI-Pilotprojekte bleiben Insellösungen ohne Skalierung  
-  2. Fachbereiche und IT entwickeln ohne gemeinsame Strategie  
-  3. Datenqualität und Datenintegration werden unterschätzt  
-  4. Compliance und Maschinenrichtlinien werden erst nachträglich adressiert
+**Sprache:** Prägnant, strategisch, handlungsorientiert. Jeder Absatz liefert einen klaren Business-Nutzen.
 
 ---
 
-## 3. Handlungsempfehlungen & Best Practices
+## Analyse & Bewertung
 
-- Aufbau einer unternehmensweiten KI-Strategie (Produktion, Qualität, Supply Chain, Wartung)
-- KI für Predictive Maintenance, Qualitätskontrolle, Automatisierung, Prozessoptimierung einführen
-- Frühzeitige Einbindung von Betriebsrat, Datenschutz und IT-Security
-- Partnerschaften mit Universitäten, Plattformen (Industrie 4.0, Gaia-X), KI-Startups prüfen
+Nutzerdaten & Kontext (JSON):
 
-**Best Practices:**  
-- KI-basierte Anomalieerkennung in der Produktion  
-- Automatisierte Qualitätsprüfung (z. B. Bildverarbeitung)  
-- Simulation von Produktionsprozessen mit KI  
-- Energiemanagement und Instandhaltung mit Predictive Analytics
+{daten}
 
----
-
-## 4. Tools, Förderprogramme & Checklisten
-
-{tools_and_foerderungen}
+Zusatzmaterialien (falls bereitgestellt):
 
 {checklisten}
-
----
-
-## 5. Score & Benchmark-Visualisierung
-
-- Visualisierung: {score_vis}
-- Benchmark-Daten: {benchmark_table}
-- {diagramme}
-
----
-
-## 6. Compliance & Datenschutz
-
-{compliance_snippet}
-
----
-
-## 7. Next Steps & Deep Dive
-
-- KI-Pilotprojekt (z. B. Predictive Maintenance, Qualitätssicherung) starten
-- Förderprogramme & Verbundprojekte prüfen
-- Datenschutz und IT-Sicherheit von Beginn an berücksichtigen
-
----
-
-_Für individuelle Beratung: [KI-Sicherheit.jetzt](https://ki-sicherheit.jetzt)_
+{tools_und_foerderungen}
+{praxisbeispiele}
