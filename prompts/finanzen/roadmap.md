@@ -1,6 +1,22 @@
-Formuliere eine konkrete Roadmap für die nächsten 6-12 Monate zur Erreichung der wichtigsten KI-Ziele für ein Unternehmen aus dem Bereich Finanzen & Versicherungen der Größe {unternehmensgroesse}.
-Gliedere sie in sinnvolle Phasen, Meilensteine und erste Umsetzungsschritte.
+# Roadmap – Finanzen & Versicherungen, {unternehmensgroesse}
 
-Nutze auch folgende aktuelle Tools und Förderprogramme:
-{tools}
-{foerderungen}
+## Ihre empfohlene KI-Implementierungs-Roadmap
+
+{roadmap_report}
+
+## Schritt-für-Schritt-Plan
+
+1. Status-Quo klären ({score_percent}, {benchmark_score})
+2. Quick-Wins umsetzen (z. B. Dokumentenmanagement automatisieren)
+3. Mitarbeitende einbinden, schulen und Datenschutz dokumentieren
+4. Compliance-Prüfung (BaFin, DSGVO, AI Act)
+5. Innovationsprojekte nach Priorität starten
+6. Förderprogramme gezielt nutzen ({tools_and_foerderungen})
+
+## Roadmap-Checkliste
+
+{check_umsetzungsplan}
+
+---
+
+_Tipp: Halten Sie die Roadmap als lebendiges Dokument mit Verantwortlichen und Review-Terminen._

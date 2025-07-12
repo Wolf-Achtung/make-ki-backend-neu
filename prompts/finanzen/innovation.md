@@ -1,10 +1,30 @@
-Gib eine Einschätzung zum Innovationspotenzial und den wichtigsten Entwicklungsmöglichkeiten für ein Unternehmen aus dem Bereich Finanzen & Versicherungen der Größe {unternehmensgroesse}.
-Nutze als Grundlage die übergebenen Antworten und die Innovations-Checkliste:
-{daten}
-{check_innovationspotenzial}
-Empfohlene KI-Tools für diese Zielgruppe:
-{tools}
+# Innovationspotenzial – Finanzen & Versicherungen, {unternehmensgroesse}
 
-Aktuelle Förderprogramme für Marketing-Unternehmen:
-{foerderungen}
-Erstelle eine Roadmap mit 3-5 priorisierten Milestones (maximal 12 Monate) sowie Empfehlungen für Tools, Fördermittel und Weiterbildung.
+## SWOT-Innovation
+
+**Stärken:** {swot_strengths}  
+**Schwächen:** {swot_weaknesses}  
+**Chancen:** {swot_opportunities}  
+**Risiken:** {swot_threats}
+
+---
+
+## Innovationsstrategie & Beispiele
+
+{innovation_report}
+
+---
+
+## Empfohlene Tools/Methoden
+
+{tools_and_foerderungen}
+
+---
+
+## Innovation-Checkliste
+
+{check_innovationspotenzial}
+
+---
+
+_Tipp: Fördern Sie „fail fast“-Prototypen und bauen Sie gezielt Innovationspartnerschaften auf!_
