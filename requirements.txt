@@ -21,3 +21,5 @@ pandas
 matplotlib
 
 
+# PostgreSQL
+psycopg2-binary
