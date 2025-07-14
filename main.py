@@ -28,8 +28,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
     expose_headers=["*"]
 )
 
@@ -38,24 +38,29 @@ def get_db():
 
 def verify_token(auth_header):
     if not auth_header or not auth_header.startswith("Bearer "):
+        print("⚠️ Fehlender oder ungültiger Authorization Header")
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
     token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         return payload["sub"], payload.get("role", "user")
     except jwt.ExpiredSignatureError:
+        print("⚠️ Token expired")
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
+        print("⚠️ Invalid Token")
         raise HTTPException(status_code=401, detail="Invalid token")
 
 def verify_admin(auth_header):
     email, role = verify_token(auth_header)
     if role != "admin":
+        print(f"⚠️ Forbidden: {email} ist kein Admin")
         raise HTTPException(status_code=403, detail="Forbidden: Not admin")
     return email
 
 @app.get("/health")
 def healthcheck():
+    print("✅ Healthcheck aufgerufen")
     return {"status": "ok"}
 
 @app.post("/api/login")
@@ -64,6 +69,7 @@ async def login(req: Request):
     email = data.get("email")
     password = data.get("password")
     if not email or not password:
+        print(f"⚠️ Login fehlgeschlagen: Fehlende Daten ({email})")
         raise HTTPException(status_code=400, detail="Email and password required")
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -73,17 +79,20 @@ async def login(req: Request):
             )
             user = cur.fetchone()
             if user:
+                print(f"✅ Login erfolgreich für {email}")
                 token = jwt.encode({
                     "sub": email,
                     "role": user.get("role", "user"),
                     "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=2)
                 }, SECRET_KEY, algorithm="HS256")
                 return {"token": token}
+    print(f"⚠️ Login fehlgeschlagen für {email}")
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
 @app.post("/briefing")
 async def create_briefing(request: Request, authorization: str = Header(None)):
     email, _ = verify_token(authorization)
+    print(f"✍️ Briefing erstellt von {email}")
     data = await request.json()
     report_data = analyze_full_report(data)
     report_data.setdefault("ScoreVisualisierung", f"<b>Score: {report_data.get('score_percent', 0)}%</b>")
@@ -101,11 +110,13 @@ def download(pdf_file: str):
     file_path = os.path.join(os.path.dirname(__file__), "downloads", pdf_file)
     if os.path.exists(file_path):
         return FileResponse(path=file_path, media_type='application/pdf', filename=pdf_file)
+    print(f"⚠️ Datei nicht gefunden: {pdf_file}")
     return JSONResponse({"error": "Datei nicht gefunden"}, status_code=404)
 
 @app.get("/api/stats")
 def stats(start: str = None, end: str = None, authorization: str = Header(None)):
-    verify_admin(authorization)
+    email = verify_admin(authorization)
+    print(f"📊 Admin {email} ruft /api/stats ab")
     query = """
         SELECT email, COUNT(*) AS total, MAX(created_at) AS last_use
         FROM usage_logs
@@ -121,7 +132,8 @@ def stats(start: str = None, end: str = None, authorization: str = Header(None))
 
 @app.get("/api/export-logs")
 def export_logs(start: str = None, end: str = None, authorization: str = Header(None)):
-    verify_admin(authorization)
+    email = verify_admin(authorization)
+    print(f"📥 Admin {email} exportiert Logs")
     query = """
         SELECT * FROM usage_logs
         WHERE (%s IS NULL OR created_at >= %s)
