@@ -23,12 +23,14 @@ ALLOWED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1"
 ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 def get_db():
