@@ -51,6 +51,7 @@ def verify_admin(auth_header):
     if role != "admin":
         raise HTTPException(status_code=403, detail="Forbidden: Not admin")
     return email
+
 @app.get("/health")
 def healthcheck():
     return {"status": "ok"}
@@ -64,10 +65,12 @@ async def login(req: Request):
         raise HTTPException(status_code=400, detail="Email and password required")
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM users WHERE email=%s", (email,))
+            cur.execute(
+                "SELECT * FROM users WHERE email=%s AND password_hash = crypt(%s, password_hash)",
+                (email, password)
+            )
             user = cur.fetchone()
-            if user and user["password_hash"] and \
-               psycopg2.extensions.adapt(password).getquoted().decode() in user["password_hash"]:
+            if user:
                 token = jwt.encode({
                     "sub": email,
                     "role": user.get("role", "user"),
