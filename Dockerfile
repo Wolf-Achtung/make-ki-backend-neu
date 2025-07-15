@@ -42,7 +42,7 @@ COPY . .
 EXPOSE 8000
 
 # 🚀 Variante 1: Mit kompletter DB-Initialisierung (für den ersten Run)
-ENTRYPOINT ["sh", "-c", "python full_init.py && uvicorn main:app --host 0.0.0.0 --port 8000"]
+# ENTRYPOINT ["sh", "-c", "python full_init.py && uvicorn main:app --host 0.0.0.0 --port 8000"]
 
 # 🚀 Variante 2: Nur API starten (für Dauerbetrieb)
-# ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
