@@ -1,5 +1,17 @@
+# ----------------------------
+# Dockerfile für KI-Readiness-Check Backend
+# inkl. automatischer DB-Initialisierung
+# ----------------------------
+
 FROM python:3.11-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV LANG=C.UTF-8
+
+WORKDIR /app
+
+# Linux-Packages installieren (z. B. für Cairo/Pango etc.)
 RUN apt-get update && \
     apt-get install -y \
     build-essential \
@@ -22,13 +34,15 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN pip install --no-cache-dir -r requirements.txt
-
 EXPOSE 8000
 
-# 🚀 Normale Pipeline wieder aktivieren
-CMD python init_pgcrypto.py && uvicorn main:app --host 0.0.0.0 --port 8000
+# 🚀 Variante 1: Mit kompletter DB-Initialisierung (für den ersten Run)
+ENTRYPOINT ["sh", "-c", "python full_init.py && uvicorn main:app --host 0.0.0.0 --port 8000"]
+
+# 🚀 Variante 2: Nur API starten (für Dauerbetrieb)
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
