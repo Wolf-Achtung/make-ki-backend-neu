@@ -152,3 +152,29 @@ def export_logs(start: str = None, end: str = None, authorization: str = Header(
     return StreamingResponse(iter([output.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=usage_logs.csv"})
+@app.get("/api/feedback-logs")
+def get_feedback_logs(authorization: str = Header(None)):
+    email = verify_admin(authorization)
+    print(f"📥 Admin {email} ruft /api/feedback-logs ab")
+    query = "SELECT email, feedback_data, created_at FROM feedback_logs ORDER BY created_at DESC"
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            return cur.fetchall()
+@app.get("/api/export-feedback")
+def export_feedback(authorization: str = Header(None)):
+    email = verify_admin(authorization)
+    print(f"📥 Admin {email} exportiert Feedback-Logs")
+    query = "SELECT * FROM feedback_logs ORDER BY created_at DESC"
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            rows = cur.fetchall()
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=["id","email","feedback_data","created_at"])
+    writer.writeheader()
+    for row in rows:
+        writer.writerow(row)
+    return StreamingResponse(iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=feedback_logs.csv"})
