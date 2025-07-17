@@ -1,10 +1,7 @@
-# --- imports + Setup ---
 import os
-from fastapi import FastAPI, Request, HTTPException, Header, Depends
+from fastapi import FastAPI, Request, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
-from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.openapi.utils import get_openapi
 from dotenv import load_dotenv
 from gpt_analyze import analyze_full_report
 from pdf_export import export_pdf
@@ -19,7 +16,7 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 SECRET_KEY = os.getenv("SECRET_KEY", "notsosecret")
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI()
 
 ALLOWED_ORIGINS = [
     "https://make.ki-sicherheit.jetzt",
@@ -36,7 +33,6 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-# --- Hilfsfunktionen ---
 def get_db():
     return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
 
@@ -55,25 +51,13 @@ def verify_token(auth_header):
         print("⚠️ Invalid Token")
         raise HTTPException(status_code=401, detail="Invalid token")
 
-def verify_admin(auth_header=Header(None)):
+def verify_admin(auth_header):
     email, role = verify_token(auth_header)
     if role != "admin":
         print(f"⚠️ Forbidden: {email} ist kein Admin")
         raise HTTPException(status_code=403, detail="Forbidden: Not admin")
     return email
 
-# --- Geschützte Swagger-Docs ---
-@app.get("/docs", include_in_schema=False)
-def custom_docs(auth: str = Header(None)):
-    verify_admin(auth)
-    return get_swagger_ui_html(openapi_url="/openapi.json", title="KI-Readiness API")
-
-@app.get("/openapi.json", include_in_schema=False)
-def protected_openapi(auth: str = Header(None)):
-    verify_admin(auth)
-    return JSONResponse(get_openapi(title="KI Readiness", version="1.0", routes=app.routes))
-
-# --- API-Routen ---
 @app.get("/health")
 def healthcheck():
     print("✅ Healthcheck aufgerufen")
@@ -121,7 +105,7 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
             )
     return JSONResponse({"pdf_url": f"/download/{os.path.basename(pdf_path)}"})
 
-@app.get("/download/{pdf_file}")
+# Alte Download-Route ersetzt
 def download(pdf_file: str):
     file_path = os.path.join(os.path.dirname(__file__), "downloads", pdf_file)
     if os.path.exists(file_path):
@@ -168,7 +152,6 @@ def export_logs(start: str = None, end: str = None, authorization: str = Header(
     return StreamingResponse(iter([output.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=usage_logs.csv"})
-
 @app.get("/api/feedback-logs")
 def get_feedback_logs(authorization: str = Header(None)):
     email = verify_admin(authorization)
@@ -178,7 +161,6 @@ def get_feedback_logs(authorization: str = Header(None)):
         with conn.cursor() as cur:
             cur.execute(query)
             return cur.fetchall()
-
 @app.get("/api/export-feedback")
 def export_feedback(authorization: str = Header(None)):
     email = verify_admin(authorization)
@@ -199,13 +181,17 @@ def export_feedback(authorization: str = Header(None)):
 
 @app.post("/feedback")
 async def submit_feedback(request: Request):
-    data = await request.json()
-    email = data.get("email", "unbekannt")
-    print(f"📥 Feedback von {email}: {data}")
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO feedback_logs (email, feedback_data) VALUES (%s, %s)",
-                (email, str(data))
-            )
-    return {"message": "Feedback gespeichert"}
+    data = await request.form()
+    email = data.get("email") or "anonymous"
+    print(f"✉️ Feedback eingegangen von: {email}")
+    # Weiterverarbeitung bleibt gleich
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO feedback_logs (email, feedback_data, created_at) VALUES (%s, %s, NOW())",
+            (email, dict(data))
+        )
+        conn.commit()
+    return JSONResponse({"status": "success", "message": "Danke für dein Feedback!"})
+:
+    data = await request.json(
