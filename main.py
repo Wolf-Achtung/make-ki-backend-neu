@@ -178,3 +178,16 @@ def export_feedback(authorization: str = Header(None)):
     return StreamingResponse(iter([output.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=feedback_logs.csv"})
+@app.post("/feedback")
+async def submit_feedback(request: Request):
+    data = await request.json()
+    email = data.get("email", "unbekannt")
+    print(f"📥 Feedback von {email}: {data}")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO feedback_logs (email, feedback_data) VALUES (%s, %s)",
+                (email, str(data))
+            )
+    return {"message": "Feedback gespeichert"}
+
