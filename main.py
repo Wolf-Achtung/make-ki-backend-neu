@@ -19,7 +19,7 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 SECRET_KEY = os.getenv("SECRET_KEY", "notsosecret")
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 ALLOWED_ORIGINS = [
     "https://make.ki-sicherheit.jetzt",
