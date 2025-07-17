@@ -24,3 +24,5 @@ matplotlib
 # PostgreSQL
 psycopg2-binary
 pyjwt
+
+python-multipart
