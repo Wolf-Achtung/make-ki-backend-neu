@@ -71,6 +71,7 @@ def login(email: str = Form(...)):
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
             return {"token": token}
+
 # --- ANALYSE + PDF ---
 @app.post("/api/analyze")
 async def analyze(request: Request):
@@ -85,44 +86,50 @@ async def analyze(request: Request):
             )
             conn.commit()
     return result
+# --- PDF-GENERIERUNG ---
+@app.post("/api/pdf")
+async def generate_pdf(request: Request):
+    data = await request.json()
+    print(f"🖨️ PDF-Erzeugung für: {data.get('email')}")
+    pdf_url = export_pdf(data)
+    return {"pdf_url": pdf_url}
 
-@app.post("/api/export")
-async def export_pdf_route(request: Request):
-    payload = await request.json()
-    print(f"📄 PDF Export wird gestartet für: {payload.get('email')}")
-    result = export_pdf(payload)
-    return JSONResponse(content={"url": result})
+# --- GESCHÜTZTER PDF-DOWNLOAD ---
+@app.get("/api/pdf-download")
+async def download_pdf(file: str, authorization: str = Header(None)):
+    print(f"⬇️ Download-Anfrage für: {file}")
+    verify_admin(authorization)
+    file_path = f"./pdf_exports/{file}"
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+    return FileResponse(file_path, media_type="application/pdf", filename=file)
+
 # --- FEEDBACK ---
-@app.post("/feedback")
+@app.post("/api/feedback")
 async def submit_feedback(request: Request):
-    try:
-        form_data = await request.form()
-        email = form_data.get("email") or "anonym"
-        feedback_data = {k: v for k, v in form_data.items() if k != "email"}
-        print(f"💬 Feedback von {email}: {feedback_data}")
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "INSERT INTO feedback_logs (email, feedback_data, created_at) VALUES (%s, %s, NOW())",
-                    (email, str(dict(feedback_data)))
-                )
-                conn.commit()
-        return JSONResponse(content={"message": "Feedback gespeichert"}, status_code=200)
-    except Exception as e:
-        print("❌ Fehler beim Speichern des Feedbacks:", e)
-        raise HTTPException(status_code=500, detail="Fehler beim Feedback")
+    data = await request.json()
+    email = data.get("email", "unbekannt")
+    print(f"💬 Feedback erhalten von: {email}")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO feedback_logs (email, feedback_data, created_at) VALUES (%s, %s, NOW())",
+                (email, str(data))
+            )
+            conn.commit()
+    return {"status": "success", "message": "Feedback gespeichert"}
 
-# --- ADMIN: Usage Logs CSV ---
+# --- ADMIN CSV: NUTZUNG ---
 @app.get("/api/export-logs")
 def export_logs(start: str = None, end: str = None, authorization: str = Header(None)):
     email = verify_admin(authorization)
     print(f"📥 Admin {email} exportiert Logs")
-    query = '''
+    query = """
         SELECT * FROM usage_logs
         WHERE (%s IS NULL OR created_at >= %s)
           AND (%s IS NULL OR created_at <= %s)
         ORDER BY created_at DESC
-    '''
+    """
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(query, (start, start, end, end))
@@ -135,23 +142,15 @@ def export_logs(start: str = None, end: str = None, authorization: str = Header(
     return StreamingResponse(iter([output.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=usage_logs.csv"})
-# --- ADMIN: Feedback Logs & Export ---
-@app.get("/api/feedback-logs")
-def get_feedback_logs(authorization: str = Header(None)):
-    email = verify_admin(authorization)
-    print(f"📥 Admin {email} ruft /api/feedback-logs ab")
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT email, feedback_data, created_at FROM feedback_logs ORDER BY created_at DESC")
-            return cur.fetchall()
-
+# --- ADMIN CSV: FEEDBACK ---
 @app.get("/api/export-feedback")
 def export_feedback(authorization: str = Header(None)):
     email = verify_admin(authorization)
     print(f"📥 Admin {email} exportiert Feedback-Logs")
+    query = "SELECT * FROM feedback_logs ORDER BY created_at DESC"
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM feedback_logs ORDER BY created_at DESC")
+            cur.execute(query)
             rows = cur.fetchall()
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=["id", "email", "feedback_data", "created_at"])
@@ -162,10 +161,23 @@ def export_feedback(authorization: str = Header(None)):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=feedback_logs.csv"})
 
-# --- GESCHÜTZTER PDF DOWNLOAD ---
-@app.get("/download/{pdf_file}")
-def download_pdf(pdf_file: str, authorization: str = Header(None)):
-    verify_admin(authorization)
-    path = f"./exports/{pdf_file}"
-    print(f"⬇️ PDF-Download angefragt: {pdf_file}")
-    return FileResponse(path, media_type="application/pdf", filename=pdf_file)
+# --- ADMIN JSON: FEEDBACK EINSEHEN ---
+@app.get("/api/feedback-logs")
+def get_feedback_logs(authorization: str = Header(None)):
+    email = verify_admin(authorization)
+    print(f"📥 Admin {email} ruft /api/feedback-logs ab")
+    query = "SELECT email, feedback_data, created_at FROM feedback_logs ORDER BY created_at DESC"
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            return cur.fetchall()
+
+# --- LEBENSZEICHEN FÜR TESTZWECKE ---
+@app.get("/api/status")
+def get_status():
+    return {"status": "ok", "message": "KI-Backend läuft 🎯"}
+
+# --- ROOT-CHECK ---
+@app.get("/")
+def root():
+    return {"message": "Willkommen im KI-Backend"}
