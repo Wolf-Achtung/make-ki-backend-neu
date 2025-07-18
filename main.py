@@ -1,4 +1,3 @@
-# --- imports + Setup ---
 import os
 from fastapi import FastAPI, Request, HTTPException, Header, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,13 +5,14 @@ from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from dotenv import load_dotenv
 from gpt_analyze import analyze_full_report
 from pdf_export import export_pdf
-from pydantic import BaseModel  # ✅ NEU
+from pydantic import BaseModel
 import psycopg2
 import psycopg2.extras
 import jwt
 import datetime
 import io
 import csv
+import json
 
 # --- Load Environment ---
 load_dotenv()
@@ -22,41 +22,37 @@ SECRET_KEY = os.getenv("JWT_SECRET", "notsosecret")
 # --- App & CORS Setup ---
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
-ALLOWED_ORIGINS = [
-    "https://make.ki-sicherheit.jetzt",
-    "http://localhost",
-    "http://127.0.0.1"
-]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://make.ki-sicherheit.jetzt", "http://localhost:8888"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"]
 )
 
 # --- DB & Auth Helpers ---
 def get_db():
     return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
 
-def verify_admin(auth_header: str):
+def verify_token(auth_header: str):
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
     token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        if payload.get("role") != "admin":
-            raise HTTPException(status_code=403, detail="Admin role required")
-        return payload.get("email")
+        return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-# --- LOGIN ---
+def verify_admin(auth_header: str):
+    payload = verify_token(auth_header)
+    if payload.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin role required")
+    return payload.get("email")
 
+# --- LOGIN ---
 class LoginData(BaseModel):
     email: str
     password: str
@@ -92,6 +88,7 @@ async def analyze(request: Request):
             )
             conn.commit()
     return result
+
 # --- PDF-GENERIERUNG ---
 @app.post("/api/pdf")
 async def generate_pdf(request: Request):
@@ -104,7 +101,7 @@ async def generate_pdf(request: Request):
 @app.get("/api/pdf-download")
 async def download_pdf(file: str, authorization: str = Header(None)):
     print(f"⬇️ Download-Anfrage für: {file}")
-    verify_admin(authorization)
+    payload = verify_token(authorization)
     file_path = f"./pdf_exports/{file}"
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Datei nicht gefunden")
@@ -140,18 +137,18 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
     pdf_filename = export_pdf(result)
     return {"pdf_url": f"/api/pdf-download?file={pdf_filename}"}
 
-
 # --- FEEDBACK ---
 @app.post("/api/feedback")
 async def submit_feedback(request: Request):
     data = await request.json()
     email = data.get("email", "unbekannt")
     print(f"💬 Feedback erhalten von: {email}")
+    feedback_json = json.dumps(data, ensure_ascii=False)
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO feedback_logs (email, feedback_data, created_at) VALUES (%s, %s, NOW())",
-                (email, str(data))
+                (email, feedback_json)
             )
             conn.commit()
     return {"status": "success", "message": "Feedback gespeichert"}
@@ -179,6 +176,7 @@ def export_logs(start: str = None, end: str = None, authorization: str = Header(
     return StreamingResponse(iter([output.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=usage_logs.csv"})
+
 # --- ADMIN CSV: FEEDBACK ---
 @app.get("/api/export-feedback")
 def export_feedback(authorization: str = Header(None)):
