@@ -92,4 +92,5 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
     else:
         print(f"[PDF_EXPORT][ERROR] PDF-Datei fehlt nach Export! ({pdf_path})")
 
-    return pdf_path
+    return os.path.basename(pdf_path)
+

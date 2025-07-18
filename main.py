@@ -137,8 +137,8 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
             )
             conn.commit()
 
-    pdf_url = export_pdf(result)
-    return {"pdf_url": pdf_url}
+    pdf_filename = export_pdf(result)
+    return {"pdf_url": f"/api/pdf-download?file={pdf_filename}"}
 
 
 # --- FEEDBACK ---
