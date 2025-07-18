@@ -109,6 +109,24 @@ async def download_pdf(file: str, authorization: str = Header(None)):
         raise HTTPException(status_code=404, detail="Datei nicht gefunden")
     return FileResponse(file_path, media_type="application/pdf", filename=file)
 
+# --- BRIEFING KOMBI: Analyse + PDF ---
+@app.post("/api/briefing")
+async def create_briefing(request: Request):
+    data = await request.json()
+    print(f"🧠 Briefing-Daten empfangen von {data.get('email')}")
+    result = analyze_full_report(data)
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO usage_logs (email, pdf_type, created_at) VALUES (%s, %s, NOW())",
+                (data.get("email"), "briefing")
+            )
+            conn.commit()
+
+    pdf_url = export_pdf(result)
+    return {"pdf_url": pdf_url}
+
 # --- FEEDBACK ---
 @app.post("/api/feedback")
 async def submit_feedback(request: Request):
