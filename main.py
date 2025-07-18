@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from dotenv import load_dotenv
 from gpt_analyze import analyze_full_report
 from pdf_export import export_pdf
+from pydantic import BaseModel  # ✅ NEU
 import psycopg2
 import psycopg2.extras
 import jwt
@@ -55,12 +56,16 @@ def verify_admin(auth_header: str):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 # --- LOGIN ---
+
+class LoginData(BaseModel):
+    email: str
+
 @app.post("/api/login")
-def login(email: str = Form(...)):
-    print(f"🔐 Login-Versuch von: {email}")
+def login(data: LoginData):
+    print(f"🔐 Login-Versuch von: {data.email}")
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+            cur.execute("SELECT * FROM users WHERE email = %s", (data.email,))
             user = cur.fetchone()
             if not user:
                 raise HTTPException(status_code=401, detail="Unbekannter Benutzer")
