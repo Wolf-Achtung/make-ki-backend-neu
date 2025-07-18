@@ -59,6 +59,7 @@ def verify_admin(auth_header: str):
 
 class LoginData(BaseModel):
     email: str
+    password: str
 
 @app.post("/api/login")
 def login(data: LoginData):
@@ -111,21 +112,34 @@ async def download_pdf(file: str, authorization: str = Header(None)):
 
 # --- BRIEFING KOMBI: Analyse + PDF ---
 @app.post("/api/briefing")
-async def create_briefing(request: Request):
+async def create_briefing(request: Request, authorization: str = Header(None)):
     data = await request.json()
-    print(f"🧠 Briefing-Daten empfangen von {data.get('email')}")
+    # E-Mail sicher aus JWT extrahieren
+    email = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            email = payload.get("email")
+        except Exception as e:
+            print("JWT decode error:", e)
+    if not email:
+        email = data.get("email")  # Fallback, falls irgendwas schief läuft
+
+    print(f"🧠 Briefing-Daten empfangen von {email}")
     result = analyze_full_report(data)
 
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO usage_logs (email, pdf_type, created_at) VALUES (%s, %s, NOW())",
-                (data.get("email"), "briefing")
+                (email, "briefing")
             )
             conn.commit()
 
     pdf_url = export_pdf(result)
     return {"pdf_url": pdf_url}
+
 
 # --- FEEDBACK ---
 @app.post("/api/feedback")
