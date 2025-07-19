@@ -5,7 +5,7 @@ import psycopg2.extras
 from fastapi import FastAPI, Request, HTTPException, Header, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
-from pdf_export import export_pdf, full_report
+from pdf_export import export_pdf
 from dotenv import load_dotenv
 import datetime
 import csv
