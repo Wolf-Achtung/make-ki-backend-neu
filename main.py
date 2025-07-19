@@ -78,11 +78,8 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
     if authorization and authorization.startswith("Bearer "):
         payload = jwt.decode(authorization.split()[1], SECRET_KEY, algorithms=["HS256"])
         email = payload.get("email")
-    if not email:
+    else:
         email = data.get("email", "fallback")
-    # GPT-Auswertung (bei dir: full_report oder direktes Prompt-Modul, ggf. importieren!)
-    # Annahme: result = {"score_percent": ..., "executive_summary": ...} etc.
-    from gpt_analyze import full_report  # Optional: Modular halten!
     result = full_report(data)
     with get_db() as conn:
         with conn.cursor() as cur:
