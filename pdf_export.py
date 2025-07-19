@@ -23,7 +23,7 @@ def read_checklists():
             fpath = os.path.join(checklist_dir, fname)
             with open(fpath, "r", encoding="utf-8") as f:
                 content = f.read()
-            # Optional: Der Dateiname als Überschrift
+            # Optional: Dateiname als Überschrift
             headline = os.path.splitext(fname)[0].replace("_", " ").title()
             html_blocks.append(f"<h3>{headline}</h3>{markdown_to_html(content)}")
     if html_blocks:
@@ -37,22 +37,9 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
 
     # Alle Textfelder, die Markdown enthalten, konvertieren
     md_keys = [
-        "executive_summary",
-        "gesamtstrategie",
-        "compliance",
-        "innovation",
-        "datenschutz",
-        "roadmap",
-        "praxisbeispiele",
-        "tools",
-        "foerderprogramme",
-        "moonshot_vision",
-        "eu_ai_act",
-        "summary_solo",
-        "summary_kmu",
-        "summary_klein",
-        "foerdermittel",
-        # ggf. weitere Felder ergänzen!
+        "executive_summary", "gesamtstrategie", "compliance", "innovation", "datenschutz",
+        "roadmap", "praxisbeispiele", "tools", "foerderprogramme", "moonshot_vision",
+        "eu_ai_act", "summary_solo", "summary_kmu", "summary_klein", "foerdermittel",
     ]
     report_data_html = report_data.copy()
     for key in md_keys:
@@ -75,7 +62,7 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
         html_content = template.render(**report_data_html)
     except Exception as e:
         print(f"[PDF_EXPORT][ERROR] HTML-Rendering fehlgeschlagen: {e}")
-        raise
+        raise RuntimeError(f"PDF-Template konnte nicht geladen werden: {e}")
 
     pdf_path = os.path.join(downloads_dir, filename)
     print(f"[PDF_EXPORT] Geplante PDF-Datei: {pdf_path}")
@@ -85,7 +72,7 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
         print(f"[PDF_EXPORT] PDF erfolgreich erzeugt: {pdf_path}")
     except Exception as e:
         print(f"[PDF_EXPORT][ERROR] PDF-Erstellung fehlgeschlagen: {e}")
-        raise
+        raise RuntimeError(f"PDF-Erstellung fehlgeschlagen: {e}")
 
     if os.path.exists(pdf_path):
         print(f"[PDF_EXPORT] PDF-Datei existiert: {pdf_path}")
@@ -93,4 +80,3 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
         print(f"[PDF_EXPORT][ERROR] PDF-Datei fehlt nach Export! ({pdf_path})")
 
     return os.path.basename(pdf_path)
-

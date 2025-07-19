@@ -1,27 +1,24 @@
 import os
+import json
+import psycopg2
+import psycopg2.extras
 from fastapi import FastAPI, Request, HTTPException, Header, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
+from pdf_export import export_pdf, full_report
 from dotenv import load_dotenv
-from gpt_analyze import analyze_full_report
-from pdf_export import export_pdf
-from pydantic import BaseModel
-import psycopg2
-import psycopg2.extras
-import jwt
 import datetime
-import io
 import csv
-import json
+import io
+import jwt
 
-# --- Load Environment ---
+# --- Load environment ---
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
-SECRET_KEY = os.getenv("JWT_SECRET", "notsosecret")
+SECRET_KEY = os.getenv("SECRET_KEY", "my-secret")
 
 # --- App & CORS Setup ---
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-
+app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://make.ki-sicherheit.jetzt", "http://localhost:8888"],
@@ -40,11 +37,11 @@ def verify_token(auth_header: str):
     token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
+    return payload
 
 def verify_admin(auth_header: str):
     payload = verify_token(auth_header)
@@ -53,113 +50,78 @@ def verify_admin(auth_header: str):
     return payload.get("email")
 
 # --- LOGIN ---
-class LoginData(BaseModel):
+class LoginData:
     email: str
     password: str
 
 @app.post("/api/login")
-def login(data: LoginData):
-    print(f"🔐 Login-Versuch von: {data.email}")
+async def login(data: dict):
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM users WHERE email = %s", (data.email,))
+            cur.execute("SELECT * FROM users WHERE email = %s", (data["email"],))
             user = cur.fetchone()
-            if not user:
-                raise HTTPException(status_code=401, detail="Unbekannter Benutzer")
-            payload = {
-                "email": user["email"],
-                "role": user["role"],
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(days=2)
-            }
-            token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-            return {"token": token}
+    if not user:
+        raise HTTPException(status_code=401, detail="Unbekannter Benutzer")
+    if user["password_hash"] != data["password"]:
+        raise HTTPException(status_code=401, detail="Falsches Passwort")
+    token = jwt.encode(
+        {"email": user["email"], "role": user["role"], "exp": datetime.datetime.utcnow() + datetime.timedelta(days=2)},
+        SECRET_KEY,
+        algorithm="HS256"
+    )
+    return {"token": token}
 
-# --- ANALYSE + PDF ---
-@app.post("/api/analyze")
-async def analyze(request: Request):
-    data = await request.json()
-    print(f"📊 Starte Analyse für: {data.get('email')}")
-    result = analyze_full_report(data)
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO usage_logs (email, pdf_type, created_at) VALUES (%s, %s, NOW())",
-                (data.get("email"), "full")
-            )
-            conn.commit()
-    return result
-
-# --- PDF-GENERIERUNG ---
-@app.post("/api/pdf")
-async def generate_pdf(request: Request):
-    data = await request.json()
-    print(f"🖨️ PDF-Erzeugung für: {data.get('email')}")
-    pdf_url = export_pdf(data)
-    return {"pdf_url": pdf_url}
-
-# --- GESCHÜTZTER PDF-DOWNLOAD ---
-@app.get("/api/pdf-download")
-async def download_pdf(file: str, authorization: str = Header(None)):
-    print(f"⬇️ Download-Anfrage für: {file}")
-    payload = verify_token(authorization)
-    file_path = f"./pdf_exports/{file}"
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="Datei nicht gefunden")
-    return FileResponse(file_path, media_type="application/pdf", filename=file)
-
-# --- BRIEFING KOMBI: Analyse + PDF ---
+# --- KI-BRIEFING (PDF-GENERIERUNG) ---
 @app.post("/api/briefing")
 async def create_briefing(request: Request, authorization: str = Header(None)):
     data = await request.json()
-    # E-Mail sicher aus JWT extrahieren
-    email = None
+    # Token-Check (email auslesen)
     if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            email = payload.get("email")
-        except Exception as e:
-            print("JWT decode error:", e)
-    if not email:
-        email = data.get("email")  # Fallback, falls irgendwas schief läuft
-
-    print(f"🧠 Briefing-Daten empfangen von {email}")
-    result = analyze_full_report(data)
-
+        payload = jwt.decode(authorization.split()[1], SECRET_KEY, algorithms=["HS256"])
+        email = payload.get("email")
+    else:
+        email = data.get("email", "fallback")
+    result = full_report(data)
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO usage_logs (email, pdf_type, created_at) VALUES (%s, %s, NOW())",
-                (email, "briefing")
-            )
-            conn.commit()
-
+            cur.execute("INSERT INTO usage_logs (email, pdf_type, created_at) VALUES (%s, %s, NOW())", (email, "briefing"))
+        conn.commit()
     pdf_filename = export_pdf(result)
-    return {"pdf_url": f"/api/pdf-download?file={pdf_filename}"}
+    # -> Sofort-Download: Datei direkt als Response
+    file_path = os.path.join(os.path.dirname(__file__), "downloads", pdf_filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="PDF nicht gefunden")
+    return FileResponse(file_path, media_type="application/pdf", filename=pdf_filename)
 
 # --- FEEDBACK ---
 @app.post("/api/feedback")
 async def submit_feedback(request: Request):
     data = await request.json()
-    email = data.get("email", "unbekannt")
-    print(f"💬 Feedback erhalten von: {email}")
+    email = data.get("tipp_email") or data.get("email", "unbekannt")
     feedback_json = json.dumps(data, ensure_ascii=False)
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO feedback_logs (email, feedback_data, created_at) VALUES (%s, %s, NOW())",
-                (email, feedback_json)
-            )
-            conn.commit()
+            cur.execute("INSERT INTO feedback_logs (email, feedback_data, created_at) VALUES (%s, %s, NOW())", (email, feedback_json))
+        conn.commit()
     return {"status": "success", "message": "Feedback gespeichert"}
 
+# --- PDF-DOWNLOAD ALT (NUR FALLBACK, nicht mehr empfohlen) ---
+@app.get("/api/pdf-download")
+async def get_pdf_download(file: str, authorization: str = Header(None)):
+    # Für Legacy-Frontend, ersetzt durch Sofort-Download in /api/briefing!
+    payload = verify_token(authorization)
+    file_path = os.path.join(os.path.dirname(__file__), "downloads", file)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="PDF nicht gefunden")
+    return FileResponse(file_path, media_type="application/pdf", filename=file)
+
 # --- ADMIN CSV: NUTZUNG ---
-@app.get("/api/export-logs")
-def export_logs(start: str = None, end: str = None, authorization: str = Header(None)):
-    email = verify_admin(authorization)
-    print(f"📥 Admin {email} exportiert Logs")
+@app.get("/api/export-usage")
+def export_usage_logs(start: str = None, end: str = None, authorization: str = Header(None)):
+    verify_admin(authorization)
     query = """
-        SELECT * FROM usage_logs
+        SELECT id, email, pdf_type, created_at
+        FROM usage_logs
         WHERE (%s IS NULL OR created_at >= %s)
           AND (%s IS NULL OR created_at <= %s)
         ORDER BY created_at DESC
@@ -171,17 +133,13 @@ def export_logs(start: str = None, end: str = None, authorization: str = Header(
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=["id", "email", "pdf_type", "created_at"])
     writer.writeheader()
-    for row in rows:
-        writer.writerow(row)
-    return StreamingResponse(iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=usage_logs.csv"})
+    writer.writerows(rows)
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=usage_logs.csv"})
 
 # --- ADMIN CSV: FEEDBACK ---
 @app.get("/api/export-feedback")
-def export_feedback(authorization: str = Header(None)):
-    email = verify_admin(authorization)
-    print(f"📥 Admin {email} exportiert Feedback-Logs")
+def export_feedback_logs(authorization: str = Header(None)):
+    verify_admin(authorization)
     query = "SELECT * FROM feedback_logs ORDER BY created_at DESC"
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -190,29 +148,25 @@ def export_feedback(authorization: str = Header(None)):
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=["id", "email", "feedback_data", "created_at"])
     writer.writeheader()
-    for row in rows:
-        writer.writerow(row)
-    return StreamingResponse(iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=feedback_logs.csv"})
+    writer.writerows(rows)
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=feedback_logs.csv"})
 
 # --- ADMIN JSON: FEEDBACK EINSEHEN ---
 @app.get("/api/feedback-logs")
 def get_feedback_logs(authorization: str = Header(None)):
-    email = verify_admin(authorization)
-    print(f"📥 Admin {email} ruft /api/feedback-logs ab")
+    verify_admin(authorization)
     query = "SELECT email, feedback_data, created_at FROM feedback_logs ORDER BY created_at DESC"
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(query)
             return cur.fetchall()
 
-# --- LEBENSZEICHEN FÜR TESTZWECKE ---
+# --- STATUS ---
 @app.get("/api/status")
 def get_status():
-    return {"status": "ok", "message": "KI-Backend läuft 🎯"}
+    return {"status": "ok", "message": "KI-Backend läuft 🟢"}
 
-# --- ROOT-CHECK ---
+# --- ROOT ---
 @app.get("/")
 def root():
     return {"message": "Willkommen im KI-Backend"}
