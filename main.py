@@ -11,6 +11,7 @@ import datetime
 import csv
 import io
 import jwt
+import bcrypt
 
 # --- Load environment ---
 load_dotenv()
@@ -50,10 +51,6 @@ def verify_admin(auth_header: str):
     return payload.get("email")
 
 # --- LOGIN ---
-class LoginData:
-    email: str
-    password: str
-
 @app.post("/api/login")
 async def login(data: dict):
     with get_db() as conn:
@@ -62,7 +59,8 @@ async def login(data: dict):
             user = cur.fetchone()
     if not user:
         raise HTTPException(status_code=401, detail="Unbekannter Benutzer")
-    if user["password_hash"] != data["password"]:
+    # Sichere Passwort-Prüfung (bcrypt)
+    if not bcrypt.checkpw(data["password"].encode(), user["password_hash"].encode()):
         raise HTTPException(status_code=401, detail="Falsches Passwort")
     token = jwt.encode(
         {"email": user["email"], "role": user["role"], "exp": datetime.datetime.utcnow() + datetime.timedelta(days=2)},
@@ -76,11 +74,15 @@ async def login(data: dict):
 async def create_briefing(request: Request, authorization: str = Header(None)):
     data = await request.json()
     # Token-Check (email auslesen)
+    email = None
     if authorization and authorization.startswith("Bearer "):
         payload = jwt.decode(authorization.split()[1], SECRET_KEY, algorithms=["HS256"])
         email = payload.get("email")
-    else:
+    if not email:
         email = data.get("email", "fallback")
+    # GPT-Auswertung (bei dir: full_report oder direktes Prompt-Modul, ggf. importieren!)
+    # Annahme: result = {"score_percent": ..., "executive_summary": ...} etc.
+    from gpt_analyze import full_report  # Optional: Modular halten!
     result = full_report(data)
     with get_db() as conn:
         with conn.cursor() as cur:
