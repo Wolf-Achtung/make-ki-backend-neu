@@ -76,7 +76,8 @@ async def login(data: dict):
         algorithm="HS256"
     )
     return {"token": token}
-# --- KI-BRIEFING (Analyse + PDF, Sofort-Download) ---
+
+# --- KI-BRIEFING (Analyse + PDF, Sofort-Download, Logging inkl. E-Mail) ---
 @app.post("/api/briefing")
 async def create_briefing(request: Request, authorization: str = Header(None)):
     data = await request.json()
@@ -92,9 +93,14 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
         email = data.get("email", "fallback")
     print(f"🧠 Briefing-Daten empfangen von {email}")
     result = analyze_full_report(data)      # <- Zentrale GPT-Analyse
+
+    # Logging mit E-Mail und Rohdaten
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO usage_logs (email, pdf_type, created_at) VALUES (%s, %s, NOW())", (email, "briefing"))
+            cur.execute(
+                "INSERT INTO usage_logs (email, pdf_type, created_at, raw_data) VALUES (%s, %s, NOW(), %s)",
+                (email, "briefing", json.dumps(data, ensure_ascii=False))
+            )
             conn.commit()
     pdf_filename = export_pdf(result)       # <- PDF wird erzeugt und im downloads/ Ordner gespeichert
     file_path = os.path.join(os.path.dirname(__file__), "downloads", pdf_filename)
@@ -124,12 +130,12 @@ async def submit_feedback(request: Request):
             conn.commit()
     return {"status": "success", "message": "Feedback gespeichert"}
 
-# --- ADMIN CSV: NUTZUNG ---
+# --- ADMIN CSV: NUTZUNG inkl. Rohdaten (Download aller Analysen inkl. E-Mail) ---
 @app.get("/api/export-usage")
 def export_usage_logs(start: str = None, end: str = None, authorization: str = Header(None)):
     verify_admin(authorization)
     query = """
-        SELECT id, email, pdf_type, created_at
+        SELECT id, email, pdf_type, created_at, raw_data
         FROM usage_logs
         WHERE (%s IS NULL OR created_at >= %s)
           AND (%s IS NULL OR created_at <= %s)
@@ -140,7 +146,7 @@ def export_usage_logs(start: str = None, end: str = None, authorization: str = H
             cur.execute(query, (start, start, end, end))
             rows = cur.fetchall()
     output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=["id", "email", "pdf_type", "created_at"])
+    writer = csv.DictWriter(output, fieldnames=["id", "email", "pdf_type", "created_at", "raw_data"])
     writer.writeheader()
     writer.writerows(rows)
     return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=usage_logs.csv"})
@@ -169,6 +175,18 @@ def get_feedback_logs(authorization: str = Header(None)):
         with conn.cursor() as cur:
             cur.execute(query)
             return cur.fetchall()
+
+# --- ADMIN: Einzelne Analyse/Briefing als JSON einsehen (inkl. E-Mail) ---
+@app.get("/api/usage-detail")
+def get_usage_detail(usage_id: int, authorization: str = Header(None)):
+    verify_admin(authorization)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM usage_logs WHERE id = %s", (usage_id,))
+            entry = cur.fetchone()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+    return entry
 
 # --- STATUS ---
 @app.get("/api/status")
