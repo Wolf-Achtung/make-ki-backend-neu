@@ -14,8 +14,8 @@ import jwt
 import bcrypt
 import traceback
 
-from gpt_analyze import analyze_full_report   # <- Dein zentrales GPT-Modul
-from pdf_export import export_pdf             # <- PDF-Modul im /downloads/ Ordner
+from gpt_analyze import analyze_full_report   # Zentrales GPT-Modul
+from pdf_export import export_pdf             # PDF-Modul im /downloads/ Ordner
 
 # --- ENV-VARIABLEN LADEN ---
 load_dotenv()
@@ -110,7 +110,7 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
     print(f"🧠 Briefing-Daten empfangen von {email}")
 
     try:
-        result = analyze_full_report(data)      # <- Zentrale GPT-Analyse
+        result = analyze_full_report(data)      # Zentrale GPT-Analyse
     except Exception as e:
         print(f"[GPT][ERROR] Analyse fehlgeschlagen: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail="KI-Analyse fehlgeschlagen.")
@@ -128,7 +128,7 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
         print(f"[DB][WARN] Logging fehlgeschlagen: {e}")
 
     try:
-        pdf_filename = export_pdf(result)       # <- PDF wird erzeugt und im downloads/ Ordner gespeichert
+        pdf_filename = export_pdf(result)       # PDF wird erzeugt und im downloads/ Ordner gespeichert
         file_path = os.path.join(os.path.dirname(__file__), "downloads", pdf_filename)
         if not os.path.exists(file_path):
             raise HTTPException(status_code=404, detail="PDF nicht gefunden")

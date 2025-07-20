@@ -1,9 +1,8 @@
 import os
 import json
 import pandas as pd
-from concurrent.futures import ThreadPoolExecutor
-from openai import OpenAI
 import re
+from openai import OpenAI
 
 client = OpenAI()
 
@@ -19,7 +18,7 @@ def load_prompt(branche, abschnitt):
     with open(path, encoding="utf-8") as f:
         return f.read()
 
-# --- 2. Benchmark-Loader (Value-Keys!) ---
+# --- 2. Benchmark-Loader ---
 def load_benchmark(branche):
     fn = f"benchmark_{branche}.csv"
     path = os.path.join("data", fn)
@@ -54,7 +53,7 @@ def load_tools_und_foerderungen():
 
 TOOLS_FOERDER = load_tools_und_foerderungen()
 
-# --- 5. Prompt-Builder (KeyError-sicher!) ---
+# --- 5. Prompt-Builder ---
 def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, tools_text="", foerder_text=""):
     prompt_raw = load_prompt(branche, abschnitt)
     bench_txt = ""
@@ -63,7 +62,6 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
             f"- {row.get('Kategorie', '')}: {row.get('Wert_Durchschnitt', '')} ({row.get('Kurzbeschreibung', '')})"
             for row in benchmark
         )
-    # Alle potentiellen Platzhalter:
     prompt_vars = {
         "branche": branche,
         "unternehmensgroesse": groesse,
@@ -75,9 +73,7 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
         "foerderungen": foerder_text or "",
         "praxisbeispiele": "",
         "score_percent": data.get("score_percent", ""),
-        # Füge bei Bedarf weitere Platzhalter hier hinzu!
     }
-    # Alle im Prompt vorkommenden {}-Platzhalter werden mit mindestens "" ersetzt (KeyError-sicher)
     keys_in_prompt = set(re.findall(r"{([a-zA-Z0-9_]+)}", prompt_raw))
     for key in keys_in_prompt:
         if key not in prompt_vars:
@@ -136,13 +132,10 @@ def get_tools_und_foerderungen(data):
         foerder_text = "\n".join([f"- [{f['name']}]({f['link']})" for f in foerder_list])
 
     return tools_text, foerder_text
+
 # --- 7. GPT-Block ---
 def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, prior_results=None):
-    """
-    GPT-Aufruf, prompt-chaining-ready: prior_results kann als Kontext übergeben werden.
-    """
     tools_text, foerder_text = get_tools_und_foerderungen(data)
-    # Prompt-Template bekommt bei Bedarf bereits vorige Resultate als Kontext.
     prompt = build_prompt(
         data, abschnitt, branche, groesse, checklisten, benchmark, tools_text, foerder_text
     )
@@ -166,7 +159,7 @@ def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=Non
     )
     return response.choices[0].message.content.strip()
 
-# --- 8. Modularer Analyse-Flow (Prompt-Chaining) ---
+# --- 8. Modularer Analyse-Flow ---
 def analyze_full_report(data):
     branche = data.get("branche", "default").strip().lower()
     groesse = data.get("unternehmensgroesse", "kmu").strip().lower()
@@ -181,7 +174,7 @@ def analyze_full_report(data):
     tools = read_markdown_file("tools.md")
 
     abschnittsreihenfolge = [
-        ("score_percent", None),  # Score immer zuerst!
+        ("score_percent", None),
         ("executive_summary", check_readiness),
         ("gesamtstrategie", check_readiness),
         ("compliance", check_compliance),
@@ -190,7 +183,7 @@ def analyze_full_report(data):
         ("roadmap", check_roadmap),
         ("praxisbeispiele", praxisbeispiele),
         ("tools", tools),
-        ("foerderprogramme", ""),  # individuell befüllt
+        ("foerderprogramme", ""),
         ("moonshot_vision", ""),
         ("eu_ai_act", check_compliance),
     ]
@@ -219,7 +212,7 @@ def analyze_full_report(data):
     print("### DEBUG: Alle Ergebnisse gesammelt:", results)
     return results
 
-# --- 9. SWOT-Extractor (Optional, falls im Prompt benötigt) ---
+# --- 9. SWOT-Extractor ---
 def extract_swot(full_text):
     def find(pattern):
         m = re.search(pattern, full_text, re.DOTALL | re.IGNORECASE)
@@ -235,7 +228,7 @@ def extract_swot(full_text):
 def calc_score_percent(data):
     print("### DEBUG: calc_score_percent(data) wird ausgeführt ###")
     score = 0
-    max_score = 35  # Summe aller Teilpunkte
+    max_score = 35
 
     try:
         score += int(data.get("digitalisierungsgrad", 1))
@@ -280,5 +273,3 @@ def calc_score_percent(data):
     print(f"### DEBUG: calc_score_percent AUFGERUFEN mit: {data}")
     print(f"### DEBUG: score_percent gesetzt: {percent}")
     return percent
-
-# --- Fertig: alles modular, branchenübergreifend, prompt-chaining-fähig! ---

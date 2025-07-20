@@ -4,14 +4,6 @@ import markdown
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML
 
-# Markdown zu HTML-Konvertierung
-def markdown_to_html(text, extensions=None):
-    if not text:
-        return ""
-    if extensions is None:
-        extensions = ["extra", "nl2br"]
-    return markdown.markdown(text, extensions=extensions)
-
 # Robust: Alle Pflichtfelder und Defaults für das Report-Dict
 REPORT_DEFAULTS = {
     "executive_summary": "",
@@ -39,7 +31,14 @@ REPORT_DEFAULTS = {
     "year": "",
 }
 
-# Checklisten als HTML laden (dein Code beibehalten)
+# Markdown zu HTML-Konvertierung
+def markdown_to_html(text, extensions=None):
+    if not text:
+        return ""
+    if extensions is None:
+        extensions = ["extra", "nl2br"]
+    return markdown.markdown(text, extensions=extensions)
+
 def read_checklists():
     checklist_dir = os.path.join(os.path.dirname(__file__), "data", "checklisten")
     if not os.path.exists(checklist_dir):
@@ -66,7 +65,6 @@ def get_safe_filename(base: str):
 def export_pdf(report_data):
     # Starte robust: Ergänze fehlende Felder mit Defaults!
     report = REPORT_DEFAULTS.copy()
-    # Fülle vorhandene Werte ein
     if isinstance(report_data, dict):
         for k in report:
             if k in report_data and report_data[k] not in [None, ""]:
@@ -88,9 +86,9 @@ def export_pdf(report_data):
         report[key] = markdown_to_html(report.get(key, ""))
 
     # Checklisten einfügen (optional, je nach Template)
-    report["checklists_html"] = read_checklists()
+    report["checklisten"] = read_checklists()
 
-    # Datum/ Jahr eintragen, falls nicht gesetzt
+    # Datum/Jahr eintragen, falls nicht gesetzt
     if not report["date"]:
         report["date"] = datetime.datetime.now().strftime("%d.%m.%Y")
     if not report["year"]:
@@ -109,7 +107,7 @@ def export_pdf(report_data):
             autoescape=select_autoescape(["html", "xml"])
         )
         template = env.get_template("pdf_template.html")
-        html_content = template.render(report=report)
+        html_content = template.render(**report)
     except Exception as e:
         print("[PDF_EXPORT][ERROR] PDF-Template konnte nicht geladen/gerendert werden:", e)
         raise RuntimeError(f"PDF-Template konnte nicht geladen/gerendert werden: {e}")
