@@ -1,220 +1,192 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="utf-8">
-    <title>KI-Readiness-Report</title>
+    <meta charset="UTF-8">
+    <title>{{ company_name or "KI-Readiness Report" }}</title>
     <style>
-        @page { margin: 38px 44px 90px 44px; }
-        html, body { font-family: 'Inter', 'Arial', sans-serif; color: #14325e; font-size: 1.02em; margin: 0; padding: 0; background: #fafdff; }
-        body { padding: 0; margin: 0; }
-
-        .header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            border-bottom: 3px solid #bfdcff;
-            padding-bottom: 8px;
-            margin-bottom: 18px;
+        body {
+            font-family: 'Fira Mono', 'Arial', sans-serif;
+            color: #1e293b;
+            background: #f7f9fa;
+            margin: 0;
+            padding: 0 0 80px 0;
         }
-        .logos {
-            display: flex;
-            gap: 16px;
-            align-items: flex-end;
+        header, section {
+            margin: 0 auto 36px auto;
+            max-width: 900px;
+            padding: 0 32px;
         }
-        .logo-main { height: 38px; }
-        .logo-dsgvo { height: 32px; }
-        .logo-euai { height: 32px; }
-
-        .title {
-            font-size: 2.0em;
-            font-weight: 700;
-            color: #21579b;
-            margin-top: 10px;
-            margin-bottom: 8px;
+        h1, h2 {
+            font-family: 'Fira Mono', 'Arial', monospace;
+            letter-spacing: 2px;
+            margin-top: 42px;
         }
-        .subtitle {
-            font-size: 1.1em;
-            color: #3076cc;
-            margin-bottom: 18px;
-        }
-        .metadata {
-            margin-bottom: 16px;
-            color: #385176;
-            font-size: 1em;
-        }
-        .divider {
-            height: 2px;
-            background: linear-gradient(to right, #bfdcff 0%, #eaf4ff 100%);
-            margin: 28px 0 18px 0;
-            border: none;
-        }
-        .executive-summary {
-            background: #eaf2fa;
-            border-left: 6px solid #2166c2;
-            padding: 18px 20px 14px 20px;
-            margin: 24px 0 38px 0;
-            border-radius: 10px;
-        }
-        .executive-summary h2 {
-            margin-top: 0;
-            margin-bottom: 8px;
-            color: #21579b;
-        }
-        .section {
-            margin-bottom: 54px;
-            page-break-inside: avoid;
-        }
-        .section:last-child { margin-bottom: 34px; }
-        .section-title {
-            color: #267b3b;
-            font-size: 1.29em;
-            font-weight: 600;
-            margin-bottom: 17px;
-            margin-top: 28px;
-            letter-spacing: 0.04em;
-        }
-        .section-content {
-            color: #1b283b;
-            font-size: 1.06em;
-            margin-bottom: 14px;
-            margin-top: 13px;
-            line-height: 1.63;
-        }
-        /* Abstand für Überschriften innerhalb von Section-Content */
-        .section-content h3, .section-content h4, .section-content h5 {
-            margin-top: 28px;
-            margin-bottom: 13px;
-            display: block;
-            line-height: 1.35;
-            color: #2b529a;
-        }
-        .section-content ul, .section-content ol { margin-left: 18px; margin-bottom: 12px; }
-        .section-content li { margin-bottom: 4px; }
-        .section-content p { margin-top: 1.05em; margin-bottom: 0.82em; }
-        .score-bar {
-            background: #f5faff;
+        h1 { font-size: 2.8em; }
+        h2 { font-size: 2.0em; color: #1847a6; }
+        .intro, .summary, .bonus, .footer { margin-bottom: 32px; }
+        .box {
+            background: #e3eefe;
             border-radius: 18px;
-            height: 22px;
-            width: 98%;
-            margin-bottom: 22px;
-            margin-top: 10px;
-            border: 1.2px solid #c9e4fc;
-            overflow: hidden;
-            box-shadow: 0 1.5px 4px #b6e0ff22;
+            padding: 28px;
+            margin: 24px 0;
+            box-shadow: 0 2px 16px rgba(20,40,90,0.04);
         }
-        .score-bar-inner {
-            background: linear-gradient(to right, #62ceae 0%, #38bdf8 100%);
-            height: 100%;
-            border-radius: 18px;
+        ul, ol { margin-left: 20px; }
+        .checklist {
+            background: #f1faf6;
+            border-left: 8px solid #20a39e;
+            padding: 20px 24px;
+            border-radius: 12px;
+            margin: 36px 0;
         }
-        /* Footer & Abstand */
+        .logo-row img {
+            height: 50px;
+            margin: 0 16px 0 0;
+            vertical-align: middle;
+        }
         .footer {
+            background: #1847a6;
+            color: #fff;
+            font-size: 1.08em;
+            padding: 24px 0 20px 0;
+            border-top-left-radius: 32px;
+            border-top-right-radius: 32px;
+            text-align: center;
             position: fixed;
-            left: 0; bottom: 0; right: 0;
-            color: #9bb3d8;
-            font-size: 0.98em;
-            text-align: right;
-            padding: 24px 32px 16px 0;
-            border-top: 1.5px solid #e0eaf7;
-            background: #f8fafd;
-            z-index: 99;
-            height: 76px;
-            letter-spacing: 0.01em;
+            left: 0; right: 0; bottom: 0;
+            width: 100%;
+            z-index: 1000;
         }
+        .highlight {
+            font-weight: bold;
+            color: #1847a6;
+        }
+        .bonus {
+            background: #ffd53e2c;
+            border-left: 8px solid #ffd53e;
+        }
+        .section-label {
+            font-size: 1em;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #5475b5;
+            letter-spacing: 1px;
+            margin-top: 22px;
+            margin-bottom: 0;
+        }
+        .pagebreak { page-break-before: always; }
+        .img-block {
+            float: left;
+            margin-right: 34px;
+            margin-bottom: 14px;
+            width: 180px;
+            border-radius: 12px;
+            box-shadow: 0 1px 8px rgba(20,40,90,0.10);
+        }
+        .clearfix::after { content: ""; clear: both; display: table; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div>
-            <div class="title">KI-Readiness Report</div>
-            <div class="subtitle">{{ report.org_name or '' }} &nbsp;|&nbsp; {{ report.date or '' }}</div>
-            <div class="metadata">
-                Ansprechpartner: {{ report.contact_name or 'Wolf Hohl, KI-Sicherheit.jetzt' }}<br>
-                E-Mail: {{ report.contact_email or 'info@ki-sicherheit.jetzt' }}
+    <!-- Intro -->
+    <header>
+        <div class="clearfix">
+            <img src="logo.png" alt="Logo" class="img-block" style="width: 140px;">
+            <h1>{{ report_title or "KI-Readiness Report" }}</h1>
+            <div>
+                <p class="highlight">TÜV-zertifiziertes KI-Management, Ansprechpartner: Wolf Hohl, KI-Sicherheit.jetzt<br>
+                E-Mail: <a href="mailto:kontakt@ki-sicherheit.jetzt">kontakt@ki-sicherheit.jetzt</a></p>
+                <div class="logo-row">
+                    <img src="tuv.svg" alt="TÜV Zertifiziert">
+                    <img src="ki_ready_2025.svg" alt="KI-Ready 2025">
+                    <img src="dsgvo.svg" alt="DSGVO-konform">
+                </div>
             </div>
         </div>
-        <div class="logos">
-            <img class="logo-main" src="templates/ki-sicherheit-logo.png" alt="KI-Sicherheit.jetzt">
-            <img class="logo-dsgvo" src="templates/dsgvo.svg" alt="DSGVO">
-            <img class="logo-euai" src="templates/eu-ai.svg" alt="EU-AI-Act">
-        </div>
-    </div>
+    </header>
 
-    <div class="executive-summary">
-        <h2>Executive Summary</h2>
-        {{ report.executive_summary | safe }}
-        {% if report.score %}
-        <div class="score-bar">
-            <div class="score-bar-inner" style="width: {{ report.score }}%;"></div>
+    <!-- Executive Summary -->
+    <section>
+        <div class="section-label">Executive Summary</div>
+        <div class="box summary">
+            {{ executive_summary | safe }}
         </div>
-        <b>KI-Readiness-Score:</b> {{ report.score }}/100
-        {% endif %}
-    </div>
+    </section>
 
-    <hr class="divider">
-    <!-- SECTION: Branchenüberblick -->
-    <div class="section">
-        <div class="section-title">1. Branchenüberblick</div>
-        <div class="section-content">
-            {{ report.branchenueberblick | safe }}
-        </div>
-    </div>
+    <!-- Gesamtstrategie -->
+    <section>
+        <div class="section-label">Strategische Gesamtempfehlung</div>
+        {{ gesamtstrategie | safe }}
+    </section>
 
-    <!-- SECTION: Wettbewerbslandschaft -->
-    <div class="section">
-        <div class="section-title">2. Wettbewerbslandschaft</div>
-        <div class="section-content">
-            {{ report.wettbewerb | safe }}
+    <!-- Innovation + Praxisbeispiele -->
+    <section>
+        <div class="section-label">Innovation & Praxisbeispiele</div>
+        <div class="box">
+            {{ innovation | safe }}
+            {{ praxisbeispiele | safe }}
         </div>
-    </div>
+    </section>
 
-    <!-- SECTION: Zielgruppen-Segmentierung -->
-    <div class="section">
-        <div class="section-title">3. Zielgruppen-Segmentierung</div>
-        <div class="section-content">
-            {{ report.zielgruppen | safe }}
+    <!-- Roadmap -->
+    <section>
+        <div class="section-label">Roadmap & Next Steps</div>
+        <div class="box">
+            {{ roadmap | safe }}
         </div>
-    </div>
+    </section>
 
-    <!-- SECTION: Chancen & Risiken -->
-    <div class="section">
-        <div class="section-title">4. Chancen & Risiken</div>
-        <div class="section-content">
-            {{ report.chancen_risiken | safe }}
+    <!-- Compliance & Datenschutz -->
+    <section>
+        <div class="section-label">Compliance & Datenschutz</div>
+        <div class="box">
+            {{ compliance | safe }}
+            {{ datenschutz | safe }}
         </div>
-    </div>
+    </section>
 
-    <!-- SECTION: Datenschutz-Analyse -->
-    <div class="section">
-        <div class="section-title">5. Datenschutz-Analyse</div>
-        <div class="section-content">
-            {{ report.datenschutz | safe }}
+    <!-- EU AI Act & Regulatorik -->
+    <section>
+        <div class="section-label">EU AI Act & Regulatorik</div>
+        <div class="box">
+            {{ eu_ai_act | safe }}
         </div>
-    </div>
+    </section>
 
-    <!-- SECTION: Konkrete Handlungsempfehlungen -->
-    <div class="section">
-        <div class="section-title">6. Handlungsempfehlungen</div>
-        <div class="section-content">
-            {{ report.empfehlungen | safe }}
+    <!-- Tools & Fördermittel -->
+    <section>
+        <div class="section-label">Tools & Förderprogramme</div>
+        <div class="box">
+            {{ tools | safe }}
+            {{ foerdermittel | safe }}
+            {{ foerderprogramme | safe }}
         </div>
-    </div>
+    </section>
 
-    <!-- OPTIONAL: Bonus-Module -->
-    {% if report.bonus %}
-    <div class="section">
-        <div class="section-title">Bonus: Zielkunden-Feedback & Simulationen</div>
-        <div class="section-content">
-            {{ report.bonus | safe }}
+    <!-- Checklisten -->
+    {% if checklisten %}
+    <section>
+        <div class="section-label">Checklisten</div>
+        {% for checklist_html in checklisten %}
+            <div class="checklist">{{ checklist_html | safe }}</div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <!-- Bonus/Moonshot -->
+    {% if moonshot_vision %}
+    <section>
+        <div class="section-label">Moonshot Vision (Bonus)</div>
+        <div class="bonus box">
+            {{ moonshot_vision | safe }}
         </div>
-    </div>
+    </section>
     {% endif %}
 
     <!-- Footer -->
     <div class="footer">
-        &copy; KI-Sicherheit.jetzt | TÜV-zertifiziertes KI-Management: Wolf Hohl 2025,
-        Inhalte ausschließlich zur Nutzung im Rahmen der KI-Readiness- und Datenschutzberatung.<br>
-        Logos &amp; Design urheberrechtlich geschützt. Listen &amp; Prompts ausschließlich für Kunden von KI-Sicherheit.jetzt.
+        TÜV-zertifiziertes KI-Management, Ansprechpartner: Wolf Hohl, KI-Sicherheit.jetzt<br>
+        E-Mail: kontakt@ki-sicherheit.jetzt<br>
+        Copyright © 2025 Wolf Hohl – KI-Sicherheit.jetzt
     </div>
 </body>
 </html>
