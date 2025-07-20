@@ -5,11 +5,15 @@
     <title>{{ company_name or "KI-Readiness Report" }}</title>
     <style>
         body {
-            font-family: 'Fira Mono', 'Arial', sans-serif;
-            color: #1e293b;
-            background: #f7f9fa;
-            margin: 0;
-            padding: 0 0 80px 0;
+        font-family: 'Fira Mono', 'Arial', sans-serif;
+        color: #1e293b;
+        background: #f7f9fa;
+        margin: 0;
+        padding: 0 0 80px 0;
+        /* Neu für Footer am unteren Rand: */
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
         }
         header, section {
             margin: 0 auto 36px auto;
@@ -52,10 +56,8 @@
             border-top-left-radius: 32px;
             border-top-right-radius: 32px;
             text-align: center;
-            position: fixed;
-            left: 0; right: 0; bottom: 0;
             width: 100%;
-            z-index: 1000;
+            margin-top: 64px;
         }
         .highlight {
             font-weight: bold;
