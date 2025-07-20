@@ -4,82 +4,121 @@ import markdown
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML
 
-# --- Markdown zu HTML-Konvertierung
-def markdown_to_html(text):
-    return markdown.markdown(text, extensions=["extra", "nl2br"])
+# Markdown zu HTML-Konvertierung
+def markdown_to_html(text, extensions=None):
+    if not text:
+        return ""
+    if extensions is None:
+        extensions = ["extra", "nl2br"]
+    return markdown.markdown(text, extensions=extensions)
 
-# --- Checklisten als HTML laden
+# Robust: Alle Pflichtfelder und Defaults für das Report-Dict
+REPORT_DEFAULTS = {
+    "executive_summary": "",
+    "gesamtstrategie": "",
+    "compliance": "",
+    "innovation": "",
+    "datenschutz": "",
+    "roadmap": "",
+    "praxisbeispiele": "",
+    "tools": "",
+    "foerderprogramme": "",
+    "moonshot_vision": "",
+    "eu_ai_act": "",
+    "score_percent": "",
+    "branchenueberblick": "",
+    "wettbewerb": "",
+    "zielgruppen": "",
+    "chancen_risiken": "",
+    "empfehlungen": "",
+    "bonus": "",
+    "org_name": "",
+    "contact_name": "",
+    "contact_email": "",
+    "date": "",
+    "year": "",
+}
+
+# Checklisten als HTML laden (dein Code beibehalten)
 def read_checklists():
-    """
-    Liest alle Checklisten aus dem ./data/checklisten-Ordner ein und gibt sie als HTML-String zurück.
-    """
     checklist_dir = os.path.join(os.path.dirname(__file__), "data", "checklisten")
     if not os.path.exists(checklist_dir):
         print("[PDF_EXPORT] Ordner nicht gefunden:", checklist_dir)
-        return ""
-
-    html_blocks = []
+        return {}
+    html_blocks = {}
     for fname in sorted(os.listdir(checklist_dir)):
         if fname.endswith(".md"):
             path = os.path.join(checklist_dir, fname)
-            with open(path, encoding="utf-8") as f:
-                content = f.read()
-                title = fname[:-3].replace("_", " ").title()
-                html = f"<h3>{title}</h3>\n" + markdown_to_html(content)
-                html_blocks.append(html)
-    return "\n".join(html_blocks)
+            with open(path, "r") as f:
+                html_blocks[fname[:-3].replace("_", " ").title()] = markdown_to_html(f.read())
+    return html_blocks
 
-# --- Hauptfunktion: PDF-Export
-def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
+def ensure_downloads_dir():
     downloads_dir = os.path.join(os.path.dirname(__file__), "downloads")
-    os.makedirs(downloads_dir, exist_ok=True)
-    pdf_path = os.path.join(downloads_dir, filename)
-    print(f"[PDF_EXPORT] Start PDF-Export nach: {downloads_dir}")
+    if not os.path.exists(downloads_dir):
+        os.makedirs(downloads_dir, exist_ok=True)
+    return downloads_dir
 
-    # --- Markdown-Felder zu HTML
-    keys_md = [
-        "executive_summary", "gesamtstrategie", "compliance", "innovation",
-        "datenschutz", "roadmap", "praxisbeispiele", "tools",
-        "foerderprogramme", "moonshot_vision", "eu_ai_act"
+def get_safe_filename(base: str):
+    now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    return f"{base}_{now}.pdf"
+
+def export_pdf(report_data):
+    # Starte robust: Ergänze fehlende Felder mit Defaults!
+    report = REPORT_DEFAULTS.copy()
+    # Fülle vorhandene Werte ein
+    if isinstance(report_data, dict):
+        for k in report:
+            if k in report_data and report_data[k] not in [None, ""]:
+                report[k] = report_data[k]
+        # Debug: Zeige fehlende oder leere Felder
+        missing = [k for k in report if report[k] == "" and k in REPORT_DEFAULTS and (k not in report_data or not report_data.get(k))]
+        print("[PDF_EXPORT][DEBUG] Fehlende oder leere Felder im Report:", missing)
+    else:
+        print("[PDF_EXPORT][ERROR] Falscher Typ:", type(report_data))
+        raise ValueError("Report-Daten müssen ein Dict sein!")
+
+    # Markdown-Felder zu HTML konvertieren
+    markdown_fields = [
+        "executive_summary", "gesamtstrategie", "compliance", "innovation", "datenschutz",
+        "roadmap", "praxisbeispiele", "tools", "foerderprogramme", "moonshot_vision", "eu_ai_act",
+        "branchenueberblick", "wettbewerb", "zielgruppen", "chancen_risiken", "empfehlungen", "bonus"
     ]
-    report_data_html = report_data.copy()
-    for key in keys_md:
-        if key in report_data_html:
-            report_data_html[key] = markdown_to_html(report_data_html[key])
+    for key in markdown_fields:
+        report[key] = markdown_to_html(report.get(key, ""))
 
-    # --- Checklisten einfügen
-    report_data_html["checklists_html"] = read_checklists()
-    # --- Datum/Jahr automatisch einfügen
-    report_data_html["date"] = datetime.datetime.now().strftime("%d.%m.%Y")
-    report_data_html["year"] = datetime.datetime.now().year
+    # Checklisten einfügen (optional, je nach Template)
+    report["checklists_html"] = read_checklists()
 
-    # --- Fallback für report_name
-    if "report" not in report_data_html:
-        report_data_html["report"] = report_data_html
+    # Datum/ Jahr eintragen, falls nicht gesetzt
+    if not report["date"]:
+        report["date"] = datetime.datetime.now().strftime("%d.%m.%Y")
+    if not report["year"]:
+        report["year"] = datetime.datetime.now().year
 
-    # --- HTML Rendering mit Jinja2
+    # PDF-Dateipfad
+    downloads_dir = ensure_downloads_dir()
+    filename_base = (report.get("org_name", "KI-Readiness").replace(" ", "_") or "KI-Readiness")
+    filename = get_safe_filename(filename_base)
+    pdf_path = os.path.join(downloads_dir, filename)
+
+    # PDF-Template laden & rendern
     try:
         env = Environment(
             loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates")),
-            autoescape=select_autoescape(['html'])
+            autoescape=select_autoescape(["html", "xml"])
         )
         template = env.get_template("pdf_template.html")
-        html_content = template.render(**report_data_html)
+        html_content = template.render(report=report)
     except Exception as e:
-        raise RuntimeError(f"PDF-Template konnte nicht geladen/rendered werden: {e}")
+        print("[PDF_EXPORT][ERROR] PDF-Template konnte nicht geladen/gerendert werden:", e)
+        raise RuntimeError(f"PDF-Template konnte nicht geladen/gerendert werden: {e}")
 
-    # --- PDF Generierung
+    # PDF generieren und speichern
     try:
         HTML(string=html_content, base_url=downloads_dir).write_pdf(pdf_path)
-        print(f"[PDF_EXPORT] PDF erfolgreich erzeugt: {pdf_path}")
+        print(f"[PDF_EXPORT] PDF erfolgreich erstellt: {pdf_path}")
+        return os.path.basename(pdf_path)
     except Exception as e:
+        print("[PDF_EXPORT][ERROR] PDF-Erstellung fehlgeschlagen:", e)
         raise RuntimeError(f"PDF-Erstellung fehlgeschlagen: {e}")
-
-    if not os.path.exists(pdf_path):
-        raise FileNotFoundError(f"[PDF_EXPORT] PDF-Datei fehlt nach Export! ({pdf_path})")
-    return os.path.basename(pdf_path)
-
-# --- Hinweis zur Nutzung von Logos (siehe Template-Kommentar)
-# Für statische Assets: z.B. unter /app/templates oder /app/static/logo.svg
-# Nutzung im Template: <img src="/static/logo.svg"> oder rel. <img src="logo.svg">
-

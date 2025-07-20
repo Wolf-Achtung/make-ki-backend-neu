@@ -12,6 +12,7 @@ import csv
 import io
 import jwt
 import bcrypt
+import traceback
 
 from gpt_analyze import analyze_full_report   # <- Dein zentrales GPT-Modul
 from pdf_export import export_pdf             # <- PDF-Modul im /downloads/ Ordner
@@ -37,7 +38,11 @@ app.add_middleware(
 
 # --- DB HELPER ---
 def get_db():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    except Exception as e:
+        print(f"[DB][ERROR] Verbindung fehlgeschlagen: {e}")
+        raise HTTPException(status_code=500, detail="Verbindung zur Datenbank fehlgeschlagen.")
 
 # --- JWT AUTH ---
 def verify_token(auth_header: str):
@@ -48,7 +53,8 @@ def verify_token(auth_header: str):
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except Exception:
+    except Exception as e:
+        print(f"[JWT][ERROR] {e}")
         raise HTTPException(status_code=401, detail="Invalid token")
     return payload
 
@@ -61,13 +67,17 @@ def verify_admin(auth_header: str):
 # --- LOGIN ---
 @app.post("/api/login")
 async def login(data: dict):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM users WHERE email = %s", (data["email"],))
-            user = cur.fetchone()
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM users WHERE email = %s", (data["email"],))
+                user = cur.fetchone()
+    except Exception as e:
+        print(f"[LOGIN][ERROR] {e}")
+        raise HTTPException(status_code=500, detail="DB-Fehler beim Login")
     if not user:
         raise HTTPException(status_code=401, detail="Unbekannter Benutzer")
-    # Passwort-Hash-Check (bcrypt, sicher!)
+    # Passwort-Hash-Check (bcrypt)
     if not bcrypt.checkpw(data["password"].encode(), user["password_hash"].encode()):
         raise HTTPException(status_code=401, detail="Falsches Passwort")
     token = jwt.encode(
@@ -80,32 +90,51 @@ async def login(data: dict):
 # --- KI-BRIEFING (Analyse + PDF, Sofort-Download, Logging inkl. E-Mail) ---
 @app.post("/api/briefing")
 async def create_briefing(request: Request, authorization: str = Header(None)):
-    data = await request.json()
+    try:
+        data = await request.json()
+    except Exception as e:
+        print(f"[BRIEFING][ERROR] Ungültiges JSON: {e}")
+        raise HTTPException(status_code=400, detail="Ungültige JSON-Daten")
+
     # Token auslesen (E-Mail für Logging)
     email = None
     if authorization and authorization.startswith("Bearer "):
         try:
             payload = jwt.decode(authorization.split()[1], SECRET_KEY, algorithms=["HS256"])
             email = payload.get("email")
-        except Exception:
+        except Exception as e:
+            print(f"[JWT][WARN] {e}")
             email = data.get("email", "fallback")
     else:
         email = data.get("email", "fallback")
     print(f"🧠 Briefing-Daten empfangen von {email}")
-    result = analyze_full_report(data)      # <- Zentrale GPT-Analyse
+
+    try:
+        result = analyze_full_report(data)      # <- Zentrale GPT-Analyse
+    except Exception as e:
+        print(f"[GPT][ERROR] Analyse fehlgeschlagen: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="KI-Analyse fehlgeschlagen.")
 
     # Logging mit E-Mail und Rohdaten
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO usage_logs (email, pdf_type, created_at, raw_data) VALUES (%s, %s, NOW(), %s)",
-                (email, "briefing", json.dumps(data, ensure_ascii=False))
-            )
-            conn.commit()
-    pdf_filename = export_pdf(result)       # <- PDF wird erzeugt und im downloads/ Ordner gespeichert
-    file_path = os.path.join(os.path.dirname(__file__), "downloads", pdf_filename)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="PDF nicht gefunden")
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO usage_logs (email, pdf_type, created_at, raw_data) VALUES (%s, %s, NOW(), %s)",
+                    (email, "briefing", json.dumps(data, ensure_ascii=False))
+                )
+                conn.commit()
+    except Exception as e:
+        print(f"[DB][WARN] Logging fehlgeschlagen: {e}")
+
+    try:
+        pdf_filename = export_pdf(result)       # <- PDF wird erzeugt und im downloads/ Ordner gespeichert
+        file_path = os.path.join(os.path.dirname(__file__), "downloads", pdf_filename)
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="PDF nicht gefunden")
+    except Exception as e:
+        print(f"[PDF][ERROR] Export oder Zugriff fehlgeschlagen: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="PDF-Export fehlgeschlagen.")
     # Direkter Download als Response
     return FileResponse(file_path, media_type="application/pdf", filename=pdf_filename)
 
@@ -121,13 +150,21 @@ async def get_pdf_download(file: str, authorization: str = Header(None)):
 # --- FEEDBACK ---
 @app.post("/api/feedback")
 async def submit_feedback(request: Request):
-    data = await request.json()
-    email = data.get("tipp_email") or data.get("email", "unbekannt")
-    feedback_json = json.dumps(data, ensure_ascii=False)
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("INSERT INTO feedback_logs (email, feedback_data, created_at) VALUES (%s, %s, NOW())", (email, feedback_json))
-            conn.commit()
+    try:
+        data = await request.json()
+        email = data.get("tipp_email") or data.get("email", "unbekannt")
+        feedback_json = json.dumps(data, ensure_ascii=False)
+    except Exception as e:
+        print(f"[FEEDBACK][ERROR] {e}")
+        raise HTTPException(status_code=400, detail="Ungültige Feedback-Daten")
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO feedback_logs (email, feedback_data, created_at) VALUES (%s, %s, NOW())", (email, feedback_json))
+                conn.commit()
+    except Exception as e:
+        print(f"[DB][WARN] Feedback-Logging fehlgeschlagen: {e}")
+        raise HTTPException(status_code=500, detail="Feedback konnte nicht gespeichert werden")
     return {"status": "success", "message": "Feedback gespeichert"}
 
 # --- ADMIN CSV: NUTZUNG inkl. Rohdaten (Download aller Analysen inkl. E-Mail) ---
@@ -141,10 +178,14 @@ def export_usage_logs(start: str = None, end: str = None, authorization: str = H
           AND (%s IS NULL OR created_at <= %s)
         ORDER BY created_at DESC
     """
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query, (start, start, end, end))
-            rows = cur.fetchall()
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (start, start, end, end))
+                rows = cur.fetchall()
+    except Exception as e:
+        print(f"[ADMIN][ERROR] Export-Usage-Logs: {e}")
+        raise HTTPException(status_code=500, detail="Fehler beim Export der Nutzungsdaten.")
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=["id", "email", "pdf_type", "created_at", "raw_data"])
     writer.writeheader()
@@ -156,10 +197,14 @@ def export_usage_logs(start: str = None, end: str = None, authorization: str = H
 def export_feedback_logs(authorization: str = Header(None)):
     verify_admin(authorization)
     query = "SELECT * FROM feedback_logs ORDER BY created_at DESC"
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query)
-            rows = cur.fetchall()
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                rows = cur.fetchall()
+    except Exception as e:
+        print(f"[ADMIN][ERROR] Export-Feedback-Logs: {e}")
+        raise HTTPException(status_code=500, detail="Fehler beim Export der Feedbackdaten.")
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=["id", "email", "feedback_data", "created_at"])
     writer.writeheader()
@@ -171,19 +216,27 @@ def export_feedback_logs(authorization: str = Header(None)):
 def get_feedback_logs(authorization: str = Header(None)):
     verify_admin(authorization)
     query = "SELECT email, feedback_data, created_at FROM feedback_logs ORDER BY created_at DESC"
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query)
-            return cur.fetchall()
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                return cur.fetchall()
+    except Exception as e:
+        print(f"[ADMIN][ERROR] Feedback-Logs abrufen: {e}")
+        raise HTTPException(status_code=500, detail="Feedbackdaten konnten nicht abgerufen werden.")
 
 # --- ADMIN: Einzelne Analyse/Briefing als JSON einsehen (inkl. E-Mail) ---
 @app.get("/api/usage-detail")
 def get_usage_detail(usage_id: int, authorization: str = Header(None)):
     verify_admin(authorization)
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM usage_logs WHERE id = %s", (usage_id,))
-            entry = cur.fetchone()
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM usage_logs WHERE id = %s", (usage_id,))
+                entry = cur.fetchone()
+    except Exception as e:
+        print(f"[ADMIN][ERROR] Usage-Detail: {e}")
+        raise HTTPException(status_code=500, detail="Eintrag konnte nicht geladen werden.")
     if not entry:
         raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
     return entry
