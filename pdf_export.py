@@ -52,6 +52,9 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
     # Das aktuelle Jahr bereitstellen
     report_data_html["jahr"] = datetime.datetime.now().year
 
+    # Optional: Falls das Template noch auf report.xyz referenziert, dies ergänzen:
+    # report_data_html["report"] = report_data_html
+
     # HTML Rendering
     try:
         env = Environment(
@@ -68,7 +71,7 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
     print(f"[PDF_EXPORT] Geplante PDF-Datei: {pdf_path}")
 
     try:
-        HTML(string=html_content).write_pdf(pdf_path)
+        HTML(string=html_content, base_url=os.path.dirname(__file__)).write_pdf(pdf_path)
         print(f"[PDF_EXPORT] PDF erfolgreich erzeugt: {pdf_path}")
     except Exception as e:
         print(f"[PDF_EXPORT][ERROR] PDF-Erstellung fehlgeschlagen: {e}")
@@ -80,3 +83,8 @@ def export_pdf(report_data, filename="KI-Readiness-Report.pdf"):
         print(f"[PDF_EXPORT][ERROR] PDF-Datei fehlt nach Export! ({pdf_path})")
 
     return os.path.basename(pdf_path)
+
+# Hinweise zu Logos:
+# Damit WeasyPrint Bilder korrekt einbettet, sollten Logos z.B. unter /app/templates oder /app/static/logo.svg liegen
+# Im Template muss die Pfadangabe relativ zum PDF-Export (base_url=...) oder als absolute URL erfolgen:
+# Beispiel im HTML: <img src="static/logo.svg"> oder <img src="https://deine-domain.de/static/logo.svg">
