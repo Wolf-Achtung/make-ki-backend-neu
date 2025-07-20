@@ -1,11 +1,11 @@
+# --- IMPORTS & SETUP ---
 import os
 import json
 import psycopg2
 import psycopg2.extras
-from fastapi import FastAPI, Request, HTTPException, Header, Depends, Form
+from fastapi import FastAPI, Request, HTTPException, Header, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
-from pdf_export import export_pdf
 from dotenv import load_dotenv
 import datetime
 import csv
@@ -13,25 +13,33 @@ import io
 import jwt
 import bcrypt
 
-# --- Load environment ---
+from gpt_analyze import analyze_full_report   # <- Dein zentrales GPT-Modul
+from pdf_export import export_pdf             # <- PDF-Modul im /downloads/ Ordner
+
+# --- ENV-VARIABLEN LADEN ---
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 SECRET_KEY = os.getenv("SECRET_KEY", "my-secret")
 
-# --- App & CORS Setup ---
+# --- FASTAPI & CORS ---
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://make.ki-sicherheit.jetzt", "http://localhost:8888"],
+    allow_origins=[
+        "https://make.ki-sicherheit.jetzt",
+        "http://localhost",
+        "http://127.0.0.1"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- DB & Auth Helpers ---
+# --- DB HELPER ---
 def get_db():
     return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
 
+# --- JWT AUTH ---
 def verify_token(auth_header: str):
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
@@ -59,7 +67,7 @@ async def login(data: dict):
             user = cur.fetchone()
     if not user:
         raise HTTPException(status_code=401, detail="Unbekannter Benutzer")
-    # Sichere Passwort-Prüfung (bcrypt)
+    # Passwort-Hash-Check (bcrypt, sicher!)
     if not bcrypt.checkpw(data["password"].encode(), user["password_hash"].encode()):
         raise HTTPException(status_code=401, detail="Falsches Passwort")
     token = jwt.encode(
@@ -68,29 +76,41 @@ async def login(data: dict):
         algorithm="HS256"
     )
     return {"token": token}
-
-# --- KI-BRIEFING (PDF-GENERIERUNG) ---
+# --- KI-BRIEFING (Analyse + PDF, Sofort-Download) ---
 @app.post("/api/briefing")
 async def create_briefing(request: Request, authorization: str = Header(None)):
     data = await request.json()
-    # Token-Check (email auslesen)
+    # Token auslesen (E-Mail für Logging)
     email = None
     if authorization and authorization.startswith("Bearer "):
-        payload = jwt.decode(authorization.split()[1], SECRET_KEY, algorithms=["HS256"])
-        email = payload.get("email")
+        try:
+            payload = jwt.decode(authorization.split()[1], SECRET_KEY, algorithms=["HS256"])
+            email = payload.get("email")
+        except Exception:
+            email = data.get("email", "fallback")
     else:
         email = data.get("email", "fallback")
-    result = full_report(data)
+    print(f"🧠 Briefing-Daten empfangen von {email}")
+    result = analyze_full_report(data)      # <- Zentrale GPT-Analyse
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("INSERT INTO usage_logs (email, pdf_type, created_at) VALUES (%s, %s, NOW())", (email, "briefing"))
-        conn.commit()
-    pdf_filename = export_pdf(result)
-    # -> Sofort-Download: Datei direkt als Response
+            conn.commit()
+    pdf_filename = export_pdf(result)       # <- PDF wird erzeugt und im downloads/ Ordner gespeichert
     file_path = os.path.join(os.path.dirname(__file__), "downloads", pdf_filename)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="PDF nicht gefunden")
+    # Direkter Download als Response
     return FileResponse(file_path, media_type="application/pdf", filename=pdf_filename)
+
+# --- PDF-DOWNLOAD ALT (Legacy, nur für alte Frontends) ---
+@app.get("/api/pdf-download")
+async def get_pdf_download(file: str, authorization: str = Header(None)):
+    verify_token(authorization)
+    file_path = os.path.join(os.path.dirname(__file__), "downloads", file)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="PDF nicht gefunden")
+    return FileResponse(file_path, media_type="application/pdf", filename=file)
 
 # --- FEEDBACK ---
 @app.post("/api/feedback")
@@ -101,18 +121,8 @@ async def submit_feedback(request: Request):
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("INSERT INTO feedback_logs (email, feedback_data, created_at) VALUES (%s, %s, NOW())", (email, feedback_json))
-        conn.commit()
+            conn.commit()
     return {"status": "success", "message": "Feedback gespeichert"}
-
-# --- PDF-DOWNLOAD ALT (NUR FALLBACK, nicht mehr empfohlen) ---
-@app.get("/api/pdf-download")
-async def get_pdf_download(file: str, authorization: str = Header(None)):
-    # Für Legacy-Frontend, ersetzt durch Sofort-Download in /api/briefing!
-    payload = verify_token(authorization)
-    file_path = os.path.join(os.path.dirname(__file__), "downloads", file)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="PDF nicht gefunden")
-    return FileResponse(file_path, media_type="application/pdf", filename=file)
 
 # --- ADMIN CSV: NUTZUNG ---
 @app.get("/api/export-usage")
