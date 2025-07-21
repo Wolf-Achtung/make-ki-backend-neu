@@ -119,17 +119,20 @@ async def feedback(data: dict, authorization: str = Header(None)):
     payload = verify_token(authorization)
     email = payload.get("email")
     try:
+        kommentar = data.get("kommentar", "")   # <--- Robust gegen fehlendes Feld!
+        nuetzlich = data.get("nützlich", "")    # Falls "nützlich" fehlt, auch leer.
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     "INSERT INTO feedback (email, kommentar, nützlich, created_at) VALUES (%s, %s, %s, NOW())",
-                    (email, data["kommentar"], data["nützlich"])
+                    (email, kommentar, nuetzlich)
                 )
-                conn.commit()
+            conn.commit()
         return {"message": "Feedback gespeichert"}
     except Exception as e:
         print("❌ Fehler bei /feedback:", e)
         raise HTTPException(status_code=500, detail="Feedback-Fehler")
+
 
 # --- ADMIN: LISTE ALLE PDFs ---
 @app.get("/admin/list")
