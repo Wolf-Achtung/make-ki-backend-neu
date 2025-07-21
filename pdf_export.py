@@ -14,27 +14,21 @@ PROJECT_ROOT = get_project_root()
 REPORT_DEFAULTS = {
     "executive_summary": "",
     "gesamtstrategie": "",
-    "compliance": "",
-    "innovation": "",
-    "datenschutz": "",
-    "roadmap": "",
-    "praxisbeispiele": "",
-    "tools": "",
-    "foerderprogramme": "",
-    "moonshot_vision": "",
-    "eu_ai_act": "",
-    "score_percent": "",
     "branchenueberblick": "",
     "wettbewerb": "",
     "zielgruppen": "",
     "chancen_risiken": "",
     "empfehlungen": "",
-    "bonus": "",
-    "org_name": "",
-    "contact_name": "",
-    "contact_email": "",
-    "date": "",
-    "year": "",
+    "roadmap": "",
+    "innovation": "",
+    "praxisbeispiele": "",
+    "compliance": "",
+    "datenschutz": "",
+    "tools": "",
+    "foerderprogramme": "",
+    "checklisten": "",
+    "moonshot_vision": "",
+    "eu_ai_act": "",
 }
 
 # Markdown zu HTML-Konvertierung
@@ -81,10 +75,10 @@ def export_pdf(report_data):
         raise ValueError("Report-Daten müssen ein Dict sein!")
 
     markdown_fields = [
-        "executive_summary", "gesamtstrategie", "compliance", "innovation", "datenschutz",
-        "roadmap", "praxisbeispiele", "tools", "foerderprogramme", "moonshot_vision", "eu_ai_act",
-        "branchenueberblick", "wettbewerb", "zielgruppen", "chancen_risiken", "empfehlungen", "bonus"
-    ]
+    "executive_summary", "gesamtstrategie", "branchenueberblick", "wettbewerb", "zielgruppen",
+    "chancen_risiken", "empfehlungen", "roadmap", "innovation", "praxisbeispiele", "compliance",
+    "datenschutz", "tools", "foerderprogramme", "moonshot_vision", "eu_ai_act"
+]
     for key in markdown_fields:
         report[key] = markdown_to_html(report.get(key, ""))
 
