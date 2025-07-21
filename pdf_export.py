@@ -14,19 +14,17 @@ PROJECT_ROOT = get_project_root()
 REPORT_DEFAULTS = {
     "executive_summary": "",
     "gesamtstrategie": "",
-    "branchenueberblick": "",
-    "wettbewerb": "",
-    "zielgruppen": "",
-    "chancen_risiken": "",
-    "empfehlungen": "",
     "roadmap": "",
     "innovation": "",
     "praxisbeispiele": "",
     "compliance": "",
     "datenschutz": "",
-    "tools": "",
     "foerderprogramme": "",
-    "checklisten": "",
+    "foerdermittel": "",
+    "tools": "",
+    "summary_klein": "",
+    "summary_kmu": "",
+    "summary_solo": "",
     "moonshot_vision": "",
     "eu_ai_act": "",
 }
@@ -75,19 +73,14 @@ def export_pdf(report_data):
         raise ValueError("Report-Daten müssen ein Dict sein!")
 
     markdown_fields = [
-    "executive_summary", "gesamtstrategie", "branchenueberblick", "wettbewerb", "zielgruppen",
-    "chancen_risiken", "empfehlungen", "roadmap", "innovation", "praxisbeispiele", "compliance",
-    "datenschutz", "tools", "foerderprogramme", "moonshot_vision", "eu_ai_act"
+    "executive_summary", "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", 
+    "compliance", "datenschutz", "foerderprogramme", "foerdermittel", "tools", "summary_klein",
+    "summary_kmu", "summary_solo", "moonshot_vision", "eu_ai_act"
 ]
     for key in markdown_fields:
         report[key] = markdown_to_html(report.get(key, ""))
 
     report["checklisten"] = read_checklists()
-
-    if not report["date"]:
-        report["date"] = datetime.datetime.now().strftime("%d.%m.%Y")
-    if not report["year"]:
-        report["year"] = datetime.datetime.now().year
 
     downloads_dir = ensure_downloads_dir()
     filename_base = (report.get("org_name", "KI-Readiness").replace(" ", "_") or "KI-Readiness")
