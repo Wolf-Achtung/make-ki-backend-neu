@@ -77,7 +77,6 @@ async def login(data: dict):
         raise HTTPException(status_code=500, detail="DB-Fehler beim Login")
     if not user:
         raise HTTPException(status_code=401, detail="Unbekannter Benutzer")
-    # Passwort-Hash-Check (bcrypt)
     if not bcrypt.checkpw(data["password"].encode(), user["password_hash"].encode()):
         raise HTTPException(status_code=401, detail="Falsches Passwort")
     token = jwt.encode(
@@ -86,167 +85,94 @@ async def login(data: dict):
         algorithm="HS256"
     )
     return {"token": token}
-
-# --- KI-BRIEFING (Analyse + PDF, Sofort-Download, Logging inkl. E-Mail) ---
-@app.post("/api/briefing")
+# --- BRIEFING ---
+@app.post("/briefing")
 async def create_briefing(request: Request, authorization: str = Header(None)):
+    payload = verify_token(authorization)
+    email = payload.get("email")
     try:
         data = await request.json()
+        print(f"🧠 Briefing-Daten empfangen von {email}")
+        print("### DEBUG: calc_score_percent(data) wird ausgeführt ###")
+        result = analyze_full_report(data)
+        print(f"### DEBUG: score_percent berechnet: {result.get('score_percent')}")
+        result["email"] = email
+        pdf_file = export_pdf(result)
+        print(f"📄 PDF-Datei erstellt: {pdf_file}")
+        # Protokollierung in der Datenbank
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO usage_logs (email, pdf_type, created_at) VALUES (%s, %s, NOW())",
+                    (email, "briefing")
+                )
+                conn.commit()
+        return {"pdf_file": pdf_file}
     except Exception as e:
-        print(f"[BRIEFING][ERROR] Ungültiges JSON: {e}")
-        raise HTTPException(status_code=400, detail="Ungültige JSON-Daten")
+        print("❌ Fehler bei /briefing:", e)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Interner Fehler")
 
-    # Token auslesen (E-Mail für Logging)
-    email = None
-    if authorization and authorization.startswith("Bearer "):
-        try:
-            payload = jwt.decode(authorization.split()[1], SECRET_KEY, algorithms=["HS256"])
-            email = payload.get("email")
-        except Exception as e:
-            print(f"[JWT][WARN] {e}")
-            email = data.get("email", "fallback")
-    else:
-        email = data.get("email", "fallback")
-    print(f"🧠 Briefing-Daten empfangen von {email}")
-
-    try:
-        result = analyze_full_report(data)      # Zentrale GPT-Analyse
-    except Exception as e:
-        print(f"[GPT][ERROR] Analyse fehlgeschlagen: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail="KI-Analyse fehlgeschlagen.")
-
-    # Logging mit E-Mail und Rohdaten
+# --- FEEDBACK SPEICHERN ---
+@app.post("/feedback")
+async def feedback(data: dict, authorization: str = Header(None)):
+    payload = verify_token(authorization)
+    email = payload.get("email")
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "INSERT INTO usage_logs (email, pdf_type, created_at, raw_data) VALUES (%s, %s, NOW(), %s)",
-                    (email, "briefing", json.dumps(data, ensure_ascii=False))
+                    "INSERT INTO feedback (email, kommentar, nützlich, created_at) VALUES (%s, %s, %s, NOW())",
+                    (email, data["kommentar"], data["nützlich"])
                 )
                 conn.commit()
+        return {"message": "Feedback gespeichert"}
     except Exception as e:
-        print(f"[DB][WARN] Logging fehlgeschlagen: {e}")
+        print("❌ Fehler bei /feedback:", e)
+        raise HTTPException(status_code=500, detail="Feedback-Fehler")
 
-    try:
-        pdf_filename = export_pdf(result)       # PDF wird erzeugt und im downloads/ Ordner gespeichert
-        file_path = os.path.join(os.path.dirname(__file__), "downloads", pdf_filename)
-        if not os.path.exists(file_path):
-            raise HTTPException(status_code=404, detail="PDF nicht gefunden")
-    except Exception as e:
-        print(f"[PDF][ERROR] Export oder Zugriff fehlgeschlagen: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail="PDF-Export fehlgeschlagen.")
-    # Direkter Download als Response
-    return FileResponse(file_path, media_type="application/pdf", filename=pdf_filename)
-
-# --- PDF-DOWNLOAD ALT (Legacy, nur für alte Frontends) ---
-@app.get("/api/pdf-download")
-async def get_pdf_download(file: str, authorization: str = Header(None)):
-    verify_token(authorization)
-    file_path = os.path.join(os.path.dirname(__file__), "downloads", file)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="PDF nicht gefunden")
-    return FileResponse(file_path, media_type="application/pdf", filename=file)
-
-# --- FEEDBACK ---
-@app.post("/api/feedback")
-async def submit_feedback(request: Request):
-    try:
-        data = await request.json()
-        email = data.get("tipp_email") or data.get("email", "unbekannt")
-        feedback_json = json.dumps(data, ensure_ascii=False)
-    except Exception as e:
-        print(f"[FEEDBACK][ERROR] {e}")
-        raise HTTPException(status_code=400, detail="Ungültige Feedback-Daten")
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("INSERT INTO feedback_logs (email, feedback_data, created_at) VALUES (%s, %s, NOW())", (email, feedback_json))
-                conn.commit()
-    except Exception as e:
-        print(f"[DB][WARN] Feedback-Logging fehlgeschlagen: {e}")
-        raise HTTPException(status_code=500, detail="Feedback konnte nicht gespeichert werden")
-    return {"status": "success", "message": "Feedback gespeichert"}
-
-# --- ADMIN CSV: NUTZUNG inkl. Rohdaten (Download aller Analysen inkl. E-Mail) ---
-@app.get("/api/export-usage")
-def export_usage_logs(start: str = None, end: str = None, authorization: str = Header(None)):
+# --- ADMIN: LISTE ALLE PDFs ---
+@app.get("/admin/list")
+def list_all(authorization: str = Header(None)):
     verify_admin(authorization)
-    query = """
-        SELECT id, email, pdf_type, created_at, raw_data
-        FROM usage_logs
-        WHERE (%s IS NULL OR created_at >= %s)
-          AND (%s IS NULL OR created_at <= %s)
-        ORDER BY created_at DESC
-    """
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, (start, start, end, end))
-                rows = cur.fetchall()
-    except Exception as e:
-        print(f"[ADMIN][ERROR] Export-Usage-Logs: {e}")
-        raise HTTPException(status_code=500, detail="Fehler beim Export der Nutzungsdaten.")
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=["id", "email", "pdf_type", "created_at", "raw_data"])
-    writer.writeheader()
-    writer.writerows(rows)
-    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=usage_logs.csv"})
-
-# --- ADMIN CSV: FEEDBACK ---
-@app.get("/api/export-feedback")
-def export_feedback_logs(authorization: str = Header(None)):
-    verify_admin(authorization)
-    query = "SELECT * FROM feedback_logs ORDER BY created_at DESC"
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query)
-                rows = cur.fetchall()
-    except Exception as e:
-        print(f"[ADMIN][ERROR] Export-Feedback-Logs: {e}")
-        raise HTTPException(status_code=500, detail="Fehler beim Export der Feedbackdaten.")
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=["id", "email", "feedback_data", "created_at"])
-    writer.writeheader()
-    writer.writerows(rows)
-    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=feedback_logs.csv"})
-
-# --- ADMIN JSON: FEEDBACK EINSEHEN ---
-@app.get("/api/feedback-logs")
-def get_feedback_logs(authorization: str = Header(None)):
-    verify_admin(authorization)
-    query = "SELECT email, feedback_data, created_at FROM feedback_logs ORDER BY created_at DESC"
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query)
+                cur.execute("SELECT * FROM usage_logs ORDER BY created_at DESC")
                 return cur.fetchall()
     except Exception as e:
-        print(f"[ADMIN][ERROR] Feedback-Logs abrufen: {e}")
-        raise HTTPException(status_code=500, detail="Feedbackdaten konnten nicht abgerufen werden.")
+        print(f"[Admin][list] Fehler: {e}")
+        raise HTTPException(status_code=500, detail="Datenbankfehler")
 
-# --- ADMIN: Einzelne Analyse/Briefing als JSON einsehen (inkl. E-Mail) ---
-@app.get("/api/usage-detail")
-def get_usage_detail(usage_id: int, authorization: str = Header(None)):
+# --- ADMIN: ALLE ENTRIES ALS CSV ---
+@app.get("/admin/export")
+def export_csv(authorization: str = Header(None)):
     verify_admin(authorization)
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT * FROM usage_logs WHERE id = %s", (usage_id,))
-                entry = cur.fetchone()
+                cur.execute("SELECT * FROM usage_logs ORDER BY created_at DESC")
+                rows = cur.fetchall()
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=usage_logs.csv"}
+        )
     except Exception as e:
-        print(f"[ADMIN][ERROR] Usage-Detail: {e}")
-        raise HTTPException(status_code=500, detail="Eintrag konnte nicht geladen werden.")
-    if not entry:
-        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
-    return entry
+        print(f"[Admin][export] Fehler: {e}")
+        raise HTTPException(status_code=500, detail="Export-Fehler")
 
-# --- STATUS ---
-@app.get("/api/status")
-def get_status():
-    return {"status": "ok", "message": "KI-Backend läuft 🟢"}
-
-# --- ROOT ---
-@app.get("/")
-def root():
-    return {"message": "Willkommen im KI-Backend"}
+# --- RAILWAY-KOMPATIBLER DOWNLOAD ---
+@app.get("/download/{pdf_file}")
+def download_pdf(pdf_file: str, authorization: str = Header(None)):
+    verify_token(authorization)  # Kein Admin nötig, nur gültiger Login
+    base_path = os.path.dirname(__file__)
+    path = os.path.join(base_path, "downloads", pdf_file)
+    print(f"⬇️ PDF-Download angefragt: {pdf_file}")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="PDF nicht gefunden")
+    return FileResponse(path, media_type="application/pdf", filename=pdf_file)
