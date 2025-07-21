@@ -2,193 +2,250 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>{{ company_name or "KI-Readiness Report" }}</title>
+    <title>{{ report_title or "KI-Readiness Report" }}</title>
     <style>
         body {
-        font-family: 'Fira Mono', 'Arial', sans-serif;
-        color: #1e293b;
-        background: #f7f9fa;
-        margin: 0;
-        padding: 0 0 80px 0;
-        /* Neu für Footer am unteren Rand: */
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
+            font-family: 'Fira Mono', 'Arial', sans-serif;
+            color: #193b6e;
+            background: #f9fbfd;
+            margin: 0;
+            padding: 0 0 120px 0;
+            min-height: 100vh;
         }
         header, section {
-            margin: 0 auto 36px auto;
+            margin: 0 auto 44px auto;
             max-width: 900px;
-            padding: 0 32px;
+            padding: 0 44px;
         }
-        h1, h2 {
+        h1, h2, h3, h4 {
             font-family: 'Fira Mono', 'Arial', monospace;
-            letter-spacing: 2px;
-            margin-top: 42px;
         }
-        h1 { font-size: 2.8em; }
-        h2 { font-size: 2.0em; color: #1847a6; }
+        h1 { font-size: 2.8em; margin-bottom: 8px; }
+        h2 { font-size: 2.0em; color: #1762a6; margin-top: 38px; }
+        h3 { font-size: 1.2em; color: #164072; margin-top: 18px; margin-bottom: 12px; }
+        h4 { font-size: 1.08em; color: #286ad6; margin: 14px 0 7px 0; }
         .intro, .summary, .bonus, .footer { margin-bottom: 32px; }
         .box {
-            background: #e3eefe;
-            border-radius: 18px;
-            padding: 28px;
-            margin: 24px 0;
-            box-shadow: 0 2px 16px rgba(20,40,90,0.04);
+            background: #e7f0fa;
+            border-radius: 24px;
+            padding: 38px 36px 38px 36px;
+            margin: 32px 0;
+            box-shadow: 0 4px 28px rgba(30,72,150,0.09);
+            border-left: 8px solid #387cdf;
+            border-top: 4px solid #c7e2fb;
         }
-        ul, ol { margin-left: 20px; }
+        .section-label {
+            font-size: 1.12em;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #387cdf;
+            letter-spacing: 1.5px;
+            margin-top: 16px;
+            margin-bottom: 0;
+        }
+        ul, ol {
+            margin-left: 28px;
+            margin-bottom: 22px;
+            line-height: 1.7;
+        }
+        ul li, ol li {
+            background: #f5f9ff;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            padding: 7px 12px 7px 12px;
+            color: #193b6e;
+        }
         .checklist {
-            background: #f1faf6;
-            border-left: 8px solid #20a39e;
-            padding: 20px 24px;
-            border-radius: 12px;
-            margin: 36px 0;
+            background: #e3f8f5;
+            border-left: 10px solid #14b3ad;
+            padding: 26px 30px;
+            border-radius: 18px;
+            margin: 46px 0;
+        }
+        .bonus {
+            background: #fffbf0;
+            border-left: 10px solid #ffe177;
+        }
+        .pagebreak { 
+            page-break-before: always; 
+            height: 0; 
+            margin: 0; 
+            border: none;
+        }
+        .footer {
+            background: #1c3a6b;
+            color: #fff;
+            font-size: 1.10em;
+            padding: 36px 0 22px 0;
+            border-top-left-radius: 38px;
+            border-top-right-radius: 38px;
+            text-align: center;
+            width: 100%;
+            margin-top: 74px;
         }
         .logo-row img {
             height: 50px;
-            margin: 0 16px 0 0;
+            margin: 0 18px 0 0;
             vertical-align: middle;
-        }
-        .footer {
-            background: #1847a6;
-            color: #fff;
-            font-size: 1.08em;
-            padding: 24px 0 20px 0;
-            border-top-left-radius: 32px;
-            border-top-right-radius: 32px;
-            text-align: center;
-            width: 100%;
-            margin-top: 64px;
         }
         .highlight {
             font-weight: bold;
-            color: #1847a6;
+            color: #1762a6;
         }
-        .bonus {
-            background: #ffd53e2c;
-            border-left: 8px solid #ffd53e;
-        }
-        .section-label {
-            font-size: 1em;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #5475b5;
-            letter-spacing: 1px;
-            margin-top: 22px;
-            margin-bottom: 0;
-        }
-        .pagebreak { page-break-before: always; }
         .img-block {
             float: left;
             margin-right: 34px;
             margin-bottom: 14px;
-            width: 180px;
-            border-radius: 12px;
-            box-shadow: 0 1px 8px rgba(20,40,90,0.10);
+            width: 140px;
+            border-radius: 14px;
+            box-shadow: 0 1px 8px rgba(30,72,150,0.12);
         }
         .clearfix::after { content: ""; clear: both; display: table; }
+        /* Tabellen */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            background: #f8fbff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 13px 12px;
+            border-bottom: 1px solid #cde2f7;
+            font-size: 1em;
+        }
+        th {
+            background: #e3eefe;
+            color: #193b6e;
+            font-weight: bold;
+        }
+        tr:last-child td { border-bottom: none; }
+        /* Subheading aus Markdown: automatisch größer */
+        h3, h4 {
+            margin-top: 28px;
+        }
     </style>
 </head>
 <body>
-    <!-- Intro -->
     <header>
         <div class="clearfix">
-            <img src="logo.png" alt="Logo" class="img-block" style="width: 140px;">
+            <img src="ki-sicherheit-logo.png" alt="Logo" class="img-block">
             <h1>{{ report_title or "KI-Readiness Report" }}</h1>
             <div>
                 <p class="highlight">TÜV-zertifiziertes KI-Management, Ansprechpartner: Wolf Hohl, KI-Sicherheit.jetzt<br>
                 E-Mail: <a href="mailto:kontakt@ki-sicherheit.jetzt">kontakt@ki-sicherheit.jetzt</a></p>
                 <div class="logo-row">
-                    <img src="tuv.svg" alt="TÜV Zertifiziert">
-                    <img src="ki_ready_2025.svg" alt="KI-Ready 2025">
+                    <img src="tuev-logo-transparent.png" alt="TÜV Zertifiziert">
+                    <img src="ki-ready-2025.png" alt="KI-Ready 2025">
+                    <img src="eu-ai.svg" alt="KI-Ready 2025">
                     <img src="dsgvo.svg" alt="DSGVO-konform">
                 </div>
             </div>
         </div>
     </header>
-
-    <!-- Executive Summary -->
-    <section>
+    <section class="box summary">
         <div class="section-label">Executive Summary</div>
-        <div class="box summary">
-            {{ executive_summary | safe }}
-        </div>
+        {{ executive_summary | safe }}
     </section>
+    <div class="pagebreak"></div>
 
-    <!-- Gesamtstrategie -->
-    <section>
+    <section class="box">
         <div class="section-label">Strategische Gesamtempfehlung</div>
         {{ gesamtstrategie | safe }}
     </section>
+    <div class="pagebreak"></div>
 
-    <!-- Innovation + Praxisbeispiele -->
-    <section>
-        <div class="section-label">Innovation & Praxisbeispiele</div>
-        <div class="box">
-            {{ innovation | safe }}
-            {{ praxisbeispiele | safe }}
-        </div>
+    <section class="box">
+        <div class="section-label">Branchenüberblick</div>
+        {{ branchenueberblick | safe }}
     </section>
+    <div class="pagebreak"></div>
 
-    <!-- Roadmap -->
-    <section>
-        <div class="section-label">Roadmap & Next Steps</div>
-        <div class="box">
-            {{ roadmap | safe }}
-        </div>
+    <section class="box">
+        <div class="section-label">Wettbewerbslandschaft</div>
+        {{ wettbewerb | safe }}
     </section>
+    <div class="pagebreak"></div>
 
-    <!-- Compliance & Datenschutz -->
-    <section>
+    <section class="box">
+        <div class="section-label">Zielgruppen-Segmentierung</div>
+        {{ zielgruppen | safe }}
+    </section>
+    <div class="pagebreak"></div>
+
+    <section class="box">
+        <div class="section-label">Chancen & Risiken</div>
+        {{ chancen_risiken | safe }}
+    </section>
+    <div class="pagebreak"></div>
+
+    <section class="box">
+        <div class="section-label">Konkrete Handlungsempfehlungen</div>
+        {{ empfehlungen | safe }}
+    </section>
+    <div class="pagebreak"></div>
+
+    <section class="box">
+        <div class="section-label">Roadmap & Umsetzung</div>
+        {{ roadmap | safe }}
+    </section>
+    <div class="pagebreak"></div>
+
+    <section class="box">
+        <div class="section-label">Innovation & Zukunft</div>
+        {{ innovation | safe }}
+    </section>
+    <div class="pagebreak"></div>
+
+    <section class="box">
+        <div class="section-label">Praxisbeispiele</div>
+        {{ praxisbeispiele | safe }}
+    </section>
+    <div class="pagebreak"></div>
+
+    <section class="box">
         <div class="section-label">Compliance & Datenschutz</div>
-        <div class="box">
-            {{ compliance | safe }}
-            {{ datenschutz | safe }}
+        {{ compliance | safe }}
+        <hr style="border:0; border-top:2px solid #b8d2f7; margin:30px 0 22px 0;">
+        {{ datenschutz | safe }}
+    </section>
+    <div class="pagebreak"></div>
+
+    <section class="box">
+        <div class="section-label">Förderprogramme & Tools</div>
+        {{ foerderprogramme | safe }}
+        <hr style="border:0; border-top:2px solid #b8d2f7; margin:30px 0 22px 0;">
+        {{ tools | safe }}
+    </section>
+    <div class="pagebreak"></div>
+
+    <section class="box bonus">
+        <div class="section-label">Bonus-Module & Checklisten</div>
+        {{ bonus | safe }}
+        <div class="checklist">
+            {{ checklisten | safe }}
         </div>
     </section>
+    <div class="pagebreak"></div>
 
-    <!-- EU AI Act & Regulatorik -->
-    <section>
-        <div class="section-label">EU AI Act & Regulatorik</div>
-        <div class="box">
-            {{ eu_ai_act | safe }}
+    <section class="box">
+        <div class="section-label">Moonshot Vision (3–5 Jahre)</div>
+        {{ moonshot_vision | safe }}
+    </section>
+    <div class="pagebreak"></div>
+
+    <section class="box">
+        <div class="section-label">EU AI Act</div>
+        {{ eu_ai_act | safe }}
+    </section>
+    <div class="pagebreak"></div>
+
+    <footer class="footer">
+        <div>
+            <strong>© 2025 KI-Sicherheit.jetzt</strong> — Report powered by TÜV-zertifiziertes KI-Management<br>
+            Ansprechpartner: Wolf Hohl, <a href="mailto:kontakt@ki-sicherheit.jetzt" style="color:#ffe177;">kontakt@ki-sicherheit.jetzt</a>
         </div>
-    </section>
-
-    <!-- Tools & Fördermittel -->
-    <section>
-        <div class="section-label">Tools & Förderprogramme</div>
-        <div class="box">
-            {{ tools | safe }}
-            {{ foerdermittel | safe }}
-            {{ foerderprogramme | safe }}
-        </div>
-    </section>
-
-    <!-- Checklisten -->
-    {% if checklisten %}
-    <section>
-        <div class="section-label">Checklisten</div>
-        {% for checklist_html in checklisten %}
-            <div class="checklist">{{ checklist_html | safe }}</div>
-        {% endfor %}
-    </section>
-    {% endif %}
-
-    <!-- Bonus/Moonshot -->
-    {% if moonshot_vision %}
-    <section>
-        <div class="section-label">Moonshot Vision (Bonus)</div>
-        <div class="bonus box">
-            {{ moonshot_vision | safe }}
-        </div>
-    </section>
-    {% endif %}
-
-    <!-- Footer -->
-    <div class="footer">
-        TÜV-zertifiziertes KI-Management, Ansprechpartner: Wolf Hohl, KI-Sicherheit.jetzt<br>
-        E-Mail: kontakt@ki-sicherheit.jetzt<br>
-        Copyright © 2025 Wolf Hohl – KI-Sicherheit.jetzt
-    </div>
+    </footer>
 </body>
 </html>
