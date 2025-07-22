@@ -18,7 +18,6 @@
             margin: 36px auto;
             background: #fff;
             border-radius: 18px;
-            box-shadow: 0 4px 28px rgba(48, 76, 134, 0.13);
             padding: 42px 48px 40px 48px;
         }
         h1, h2, h3 {
@@ -37,6 +36,8 @@
             margin-bottom: 6px;
             border-bottom: 1.5px solid #e0e9f6;
             padding-bottom: 4px;
+            page-break-before: always;
+            break-before: page;
         }
         h3 {
             font-size: 1.12rem;
@@ -59,23 +60,23 @@
             text-align: center;
         }
         .cover-logos {
-            margin-bottom: 38px;
+            margin: 26px 0 38px 0;
             display: flex;
-            gap: 42px;
+            gap: 38px;
             align-items: center;
             justify-content: center;
         }
         .cover-logos img {
-            height: 84px;
-            max-width: 180px;
+            height: 62px;
+            max-width: 135px;
         }
         .main-logo {
-            height: 92px;
-            margin-bottom: 16px;
+            height: 105px;
+            margin-bottom: 20px;
         }
         .big-title {
             color: #23487A;
-            font-size: 2.6rem;
+            font-size: 2.7rem;
             font-weight: 900;
             margin-bottom: 18px;
             letter-spacing: 1.2px;
@@ -84,7 +85,7 @@
             color: #2867B2;
             font-size: 1.45rem;
             font-weight: 500;
-            margin-bottom: 32px;
+            margin-bottom: 30px;
         }
         .badge {
             background: #2867b2;
@@ -92,8 +93,8 @@
             display: inline-block;
             padding: 6px 22px;
             border-radius: 12px;
-            font-size: 1.05rem;
-            margin-bottom: 18px;
+            font-size: 1.06rem;
+            margin-bottom: 15px;
             letter-spacing: 0.7px;
         }
         .toc {
@@ -101,7 +102,6 @@
             padding: 28px 30px;
             background: #f0f5fb;
             border-radius: 15px;
-            box-shadow: 0 1px 9px rgba(48, 76, 134, 0.08);
         }
         .toc h2 {
             border-bottom: none;
@@ -127,12 +127,18 @@
             text-decoration: underline;
         }
         .footer {
-            font-size: 0.92rem;
+            font-size: 0.89rem;
             color: #7b8ca3;
-            border-top: 1.5px solid #ecf2fa;
-            padding-top: 18px;
-            margin-top: 48px;
+            border-top: 1.3px solid #ecf2fa;
+            padding-top: 10px;
+            margin-top: 36px;
             text-align: center;
+            opacity: 0.89;
+            width: 100%;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            background: #fff;
         }
         @media print {
             .report-container {
@@ -140,38 +146,50 @@
                 border-radius: 0 !important;
                 padding: 18px 8px;
             }
-            .section {
+            h2, .section {
+                page-break-before: always;
+                break-before: page;
                 page-break-inside: avoid;
                 break-inside: avoid-page;
             }
-            .footer { page-break-before: always; }
+            .footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100vw;
+                font-size: 0.82em;
+                color: #aaa;
+                background: #fff;
+                border-top: 1px solid #eaeaea;
+                opacity: 0.82;
+                z-index: 99;
+                padding: 4px 0 4px 0;
+            }
         }
     </style>
 </head>
 <body>
     <!-- TITELSEITE -->
-<div class="report-container cover" style="page-break-after: always;">
-    <div class="main-logo" style="display:flex;align-items:center;justify-content:center;background:#ddeaff;border-radius:15px;font-size:2rem;font-weight:700;color:#23487A;height:92px;width:320px;margin-bottom:16px;">
-        KI-SICHERHEIT<br>TEXT-LOGO
+    <div class="report-container cover" style="page-break-after: always;">
+        <img src="ki-sicherheit-logo.png" class="main-logo" alt="KI-Sicherheit Logo">
+        <div class="big-title">KI-Readiness-Report 2025</div>
+        <div class="subtitle">Zukunftssichere KI-Strategie für Unternehmen</div>
+        <div class="cover-logos">
+            <img src="dsgvo.svg" alt="DSGVO-Logo">
+            <img src="eu-ai.svg" alt="EU AI-Logo">
+            <img src="ki-ready-2025.webp" alt="KI-Ready 2025">
+            <img src="tuev-logo-transparent.webp" alt="TÜV Logo">
+        </div>
+        <div class="badge">TÜV-zertifiziertes KI-Management</div>
+        <div style="color:#556; margin-top: 22px;">Ansprechpartner: Wolf Hohl<br>kontakt@ki-sicherheit.jetzt<br>© 2025 KI-Sicherheit.jetzt</div>
     </div>
-    <div class="big-title">KI-Readiness-Report 2025</div>
-    <div class="subtitle">Zukunftssichere KI-Strategie für Unternehmen</div>
-    <div class="cover-logos">
-        <img src="tuev-logo.webp" alt="TÜV Logo">
-        <img src="ki-ready-2025.webp" alt="KI-Ready 2025">
-    </div>
-    <div class="badge">TÜV-zertifiziertes KI-Management</div>
-    <div style="color:#556; margin-top: 22px;">Ansprechpartner: Wolf Hohl<br>kontakt@ki-sicherheit.jetzt<br>© 2025 KI-Sicherheit.jetzt</div>
-</div>
 
     <!-- INHALTSVERZEICHNIS -->
     <div class="report-container toc" style="page-break-after: always;">
         <h2>Inhaltsverzeichnis</h2>
         <ul>
             <li><a href="#executive_summary">Executive Summary</a></li>
-            <li><a href="#summary_klein">Kurzfazit für kleine Unternehmen</a></li>
-            <li><a href="#summary_kmu">Kurzfazit für KMU</a></li>
-            <li><a href="#summary_solo">Kurzfazit für Solo-Unternehmen</a></li>
+            <li><a href="#kurzfazit">Kurzfazit</a></li>
             <li><a href="#gesamtstrategie">Strategische Gesamtempfehlung</a></li>
             <li><a href="#roadmap">Roadmap</a></li>
             <li><a href="#innovation">Innovationspotenziale & Zukunftschancen</a></li>
@@ -191,17 +209,9 @@
             <h2>Executive Summary</h2>
             {{ executive_summary | safe }}
         </div>
-        <div class="section" id="summary_klein">
-            <h2>Kurzfazit für kleine Unternehmen</h2>
-            {{ summary_klein | safe }}
-        </div>
-        <div class="section" id="summary_kmu">
-            <h2>Kurzfazit für KMU</h2>
-            {{ summary_kmu | safe }}
-        </div>
-        <div class="section" id="summary_solo">
-            <h2>Kurzfazit für Solo-Unternehmen</h2>
-            {{ summary_solo | safe }}
+        <div class="section" id="kurzfazit">
+            <h2>Kurzfazit</h2>
+            {{ kurzfazit | safe }}
         </div>
         <div class="section" id="gesamtstrategie">
             <h2>Strategische Gesamtempfehlung</h2>
@@ -247,11 +257,13 @@
             <h2>EU AI Act</h2>
             {{ eu_ai_act | safe }}
         </div>
-        <div class="footer">
-            TÜV-zertifiziertes KI-Management, Ansprechpartner: Wolf Hohl, KI-Sicherheit.jetzt<br>
-            E-Mail: kontakt@ki-sicherheit.jetzt<br>
-            Copyright © 2025 Wolf Hohl – KI-Sicherheit.jetzt
-        </div>
     </div>
+
+    <footer class="footer">
+      <span class="lizenz">
+        TÜV-zertifiziertes KI-Management und Copyright © 2025: Wolf Hohl, 
+        E-Mail: kontakt@ki-sicherheit.jetzt
+      </span>
+    </footer>
 </body>
 </html>
