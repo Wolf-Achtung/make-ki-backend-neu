@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <title>KI-Readiness-Report</title>
   <style>
+    @page {
+      size: A4;
+      margin: 30mm 19mm 26mm 19mm; /* oben, rechts, unten, links */
+      @bottom-center {
+        content: element(reportfooter);
+      }
+    }
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       color: #21334d;
@@ -46,7 +53,7 @@
     .cover-logo-row img {
       height: 97px;
       max-width: 320px;
-      margin: 0 0 0 0;
+      margin: 0;
       object-fit: contain;
       object-position: center center;
     }
@@ -86,13 +93,6 @@
       margin-top: 14px;
       padding: 6px 0 0 0;
     }
-    @page {
-      size: A4;
-      margin: 30mm 19mm 26mm 19mm;
-      @bottom-center {
-        content: element(reportfooter);
-      }
-    }
     ul, ol {
       margin-left: 24px;
     }
@@ -111,6 +111,9 @@
     .section {
       margin-bottom: 39px;
       page-break-inside: avoid;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
     }
     a { color: #2867B2; text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -118,7 +121,7 @@
 </head>
 <body>
   <!-- Titelseite -->
-  <div style="text-align:center;margin-top:40px;">
+  <div style="text-align:center;margin-top:40px; max-width: 700px; margin-left:auto; margin-right:auto;">
     <div class="cover-logo-row">
       <img src="ki-sicherheit-logo.png" alt="KI-Sicherheit Logo"/>
     </div>
@@ -137,7 +140,7 @@
   <div class="page-break"></div>
 
   <!-- Inhaltsverzeichnis -->
-  <h2 style="text-align:center;margin-bottom:28px;">Inhaltsverzeichnis</h2>
+  <h2 style="text-align:center;margin-bottom:28px; max-width: 700px; margin-left:auto; margin-right:auto;">Inhaltsverzeichnis</h2>
   <ul class="inhalt">
     <li><a href="#executive_summary">Executive Summary</a></li>
     <li><a href="#kurzfazit">Kurzfazit</a></li>
