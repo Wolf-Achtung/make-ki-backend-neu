@@ -120,16 +120,16 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
             "eu_ai_act": result.get("eu_ai_act", ""),
         }
 
-markdown_fields = [
-    "executive_summary", "summary_klein", "summary_kmu", "summary_solo",
-    "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", "compliance",
-    "datenschutz", "foerderprogramme", "foerdermittel", "tools",
-    "moonshot_vision", "eu_ai_act"
-]
-for key in markdown_fields:
-    if template_fields.get(key):
-        template_fields[key] = markdown.markdown(template_fields[key])
-
+        # --- Markdown zu HTML umwandeln ---
+        markdown_fields = [
+            "executive_summary", "summary_klein", "summary_kmu", "summary_solo",
+            "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", "compliance",
+            "datenschutz", "foerderprogramme", "foerdermittel", "tools",
+            "moonshot_vision", "eu_ai_act"
+        ]
+        for key in markdown_fields:
+            if template_fields.get(key):
+                template_fields[key] = markdown.markdown(template_fields[key])
 
         # --- Template laden und HTML erzeugen ---
         with open("templates/pdf_template.html", encoding="utf-8") as f:
@@ -147,10 +147,12 @@ for key in markdown_fields:
 
         # *** Das HTML an das Frontend zurückgeben! ***
         return {"html": html_content}
+
     except Exception as e:
         print("❌ Fehler bei /briefing:", e)
         import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail="Interner Fehler")
+
 
 # --- FEEDBACK SPEICHERN ---
 @app.post("/feedback")
