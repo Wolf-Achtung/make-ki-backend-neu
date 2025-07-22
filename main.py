@@ -102,6 +102,7 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
         result["email"] = email
 
         # --- Die benötigten Felder für das Template bereitstellen ---
+                # --- Die benötigten Felder für das Template bereitstellen ---
         template_fields = {
             "executive_summary": result.get("executive_summary", ""),
             "summary_klein": result.get("summary_klein", ""),
@@ -120,12 +121,22 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
             "eu_ai_act": result.get("eu_ai_act", ""),
         }
 
+        # --- Kurzfazit abhängig von Unternehmensgröße wählen ---
+        summary_map = {
+            "klein": "summary_klein",
+            "kmu": "summary_kmu",
+            "solo": "summary_solo"
+        }
+        unternehmensgroesse = data.get("unternehmensgroesse", "kmu")
+        selected_key = summary_map.get(unternehmensgroesse, "summary_kmu")
+        template_fields["kurzfazit"] = result.get(selected_key, "")
+
         # --- Markdown zu HTML umwandeln ---
         markdown_fields = [
             "executive_summary", "summary_klein", "summary_kmu", "summary_solo",
             "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", "compliance",
             "datenschutz", "foerderprogramme", "foerdermittel", "tools",
-            "moonshot_vision", "eu_ai_act"
+            "moonshot_vision", "eu_ai_act", "kurzfazit"
         ]
         for key in markdown_fields:
             if template_fields.get(key):
