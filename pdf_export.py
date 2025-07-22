@@ -73,10 +73,10 @@ def export_pdf(report_data):
         raise ValueError("Report-Daten müssen ein Dict sein!")
 
     markdown_fields = [
-    "executive_summary", "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", 
-    "compliance", "datenschutz", "foerderprogramme", "foerdermittel", "tools", "summary_klein",
-    "summary_kmu", "summary_solo", "moonshot_vision", "eu_ai_act"
-]
+        "executive_summary", "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", 
+        "compliance", "datenschutz", "foerderprogramme", "foerdermittel", "tools", "summary_klein",
+        "summary_kmu", "summary_solo", "moonshot_vision", "eu_ai_act"
+    ]
     for key in markdown_fields:
         report[key] = markdown_to_html(report.get(key, ""))
 
@@ -94,14 +94,22 @@ def export_pdf(report_data):
         )
         template = env.get_template("pdf_template.html")
         html_content = template.render(**report)
+        print("[PDF_EXPORT][DEBUG] HTML-Inhalt vor PDF-Export (Ausschnitt):")
+        print(html_content[:1200])  # Nur ein Ausschnitt!
     except Exception as e:
         print("[PDF_EXPORT][ERROR] PDF-Template konnte nicht geladen/gerendert werden:", e)
         raise RuntimeError(f"PDF-Template konnte nicht geladen/gerendert werden: {e}")
 
     try:
-        HTML(string=html_content, base_url=downloads_dir).write_pdf(pdf_path)
+        # base_url zeigt jetzt auf das Template-Verzeichnis, wo auch die Bilder liegen
+        HTML(string=html_content, base_url=os.path.join(PROJECT_ROOT, "templates")).write_pdf(pdf_path)
         print(f"[PDF_EXPORT] PDF erfolgreich erstellt: {pdf_path}")
         return os.path.basename(pdf_path)
     except Exception as e:
         print("[PDF_EXPORT][ERROR] PDF-Erstellung fehlgeschlagen:", e)
+        # Debug-Hilfe: HTML-Content als Datei speichern
+        debug_path = os.path.join(downloads_dir, "DEBUG_last_pdf.html")
+        with open(debug_path, "w", encoding="utf-8") as debug_file:
+            debug_file.write(html_content)
+        print(f"[PDF_EXPORT][DEBUG] HTML als Datei gespeichert: {debug_path}")
         raise RuntimeError(f"PDF-Erstellung fehlgeschlagen: {e}")
