@@ -1,6 +1,8 @@
 import os
 import datetime
 import markdown
+import weasyprint
+print("WeasyPrint-Version:", weasyprint.__version__)
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML
 
