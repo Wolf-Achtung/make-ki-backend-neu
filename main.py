@@ -16,7 +16,7 @@ import bcrypt
 import traceback
 
 from gpt_analyze import analyze_full_report   # Zentrales GPT-Modul
-from pdf_export import create_pdf             # PDF-Modul im /downloads/ Ordner
+#from pdf_export import create_pdf             # PDF-Modul im /downloads/ Ordner
 
 # --- ENV-VARIABLEN LADEN ---
 load_dotenv()
@@ -86,6 +86,7 @@ async def login(data: dict):
         algorithm="HS256"
     )
     return {"token": token}
+
 # --- BRIEFING ---
 @app.post("/briefing")
 async def create_briefing(request: Request, authorization: str = Header(None)):
@@ -123,10 +124,6 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
             template = Template(f.read())
         html_content = template.render(**template_fields)
 
-        # --- PDF erzeugen ---
-        pdf_file = create_pdf(html_content)
-        print(f"📄 PDF-Datei erstellt: {pdf_file}")
-
         # --- Protokollierung in der Datenbank ---
         with get_db() as conn:
             with conn.cursor() as cur:
@@ -136,7 +133,8 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
                 )
                 conn.commit()
 
-        return {"pdf_file": pdf_file}
+        # *** Das HTML an das Frontend zurückgeben! ***
+        return {"html": html_content}
     except Exception as e:
         print("❌ Fehler bei /briefing:", e)
         import traceback; traceback.print_exc()
