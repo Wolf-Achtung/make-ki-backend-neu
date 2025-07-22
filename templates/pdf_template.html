@@ -9,21 +9,22 @@
       color: #21334d;
       background: #fff;
       margin: 0;
-      font-size: 1.01rem;
-      line-height: 1.7;
+      font-size: 1.04rem;
+      line-height: 1.68;
     }
     h1, h2, h3 {
       color: #2867B2;
       font-weight: 700;
       margin-top: 0;
+      page-break-after: avoid;
     }
     h1 {
-      font-size: 2.2rem;
+      font-size: 2.3rem;
       letter-spacing: 1px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     h2 {
-      font-size: 1.3rem;
+      font-size: 1.27rem;
       margin-top: 44px;
       margin-bottom: 8px;
       border-bottom: 1.5px solid #e0e9f6;
@@ -31,38 +32,44 @@
       page-break-after: avoid;
     }
     h3 {
-      font-size: 1.07rem;
-      margin-bottom: 6px;
+      font-size: 1.10rem;
+      margin-bottom: 7px;
     }
     .cover-logo-row {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-top: 58px;
-      margin-bottom: 14px;
+      margin-top: 35px;
+      margin-bottom: 18px;
       gap: 0;
     }
     .cover-logo-row img {
-      height: 92px;
+      height: 97px;
+      max-width: 320px;
       margin: 0 0 0 0;
+      object-fit: contain;
+      object-position: center center;
     }
     .cover-logo-row-small {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 24px;
-      margin-top: 32px;
-      margin-bottom: 12px;
+      gap: 36px;
+      margin-top: 34px;
+      margin-bottom: 15px;
     }
     .cover-logo-row-small img {
-      height: 34px;
+      height: 38px;
+      width: auto;
+      max-width: 82px;
       margin: 0;
+      object-fit: contain;
     }
     .subtitle {
       text-align: center;
       color: #2867B2;
-      margin-bottom: 10px;
-      font-size: 1.12rem;
+      margin-bottom: 18px;
+      font-size: 1.15rem;
       letter-spacing: .1px;
     }
     .page-break {
@@ -71,38 +78,39 @@
     }
     .report-footer {
       display: block;
-      position: running(footer);
+      position: running(reportfooter);
       font-size: 10px;
       color: #888;
       text-align: center;
       width: 100%;
-      margin-top: 18px;
-      padding: 8px 0 0 0;
+      margin-top: 14px;
+      padding: 6px 0 0 0;
     }
     @page {
       size: A4;
-      margin: 32mm 17mm 28mm 17mm;
+      margin: 30mm 19mm 26mm 19mm;
       @bottom-center {
-        content: element(footer);
+        content: element(reportfooter);
       }
     }
     ul, ol {
-      margin-left: 22px;
+      margin-left: 24px;
     }
     .inhalt {
       background: #f6f9fd;
       border-radius: 10px;
       padding: 20px 32px;
-      margin-bottom: 28px;
+      margin-bottom: 32px;
       max-width: 580px;
       margin-left: auto;
       margin-right: auto;
     }
     .inhalt li {
-      margin-bottom: 5px;
+      margin-bottom: 7px;
     }
     .section {
-      margin-bottom: 36px;
+      margin-bottom: 39px;
+      page-break-inside: avoid;
     }
     a { color: #2867B2; text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -121,13 +129,13 @@
       <img src="eu-ai.svg" alt="EU AI"/>
       <img src="ki-ready-2025.webp" alt="KI Ready 2025"/>
     </div>
-  </div>
-
-  <div class="report-footer">
-    TÜV-zertifiziertes KI-Management und Copyright © 2025: Wolf Hohl, E-Mail: kontakt@ki-sicherheit.jetzt
+    <div class="report-footer">
+      TÜV-zertifiziertes KI-Management und Copyright © 2025: Wolf Hohl, E-Mail: kontakt@ki-sicherheit.jetzt
+    </div>
   </div>
 
   <div class="page-break"></div>
+
   <!-- Inhaltsverzeichnis -->
   <h2 style="text-align:center;margin-bottom:28px;">Inhaltsverzeichnis</h2>
   <ul class="inhalt">
@@ -145,6 +153,10 @@
     <li><a href="#moonshot_vision">Moonshot-Vision</a></li>
     <li><a href="#eu_ai_act">EU AI Act</a></li>
   </ul>
+
+  <div class="report-footer">
+    TÜV-zertifiziertes KI-Management und Copyright © 2025: Wolf Hohl, E-Mail: kontakt@ki-sicherheit.jetzt
+  </div>
 
   <!-- Executive Summary -->
   <div class="page-break"></div>
