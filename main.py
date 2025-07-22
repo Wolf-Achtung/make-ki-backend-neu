@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request, HTTPException, Header, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from dotenv import load_dotenv
+from jinja2 import Template
 import datetime
 import csv
 import io
@@ -97,9 +98,36 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
         result = analyze_full_report(data)
         print(f"### DEBUG: score_percent berechnet: {result.get('score_percent')}")
         result["email"] = email
+
+        # --- Die benötigten Felder für das Template bereitstellen ---
+        template_fields = {
+            "executive_summary": result.get("executive_summary", ""),
+            "summary_klein": result.get("summary_klein", ""),
+            "summary_kmu": result.get("summary_kmu", ""),
+            "summary_solo": result.get("summary_solo", ""),
+            "gesamtstrategie": result.get("gesamtstrategie", ""),
+            "roadmap": result.get("roadmap", ""),
+            "innovation": result.get("innovation", ""),
+            "praxisbeispiele": result.get("praxisbeispiele", ""),
+            "compliance": result.get("compliance", ""),
+            "datenschutz": result.get("datenschutz", ""),
+            "foerderprogramme": result.get("foerderprogramme", ""),
+            "foerdermittel": result.get("foerdermittel", ""),
+            "tools": result.get("tools", ""),
+            "moonshot_vision": result.get("moonshot_vision", ""),
+            "eu_ai_act": result.get("eu_ai_act", ""),
+        }
+
+        # --- Template laden und HTML erzeugen ---
+        with open("templates/pdf_template.html", encoding="utf-8") as f:
+            template = Template(f.read())
+        html_content = template.render(**template_fields)
+
+        # --- PDF erzeugen ---
         pdf_file = create_pdf(html_content)
         print(f"📄 PDF-Datei erstellt: {pdf_file}")
-        # Protokollierung in der Datenbank
+
+        # --- Protokollierung in der Datenbank ---
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -107,10 +135,11 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
                     (email, "briefing")
                 )
                 conn.commit()
+
         return {"pdf_file": pdf_file}
     except Exception as e:
         print("❌ Fehler bei /briefing:", e)
-        traceback.print_exc()
+        import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail="Interner Fehler")
 
 # --- FEEDBACK SPEICHERN ---
