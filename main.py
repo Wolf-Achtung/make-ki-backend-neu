@@ -15,7 +15,7 @@ import bcrypt
 import traceback
 
 from gpt_analyze import analyze_full_report   # Zentrales GPT-Modul
-from pdf_export import export_pdf             # PDF-Modul im /downloads/ Ordner
+from pdf_export import create_pdf             # PDF-Modul im /downloads/ Ordner
 
 # --- ENV-VARIABLEN LADEN ---
 load_dotenv()
@@ -97,7 +97,7 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
         result = analyze_full_report(data)
         print(f"### DEBUG: score_percent berechnet: {result.get('score_percent')}")
         result["email"] = email
-        pdf_file = export_pdf(result)
+        pdf_file = create_pdf(html_content)
         print(f"📄 PDF-Datei erstellt: {pdf_file}")
         # Protokollierung in der Datenbank
         with get_db() as conn:
