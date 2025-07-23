@@ -6,7 +6,7 @@
   <style>
     @page {
       size: A4;
-      margin: 2.6cm 2.4cm 3cm 2.4cm;
+      margin: 2.5cm 2.2cm 4cm 2.2cm;
       @bottom-center {
         content: element(reportfooter);
       }
@@ -116,15 +116,15 @@
       margin-bottom: 7px;
     }
     .report-footer {
-      display: block;
-      position: running(reportfooter);
-      font-size: 10px;
-      color: #888;
-      text-align: center;
-      width: 100%;
-      margin-top: 20px;
-      padding: 6px 0 0 0;
-      letter-spacing: 0.02em;
+  display: block;
+  position: running(reportfooter);
+  font-size: 0.93em;
+  color: #888;
+  text-align: center;
+  width: 100%;
+  background: #fff;
+  padding: 10px 0 8px 0;
+  letter-spacing: 0.03em;
     }
     a { color: #2867B2; text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -253,9 +253,8 @@
       {{ eu_ai_act|safe }}
     </div>
 
-    <div class="report-footer">
-      TÜV-zertifiziertes KI-Management und Copyright © 2025: Wolf Hohl, E-Mail: kontakt@ki-sicherheit.jetzt
-    </div>
-  </div>
+   <div class="report-footer" style="display: block; position: running(reportfooter);">
+  TÜV-zertifiziertes KI-Management und Copyright © 2025: Wolf Hohl, E-Mail: kontakt@ki-sicherheit.jetzt
+</div>
 </body>
 </html>
