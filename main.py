@@ -8,13 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from dotenv import load_dotenv
 from jinja2 import Template
-import datetime
+from datetime import datetime      # <- Empfohlen!
 import markdown
 import csv
 import io
 import jwt
 import bcrypt
 import traceback
+
 
 from gpt_analyze import analyze_full_report   # Zentrales GPT-Modul
 #from pdf_export import create_pdf             # PDF-Modul im /downloads/ Ordner
@@ -167,22 +168,55 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
 
 # --- FEEDBACK SPEICHERN ---
 @app.post("/feedback")
-async def feedback(data: dict, authorization: str = Header(None)):
+async def feedback(request: Request, authorization: str = Header(None)):
     payload = verify_token(authorization)
     email = payload.get("email")
     try:
-        kommentar = data.get("kommentar", "")   # <--- Robust gegen fehlendes Feld!
-        nuetzlich = data.get("nützlich", "")    # Falls "nützlich" fehlt, auch leer.
+        data = await request.json()
+        # Alle Felder robust auslesen (Default: leerer String)
+        kommentar = data.get("kommentar", "")
+        nuetzlich = data.get("nuetzlich", "")
+        hilfe = data.get("hilfe", "")
+        verstaendlich_analyse = data.get("verstaendlich_analyse", "")
+        verstaendlich_empfehlung = data.get("verstaendlich_empfehlung", "")
+        vertrauen = data.get("vertrauen", "")
+        serio = data.get("serio", "")
+        textstellen = data.get("textstellen", "")
+        dauer = data.get("dauer", "")
+        unsicher = data.get("unsicher", "")
+        features = data.get("features", "")
+        freitext = data.get("freitext", "")
+        tipp_name = data.get("tipp_name", "")
+        tipp_firma = data.get("tipp_firma", "")
+        tipp_email = data.get("tipp_email", "")
+
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "INSERT INTO feedback (email, kommentar, nützlich, created_at) VALUES (%s, %s, %s, NOW())",
-                    (email, kommentar, nuetzlich)
+                    """
+                    INSERT INTO feedback (
+                        email, kommentar, nuetzlich, hilfe,
+                        verstaendlich_analyse, verstaendlich_empfehlung,
+                        vertrauen, serio, textstellen, dauer, unsicher, features,
+                        freitext, tipp_name, tipp_firma, tipp_email, created_at
+                    ) VALUES (
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, NOW()
+                    )
+                    """,
+                    (
+                        email, kommentar, nuetzlich, hilfe,
+                        verstaendlich_analyse, verstaendlich_empfehlung,
+                        vertrauen, serio, textstellen, dauer, unsicher, features,
+                        freitext, tipp_name, tipp_firma, tipp_email
+                    )
                 )
             conn.commit()
         return {"message": "Feedback gespeichert"}
     except Exception as e:
         print("❌ Fehler bei /feedback:", e)
+        import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail="Feedback-Fehler")
 
 
