@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from dotenv import load_dotenv
 from jinja2 import Template
-from datetime import datetime      # <- Empfohlen!
+from datetime import datetime, timedelta      # <- Empfohlen!
 import markdown
 import csv
 import io
@@ -83,7 +83,7 @@ async def login(data: dict):
     if not bcrypt.checkpw(data["password"].encode(), user["password_hash"].encode()):
         raise HTTPException(status_code=401, detail="Falsches Passwort")
     token = jwt.encode(
-        {"email": user["email"], "role": user["role"], "exp": datetime.datetime.utcnow() + datetime.timedelta(days=2)},
+        {"email": user["email"], "role": user["role"], "exp": datetime.utcnow() + timedelta(days=2)},
         SECRET_KEY,
         algorithm="HS256"
     )
