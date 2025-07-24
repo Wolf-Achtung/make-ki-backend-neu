@@ -21,6 +21,7 @@ users = [
     ("test@example.de", "passtest!", "user"),
     ("geffertj@mac.com", "passjens!", "user"),
     ("geffertkilian@gmail.com", "passkili!", "user"),
+    ("Levent.graef@posteo.de", "passlevgr!", "user"),
 ]
 
 print("Starte Einfügen/Update der User...")
