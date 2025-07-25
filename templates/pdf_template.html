@@ -23,26 +23,13 @@
       flex-direction: column;
       justify-content: space-between;
     }
-    .logo-row {
-      display: flex;
-      gap: 32px;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 22px;
-    }
-    .logo-row img {
-      height: 38px;
-      max-width: 95px;
-      object-fit: contain;
-      filter: grayscale(0.3) brightness(1.1);
-    }
     h1 {
       font-size: 2.15em;
       text-align: center;
       color: #1e3a8a;
       letter-spacing: 1.5px;
       font-weight: 700;
-      margin: 35px 0 10px 0;
+      margin: 70px 0 10px 0;
     }
     h2 {
       color: #2563eb;
@@ -99,12 +86,6 @@
 <!-- TITELSEITE -->
 <div class="report-section">
   <div>
-    <div class="logo-row">
-      <img src="/templates/ki-sicherheit-logo.png" alt="KI-Sicherheit" />
-      <img src="/templates/eu-ai.svg" alt="EU AI Act" />
-      <img src="/templates/dsgvo.svg" alt="DSGVO" />
-      <img src="/templates/ki-ready-2025.webp" alt="KI-Ready" />
-    </div>
     <h1>KI-Readiness-Report 2025</h1>
     <div class="subtitle">Zukunftssichere KI-Strategie für Unternehmen</div>
   </div>
@@ -159,6 +140,7 @@
     <div style="margin-top: 2em;">{{ roadmap | safe }}</div>
   </div>
 </div>
+
 <!-- COMPLIANCE & DATENSCHUTZ -->
 <div class="report-section">
   <div class="chapter-box">
