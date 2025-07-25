@@ -5,7 +5,7 @@
   <title>KI-Readiness-Report 2025</title>
   <style>
     body {
-      background: #f4f8fc;
+      background: #fff;
       margin: 0;
       padding: 0;
       font-family: 'Inter', 'Fira Sans', Arial, sans-serif;
@@ -14,98 +14,99 @@
     .pdf-page {
       width: 210mm;
       min-height: 297mm;
-      margin: 0 auto 32px auto;
-      padding: 34mm 22mm 32mm 22mm;
+      max-width: 210mm;
+      margin: 0 auto 0 auto;
+      padding: 32mm 20mm 32mm 20mm;
       background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 0 4mm #d6e6f8cc;
+      border-radius: 14px;
       box-sizing: border-box;
       position: relative;
-      page-break-after: always;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-start;
+      page-break-after: always;
+      overflow: hidden;
     }
     .header-logo-row {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 38px;
-      margin: 0 0 18px 0;
+      gap: 32px;
+      margin: 0 0 24px 0;
     }
     .header-logo-row img {
-      max-height: 54px;
-      max-width: 120px;
+      max-height: 44px;
+      max-width: 100px;
       object-fit: contain;
       background: transparent;
       display: block;
     }
     .main-title {
-      font-size: 2.2em;
+      font-size: 2.15em;
       color: #2173d8;
       text-align: center;
       font-weight: bold;
-      margin-bottom: 0.4em;
-      margin-top: 18px;
+      margin: 22px 0 8px 0;
     }
     .subtitle {
-      font-size: 1.22em;
+      font-size: 1.14em;
       color: #3370b8;
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 44px;
     }
     .chapter-box {
-      background: #f5faff;
-      border-radius: 14px;
-      padding: 30px 34px;
-      margin: 32px auto 38px auto;
+      background: #f7fafd;
+      border-radius: 10px;
+      padding: 24px 28px;
+      margin: 0 auto 0 auto;
       max-width: 16cm;
-      color: #214169;
-      font-size: 1.13em;
-      line-height: 1.6;
-      box-shadow: 0 1.2mm 7mm #e1eaf7cc;
+      color: #204169;
+      font-size: 1.09em;
+      line-height: 1.58;
+      box-shadow: 0 1mm 6mm #e7ebf2;
       page-break-inside: avoid;
+      word-break: break-word;
     }
     h2 {
       color: #2579ce;
-      font-size: 1.35em;
+      font-size: 1.22em;
       font-weight: 700;
       margin-top: 0;
-      margin-bottom: 18px;
-      border-bottom: 1.3px solid #d6e6f8;
-      padding-bottom: 5px;
+      margin-bottom: 15px;
+      border-bottom: 1.2px solid #e7ebf2;
+      padding-bottom: 4px;
     }
     .footer-pdf {
       position: absolute;
       left: 0;
       right: 0;
-      bottom: 18mm;
+      bottom: 16mm;
       text-align: center;
       color: #a9b7c7;
-      font-size: 1em;
-      opacity: 0.85;
+      font-size: 0.99em;
+      opacity: 0.92;
       font-style: italic;
     }
     .seitenzahl {
       position: absolute;
       right: 22mm;
-      bottom: 11mm;
+      bottom: 10mm;
       color: #c5cfe4;
-      font-size: 0.95em;
-      opacity: 0.85;
+      font-size: 0.97em;
+      opacity: 0.84;
       font-family: monospace;
     }
     ul, ol {
-      margin-left: 1.3em;
+      margin-left: 1.1em;
       margin-bottom: 1em;
-      padding-left: 0.4em;
+      padding-left: 0.1em;
     }
-    .inhalt ul { margin: 0 0 0 1.1em; }
+    .inhalt ul { margin: 0 0 0 1em; }
   </style>
 </head>
 <body>
 
-<!-- Titelseite -->
+<!-- TITELSEITE -->
 <div class="pdf-page">
   <div>
     <div class="header-logo-row">
@@ -116,7 +117,6 @@
     </div>
     <div class="main-title">KI-Readiness-Report<br>2025</div>
     <div class="subtitle">Zukunftssichere KI-Strategie für Unternehmen</div>
-    <div style="height:60px"></div>
   </div>
   <div class="footer-pdf">
     TÜV-zertifiziertes KI-Management • © 2025: Wolf Hohl, E-Mail: kontakt@ki-sicherheit.jetzt
@@ -124,7 +124,7 @@
   <div class="seitenzahl">Seite 1</div>
 </div>
 
-<!-- Inhaltsverzeichnis -->
+<!-- INHALTSVERZEICHNIS -->
 <div class="pdf-page">
   <div class="chapter-box inhalt">
     <h2>Inhaltsverzeichnis</h2>
@@ -145,7 +145,7 @@
   <div class="seitenzahl">Seite 2</div>
 </div>
 
-<!-- Executive Summary -->
+<!-- EXECUTIVE SUMMARY -->
 <div class="pdf-page">
   <div class="chapter-box">
     <h2>Executive Summary</h2>
@@ -157,7 +157,7 @@
   <div class="seitenzahl">Seite 3</div>
 </div>
 
-<!-- Kurzfazit (zeige nur die relevante Variante) -->
+<!-- KURZFAZIT -->
 <div class="pdf-page">
   <div class="chapter-box">
     <h2>Kurzfazit</h2>
@@ -177,7 +177,7 @@
   <div class="seitenzahl">Seite 4</div>
 </div>
 
-<!-- Gesamtstrategie & Roadmap -->
+<!-- GESAMTSTRATEGIE & ROADMAP -->
 <div class="pdf-page">
   <div class="chapter-box">
     <h2>Gesamtstrategie & Roadmap</h2>
@@ -190,7 +190,7 @@
   <div class="seitenzahl">Seite 5</div>
 </div>
 
-<!-- Compliance & Datenschutz -->
+<!-- COMPLIANCE & DATENSCHUTZ -->
 <div class="pdf-page">
   <div class="chapter-box">
     <h2>Compliance & Datenschutz</h2>
@@ -202,8 +202,7 @@
   </div>
   <div class="seitenzahl">Seite 6</div>
 </div>
-
-<!-- Förderprogramme -->
+<!-- FÖRDERPROGRAMME -->
 <div class="pdf-page">
   <div class="chapter-box">
     <h2>Förderprogramme</h2>
@@ -218,10 +217,10 @@
   <div class="seitenzahl">Seite 7</div>
 </div>
 
-<!-- Tools & Innovation -->
+<!-- TOOLS & INNOVATIONEN -->
 <div class="pdf-page">
   <div class="chapter-box">
-    <h2>Tools & Innovation</h2>
+    <h2>Tools & Innovationen</h2>
     <div>{{ tools | safe }}</div>
     <div style="margin-top:1.6em;">{{ innovation | safe }}</div>
   </div>
@@ -231,7 +230,7 @@
   <div class="seitenzahl">Seite 8</div>
 </div>
 
-<!-- Praxisbeispiele -->
+<!-- PRAXISBEISPIELE -->
 <div class="pdf-page">
   <div class="chapter-box">
     <h2>Praxisbeispiele</h2>
@@ -243,7 +242,7 @@
   <div class="seitenzahl">Seite 9</div>
 </div>
 
-<!-- Vision & Zukunftsausblick -->
+<!-- VISION & ZUKUNFTSAUSBLICK -->
 <div class="pdf-page">
   <div class="chapter-box">
     <h2>Vision & Zukunftsausblick</h2>
