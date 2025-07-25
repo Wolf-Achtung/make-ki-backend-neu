@@ -2,259 +2,199 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>KI-Readiness-Report</title>
+  <title>KI-Readiness-Report 2025</title>
   <style>
     @page {
       size: A4;
-      margin: 2.5cm 2.2cm 4cm 2.2cm;
-      @bottom-center {
-        content: element(reportfooter);
-      }
+      margin: 2.4cm 2cm 2.7cm 2cm; /* Oben, Rechts, Unten, Links */
     }
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      color: #22334d;
+      font-family: 'Fira Sans', Arial, sans-serif;
+      font-size: 1.04em;
+      color: #244b74;
       background: #fff;
       margin: 0;
-      font-size: 1.12rem;
-      line-height: 1.76;
       padding: 0;
+      box-sizing: border-box;
+      max-width: 19cm;
+      min-height: 100vh;
     }
-    .report-container {
-      max-width: 850px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 0;
+    header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .logo-row {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin: 32px 0 12px 0;
+    }
+    .logo-row img {
+      max-height: 45px;
+      max-width: 120px;
+      object-fit: contain;
+      background: transparent;
     }
     h1, h2, h3 {
-      color: #2966b2;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #3174d6;
+      font-family: 'Fira Sans', Arial, sans-serif;
+      margin-top: 0;
       font-weight: 700;
-      margin-top: 0;
-      page-break-after: avoid;
     }
-    h1 {
-      font-size: 2.55rem;
-      letter-spacing: 0.5px;
-      margin-bottom: 16px;
-      margin-top: 1em;
-      text-align: center;
-    }
-    h2 {
-      font-size: 1.37rem;
-      margin-top: 2.3em;
-      margin-bottom: 14px;
-      border-bottom: 1.6px solid #e0e9f6;
-      padding-bottom: 4px;
-      page-break-after: avoid;
-    }
-    h3 {
-      font-size: 1.11rem;
-      margin-bottom: 9px;
-    }
-    .subtitle {
-      text-align: center;
-      color: #2867B2;
-      margin-bottom: 30px;
-      font-size: 1.18rem;
-      letter-spacing: .04em;
-      margin-top: 0;
-    }
-    .cover-logo-row {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 32px;
-      margin-bottom: 0px;
-    }
-    .cover-logo-row img {
-      height: 104px;
-      max-width: 320px;
-      object-fit: contain;
-      margin: 0 0 0 0;
-    }
-    .cover-logo-row-small {
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      gap: 38px;
-      margin-top: 38px;
-      margin-bottom: 13px;
-      min-height: 56px;
-    }
-    .cover-logo-row-small img {
-      max-height: 44px;
-      width: auto;
-      object-fit: contain;
-      margin: 0 8px;
-    }
-    .page-break { page-break-before: always; }
-    .section {
-      margin-bottom: 44px;
-      page-break-inside: avoid;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+    h1 { font-size: 2.5em; margin-bottom: 18px; }
+    h2 { font-size: 1.33em; margin-bottom: 13px; margin-top: 1.5em;}
+    h3 { font-size: 1.09em; margin-bottom: 7px; color: #204769;}
     ul, ol {
-      margin-left: 28px;
-      margin-bottom: 1.1em;
+      margin-left: 1.2em;
+      margin-bottom: 1.2em;
+      margin-top: 0.4em;
+      padding-left: 0.2em;
     }
-    li {
-      margin-bottom: 0.35em;
+    section {
+      margin-bottom: 1.1em;
+      page-break-inside: avoid;
+    }
+    .footer {
+      position: fixed;
+      bottom: 1.5cm;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #999;
+      font-size: 0.95em;
+      z-index: 10;
+    }
+    .pagebreak {
+      page-break-before: always;
+      break-before: always;
+      margin-top: 24px;
     }
     .inhalt {
-      background: #f6f9fd;
-      border-radius: 12px;
-      padding: 22px 38px;
-      margin-bottom: 36px;
-      max-width: 570px;
-      margin-left: auto;
-      margin-right: auto;
+      background: #f4f8fc;
+      border-radius: 18px;
+      padding: 30px 34px;
+      margin: 26px auto 40px auto;
+      max-width: 17cm;
+      color: #204769;
+      font-size: 1.04em;
     }
-    .inhalt li {
-      margin-bottom: 7px;
-    }
-    .report-footer {
-  display: block;
-  position: running(reportfooter);
-  font-size: 0.93em;
-  color: #888;
-  text-align: center;
-  width: 100%;
-  background: #fff;
-  padding: 10px 0 8px 0;
-  letter-spacing: 0.03em;
-    }
-    a { color: #2867B2; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    .inhalt ul { margin: 0 0 0 1.1em; }
+    .abschnitt { margin-bottom: 1.5em;}
   </style>
 </head>
 <body>
-  <div class="report-container">
 
-    <!-- Titelseite -->
-    <div style="text-align:center;margin-top:46px;">
-      <div class="cover-logo-row">
-        <img src="ki-sicherheit-logo.png" alt="KI-Sicherheit Logo"/>
-      </div>
-      <h1>KI-Readiness-Report<br>2025</h1>
-      <div class="subtitle">Zukunftssichere KI-Strategie für Unternehmen</div>
-      <div class="cover-logo-row-small">
-        <img src="dsgvo.svg" alt="DSGVO"/>
-        <img src="eu-ai.svg" alt="EU AI"/>
-        <img src="ki-ready-2025.webp" alt="KI Ready 2025"/>
-      </div>
-      <div class="report-footer">
-        TÜV-zertifiziertes KI-Management und Copyright © 2025: Wolf Hohl, E-Mail: kontakt@ki-sicherheit.jetzt
-      </div>
-    </div>
-
-    <div class="page-break"></div>
-
-    <!-- Inhaltsverzeichnis -->
-    <h2 style="text-align:center;margin-bottom:28px; max-width: 700px; margin-left:auto; margin-right:auto;">Inhaltsverzeichnis</h2>
-    <ul class="inhalt">
-      <li><a href="#executive_summary">Executive Summary</a></li>
-      <li><a href="#kurzfazit">Kurzfazit</a></li>
-      <li><a href="#gesamtstrategie">Strategische Gesamtempfehlung</a></li>
-      <li><a href="#roadmap">Roadmap</a></li>
-      <li><a href="#innovation">Innovationspotenziale</a></li>
-      <li><a href="#praxisbeispiele">Praxisbeispiele</a></li>
-      <li><a href="#compliance">Compliance</a></li>
-      <li><a href="#datenschutz">Datenschutz & DSGVO</a></li>
-      <li><a href="#foerderprogramme">Förderprogramme</a></li>
-      <li><a href="#foerdermittel">Fördermittel individuell</a></li>
-      <li><a href="#tools">Empfohlene Tools</a></li>
-      <li><a href="#moonshot_vision">Moonshot-Vision</a></li>
-      <li><a href="#eu_ai_act">EU AI Act</a></li>
-    </ul>
-
-    <div class="report-footer">
-      TÜV-zertifiziertes KI-Management und Copyright © 2025: Wolf Hohl, E-Mail: kontakt@ki-sicherheit.jetzt
-    </div>
-
-    <!-- Kapitel-Abschnitte -->
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="executive_summary">Executive Summary</h2>
-      {{ executive_summary|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="kurzfazit">Kurzfazit</h2>
-      {{ kurzfazit|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="gesamtstrategie">Strategische Gesamtempfehlung</h2>
-      {{ gesamtstrategie|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="roadmap">Roadmap</h2>
-      {% if roadmap %}{{ roadmap|safe }}{% else %}<span style="color:#999;">Noch keine individuelle Roadmap vorhanden.</span>{% endif %}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="innovation">Innovationspotenziale & Zukunftschancen</h2>
-      {{ innovation|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="praxisbeispiele">Praxisbeispiele</h2>
-      {{ praxisbeispiele|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="compliance">Compliance</h2>
-      {{ compliance|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="datenschutz">Datenschutz & DSGVO</h2>
-      {{ datenschutz|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="foerderprogramme">Förderprogramme</h2>
-      {{ foerderprogramme|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="foerdermittel">Fördermittel individuell</h2>
-      {{ foerdermittel|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="tools">Empfohlene Tools</h2>
-      {{ tools|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="moonshot_vision">Moonshot-Vision</h2>
-      {{ moonshot_vision|safe }}
-    </div>
-
-    <div class="page-break"></div>
-    <div class="section">
-      <h2 id="eu_ai_act">EU AI Act</h2>
-      {{ eu_ai_act|safe }}
-    </div>
-
-   <div class="report-footer" style="display: block; position: running(reportfooter);">
+<header>
+  <img src="ki-sicherheit-logo.png" alt="KI-Sicherheit Logo" style="max-height:70px;margin:0 auto 18px auto;display:block;">
+  <h1>KI-Readiness-Report<br>2025</h1>
+  <div style="font-size:1.3em;margin-bottom:18px;color:#3c70b5;">
+    Zukunftssichere KI-Strategie für Unternehmen
+  </div>
+  <div class="logo-row">
+    <img src="eu-ai.svg" alt="EU AI Act Logo">
+    <img src="dsgvo.svg" alt="DSGVO Logo">
+    <img src="ki-ready-2025.webp" alt="KI-Ready 2025">
+  </div>
+</header>
+<div class="footer">
   TÜV-zertifiziertes KI-Management und Copyright © 2025: Wolf Hohl, E-Mail: kontakt@ki-sicherheit.jetzt
 </div>
+
+<!-- Titelseite Abstand -->
+<div style="height:3.2cm;"></div>
+<div class="pagebreak"></div>
+<!-- Inhaltsverzeichnis -->
+<section class="inhalt">
+  <h2>Inhaltsverzeichnis</h2>
+  <ul>
+    <li>Executive Summary</li>
+    <li>Kurzfazit</li>
+    <li>Gesamtstrategie & Roadmap</li>
+    <li>Compliance & Datenschutz</li>
+    <li>Förderprogramme</li>
+    <li>Tools & Innovationen</li>
+    <li>Praxisbeispiele</li>
+    <li>Vision & Zukunftsausblick</li>
+  </ul>
+</section>
+<div class="pagebreak"></div>
+
+<!-- Executive Summary -->
+<section class="abschnitt">
+  <h2>Executive Summary</h2>
+  <div>{{ executive_summary | safe }}</div>
+</section>
+<div class="pagebreak"></div>
+
+<!-- Kurzfazit (zeige nur die relevante Variante) -->
+<section class="abschnitt">
+  <h2>Kurzfazit</h2>
+  {% if summary_klein %}
+    <div><b>Kleine Unternehmen:</b> {{ summary_klein | safe }}</div>
+  {% endif %}
+  {% if summary_kmu %}
+    <div><b>KMU:</b> {{ summary_kmu | safe }}</div>
+  {% endif %}
+  {% if summary_solo %}
+    <div><b>Solo-Unternehmen:</b> {{ summary_solo | safe }}</div>
+  {% endif %}
+</section>
+<div class="pagebreak"></div>
+
+<!-- Gesamtstrategie -->
+<section class="abschnitt">
+  <h2>Gesamtstrategie & Roadmap</h2>
+  <div>{{ gesamtstrategie | safe }}</div>
+  <div style="margin-top: 2em;">{{ roadmap | safe }}</div>
+</section>
+<div class="pagebreak"></div>
+
+<!-- Compliance -->
+<section class="abschnitt">
+  <h2>Compliance & Datenschutz</h2>
+  <div>{{ compliance | safe }}</div>
+  <div style="margin-top: 2em;">{{ datenschutz | safe }}</div>
+</section>
+<div class="pagebreak"></div>
+
+<!-- Förderprogramme -->
+<section class="abschnitt">
+  <h2>Förderprogramme</h2>
+  <div>{{ foerderprogramme | safe }}</div>
+  {% if foerdermittel %}
+    <div style="margin-top:1em;">{{ foerdermittel | safe }}</div>
+  {% endif %}
+</section>
+<div class="pagebreak"></div>
+<!-- Tools & Innovation -->
+<section class="abschnitt">
+  <h2>Tools & Innovation</h2>
+  <div>{{ tools | safe }}</div>
+  <div style="margin-top:1.6em;">{{ innovation | safe }}</div>
+</section>
+<div class="pagebreak"></div>
+
+<!-- Praxisbeispiele -->
+<section class="abschnitt">
+  <h2>Praxisbeispiele</h2>
+  <div>{{ praxisbeispiele | safe }}</div>
+</section>
+<div class="pagebreak"></div>
+
+<!-- Vision & Zukunftsausblick -->
+<section class="abschnitt">
+  <h2>Vision & Zukunftsausblick</h2>
+  <div>{{ moonshot_vision | safe }}</div>
+  {% if eu_ai_act %}
+    <div style="margin-top:1.4em;"><b>EU AI Act:</b> {{ eu_ai_act | safe }}</div>
+  {% endif %}
+</section>
+<div class="pagebreak"></div>
+
+<!-- Footer bleibt auf jeder Seite sichtbar -->
+<div class="footer">
+  TÜV-zertifiziertes KI-Management und Copyright © 2025: Wolf Hohl, E-Mail: kontakt@ki-sicherheit.jetzt
+</div>
+
 </body>
 </html>
