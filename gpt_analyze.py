@@ -218,7 +218,7 @@ def analyze_full_report(data):
             text = fix_encoding(text)
             results[abschnitt] = text
             prior_results[abschnitt] = text
-        try:
+
     ...
 except Exception as e:
     msg = f"[ERROR in Abschnitt {abschnitt}: {e}]"
