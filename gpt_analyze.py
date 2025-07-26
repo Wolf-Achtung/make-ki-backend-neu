@@ -3,20 +3,33 @@ import json
 import pandas as pd
 import re
 from openai import OpenAI
+from datetime import datetime
 
 client = OpenAI()
 
 # --- 1. Branchenspezifisches Prompt-Loader ---
-def load_prompt(branche, abschnitt):
-    """
-    Lädt den spezifischen Prompt für einen Abschnitt einer Branche.
-    Fallback auf default, falls nicht vorhanden.
-    """
+
+def load_prompt(branche, abschnitt, context_vars=None):
+    # 1. Prefix laden
+    with open("prompts/prompt_prefix.md", encoding="utf-8") as f:
+        prefix = f.read()
+    # 2. Hauptprompt laden (wie gehabt)
     path = os.path.join("prompts", branche, f"{abschnitt}.md")
     if not os.path.exists(path):
         path = os.path.join("prompts", "default", f"{abschnitt}.md")
     with open(path, encoding="utf-8") as f:
-        return f.read()
+        main_prompt = f.read()
+    # 3. Suffix laden
+    with open("prompts/prompt_suffix.md", encoding="utf-8") as f:
+        suffix = f.read()
+    # 4. Variablen vorbereiten (alle Formularfelder erlaubt!)
+    vars = context_vars.copy() if context_vars else {}
+    vars.setdefault("datum", datetime.now().strftime("%d.%m.%Y"))
+    # 5. Zusammensetzen & Variablen ersetzen (überall erlaubt!)
+    prompt = f"{prefix}\n\n{main_prompt}\n\n{suffix}"
+    prompt = prompt.format(**vars)
+    return prompt
+
 
 # --- 2. Benchmark-Loader ---
 def load_benchmark(branche):
@@ -55,13 +68,14 @@ TOOLS_FOERDER = load_tools_und_foerderungen()
 
 # --- 5. Prompt-Builder ---
 def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, tools_text="", foerder_text=""):
-    prompt_raw = load_prompt(branche, abschnitt)
+    # Benchmark-Text wie gehabt
     bench_txt = ""
     if benchmark:
         bench_txt = "\nBranchen-Benchmark:\n" + "\n".join(
             f"- {row.get('Kategorie', '')}: {row.get('Wert_Durchschnitt', '')} ({row.get('Kurzbeschreibung', '')})"
             for row in benchmark
         )
+    # Kontext-Variablen für Prefix/Suffix UND Hauptprompt
     prompt_vars = {
         "branche": branche,
         "unternehmensgroesse": groesse,
@@ -73,13 +87,13 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
         "foerderungen": foerder_text or "",
         "praxisbeispiele": "",
         "score_percent": data.get("score_percent", ""),
+        # PLUS: Alle Felder aus dem Formular!
+        **data
     }
-    keys_in_prompt = set(re.findall(r"{([a-zA-Z0-9_]+)}", prompt_raw))
-    for key in keys_in_prompt:
-        if key not in prompt_vars:
-            prompt_vars[key] = ""
-    prompt = prompt_raw.format(**prompt_vars)
+    # NEU: Jetzt Prefix, Prompt und Suffix mit allen Variablen ersetzen
+    prompt = load_prompt(branche, abschnitt, prompt_vars)
     return prompt
+
 
 # --- 6. Tools & Förderungen für Prompt ---
 def get_tools_und_foerderungen(data):
