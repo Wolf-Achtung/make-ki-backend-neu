@@ -219,7 +219,6 @@ def analyze_full_report(data):
             results[abschnitt] = text
             prior_results[abschnitt] = text
 
-    ...
 except Exception as e:
     msg = f"[ERROR in Abschnitt {abschnitt}: {e}]"
     print(msg)
