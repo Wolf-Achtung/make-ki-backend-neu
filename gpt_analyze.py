@@ -215,13 +215,23 @@ def analyze_full_report(data):
             text = gpt_block(
                 data, abschnitt, branche, groesse, checklisten, benchmark, prior_results
             )
+            text = fix_encoding(text)
             results[abschnitt] = text
             prior_results[abschnitt] = text
         except Exception as e:
-            msg = f"[ERROR in Abschnitt {abschnitt}: {e}]"
-            print(msg)
-            results[abschnitt] = msg
-            prior_results[abschnitt] = msg
+    msg = f"[ERROR in Abschnitt {abschnitt}: {e}]"
+    print(msg)
+    if abschnitt == "foerderprogramme":
+        fallback = (
+            "Für diesen Bereich konnten aktuell keine spezifischen Förderprogramme automatisch generiert werden. "
+            "Bitte kontaktieren Sie uns für eine individuelle Fördermittel-Recherche."
+        )
+        results[abschnitt] = fallback
+        prior_results[abschnitt] = fallback
+    else:
+        results[abschnitt] = msg
+        prior_results[abschnitt] = msg
+
 
     print("### DEBUG: Alle Ergebnisse gesammelt:", results)
     return results
@@ -287,3 +297,12 @@ def calc_score_percent(data):
     print(f"### DEBUG: calc_score_percent AUFGERUFEN mit: {data}")
     print(f"### DEBUG: score_percent gesetzt: {percent}")
     return percent
+def fix_encoding(text):
+    # Entfernt oder ersetzt fehlerhafte Zeichen und typografische Sonderzeichen
+    return (
+        text.replace("�", "-")
+            .replace("–", "-")
+            .replace("“", "\"")
+            .replace("”", "\"")
+            .replace("’", "'")
+    )
