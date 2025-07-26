@@ -218,7 +218,9 @@ def analyze_full_report(data):
             text = fix_encoding(text)
             results[abschnitt] = text
             prior_results[abschnitt] = text
-        except Exception as e:
+        try:
+    ...
+except Exception as e:
     msg = f"[ERROR in Abschnitt {abschnitt}: {e}]"
     print(msg)
     if abschnitt == "foerderprogramme":
