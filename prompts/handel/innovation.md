@@ -4,8 +4,7 @@ Identifiziere die wichtigsten Innovationsfelder für Handelsunternehmen, die dur
 
 **Beispiele:** 
 - Personalisierung & Recommendations, Supply-Chain-Optimierung, Dynamic Pricing, In-Store Analytics, Visual Search, Self-Checkout, Smart Stores
-- Barrieren & wie sie überwunden werden können (Akzeptanz, IT, Datenschutz)
-- Konkrete Pilotprojekte & direkt umsetzbare Quick Wins
+- Barrieren & wie sie überwunden werden können (Akzeptanz, IT, - Konkrete Pilotprojekte & direkt umsetzbare Quick Wins
 
 ---
 

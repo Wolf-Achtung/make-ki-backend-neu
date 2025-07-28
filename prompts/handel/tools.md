@@ -4,8 +4,7 @@ Liste die besten Tools für KI-gestützten Handel: Personalisierung, Recommendat
 
 **Für jedes Tool:**
 - Eignung/Use Case
-- DSGVO/EU AI Act-Konformität
-- Open-Source-Alternativen
+- - Open-Source-Alternativen
 - Praxistipp zur Einführung
 
 ---
