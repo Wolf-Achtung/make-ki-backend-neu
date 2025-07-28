@@ -1,13 +1,9 @@
 <!-- compliance.md -->
-# Compliance-Status & Empfehlungen für die Finanzbranche
-
-Bewerte die Einhaltung regulatorischer Anforderungen (DSGVO, MaRisk, BAIT, BaFin, EU AI Act) und liefere branchenspezifische Compliance-Empfehlungen.
-
+# Compliance-Status & 
+Bewerte die Einhaltung regulatorischer Anforderungen (
 **Schwerpunkte:**
-- Datenschutz, KYC/AML, Risikomanagement, Meldepflichten
-- Herausforderungen bei Automatisierung, Outsourcing, Cloud-Nutzung
-- Sofortmaßnahmen & strategische Empfehlungen für Compliance-Readiness
-
+- - Herausforderungen bei Automatisierung, Outsourcing, Cloud-Nutzung
+- Sofortmaßnahmen & strategische 
 ---
 
 ## Compliance-Analyse

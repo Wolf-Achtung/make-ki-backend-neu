@@ -5,8 +5,7 @@ Liste die besten Tools für Fraud Detection, KYC, Kundenanalysen, Risikomanageme
 
 **Für jedes Tool:**
 - Eignung/Use Case
-- DSGVO/BaFin/EU AI Act-Konformität
-- Open-Source-Alternativen
+- - Open-Source-Alternativen
 - Praxistipp zur Einführung
 
 ---

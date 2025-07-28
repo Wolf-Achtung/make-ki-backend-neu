@@ -1,6 +1,5 @@
 <!-- gesamtstrategie.md -->
-# Strategische Gesamtempfehlung für den Finanzsektor: KI-Einsatz & digitale Transformation
-
+# Strategische Gesamt
 Erarbeite eine umfassende Strategie für den nachhaltigen Einsatz von KI und Digitalisierung in Banken, Versicherungen & Finanzdienstleistern.
 
 **Fokuspunkte:**
