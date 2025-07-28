@@ -7,10 +7,8 @@ Baue eine Roadmap für die Einführung und Skalierung von KI-Anwendungen in Bild
 1. Infrastruktur & Basisdigitalisierung
 2. Didaktische Innovation & adaptives Lernen
 3. Verwaltung & Prüfungsmanagement
-4. Datenschutz & Compliance
-5. Schulungen & Change Management
-6. Fördermittel & Partnerschaften
-
+4. 5. Schulungen & Change Management
+6. 
 Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourcen.
 
 ---

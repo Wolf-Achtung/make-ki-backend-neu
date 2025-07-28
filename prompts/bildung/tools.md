@@ -5,8 +5,7 @@ Liste die relevantesten Tools für Lernplattformen, digitale Prüfungen, Automat
 
 **Für jedes Tool:**
 - Eignung/Use Case
-- Datenschutz/Compliance-Bewertung
-- Open-Source-Alternativen
+- - Open-Source-Alternativen
 - Praxistipp zur Einführung
 
 ---

@@ -1,13 +1,10 @@
 <!-- compliance.md -->
-# Compliance-Status & Empfehlungen für Bildungseinrichtungen
-
-Bewerte die Einhaltung gesetzlicher und regulatorischer Vorgaben (DSGVO, Schulgesetze, Hochschulgesetze, Urheberrecht, Datenschutz bei Minderjährigen) und gib praxisnahe Empfehlungen.
-
+# Compliance-Status & 
+Bewerte die Einhaltung gesetzlicher und regulatorischer Vorgaben (
 **Fokus:**
 - Datenverarbeitung von Schüler*innen/Studierenden
 - Nutzung cloudbasierter Systeme, Einwilligungen, Zugriffsrechte
-- Sofortmaßnahmen & strategische Empfehlungen zur Compliance-Readiness
-
+- Sofortmaßnahmen & strategische 
 ---
 
 ## Compliance-Analyse
