@@ -1,17 +1,12 @@
-<!-- datenschutz.md -->
-# Datenschutz-Analyse & Empfehlungen für das Gesundheitswesen
-
-Bewerte den Datenschutzstatus: Patientenakten, Telemedizin, Forschung, Cloud- & Datenintegration.
-
+<!-- # 
+Bewerte den 
 **Fokus:**
 - Verwaltung & Sicherung sensibler Gesundheitsdaten, Zugriffsmanagement
 - Herausforderungen bei Einwilligung, Datenweitergabe, Aufbewahrungsfristen, Notfalldatenmanagement
-- Lückenanalyse, Sofortmaßnahmen & praxisnahe Empfehlungen
-
+- Lückenanalyse, Sofortmaßnahmen & praxisnahe 
 ---
 
-## Datenschutz-Check
-
+## 
 Nutzerdaten:
 
 {daten}

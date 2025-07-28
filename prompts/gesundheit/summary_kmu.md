@@ -1,10 +1,7 @@
-<!-- summary_kmu.md -->
-# Executive Summary für Gesundheits-KMU
-
+<!-- summary_# Executive Summary für Gesundheits-
 Formuliere eine ausführliche, verständliche Executive Summary für kleine und mittlere Unternehmen im Gesundheitssektor: Score, Chancen, Herausforderungen, Next Steps, Risiken, Praxistipp.
 
 ---
 
-## KMU-Executive Summary
-
+## 
 {daten}

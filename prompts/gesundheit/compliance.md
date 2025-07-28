@@ -1,14 +1,9 @@
 <!-- compliance.md -->
-# Compliance-Status & Empfehlungen im Gesundheitswesen
-
-Analysiere die Compliance-Lage in Gesundheitseinrichtungen mit Fokus auf KI, Datenschutz, medizinische Zulassung, Dokumentation und Transparenz.
-
+# Compliance-Status & 
+Analysiere die Compliance-Lage in Gesundheitseinrichtungen mit Fokus auf KI, 
 **Schwerpunkte:**
-- Datenschutz (DSGVO, ärztliche Schweigepflicht, Patientendatenmanagement)
-- Medizingeräteverordnung (MDR), IT-Sicherheitsgesetz, EU AI Act
-- Einwilligungsmanagement, Rollen und Verantwortlichkeiten
-- Sofortmaßnahmen & strategische Empfehlungen für Compliance-Readiness
-
+- - Medizingeräteverordnung (MDR), IT-Sicherheitsgesetz, - Einwilligungsmanagement, Rollen und Verantwortlichkeiten
+- Sofortmaßnahmen & strategische 
 ---
 
 ## Compliance-Analyse
