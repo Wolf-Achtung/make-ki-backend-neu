@@ -13,8 +13,7 @@ Sehr kompakt, lösungsfokussiert, leicht verständlich – für Entscheider:inne
 
 ---
 
-## Kurzbewertung & Empfehlungen
-
+## Kurzbewertung & 
 Nutzerdaten & Kontext (JSON):
 
 {daten}
