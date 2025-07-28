@@ -4,8 +4,7 @@ Recherchiere und bewerte die besten Tools (kommerziell & Open Source) für KI-ge
 
 **Für jedes Tool:**
 - Eignung (Use Case)
-- DSGVO/EU AI Act-Konformität
-- Open-Source-Alternativen
+- - Open-Source-Alternativen
 - Praxistipp für die Einführung
 
 ---

@@ -1,10 +1,7 @@
-# Compliance-Status & Empfehlungen für KI in der IT-Branche
-
-Analysiere die aktuelle IT- und KI-Compliance (DSGVO, IT-Sicherheitsgesetz, EU AI Act) auf Basis der Nutzerdaten. Gib gezielte, praxisnahe Empfehlungen für die Einhaltung regulatorischer Anforderungen bei KI- und Digitalprojekten in der IT.
-
+# Compliance-Status & 
+Analysiere die aktuelle IT- und KI-Compliance (
 **Bearbeite:**
-- Datenschutz- und Datensicherheitsstatus, Rollen, Verantwortlichkeiten
-- Technische und organisatorische Maßnahmen (TOMs) im Kontext von KI
+- - Technische und organisatorische Maßnahmen (TOMs) im Kontext von KI
 - KI-spezifische Pflichten (Transparenz, Dokumentation, Nachvollziehbarkeit)
 - Quick Wins und strategische Next Steps zur Steigerung der Compliance-Readiness
 

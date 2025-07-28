@@ -5,10 +5,8 @@ Erstelle eine modulare Roadmap zur erfolgreichen Einführung und Skalierung von 
 **Blöcke:**
 1. Automatisierung von IT-Services (z. B. Monitoring, Incident Response, DevOps)
 2. Optimierung der Infrastruktur durch KI (Cloud, Netzwerk, Security)
-3. Datenschutz- und Compliance-Maßnahmen (DSGVO, EU AI Act, IT-SiG)
-4. Upskilling und Change Management für das IT-Team
-5. Fördermittel- und Investitionsstrategie
-
+3. 4. Upskilling und Change Management für das IT-Team
+5. 
 Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Abhängigkeiten, Ressourcen.
 
 ---

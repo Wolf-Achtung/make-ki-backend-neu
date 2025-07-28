@@ -1,5 +1,4 @@
-# Strategische Gesamtempfehlung für IT: KI-Einsatz & Digitale Transformation
-
+# Strategische Gesamt
 Als KI- und Digitalstrategie-Consultant für IT-Abteilungen und -Unternehmen formulierst du eine umfassende, an Business- und IT-Zielen ausgerichtete KI-Strategie. Berücksichtige alle relevanten Aspekte für eine skalierbare und nachhaltige Umsetzung.
 
 **Bearbeite:**

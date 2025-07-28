@@ -1,5 +1,4 @@
-# Executive Summary für IT-KMU
-
+# Executive Summary für IT-
 Verfasse eine kompakte, aber fundierte Executive Summary für kleine und mittlere IT-Unternehmen. Beziehe Score, Benchmarks, Herausforderungen, zentrale Chancen, Risiken und Quick Wins ein.
 
 **Blöcke:**
@@ -10,6 +9,5 @@ Verfasse eine kompakte, aber fundierte Executive Summary für kleine und mittler
 
 ---
 
-## KMU-Executive Summary
-
+## 
 {daten}
