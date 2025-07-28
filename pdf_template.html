@@ -12,75 +12,60 @@ body {
   color: #223561;
 }
 h1 {
-  font-size: 2.15em;
+  font-size: 2.2em;
   text-align: center;
   color: #1e3a8a;
   letter-spacing: 1.5px;
   font-weight: 700;
-  margin: 70px 0 10px 0;
+  margin: 80px 0 18px 0;
   text-shadow: 0 1px 0 #e3ebfa;
 }
 h2 {
   color: #2563eb;
-  font-size: 1.23em;
+  font-size: 1.25em;
   font-weight: 700;
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   border-bottom: 1.5px solid #e8eefd;
   padding-bottom: 4px;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
 }
 .subtitle {
-  font-size: 1.17em;
+  font-size: 1.19em;
   text-align: center;
   color: #1e40af;
-  margin-bottom: 40px;
+  margin-bottom: 44px;
   font-weight: 500;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
 }
 .chapter-box {
   background: #f4f8fc;
-  border-radius: 13px;
-  padding: 28px 30px;
-  margin: 0 auto 18px auto;
-  max-width: 15.5cm;
+  border-radius: 14px;
+  padding: 30px 32px;
+  margin: 0 auto 21px auto;
+  max-width: 16cm;
   color: #223561;
-  font-size: 1.09em;
-  line-height: 1.6;
+  font-size: 1.11em;
+  line-height: 1.65;
   page-break-inside: avoid;
   word-break: break-word;
-  border: 1.2px solid #d1e3fa;
-  box-shadow: 0 2px 12px #e8eefd45;
-}
-.success-box {
-  background: #f7fbf9;
-  border-left: 4px solid #3bbca6;
-  padding: 10px 20px;
-  margin: 20px 0 18px 0;
-  color: #1c6153;
-  border-radius: 9px;
-}
-.warning-box {
-  background: #fff9f0;
-  border-left: 4px solid #fbbf24;
-  padding: 10px 20px;
-  margin: 20px 0 18px 0;
-  color: #b57316;
-  border-radius: 9px;
+  border: 1.25px solid #d1e3fa;
+  box-shadow: 0 2px 14px #e8eefd3b;
 }
 .hauptleistung-infobox {
   background: #f0f6fb;
   border-left: 4px solid #2563eb;
-  padding: 12px 22px;
-  margin: 0 0 20px 0;
-  font-size: 1.10em;
+  padding: 13px 24px;
+  margin: 0 0 18px 0;
+  font-size: 1.11em;
   font-weight: 500;
   color: #1e40af;
-  letter-spacing: 0.15px;
+  letter-spacing: 0.17px;
+  border-radius: 10px;
 }
 ul, ol {
-  margin-left: 1.2em;
-  margin-bottom: 1em;
+  margin-left: 1.3em;
+  margin-bottom: 1.1em;
 }
 b { color: #2563eb; }
 @page {
@@ -94,7 +79,6 @@ b { color: #2563eb; }
     opacity: 0.81;
   }
 }
-
   </style>
 </head>
 <body>
@@ -125,6 +109,7 @@ b { color: #2563eb; }
   </div>
 </div>
 {% endif %}
+
 <!-- EXECUTIVE SUMMARY -->
 {% if executive_summary %}
 <div class="report-section">
@@ -132,7 +117,7 @@ b { color: #2563eb; }
     <h2>Executive Summary</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
-        <b>Alle Empfehlungen dieses Abschnitts beziehen sich explizit auf Ihre Hauptleistung:</b>
+        <b>Im Fokus dieser Bewertung steht Ihre Hauptleistung:</b>
         <span>{{ hauptleistung }}</span>
       </div>
     {% endif %}
@@ -148,8 +133,7 @@ b { color: #2563eb; }
     <h2>Kurzfazit</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
-        <b>Alle Empfehlungen dieses Abschnitts beziehen sich explizit auf Ihre Hauptleistung:</b>
-        <span>{{ hauptleistung }}</span>
+        <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
       </div>
     {% endif %}
     {% if summary_klein %}
@@ -172,8 +156,7 @@ b { color: #2563eb; }
     <h2>Gesamtstrategie & Roadmap</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
-        <b>Alle Empfehlungen dieses Abschnitts beziehen sich explizit auf Ihre Hauptleistung:</b>
-        <span>{{ hauptleistung }}</span>
+        <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
       </div>
     {% endif %}
     {% if gesamtstrategie %}
@@ -193,8 +176,7 @@ b { color: #2563eb; }
     <h2>Compliance & Datenschutz</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
-        <b>Alle Empfehlungen dieses Abschnitts beziehen sich explizit auf Ihre Hauptleistung:</b>
-        <span>{{ hauptleistung }}</span>
+        <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
       </div>
     {% endif %}
     {% if compliance %}
@@ -214,8 +196,7 @@ b { color: #2563eb; }
     <h2>Förderprogramme</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
-        <b>Alle Empfehlungen dieses Abschnitts beziehen sich explizit auf Ihre Hauptleistung:</b>
-        <span>{{ hauptleistung }}</span>
+        <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
       </div>
     {% endif %}
     {% if foerderprogramme %}
@@ -235,8 +216,7 @@ b { color: #2563eb; }
     <h2>Tools & Innovationen</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
-        <b>Alle Empfehlungen dieses Abschnitts beziehen sich explizit auf Ihre Hauptleistung:</b>
-        <span>{{ hauptleistung }}</span>
+        <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
       </div>
     {% endif %}
     {% if tools %}
@@ -256,8 +236,7 @@ b { color: #2563eb; }
     <h2>Praxisbeispiele</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
-        <b>Alle Empfehlungen dieses Abschnitts beziehen sich explizit auf Ihre Hauptleistung:</b>
-        <span>{{ hauptleistung }}</span>
+        <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
       </div>
     {% endif %}
     <div>{{ praxisbeispiele | safe }}</div>
@@ -272,8 +251,7 @@ b { color: #2563eb; }
     <h2>Vision & Zukunftsausblick</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
-        <b>Alle Empfehlungen dieses Abschnitts beziehen sich explizit auf Ihre Hauptleistung:</b>
-        <span>{{ hauptleistung }}</span>
+        <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
       </div>
     {% endif %}
     {% if moonshot_vision %}
