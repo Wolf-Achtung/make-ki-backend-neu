@@ -5,8 +5,7 @@ Liste führende Tools für Content Creation, Editing, Distribution, Rights Manag
 
 **Für jedes Tool:**
 - Eignung/Use Case
-- Datenschutz/Compliance-Check
-- Open-Source-Alternative
+- - Open-Source-Alternative
 - Praxistipp zur Einführung
 
 ---

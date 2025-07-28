@@ -7,10 +7,8 @@ Strukturiere eine Roadmap für KI-Einführung und -Skalierung – von Infrastruk
 1. Technologiebasis & Infrastruktur
 2. Automatisierung in Produktion & Distribution
 3. Content-Rechte & Lizenzmanagement
-4. Datenschutz & Compliance
-5. Schulungen & Change Management
-6. Fördermittel & Partnerschaften
-
+4. 5. Schulungen & Change Management
+6. 
 Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourcen.
 
 ---

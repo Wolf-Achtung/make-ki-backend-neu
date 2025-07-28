@@ -1,6 +1,5 @@
 <!-- gesamtstrategie.md -->
-# Strategische Gesamtempfehlung für Medien- und Kreativunternehmen: KI-Einsatz & digitale Innovation
-
+# Strategische Gesamt
 Formuliere eine umfassende Strategie für nachhaltigen KI- und Digitalisierungserfolg in der Medien- und Kreativbranche.
 
 **Schwerpunkte:**
