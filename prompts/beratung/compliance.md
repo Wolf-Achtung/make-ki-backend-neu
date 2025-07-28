@@ -1,12 +1,9 @@
-# Compliance-Status & Empfehlungen für Beratungs-Dienstleistungen
-
-Bewerte die Einhaltung branchenspezifischer Vorgaben: Datenschutz, Geheimhaltung, Mandanten-/Kunden-Compliance, IT-Sicherheit, Compliance im Fördergeschäft, Dokumentationspflichten.
-
+# Compliance-Status & 
+Bewerte die Einhaltung branchenspezifischer Vorgaben: 
 **Fokus:**
 - Datennutzung, Mandantenschutz, sichere Kommunikation
 - Prozesse für Dokumentation und Nachvollziehbarkeit
-- Sofortmaßnahmen & strategische Empfehlungen zur Compliance-Readiness
-
+- Sofortmaßnahmen & strategische 
 ---
 
 ## Compliance-Analyse

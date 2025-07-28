@@ -4,8 +4,7 @@ Liste führende Tools für Automatisierung, Analyse, Wissensmanagement, digitale
 
 **Für jedes Tool:**
 - Eignung/Use Case
-- Datenschutz/Compliance
-- Open-Source-Alternative
+- - Open-Source-Alternative
 - Praxistipp zur Einführung
 
 ---

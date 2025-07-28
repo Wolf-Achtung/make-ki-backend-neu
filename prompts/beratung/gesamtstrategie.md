@@ -1,5 +1,4 @@
-# Strategische Gesamtempfehlung für Beratungs-Dienstleistungen: KI-Einsatz & Digitalisierung
-
+# Strategische Gesamt
 Formuliere eine umfassende, zukunftsfähige Strategie zur Digitalisierung und für den KI-Einsatz in Beratungsunternehmen.
 
 **Fokus:**

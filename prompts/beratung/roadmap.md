@@ -5,11 +5,9 @@ Strukturiere eine Roadmap für den schrittweisen Ausbau von KI- und Digitaltechn
 **Module:**
 1. Technologiebasis & Datenintegration
 2. Automatisierung und KI-Tools
-3. Datenschutz & Compliance
-4. Produktentwicklung (digitale Beratung)
+3. 4. Produktentwicklung (digitale Beratung)
 5. Schulungen & Change Management
-6. Fördermittel & Partnerschaften
-
+6. 
 ---
 
 ## Roadmap
