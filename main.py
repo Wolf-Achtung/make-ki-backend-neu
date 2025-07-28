@@ -158,7 +158,7 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
                 conn.commit()
 
         # *** Das HTML an das Frontend zurückgeben! ***
-        return {"html": html_content}
+        return JSONResponse(content={"html": html_content})
 
     except Exception as e:
         print("❌ Fehler bei /briefing:", e)
