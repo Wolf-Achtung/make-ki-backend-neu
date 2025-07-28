@@ -1,5 +1,4 @@
-# Kurz-Executive Summary für Marketing-KMU
-
+# Kurz-Executive Summary für Marketing-
 Schreibe eine prägnante Executive Summary für kleine und mittlere Marketing-Unternehmen, die den KI-Readiness-Status, zentrale Chancen und Quick Wins auf den Punkt bringt.
 
 **Nutze:**
@@ -8,6 +7,5 @@ Schreibe eine prägnante Executive Summary für kleine und mittlere Marketing-Un
 
 ---
 
-## KMU-Kurzfassung
-
+## 
 {daten}

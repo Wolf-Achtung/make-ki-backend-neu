@@ -1,7 +1,5 @@
-# EU AI Act-Analyse & Empfehlungen für das Marketing
-
-Bewerte die Bedeutung und konkreten Anforderungen des EU AI Act speziell für Marketingteams und Agenturen. Analysiere, welche Anwendungsfälle besonders betroffen sind (z. B. Personalisierung, Profiling, Chatbots), und gib Empfehlungen für die Umsetzung.
-
+# 
+Bewerte die Bedeutung und konkreten Anforderungen des 
 **Fokussiert auf:**
 - Risikomanagement, Dokumentationspflichten, Transparenz
 - Chancen für Innovation und Compliance
@@ -9,6 +7,5 @@ Bewerte die Bedeutung und konkreten Anforderungen des EU AI Act speziell für Ma
 
 ---
 
-## EU AI Act-Analyse
-
+## 
 {daten}
