@@ -1,12 +1,9 @@
-# Compliance-Status & Empfehlungen für Industrie & Produktion
-
-Bewerte die Einhaltung branchenspezifischer Regularien: Arbeitssicherheitsgesetze, Maschinenschutz, Produktionsdatenschutz, Exportkontrolle, IoT-Security, Lieferkettenverordnung, Nachhaltigkeitsregeln.
-
+# Compliance-Status & 
+Bewerte die Einhaltung branchenspezifischer Regularien: Arbeitssicherheitsgesetze, Maschinenschutz, Produktions
 **Fokus:**
 - Datennutzung, Maschinendaten & Prozessdaten
 - Prozesse für Qualitätssicherung und Nachweispflichten
-- Sofortmaßnahmen & strategische Empfehlungen zur Compliance-Readiness
-
+- Sofortmaßnahmen & strategische 
 ---
 
 ## Compliance-Analyse

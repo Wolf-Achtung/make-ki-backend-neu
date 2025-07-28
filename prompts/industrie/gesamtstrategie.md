@@ -1,5 +1,4 @@
-# Strategische Gesamtempfehlung für Industrie & Produktion: KI-Einsatz & Digitalisierung
-
+# Strategische Gesamt
 Formuliere eine umfassende Strategie für nachhaltigen KI- und Digitalisierungserfolg in der Industrie.
 
 **Schwerpunkte:**

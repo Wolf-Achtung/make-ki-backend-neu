@@ -6,10 +6,8 @@ Strukturiere eine Roadmap für KI-Einführung und -Skalierung in der Industrie �
 1. Technologiebasis & Datenintegration
 2. Automatisierung & Smart Factory
 3. Predictive Maintenance & Qualitätssicherung
-4. Datenschutz & Compliance
-5. Schulungen & Change Management
-6. Fördermittel & Innovationspartnerschaften
-
+4. 5. Schulungen & Change Management
+6. 
 Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourcen.
 
 ---
