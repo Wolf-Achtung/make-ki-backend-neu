@@ -4,8 +4,7 @@ Liste führende Tools für Tracking, Flottenmanagement, Lagerautomatisierung, Ro
 
 **Für jedes Tool:**
 - Eignung/Use Case
-- Datenschutz/Compliance-Check
-- Open-Source-Alternative
+- - Open-Source-Alternative
 - Praxistipp zur Einführung
 
 ---

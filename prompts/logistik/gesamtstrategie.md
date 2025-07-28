@@ -1,5 +1,4 @@
-# Strategische Gesamtempfehlung für Logistik und Transport: KI-Einsatz & Digitalisierung
-
+# Strategische Gesamt
 Formuliere eine umfassende Strategie für nachhaltigen KI- und Digitalisierungserfolg im Logistik-/Transportsektor.
 
 **Schwerpunkte:**

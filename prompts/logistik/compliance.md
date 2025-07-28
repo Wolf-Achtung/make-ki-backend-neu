@@ -1,12 +1,8 @@
-# Compliance-Status & Empfehlungen für Logistik- und Transportunternehmen
-
-Bewerte die Einhaltung von branchenspezifischen Regularien: Lieferkettengesetz, DSGVO, Fahrerdaten, Telematik, Gefahrgutverordnung, Zoll, E-Mobility-Vorgaben.
-
+# Compliance-Status & 
+Bewerte die Einhaltung von branchenspezifischen Regularien: Lieferkettengesetz, 
 **Fokus:**
-- Datennutzung und Datenschutz im Tracking, Telematik und Kundendaten
-- Prozesse für Lieferkettentransparenz und Reporting
-- Sofortmaßnahmen & strategische Empfehlungen zur Compliance-Readiness
-
+- Datennutzung und - Prozesse für Lieferkettentransparenz und Reporting
+- Sofortmaßnahmen & strategische 
 ---
 
 ## Compliance-Analyse

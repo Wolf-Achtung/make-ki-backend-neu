@@ -6,10 +6,8 @@ Strukturiere eine Roadmap für KI-Einführung und -Skalierung – von Dateninfra
 1. Technologiebasis & Datenintegration
 2. Automatisierung von Disposition & Routen
 3. Lager- und Frachtmanagement
-4. Datenschutz & Compliance
-5. Schulungen & Change Management
-6. Fördermittel & Partnerschaften
-
+4. 5. Schulungen & Change Management
+6. 
 Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourcen.
 
 ---
