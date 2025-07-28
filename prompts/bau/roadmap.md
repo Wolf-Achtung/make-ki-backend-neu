@@ -5,11 +5,9 @@ Strukturiere eine Roadmap für die digitale und KI-Transformation: Datenintegrat
 **Module:**
 1. Datengrundlagen & BIM-Einführung
 2. Automatisierung & KI-Tools in Planung/Ausführung
-3. Datenschutz & Compliance
-4. Digitale Kollaborationsplattformen
+3. 4. Digitale Kollaborationsplattformen
 5. Change Management & Schulungen
-6. Fördermittel & Partnerschaften
-
+6. 
 ---
 
 ## Roadmap

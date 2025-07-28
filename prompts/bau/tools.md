@@ -4,8 +4,7 @@ Liste führende Tools für BIM, Projektmanagement, Simulation, Baucontrolling, A
 
 **Für jedes Tool:**
 - Eignung/Use Case
-- Datenschutz/Compliance
-- Open-Source-Alternative
+- - Open-Source-Alternative
 - Praxistipp
 
 ---

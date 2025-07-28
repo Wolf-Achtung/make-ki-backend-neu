@@ -1,5 +1,4 @@
-# Strategische Gesamtempfehlung für Bauwesen und Architektur: KI-Einsatz & Digitalisierung
-
+# Strategische Gesamt
 Entwickle eine umfassende Strategie für die digitale und KI-Transformation in Architektur- und Bauunternehmen.
 
 **Fokus:**
