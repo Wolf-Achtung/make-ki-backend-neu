@@ -79,6 +79,9 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
         "foerderungen": foerder_text or "",
         "praxisbeispiele": "",
         "score_percent": data.get("score_percent", ""),
+        "hinweis_html_tabellen": (
+        "Wichtig: Wenn strukturierte Inhalte wie Tabellen nötig sind, geben Sie diese ausschließlich "
+        "in validem HTML-Format (<table>, <tr>, <td>) aus – kein Markdown oder Codeblock."
         **data
     }
     prompt = load_prompt(branche, abschnitt, prompt_vars)
