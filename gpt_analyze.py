@@ -68,26 +68,26 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
             f"- {row.get('Kategorie', '')}: {row.get('Wert_Durchschnitt', '')} ({row.get('Kurzbeschreibung', '')})"
             for row in benchmark
         )
-    # === gpt_analyze.py: Erweiterung prompt_vars ===
-prompt_vars = {
-    "branche": branche,
-    "hauptleistung": data.get("hauptleistung", ""),
-    "unternehmensgroesse": groesse,
-    "selbststaendig": data.get("selbststaendig", ""),
-    "daten": json.dumps(data, indent=2, ensure_ascii=False),
-    "checklisten": checklisten or "",
-    "benchmark": bench_txt,
-    "tools": tools_text or "",
-    "tools_und_foerderungen": tools_text or "",
-    "foerderungen": foerder_text or "",
-    "praxisbeispiele": "",
-    "score_percent": data.get("score_percent", ""),
-    "hinweis_html_tabellen": (
-        "Wichtig: Wenn strukturierte Inhalte wie Tabellen nötig sind, geben Sie diese ausschließlich "
-        "in validem HTML-Format (<table>, <tr>, <td>) aus – kein Markdown oder Codeblock."
-    ),
-    **data
-}
+
+    prompt_vars = {
+        "branche": branche,
+        "hauptleistung": data.get("hauptleistung", ""),
+        "unternehmensgroesse": groesse,
+        "selbststaendig": data.get("selbststaendig", ""),
+        "daten": json.dumps(data, indent=2, ensure_ascii=False),
+        "checklisten": checklisten or "",
+        "benchmark": bench_txt,
+        "tools": tools_text or "",
+        "tools_und_foerderungen": tools_text or "",
+        "foerderungen": foerder_text or "",
+        "praxisbeispiele": "",
+        "score_percent": data.get("score_percent", ""),
+        "hinweis_html_tabellen": (
+            "Wichtig: Wenn strukturierte Inhalte wie Tabellen nötig sind, geben Sie diese ausschließlich "
+            "in validem HTML-Format (<table>, <tr>, <td>) aus – kein Markdown oder Codeblock."
+        ),
+        **data
+    }
 
     prompt = load_prompt(branche, abschnitt, prompt_vars)
     return prompt
