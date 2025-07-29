@@ -33,3 +33,7 @@ Für diese Analyse sind folgende Angaben **entscheidend** – sie müssen in JED
 - Wiederhole Empfehlungen zu Fördermitteln, DSGVO, Tool-Tipps oder Roadmaps **nur, falls sie im Report nicht schon vorkommen**. Fasse ähnliche Hinweise prägnant zusammen.
 
 **Deine Analyse muss modern, motivierend, verständlich und individuell sein.**
+
+**Technischer Hinweis für strukturierte Inhalte:**  
+Wenn strukturierte Inhalte wie Tabellen erforderlich sind (z. B. zur Risiko-Kategorisierung), geben Sie diese bitte **nicht** in Markdown, sondern **ausschließlich in gültigem HTML aus** (z. B. `<table>`, `<tr>`, `<td>`).  
+Dies gewährleistet eine fehlerfreie Darstellung im automatisiert erzeugten PDF.
