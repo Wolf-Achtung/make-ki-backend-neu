@@ -1,6 +1,6 @@
 # Compliance‑Check (EU AI Act & DSGVO) – Optimiert
 
-- [ ] **Risikoklassifizierung:** Sind alle KI‑Systeme gemäß EU AI Act eingeordnet (Unzulässig, Hochrisiko, Begrenztes Risiko, Minimalrisiko)?
+- [ ] **Risikoklassifizierung:** Sind alle KI‑Systeme gemäß EU AI Act eingeordnet (siehe Tabelle im Compliance‑Kapitel)?
 - [ ] **Dokumentation:** Werden eingesetzte KI‑Systeme registriert, dokumentiert und nachverfolgt (Modellversionen, Trainingsdaten, Anbieter)?
 - [ ] **Transparenz:** Gibt es angemessene Kennzeichnung und Erklärung der KI‑Nutzung gegenüber Kunden, Mitarbeitenden und Partnern? Sind Opt‑out‑Optionen vorhanden?
 - [ ] **Trainingsdaten & Entscheidungslogik:** Werden Datenquellen, Annotationen und Modellentscheidungen dokumentiert und regelmäßig auf Bias überprüft?
