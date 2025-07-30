@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>KI-Readiness-Report 2025</title>
+  <title>KI‑Readiness‑Report 2025</title>
   <style>
 body {
   background: #fff;
@@ -17,7 +17,7 @@ h1 {
   color: #1e3a8a;
   letter-spacing: 1.5px;
   font-weight: 700;
-  margin: 80px 0 18px 0;
+  margin: 70px 0 12px 0;
   text-shadow: 0 1px 0 #e3ebfa;
 }
 h2 {
@@ -95,7 +95,21 @@ th {
   background-color: #f0f6fb;
   color: #1e40af;
 }
-
+/* Score Box */
+.score-box {
+  background: #fff7e6;
+  border-left: 5px solid #f59e0b;
+  padding: 20px 28px;
+  margin: 0 auto 26px auto;
+  max-width: 16cm;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.12);
+  font-size: 1.15em;
+  color: #92400e;
+}
+.score-box b {
+  color: #b45309;
+}
   </style>
 </head>
 <body>
@@ -103,10 +117,18 @@ th {
 <!-- TITELSEITE -->
 <div class="report-section">
   <div>
-    <h1>KI-Readiness-Report 2025</h1>
-    <div class="subtitle">Zukunftssichere KI-Strategie für Unternehmen</div>
+    <h1>KI‑Readiness‑Report 2025</h1>
+    <div class="subtitle">Zukunftssichere KI‑Strategie für Unternehmen</div>
   </div>
 </div>
+
+<!-- SCORE‑ÜBERSICHT -->
+{% if score_percent %}
+<div class="score-box">
+  <p><b>KI‑Readiness‑Score:</b> {{ score_percent }} % von 100 %</p>
+  <p>Dieser Wert zeigt, wie gut Ihr Unternehmen aktuell für den Einsatz von KI vorbereitet ist. Je höher der Wert, desto stärker sind Ihre digitale Reife, Ihre Automatisierung und Ihr internes Know‑how ausgeprägt.</p>
+</div>
+{% endif %}
 
 <!-- INHALTSVERZEICHNIS -->
 {% if executive_summary or summary_klein or summary_kmu or summary_solo or gesamtstrategie or roadmap or compliance or datenschutz or foerderprogramme or foerdermittel or tools or innovation or praxisbeispiele or moonshot_vision or eu_ai_act %}
@@ -116,12 +138,13 @@ th {
     <ul>
       {% if executive_summary %}<li>Executive Summary</li>{% endif %}
       {% if summary_klein or summary_kmu or summary_solo %}<li>Kurzfazit</li>{% endif %}
-      {% if gesamtstrategie or roadmap %}<li>Gesamtstrategie & Roadmap</li>{% endif %}
-      {% if compliance or datenschutz %}<li>Compliance & Datenschutz</li>{% endif %}
+      {% if gesamtstrategie or roadmap %}<li>Gesamtstrategie & Roadmap</li>{% endif %}
+      {% if compliance or datenschutz %}<li>Compliance & Datenschutz</li>{% endif %}
       {% if foerderprogramme or foerdermittel %}<li>Förderprogramme</li>{% endif %}
-      {% if tools or innovation %}<li>Tools & Innovationen</li>{% endif %}
+      {% if tools or innovation %}<li>Tools & Innovationen</li>{% endif %}
       {% if praxisbeispiele %}<li>Praxisbeispiele</li>{% endif %}
-      {% if moonshot_vision or eu_ai_act %}<li>Vision & Zukunftsausblick</li>{% endif %}
+      {% if moonshot_vision or eu_ai_act %}<li>Vision & Zukunftsausblick</li>{% endif %}
+      {% if checklisten %}<li>Checklisten & Leitfäden</li>{% endif %}
     </ul>
   </div>
 </div>
@@ -129,7 +152,7 @@ th {
 
 <!-- EXECUTIVE SUMMARY -->
 {% if executive_summary %}
-<div class="report-section">
+<div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
     <h2>Executive Summary</h2>
     {% if hauptleistung %}
@@ -145,7 +168,7 @@ th {
 
 <!-- KURZFAZIT -->
 {% if summary_klein or summary_kmu or summary_solo %}
-<div class="report-section">
+<div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
     <h2>Kurzfazit</h2>
     {% if hauptleistung %}
@@ -160,17 +183,17 @@ th {
       <div><b>KMU:</b> {{ summary_kmu | safe }}</div>
     {% endif %}
     {% if summary_solo %}
-      <div><b>Solo-Unternehmen:</b> {{ summary_solo | safe }}</div>
+      <div><b>Solo‑Unternehmen:</b> {{ summary_solo | safe }}</div>
     {% endif %}
   </div>
 </div>
 {% endif %}
 
-<!-- GESAMTSTRATEGIE & ROADMAP -->
+<!-- GESAMTSTRATEGIE & ROADMAP -->
 {% if gesamtstrategie or roadmap %}
-<div class="report-section">
+<div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
-    <h2>Gesamtstrategie & Roadmap</h2>
+    <h2>Gesamtstrategie & Roadmap</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
         <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
@@ -186,11 +209,11 @@ th {
 </div>
 {% endif %}
 
-<!-- COMPLIANCE & DATENSCHUTZ -->
+<!-- COMPLIANCE & DATENSCHUTZ -->
 {% if compliance or datenschutz %}
-<div class="report-section">
+<div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
-    <h2>Compliance & Datenschutz</h2>
+    <h2>Compliance & Datenschutz</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
         <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
@@ -208,7 +231,7 @@ th {
 
 <!-- FÖRDERPROGRAMME -->
 {% if foerderprogramme or foerdermittel %}
-<div class="report-section">
+<div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
     <h2>Förderprogramme</h2>
     {% if hauptleistung %}
@@ -226,11 +249,11 @@ th {
 </div>
 {% endif %}
 
-<!-- TOOLS & INNOVATIONEN -->
+<!-- TOOLS & INNOVATIONEN -->
 {% if tools or innovation %}
-<div class="report-section">
+<div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
-    <h2>Tools & Innovationen</h2>
+    <h2>Tools & Innovationen</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
         <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
@@ -248,7 +271,7 @@ th {
 
 <!-- PRAXISBEISPIELE -->
 {% if praxisbeispiele %}
-<div class="report-section">
+<div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
     <h2>Praxisbeispiele</h2>
     {% if hauptleistung %}
@@ -261,11 +284,11 @@ th {
 </div>
 {% endif %}
 
-<!-- VISION & ZUKUNFTSAUSBLICK -->
+<!-- VISION & ZUKUNFTSAUSBLICK -->
 {% if moonshot_vision or eu_ai_act %}
-<div class="report-section">
+<div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
-    <h2>Vision & Zukunftsausblick</h2>
+    <h2>Vision & Zukunftsausblick</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
         <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
@@ -275,8 +298,18 @@ th {
       <div>{{ moonshot_vision | safe }}</div>
     {% endif %}
     {% if eu_ai_act %}
-      <div style="margin-top:1.4em;"><b>EU AI Act:</b> {{ eu_ai_act | safe }}</div>
+      <div style="margin-top:1.4em;"><b>EU AI Act:</b> {{ eu_ai_act | safe }}</div>
     {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- CHECKLISTEN & LEITFÄDEN -->
+{% if checklisten %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Checklisten & Leitfäden</h2>
+    <div>{{ checklisten | safe }}</div>
   </div>
 </div>
 {% endif %}
