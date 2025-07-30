@@ -1,9 +1,9 @@
-# Executive Summary für kleine IT-Dienstleister
+# Executive Summary für kleine IT‑Dienstleister
 
-Fasse die wichtigsten Erkenntnisse für kleine IT-Firmen und Einzeldienstleister ausführlich zusammen – von Score und Stärken bis zu Quick Wins und häufigen Fehlerquellen.
+Fasse die wichtigsten Erkenntnisse für kleine IT‑Firmen und Einzeldienstleister zusammen: Score, Stärken, Chancen, Risiken und 1–2 Quick‑Wins.
 
 ---
 
-## Kleinunternehmen-Executive Summary
+## Kurzfazit Kleinunternehmen
 
 {daten}

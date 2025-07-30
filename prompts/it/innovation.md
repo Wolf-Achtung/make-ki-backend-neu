@@ -1,11 +1,11 @@
-# Innovationspotenziale & Zukunftschancen für die IT-Branche
+# Innovationspotenziale & Zukunftschancen für die IT‑Branche
 
-Identifiziere die wichtigsten Innovationsfelder, Quick Wins und strategische Chancen durch KI und Digitalisierung für IT-Unternehmen und -Abteilungen.
+Identifiziere die wichtigsten Innovationsfelder, Quick‑Wins und strategische Chancen durch KI und Digitalisierung für IT‑Unternehmen und ‑Abteilungen.
 
 **Bearbeite:**
-- Die größten Hebel für Effizienz, Skalierbarkeit, Qualität und Innovationskraft (z. B. Automatisierung von IT-Services, intelligente Fehlererkennung, KI-gestütztes Monitoring, AI-Ops, Security)
-- Barrieren (z. B. Legacy-IT, Datenqualität, Skill-Gaps) und wie sie überwunden werden können
-- Konkrete Pilotprojekte und Use Cases für KI in der IT (praktisch und direkt adaptierbar)
+* **Größte Hebel** für Effizienz, Skalierbarkeit, Qualität und Innovationskraft, z. B. Automatisierung von IT‑Services, intelligente Fehlererkennung, AIOps & MLOps, KI‑gestütztes Monitoring, Security‑Automation, generative Software‑Entwicklung.
+* **Barrieren & Lösungsansätze:** Legacy‑IT, Datenqualität, Skill‑Gaps, regulatorische Unsicherheit; beschreibe, wie diese überwunden werden können (Cloud‑Migration, Data‑Ops, Upskilling, moderne DevOps‑Toolchains).
+* **Pilotprojekte & Use Cases:** Konkrete, praktisch adaptierbare Use Cases (z. B. automatisches Incident‑Routing mit NLP, Predictive Capacity Management, KI‑basierte Code‑Reviews).
 
 ---
 
@@ -14,3 +14,8 @@ Identifiziere die wichtigsten Innovationsfelder, Quick Wins und strategische Cha
 Nutzerdaten (JSON):
 
 {daten}
+
+Zusatzmaterialien:
+
+{praxisbeispiele}
+{tools_und_foerderungen}
