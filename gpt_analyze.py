@@ -5,6 +5,19 @@ import re
 from openai import OpenAI
 from datetime import datetime
 
+EU_RISK_TABLE = """
+<div class="eu-risk-table" style="margin-bottom:1.2em;">
+  <b>Risikokategorien gemäß EU AI Act:</b>
+  <table>
+    <tr><th>Kategorie</th><th>Beschreibung</th></tr>
+    <tr><td>Verboten</td><td>KI-Systeme mit Sozialem Scoring, manipulativer oder verdeckter Steuerung</td></tr>
+    <tr><td>Hochrisiko</td><td>KI in kritischen Infrastrukturen, Gesundheit, Justiz, HR, Sicherheit, etc.</td></tr>
+    <tr><td>Begrenztes Risiko</td><td>z. B. Chatbots, Empfehlungssysteme (mit Transparenzpflichten)</td></tr>
+    <tr><td>Minimales Risiko</td><td>z. B. Spamfilter, Games</td></tr>
+  </table>
+</div>
+"""
+
 # Simple helper to convert checklist Markdown to basic HTML lists. This avoids a heavy markdown dependency.
 def checklist_markdown_to_html(md_text: str) -> str:
     """
@@ -265,49 +278,37 @@ def analyze_full_report(data):
                 data, abschnitt, branche, groesse, checklisten, benchmark, prior_results
             )
             text = fix_encoding(text)
+            if abschnitt == "compliance":
+            results[abschnitt] = EU_RISK_TABLE + "\n" + text
+        else:
             results[abschnitt] = text
-            prior_results[abschnitt] = text
-        except Exception as e:
-            msg = f"[ERROR in Abschnitt {abschnitt}: {e}]"
-            print(msg)
-            results[abschnitt] = msg
-            prior_results[abschnitt] = msg
+            prior_results[abschnitt] = results[abschnitt]
 
     # Tools und Förderprogramme separat ermitteln und in die Ergebnisse einfügen. Diese werden nicht von GPT generiert, um stabile und aktuelle Inhalte zu gewährleisten.
     tools_text, foerder_text = get_tools_und_foerderungen(data)
     results["tools"] = tools_text or "Keine spezifischen Tools gefunden."
     results["foerderprogramme"] = foerder_text or "Keine Förderprogramme gefunden."
 
-    # --- Checklisten-Integration ---
-    # Zusätzlich zu den GPT-generierten Texten sollen strukturierte Checklisten aus dem data-Verzeichnis
-    # im Report erscheinen. Diese Checklisten werden als Markdown gepflegt und hier in HTML umgewandelt.
-    checklists_html = ""
-    # Liste der relevanten Checklistendateien. Falls weitere Checklisten hinzukommen, können sie hier ergänzt werden.
-    checklist_files = [
-        "check_ki_readiness.md",
-        "check_compliance_eu_ai_act.md",
-        "check_innovationspotenzial.md",
-        "check_datenschutz.md",
-        "check_foerdermittel.md",
-        "check_umsetzungsplan_ki.md",
-    ]
-    for cl_file in checklist_files:
-        md = read_markdown_file(cl_file)
-        if md:
-            html = checklist_markdown_to_html(md)
-            # Falls die Checkliste eine Überschrift im Markdown enthält, wird sie durch
-            # checklist_markdown_to_html() als <h3> ausgegeben. Wir fügen nur eine
-            # Leerzeile als Trennung ein.
-            if html:
-                checklists_html += html + "\n"
-    # Füge die Checklisten als neues Feld in die Ergebnisse ein, falls Inhalt vorhanden ist.
-    if checklists_html.strip():
-        results["checklisten"] = checklists_html.strip()
-    else:
-        results["checklisten"] = ""
+    # --- Checklisten-Integration, Gold-Standard ---
+# Strukturiert: Jede Checkliste als eigene Box mit Überschrift und Checkboxen
 
-    print("### DEBUG: Alle Ergebnisse gesammelt:", results)
-    return results
+checklist_map = [
+    ("KI‑Readiness‑Check", "check_ki_readiness.md"),
+    ("Compliance‑Check (EU AI Act & DSGVO)", "check_compliance_eu_ai_act.md"),
+    ("Innovationspotenzial‑Check", "check_innovationspotenzial.md"),
+    ("Datenschutz‑Check", "check_datenschutz.md"),
+    ("Fördermittel‑Check", "check_foerdermittel.md"),
+    ("KI‑Umsetzungsplan", "check_umsetzungsplan_ki.md"),
+]
+
+checklists_html = ""
+for title, cl_file in checklist_map:
+    md = read_markdown_file(cl_file)
+    if md and md.strip():
+        html = checklist_markdown_to_html(md)
+        checklists_html += f'<div class="checklist-box"><h3>{title}</h3>{html}</div>\n'
+
+results["checklisten"] = checklists_html.strip() if checklists_html.strip() else ""
 
 # --- 9. SWOT-Extractor ---
 def extract_swot(full_text):
