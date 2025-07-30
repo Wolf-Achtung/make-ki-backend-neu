@@ -265,7 +265,7 @@ def analyze_full_report(data):
     results = {}
     prior_results = {}
     for abschnitt, checklisten in abschnittsreihenfolge:
-    try:
+	try:
         if abschnitt == "score_percent":
             percent = calc_score_percent(data)
             results["score_percent"] = percent
