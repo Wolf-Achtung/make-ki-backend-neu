@@ -1,20 +1,19 @@
+# Förderprogramme für die Medien- und Kreativwirtschaft (maximal aktuell)
 
-<!-- foerderprogramme.md -->
-# Förderprogramme für die Medien- und Kreativwirtschaft
+Bitte listen Sie die fünf tagesaktuell wichtigsten Förderprogramme auf,
+die Digitalisierung und KI-Vorhaben in der Medien‑ und Kreativwirtschaft unterstützen (Stand: {{ datum }}).
 
-Gib einen strukturierten Überblick zu relevanten Förderprogrammen (z. B. Bund, Länder, EU, Medienboard, Creative Europe, Filmförderung) für Digitalisierungs‑ und KI‑Vorhaben in der Medien‑ und Kreativwirtschaft. Nutze die Daten aus {foerderprogramme} als Grundlage.
+- Beziehen Sie neue, aktualisierte oder verlängerte Programme von Bund, Ländern, EU, Medienboard, Creative Europe, Filmförderung etc. ein (seit April 2024).
+- Für jedes Programm bitte angeben:
+  - **Name & Link zum Programm**
+  - **Zielgruppe & Medienfokus** (Film, Musik, Games, Journalismus, Start‑ups, ...)
+  - **Förderhöhe und Leistungen** (Investitionen, Beratung, F&E, Weiterbildung)
+  - **Voraussetzungen, Fristen, Update-Datum** (sofern bekannt)
+  - **Praxistipps & Erfolgsfaktoren** (Erfolgsstrategie, Kombinierbarkeit, häufige Stolpersteine)
+  - **Quellenangabe**
 
-Für jedes Programm solltest du folgende Punkte aufgreifen:
-* **Name & Link zum Programm**
-* **Zielgruppe & Medienfokus** (z. B. Filmproduktion, Games, Musik, Journalismus, Start‑ups)
-* **Förderhöhe und Leistungen** (Investitionen, Beratung, Forschung & Entwicklung)
-* **Voraussetzungen & Fristen** (Antragstellung, Matching‑Funds, regionale Vorgaben)
-* **Praxistipps & Erfolgsfaktoren** (Tipps zur Antragstellung, Fallstricke, Kombinierbarkeit mit anderen Programmen)
-
-Stelle die Informationen übersichtlich dar, zum Beispiel in einer Liste oder Tabelle. Erkläre Fachbegriffe kurz und betone, wie diese Programme insbesondere KI‑Projekte im Medienbereich unterstützen.
+Strukturieren Sie die Programme als Liste oder Tabelle und erklären Sie Fachbegriffe kurz, insbesondere wenn sie für KI‑Projekte im Medienbereich relevant sind.
 
 ---
 
-## Förderprogramme
-
-{foerderprogramme}
+{{ foerderprogramme }}
