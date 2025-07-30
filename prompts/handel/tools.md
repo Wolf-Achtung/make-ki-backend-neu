@@ -1,19 +1,22 @@
-# Empfohlene KI‑ und Digitalisierungstools für den Handel
+# Aktuelle KI‑ und Digitalisierungstools für den Handel
 
-Liste drei bis fünf bewährte Tools oder Softwarelösungen, die Handelsunternehmen beim Einsatz von KI und Digitalisierung unterstützen. Beziehe Systeme für Personalisierung & Recommendation Engines, Warenmanagement & Prognosen, Analytics & Business Intelligence, CRM & Kundenbindung sowie Marketing‑Automation ein. Berücksichtige sowohl marktführende Produkte als auch Open‑Source‑Alternativen. Nutze {tools_und_foerderungen} als Datenquelle und ergänze um eigene Empfehlungen.
+Bitte listen Sie die tagesaktuell relevantesten Tools und Softwarelösungen auf,
+die Handelsunternehmen beim Einsatz von KI und Digitalisierung unterstützen (Stand: {{ datum }}).
 
-Für jedes Tool sollten folgende Angaben gemacht werden:
+- Beziehen Sie besonders neue oder wenig bekannte Systeme ein, die nach April 2024 veröffentlicht wurden oder aktualisiert wurden.
+- Für jedes Tool bitte folgende Angaben machen:
+  - **Name & Kategorie** (z. B. Personalisierung, Warenmanagement, Analytics, Marketing)
+  - **Eignung / Use Case:** Welche konkreten Anwendungsfälle, Vorteile, Nutzen für Händler?
+  - **Open‑Source‑Alternativen:** Gibt es günstige oder quelloffene Lösungen für Einsteiger, KMU oder DIY-Projekte?
+  - **Quellenlink, Anbieter, Veröffentlichungsdatum** (sofern verfügbar)
+- Geben Sie Hinweise, wie Händler das Tool erfolgreich einführen können (Pilotprojekt, Integration, Datenschutz).
 
-* **Name & Kategorie:** Wie heißt das Tool und welchem Bereich (Personalisierung, Logistik, Analytics, Marketing) ist es zuzuordnen?
-* **Eignung / Use Case:** Beschreibe, wofür das Tool im Handel verwendet wird und welche Vorteile es bringt (z. B. automatisch generierte Produktempfehlungen, präzise Nachfragevorhersagen, Echtzeit‑Analysen, Customer Journey‑Optimierung).
-* **Open‑Source‑Alternativen:** Nenne eine oder mehrere Open‑Source‑Alternativen oder günstige Tools, falls verfügbar, und erläutere, wann ihr Einsatz sinnvoll ist (z. B. bei kleinem Budget, DIY‑Projekten).
-* **Praxistipp zur Einführung:** Gib Hinweise, wie Händler das Tool erfolgreich einführen können (z. B. Pilotprojekt in einer Produktkategorie, Integration in bestehende Shopsysteme, Schulungen, datenschutzrechtliche Prüfung).
+Priorisieren Sie Tools, die in Deutschland/EU datenschutzkonform sind. Nennen Sie für jedes Tool, ob es für kleine Händler, KMU oder Großunternehmen besonders geeignet ist.
 
-Die Tools sollten in einer klaren, verständlichen Sprache beschrieben werden und den Nutzen für die Zielgruppe hervorheben.
+**Tipp:** Recherchieren Sie auch nach innovativen Lösungen, die in den letzten Monaten in Fachmagazinen, auf Events oder bei Branchen-Verbänden vorgestellt wurden, und geben Sie eine kurze Quellenangabe.
 
 ---
 
-## Tools & Empfehlungen
+{{ tools_und_foerderungen }}
 
-{tools_und_foerderungen}
-{daten}
+{{ daten }}

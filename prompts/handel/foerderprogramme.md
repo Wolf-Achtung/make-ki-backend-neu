@@ -1,19 +1,19 @@
-# Förderprogramme für den Handel
+# Förderprogramme für den Handel (maximal aktuell)
 
-Erstelle eine übersichtliche Tabelle mit bis zu fünf Förderprogrammen, die speziell oder branchenübergreifend Digitalisierungs‑ und KI‑Projekte im Handel fördern. Dazu zählen Programme des Bundes (z. B. „Digital Jetzt“, „Mittelstand Innovativ & Digital“), der Länder (z. B. Digitalisierungsprämien), der EU (z. B. EFRE‑/ESF‑Programme, Horizon Europe) sowie branchenspezifische Initiativen (z. B. Programme der Handelsverbände). Nutze {foerderprogramme} als Datengrundlage, wenn vorhanden.
+Bitte listen Sie die fünf relevantesten, tagesaktuellen Förderprogramme auf, 
+die speziell oder branchenübergreifend Digitalisierungs‑ und KI‑Projekte im Handel fördern (Stand: {{ datum }}).
 
-Für jedes Programm sollten folgende Punkte dargestellt werden:
+- Beziehen Sie besonders Programme mit neuer Frist, geänderten Bedingungen oder neuen Schwerpunkten ein (z. B. seit April 2024).
+- Für jedes Programm bitte folgende Angaben machen:
+  - **Name & Link:** Titel und Link zur Antragsstelle/Infoseite
+  - **Zielgruppe:** Wer ist antragsberechtigt? (z. B. Einzelhändler, Großhändler, KMU, Start‑ups)
+  - **Förderhöhe & Nutzen:** Zuschüsse, Kredite, förderfähige Investitionen (z. B. Infrastruktur, Soft-/Hardware, Schulungen)
+  - **Frist, Besonderheiten, Update-Datum** (wenn bekannt)
+  - **Quellenangabe**
+- Geben Sie Hinweise, wie Händler ihre Chancen auf Bewilligung erhöhen können (Projektdefinition, Strategiebezug, professionelle Antragstellung).
 
-* **Name & Link:** Titel des Programms und ein Link oder Hinweis zur Antragsstelle.
-* **Zielgruppe:** Welche Unternehmen sind antragsberechtigt (Einzelhändler, Großhändler, KMU, Start‑ups, Konsortien)?
-* **Förderhöhe & Nutzen:** Beschreibe, wie hoch die Zuschüsse oder Kredite sind und welche Investitionen förderfähig sind (z. B. digitale Infrastruktur, Soft‑ und Hardware, Schulungen).
-* **Voraussetzungen & Stolpersteine:** Nenne wichtige Voraussetzungen und häufige Fallstricke (z. B. Mindestinvestitionssumme, notwendige Eigenanteile, Nachweispflichten, Fristen).
-* **Erfolgsfaktoren & Praxistipps:** Gib Empfehlungen, wie Händler die Bewilligungschancen erhöhen können (z. B. klare Projektdefinition, Bezug zu Unternehmensstrategie, professioneller Antrag, fristgerechte Einreichung).
-
-Der Tabellenstil sollte kompatibel mit HTML sein, damit der Report korrekt gerendert wird.
+Priorisieren Sie Förderprogramme mit explizitem Bezug zu Handel, KI oder Digitalisierung sowie solche, die seit 2024/2025 neu oder verlängert wurden.
 
 ---
 
-## Förderprogramme
-
-{foerderprogramme}
+{{ foerderprogramme }}
