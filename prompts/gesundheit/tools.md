@@ -1,20 +1,24 @@
-<!-- tools.md -->
-# Empfohlene KI‑ und Digitalisierungstools für das Gesundheitswesen
+# Aktuelle KI‑ und Digitalisierungstools für das Gesundheitswesen
 
-Liste drei bis fünf relevante Tools oder Softwarelösungen auf, die in Gesundheitsorganisationen einen großen Nutzen bringen können. Berücksichtige Anwendungen für Diagnostik, Patientenmanagement, Dokumentation, Bildgebung, Forschung und Telemedizin. Ergänze auch Open‑Source‑Lösungen oder preisgünstige Alternativen, wenn verfügbar. Nutze {tools_und_foerderungen} als Datenquelle für branchenspezifische Empfehlungen.
+Bitte listen Sie die tagesaktuell relevantesten Tools und Softwarelösungen auf,
+die im Gesundheitswesen (Kliniken, Praxen, Pflege, Forschung) einen großen Nutzen bringen können (Stand: {{ datum }}).
 
-Für jedes Tool sollten folgende Punkte genannt werden:
+- Berücksichtigen Sie insbesondere Neuerscheinungen oder größere Updates seit April 2024 für:
+  - Diagnostik & Bildgebung (z. B. KI‑Bildanalyse)
+  - Patientenmanagement & Dokumentation (z. B. elektronische Patientenakte)
+  - Chatbots & Automatisierung (z. B. Terminvergabe, Patientenkommunikation)
+  - Forschung & Genomdatenanalyse
+  - Telemedizin & eHealth
+- Für jedes Tool bitte folgende Punkte nennen:
+  - **Name & Anwendungsbereich:** Für welche Anwendung/Fachbereich ist das Tool besonders geeignet?
+  - **Eignung / Use Case:** Konkrete Vorteile (z. B. schnellere Diagnosen, bessere Datenanalyse, patientenzentrierte Kommunikation)
+  - **Open‑Source‑ oder Low‑Cost‑Alternative:** Nenne eine günstige/quelloffene Lösung und beschreibe, wann sie sinnvoll ist
+  - **Praxistipp zur Einführung:** Hinweise für erfolgreiche Pilotierung, Schulung, Integration, Datenschutz
+  - **Quellenlink, Anbieter, Update-Datum** (wenn bekannt)
 
-* **Name & Anwendungsbereich:** Welches Tool und in welchem Bereich wird es eingesetzt? (z. B. KI‑Bildanalyse, elektronische Patientenakte, Chatbots für Terminvergabe, Forschungsplattform für Genomdaten)
-* **Eignung / Use Case:** Warum ist das Tool für den konkreten Anwendungsfall geeignet? Welche Vorteile bietet es, z. B. schnellere Diagnosen, bessere Datenanalyse, patientenzentrierte Kommunikation?
-* **Open‑Source‑ oder Low‑Cost‑Alternative:** Wenn es eine alternative Lösung gibt, nenne sie und beschreibe, wann sie sinnvoll ist (z. B. für kleinere Einrichtungen, Prototyping).
-* **Praxistipp zur Einführung:** Gib Hinweise für den erfolgreichen Einstieg (z. B. Pilotprojekt in einem bestimmten Bereich, Schulungen für das Personal, Integration in bestehende Systeme, Einbindung der Datenschutzbeauftragten).
-
-Formuliere die Empfehlungen klar und praxisorientiert. Die Tools sollten nach ihrer Relevanz für die Einrichtung und die geplanten KI‑Projekte ausgewählt werden.
+Priorisieren Sie Tools, die für den deutschen/europäischen Markt zugelassen sind, und geben Sie für neue Lösungen eine Quellenangabe an.
 
 ---
 
-## Tools & Empfehlungen
-
-{tools_und_foerderungen}
-{daten}
+{{ tools_und_foerderungen }}
+{{ daten }}
