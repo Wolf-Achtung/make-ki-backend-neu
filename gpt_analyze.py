@@ -264,8 +264,8 @@ def analyze_full_report(data):
 
     results = {}
     prior_results = {}
-    for abschnitt, checklisten in abschnittsreihenfolge:
-	try:
+for abschnitt, checklisten in abschnittsreihenfolge:
+    try:
         if abschnitt == "score_percent":
             percent = calc_score_percent(data)
             results["score_percent"] = percent
@@ -282,6 +282,11 @@ def analyze_full_report(data):
         else:
             results[abschnitt] = text
         prior_results[abschnitt] = results[abschnitt]
+    except Exception as e:
+        print(f"Fehler in Abschnitt {abschnitt}: {e}")
+        results[abschnitt] = f"[Fehler: {e}]"
+        prior_results[abschnitt] = f"[Fehler: {e}]"
+
 
     # Tools und Förderprogramme separat ermitteln und in die Ergebnisse einfügen. Diese werden nicht von GPT generiert, um stabile und aktuelle Inhalte zu gewährleisten.
     tools_text, foerder_text = get_tools_und_foerderungen(data)
