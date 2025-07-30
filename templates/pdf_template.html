@@ -206,6 +206,35 @@ th {
   </div>
 </div>
 {% endif %}
+<!-- LIVE-WEBSEARCH: FÖRDERPROGRAMME -->
+{% if websearch_links_foerder %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box" style="background: #f9fbfd; border-left: 5px solid #57c7fa;">
+    <h2 style="color: #0e568a;">Tagesaktuelle Förderprogramme:</h2>
+    <div style="font-size:1.07em; color:#154e70; margin-bottom:0;">
+      {{ websearch_links_foerder | safe }}
+    </div>
+    <div style="margin-top:10px; font-size:0.98em; color:#2279b6;">
+      <em>Quelle: Google-Suchergebnisse via SerpAPI, automatisch generiert am {{ datum }}.</em>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- LIVE-WEBSEARCH: KI-TOOLS -->
+{% if websearch_links_tools %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box" style="background: #f9fbfd; border-left: 5px solid #57c7fa;">
+    <h2 style="color: #0e568a;">Aktuelle KI-Tools & Software:</h2>
+    <div style="font-size:1.07em; color:#154e70; margin-bottom:0;">
+      {{ websearch_links_tools | safe }}
+    </div>
+    <div style="margin-top:10px; font-size:0.98em; color:#2279b6;">
+      <em>Quelle: Google-Suchergebnisse via SerpAPI, automatisch generiert am {{ datum }}.</em>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- KURZFAZIT -->
 {% if summary_klein or summary_kmu or summary_solo %}
