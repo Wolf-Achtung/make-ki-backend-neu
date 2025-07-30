@@ -1,24 +1,23 @@
+# Aktuelle KI‑ und MarTech‑Tools für das Marketing
 
-# Empfohlene KI‑ und MarTech‑Tools für das Marketing
+Bitte listen Sie die tagesaktuell wichtigsten Tools und Plattformen auf,
+die Marketingunternehmen oder Agenturen beim Einsatz von KI, Automatisierung und Digitalisierung unterstützen (Stand: {{ datum }}).
 
-Erstelle eine strukturierte Übersicht der besten und relevantesten Tools (kommerziell und Open‑Source) für KI‑gestütztes Marketing. Ordne sie praxisnah nach Use‑Cases, zum Beispiel:
+- Ordnen Sie die Tools praxisnah nach folgenden Use‑Cases:
+  1. **Content & Kreativtools** (Text-, Bild-, Video-, Audio-KI, Augmentation, Copywriting)
+  2. **Analytics & Customer Insights** (Segmentation, Attribution, Predictive Analytics, Dashboards)
+  3. **Automatisierung & Workflow** (E-Mail-Kampagnen, Chatbots, Funnels)
+  4. **CRM & Kampagnenmanagement** (CDP, Omnichannel, KI-gestütztes Kampagnenmanagement)
+  5. **Social Media & Listening** (Listening, Sentiment-Analyse, Influencer Tools)
+- Für jede Kategorie bitte 2–3 Tools nennen mit:
+  - **Eignung / Use‑Case:** Was bringt das Tool konkret? Für wen ist es am besten geeignet?
+  - **Open‑Source‑Alternative:** Gibt es kostenlose/günstige Alternativen?
+  - **Einführungstipp:** Praxistipp zur Einführung, Datenanbindung, Integration oder Onboarding
+  - **Quellenlink, Anbieter, Update-Datum** (wenn bekannt)
 
-1. **Content & Kreativtools** – Generative KI für Text, Bild, Audio, Video (z. B. Copywriting‑Assistenten, Bildgeneratoren), Augmentationstools zur Ideengenerierung.
-2. **Analytics & Customer Insights** – Plattformen für Customer Segmentation, Attribution‑Modeling, Predictive‑Analytics, Data‑Visualization und Dashboards.
-3. **Automatisierung & Workflow** – Marketing‑Automation‑Tools für E‑Mail‑Kampagnen, Lead‑Scoring, Funnels, Chatbots, Conversational Marketing.
-4. **CRM & Kampagnenmanagement** – CRM‑Systeme mit KI‑Funktionen, Customer‑Data‑Platforms (CDP), Omnichannel‑Orchestrierung.
-5. **Social Media & Listening** – Tools für Social Listening, Sentiment‑Analyse, Community‑Management, Influencer‑Marketing.
-
-Für jede Kategorie sollst du 2–3 repräsentative Tools nennen und die folgenden Informationen bereitstellen:
-
-* **Eignung / Use‑Case:** Wofür eignet sich das Tool konkret?
-* **Open‑Source‑Alternativen:** Falls vorhanden, nenne eine kostengünstige oder frei verfügbare Alternative.
-* **Einführungstipp:** Ein kurzer Praxistipp zur erfolgreichen Einführung (z. B. Pilotphase, Datenanbindung, Schulung).
-
-Nutze die Informationen aus {tools}, um konkrete Tool‑Namen zu liefern. Strukturierte Listen oder Tabellen erleichtern die Lesbarkeit. Vermeide Werbung und beschreibe neutral.
+Priorisieren Sie Tools, die seit April 2024 neu veröffentlicht oder von Branchen-Experten/Fachmagazinen empfohlen wurden. Fügen Sie eine Quellenangabe hinzu und vermeiden Sie Werbung.
 
 ---
 
-## Tools
-
-{tools}
+{{ tools_und_foerderungen }}
+{{ daten }}
