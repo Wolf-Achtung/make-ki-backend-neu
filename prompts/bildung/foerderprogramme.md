@@ -1,17 +1,18 @@
-<!-- foerderprogramme.md -->
-# Förderprogramme für die Bildungsbranche
+# Förderprogramme für die Bildungsbranche (maximal aktuell)
 
-Erstelle eine Übersicht relevanter Förderprogramme für Schulen, Hochschulen und Weiterbildungseinrichtungen.  Berücksichtige Programme des Bundes (z. B. DigitalPakt Schule, „INVEST – Digital for All“, DigitalPakt Hochschule), der Bundesländer, der EU (Erasmus+, Horizon Europe) sowie Förderungen von Stiftungen.
+Bitte listen Sie die fünf tagesaktuell wichtigsten Förderprogramme auf,
+die Digitalisierung, KI und Innovation in Schulen, Hochschulen und Weiterbildungseinrichtungen fördern (Stand: {{ datum }}).
 
-**Für jedes Programm angeben:**
+- Berücksichtigen Sie Programme des Bundes (z. B. DigitalPakt Schule, „INVEST – Digital for All“, DigitalPakt Hochschule), der Länder, der EU (z. B. Erasmus+, Horizon Europe) sowie Förderungen von Stiftungen, die seit April 2024 neu, verlängert oder angepasst wurden.
+- Für jedes Programm bitte angeben:
+  - **Zielgruppen & Einrichtungstypen:** Für wen ist die Förderung bestimmt? (z. B. Schulen, Hochschulen, kommunale Träger, private Weiterbildungen)
+  - **Förderhöhe & -quote:** Maximale Zuschüsse, Förderquoten, Kombinationsmöglichkeiten
+  - **Voraussetzungen & Bedingungen:** Digitalisierungskonzept, pädagogische Strategie, Eigenanteil
+  - **Praxistipps:** Hinweise zur Antragstellung, Projektträger, Nachweisdokumente, Anwendungsbeispiele
+  - **Quellenlink, Update-Datum** (wenn bekannt)
 
-* **Zielgruppen & Einrichtungstypen:** Für wen ist die Förderung bestimmt?  (z. B. Schulen, Hochschulen, kommunale Bildungsträger, private Weiterbildungseinrichtungen).
-* **Förderhöhe & -quote:** Maximale Zuschüsse oder Kredite, Förderquoten und eventuelle Kombinationsmöglichkeiten.
-* **Voraussetzungen & Bedingungen:** Welche Voraussetzungen müssen erfüllt sein (z. B. Digitalisierungskonzept, pädagogisches Konzept, Mitfinanzierungsanteil)?
-* **Praxistipps:** Hinweise zur Antragstellung, Begleitung durch Projektträger, Nachweis- und Abrechnungsmodalitäten sowie Anwendungsbeispiele.
+Stellen Sie die Programme übersichtlich als Tabelle oder Liste dar. Erklären Sie kurz, wie die Förderungen speziell Innovation und KI-Projekte im Bildungsbereich ermöglichen.
 
 ---
 
-## Förderprogramme
-
-{foerderprogramme}
+{{ foerderprogramme }}
