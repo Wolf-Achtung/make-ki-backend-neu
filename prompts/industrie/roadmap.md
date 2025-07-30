@@ -1,14 +1,16 @@
 # Roadmap & Umsetzungsplan für KI und Digitalisierung in der Industrie
 
-Strukturiere eine Roadmap für KI-Einführung und -Skalierung in der Industrie – von Dateninfrastruktur über Produktion, Qualitätssicherung, Instandhaltung bis zu Supply Chain und Analytics.
+Erarbeite eine praxisnahe Roadmap für die Einführung und Skalierung von KI‑Technologien in der industriellen Fertigung. Die Roadmap soll verschiedene Module abdecken und die Reihenfolge sinnvoll aufeinander aufbauen. 
 
-**Module:**
-1. Technologiebasis & Datenintegration
-2. Automatisierung & Smart Factory
-3. Predictive Maintenance & Qualitätssicherung
-4. 5. Schulungen & Change Management
-6. 
-Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourcen.
+**Module & Leitfäden:**
+1. **Technologiebasis & Datenintegration** – Erfassung & Qualitätssicherung von Maschinendaten, Aufbau einer IIoT‑Plattform, Edge/Cloud‑Architektur.
+2. **Automatisierung & Smart Factory** – Roboter‑Automation, vernetzte Produktionsinseln, verlässliche Sensorik.
+3. **Predictive Maintenance & Asset Management** – Modelle zur vorausschauenden Wartung und Lebensdauerprognose, Integration in Instandhaltungsprozesse.
+4. **Qualitätssicherung & Prozessoptimierung** – KI‑basierte Inspektionssysteme, Closed‑Loop‑Regelkreise, Anomaly Detection.
+5. **Supply‑Chain & Datenanalyse** – Echtzeit‑Überwachung der Lieferkette, Bedarfsprognose, nachhaltige Materialbeschaffung.
+6. **Schulungen & Change‑Management** – Qualifizierung der Mitarbeitenden, agile Projektmethoden, Kommunikation & Kulturwandel.
+
+Für jede Phase: beschreibe Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren und erforderliche Ressourcen. Orientiere dich an den Daten des Unternehmens (z. B. {daten}) und den verfügbaren Checklisten.
 
 ---
 
@@ -17,3 +19,7 @@ Jeder Block: Ziel, Meilensteine, Verantwortlichkeiten, Erfolgsfaktoren, Ressourc
 Nutzerdaten:
 
 {daten}
+
+Zusatzmaterialien:
+
+{checklisten}

@@ -1,9 +1,13 @@
 # Moonshot Vision: Zukunft der Industrie & Produktion
 
-Beschreibe eine visionäre, inspirierende Zukunft für Industrie durch KI: vollautomatisierte Smart Factory, digitale Zwillinge, Echtzeit-Qualitätsmanagement, autonome Supply Chains, nachhaltige Produktion.
+Entwickle eine visionäre Perspektive auf die industrielle Produktion der Zukunft. Beschreibe, wie KI, Robotik, digitale Zwillinge und generative Designverfahren zu vollautomatisierten Smart Factories, autonomen Supply Chains und nachhaltiger Produktion führen können. Skizziere mögliche neue Geschäftsmodelle (as‑a‑service, Mass Customization, On‑Demand‑Manufacturing) und stelle dar, wie Nachhaltigkeit und Kreislaufwirtschaft durch KI‑gestützte Prozesse unterstützt werden.
 
 ---
 
 ## Moonshot Vision
 
 {daten}
+
+Zusatzmaterialien:
+
+{praxisbeispiele}
