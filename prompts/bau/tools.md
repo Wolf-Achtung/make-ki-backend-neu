@@ -1,15 +1,24 @@
-# Empfohlene KI‑ und Digitalisierungstools für Bauwesen und Architektur
+# Aktuelle KI‑ und Digitalisierungstools für Bauwesen und Architektur
 
-Stelle eine Liste führender Tools und Lösungen vor, die Bauunternehmen und Architekturbüros bei der Digitalisierung und beim Einsatz von KI unterstützen können.  Decke verschiedene Kategorien ab (BIM, Projektmanagement, Simulation, Baucontrolling, Automatisierung, 3D‑Modellierung, Ressourcenplanung) und nenne zu jedem Tool einen Einsatzzweck, eine mögliche Open‑Source‑Alternative sowie einen Praxistipp.
+Bitte listen Sie die tagesaktuell wichtigsten Tools und Lösungen auf,
+die Bauunternehmen, Handwerksbetriebe und Architekturbüros bei Digitalisierung und KI-Einsatz unterstützen (Stand: {{ datum }}).
 
-**Für jedes Tool bitte angeben:**
+- Decken Sie folgende Kategorien ab:
+  - BIM (Building Information Modeling)
+  - Projektmanagement
+  - Simulation
+  - Baucontrolling & Automatisierung
+  - 3D‑Modellierung & Visualisierung
+  - Ressourcen- und Terminplanung
+- Für jedes Tool bitte angeben:
+  - **Eignung & Use Case:** Wofür eignet sich das Tool? (z. B. 3D-Modellierung, Kostenkontrolle, Terminplanung, Echtzeit-Kommunikation)
+  - **Open‑Source‑ oder günstige Alternative:** Wenn möglich, nenne eine kostenfreie/quelloffene Lösung und deren Besonderheiten.
+  - **Praxistipp:** Ein Tipp aus der Praxis zur Einführung/Nutzung (Cloud-Integration, API, Schulung, Mobile App)
+  - **Quellenlink, Anbieter, Update-Datum** (sofern verfügbar)
 
-* **Eignung & Use Case:** Beschreibe kurz, wofür das Tool besonders geeignet ist (z. B. 3D‑Modellierung, Kostenkontrolle, Terminplanung, Echtzeit‑Kommunikation).
-* **Open‑Source‑ oder günstige Alternative:** Nenne, wenn möglich, eine kostenfreie oder Open‑Source‑Alternative und erläutere deren Einschränkungen bzw. Vorteile.
-* **Praxistipp:** Gib einen konkreten Tipp aus der Praxis, wie das Tool erfolgreich eingeführt oder genutzt werden kann (z. B. Cloud‑Einführung vorbereiten, Schulungen buchen, API‑Schnittstellen nutzen).
+Priorisieren Sie Tools, die seit April 2024 neu erschienen, umfassend aktualisiert oder in Fachpresse/Branchenmedien erwähnt wurden. Geben Sie für neue Tools stets eine Quellenangabe.
 
 ---
 
-## Tools
-
-{tools}
+{{ tools_und_foerderungen }}
+{{ daten }}

@@ -1,16 +1,18 @@
-# Förderprogramme für Bauwesen und Architektur
+# Förderprogramme für Bauwesen und Architektur (maximal aktuell)
 
-Bitte erstelle einen strukturierten Überblick zu relevanten Förderprogrammen für Digitalisierung und Innovation im Bauwesen und in der Architektur.  Berücksichtige Programme des Bundes (z. B. „Digital Jetzt“, „Innovationsförderung Bau“, Programme der KfW), der Länder und der EU, soweit sie auf Bauunternehmen und Planungsbüros ausgerichtet sind.
+Bitte listen Sie die fünf tagesaktuell relevantesten Förderprogramme auf,
+die Digitalisierung und Innovation im Bauwesen und in der Architektur fördern (Stand: {{ datum }}).
 
-Für jedes Programm solltest du erläutern:
+- Berücksichtigen Sie neue oder aktualisierte Programme von Bund (z. B. „Digital Jetzt“, „Innovationsförderung Bau“, KfW), Ländern und der EU, die für Bauunternehmen, Handwerksbetriebe und Planungsbüros relevant sind.
+- Für jedes Programm bitte erläutern:
+  - **Zielgruppen & Branchenfokus:** Wer kann antragsberechtigt sein? (KMU, Handwerksbetriebe, Architekturbüros, Start‑ups etc.)
+  - **Förderhöhe & Förderquote:** Maximale Zuschüsse, Kredite, Förderquoten, Kombinationsmöglichkeiten (z. B. Zuschuss plus Darlehen)
+  - **Voraussetzungen & Auswahlkriterien:** Innovationsgrad, Digitalisierungsgrad, Größe, Fristen, Besonderheiten
+  - **Praxistipps für die Antragstellung:** Hinweise auf Fristen, Unterlagen, Stolperfallen, Kombination mit anderen Programmen
+  - **Update-Datum, Quellenlink** (wenn verfügbar)
 
-* **Zielgruppen & Branchenfokus:** Wer kann antragsberechtigt sein (z. B. KMU, Handwerksbetriebe, Architekturbüros, Start‑ups)?
-* **Förderhöhe & Förderquote:** Maximale Zuschüsse oder Kredite, inklusive eventueller Förderquoten und Kombinationen (z. B. Zuschuss plus Darlehen).
-* **Voraussetzungen & Auswahlkriterien:** Welche Voraussetzungen müssen erfüllt sein (z. B. Innovationsgrad, Digitalisierungsgrad, Anzahl der Mitarbeitenden)?
-* **Praxistipps für die Antragstellung:** Hinweis auf Fristen, notwendige Unterlagen, typische Stolperfallen und Kombinationsmöglichkeiten mit anderen Programmen.
+Stellen Sie die Informationen als übersichtliche Liste oder Tabelle dar und heben Sie Programme hervor, die besonders auf Digitalisierung, BIM, Nachhaltigkeit oder KI-Einsatz im Bau abzielen.
 
 ---
 
-## Förderprogramme
-
-{foerderprogramme}
+{{ foerderprogramme }}
