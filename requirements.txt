@@ -28,4 +28,4 @@ pyjwt
 python-multipart
 bcrypt
 
-serpapi>=0.1.0
+serpapi>=2.0.0
