@@ -1,5 +1,5 @@
 import os
-from serpapi.google_search import GoogleSearch
+from serpapi import GoogleSearch
 
 
 SERPAPI_KEY = os.environ.get("SERPAPI_KEY")
