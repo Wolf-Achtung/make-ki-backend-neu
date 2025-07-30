@@ -1,13 +1,18 @@
-# Förderprogramme für Unternehmen
+# Förderprogramme für Unternehmen (branchenübergreifend, maximal aktuell)
 
-Erstelle einen tabellarischen Überblick über bis zu fünf aktuelle Förderprogramme für Unternehmen.  Die Tabelle sollte übersichtlich darstellen:
+Bitte listen Sie die fünf tagesaktuell wichtigsten Förderprogramme auf,
+die branchenübergreifend Digitalisierung und KI-Innovationen in Unternehmen unterstützen (Stand: {{ datum }}).
 
-* **Name & Link:** Titel des Programms und weiterführender Link oder Hinweis zur Anlaufstelle.
-* **Zielgruppe:** Welche Unternehmen sind antragsberechtigt (z. B. Start‑ups, KMU, Mittelstand, bestimmte Branchen)?
-* **Förderhöhe/Nutzen:** Höhe der Zuschüsse, Kredite oder steuerlichen Vorteile; nenne wesentliche Vorteile.
-* **Typische Stolpersteine:** Häufige Fehler bei der Antragstellung (z. B. unvollständige Unterlagen, fehlende Vorbereitungszeit).
-* **Erfolgsfaktoren:** Faktoren, die die Bewilligungschancen erhöhen (z. B. klare Projektbeschreibung, Innovationsgrad, professionelle Begleitung, Nachweise).
+- Erstellen Sie eine Tabelle mit folgenden Spalten:
+  - **Name & Link:** Titel und Link zur Anlaufstelle/Infoseite
+  - **Zielgruppe:** Wer ist antragsberechtigt? (Start-ups, KMU, Mittelstand, bestimmte Branchen)
+  - **Förderhöhe/Nutzen:** Höhe von Zuschüssen, Krediten oder steuerlichen Vorteilen; wichtigste Vorteile/Leistungen
+  - **Typische Stolpersteine:** Häufige Fehler bei der Antragstellung (z. B. fehlende Unterlagen, Fristversäumnis)
+  - **Erfolgsfaktoren & Praxistipps:** Was erhöht die Bewilligungschancen? (klare Projektbeschreibung, Innovationsgrad, professionelle Vorbereitung)
+  - **Update-Datum, Quellenangabe** (wenn bekannt)
 
-Input:  
-{foerderprogrammes}
-{daten}
+Beziehen Sie besonders Programme mit neuen Fristen oder Schwerpunkten ein, die seit April 2024 neu oder verlängert wurden. Geben Sie für neue Programme eine Quellenangabe und Update-Datum an.
+
+---
+
+{{ foerderprogramme }}
