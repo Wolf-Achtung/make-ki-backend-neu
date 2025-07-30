@@ -1,11 +1,11 @@
-# Fördermittel-Checkliste
+# Fördermittel‑Checkliste – Optimiert
 
-- [ ] Sind Sie über aktuelle Fördermöglichkeiten (regional, national, EU) für Digitalisierung/KI informiert?
-- [ ] Haben Sie schon einmal Fördermittel für Digitalisierung/KI beantragt?
-- [ ] Gibt es Interesse, aktuelle oder neue Projekte fördern zu lassen?
-- [ ] Kennen Sie die Anforderungen und Fristen der wichtigsten Programme (z. B. Digital Jetzt, go-digital, MID NRW, Horizon Europe)?
-- [ ] Ist die Unternehmensgröße, Branche und geplantes Vorhaben förderfähig?
-- [ ] Liegen alle notwendigen Unterlagen (Projektbeschreibung, Budget, Nachweise, Partnerinfos) vollständig vor?
-- [ ] Gibt es im Team Erfahrung mit Förderanträgen oder Förderberatern?
-- [ ] Sind Sie bereit, mit externen Beratern/Partnern zusammenzuarbeiten (z. B. für Antrag, Umsetzung, Abrechnung)?
-- [ ] Gibt es ein internes Monitoring, ob und wie Förderprojekte erfolgreich umgesetzt wurden?
+- [ ] **Programmkenntnis:** Kennen Sie die wichtigsten Förderprogramme auf Bundes‑, Landes‑ und EU‑Ebene (z. B. Digital Jetzt, go‑digital, KMU‑innovativ, Digitalprämie, Horizon Europe)?
+- [ ] **Bisherige Förderung:** Haben Sie bereits Fördermittel beantragt oder erhalten? Wenn ja, welche Programme, wann und in welcher Höhe?
+- [ ] **Förderfähigkeit:** Entspricht Ihre Unternehmensgröße, Branche und das geplante Vorhaben den Bedingungen der Programme? Gibt es branchenspezifische Sonderprogramme?
+- [ ] **Unterlagen & Nachweise:** Sind Projektbeschreibung, Businessplan, Budget, Ressourcenplanung, Personalkosten und Partnerdaten vollständig vorbereitet?
+- [ ] **Beratung & Zuständigkeit:** Gibt es interne Zuständigkeiten oder externe Berater, die Antragsstellung, Abwicklung und Verwendungsnachweis begleiten?
+- [ ] **Kombination & Strategie:** Existiert ein Plan, wie verschiedene Programme sinnvoll kombiniert werden können (z. B. Beratung + Technologie + Forschung)? Wie wird der Eigenanteil finanziert?
+- [ ] **Fristen & Deadlines:** Sind Sie über Einreichfristen, Laufzeiten, Bearbeitungszeiten und Reportpflichten informiert? Gibt es Reminder und Prozesse zur fristgerechten Einreichung?
+- [ ] **Monitoring & Controlling:** Gibt es ein internes Monitoring, ob Förderprojekte erfolgreich umgesetzt werden, ob Folgeprogramme passen und ob Rückmeldungen der Fördergeber erfüllt werden?
+- [ ] **Finanzplanung:** Wird der Fördermittelzufluss in der Finanzplanung berücksichtigt (Liquiditätsplanung, steuerliche Behandlung)? Wie wirken sich Förderungen auf Cashflow und Steuerlast aus?

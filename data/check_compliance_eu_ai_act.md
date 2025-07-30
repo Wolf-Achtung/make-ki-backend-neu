@@ -1,11 +1,12 @@
-# Compliance-Check (EU AI Act)
+# Compliance‑Check (EU AI Act & DSGVO) – Optimiert
 
-- [ ] Wurde der KI-Einsatz im Unternehmen auf Risikoklassen geprüft?
-- [ ] Sind alle eingesetzten KI-Systeme registriert und dokumentiert?
-- [ ] Gibt es Transparenzmaßnahmen für KI-Anwendungen (z. B. Erklärung gegenüber Kunden)?
-- [ ] Werden Trainingsdaten und Modelle laufend dokumentiert und geprüft?
-- [ ] Gibt es Prozesse, um Risiken und Bias frühzeitig zu erkennen?
-- [ ] Werden Nutzer:innen und Betroffene ausreichend über KI-Nutzung informiert?
-- [ ] Werden ethische Richtlinien und Unternehmenswerte bei KI-Projekten beachtet?
-- [ ] Sind Verantwortlichkeiten für KI-Compliance klar geregelt?
-- [ ] Gibt es regelmäßige Schulungen zum Thema KI-Compliance und AI Act?
+- [ ] **Risikoklassifizierung:** Sind alle KI‑Systeme gemäß EU AI Act eingeordnet (Unzulässig, Hochrisiko, Begrenztes Risiko, Minimalrisiko)?
+- [ ] **Dokumentation:** Werden eingesetzte KI‑Systeme registriert, dokumentiert und nachverfolgt (Modellversionen, Trainingsdaten, Anbieter)?
+- [ ] **Transparenz:** Gibt es angemessene Kennzeichnung und Erklärung der KI‑Nutzung gegenüber Kunden, Mitarbeitenden und Partnern? Sind Opt‑out‑Optionen vorhanden?
+- [ ] **Trainingsdaten & Entscheidungslogik:** Werden Datenquellen, Annotationen und Modellentscheidungen dokumentiert und regelmäßig auf Bias überprüft?
+- [ ] **Risk‑Management:** Gibt es Prozesse, um algorithmische Risiken, Diskriminierung oder Fehler zu erkennen, zu melden und zu beheben? Werden Audits (z. B. AI Impact Assessment) durchgeführt?
+- [ ] **Betroffenenrechte:** Werden Nutzer:innen und Betroffene über ihre Rechte informiert (Auskunft, Löschung, Widerspruch) und gibt es Mechanismen zur Ausübung dieser Rechte?
+- [ ] **Governance & Verantwortung:** Existiert ein Compliance‑Beauftragter oder ein interdisziplinäres KI‑Governance‑Team? Sind Verantwortlichkeiten klar geregelt?
+- [ ] **Lieferanten‑Compliance:** Werden Drittanbieter und externe KI‑Services auf DSGVO‑ und AI‑Act‑Konformität überprüft (z. B. SCCs, Auftragsverarbeitungsverträge)?
+- [ ] **Schulungen & Awareness:** Gibt es regelmäßige Schulungen zu Datenschutz, Ethik und EU AI Act? Werden Mitarbeitende sensibilisiert?
+- [ ] **Notfallplan:** Sind Notfall‑ und Meldewege für KI‑Vor‑fälle und Datenschutzverletzungen definiert (inkl. Fristen für Behördenmeldung)?

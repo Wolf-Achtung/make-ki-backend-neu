@@ -1,14 +1,12 @@
-# Datenschutz & Compliance Checkliste (DSGVO & EU AI Act)
+# Datenschutz‑Check (DSGVO & AI Act) – Optimiert
 
-- [ ] Gibt es einen (internen oder externen) Datenschutzbeauftragten?
-- [ ] Sind technische Maßnahmen zum Datenschutz vollständig umgesetzt? (Firewalls, Zugriffskontrolle, Verschlüsselung, regelmäßige Updates)
-- [ ] Wurde für KI-Anwendungen eine DSGVO-Folgenabschätzung durchgeführt?
-- [ ] Gibt es definierte Meldewege für Datenschutzvorfälle?
-- [ ] Sind klare Regeln zur Löschung oder Anonymisierung von Daten dokumentiert?
-- [ ] Wie ist die Kenntnis des EU AI Act im Unternehmen? (Sehr gut, Gut, Gehört, Noch nicht beschäftigt)
-- [ ] Ist allen Mitarbeitenden der Umgang mit personenbezogenen Daten vertraut?
-- [ ] Werden alle KI-Modelle, Trainingsdaten und Algorithmen dokumentiert?
-- [ ] Gibt es regelmäßige Audits/Reviews zu Datenschutz und IT-Sicherheit?
-- [ ] Ist die Nutzung externer KI-Tools oder -APIs auf Datenschutzrisiken geprüft?
-- [ ] Gibt es einen Prozess für die Aktualisierung der Datenschutzrichtlinien?
-- [ ] Wird die Einhaltung der Datenschutz-Standards regelmäßig überprüft und zertifiziert?
+- [ ] **Datenschutzbeauftragte/r:** Gibt es eine:n interne:n oder externe:n Datenschutzbeauftragte:n? Sind Aufgaben und Vollmachten klar definiert?
+- [ ] **Technische Sicherheitsmaßnahmen:** Sind Firewalls, Zugriffskontrollen, Verschlüsselung, Multi‑Factor‑Authentifizierung, regelmäßige Updates und Patches implementiert?
+- [ ] **Folgenabschätzung:** Wurde für KI‑Anwendungen eine Datenschutz‑Folgenabschätzung (DSFA) oder KI‑Impact‑Analyse erstellt?
+- [ ] **Datenminimierung & Löschfristen:** Werden Daten nur so lange wie nötig gespeichert? Gibt es klare Regeln zur Anonymisierung, Pseudonymisierung und Löschung?
+- [ ] **Meldewege & Incident‑Response:** Sind Meldewege für Datenschutzverletzungen definiert? Gibt es einen Incident‑Response‑Plan und regelmäßige Tests?
+- [ ] **Mitarbeiter‑Sensibilisierung:** Werden alle Mitarbeitenden regelmäßig zu Datenschutzthemen geschult (inkl. KI‑Nutzung, Phishing, Social Engineering)?
+- [ ] **Third‑Party Management:** Werden externe Dienstleister, Clouds und KI‑APIs regelmäßig auf Datenschutzkonformität geprüft? Bestehen Auftragsverarbeitungsverträge und Standardvertragsklauseln (SCCs)?
+- [ ] **Internationale Datenübertragung:** Sind Datenübermittlungen in Drittländer DSGVO‑konform geregelt (SCCs, Angemessenheitsbeschlüsse)?
+- [ ] **Verzeichnis der Verarbeitungstätigkeiten:** Gibt es eine aktuelle Dokumentation aller Datenarten, Speicherorte, Zwecke und Rechtsgrundlagen?
+- [ ] **Kontinuierliche Audits:** Werden Datenschutzrichtlinien, Einwilligungstexte und Sicherheitsmaßnahmen regelmäßig überprüft, auditiert und aktualisiert?
