@@ -5,6 +5,10 @@ import re
 from openai import OpenAI
 from datetime import datetime
 
+# 🆕 Gamechanger-Features & Branchen-Intros integrieren
+from innovation_intro import INNOVATION_INTRO
+from gamechanger_features import GAMECHANGER_FEATURES
+from gamechanger_blocks import build_gamechanger_blocks
 
 EU_RISK_TABLE = """
 <div class="eu-risk-table" style="margin-bottom:1.2em;">
@@ -19,28 +23,13 @@ EU_RISK_TABLE = """
 </div>
 """
 
-# Simple helper to convert checklist Markdown to basic HTML lists. This avoids a heavy markdown dependency.
 def checklist_markdown_to_html(md_text: str) -> str:
-    """Convert a simple Markdown checklist to basic HTML lists.
-
-    This helper iterates over the lines of a Markdown-formatted checklist and
-    produces corresponding HTML `<ul>`/`<li>` tags. Headings (lines starting
-    with `#`) are converted into `<h3>` tags. Only very simple Markdown
-    constructs are supported; any unsupported line is ignored.
-
-    Args:
-        md_text: The raw Markdown text containing checklist items and headings.
-
-    Returns:
-        A string containing HTML markup representing the checklist.
-    """
     html_lines: list[str] = []
     ul_open = False
     for line in md_text.splitlines():
         striped = line.strip()
         if not striped:
             continue
-        # Überschriften
         if striped.startswith('#'):
             if ul_open:
                 html_lines.append('</ul>')
@@ -48,7 +37,6 @@ def checklist_markdown_to_html(md_text: str) -> str:
             heading = striped.lstrip('#').strip()
             html_lines.append(f'<h3>{heading}</h3>')
             continue
-        # Listenelemente (Checkliste oder Bullet)
         if striped.startswith('- [ ]') or striped.startswith('- [x]'):
             item = striped[5:].strip()
         elif striped.startswith('- '):
@@ -61,30 +49,12 @@ def checklist_markdown_to_html(md_text: str) -> str:
         html_lines.append(f'<li>{item}</li>')
     if ul_open:
         html_lines.append('</ul>')
-    # Join all lines with a newline. The original version had an unterminated
-    # string literal here which caused a syntax error; this fixes it.
     return '\n'.join(html_lines)
-
 
 client = OpenAI()
 
-# --- 1. Branchenspezifisches Prompt-Loader ---
-
+# --- 1. Prompt-Loader ---
 def load_prompt(branche: str, abschnitt: str, context_vars: dict | None = None) -> str:
-    """Load a prompt template for a given industry and section.
-
-    Fallspezifische Prompt-Dateien bestehen aus einem Prefix, einem sektorspezifischen
-    Hauptteil und einem Suffix. Variablen im Prompt werden mithilfe der
-    `context_vars` ersetzt.
-
-    Args:
-        branche: Name der Branche (z.B. "it", "industrie").
-        abschnitt: Name des Abschnitts innerhalb der Prompt-Vorlage.
-        context_vars: Dictionary mit Variablen zur Formatierung der Vorlage.
-
-    Returns:
-        Den formatierten Prompt als String.
-    """
     with open("prompts/prompt_prefix.md", encoding="utf-8") as f:
         prefix = f.read()
     path = os.path.join("prompts", branche, f"{abschnitt}.md")
@@ -95,16 +65,12 @@ def load_prompt(branche: str, abschnitt: str, context_vars: dict | None = None) 
     with open("prompts/prompt_suffix.md", encoding="utf-8") as f:
         suffix = f.read()
     vars = context_vars.copy() if context_vars else {}
-    # Set the current date if not provided
     vars.setdefault("datum", datetime.now().strftime("%d.%m.%Y"))
     prompt = f"{prefix}\n\n{main_prompt}\n\n{suffix}"
     prompt = prompt.format(**vars)
     return prompt
 
-
-# --- 2. Benchmark-Loader ---
 def load_benchmark(branche: str) -> list[dict]:
-    """Load a CSV benchmark file for the given industry, if available."""
     fn = f"benchmark_{branche}.csv"
     path = os.path.join("data", fn)
     if not os.path.exists(path):
@@ -116,10 +82,7 @@ def load_benchmark(branche: str) -> list[dict]:
         print(f"Benchmark-Loading Error: {e}")
         return []
 
-
-# --- 3. Markdown-/Checklisten-Loader ---
 def read_markdown_file(filename: str) -> str:
-    """Read a Markdown file from the data directory and return its contents."""
     path = os.path.join("data", filename)
     try:
         with open(path, encoding="utf-8") as f:
@@ -128,10 +91,7 @@ def read_markdown_file(filename: str) -> str:
         print(f"Fehler beim Lesen von {path}: {e}")
         return ""
 
-
-# --- 4. Tools & Förderungen-Loader (JSON) ---
 def load_tools_und_foerderungen() -> dict:
-    """Load a JSON file containing tools and funding programmes."""
     path = "tools_und_foerderungen.json"
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -140,11 +100,9 @@ def load_tools_und_foerderungen() -> dict:
         print(f"Fehler beim Lesen von {path}: {e}")
         return {}
 
-
 TOOLS_FOERDER: dict = load_tools_und_foerderungen()
 
-
-# --- 5. Prompt-Builder ---
+# --- 5. Prompt-Builder (JETZT MIT INNOVATION/BLOCKS) ---
 def build_prompt(
     data: dict,
     abschnitt: str,
@@ -154,8 +112,8 @@ def build_prompt(
     benchmark: list[dict] | None = None,
     tools_text: str = "",
     foerder_text: str = "",
+    features: dict = GAMECHANGER_FEATURES,   # <-- Features togglen
 ) -> str:
-    """Assemble the full prompt for GPT based on collected inputs."""
     bench_txt = ""
     if benchmark:
         bench_txt = "\nBranchen-Benchmark:\n" + "\n".join(
@@ -163,7 +121,6 @@ def build_prompt(
             for row in benchmark
         )
 
-    # Kombiniere Tools und Förderprogramme für die Variable tools_und_foerderungen.
     kombi_tools_foerder = ""
     if tools_text and foerder_text:
         kombi_tools_foerder = f"{tools_text}\n{foerder_text}"
@@ -171,6 +128,10 @@ def build_prompt(
         kombi_tools_foerder = tools_text
     elif foerder_text:
         kombi_tools_foerder = foerder_text
+
+    # 🆕 Branchen-Innovation & Gamechanger-Blocks!
+    branchen_intro = INNOVATION_INTRO.get(branche, "")
+    gamechanger_blocks = build_gamechanger_blocks(data, features)
 
     prompt_vars: dict = {
         "branche": branche,
@@ -180,9 +141,7 @@ def build_prompt(
         "daten": json.dumps(data, indent=2, ensure_ascii=False),
         "checklisten": checklisten or "",
         "benchmark": bench_txt,
-        # separate Tools und Förderlisten für legacy Prompts
         "tools": tools_text or "",
-        # kombiniertes Feld enthält sowohl Tool- als auch Förderprogramme
         "tools_und_foerderungen": kombi_tools_foerder or "",
         "foerderungen": foerder_text or "",
         "praxisbeispiele": "",
@@ -191,16 +150,15 @@ def build_prompt(
             "Wichtig: Wenn strukturierte Inhalte wie Tabellen nötig sind, geben Sie diese ausschließlich "
             "in validem HTML-Format (<table>, <tr>, <td>) aus – kein Markdown oder Codeblock."
         ),
+        "branchen_innovations_intro": branchen_intro,
+        "gamechanger_blocks": gamechanger_blocks,
         **data,
     }
 
     prompt = load_prompt(branche, abschnitt, prompt_vars)
     return prompt
 
-
-# --- 6. Tools & Förderungen für Prompt ---
 def get_tools_und_foerderungen(data: dict) -> tuple[str, str]:
-    """Retrieve tools and funding programme lists for a given company profile."""
     groesse = data.get("unternehmensgroesse", "").lower()
     branche = data.get("branche", "").lower()
     tools_text = "Keine spezifischen Tools gefunden."
@@ -220,29 +178,24 @@ def get_tools_und_foerderungen(data: dict) -> tuple[str, str]:
 
     foerderungen = TOOLS_FOERDER.get("foerderungen", {})
     foerder_list: list[dict] = []
-    # branchenspezifische Förderungen
     if branche in foerderungen and isinstance(foerderungen[branche], dict):
         for key, value in foerderungen[branche].items():
             if isinstance(value, list):
                 foerder_list.extend(value)
-    # nationale Förderungen pro Branche
     if branche in foerderungen and isinstance(foerderungen[branche], dict):
         national_branch = foerderungen[branche].get("national", [])
         if isinstance(national_branch, list):
             foerder_list.extend(national_branch)
-    # standard nationale Förderungen
     if "default" in foerderungen and "national" in foerderungen["default"]:
         default_national = foerderungen["default"]["national"]
         if isinstance(default_national, list):
             foerder_list.extend(default_national)
-    # globale nationale Förderungen
     if "national" in foerderungen and isinstance(foerderungen["national"], list):
         foerder_list.extend(foerderungen["national"])
     elif "national" in foerderungen and isinstance(foerderungen["national"], dict):
         for v in foerderungen["national"].values():
             if isinstance(v, list):
                 foerder_list.extend(v)
-    # Unique by name/link
     unique: dict[tuple[str, str], dict] = {}
     for f in foerder_list:
         key = (f.get("name", ""), f.get("link", ""))
@@ -254,8 +207,6 @@ def get_tools_und_foerderungen(data: dict) -> tuple[str, str]:
 
     return tools_text, foerder_text
 
-
-# --- 7. GPT-Block ---
 def gpt_block(
     data: dict,
     abschnitt: str,
@@ -264,11 +215,11 @@ def gpt_block(
     checklisten: str | None = None,
     benchmark: list[dict] | None = None,
     prior_results: dict | None = None,
+    features: dict = GAMECHANGER_FEATURES,   # <-- NEU
 ) -> str:
-    """Send a prompt to the OpenAI API and return the generated content."""
     tools_text, foerder_text = get_tools_und_foerderungen(data)
     prompt = build_prompt(
-        data, abschnitt, branche, groesse, checklisten, benchmark, tools_text, foerder_text
+        data, abschnitt, branche, groesse, checklisten, benchmark, tools_text, foerder_text, features
     )
     if prior_results:
         prompt += "\n\n[Vorherige Analyse-Ergebnisse als Kontext]:\n"
@@ -291,15 +242,11 @@ def gpt_block(
     )
     return response.choices[0].message.content.strip()
 
-
-# --- 8. Modularer Analyse-Flow ---
 def analyze_full_report(data: dict) -> dict:
-    """Run the full analysis flow for a given dataset and return structured results."""
     branche = data.get("branche", "default").strip().lower()
     groesse = data.get("unternehmensgroesse", "kmu").strip().lower()
 
     benchmark = load_benchmark(branche)
-    # Checklisten laden
     check_readiness = read_markdown_file("check_ki_readiness.md")
     check_compliance = read_markdown_file("check_compliance_eu_ai_act.md")
     check_inno = read_markdown_file("check_innovationspotenzial.md")
@@ -307,7 +254,6 @@ def analyze_full_report(data: dict) -> dict:
     check_roadmap = read_markdown_file("check_umsetzungsplan_ki.md")
     praxisbeispiele_md = read_markdown_file("praxisbeispiele.md")
 
-    # Definiere die Reihenfolge der GPT-Abschnitte. Zusammenfassungen werden für alle Unternehmensgrößen generiert, um die PDF-Templates bedienen zu können.
     abschnittsreihenfolge: list[tuple[str, str | None]] = [
         ("score_percent", None),
         ("executive_summary", check_readiness),
@@ -334,10 +280,8 @@ def analyze_full_report(data: dict) -> dict:
                 prior_results["score_percent"] = percent
                 data["score_percent"] = percent
                 continue
-            # GPT Text generieren
             text = gpt_block(data, abschnitt, branche, groesse, checklisten, benchmark, prior_results)
             text = fix_encoding(text)
-            # EU Risk Table nur einmal
             if abschnitt == "compliance":
                 results[abschnitt] = EU_RISK_TABLE + "\n" + text
             else:
@@ -348,14 +292,10 @@ def analyze_full_report(data: dict) -> dict:
             results[abschnitt] = f"[Fehler: {e}]"
             prior_results[abschnitt] = f"[Fehler: {e}]"
 
-    # Tools und Förderprogramme separat ermitteln und in die Ergebnisse einfügen.
-    # Diese werden nicht von GPT generiert, um stabile und aktuelle Inhalte zu gewährleisten.
     tools_text, foerder_text = get_tools_und_foerderungen(data)
     results["tools"] = tools_text or "Keine spezifischen Tools gefunden."
     results["foerderprogramme"] = foerder_text or "Keine Förderprogramme identifiziert."
 
-    # --- Checklisten-Integration, Gold-Standard ---
-    # Strukturiert: Jede Checkliste als eigene Box mit Überschrift und Checkboxen
     checklist_map: list[tuple[str, str]] = [
         ("KI‑Readiness‑Check", "check_ki_readiness.md"),
         ("Compliance‑Check (EU AI Act & DSGVO)", "check_compliance_eu_ai_act.md"),
@@ -380,10 +320,7 @@ def analyze_full_report(data: dict) -> dict:
 
     return results
 
-
-# --- 9. SWOT-Extractor ---
 def extract_swot(full_text: str) -> dict:
-    """Extract SWOT sections from a combined analysis text."""
     def find(pattern: str) -> str:
         m = re.search(pattern, full_text, re.DOTALL | re.IGNORECASE)
         return m.group(1).strip() if m else ""
@@ -395,10 +332,7 @@ def extract_swot(full_text: str) -> dict:
         "swot_threats": find(r"Risiken:(.*?)(?:$)"),
     }
 
-
-# --- 10. KI-Readiness Score Minimalberechnung ---
 def calc_score_percent(data: dict) -> int:
-    """Compute a basic readiness score percentage based on simple heuristics."""
     print("### DEBUG: calc_score_percent(data) wird ausgeführt ###")
     score = 0
     max_score = 35
@@ -447,9 +381,7 @@ def calc_score_percent(data: dict) -> int:
     print(f"### DEBUG: score_percent gesetzt: {percent}")
     return percent
 
-
 def fix_encoding(text: str) -> str:
-    """Normalize some common encoding issues in the output text."""
     return (
         text.replace("�", "-")
         .replace("–", "-")
