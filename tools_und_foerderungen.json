@@ -1,245 +1,895 @@
 {
   "marketing": {
     "solo": [
-      { "name": "Canva AI", "link": "https://www.canva.com/de_de/ai-tools/" },
-      { "name": "Copy.ai", "link": "https://www.copy.ai/" }
+      {
+        "name": "Canva AI",
+        "link": "https://www.canva.com/de_de/ai-tools/"
+      },
+      {
+        "name": "Copy.ai",
+        "link": "https://www.copy.ai/"
+      },
+      {
+        "name": "Hootsuite",
+        "link": "https://www.hootsuite.com/de"
+      },
+      {
+        "name": "Matomo (Open Source Analytik)",
+        "link": "https://matomo.org/"
+      }
     ],
     "klein": [
-      { "name": "HubSpot Marketing Hub", "link": "https://www.hubspot.de/products/marketing" }
+      {
+        "name": "HubSpot Marketing Hub",
+        "link": "https://www.hubspot.de/products/marketing"
+      },
+      {
+        "name": "Mailchimp",
+        "link": "https://mailchimp.com/"
+      },
+      {
+        "name": "Seobility",
+        "link": "https://www.seobility.net/de/"
+      }
     ],
     "mittel": [
-      { "name": "Adobe Experience Cloud", "link": "https://business.adobe.com/de/products/experience-cloud.html" }
+      {
+        "name": "Adobe Experience Cloud",
+        "link": "https://business.adobe.com/de/products/experience-cloud.html"
+      },
+      {
+        "name": "Salesforce Marketing Cloud",
+        "link": "https://www.salesforce.com/de/products/marketing-cloud/overview/"
+      },
+      {
+        "name": "Marketo",
+        "link": "https://www.marketo.com/"
+      }
     ]
   },
   "beratung": {
     "solo": [
-      { "name": "Miro (KI-Whiteboards)", "link": "https://miro.com/" },
-      { "name": "Notion AI", "link": "https://www.notion.so/product/ai" }
+      {
+        "name": "Miro (KI-Whiteboards)",
+        "link": "https://miro.com/"
+      },
+      {
+        "name": "Notion AI",
+        "link": "https://www.notion.so/product/ai"
+      },
+      {
+        "name": "Trello",
+        "link": "https://trello.com/"
+      }
     ],
     "klein": [
-      { "name": "Asana KI-Projektmanagement", "link": "https://asana.com/de/features/ai" }
+      {
+        "name": "Asana KI-Projektmanagement",
+        "link": "https://asana.com/de/features/ai"
+      },
+      {
+        "name": "Slack (mit GPT-Plugins)",
+        "link": "https://slack.com/"
+      },
+      {
+        "name": "Evernote",
+        "link": "https://evernote.com/"
+      }
     ],
     "mittel": [
-      { "name": "Monday.com Work OS", "link": "https://monday.com/de/features/ki" }
+      {
+        "name": "Monday.com Work OS",
+        "link": "https://monday.com/de/features/ki"
+      },
+      {
+        "name": "Confluence (KI-gestützte Dokumentation)",
+        "link": "https://www.atlassian.com/software/confluence"
+      },
+      {
+        "name": "ClickUp AI",
+        "link": "https://clickup.com/ai"
+      }
     ]
   },
   "it": {
     "solo": [
-      { "name": "GitHub Copilot", "link": "https://github.com/features/copilot" },
-      { "name": "Raycast", "link": "https://www.raycast.com/" }
+      {
+        "name": "GitHub Copilot",
+        "link": "https://github.com/features/copilot"
+      },
+      {
+        "name": "JetBrains AI Assistant",
+        "link": "https://www.jetbrains.com/de-de/ai/"
+      },
+      {
+        "name": "Postman AI",
+        "link": "https://www.postman.com/"
+      }
     ],
     "klein": [
-      { "name": "JetBrains AI Assistant", "link": "https://www.jetbrains.com/ai/" }
+      {
+        "name": "Jira Software mit KI",
+        "link": "https://www.atlassian.com/software/jira"
+      },
+      {
+        "name": "GitLab Duo",
+        "link": "https://about.gitlab.com/solutions/ai/"
+      },
+      {
+        "name": "Miro Code Prototyping",
+        "link": "https://miro.com/"
+      }
     ],
     "mittel": [
-      { "name": "Datadog AIOps", "link": "https://www.datadoghq.com/aiops/" }
+      {
+        "name": "Azure DevOps mit AI",
+        "link": "https://azure.microsoft.com/de-de/services/devops/"
+      },
+      {
+        "name": "Terraform Cloud (Policy as Code)",
+        "link": "https://www.hashicorp.com/products/terraform"
+      },
+      {
+        "name": "Datadog AI Monitoring",
+        "link": "https://www.datadoghq.com/"
+      }
     ]
   },
   "finanzen": {
     "solo": [
-      { "name": "lexoffice KI-Buchhaltung", "link": "https://www.lexoffice.de/" }
+      {
+        "name": "DATEV KI-Assistent",
+        "link": "https://www.datev.de/"
+      },
+      {
+        "name": "Kontist (Automatisierte Steuer)",
+        "link": "https://kontist.com/"
+      },
+      {
+        "name": "Bookamat",
+        "link": "https://www.bookamat.com/"
+      }
     ],
     "klein": [
-      { "name": "sevDesk KI", "link": "https://sevdesk.de/ki-buchhaltung/" }
+      {
+        "name": "SMACC Buchhaltungs-KI",
+        "link": "https://www.smacc.io/"
+      },
+      {
+        "name": "Finmatics (Beleg- und Rechnungsautomatisierung)",
+        "link": "https://finmatics.com/"
+      },
+      {
+        "name": "sevDesk",
+        "link": "https://sevdesk.de/"
+      }
     ],
     "mittel": [
-      { "name": "SAP Business AI", "link": "https://www.sap.com/germany/products/artificial-intelligence.html" }
+      {
+        "name": "Sage Intacct (Finanzmanagement)",
+        "link": "https://www.sage.com/en-us/products/sage-intacct/"
+      },
+      {
+        "name": "SAP S/4HANA Finance",
+        "link": "https://www.sap.com/germany/products/s4hana-erp.html"
+      },
+      {
+        "name": "Workday Financial Management",
+        "link": "https://www.workday.com/en-us/products/financial-management.html"
+      }
     ]
   },
   "handel": {
     "solo": [
-      { "name": "Shopify Magic", "link": "https://www.shopify.com/tools/ai" }
+      {
+        "name": "Shopify (EU Hosting)",
+        "link": "https://www.shopify.de/"
+      },
+      {
+        "name": "Wix eCommerce",
+        "link": "https://de.wix.com/"
+      },
+      {
+        "name": "WooCommerce",
+        "link": "https://woocommerce.com/"
+      }
     ],
     "klein": [
-      { "name": "JTL-Wawi KI", "link": "https://www.jtl-software.de/" }
+      {
+        "name": "JTL-Wawi",
+        "link": "https://www.jtl-software.de/jtl-wawi"
+      },
+      {
+        "name": "Tradebyte TB.One",
+        "link": "https://www.tradebyte.com/"
+      },
+      {
+        "name": "Shopware AI Copilot",
+        "link": "https://www.shopware.com/de/shopware-copilot/"
+      }
     ],
     "mittel": [
-      { "name": "Tradebyte AI", "link": "https://www.tradebyte.com/" }
+      {
+        "name": "Spryker Cloud Commerce OS",
+        "link": "https://spryker.com/"
+      },
+      {
+        "name": "Salesforce Commerce Cloud",
+        "link": "https://www.salesforce.com/de/products/commerce-cloud/overview/"
+      },
+      {
+        "name": "Intershop Commerce",
+        "link": "https://www.intershop.com/"
+      }
     ]
   },
   "bildung": {
     "solo": [
-      { "name": "Sofatutor KI", "link": "https://www.sofatutor.com/" }
+      {
+        "name": "Moodle",
+        "link": "https://moodle.org/"
+      },
+      {
+        "name": "Open edX",
+        "link": "https://open.edx.org/"
+      },
+      {
+        "name": "H5P Interaktive Inhalte",
+        "link": "https://h5p.org/"
+      }
     ],
     "klein": [
-      { "name": "Moodle AI-Plugins", "link": "https://moodle.org/plugins/?q=ai" }
+      {
+        "name": "Ilias Lernplattform",
+        "link": "https://www.ilias.de/"
+      },
+      {
+        "name": "EduPage",
+        "link": "https://www.edupage.org/"
+      },
+      {
+        "name": "Antares Education AI",
+        "link": "https://www.antares.ai/"
+      }
     ],
     "mittel": [
-      { "name": "Microsoft Education Copilot", "link": "https://education.microsoft.com/" }
+      {
+        "name": "Classroom21",
+        "link": "https://www.classroom21.de/"
+      },
+      {
+        "name": "Netzwerk Digitale Bildung",
+        "link": "https://netzwerkdigitalebildung.de/"
+      },
+      {
+        "name": "itslearning",
+        "link": "https://itslearning.com/"
+      }
     ]
   },
   "verwaltung": {
     "solo": [
-      { "name": "Datenlotsen GovTech", "link": "https://datenlotsen.de/" }
+      {
+        "name": "Form-Solutions eGovPortal",
+        "link": "https://www.form-solutions.de/"
+      },
+      {
+        "name": "OpenProject",
+        "link": "https://www.openproject.org/de/"
+      },
+      {
+        "name": "dPhoenixSuite (Open Source DMS)",
+        "link": "https://dphoenixsuite.de/"
+      }
     ],
     "klein": [
-      { "name": "Mach AG eAkte KI", "link": "https://www.mach.de/produkte/eaakte" }
+      {
+        "name": "OpenRPA (Robotic Process Automation)",
+        "link": "https://github.com/openrpa/openrpa"
+      },
+      {
+        "name": "HSH Traum-Feld (KI in Fachverfahren)",
+        "link": "https://www.hsh-berlin.com/"
+      },
+      {
+        "name": "d.velop Documents",
+        "link": "https://www.d-velop.de/"
+      }
     ],
     "mittel": [
-      { "name": "Komm.ONE AI-Lösungen", "link": "https://www.komm.one/" }
+      {
+        "name": "d.SIGN (digitale Signatur)",
+        "link": "https://www.d-velop.de/dsign"
+      },
+      {
+        "name": "FIS-OS (Open Source Rechnungsworkflow)",
+        "link": "https://www.fis-gmbh.de/produkte/fis-os"
+      },
+      {
+        "name": "Alfresco Process Services",
+        "link": "https://www.alfresco.com/"
+      }
     ]
   },
   "gesundheit": {
     "solo": [
-      { "name": "Doctolib KI", "link": "https://www.doctolib.de/" }
+      {
+        "name": "Doctolib (Terminmanagement)",
+        "link": "https://www.doctolib.de/"
+      },
+      {
+        "name": "TeleClinic",
+        "link": "https://www.teleclinic.com/"
+      },
+      {
+        "name": "PraxisApp",
+        "link": "https://www.praxisapp.de/"
+      }
     ],
     "klein": [
-      { "name": "m.Doc HealthCloud", "link": "https://mdoc.one/" }
+      {
+        "name": "DoctorBox",
+        "link": "https://doctorbox.de/"
+      },
+      {
+        "name": "Smartpraxis",
+        "link": "https://smartpraxis.de/"
+      },
+      {
+        "name": "Carl Data (IoT Health)",
+        "link": "https://www.carl-data.com/"
+      }
     ],
     "mittel": [
-      { "name": "Infermedica (KI-Anamnese)", "link": "https://infermedica.com/de/" }
+      {
+        "name": "Cerner Millennium",
+        "link": "https://www.cerner.com/solutions/electronic-health-record"
+      },
+      {
+        "name": "Epic Systems",
+        "link": "https://www.epic.com/"
+      },
+      {
+        "name": "Philips IntelliVue",
+        "link": "https://www.philips.de/healthcare/product/HCNOCTN759/intellivue-solutions"
+      }
     ]
   },
   "bau": {
     "solo": [
-      { "name": "PlanRadar", "link": "https://www.planradar.com/de/" }
+      {
+        "name": "Autodesk Revit",
+        "link": "https://www.autodesk.de/products/revit/"
+      },
+      {
+        "name": "PlanRadar",
+        "link": "https://www.planradar.com/de/"
+      },
+      {
+        "name": "Novoplan",
+        "link": "https://www.novoplan.de/"
+      }
     ],
     "klein": [
-      { "name": "Procore", "link": "https://www.procore.com/" }
+      {
+        "name": "BIMcollab",
+        "link": "https://www.bimcollab.com/de/"
+      },
+      {
+        "name": "Bluebeam Revu",
+        "link": "https://www.bluebeam.com/de/"
+      },
+      {
+        "name": "Procore",
+        "link": "https://www.procore.com/"
+      }
     ],
     "mittel": [
-      { "name": "Autodesk Construction Cloud", "link": "https://construction.autodesk.eu/" }
+      {
+        "name": "Oracle Aconex",
+        "link": "https://www.oracle.com/industries/construction-engineering/aconex/"
+      },
+      {
+        "name": "Nemetschek Allplan",
+        "link": "https://www.allplan.com/de/"
+      },
+      {
+        "name": "Bentley OpenBuildings",
+        "link": "https://www.bentley.com/software/openbuildings/"
+      }
     ]
   },
   "medien": {
     "solo": [
-      { "name": "Descript AI (Audio/Video)", "link": "https://www.descript.com/ai" }
+      {
+        "name": "Adobe Creative Cloud AI",
+        "link": "https://www.adobe.com/de/creativecloud.html"
+      },
+      {
+        "name": "Canva Pro",
+        "link": "https://www.canva.com/de/"
+      },
+      {
+        "name": "Otter.ai (Transkriptions-KI)",
+        "link": "https://otter.ai/"
+      }
     ],
     "klein": [
-      { "name": "StoryChief KI", "link": "https://storychief.io/de" }
+      {
+        "name": "Avid Media Composer",
+        "link": "https://www.avid.com/mediacomposer"
+      },
+      {
+        "name": "Final Cut Pro",
+        "link": "https://www.apple.com/final-cut-pro/"
+      },
+      {
+        "name": "Frame.io",
+        "link": "https://frame.io/"
+      }
     ],
     "mittel": [
-      { "name": "Adobe Creative Cloud mit Firefly", "link": "https://www.adobe.com/de/products/firefly.html" }
+      {
+        "name": "DaVinci Resolve Studio",
+        "link": "https://www.blackmagicdesign.com/products/davinciresolve/"
+      },
+      {
+        "name": "Vizrt (Live Graphics)",
+        "link": "https://www.vizrt.com/"
+      },
+      {
+        "name": "AVID iNEWS",
+        "link": "https://www.avid.com/products/inews"
+      }
     ]
   },
   "industrie": {
     "solo": [
-      { "name": "Octoplant", "link": "https://www.auvesy-mdt.com/de/octoplant.html" }
+      {
+        "name": "Siemens MindSphere",
+        "link": "https://siemens.mindsphere.io/"
+      },
+      {
+        "name": "Bosch IoT Suite",
+        "link": "https://bosch-iot-suite.com/"
+      },
+      {
+        "name": "PTC ThingWorx",
+        "link": "https://www.ptc.com/en/products/iiot/thingsworx"
+      }
     ],
     "klein": [
-      { "name": "Siemens MindSphere", "link": "https://siemens.mindsphere.io/" }
+      {
+        "name": "IBM Maximo",
+        "link": "https://www.ibm.com/products/maximo"
+      },
+      {
+        "name": "SAP Digital Manufacturing",
+        "link": "https://www.sap.com/germany/products/digital-manufacturing.html"
+      },
+      {
+        "name": "Honeywell Forge",
+        "link": "https://www.honeywellforge.ai/"
+      }
     ],
     "mittel": [
-      { "name": "PTC ThingWorx", "link": "https://www.ptc.com/en/products/thingworx" }
+      {
+        "name": "Edge Impulse",
+        "link": "https://edgeimpulse.com/"
+      },
+      {
+        "name": "GE Predix",
+        "link": "https://www.ge.com/digital/predix"
+      },
+      {
+        "name": "Dassault 3DEXPERIENCE",
+        "link": "https://www.3ds.com/de/produkte-und-services/3dexperience/"
+      }
     ]
   },
   "logistik": {
     "solo": [
-      { "name": "ParcelLab", "link": "https://www.parcellab.com/de/" }
+      {
+        "name": "SENDIN (Sendungsverfolgung)",
+        "link": "https://sendinblue.com/"
+      },
+      {
+        "name": "ParcelLab",
+        "link": "https://parcellab.com/"
+      },
+      {
+        "name": "Shipcloud",
+        "link": "https://www.shipcloud.io/de"
+      }
     ],
     "klein": [
-      { "name": "Transporeon", "link": "https://www.transporeon.com/de/" }
+      {
+        "name": "Project44",
+        "link": "https://www.project44.com/"
+      },
+      {
+        "name": "Shippeo",
+        "link": "https://www.shippeo.com/"
+      },
+      {
+        "name": "ClearMetal",
+        "link": "https://clearmetal.com/"
+      }
     ],
     "mittel": [
-      { "name": "Blue Yonder", "link": "https://blueyonder.com/" }
+      {
+        "name": "SAP Transportation Management",
+        "link": "https://www.sap.com/products/transportation-management.html"
+      },
+      {
+        "name": "Infor Nexus",
+        "link": "https://www.infor.com/solutions/scm/nexus"
+      },
+      {
+        "name": "Kuebix TMS",
+        "link": "https://www.kuebix.com/"
+      }
     ]
   },
   "default": {
     "solo": [
-      { "name": "Microsoft 365 Copilot", "link": "https://www.microsoft.com/de-de/microsoft-365/copilot" },
-      { "name": "ChatGPT (OpenAI)", "link": "https://chat.openai.com/" }
+      {
+        "name": "Microsoft 365",
+        "link": "https://www.microsoft.com/de-de/microsoft-365"
+      },
+      {
+        "name": "Google Workspace (EU Standort)",
+        "link": "https://workspace.google.com/"
+      },
+      {
+        "name": "Airtable",
+        "link": "https://www.airtable.com/"
+      },
+      {
+        "name": "Zapier",
+        "link": "https://zapier.com/"
+      }
     ],
     "klein": [
-      { "name": "Zapier KI-Automation", "link": "https://zapier.com/" }
+      {
+        "name": "Notion",
+        "link": "https://www.notion.so/"
+      },
+      {
+        "name": "Jira",
+        "link": "https://www.atlassian.com/software/jira"
+      },
+      {
+        "name": "Asana",
+        "link": "https://asana.com/"
+      }
     ],
     "mittel": [
-      { "name": "Google Workspace AI", "link": "https://workspace.google.com/intl/de/products/ai/" }
+      {
+        "name": "Salesforce Einstein GPT",
+        "link": "https://www.salesforce.com/de/products/einstein/"
+      },
+      {
+        "name": "SAP AI Business Services",
+        "link": "https://www.sap.com/germany/products/artificial-intelligence.html"
+      },
+      {
+        "name": "OpenAI ChatGPT Enterprise",
+        "link": "https://openai.com/enterprise"
+      }
     ]
   },
   "foerderungen": {
     "marketing": {
       "national": [
-        { "name": "go-digital", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/foerderprogramm-go-digital.html" }
-      ],
-      "solo": [
-        { "name": "EXIST-Gründerstipendium", "link": "https://www.exist.de/DE/Programm/Exist-Gruenderstipendium/inhalt.html" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "beratung": {
       "national": [
-        { "name": "BAFA-Förderung Unternehmensberatung", "link": "https://www.bafa.de/DE/Wirtschaft/Beratung/Förderung_beratender_Berufe/beratung_node.html" }
-      ],
-      "solo": [
-        { "name": "Gründungszuschuss (Agentur für Arbeit)", "link": "https://www.arbeitsagentur.de/unternehmen/finanziell/gruendungszuschuss" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "it": {
       "national": [
-        { "name": "KMU-innovativ: IT", "link": "https://www.kmu-innovativ.de/" }
-      ],
-      "solo": [
-        { "name": "Digital Jetzt", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/foerderprogramm-digital-jetzt.html" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "finanzen": {
       "national": [
-        { "name": "INVEST – Zuschuss für Wagniskapital", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Mittelstand/invest.html" }
-      ],
-      "solo": [
-        { "name": "ERP-Gründerkredit", "link": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Gründen-Erweitern/Finanzierungsangebote/ERP-Gründerkredit-StartGeld-(067)/" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "handel": {
       "national": [
-        { "name": "go-digital", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/foerderprogramm-go-digital.html" }
-      ],
-      "solo": [
-        { "name": "EXIST-Gründerstipendium", "link": "https://www.exist.de/DE/Programm/Exist-Gruenderstipendium/inhalt.html" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "bildung": {
       "national": [
-        { "name": "DigitalPakt Schule", "link": "https://www.digitalpaktschule.de/de/" }
-      ],
-      "solo": [
-        { "name": "Erasmus+ Förderungen", "link": "https://www.erasmusplus.de/" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "verwaltung": {
       "national": [
-        { "name": "E-Government-Initiative BMI", "link": "https://www.bmi.bund.de/DE/themen/moderne-verwaltung/verwaltungsmodernisierung/e-government/e-government-initiative/e-government-initiative-node.html" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "gesundheit": {
       "national": [
-        { "name": "KHZG – Krankenhauszukunftsgesetz", "link": "https://www.bundesgesundheitsministerium.de/krankenhauszukunftsgesetz.html" }
-      ],
-      "solo": [
-        { "name": "Zukunftsprogramm Krankenhäuser", "link": "https://www.bundesgesundheitsministerium.de/themen/krankenhaus/krankenhauszukunftsfonds.html" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "bau": {
       "national": [
-        { "name": "Digitalisierung Bauwirtschaft (BMWK)", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Bauen/foerderprogramme.html" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "medien": {
       "national": [
-        { "name": "Medien- und Kreativförderung", "link": "https://www.kreativ-bund.de/" }
-      ],
-      "solo": [
-        { "name": "VG Wort Förderprogramm", "link": "https://www.vgwort.de/" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "industrie": {
       "national": [
-        { "name": "Industrie 4.0-Förderprogramme", "link": "https://www.plattform-i40.de/I40/Navigation/DE/Home/home.html" }
-      ],
-      "solo": [
-        { "name": "go-inno (BMWK)", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Innovation/go-inno.html" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "logistik": {
       "national": [
-        { "name": "Innovative Hafentechnologien (IHATEC)", "link": "https://www.bmvi.de/SharedDocs/DE/Artikel/G/innovative-hafentechnologien.html" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     },
     "default": {
       "national": [
-        { "name": "Digital Jetzt", "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitalisierung/foerderprogramm-digital-jetzt.html" }
-      ],
-      "solo": [
-        { "name": "EXIST-Gründerstipendium", "link": "https://www.exist.de/DE/Programm/Exist-Gruenderstipendium/inhalt.html" }
+        {
+          "name": "Digital Jetzt (BMWK)",
+          "link": "https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html"
+        },
+        {
+          "name": "go-digital",
+          "link": "https://www.bmwi.de/Redaktion/DE/Artikel/Digitale-Welt/go-digital.html"
+        },
+        {
+          "name": "KMU-innovativ",
+          "link": "https://www.bmbf.de/bmbf/de/forschung/innovationen-mit-hoher-risken"
+        },
+        {
+          "name": "EU-Förderprogramm Horizon Europe",
+          "link": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home"
+        },
+        {
+          "name": "Digitalprämie Berlin (IBB)",
+          "link": "https://www.ibb.de/de/foerderprogramme/digitalpraemie.html"
+        }
       ]
     }
   }

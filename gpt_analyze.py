@@ -5,6 +5,46 @@ import re
 from openai import OpenAI
 from datetime import datetime
 
+# Simple helper to convert checklist Markdown to basic HTML lists. This avoids a heavy markdown dependency.
+def checklist_markdown_to_html(md_text: str) -> str:
+    """
+    Convert a simple checklist Markdown (with '- [ ]' or '- ') into a HTML unordered list.
+    Headings starting with '#' will be converted into <h3> tags. Lines that do not start
+    with a list marker or heading are ignored. This helper is intentionally simple and
+    tailored to our checklist files.
+    """
+    html_lines = []
+    lines = md_text.splitlines()
+    ul_open = False
+    for line in lines:
+        striped = line.strip()
+        if not striped:
+            continue
+        # Headings
+        if striped.startswith("#"):
+            if ul_open:
+                html_lines.append("</ul>")
+                ul_open = False
+            # remove leading hashes
+            heading = striped.lstrip('#').strip()
+            html_lines.append(f"<h3>{heading}</h3>")
+            continue
+        # Bullet items
+        if striped.startswith("- [ ]"):
+            item = striped[5:].strip()
+        elif striped.startswith("- "):
+            item = striped[2:].strip()
+        else:
+            # ignore other lines
+            continue
+        if not ul_open:
+            html_lines.append("<ul>")
+            ul_open = True
+        html_lines.append(f"<li>{item}</li>")
+    if ul_open:
+        html_lines.append("</ul>")
+    return "\n".join(html_lines)
+
 client = OpenAI()
 
 # --- 1. Branchenspezifisches Prompt-Loader ---
@@ -69,6 +109,15 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
             for row in benchmark
         )
 
+    # Kombiniere Tools und Förderprogramme für die Variable tools_und_foerderungen.
+    kombi_tools_foerder = ""
+    if tools_text and foerder_text:
+        kombi_tools_foerder = f"{tools_text}\n{foerder_text}"
+    elif tools_text:
+        kombi_tools_foerder = tools_text
+    elif foerder_text:
+        kombi_tools_foerder = foerder_text
+
     prompt_vars = {
         "branche": branche,
         "hauptleistung": data.get("hauptleistung", ""),
@@ -77,8 +126,10 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
         "daten": json.dumps(data, indent=2, ensure_ascii=False),
         "checklisten": checklisten or "",
         "benchmark": bench_txt,
+        # separate Tools und Förderlisten für legacy Prompts
         "tools": tools_text or "",
-        "tools_und_foerderungen": tools_text or "",
+        # kombiniertes Feld enthält sowohl Tool- als auch Förderprogramme
+        "tools_und_foerderungen": kombi_tools_foerder or "",
         "foerderungen": foerder_text or "",
         "praxisbeispiele": "",
         "score_percent": data.get("score_percent", ""),
@@ -179,20 +230,21 @@ def analyze_full_report(data):
     check_inno = read_markdown_file("check_innovationspotenzial.md")
     check_datenschutz = read_markdown_file("check_datenschutz.md")
     check_roadmap = read_markdown_file("check_umsetzungsplan_ki.md")
-    praxisbeispiele = read_markdown_file("praxisbeispiele.md")
-    tools = read_markdown_file("tools.md")
+    praxisbeispiele_md = read_markdown_file("praxisbeispiele.md")
 
+    # Definiere die Reihenfolge der GPT-Abschnitte. Zusammenfassungen werden für alle Unternehmensgrößen generiert, um die PDF-Templates bedienen zu können.
     abschnittsreihenfolge = [
         ("score_percent", None),
         ("executive_summary", check_readiness),
         ("gesamtstrategie", check_readiness),
-        ("compliance", check_compliance),
+        ("summary_klein", check_readiness),
+        ("summary_kmu", check_readiness),
+        ("summary_solo", check_readiness),
         ("innovation", check_inno),
+        ("compliance", check_compliance),
         ("datenschutz", check_datenschutz),
         ("roadmap", check_roadmap),
-        ("praxisbeispiele", praxisbeispiele),
-        ("tools", tools),
-        ("foerderprogramme", ""),
+        ("praxisbeispiele", praxisbeispiele_md),
         ("moonshot_vision", ""),
         ("eu_ai_act", check_compliance),
     ]
@@ -203,8 +255,10 @@ def analyze_full_report(data):
         try:
             if abschnitt == "score_percent":
                 percent = calc_score_percent(data)
+                # Speichere den Score im Ergebnis und im Datenobjekt, damit er in nachfolgenden Prompts verfügbar ist
                 results["score_percent"] = percent
                 prior_results["score_percent"] = percent
+                data["score_percent"] = percent
                 print(f"### DEBUG: score_percent berechnet: {percent}")
                 continue
             text = gpt_block(
@@ -216,16 +270,41 @@ def analyze_full_report(data):
         except Exception as e:
             msg = f"[ERROR in Abschnitt {abschnitt}: {e}]"
             print(msg)
-            if abschnitt == "foerderprogramme":
-                fallback = (
-                    "Für diesen Bereich konnten aktuell keine spezifischen Förderprogramme automatisch generiert werden. "
-                    "Bitte kontaktieren Sie uns für eine individuelle Fördermittel-Recherche."
-                )
-                results[abschnitt] = fallback
-                prior_results[abschnitt] = fallback
-            else:
-                results[abschnitt] = msg
-                prior_results[abschnitt] = msg
+            results[abschnitt] = msg
+            prior_results[abschnitt] = msg
+
+    # Tools und Förderprogramme separat ermitteln und in die Ergebnisse einfügen. Diese werden nicht von GPT generiert, um stabile und aktuelle Inhalte zu gewährleisten.
+    tools_text, foerder_text = get_tools_und_foerderungen(data)
+    results["tools"] = tools_text or "Keine spezifischen Tools gefunden."
+    results["foerderprogramme"] = foerder_text or "Keine Förderprogramme gefunden."
+
+    # --- Checklisten-Integration ---
+    # Zusätzlich zu den GPT-generierten Texten sollen strukturierte Checklisten aus dem data-Verzeichnis
+    # im Report erscheinen. Diese Checklisten werden als Markdown gepflegt und hier in HTML umgewandelt.
+    checklists_html = ""
+    # Liste der relevanten Checklistendateien. Falls weitere Checklisten hinzukommen, können sie hier ergänzt werden.
+    checklist_files = [
+        "check_ki_readiness.md",
+        "check_compliance_eu_ai_act.md",
+        "check_innovationspotenzial.md",
+        "check_datenschutz.md",
+        "check_foerdermittel.md",
+        "check_umsetzungsplan_ki.md",
+    ]
+    for cl_file in checklist_files:
+        md = read_markdown_file(cl_file)
+        if md:
+            html = checklist_markdown_to_html(md)
+            # Falls die Checkliste eine Überschrift im Markdown enthält, wird sie durch
+            # checklist_markdown_to_html() als <h3> ausgegeben. Wir fügen nur eine
+            # Leerzeile als Trennung ein.
+            if html:
+                checklists_html += html + "\n"
+    # Füge die Checklisten als neues Feld in die Ergebnisse ein, falls Inhalt vorhanden ist.
+    if checklists_html.strip():
+        results["checklisten"] = checklists_html.strip()
+    else:
+        results["checklisten"] = ""
 
     print("### DEBUG: Alle Ergebnisse gesammelt:", results)
     return results
