@@ -1,15 +1,23 @@
-# Empfohlene KI‑ und Digitalisierungstools für Beratungs‑Dienstleistungen
+# Aktuelle KI‑ und Digitalisierungstools für Beratungs‑Dienstleistungen
 
-Stelle eine Auswahl führender Tools für Beratungsunternehmen vor.  Die Liste sollte verschiedene Kategorien abdecken, z. B. Automatisierung (Low‑Code/No‑Code), Datenanalyse, Wissensmanagement, digitale Produkterstellung, Mandantenportale und Kollaborationslösungen.
+Bitte listen Sie die tagesaktuell wichtigsten Tools und Plattformen auf,
+die Beratungsunternehmen bei Digitalisierung, Automatisierung und KI-Einsatz unterstützen (Stand: {{ datum }}).
 
-**Für jedes Tool bitte angeben:**
+- Decken Sie folgende Kategorien ab:
+  - Automatisierung (Low‑Code/No‑Code)
+  - Datenanalyse & Datenvisualisierung
+  - Wissensmanagement & Dokumentenautomation
+  - Digitale Produkterstellung & Self-Service-Portale
+  - Kollaborations- und Mandantenportale
+- Für jedes Tool bitte angeben:
+  - **Eignung/Use Case:** Wofür eignet sich das Tool besonders (z. B. Dokumentenautomation, Datenvisualisierung, Wissensdatenbank, Portal)?
+  - **Open‑Source‑ oder günstige Alternative:** Wenn möglich, eine kostenfreie/quelloffene Lösung vergleichen.
+  - **Praxistipp zur Einführung:** Kurz erklären, wie die Implementierung praxisnah gelingt (Pilot, API, Team-Schulung)
+  - **Quellenlink, Anbieter, Update-Datum** (wenn bekannt)
 
-* **Eignung/Use Case:** Wofür eignet sich das Tool besonders gut (z. B. Dokumentenautomation, Datenvisualisierung, Wissensdatenbank, Self‑Service‑Portal)?
-* **Open‑Source‑ oder günstige Alternative:** Gibt es eine kostenfreie oder Open‑Source‑Variante?  Falls ja, nenne sie und vergleiche kurz die Vor‑ und Nachteile.
-* **Praxistipp zur Einführung:** Kurzer Tipp aus der Praxis zur erfolgreichen Implementierung (z. B. Pilotprojekt starten, Schulung im kleinen Team, Integration via API).
+Priorisieren Sie Tools, die seit April 2024 veröffentlicht oder relevant aktualisiert wurden. Geben Sie für neue Tools eine Quellenangabe an und begründen Sie kurz den Mehrwert.
 
 ---
 
-## Tools
-
-{tools}
+{{ tools_und_foerderungen }}
+{{ daten }}

@@ -1,16 +1,18 @@
-# Förderprogramme für Beratungs‑Dienstleistungen
+# Förderprogramme für Beratungs‑Dienstleistungen (maximal aktuell)
 
-Erstelle einen strukturierten Überblick zu relevanten Förderprogrammen für Beratungsunternehmen (z. B. BAFA‑Förderung „Beratungsförderung für KMU“, „Digital Jetzt“, regionale Beratungsförderprogramme, Innovationsförderungen).  Beschreibe Zielgruppen, Förderhöhen, Voraussetzungen und Praxistipps.
+Bitte listen Sie die fünf tagesaktuell wichtigsten Förderprogramme auf,
+die Digitalisierung, Innovation und KI‑Einsatz bei Beratungsunternehmen unterstützen (Stand: {{ datum }}).
 
-**Inhalte pro Programm:**
+- Berücksichtigen Sie insbesondere Programme wie „BAFA‑Beratungsförderung“, „Digital Jetzt“, regionale Innovationsförderungen etc., die seit April 2024 gestartet, verlängert oder aktualisiert wurden.
+- Für jedes Programm bitte folgende Angaben machen:
+  - **Zielgruppen:** Wer ist antragsberechtigt? (Kleinstunternehmen, KMU, Solo‑Berater:innen, Start‑ups)
+  - **Förderhöhe & -quote:** Zuschüsse, Kredite, maximale Beträge, Förderquoten
+  - **Voraussetzungen & Auswahlkriterien:** Beratungsschwerpunkt, Qualifikation, Digitalisierungsgrad, Innovationspotenzial
+  - **Praxistipps:** Hinweise zu Antragstellung, Fristen, Kombinationsmöglichkeiten, Unterlagen, typische Stolperfallen
+  - **Quellenlink, Update-Datum** (wenn bekannt)
 
-* **Zielgruppen:** Welche Unternehmen sind antragsberechtigt (z. B. Kleinst‑ und Kleinunternehmen, KMU, Solo‑Berater:innen, Start‑ups)?
-* **Förderhöhe & Quote:** Höhe der Zuschüsse oder Kredite, maximale Förderbeträge und ggf. Förderquoten.
-* **Voraussetzungen & Auswahlkriterien:** Notwendige Voraussetzungen wie Beratungsschwerpunkt, Qualifikation der Beratenden, Innovationsgehalt, Digitalisierungsgrad.
-* **Praxistipps:** Hinweise zu Antragstellung, Fristen, Kombinationsmöglichkeiten mit anderen Programmen, notwendige Unterlagen und typische Stolperfallen.
+Strukturieren Sie die Programme übersichtlich (Liste/Tabelle) und geben Sie für neue Programme das Update- oder Veröffentlichungsdatum an.
 
 ---
 
-## Förderprogramme
-
-{foerderprogramme}
+{{ foerderprogramme }}
