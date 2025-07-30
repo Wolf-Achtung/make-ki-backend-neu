@@ -190,6 +190,23 @@ th {
 </div>
 {% endif %}
 
+<!-- INNOVATIONS-INTRO & GAMECHANGER-BLOCKS -->
+{% if branchen_innovations_intro or gamechanger_blocks %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box" style="background: #e6f4fe; border-left: 6px solid #2563eb;">
+    <h2 style="color: #184ea4;">Innovation, Trends & Gamechanger</h2>
+    {% if branchen_innovations_intro %}
+      <div style="font-size:1.09em; font-weight:500; color:#184ea4; margin-bottom:18px;">
+        {{ branchen_innovations_intro | safe }}
+      </div>
+    {% endif %}
+    {% if gamechanger_blocks %}
+      <div style="font-size:1.07em; color:#224266;">{{ gamechanger_blocks | safe }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
 <!-- KURZFAZIT -->
 {% if summary_klein or summary_kmu or summary_solo %}
 <div class="report-section" style="page-break-before: always;">
