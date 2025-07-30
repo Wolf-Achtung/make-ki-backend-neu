@@ -286,6 +286,7 @@ def gpt_block(
             },
             {"role": "user", "content": prompt},
         ],
+        tools=[{"type": "web_browser"}],
         temperature=0.3,
     )
     return response.choices[0].message.content.strip()
