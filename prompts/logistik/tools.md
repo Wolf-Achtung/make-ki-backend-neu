@@ -1,24 +1,25 @@
-# Empfohlene KI- und Digitalisierungstools für Logistik & Transport
+# Aktuelle KI- und Digitalisierungstools für Logistik & Transport
 
-Stelle eine strukturierte Übersicht wichtiger Tools und Plattformen zusammen, die Unternehmen im Logistik‑ und Transportsektor bei der Digitalisierung und KI‑Einführung unterstützen. Berücksichtige folgende Kategorien:
+Bitte listen Sie die tagesaktuell wichtigsten Tools und Plattformen auf,
+die Unternehmen im Logistik‑ und Transportsektor bei Digitalisierung und KI‑Einführung unterstützen (Stand: {{ datum }}).
 
-1. **Telematik & Flottenmanagement** – z. B. Systeme für Echtzeit‑GPS‑Tracking, Fahrerdaten, Ladungsüberwachung und Wartungsplanung.
-2. **Transport‑Management‑Systeme (TMS)** – Software zur Disposition, Auftragsabwicklung, Dokumentation und Rechnungsstellung.
-3. **Warehouse‑Management‑Systeme (WMS) & Lagerautomatisierung** – Lösungen für Bestandsmanagement, Pick‑&‑Pack, autonome Roboter und Fördertechnik.
-4. **Routenoptimierung & Last‑Mile‑Algorithmen** – Tools zur dynamischen Planung von Touren, Berücksichtigung von Stau, Maut, Lieferfenstern, Nachhaltigkeitszielen.
-5. **Supply‑Chain‑Analytics & Business‑Intelligence** – Plattformen zur Analyse und Visualisierung von Lieferketten, Vorhersage von Lieferzeiten, Risikoanalyse.
-6. **Sicherheits‑ & Compliance‑Tools** – Software zur Einhaltung gesetzlicher Vorgaben (z. B. Gefahrgutdokumentation, Fahrtenbuchpflicht, Lieferkettengesetz).
+- Berücksichtigen Sie insbesondere Neuerscheinungen oder größere Updates seit April 2024 in diesen Kategorien:
+  1. **Telematik & Flottenmanagement** (z. B. Echtzeit‑GPS‑Tracking, Wartungsplanung)
+  2. **Transport‑Management‑Systeme (TMS)**
+  3. **Warehouse‑Management‑Systeme (WMS), Lagerautomatisierung**
+  4. **Routenoptimierung & Last‑Mile‑Algorithmen**
+  5. **Supply‑Chain‑Analytics & Business‑Intelligence**
+  6. **Sicherheits- & Compliance‑Tools**
+- Für jede Kategorie bitte 2–3 Tools nennen und jeweils angeben:
+  - **Name & kurzer Use-Case**
+  - **Open‑Source‑Alternative** (falls verfügbar)
+  - **Praxistipp zur Einführung oder Integration**
+  - **Quellenlink, Anbieter, Update-Datum** (sofern verfügbar)
+- Priorisieren Sie Lösungen, die für KMU und größere Flotten geeignet und in Deutschland/EU datenschutzkonform sind.
 
-Für jede Kategorie nenne 2–3 repräsentative Tools und gib folgende Informationen an:
-
-* **Name & kurzer Use‑Case:** Wofür eignet sich das Tool (z. B. Tracking, Disposition, Lagerautomatisierung)?
-* **Open‑Source‑Alternative:** Falls vorhanden, nenne eine kostenfreie oder Open‑Source‑Lösung.
-* **Praxistipp zur Einführung:** Gib einen praxisnahen Hinweis zur erfolgreichen Implementierung (z. B. Pilotprojekt, Schulung, Integration in bestehende Systeme).
-
-Nutze die Informationen aus {tools}, um konkrete Tool‑Namen und Daten zu ergänzen. Strukturiere die Ausgabe übersichtlich (z. B. per Liste oder Tabelle) und vermeide Marketingfloskeln.
+Recherchieren Sie gezielt nach innovativen Lösungen und Tools, die in den letzten Monaten durch Fachpresse, Events oder Verbände empfohlen wurden, und geben Sie eine kurze Quellenangabe.
 
 ---
 
-## Tools
-
-{tools}
+{{ tools_und_foerderungen }}
+{{ daten }}
