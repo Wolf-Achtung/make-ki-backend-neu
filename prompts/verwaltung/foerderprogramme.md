@@ -1,25 +1,19 @@
+# Förderprogramme & Finanzierungschancen für die Verwaltung (maximal aktuell)
 
-# Förderprogramme & Finanzierungschancen für die Verwaltung
+Bitte listen Sie die fünf tagesaktuell wichtigsten Förderprogramme auf,
+die Digitalisierung und KI-Projekte im öffentlichen Sektor und in der Verwaltung fördern (Stand: {{ datum }}).
 
-Du bist ein Fördermittel‑Experte für den öffentlichen Sektor. Deine Aufgabe ist es, die relevantesten Programme zu identifizieren, die Verwaltungen bei der Digitalisierung und KI‑Integration unterstützen.
+- Beziehen Sie insbesondere Programme auf Bundes-, Landes- und EU-Ebene ein, die seit April 2024 neu gestartet, verlängert oder verändert wurden.
+- Für jedes Programm bitte folgende Angaben machen:
+  - **Name & Link:** Titel, Link zur Antragsstelle/Infoseite
+  - **Zielgruppe:** Wer ist antragsberechtigt? (z. B. Kommunen, Landesbehörden, Schulen, Städte, Konsortien)
+  - **Förderhöhe und Leistungen:** Investitionen, Beratung, Technik, Weiterbildung, Förderquote
+  - **Frist, Voraussetzungen, Update-Datum** (sofern bekannt)
+  - **Praxistipps & Erfolgsfaktoren:** Strategische Empfehlungen, Kombination von Programmen, häufige Fehler, Nachweispflichten, Besonderheiten im Verwaltungsbereich
+  - **Quellenangabe**
 
-**Deine Aufgabe:**
-* **Geeignete Programme ermitteln:** Wähle 3–5 strategisch passende Förderprogramme auf nationaler, EU‑ und ggf. Landesebene, die Modernisierung, Digitalisierung und KI‑Projekte in Verwaltungen unterstützen (z. B. „DigitalPakt Schule“, „OZG‑Förderung“, „EU Recovery and Resilience Facility“).
-* **Programminformationen bereitstellen:** Gib zu jedem Programm eine Kurzbeschreibung, nenne Zielgruppen, maximale Förderhöhe oder ‑quote und mögliche Fördergegenstände (Technik, Personal, Beratung). Zeige typische Stolpersteine und Erfolgsfaktoren bei der Antragstellung auf.
-* **Förderstrategie entwickeln:** Schlage eine sinnvolle Strategie zur Nutzung dieser Programme vor, z. B. Kombination von Programmen, zeitliche Priorisierung, Vorab‑Beratung, partnerschaftliche Projekte. Weisen auf bewährte Vorgehensweisen und häufige Fehler hin, die vermieden werden sollten.
-* **Praxisnahe Tipps liefern:** Gib praktische Hinweise zur Antragstellung und Umsetzung (z. B. Nachweisführung, Dokumentation, Compliance‑Auflagen).
-
-**Sprache:** Präzise, chancenorientiert, umsetzungsfokussiert. Jeder Tipp liefert Mehrwert und ist für die Leitungsebene sofort verwertbar.
+Stellen Sie die Programme strukturiert (Tabelle/Liste) dar und erklären Sie Fachbegriffe kurz – insbesondere im Kontext von KI-/Digitalisierungsprojekten in Behörden.
 
 ---
 
-## Förderstrategie & Programme
-
-Nutzerdaten & Kontext (JSON):
-
-{daten}
-
-Ergänzende Förder‑ und Tool‑Listen:
-
-{tools_und_foerderungen}
-{checklisten}
+{{ foerderprogramme }}

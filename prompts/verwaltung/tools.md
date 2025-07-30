@@ -1,27 +1,24 @@
-# KI‑Tools & digitale Werkzeuge für die Verwaltung
+# Aktuelle KI‑Tools & digitale Werkzeuge für die Verwaltung
 
-Du bist ein herstellerunabhängiger Digitalisierungsexperte für Behörden. Identifiziere und bewerte, ausgehend von den vorliegenden Daten und Benchmarks, die wichtigsten Tools, Plattformen oder digitalen Helfer für die Verwaltung.
+Bitte listen Sie die tagesaktuell wichtigsten Tools, Plattformen und digitalen Lösungen auf,
+die Behörden und Verwaltungseinheiten bei Digitalisierung und KI-Einführung unterstützen (Stand: {{ datum }}).
 
-**Deine Aufgabe:**
+- Berücksichtigen Sie besonders neue oder aktualisierte Systeme für:
+  - Robotic Process Automation (RPA)
+  - Digitale Akten- und Vorgangsbearbeitung
+  - Chatbots/Bürgerkommunikation
+  - Compliance- und Datenschutzmanagement
+  - Datenanalyse und Terminverwaltung
+  - Open Government & eGovernment-Infrastruktur
+- Für jedes Tool bitte folgende Angaben machen:
+  - **Name & Einsatzbereich** (Wofür geeignet? Für welche Verwaltungsebene/Organisation?)
+  - **Open‑Source‑Alternative:** Falls vorhanden, nenne eine kostengünstige/quelloffene Lösung.
+  - **Umsetzungstipp:** Ein klarer Tipp für eine risikolose Einführung (Pilot, Integration, Schulung, Datenschutzprüfung)
+  - **Quellenlink, Anbieter, Update-Datum** (sofern bekannt)
 
-* **Relevante Tools auswählen:** Liste die 3–5 relevantesten KI‑ und Digitalisierungstools auf, die speziell im öffentlichen Sektor schnell Wirkung zeigen können (z. B. Robotic Process Automation, digitale Akten- und Vorgangsbearbeitung, Chatbots für Bürgerkommunikation, Compliance‑Management‑Software).
-* **Zweck und Nutzen erläutern:** Hebe zu jedem Tool hervor, wofür es geeignet ist (Prozessautomation, Bürgerkommunikation, Compliance‑Management, Datenanalyse, Terminverwaltung) und welchen Mehrwert es bietet.
-* **Alternative Optionen benennen:** Weisen bei Bedarf auf Open‑Source‑Alternativen oder kostengünstige Varianten hin und ordne ein, für welche Organisationen sie geeignet sind.
-* **Umsetzungstipps geben:** Gib einen klaren Tipp, wie die Einführung pragmatisch und risikolos gelingen kann (z. B. Pilotprojekte, Schulungen, Anbindung an bestehende IT, Datenschutz‑Check).
-
-**Sprache:**
-
-Objektiv, fachlich und umsetzungsorientiert. Keine Werbung, sondern konkrete Handlungsempfehlungen.
+Recherchieren Sie gezielt nach innovativen Lösungen, die seit April 2024 in Fachportalen, E-Government-Events oder Verwaltungsmagazinen empfohlen wurden. Geben Sie jeweils eine Quellenangabe.
 
 ---
 
-## Tools & Empfehlungen
-
-Nutzerdaten & Kontext (JSON):
-
-{daten}
-
-Ergänzende Tool‑ und Förderlisten:
-
-{tools_und_foerderungen}
-{checklisten}
+{{ tools_und_foerderungen }}
+{{ daten }}
