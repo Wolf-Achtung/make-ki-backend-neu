@@ -5,10 +5,12 @@ import re
 from openai import OpenAI
 from datetime import datetime
 
-# 🆕 Gamechanger-Features & Branchen-Intros integrieren
 from innovation_intro import INNOVATION_INTRO
 from gamechanger_features import GAMECHANGER_FEATURES
 from gamechanger_blocks import build_gamechanger_blocks
+
+# SerpAPI-Integration:
+from websearch_utils import serpapi_search
 
 EU_RISK_TABLE = """
 <div class="eu-risk-table" style="margin-bottom:1.2em;">
@@ -53,7 +55,6 @@ def checklist_markdown_to_html(md_text: str) -> str:
 
 client = OpenAI()
 
-# --- 1. Prompt-Loader ---
 def load_prompt(branche: str, abschnitt: str, context_vars: dict | None = None) -> str:
     with open("prompts/prompt_prefix.md", encoding="utf-8") as f:
         prefix = f.read()
@@ -102,7 +103,6 @@ def load_tools_und_foerderungen() -> dict:
 
 TOOLS_FOERDER: dict = load_tools_und_foerderungen()
 
-# --- 5. Prompt-Builder (JETZT MIT INNOVATION/BLOCKS) ---
 def build_prompt(
     data: dict,
     abschnitt: str,
@@ -112,7 +112,7 @@ def build_prompt(
     benchmark: list[dict] | None = None,
     tools_text: str = "",
     foerder_text: str = "",
-    features: dict = GAMECHANGER_FEATURES,   # <-- Features togglen
+    features: dict = GAMECHANGER_FEATURES,
 ) -> str:
     bench_txt = ""
     if benchmark:
@@ -129,9 +129,19 @@ def build_prompt(
     elif foerder_text:
         kombi_tools_foerder = foerder_text
 
-    # 🆕 Branchen-Innovation & Gamechanger-Blocks!
+    # Branchen-Innovation & Gamechanger-Blocks
     branchen_intro = INNOVATION_INTRO.get(branche, "")
     gamechanger_blocks = build_gamechanger_blocks(data, features)
+
+    # --- SerpAPI-Websearch für Förderprogramme und Tools ---
+    branche_q = data.get("branche", "")
+    projektziel_q = data.get("projektziel", "")
+    datum_str = datetime.now().strftime("%Y")
+    query_foerder = f"aktuelle Förderprogramme {branche_q} {projektziel_q} Deutschland {datum_str}"
+    query_tools = f"aktuelle KI-Tools {branche_q} Deutschland {datum_str}"
+
+    websearch_links_foerder = serpapi_search(query_foerder, num_results=5)
+    websearch_links_tools = serpapi_search(query_tools, num_results=5)
 
     prompt_vars: dict = {
         "branche": branche,
@@ -152,6 +162,8 @@ def build_prompt(
         ),
         "branchen_innovations_intro": branchen_intro,
         "gamechanger_blocks": gamechanger_blocks,
+        "websearch_links_foerder": websearch_links_foerder,
+        "websearch_links_tools": websearch_links_tools,
         **data,
     }
 
@@ -215,7 +227,7 @@ def gpt_block(
     checklisten: str | None = None,
     benchmark: list[dict] | None = None,
     prior_results: dict | None = None,
-    features: dict = GAMECHANGER_FEATURES,   # <-- NEU
+    features: dict = GAMECHANGER_FEATURES,
 ) -> str:
     tools_text, foerder_text = get_tools_und_foerderungen(data)
     prompt = build_prompt(
@@ -237,7 +249,6 @@ def gpt_block(
             },
             {"role": "user", "content": prompt},
         ],
-        tools=[{"type": "web_browser"}],
         temperature=0.3,
     )
     return response.choices[0].message.content.strip()
