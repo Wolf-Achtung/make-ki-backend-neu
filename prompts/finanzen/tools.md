@@ -1,20 +1,24 @@
-<!-- tools.md -->
-# Empfohlene KI‑ und Digitalisierungstools für den Finanzsektor
+# Aktuelle KI‑ und Digitalisierungstools für den Finanzsektor
 
-Liste 3–5 bewährte Tools oder Software‑Lösungen auf, die für Finanzunternehmen bei der Digitalisierung und dem Einsatz von KI besonders relevant sind. Beziehe Systeme für Fraud Detection, KYC/AML, Kundenanalysen, Risikomanagement, Compliance und Automatisierung ein. Nutze {tools_und_foerderungen} als Datenquelle und ergänze ggf. eigene Empfehlungen.
+Bitte listen Sie die tagesaktuell wichtigsten Tools und Software‑Lösungen auf,
+die für Finanzunternehmen bei Digitalisierung und KI-Einsatz besonders relevant sind (Stand: {{ datum }}).
 
-Für jedes Tool sollten folgende Informationen genannt werden:
+- Berücksichtigen Sie insbesondere Neuerscheinungen oder größere Updates seit April 2024 in diesen Kategorien:
+  - Fraud Detection & Prävention
+  - KYC/AML (Know Your Customer/Anti Money Laundering)
+  - Kundenanalyse & Risikomanagement
+  - Compliance & Regulatorik
+  - Automatisierung von Prozessen (z. B. Robotic Process Automation)
+- Für jedes Tool bitte folgende Informationen nennen:
+  - **Name & Kategorie:** Wofür wird das Tool eingesetzt? (z. B. Fraud Detection, KYC, RPA)
+  - **Eignung / Use Case:** Konkreter Anwendungsfall und Mehrwert (z. B. Echtzeitanalyse, Dokumentenprüfung, Chatbots)
+  - **Open‑Source‑Alternative:** Falls vorhanden, nennen Sie eine günstige/quelloffene Alternative und erläutern Sie Vor-/Nachteile
+  - **Praxistipp zur Einführung:** Ein praxisnaher Hinweis für den Einstieg (Pilotprojekt, Integration, Schulung, Regulatorik)
+  - **Quellenlink, Anbieter, Update-Datum** (wenn bekannt)
 
-* **Name & Kategorie:** Wofür wird das Tool eingesetzt (z. B. Fraud Detection, KYC, RPA)?
-* **Eignung / Use Case:** Beschreibe den konkreten Anwendungsfall und warum das Tool dafür geeignet ist (z. B. Echtzeitanalyse von Transaktionen, automatisierte Dokumentenprüfung, Chatbot‑Plattform für Kundensupport).
-* **Open‑Source‑Alternative:** Falls vorhanden, nenne eine Open‑Source‑Lösung oder Low‑Cost‑Alternative, die vergleichbare Funktionen bietet. Erkläre, wann der Einsatz sinnvoll ist (z. B. Proof‑of‑Concept, Budgetrestriktionen).
-* **Praxistipp zur Einführung:** Gib praxisnahe Hinweise für den Einstieg, wie z. B. Pilotprojekt in einem spezifischen Geschäftsbereich, notwendige Integrationen, Schulungsbedarf oder regulatorische Abklärungen.
-
-Formuliere die Empfehlungen klar und praxisorientiert. Die Reihenfolge der Tools sollte sich nach ihrer Relevanz für das analysierte Unternehmen richten.
+Priorisieren Sie Tools, die seit April 2024 neu erschienen, aktualisiert oder von Aufsichtsbehörden/Fachmedien positiv bewertet wurden. Geben Sie eine Quellenangabe und Relevanzbegründung an.
 
 ---
 
-## Tools & Empfehlungen
-
-{tools_und_foerderungen}
-{daten}
+{{ tools_und_foerderungen }}
+{{ daten }}

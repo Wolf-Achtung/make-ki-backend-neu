@@ -1,20 +1,19 @@
-<!-- foerderprogramme.md -->
-# Förderprogramme für die Finanzbranche
+# Förderprogramme für die Finanzbranche (maximal aktuell)
 
-Erstelle einen strukturierten Überblick über bis zu fünf aktuelle Förderprogramme, die speziell oder allgemein für Digitalisierung und KI‑Vorhaben im Finanzsektor relevant sind. Berücksichtige Programme von EU, Bund, Ländern sowie branchenspezifische Initiativen (z. B. Innovationsfonds der KfW, Digitalprämien der Bundesländer, Horizon Europe, Bafin‑Innovationshub). Die Darstellung sollte in einer übersichtlichen Tabelle erfolgen.
+Bitte listen Sie die fünf tagesaktuell wichtigsten Förderprogramme auf,
+die Digitalisierung und KI-Vorhaben im Finanzsektor unterstützen (Stand: {{ datum }}).
 
-Für jedes Programm sollen die folgenden Punkte aufgeführt werden:
+- Berücksichtigen Sie aktuelle Programme von EU, Bund, Ländern oder branchenspezifische Initiativen (z. B. KfW, Digitalprämien, Horizon Europe, BaFin‑Innovationshub), die seit April 2024 neu, verlängert oder geändert wurden.
+- Für jedes Programm bitte angeben:
+  - **Name & Link:** Offizieller Titel und Link zur Anlaufstelle/Infoseite
+  - **Zielgruppe:** Wer ist antragsberechtigt? (Fintechs, KMU, Banken, Versicherungen, Forschungskonsortien)
+  - **Förderhöhe & Nutzen:** Förderumfang (Zuschüsse, Kredite, steuerliche Vorteile), Mehrwert für Digitalisierung, Beratung oder Personalkosten
+  - **Typische Stolpersteine:** Häufige Fehler bei der Antragstellung (z. B. Projektbeschreibung, Fristen, Nachweise)
+  - **Erfolgsfaktoren & Praxistipps:** Wie lassen sich die Bewilligungschancen erhöhen? (Innovationsgrad, Kooperationen, professionelle Vorbereitung)
+  - **Update-Datum, Quellenangabe** (wenn bekannt)
 
-* **Name & Link:** Offizieller Titel des Programms und ein Link zur Anlaufstelle (oder ein Hinweis, wo weitere Informationen erhältlich sind).
-* **Zielgruppe:** Welche Unternehmen oder Projekte sind antragsberechtigt (z. B. Fintech‑Start‑ups, KMU, Banken, Versicherungen, Forschungskonsortien)?
-* **Förderhöhe & Nutzen:** Beschreibe den Umfang der Förderung (Zuschüsse, zinsgünstige Darlehen, steuerliche Vorteile) und den erwarteten Mehrwert (z. B. Technologieinvestitionen, Beratungsleistungen, Personalkostenzuschüsse).
-* **Typische Stolpersteine:** Nenne häufige Fehler bei der Antragstellung (z. B. unklare Projektbeschreibung, fehlende Unterlagen, Fristversäumnis).
-* **Erfolgsfaktoren & Praxistipps:** Gib Hinweise, wie sich die Bewilligungschancen erhöhen lassen (z. B. Innovationsgrad, Kooperation mit Hochschulen, frühzeitige Planung, professionelle Unterstützung).
-
-Nutze die im JSON ({foerderprogramme}) bereitgestellten Programme als Grundlage. Sollte keine spezifische Daten vorhanden sein, gib allgemeine Beispiele an. Achte darauf, dass die Tabelle im Report als HTML gerendert werden kann.
+Stellen Sie die Programme übersichtlich als HTML-Tabelle dar. Geben Sie für neue Programme stets das Update- oder Veröffentlichungsdatum und eine Quellenangabe an.
 
 ---
 
-## Förderprogramme
-
-{foerderprogramme}
+{{ foerderprogramme }}
