@@ -265,24 +265,23 @@ def analyze_full_report(data):
     results = {}
     prior_results = {}
     for abschnitt, checklisten in abschnittsreihenfolge:
-        try:
-            if abschnitt == "score_percent":
-                percent = calc_score_percent(data)
-                # Speichere den Score im Ergebnis und im Datenobjekt, damit er in nachfolgenden Prompts verfügbar ist
-                results["score_percent"] = percent
-                prior_results["score_percent"] = percent
-                data["score_percent"] = percent
-                print(f"### DEBUG: score_percent berechnet: {percent}")
-                continue
-            text = gpt_block(
-                data, abschnitt, branche, groesse, checklisten, benchmark, prior_results
-            )
-            text = fix_encoding(text)
-            if abschnitt == "compliance":
+    try:
+        if abschnitt == "score_percent":
+            percent = calc_score_percent(data)
+            results["score_percent"] = percent
+            prior_results["score_percent"] = percent
+            data["score_percent"] = percent
+            print(f"### DEBUG: score_percent berechnet: {percent}")
+            continue
+        text = gpt_block(
+            data, abschnitt, branche, groesse, checklisten, benchmark, prior_results
+        )
+        text = fix_encoding(text)
+        if abschnitt == "compliance":
             results[abschnitt] = EU_RISK_TABLE + "\n" + text
         else:
             results[abschnitt] = text
-            prior_results[abschnitt] = results[abschnitt]
+        prior_results[abschnitt] = results[abschnitt]
 
     # Tools und Förderprogramme separat ermitteln und in die Ergebnisse einfügen. Diese werden nicht von GPT generiert, um stabile und aktuelle Inhalte zu gewährleisten.
     tools_text, foerder_text = get_tools_und_foerderungen(data)
