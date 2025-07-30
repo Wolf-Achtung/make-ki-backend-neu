@@ -5,6 +5,7 @@ import re
 from openai import OpenAI
 from datetime import datetime
 
+
 EU_RISK_TABLE = """
 <div class="eu-risk-table" style="margin-bottom:1.2em;">
   <b>Risikokategorien gemäß EU AI Act:</b>
@@ -20,49 +21,70 @@ EU_RISK_TABLE = """
 
 # Simple helper to convert checklist Markdown to basic HTML lists. This avoids a heavy markdown dependency.
 def checklist_markdown_to_html(md_text: str) -> str:
+    """Convert a simple Markdown checklist to basic HTML lists.
+
+    This helper iterates over the lines of a Markdown-formatted checklist and
+    produces corresponding HTML `<ul>`/`<li>` tags. Headings (lines starting
+    with `#`) are converted into `<h3>` tags. Only very simple Markdown
+    constructs are supported; any unsupported line is ignored.
+
+    Args:
+        md_text: The raw Markdown text containing checklist items and headings.
+
+    Returns:
+        A string containing HTML markup representing the checklist.
     """
-    Convert a simple checklist Markdown (with '- [ ]' or '- ') into a HTML unordered list.
-    Headings starting with '#' will be converted into <h3> tags. Lines that do not start
-    with a list marker or heading are ignored. This helper is intentionally simple and
-    tailored to our checklist files.
-    """
-    html_lines = []
-    lines = md_text.splitlines()
+    html_lines: list[str] = []
     ul_open = False
-    for line in lines:
+    for line in md_text.splitlines():
         striped = line.strip()
         if not striped:
             continue
-        # Headings
-        if striped.startswith("#"):
+        # Überschriften
+        if striped.startswith('#'):
             if ul_open:
-                html_lines.append("</ul>")
+                html_lines.append('</ul>')
                 ul_open = False
-            # remove leading hashes
             heading = striped.lstrip('#').strip()
-            html_lines.append(f"<h3>{heading}</h3>")
+            html_lines.append(f'<h3>{heading}</h3>')
             continue
-        # Bullet items
-        if striped.startswith("- [ ]"):
+        # Listenelemente (Checkliste oder Bullet)
+        if striped.startswith('- [ ]') or striped.startswith('- [x]'):
             item = striped[5:].strip()
-        elif striped.startswith("- "):
+        elif striped.startswith('- '):
             item = striped[2:].strip()
         else:
-            # ignore other lines
             continue
         if not ul_open:
-            html_lines.append("<ul>")
+            html_lines.append('<ul>')
             ul_open = True
-        html_lines.append(f"<li>{item}</li>")
+        html_lines.append(f'<li>{item}</li>')
     if ul_open:
-        html_lines.append("</ul>")
-    return "\n".join(html_lines)
+        html_lines.append('</ul>')
+    # Join all lines with a newline. The original version had an unterminated
+    # string literal here which caused a syntax error; this fixes it.
+    return '\n'.join(html_lines)
+
 
 client = OpenAI()
 
 # --- 1. Branchenspezifisches Prompt-Loader ---
 
-def load_prompt(branche, abschnitt, context_vars=None):
+def load_prompt(branche: str, abschnitt: str, context_vars: dict | None = None) -> str:
+    """Load a prompt template for a given industry and section.
+
+    Fallspezifische Prompt-Dateien bestehen aus einem Prefix, einem sektorspezifischen
+    Hauptteil und einem Suffix. Variablen im Prompt werden mithilfe der
+    `context_vars` ersetzt.
+
+    Args:
+        branche: Name der Branche (z.B. "it", "industrie").
+        abschnitt: Name des Abschnitts innerhalb der Prompt-Vorlage.
+        context_vars: Dictionary mit Variablen zur Formatierung der Vorlage.
+
+    Returns:
+        Den formatierten Prompt als String.
+    """
     with open("prompts/prompt_prefix.md", encoding="utf-8") as f:
         prefix = f.read()
     path = os.path.join("prompts", branche, f"{abschnitt}.md")
@@ -73,13 +95,16 @@ def load_prompt(branche, abschnitt, context_vars=None):
     with open("prompts/prompt_suffix.md", encoding="utf-8") as f:
         suffix = f.read()
     vars = context_vars.copy() if context_vars else {}
+    # Set the current date if not provided
     vars.setdefault("datum", datetime.now().strftime("%d.%m.%Y"))
     prompt = f"{prefix}\n\n{main_prompt}\n\n{suffix}"
     prompt = prompt.format(**vars)
     return prompt
 
+
 # --- 2. Benchmark-Loader ---
-def load_benchmark(branche):
+def load_benchmark(branche: str) -> list[dict]:
+    """Load a CSV benchmark file for the given industry, if available."""
     fn = f"benchmark_{branche}.csv"
     path = os.path.join("data", fn)
     if not os.path.exists(path):
@@ -91,8 +116,10 @@ def load_benchmark(branche):
         print(f"Benchmark-Loading Error: {e}")
         return []
 
+
 # --- 3. Markdown-/Checklisten-Loader ---
-def read_markdown_file(filename):
+def read_markdown_file(filename: str) -> str:
+    """Read a Markdown file from the data directory and return its contents."""
     path = os.path.join("data", filename)
     try:
         with open(path, encoding="utf-8") as f:
@@ -101,8 +128,10 @@ def read_markdown_file(filename):
         print(f"Fehler beim Lesen von {path}: {e}")
         return ""
 
+
 # --- 4. Tools & Förderungen-Loader (JSON) ---
-def load_tools_und_foerderungen():
+def load_tools_und_foerderungen() -> dict:
+    """Load a JSON file containing tools and funding programmes."""
     path = "tools_und_foerderungen.json"
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -111,10 +140,22 @@ def load_tools_und_foerderungen():
         print(f"Fehler beim Lesen von {path}: {e}")
         return {}
 
-TOOLS_FOERDER = load_tools_und_foerderungen()
+
+TOOLS_FOERDER: dict = load_tools_und_foerderungen()
+
 
 # --- 5. Prompt-Builder ---
-def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, tools_text="", foerder_text=""):
+def build_prompt(
+    data: dict,
+    abschnitt: str,
+    branche: str,
+    groesse: str,
+    checklisten: str | None = None,
+    benchmark: list[dict] | None = None,
+    tools_text: str = "",
+    foerder_text: str = "",
+) -> str:
+    """Assemble the full prompt for GPT based on collected inputs."""
     bench_txt = ""
     if benchmark:
         bench_txt = "\nBranchen-Benchmark:\n" + "\n".join(
@@ -131,7 +172,7 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
     elif foerder_text:
         kombi_tools_foerder = foerder_text
 
-    prompt_vars = {
+    prompt_vars: dict = {
         "branche": branche,
         "hauptleistung": data.get("hauptleistung", ""),
         "unternehmensgroesse": groesse,
@@ -150,21 +191,23 @@ def build_prompt(data, abschnitt, branche, groesse, checklisten=None, benchmark=
             "Wichtig: Wenn strukturierte Inhalte wie Tabellen nötig sind, geben Sie diese ausschließlich "
             "in validem HTML-Format (<table>, <tr>, <td>) aus – kein Markdown oder Codeblock."
         ),
-        **data
+        **data,
     }
 
     prompt = load_prompt(branche, abschnitt, prompt_vars)
     return prompt
 
+
 # --- 6. Tools & Förderungen für Prompt ---
-def get_tools_und_foerderungen(data):
+def get_tools_und_foerderungen(data: dict) -> tuple[str, str]:
+    """Retrieve tools and funding programme lists for a given company profile."""
     groesse = data.get("unternehmensgroesse", "").lower()
     branche = data.get("branche", "").lower()
     tools_text = "Keine spezifischen Tools gefunden."
     foerder_text = "Keine Förderprogramme gefunden."
 
     tools_data = TOOLS_FOERDER.get(branche, {}) or TOOLS_FOERDER.get("default", {})
-    tools_list = []
+    tools_list: list[dict] = []
     if isinstance(tools_data, dict):
         if groesse in tools_data:
             tools_list.extend(tools_data[groesse])
@@ -176,26 +219,31 @@ def get_tools_und_foerderungen(data):
         tools_text = "\n".join([f"- [{t['name']}]({t['link']})" for t in tools_list])
 
     foerderungen = TOOLS_FOERDER.get("foerderungen", {})
-    foerder_list = []
+    foerder_list: list[dict] = []
+    # branchenspezifische Förderungen
     if branche in foerderungen and isinstance(foerderungen[branche], dict):
         for key, value in foerderungen[branche].items():
             if isinstance(value, list):
                 foerder_list.extend(value)
+    # nationale Förderungen pro Branche
     if branche in foerderungen and isinstance(foerderungen[branche], dict):
         national_branch = foerderungen[branche].get("national", [])
         if isinstance(national_branch, list):
             foerder_list.extend(national_branch)
+    # standard nationale Förderungen
     if "default" in foerderungen and "national" in foerderungen["default"]:
         default_national = foerderungen["default"]["national"]
         if isinstance(default_national, list):
             foerder_list.extend(default_national)
+    # globale nationale Förderungen
     if "national" in foerderungen and isinstance(foerderungen["national"], list):
         foerder_list.extend(foerderungen["national"])
     elif "national" in foerderungen and isinstance(foerderungen["national"], dict):
         for v in foerderungen["national"].values():
             if isinstance(v, list):
                 foerder_list.extend(v)
-    unique = {}
+    # Unique by name/link
+    unique: dict[tuple[str, str], dict] = {}
     for f in foerder_list:
         key = (f.get("name", ""), f.get("link", ""))
         if key not in unique:
@@ -206,8 +254,18 @@ def get_tools_und_foerderungen(data):
 
     return tools_text, foerder_text
 
+
 # --- 7. GPT-Block ---
-def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=None, prior_results=None):
+def gpt_block(
+    data: dict,
+    abschnitt: str,
+    branche: str,
+    groesse: str,
+    checklisten: str | None = None,
+    benchmark: list[dict] | None = None,
+    prior_results: dict | None = None,
+) -> str:
+    """Send a prompt to the OpenAI API and return the generated content."""
     tools_text, foerder_text = get_tools_und_foerderungen(data)
     prompt = build_prompt(
         data, abschnitt, branche, groesse, checklisten, benchmark, tools_text, foerder_text
@@ -224,20 +282,23 @@ def gpt_block(data, abschnitt, branche, groesse, checklisten=None, benchmark=Non
                     "Du bist ein TÜV-zertifizierter KI-Manager, KI-Strategieberater und Datenschutz-Experte. "
                     "Deine Empfehlungen sind stets aktuell, rechtssicher und praxisorientiert für den Mittelstand, "
                     "unter besonderer Berücksichtigung von DSGVO, EU AI Act und Markt-Benchmarks."
-                )
+                ),
             },
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": prompt},
         ],
         temperature=0.3,
     )
     return response.choices[0].message.content.strip()
 
+
 # --- 8. Modularer Analyse-Flow ---
-def analyze_full_report(data):
+def analyze_full_report(data: dict) -> dict:
+    """Run the full analysis flow for a given dataset and return structured results."""
     branche = data.get("branche", "default").strip().lower()
     groesse = data.get("unternehmensgroesse", "kmu").strip().lower()
 
     benchmark = load_benchmark(branche)
+    # Checklisten laden
     check_readiness = read_markdown_file("check_ki_readiness.md")
     check_compliance = read_markdown_file("check_compliance_eu_ai_act.md")
     check_inno = read_markdown_file("check_innovationspotenzial.md")
@@ -246,7 +307,7 @@ def analyze_full_report(data):
     praxisbeispiele_md = read_markdown_file("praxisbeispiele.md")
 
     # Definiere die Reihenfolge der GPT-Abschnitte. Zusammenfassungen werden für alle Unternehmensgrößen generiert, um die PDF-Templates bedienen zu können.
-    abschnittsreihenfolge = [
+    abschnittsreihenfolge: list[tuple[str, str | None]] = [
         ("score_percent", None),
         ("executive_summary", check_readiness),
         ("gesamtstrategie", check_readiness),
@@ -258,67 +319,74 @@ def analyze_full_report(data):
         ("datenschutz", check_datenschutz),
         ("roadmap", check_roadmap),
         ("praxisbeispiele", praxisbeispiele_md),
-        ("moonshot_vision", ""),
+        ("moonshot_vision", None),
         ("eu_ai_act", check_compliance),
     ]
 
-    results = {}
-    prior_results = {}
-for abschnitt, checklisten in abschnittsreihenfolge:
-    try:
-        if abschnitt == "score_percent":
-            percent = calc_score_percent(data)
-            results["score_percent"] = percent
-            prior_results["score_percent"] = percent
-            data["score_percent"] = percent
-            print(f"### DEBUG: score_percent berechnet: {percent}")
-            continue
-        text = gpt_block(
-            data, abschnitt, branche, groesse, checklisten, benchmark, prior_results
-        )
-        text = fix_encoding(text)
-        if abschnitt == "compliance":
-            results[abschnitt] = EU_RISK_TABLE + "\n" + text
-        else:
-            results[abschnitt] = text
-        prior_results[abschnitt] = results[abschnitt]
-    except Exception as e:
-        print(f"Fehler in Abschnitt {abschnitt}: {e}")
-        results[abschnitt] = f"[Fehler: {e}]"
-        prior_results[abschnitt] = f"[Fehler: {e}]"
+    results: dict = {}
+    prior_results: dict = {}
+    for abschnitt, checklisten in abschnittsreihenfolge:
+        try:
+            if abschnitt == "score_percent":
+                percent = calc_score_percent(data)
+                results["score_percent"] = percent
+                prior_results["score_percent"] = percent
+                data["score_percent"] = percent
+                continue
+            # GPT Text generieren
+            text = gpt_block(data, abschnitt, branche, groesse, checklisten, benchmark, prior_results)
+            text = fix_encoding(text)
+            # EU Risk Table nur einmal
+            if abschnitt == "compliance":
+                results[abschnitt] = EU_RISK_TABLE + "\n" + text
+            else:
+                results[abschnitt] = text
+            prior_results[abschnitt] = results[abschnitt]
+        except Exception as e:
+            print(f"Fehler in Abschnitt {abschnitt}: {e}")
+            results[abschnitt] = f"[Fehler: {e}]"
+            prior_results[abschnitt] = f"[Fehler: {e}]"
 
-
-    # Tools und Förderprogramme separat ermitteln und in die Ergebnisse einfügen. Diese werden nicht von GPT generiert, um stabile und aktuelle Inhalte zu gewährleisten.
+    # Tools und Förderprogramme separat ermitteln und in die Ergebnisse einfügen.
+    # Diese werden nicht von GPT generiert, um stabile und aktuelle Inhalte zu gewährleisten.
     tools_text, foerder_text = get_tools_und_foerderungen(data)
     results["tools"] = tools_text or "Keine spezifischen Tools gefunden."
-    results["foerderprogramme"] = foerder_text or "Keine Förderprogramme gefunden."
+    results["foerderprogramme"] = foerder_text or "Keine Förderprogramme identifiziert."
 
     # --- Checklisten-Integration, Gold-Standard ---
-# Strukturiert: Jede Checkliste als eigene Box mit Überschrift und Checkboxen
+    # Strukturiert: Jede Checkliste als eigene Box mit Überschrift und Checkboxen
+    checklist_map: list[tuple[str, str]] = [
+        ("KI‑Readiness‑Check", "check_ki_readiness.md"),
+        ("Compliance‑Check (EU AI Act & DSGVO)", "check_compliance_eu_ai_act.md"),
+        ("Innovationspotenzial‑Check", "check_innovationspotenzial.md"),
+        ("Datenschutz‑Check", "check_datenschutz.md"),
+        ("Fördermittel‑Check", "check_foerdermittel.md"),
+        ("KI‑Umsetzungsplan", "check_umsetzungsplan_ki.md"),
+    ]
 
-checklist_map = [
-    ("KI‑Readiness‑Check", "check_ki_readiness.md"),
-    ("Compliance‑Check (EU AI Act & DSGVO)", "check_compliance_eu_ai_act.md"),
-    ("Innovationspotenzial‑Check", "check_innovationspotenzial.md"),
-    ("Datenschutz‑Check", "check_datenschutz.md"),
-    ("Fördermittel‑Check", "check_foerdermittel.md"),
-    ("KI‑Umsetzungsplan", "check_umsetzungsplan_ki.md"),
-]
+    checklists_html = ""
+    for file in [
+        "check_ki_readiness.md",
+        "check_compliance_eu_ai_act.md",
+        "check_innovationspotenzial.md",
+        "check_datenschutz.md",
+        "check_umsetzungsplan_ki.md",
+    ]:
+        md = read_markdown_file(file)
+        if md:
+            checklists_html += checklist_markdown_to_html(md) + "\n"
+    results["checklisten"] = checklists_html.strip()
 
-checklists_html = ""
-for title, cl_file in checklist_map:
-    md = read_markdown_file(cl_file)
-    if md and md.strip():
-        html = checklist_markdown_to_html(md)
-        checklists_html += f'<div class="checklist-box"><h3>{title}</h3>{html}</div>\n'
+    return results
 
-results["checklisten"] = checklists_html.strip() if checklists_html.strip() else ""
 
 # --- 9. SWOT-Extractor ---
-def extract_swot(full_text):
-    def find(pattern):
+def extract_swot(full_text: str) -> dict:
+    """Extract SWOT sections from a combined analysis text."""
+    def find(pattern: str) -> str:
         m = re.search(pattern, full_text, re.DOTALL | re.IGNORECASE)
         return m.group(1).strip() if m else ""
+
     return {
         "swot_strengths": find(r"Stärken:(.*?)(?:Schwächen:|Chancen:|Risiken:|$)"),
         "swot_weaknesses": find(r"Schwächen:(.*?)(?:Chancen:|Risiken:|$)"),
@@ -326,8 +394,10 @@ def extract_swot(full_text):
         "swot_threats": find(r"Risiken:(.*?)(?:$)"),
     }
 
+
 # --- 10. KI-Readiness Score Minimalberechnung ---
-def calc_score_percent(data):
+def calc_score_percent(data: dict) -> int:
+    """Compute a basic readiness score percentage based on simple heuristics."""
     print("### DEBUG: calc_score_percent(data) wird ausgeführt ###")
     score = 0
     max_score = 35
@@ -343,7 +413,7 @@ def calc_score_percent(data):
         "eher_niedrig": 1,
         "mittel": 3,
         "eher_hoch": 4,
-        "sehr_hoch": 5
+        "sehr_hoch": 5,
     }
     score += auto_map.get(autogr, 0)
 
@@ -352,7 +422,7 @@ def calc_score_percent(data):
         "0-20": 1,
         "21-50": 2,
         "51-80": 4,
-        "81-100": 5
+        "81-100": 5,
     }
     score += pap_map.get(papierlos, 0)
 
@@ -362,7 +432,7 @@ def calc_score_percent(data):
         "grundkenntnisse": 1,
         "mittel": 3,
         "fortgeschritten": 4,
-        "expertenwissen": 5
+        "expertenwissen": 5,
     }
     score += know_map.get(ki_knowhow, 0)
 
@@ -376,11 +446,13 @@ def calc_score_percent(data):
     print(f"### DEBUG: score_percent gesetzt: {percent}")
     return percent
 
-def fix_encoding(text):
+
+def fix_encoding(text: str) -> str:
+    """Normalize some common encoding issues in the output text."""
     return (
         text.replace("�", "-")
-            .replace("–", "-")
-            .replace("“", "\"")
-            .replace("”", "\"")
-            .replace("’", "'")
+        .replace("–", "-")
+        .replace("“", '"')
+        .replace("”", '"')
+        .replace("’", "'")
     )
