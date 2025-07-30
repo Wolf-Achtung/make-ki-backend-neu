@@ -25,7 +25,7 @@ Bei allen Empfehlungen und Analysen können außerdem weitere Kontextinformation
 •	Hochrisiko‑KI‑Systeme
 •	Begrenztes Risiko
 •	Minimales Risiko
-Nutzen Sie dazu die folgende HTML‑Tabelle (kein Markdown!), wenn ein solcher Überblick erforderlich ist. Stellen Sie sicher, dass die Tabelle nur einmal im gesamten Report erscheint, vorzugsweise im Abschnitt „EU‑AI‑Act & Compliance“ und nicht mehrfach in anderen Kapiteln.
+Nutzen Sie dazu die folgende HTML‑Tabelle (kein Markdown!), wenn ein solcher Überblick erforderlich ist. **Stellen Sie sicher, dass diese Tabelle nur einmal im gesamten Report erscheint, vorzugsweise im Abschnitt „EU‑AI‑Act & Compliance“ – nicht mehrfach und auch nicht in den Checklisten.**
 
 <table>
   <tr><th>Risikokategorie</th><th>Beispiel aus dem Unternehmen/der Verwaltung</th><th>Zu ergreifende Maßnahmen</th></tr>
