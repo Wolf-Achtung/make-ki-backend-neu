@@ -25,7 +25,7 @@ import markdown
 import jwt
 import bcrypt
 
-from gpt_analyze import analyze_full_report  # Angepasste GPT‑Analyse
+from gpt_analyze import generate_full_report  # Angepasste GPT‑Analyse
 
 # --- ENV‑VARIABLEN LADEN ---
 load_dotenv()
