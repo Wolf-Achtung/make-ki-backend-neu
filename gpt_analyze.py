@@ -195,3 +195,5 @@ async def generate_report(request: Request):
 # - Du musst NUR noch Masterprompts und Kontextdaten (YAML) pflegen!
 # - Innovations- und Gamechanger-Features werden immer sinnvoll integriert
 # - Keine Wiederholungen mehr, alles wird pro Kapitel sauber getrennt
+
+analyze_full_report = generate_full_report
