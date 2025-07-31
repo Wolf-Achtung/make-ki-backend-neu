@@ -4,6 +4,8 @@ uvicorn
 
 pip>=24.0
 
+pyyaml>=6.0
+
 
 # OpenAI-API
 openai>=1.0
