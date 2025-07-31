@@ -103,8 +103,9 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
     email = payload.get("email")
     try:
         data = await request.json()
-        print(f"🧠 Briefing-Daten empfangen von {email}")
-        result = analyze_full_report(data)
+        lang = data.get("lang", "de")
+        print(f"🧠 Briefing-Daten empfangen von {email} (Sprache: {lang})")
+        result = generate_full_report(data, lang=lang)
         result["email"] = email
         
         # --- Die benötigten Felder für das Template bereitstellen ---

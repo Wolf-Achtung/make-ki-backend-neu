@@ -21,16 +21,16 @@ def load_prompt(filename):
     with open(filename, "r", encoding="utf-8") as f:
         return f.read()
 
-def build_context(data, branche):
-    context_path = f"branchenkontext/{branche}.yaml"
+def build_context(data, branche, lang="de"):
+    context_path = f"branchenkontext/{branche}.{lang}.yaml"
     if not os.path.exists(context_path):
-        context_path = f"branchenkontext/default.yaml"
+        context_path = f"branchenkontext/default.{lang}.yaml"
     context = load_yaml(context_path)
     context.update(data)
     return context
 
-def build_masterprompt(chapter, context):
-    prompt_text = load_prompt(f"prompts/{chapter}.md")
+def build_masterprompt(chapter, context, lang="de"):
+    prompt_text = load_prompt(f"prompts/{lang}/{chapter}.md")
     # Ersetze Platzhalter aus dem Kontext (inkl. Listen, Websearch etc.)
     try:
         prompt = prompt_text.format(**context)
@@ -125,9 +125,9 @@ def extract_swot(full_text: str) -> dict:
         "swot_opportunities": find(r"Chancen:(.*?)(?:Risiken:|$)"),
         "swot_threats": find(r"Risiken:(.*?)(?:$)"),
     }
-def gpt_generate_section(data, branche, chapter):
+def gpt_generate_section(data, branche, chapter, lang="de"):
     # Kontextdaten (Formulardaten + Branchen-YAML)
-    context = build_context(data, branche)
+    context = build_context(data, branche, lang)
     # Websearch einbauen
     projektziel = data.get("projektziel", "")
     context = add_websearch_links(context, branche, projektziel)
@@ -140,7 +140,7 @@ def gpt_generate_section(data, branche, chapter):
         else:
             context["checklisten"] = ""
     # Masterprompt bauen
-    prompt = build_masterprompt(chapter, context)
+    prompt = build_masterprompt(chapter, context, lang)
     # GPT-Call
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -154,7 +154,7 @@ def gpt_generate_section(data, branche, chapter):
 
 # ==== Report-Assembly (alle Kapitel durchlaufen) ====
 
-def generate_full_report(data):
+def generate_full_report(data, lang="de"):
     branche = data.get("branche", "default").lower()
     # Automatisch Score berechnen und Kontext hinzufügen
     data["score_percent"] = calc_score_percent(data)
@@ -170,7 +170,7 @@ def generate_full_report(data):
     report = {}
     for chapter in chapters:
         try:
-            section = gpt_generate_section(data, branche, chapter)
+            section = gpt_generate_section(data, branche, chapter, lang=lang)
             report[chapter] = fix_encoding(section)
         except Exception as e:
             report[chapter] = f"[Fehler in Kapitel {chapter}: {e}]"
