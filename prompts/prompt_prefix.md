@@ -17,16 +17,18 @@ Bei allen Empfehlungen und Analysen können außerdem weitere Kontextinformation
 
 Analysiere die wichtigsten Erkenntnisse aus diesen tagesaktuellen Suchergebnissen für Förderprogramme und fasse sie im Report zusammen.
 
+
 <!-- Live-Websearch: KI-Tools -->
 
-{{ websearch\_links\_tools }}
+{{ websearch_links_tools }}
 
 Analysiere die wichtigsten Erkenntnisse aus diesen Suchergebnissen zu aktuellen KI-Tools und fasse die für das Unternehmensprofil relevantesten für den Report zusammen.
 
 ---
 
-{% if branchen\_innovations\_intro %}<div class="branchen-intro">{{ branchen\_innovations\_intro }}</div>{% endif %}
-{{ gamechanger\_blocks }}
+{{ branchen_innovations_intro }}
+{{ gamechanger_blocks }}
+
 
 🔎 **Innovations-Upgrade für Agentenmodus & Web-Browsing:**
 
