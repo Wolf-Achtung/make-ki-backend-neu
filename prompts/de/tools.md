@@ -4,6 +4,7 @@ Erstellen Sie eine strukturierte Übersicht über die relevantesten KI-Tools fü
 
 **1. Auswahlkriterien:**  
 - Praxisrelevanz, Innovationsgrad, Datenschutz (DE/EU)
+- Kompatibilität mit Ihrer IT‑Infrastruktur ({{ it_infrastruktur }}) und Ihrer Unternehmensgröße ({{ unternehmensgroesse }})
 - Bezug zu typischen Usecases (z. B. {{ hauptleistung }}, {{ projektziel }}, {{ zielgruppen }})
 
 **2. Branchen-Kontext:**  

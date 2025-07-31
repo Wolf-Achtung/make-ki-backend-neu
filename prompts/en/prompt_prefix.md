@@ -13,6 +13,8 @@ The following assessment is based on the self‑report of a company or public ad
 • AI readiness score: {{ score_percent }} %  
 • Benchmark: {{ benchmark }}  
 
+• Additional form data (e.g., annual revenue, IT infrastructure, internal AI competences, available data sources, digitalisation and automation levels, existing AI deployments, AI know‑how, project goals and more) are available as variables and should be taken into account in the relevant chapters.
+
 Further context data (checklists, industry‑specific tools, funding programmes, best‑practice examples) are provided as variables in each chapter.
 
 ---

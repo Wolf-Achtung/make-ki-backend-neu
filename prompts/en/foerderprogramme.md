@@ -1,6 +1,6 @@
 # Funding programmes for digitalisation & AI (status as of {{ datum }})
 
-Present the 3–5 most relevant funding programmes (current, for {{ branche }}, {{ bundesland }}, {{ unternehmensgroesse }}) in a table.
+Present the 3–5 most relevant funding programmes (current, for {{ branche }}, {{ bundesland }}, {{ unternehmensgroesse }}) in a table. Take into account your previous funding experiences ({{ bisherige_foerdermittel }}) and your interest in further funding ({{ interesse_foerderung }}).
 
 **1. Criteria:**  
 - Current funding amount, target group, funding focus (AI/digitalisation), deadlines, source link
@@ -10,6 +10,7 @@ Present the 3–5 most relevant funding programmes (current, for {{ branche }}, 
   {{ foerderprogramme_list }}
 - If available, add new programmes or news from the web search results:  
   {{ websearch_links_foerder }}
+ - Also consider your answers on existing funding and current funding interests.
 
 **3. Presentation:**  
 - For each programme: name, link, target group, funding rate, deadline

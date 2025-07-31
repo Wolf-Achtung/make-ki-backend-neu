@@ -13,6 +13,8 @@ Die folgende Bewertung basiert auf der Selbstauskunft eines Unternehmens oder ei
 • KI-Readiness-Score: {{ score_percent }} %  
 • Benchmark: {{ benchmark }}  
 
+• Weitere Formulardaten (z. B. Jahresumsatz, IT‑Infrastruktur, interne KI‑Kompetenzen, vorhandene Datenquellen, Digitalisierungs‑ und Automatisierungsgrad, bestehende KI‑Einsätze, KI‑Know‑how, Projektziele und mehr) stehen als Variablen zur Verfügung und sollen in den entsprechenden Kapiteln berücksichtigt werden.
+
 Weitere Kontextdaten (Checklisten, branchenspezifische Tools, Förderungen, Praxisbeispiele) werden pro Kapitel als Variable bereitgestellt.
 
 ---

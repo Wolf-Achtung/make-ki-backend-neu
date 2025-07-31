@@ -4,6 +4,7 @@ Create a structured overview of the most relevant AI tools for {{ branche }}:
 
 **1. Selection criteria:**  
 - Practical relevance, degree of innovation, data protection (DE/EU)
+- Compatibility with your IT infrastructure ({{ it_infrastruktur }}) and company size ({{ unternehmensgroesse }})
 - Reference to typical use cases (e.g., {{ hauptleistung }}, {{ projektziel }}, {{ zielgruppen }})
 
 **2. Industry context:**  
