@@ -1,4 +1,4 @@
-branche: Industrie
+branche: Industrie & Produktion
 score_percent: 70
 benchmark: "Digitalisierungsgrad: 60 %, Automatisierungsgrad: 55 %"
 hauptleistung: "Fertigung & Prozessautomatisierung"
@@ -12,7 +12,7 @@ next_steps: |
 tools_list:
   - name: "Symate"
     usecase: "Produktionsdaten-Analyse"
-    datenschutz: "DSGVO"
+    datenschutz: "DSGVO-konform"
     link: "https://symate.de"
   - name: "Celonis"
     usecase: "Process Mining"

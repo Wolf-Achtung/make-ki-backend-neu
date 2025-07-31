@@ -1,4 +1,4 @@
-branche: Logistik
+branche: Transport & Logistik
 score_percent: 66
 benchmark: "Digitalisierungsgrad: 63 %, Automatisierungsgrad: 52 %"
 hauptleistung: "Flottenmanagement und Lieferkettenoptimierung"
@@ -12,7 +12,7 @@ next_steps: |
 tools_list:
   - name: "MotionMiners"
     usecase: "Logistikprozess-Optimierung"
-    datenschutz: "DSGVO"
+    datenschutz: "DSGVO-konform"
     link: "https://motionminers.com"
   - name: "Project44"
     usecase: "Lieferketten-Transparenz"
