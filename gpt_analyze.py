@@ -29,11 +29,66 @@ def build_context(data, branche, lang="de"):
     context.update(data)
     return context
 
+def render_template(template: str, context: dict) -> str:
+    """
+    Einfacher Renderer für Templates mit doppelten geschweiften Klammern.
+    Unterstützt Platzhalter wie {{ key }} und join-Filter wie {{ key | join(', ') }}.
+    """
+    # Filter für Join-Ausdrücke
+    def replace_join(match: re.Match) -> str:
+        key = match.group(1)
+        sep = match.group(2)
+        value = context.get(key.strip(), "")
+        if isinstance(value, list):
+            return sep.join([str(v) for v in value])
+        return str(value)
+
+    rendered = re.sub(r"\{\{\s*(\w+)\s*\|\s*join\(\s*['\"]([^'\"]*)['\"]\s*\)\s*\}\}", replace_join, template)
+
+    # Einfache Platzhalter ersetzen
+    def replace_simple(match: re.Match) -> str:
+        key = match.group(1)
+        value = context.get(key.strip(), "")
+        if isinstance(value, list):
+            return ", ".join([str(v) for v in value])
+        return str(value)
+
+    rendered = re.sub(r"\{\{\s*(\w+)\s*\}\}", replace_simple, rendered)
+    return rendered
+
+
 def build_masterprompt(chapter, context, lang="de"):
-    prompt_text = load_prompt(f"prompts/{lang}/{chapter}.md")
-    # Ersetze Platzhalter aus dem Kontext (inkl. Listen, Websearch etc.)
+    """
+    Load the prompt for the given chapter and language. If the default path
+    "prompts/{lang}/{chapter}.md" is not found, fall back to other known
+    directories (e.g., unpacked zip folders) to improve robustness.
+
+    This function also renders the template with the provided context.
+    """
+    # try a list of possible locations for the prompt file
+    possible_paths = [
+        f"prompts/{lang}/{chapter}.md",
+        f"{lang}/{chapter}.md",
+        f"{lang}_unzip/{lang}/{chapter}.md",
+        f"en_mod/en/{chapter}.md",
+        f"de_unzip/de/{chapter}.md",
+        f"en_unzip/en/{chapter}.md",
+    ]
+    prompt_text = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                prompt_text = load_prompt(path)
+                break
+            except Exception:
+                continue
+    if prompt_text is None:
+        # as a last resort, try to read the filename directly (may raise)
+        prompt_text = load_prompt(f"prompts/{lang}/{chapter}.md")
+
+    # Replace placeholders in the template with context values
     try:
-        prompt = prompt_text.format(**context)
+        prompt = render_template(prompt_text, context)
     except Exception as e:
         prompt = f"[Prompt-Rendering-Fehler: {e}]\n{prompt_text}"
     return prompt
