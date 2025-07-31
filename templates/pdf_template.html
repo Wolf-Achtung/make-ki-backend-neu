@@ -11,13 +11,25 @@ body {
   font-family: 'Inter', Arial, sans-serif;
   color: #223561;
 }
+.logo-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 38px;
+  margin-top: 24px;
+  margin-bottom: 22px;
+}
+.logo-row img {
+  height: 74px;
+  object-fit: contain;
+}
 h1 {
-  font-size: 2.2em;
+  font-size: 2.5em;
   text-align: center;
   color: #1e3a8a;
   letter-spacing: 1.5px;
   font-weight: 700;
-  margin: 70px 0 12px 0;
+  margin: 38px 0 12px 0;
   text-shadow: 0 1px 0 #e3ebfa;
 }
 h2 {
@@ -31,16 +43,16 @@ h2 {
   letter-spacing: 0.7px;
 }
 .subtitle {
-  font-size: 1.19em;
+  font-size: 1.21em;
   text-align: center;
   color: #1e40af;
-  margin-bottom: 44px;
+  margin-bottom: 42px;
   font-weight: 500;
   letter-spacing: 0.6px;
 }
 .chapter-box {
   background: #f4f8fc;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 30px 32px;
   margin: 0 auto 21px auto;
   max-width: 16cm;
@@ -54,7 +66,7 @@ h2 {
 }
 .hauptleistung-infobox {
   background: #f0f6fb;
-  border-left: 4px solid #2563eb;
+  border-left: 5px solid #2563eb;
   padding: 13px 24px;
   margin: 0 0 18px 0;
   font-size: 1.11em;
@@ -95,7 +107,17 @@ th {
   background-color: #f0f6fb;
   color: #1e40af;
 }
-/* Score Box */
+.icon-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.icon-row img {
+  height: 26px;
+  vertical-align: middle;
+}
 .score-box {
   background: #fff7e6;
   border-left: 5px solid #f59e0b;
@@ -110,33 +132,15 @@ th {
 .score-box b {
   color: #b45309;
 }
-.checklist-box {
-  background: #fffbe6;
-  border-left: 5px solid #f59e0b;
-  margin: 0 0 30px 0;
-  padding: 22px 32px;
-  border-radius: 14px;
-  box-shadow: 0 2px 10px #ffd27238;
-}
-.checklist-box h3 {
-  margin-top: 0;
-  color: #b45309;
-  font-size: 1.07em;
-  letter-spacing: 0.02em;
-}
-.checklist-box ul {
-  margin: 14px 0 0 0;
-  padding-left: 1.35em;
-  font-size: 1.06em;
-}
-.checklist-box li {
-  margin-bottom: 0.38em;
-  line-height: 1.7;
-}
-
   </style>
 </head>
 <body>
+
+<!-- LOGO-ZEILE -->
+<div class="logo-row">
+  <img src="ki-ready-2025.webp" alt="KI-Ready 2025" />
+  <img src="ki-sicherheit-logo.webp" alt="KI-Sicherheit.jetzt" />
+</div>
 
 <!-- TITELSEITE -->
 <div class="report-section">
@@ -144,6 +148,12 @@ th {
     <h1>KI‑Readiness‑Report 2025</h1>
     <div class="subtitle">Zukunftssichere KI‑Strategie für Unternehmen</div>
   </div>
+</div>
+
+<!-- ICON-ZEILE RECHTS OBEN -->
+<div class="icon-row">
+  <img src="dsgvo.svg" alt="DSGVO-Konform" title="DSGVO-Konform" />
+  <img src="eu-ai.svg" alt="EU AI Act Ready" title="EU AI Act Ready" />
 </div>
 
 <!-- SCORE‑ÜBERSICHT -->
