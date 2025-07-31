@@ -1,0 +1,32 @@
+branche: Media
+score_percent: 68
+benchmark: "Digitalisation level: 71 %, automation level: 54 %"
+hauptleistung: "Content creation & distribution"
+zielgruppen: ["agencies", "publishers", "production companies"]
+wichtigste_chancen: "AI‑based text creation, personalised media, automated distribution"
+zentrale_risiken: "Copyright, fake content, bias"
+next_steps: |
+  - Pilot AI-based image and text creation
+  - Introduce metadata automation
+  - Check funding from Creative Europe
+tools_list:
+  - name: "DeepL Write"
+    usecase: "AI text optimisation"
+    datenschutz: "DE"
+    link: "https://deepl.com/write"
+  - name: "Papercup"
+    usecase: "automatic video translation"
+    datenschutz: "EU"
+    link: "https://papercup.com"
+foerderprogramme_list:
+  - name: "Creative Europe"
+    link: "https://www.creativeeurope.de/"
+    zielgruppe: "media, culture"
+    foerderquote: "70 %"
+    deadline: "31.12.2025"
+  - name: "Medienboard Berlin-Brandenburg"
+    link: "https://www.medienboard.de/"
+    zielgruppe: "media"
+    foerderquote: "depending on the programme"
+    deadline: "31.12.2025"
+best_practice: "Publisher GHI automated the translation of video content with Papercup and reduced localisation costs by 40 %."

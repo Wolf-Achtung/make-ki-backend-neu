@@ -1,0 +1,32 @@
+branche: IT
+score_percent: 77
+benchmark: "Digitalisation level: 81 %, automation level: 70 %"
+hauptleistung: "IT services & software development"
+zielgruppen: ["SMEs", "start-ups", "system integrators"]
+wichtigste_chancen: "Automated testing, AI DevOps, security through AI"
+zentrale_risiken: "Vendor lock-in, data protection in OpenAI integration"
+next_steps: |
+  - Pilot an AIOps solution
+  - Evaluate open-source alternatives for DevOps
+  - Train the team on AI security
+tools_list:
+  - name: "GitHub Copilot"
+    usecase: "AI code generation"
+    datenschutz: "EU"
+    link: "https://github.com/features/copilot"
+  - name: "StackState"
+    usecase: "AIOps & Monitoring"
+    datenschutz: "EU"
+    link: "https://stackstate.com"
+foerderprogramme_list:
+  - name: "Digital Jetzt"
+    link: "https://www.bmwi.de/Digital-Jetzt"
+    zielgruppe: "IT, mid-sized companies"
+    foerderquote: "up to 70 %"
+    deadline: "31.12.2025"
+  - name: "Go-Digital"
+    link: "https://www.bmwi.de/go-digital"
+    zielgruppe: "IT SMEs"
+    foerderquote: "50 %"
+    deadline: "31.12.2025"
+best_practice: "IT system house DEF automated code reviews with Copilot and saved 20 % effort."
