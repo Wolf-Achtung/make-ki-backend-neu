@@ -16,7 +16,7 @@ users = [
     ("j.hohl@freenet.de", "passjhohl!", "user"),
     ("kerstin.geffert@gmail.com", "passkerstin!", "user"),
     ("post@zero2.de", "passzero2!", "user"),
-    ("giselaPeter@peter-partner.de", "passgisela!", "user"),
+    ("giselapeter@peter-partner.de", "passgisela!", "user"),
     ("stephan@meyer-brehm.de", "passstephan!", "user"),
     ("test@example.de", "passtest!", "user"),
     ("geffertj@mac.com", "passjens!", "user"),
