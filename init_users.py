@@ -16,12 +16,14 @@ users = [
     ("j.hohl@freenet.de", "passjhohl!", "user"),
     ("kerstin.geffert@gmail.com", "passkerstin!", "user"),
     ("post@zero2.de", "passzero2!", "user"),
-    ("GiselaPeter@peter-partner.de", "passgisela!", "user"),
+    ("giselaPeter@peter-partner.de", "passgisela!", "user"),
     ("stephan@meyer-brehm.de", "passstephan!", "user"),
     ("test@example.de", "passtest!", "user"),
     ("geffertj@mac.com", "passjens!", "user"),
     ("geffertkilian@gmail.com", "passkili!", "user"),
-    ("Levent.graef@posteo.de", "passlevgr!", "user"),
+    ("levent.graef@posteo.de", "passlevgr!", "user"),
+    ("birgit.cook@ulitzka-partner.de", "passbirg!", "user"),
+    ("alexander.luckow@icloud.com", "passbirg!", "user"),
 ]
 
 print("Starte Einfügen/Update der User...")
