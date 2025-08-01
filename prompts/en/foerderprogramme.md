@@ -12,8 +12,8 @@ Present the 3–5 most relevant funding programmes (current, for {{ branche }}, 
   {{ websearch_links_foerder }}
  - Also consider your answers on existing funding and current funding interests.
 
-**3. Presentation:**  
-- For each programme: name, link, target group, funding rate, deadline
+**3. Presentation:**
+- Use concise column names to keep the table compact: for each programme list the **name**, **link**, **target group**, **funding** and **deadline**. Avoid long labels like “Funding rate” that may wrap across lines.
 - Do not mention tools or measures – they are covered in their own chapters.
 
 **Table format (HTML)!**

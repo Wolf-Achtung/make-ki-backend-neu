@@ -3,11 +3,9 @@
 Analysieren Sie die Compliance-Lage (Standards, Richtlinien, ToDos) für das Unternehmen auf Basis Ihrer Formulardaten (z. B. Datenschutzbeauftragte:r, technische Schutzmaßnahmen, DSFA, Meldewege, Löschregeln, Kenntnis des EU AI Act, etc.).
 
 **1. Gesetzliche Anforderungen & Richtlinien:**  
-**1. Gesetzliche Anforderungen & Richtlinien:**  
 - DSGVO, ePrivacy, Digital Services Act, Wettbewerbsrecht, Verbraucherschutz, branchenspezifische Standards: {{ branchenspezifische_standards }}
   Berücksichtigen Sie dabei Ihre Antworten zu Datenschutzbeauftragten ({{ datenschutzbeauftragter }}) und technischen Maßnahmen ({{ technische_massnahmen }}).
 
-**2. Consent Management & Kundenrechte:**  
 **2. Consent Management & Kundenrechte:**  
 - Consent-Verwaltung, CRM, Privacy by Design/Default, Besonderheiten: {{ consent_besonderheiten }}
   Berücksichtigen Sie Ihre vorhandenen Prozesse ({{ meldewege }}, {{ loeschregeln }}) sowie das interne KI‑Know‑how ({{ ki_knowhow }}).
