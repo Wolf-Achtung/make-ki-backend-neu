@@ -10,7 +10,7 @@ Erstellen Sie einen konkreten Maßnahmenplan für die nächsten 12 Monate, gegli
 - Berücksichtigen Sie branchenspezifische Herausforderungen, Ihre Unternehmensgröße ({{ unternehmensgroesse }}), den aktuellen Digitalisierungs‑ und Automatisierungsgrad ({{ digitalisierungsgrad }}/{{ automatisierungsgrad }}), den Anteil papierloser Prozesse ({{ prozesse_papierlos }}), vorhandene KI‑Einsätze ({{ ki_einsatz | join(', ') }}) sowie das interne KI‑Know‑how ({{ ki_knowhow }}).
 - Verweisen Sie auf die wichtigsten Tools oder Förderprogramme, aber ohne sie zu wiederholen – Details stehen in den eigenen Kapiteln!
 - Geben Sie für jede Maßnahme einen klaren Handlungsvorschlag (Stichwort + 1 Satz Umsetzungsempfehlung) und richten Sie die Maßnahmen an Ihrem Hauptziel {{ projektziel | join(', ') }} und den priorisierten Usecases {{ ki_usecases | join(', ') }} aus.
-- KEINE generischen Tipps, nur individuell sinnvolle Schritte auf Basis der Analyse (z. B. „Prozessautomatisierung mit {{ tools_list[0].name }}“). Berücksichtigen Sie dabei auch Ihr Investitionsbudget ({{ investitionsbudget }}) und Ihre Risikofreude ({{ risikofreude }}).
+ - KEINE generischen Tipps, nur individuell sinnvolle Schritte auf Basis der Analyse. Vermeiden Sie Platzhalter wie `{{ tools_list[0].name }}` – formulieren Sie stattdessen konkret, zum Beispiel „Prozessautomatisierung mit einem ausgewählten KI‑Tool“. Berücksichtigen Sie dabei auch Ihr Investitionsbudget ({{ investitionsbudget }}) und Ihre Risikofreude ({{ risikofreude }}).
 
 **Tipp:**  
 Nutzen Sie Bulletpoints und vermeiden Sie Dopplungen mit anderen Kapiteln!

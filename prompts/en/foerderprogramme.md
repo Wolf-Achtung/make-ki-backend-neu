@@ -17,3 +17,5 @@ Present the 3–5 most relevant funding programmes (current, for {{ branche }}, 
 - Do not mention tools or measures – they are covered in their own chapters.
 
 **Table format (HTML)!**
+
+> **Note:** Output the HTML table directly and **do not wrap it in a code block** (no ``` fencing). Otherwise the source code will appear instead of the formatted table.

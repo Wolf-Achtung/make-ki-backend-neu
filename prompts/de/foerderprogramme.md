@@ -17,3 +17,5 @@ Stellen Sie die 3–5 relevantesten Förderprogramme (aktuell, für {{ branche }
 - Keine Tools/Maßnahmen nennen – diese stehen in eigenen Kapiteln.
 
 **Tabellenformat (HTML)!**
+
+> **Hinweis:** Geben Sie die HTML‑Tabelle direkt aus und **verwenden Sie keine Code‑Blöcke** (keine ```‑Umrandung). Andernfalls wird der Quellcode statt der Tabelle dargestellt.

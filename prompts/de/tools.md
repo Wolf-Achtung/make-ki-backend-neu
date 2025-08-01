@@ -18,5 +18,6 @@ Erstellen Sie eine strukturierte Übersicht über die relevantesten KI-Tools fü
 - Max. 3–5 Tools auflisten, doppelte Nennungen aus anderen Kapiteln (z. B. Executive Summary, Förderprogramme, Roadmap) **ausschließen**.
 - KEINE generischen Praxistipps oder Einführungsratschläge – diese stehen in der Roadmap.
 
-**Tipp:**  
-Setzen Sie eine HTML-Tabelle für die Übersicht ein.
+**Tipp:**
+- Verwenden Sie für die Übersicht eine HTML‑Tabelle.
+- **Wichtig:** Geben Sie die Tabelle direkt aus, ohne sie in ```‑Codeblöcke einzubetten – sonst erscheint der Quellcode im Report statt der Tabelle.
