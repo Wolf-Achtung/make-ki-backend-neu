@@ -181,6 +181,10 @@ def extract_swot(full_text: str) -> dict:
         "swot_threats": find(r"Risiken:(.*?)(?:$)"),
     }
 def gpt_generate_section(data, branche, chapter, lang="de"):
+    # Wenn das Formular eine Sprache definiert (z. B. data.language oder data.sprache),  
+    # verwenden wir diese, um die richtigen Prompts/YAMLs zu laden.  
+    lang = data.get("language", data.get("sprache", lang))
+
     # Kontextdaten (Formulardaten + Branchen-YAML)
     context = build_context(data, branche, lang)
     # Websearch einbauen
