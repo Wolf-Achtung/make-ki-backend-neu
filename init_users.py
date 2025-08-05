@@ -2,7 +2,7 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv('env')
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
@@ -25,7 +25,8 @@ users = [
     ("birgit.cook@ulitzka-partner.de", "passbirg!", "user"),
     ("alexander.luckow@icloud.com", "passbirg!", "user"),
     ("frank.beer@kabelmail.de", "passfrab!", "user"),
-    ("patrick@silk-relations.com", "passpat!", "user")
+    ("patrick@silk-relations.com", "passpat!", "user"),
+]
 
 
 print("Starte Einfügen/Update der User...")
