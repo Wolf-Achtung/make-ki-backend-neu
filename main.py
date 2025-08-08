@@ -1,21 +1,22 @@
 """
-Optimierte Version von main.py für den KI‑Readiness‑Report.
+Erweiterte Version von main.py für den KI‑Readiness‑Report.
 
-Diese Datei erweitert die ursprüngliche FastAPI‑Implementierung, um
-zusätzliche Felder wie den KI‑Readiness‑Score und konvertierte
-Checklisten im PDF‑Report zu berücksichtigen. Der Rest der Logik
-bleibt unverändert, sodass sie als Drop‑in‑Replacement für main.py
-verwendet werden kann.
+Diese Variante ergänzt den bestehenden FastAPI‑Service um asynchrone
+Briefing‑Endpunkte. Über `/briefing` kann weiterhin synchron ein Report
+erstellt werden. Der Endpoint `/briefing_async` startet die
+Generierung im Hintergrund und liefert sofort eine Job‑ID zurück;
+`/briefing_status/{job_id}` liefert den Fortschritt und das Ergebnis.
 
-Hinweis: Um diese Datei produktiv zu nutzen, benenne main.py um
-oder passe das Deployment entsprechend an.
+Die Logik für JWT‑Authentifizierung, DB‑Zugriff und Feedback bleibt
+unverändert. Neue Felder wie `score_percent` und `checklisten` werden
+ebenfalls im Report berücksichtigt.
 """
 
 import os
 import json
 import psycopg2
 import psycopg2.extras
-from fastapi import FastAPI, Request, HTTPException, Header
+from fastapi import FastAPI, Request, HTTPException, Header, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -24,6 +25,7 @@ from datetime import datetime, timedelta
 import markdown
 import jwt
 import bcrypt
+import uuid
 
 from gpt_analyze import generate_full_report  # Angepasste GPT‑Analyse
 
@@ -96,19 +98,19 @@ async def login(data: dict):
     )
     return {"token": token}
 
-# --- BRIEFING ---
+# --- BRIEFING (synchron) ---
 @app.post("/briefing")
 async def create_briefing(request: Request, authorization: str = Header(None)):
     payload = verify_token(authorization)
     email = payload.get("email")
     try:
         data = await request.json()
-        lang = data.get("lang", "de")
+        # Sprache bestimmen; "lang" oder "language" werden unterstützt
+        lang = data.get("lang") or data.get("language") or "de"
         print(f"🧠 Briefing-Daten empfangen von {email} (Sprache: {lang})")
         result = generate_full_report(data, lang=lang)
         result["email"] = email
-        
-        # --- Die benötigten Felder für das Template bereitstellen ---
+        # Felder für das Template vorbereiten
         template_fields = {
             "executive_summary": result.get("executive_summary", ""),
             "summary_klein": result.get("summary_klein", ""),
@@ -125,22 +127,13 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
             "tools": result.get("tools", ""),
             "moonshot_vision": result.get("moonshot_vision", ""),
             "eu_ai_act": result.get("eu_ai_act", ""),
-            # Neue Felder
             "score_percent": result.get("score_percent", ""),
             "checklisten": result.get("checklisten", "")
         }
-
-        # --- Kurzfazit abhängig von Unternehmensgröße wählen ---
-        summary_map = {
-            "klein": "summary_klein",
-            "kmu": "summary_kmu",
-            "solo": "summary_solo"
-        }
+        summary_map = {"klein": "summary_klein", "kmu": "summary_kmu", "solo": "summary_solo"}
         unternehmensgroesse = data.get("unternehmensgroesse", "kmu")
         selected_key = summary_map.get(unternehmensgroesse, "summary_kmu")
         template_fields["kurzfazit"] = result.get(selected_key, "")
-
-        # --- Markdown zu HTML umwandeln ---
         markdown_fields = [
             "executive_summary", "summary_klein", "summary_kmu", "summary_solo",
             "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", "compliance",
@@ -150,13 +143,10 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
         for key in markdown_fields:
             if template_fields.get(key):
                 template_fields[key] = markdown.markdown(template_fields[key])
-
-        # --- Template laden und HTML erzeugen ---
         with open("templates/pdf_template.html", encoding="utf-8") as f:
             template = Template(f.read())
         html_content = template.render(**template_fields)
-
-        # --- Protokollierung in der Datenbank ---
+        # Usage-Log schreiben
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -164,14 +154,105 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
                     (email, "briefing")
                 )
                 conn.commit()
-
-        # *** Das HTML an das Frontend zurückgeben! ***
         return JSONResponse(content={"html": html_content})
-
     except Exception as e:
         print("❌ Fehler bei /briefing:", e)
         import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail="Interner Fehler")
+
+# ---------------------------------------------------------------------------
+# Asynchrone Briefing‑Generierung
+#
+# /briefing_async startet einen Job im Hintergrund und gibt sofort eine Job‑ID
+# zurück. /briefing_status/{job_id} liefert den Status und ggf. das
+# generierte HTML. Die Aufgaben werden in einem einfachen Dictionary
+# verwaltet. Für einen produktiven Einsatz sollte eine persistente Queue
+# verwendet werden.
+
+tasks: dict[str, dict] = {}
+
+async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str):
+    try:
+        result = generate_full_report(data, lang=lang)
+        result["email"] = email
+        template_fields = {
+            "executive_summary": result.get("executive_summary", ""),
+            "summary_klein": result.get("summary_klein", ""),
+            "summary_kmu": result.get("summary_kmu", ""),
+            "summary_solo": result.get("summary_solo", ""),
+            "gesamtstrategie": result.get("gesamtstrategie", ""),
+            "roadmap": result.get("roadmap", ""),
+            "innovation": result.get("innovation", ""),
+            "praxisbeispiele": result.get("praxisbeispiele", ""),
+            "compliance": result.get("compliance", ""),
+            "datenschutz": result.get("datenschutz", ""),
+            "foerderprogramme": result.get("foerderprogramme", ""),
+            "foerdermittel": result.get("foerdermittel", ""),
+            "tools": result.get("tools", ""),
+            "moonshot_vision": result.get("moonshot_vision", ""),
+            "eu_ai_act": result.get("eu_ai_act", ""),
+            "score_percent": result.get("score_percent", ""),
+            "checklisten": result.get("checklisten", "")
+        }
+        summary_map = {"klein": "summary_klein", "kmu": "summary_kmu", "solo": "summary_solo"}
+        unternehmensgroesse = data.get("unternehmensgroesse", "kmu")
+        selected_key = summary_map.get(unternehmensgroesse, "summary_kmu")
+        template_fields["kurzfazit"] = result.get(selected_key, "")
+        markdown_fields = [
+            "executive_summary", "summary_klein", "summary_kmu", "summary_solo",
+            "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", "compliance",
+            "datenschutz", "foerderprogramme", "foerdermittel", "tools",
+            "moonshot_vision", "eu_ai_act", "kurzfazit"
+        ]
+        for key in markdown_fields:
+            if template_fields.get(key):
+                template_fields[key] = markdown.markdown(template_fields[key])
+        with open("templates/pdf_template.html", encoding="utf-8") as f:
+            template = Template(f.read())
+        html_content = template.render(**template_fields)
+        # Usage-Log speichern
+        try:
+            with get_db() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO usage_logs (email, pdf_type, created_at) VALUES (%s, %s, NOW())",
+                        (email, "briefing_async")
+                    )
+                    conn.commit()
+        except Exception:
+            pass
+        tasks[job_id] = {"status": "completed", "html": html_content, "email": email}
+    except Exception as e:
+        tasks[job_id] = {"status": "failed", "error": str(e), "email": email}
+
+
+@app.post("/briefing_async")
+async def create_briefing_async(request: Request, background_tasks: BackgroundTasks, authorization: str = Header(None)):
+    payload = verify_token(authorization)
+    email = payload.get("email")
+    data = await request.json()
+    lang = data.get("lang") or data.get("language") or "de"
+    job_id = str(uuid.uuid4())
+    tasks[job_id] = {"status": "pending", "email": email}
+    background_tasks.add_task(_generate_briefing_job, job_id, data, email, lang)
+    return {"job_id": job_id}
+
+
+@app.get("/briefing_status/{job_id}")
+async def briefing_status(job_id: str, authorization: str = Header(None)):
+    payload = verify_token(authorization)
+    email = payload.get("email")
+    job = tasks.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job nicht gefunden")
+    if job.get("email") != email:
+        raise HTTPException(status_code=403, detail="Zugriff verweigert")
+    if job.get("status") == "completed":
+        return {"status": "completed", "html": job.get("html")}
+    elif job.get("status") == "failed":
+        return {"status": "failed", "error": job.get("error")}
+    else:
+        return {"status": "pending"}
 
 # --- FEEDBACK SPEICHERN ---
 @app.post("/feedback")
@@ -195,7 +276,6 @@ async def feedback(request: Request, authorization: str = Header(None)):
         tipp_name = data.get("tipp_name", "")
         tipp_firma = data.get("tipp_firma", "")
         tipp_email = data.get("tipp_email", "")
-
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -215,9 +295,7 @@ async def feedback(request: Request, authorization: str = Header(None)):
                     )
                 )
                 conn.commit()
-
         return {"detail": "Feedback gespeichert"}
-
     except Exception as e:
         print("❌ Fehler beim Speichern des Feedbacks:", e)
         raise HTTPException(status_code=500, detail="Interner Fehler beim Speichern des Feedbacks")
