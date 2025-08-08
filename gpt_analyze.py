@@ -202,7 +202,7 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
     prompt = build_masterprompt(chapter, context, lang)
     # GPT-Call
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5",
         messages=[
             {"role": "system", "content": "Du bist ein TÜV-zertifizierter KI-Manager, KI-Strategieberater, Datenschutz- und Fördermittel-Experte. Berichte sind immer aktuell, innovativ, motivierend und branchenspezifisch."},
             {"role": "user", "content": prompt}
