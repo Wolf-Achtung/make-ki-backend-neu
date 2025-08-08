@@ -1,19 +1,11 @@
----
+Glossary & further sources
 
-**Glossary & further sources**
+• Briefly explain essential technical terms (in parentheses or footnotes).
+• For detailed explanations, see the appendix or these sources:
+  – Funding programmes: {{ websearch_links_foerder }}
+  – Tools: {{ websearch_links_tools }}
 
-• Explain important technical terms and abbreviations in the report briefly and clearly (in parentheses or as a footnote).
-• For further information, detailed explanations or additional questions, see the appendix, glossary or the following sources:
+Note: If a topic is already discussed elsewhere, point to it rather than repeating it.
+All recommendations should be motivating and practical.
 
-  - Funding programmes: {{ websearch_links_foerder }}
-  - Tools: {{ websearch_links_tools }}
-
----
-
-**Note:**  
-If a topic has already been covered in another chapter of the report, **refer to it instead of repeating it.**  
-All action recommendations are formulated as motivating, practical suggestions.
-
----
-
-**End of report**
+End of report
