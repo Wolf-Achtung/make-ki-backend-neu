@@ -27,7 +27,12 @@ import jwt
 import bcrypt
 import uuid
 
-from gpt_analyze import generate_full_report, generate_full_report_async  # Angepasste GPT‑Analyse
+from gpt_analyze import (
+    generate_full_report,
+    generate_full_report_async,
+    generate_full_report_dual,
+    generate_full_report_dual_async,
+)  # Angepasste GPT-Analyse (inklusive Dual-Modus)
 
 # --- ENV‑VARIABLEN LADEN ---
 load_dotenv()
@@ -108,7 +113,12 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
         # Sprache bestimmen; "lang" oder "language" werden unterstützt
         lang = data.get("lang") or data.get("language") or "de"
         print(f"🧠 Briefing-Daten empfangen von {email} (Sprache: {lang})")
-        result = generate_full_report(data, lang=lang)
+        # Je nach Modus den passenden Report-Generator wählen
+        combine_mode = os.getenv("GPT_COMBINE_MODE", "single").lower()
+        if combine_mode == "dual":
+            result = generate_full_report_dual(data, lang=lang)
+        else:
+            result = generate_full_report(data, lang=lang)
         result["email"] = email
         # Felder für das Template vorbereiten
         template_fields = {
@@ -173,19 +183,29 @@ tasks: dict[str, dict] = {}
 
 async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str):
     try:
-        # Verwende die asynchrone Generierung, um mehrere GPT‑Aufrufe parallel auszuführen.
+        # Wähle den passenden Report-Generator je nach Modus und verwende die asynchrone Variante
         import asyncio
+        combine_mode = os.getenv("GPT_COMBINE_MODE", "single").lower()
         try:
-            # Falls bereits ein laufender Eventloop existiert (z.B. in Tests),
-            # verwenden wir create_task. Andernfalls starten wir einen neuen Loop.
+            # Prüfen, ob bereits ein Eventloop existiert
             try:
                 loop = asyncio.get_running_loop()
-                result = await generate_full_report_async(data, lang=lang)  # type: ignore
+                if combine_mode == "dual":
+                    result = await generate_full_report_dual_async(data, lang=lang)  # type: ignore
+                else:
+                    result = await generate_full_report_async(data, lang=lang)  # type: ignore
             except RuntimeError:
-                result = asyncio.run(generate_full_report_async(data, lang=lang))
+                # Kein Eventloop vorhanden: neuen starten
+                if combine_mode == "dual":
+                    result = asyncio.run(generate_full_report_dual_async(data, lang=lang))
+                else:
+                    result = asyncio.run(generate_full_report_async(data, lang=lang))
         except Exception:
-            # Fallback auf synchronen Aufruf, wenn etwas schiefgeht
-            result = generate_full_report(data, lang=lang)
+            # Fallback: synchroner Aufruf
+            if combine_mode == "dual":
+                result = generate_full_report_dual(data, lang=lang)
+            else:
+                result = generate_full_report(data, lang=lang)
         result["email"] = email
         template_fields = {
             "executive_summary": result.get("executive_summary", ""),
