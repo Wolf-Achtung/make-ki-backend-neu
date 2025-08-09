@@ -11,6 +11,22 @@ body {
   font-family: 'Inter', Arial, sans-serif;
   color: #223561;
 }
+
+/* Verhindere Seitenumbrüche innerhalb von Absätzen, Listen und Tabellen */
+p, ul, ol, li, table {
+  page-break-inside: avoid;
+}
+
+
+/* Verhindere Seitenumbrüche innerhalb von Absätzen, Listen und Tabellen */
+p, ul, ol, li, table {
+  page-break-inside: avoid;
+}
+
+/* Reduziere die Schriftgröße für Fließtext leicht für bessere Lesbarkeit */
+.chapter-box {
+  font-size: 1em;
+}
 .logo-row {
   display: flex;
   justify-content: center;
@@ -57,7 +73,8 @@ h2 {
   margin: 0 auto 21px auto;
   max-width: 16cm;
   color: #223561;
-  font-size: 1.11em;
+  /* Die Schriftgröße wurde leicht reduziert, um lange Texte kompakter darzustellen */
+  font-size: 1.05em;
   line-height: 1.65;
   page-break-inside: avoid;
   word-break: break-word;
@@ -386,6 +403,26 @@ th {
   <div class="chapter-box">
     <h2>Checklisten & Leitfäden</h2>
     <div>{{ checklisten | safe }}</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- GLOSSAR -->
+{% if glossar %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Glossar</h2>
+    <div>{{ glossar | safe }}</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- GLOSSAR -->
+{% if glossar %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Glossar</h2>
+    <div>{{ glossar | safe }}</div>
   </div>
 </div>
 {% endif %}

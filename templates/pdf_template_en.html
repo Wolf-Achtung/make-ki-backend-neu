@@ -11,6 +11,21 @@ body {
   font-family: 'Inter', Arial, sans-serif;
   color: #223561;
 }
+
+/* Prevent page breaks inside paragraphs, lists and tables */
+p, ul, ol, li, table {
+  page-break-inside: avoid;
+}
+
+/* Prevent page breaks inside paragraphs, lists and tables */
+p, ul, ol, li, table {
+  page-break-inside: avoid;
+}
+
+/* Reduce font size slightly for body text for better readability */
+.chapter-box {
+  font-size: 1em;
+}
 .logo-row {
   display: flex;
   justify-content: center;
@@ -57,7 +72,8 @@ h2 {
   margin: 0 auto 21px auto;
   max-width: 16cm;
   color: #223561;
-  font-size: 1.11em;
+  /* Slightly reduced font size for longer passages */
+  font-size: 1.05em;
   line-height: 1.65;
   page-break-inside: avoid;
   word-break: break-word;
@@ -386,6 +402,26 @@ th {
   <div class="chapter-box">
     <h2>Checklists & guides</h2>
     <div>{{ checklisten | safe }}</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- GLOSSARY -->
+{% if glossary %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Glossary</h2>
+    <div>{{ glossary | safe }}</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- GLOSSARY -->
+{% if glossary %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Glossary</h2>
+    <div>{{ glossary | safe }}</div>
   </div>
 </div>
 {% endif %}
