@@ -181,8 +181,32 @@ def extract_swot(full_text: str) -> dict:
         "swot_threats": find(r"Risiken:(.*?)(?:$)"),
     }
 def gpt_generate_section(data, branche, chapter, lang="de"):
-    # Wenn das Formular eine Sprache definiert (z. B. data.language oder data.sprache),  
-    # verwenden wir diese, um die richtigen Prompts/YAMLs zu laden.  
+    """
+    Generiert einen einzelnen Abschnitt des Reports für das angegebene Kapitel.
+
+    Es wird automatisch die Sprache aus dem übermittelten `data` verwendet
+    (Felder `language` oder `sprache`). Anschließend wird der Kontext aus
+    Brancheninformationen, Websuche und Innovationseigenschaften erzeugt,
+    bevor das passende Prompt geladen und mit OpenAI abgefragt wird.
+
+    Das zu verwendende Modell kann über die Umgebungsvariable
+    `GPT_MODEL_NAME` konfiguriert werden. Standardmäßig wird `gpt-4o`
+    verwendet, da dieses Modell ein gutes Verhältnis aus Geschwindigkeit
+    und Qualität bietet. Für `gpt-5` darf keine Temperatur übergeben
+    werden, sonst führt die API zu einem Fehler. Für alle anderen Modelle
+    kann die Temperatur über `GPT_TEMPERATURE` eingestellt werden
+    (Standard: 0.3).
+
+    Parameter:
+        data (dict): Formularinhalte des Benutzers
+        branche (str): Branche, für die der Report generiert werden soll
+        chapter (str): Name des Kapitels/Prompts
+        lang (str): Sprache ("de" oder "en")
+
+    Rückgabe:
+        str: Vom Modell generierter Abschnittstext
+    """
+    # Sprache aus dem Formular bevorzugen
     lang = data.get("language", data.get("sprache", lang))
 
     # Kontextdaten (Formulardaten + Branchen-YAML)
@@ -194,55 +218,128 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
     context = add_innovation_features(context, branche, data)
     # Checklisten (z. B. als HTML aus Markdown) einbauen
     if "checklisten" not in context or not context["checklisten"]:
-        if os.path.exists("data/check_ki_readiness.md"):
-            context["checklisten"] = checklist_markdown_to_html(open("data/check_ki_readiness.md", encoding="utf-8").read())
+        md_path = "data/check_ki_readiness.md"
+        if os.path.exists(md_path):
+            with open(md_path, encoding="utf-8") as f:
+                context["checklisten"] = checklist_markdown_to_html(f.read())
         else:
             context["checklisten"] = ""
     # Masterprompt bauen
     prompt = build_masterprompt(chapter, context, lang)
-    # GPT-Call
-    # Wähle das Modell. Standard ist gpt-5, sofern verfügbar. Für gpt-5 darf
-    # kein benutzerdefinierter Temperaturwert gesetzt werden, da die API
-    # ansonsten einen Unsupported-Value-Fehler zurückgibt. Bei anderen
-    # Modellen kann die Temperatur gesetzt werden, um variablere Antworten
-    # zu erhalten.
-    model_name = "gpt-5"
+
+    # Modell und Temperatur bestimmen
+    model_name = os.getenv("GPT_MODEL_NAME", "gpt-4o")
+    temperature_str = os.getenv("GPT_TEMPERATURE", "0.3")
     temperature_args = {}
-    if not model_name.startswith("gpt-5"):
+    try:
+        # GPT-5 unterstützt keine Temperatur; andere Modelle schon
+        if not model_name.startswith("gpt-5"):
+            temperature_args = {"temperature": float(temperature_str)}
+    except Exception:
+        # Fallback, falls die Temperatur-Variable kein Float ist
         temperature_args = {"temperature": 0.3}
 
     response = client.chat.completions.create(
         model=model_name,
         messages=[
-            {"role": "system", "content": "Du bist ein TÜV-zertifizierter KI-Manager, KI-Strategieberater, Datenschutz- und Fördermittel-Experte. Berichte sind immer aktuell, innovativ, motivierend und branchenspezifisch."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": (
+                    "Du bist ein TÜV-zertifizierter KI-Manager, KI-Strategieberater, "
+                    "Datenschutz- und Fördermittel-Experte. Berichte sind immer aktuell, "
+                    "innovativ, motivierend und branchenspezifisch."
+                ),
+            },
+            {"role": "user", "content": prompt},
         ],
         **temperature_args,
     )
     return response.choices[0].message.content.strip()
 
+
+import asyncio
+
+async def gpt_generate_section_async(data, branche, chapter, lang="de") -> str:
+    """
+    Asynchrone Variante von `gpt_generate_section`.
+
+    Diese Funktion führt den synchronen GPT-Aufruf in einem Thread aus,
+    sodass mehrere Kapitel parallel generiert werden können. Die
+    eigentliche Logik bleibt unverändert.
+    """
+    return await asyncio.to_thread(gpt_generate_section, data, branche, chapter, lang)
+
+
 # ==== Report-Assembly (alle Kapitel durchlaufen) ====
 
-def generate_full_report(data, lang="de"):
+def generate_full_report(data, lang: str = "de") -> dict:
+    """
+    Synchronously generates a full report by processing all chapters one after another.
+
+    This function is kept for backward compatibility and testing. It still
+    calculates the readiness score and iterates over all report chapters,
+    but each GPT call is executed sequentially. For improved performance,
+    use the asynchronous counterpart `generate_full_report_async`.
+
+    Parameters:
+        data (dict): The user-submitted form data
+        lang (str): Report language
+
+    Returns:
+        dict: A mapping from chapter names to generated report sections
+    """
     branche = data.get("branche", "default").lower()
-    # Automatisch Score berechnen und Kontext hinzufügen
     data["score_percent"] = calc_score_percent(data)
-    # Reihenfolge und Kapitelnamen der Prompts (anpassbar!)
     chapters = [
         "executive_summary",
         "tools",
         "foerderprogramme",
         "roadmap",
         "compliance",
-        "praxisbeispiel"
+        "praxisbeispiel",
     ]
-    report = {}
+    report: dict[str, str] = {}
     for chapter in chapters:
         try:
             section = gpt_generate_section(data, branche, chapter, lang=lang)
             report[chapter] = fix_encoding(section)
         except Exception as e:
             report[chapter] = f"[Fehler in Kapitel {chapter}: {e}]"
+    return report
+
+async def generate_full_report_async(data: dict, lang: str = "de") -> dict:
+    """
+    Generates all report chapters concurrently using asynchronous tasks.
+
+    Each chapter is generated in a separate thread via `gpt_generate_section_async`.
+    This can significantly reduce the overall processing time when the
+    underlying OpenAI API supports concurrent calls.
+
+    Parameters:
+        data (dict): The user-submitted form data
+        lang (str): Report language
+
+    Returns:
+        dict: A mapping from chapter names to generated report sections
+    """
+    branche = data.get("branche", "default").lower()
+    data["score_percent"] = calc_score_percent(data)
+    chapters = [
+        "executive_summary",
+        "tools",
+        "foerderprogramme",
+        "roadmap",
+        "compliance",
+        "praxisbeispiel",
+    ]
+    tasks = [gpt_generate_section_async(data, branche, ch, lang=lang) for ch in chapters]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    report: dict[str, str] = {}
+    for ch, res in zip(chapters, results):
+        if isinstance(res, Exception):
+            report[ch] = f"[Fehler in Kapitel {ch}: {res}]"
+        else:
+            report[ch] = fix_encoding(res)
     return report
 
 # ==== Optional: PDF-Export, HTML-Export, API-Endpunkte etc. ergänzen ====

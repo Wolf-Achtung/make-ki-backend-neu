@@ -27,7 +27,7 @@ import jwt
 import bcrypt
 import uuid
 
-from gpt_analyze import generate_full_report  # Angepasste GPT‑Analyse
+from gpt_analyze import generate_full_report, generate_full_report_async  # Angepasste GPT‑Analyse
 
 # --- ENV‑VARIABLEN LADEN ---
 load_dotenv()
@@ -173,7 +173,19 @@ tasks: dict[str, dict] = {}
 
 async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str):
     try:
-        result = generate_full_report(data, lang=lang)
+        # Verwende die asynchrone Generierung, um mehrere GPT‑Aufrufe parallel auszuführen.
+        import asyncio
+        try:
+            # Falls bereits ein laufender Eventloop existiert (z.B. in Tests),
+            # verwenden wir create_task. Andernfalls starten wir einen neuen Loop.
+            try:
+                loop = asyncio.get_running_loop()
+                result = await generate_full_report_async(data, lang=lang)  # type: ignore
+            except RuntimeError:
+                result = asyncio.run(generate_full_report_async(data, lang=lang))
+        except Exception:
+            # Fallback auf synchronen Aufruf, wenn etwas schiefgeht
+            result = generate_full_report(data, lang=lang)
         result["email"] = email
         template_fields = {
             "executive_summary": result.get("executive_summary", ""),
