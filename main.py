@@ -27,12 +27,7 @@ import jwt
 import bcrypt
 import uuid
 
-from gpt_analyze import (
-    generate_full_report,
-    generate_full_report_async,
-    generate_full_report_dual,
-    generate_full_report_dual_async,
-)  # Angepasste GPT-Analyse (inklusive Dual-Modus)
+from gpt_analyze import generate_full_report  # Angepasste GPT‑Analyse
 
 # --- ENV‑VARIABLEN LADEN ---
 load_dotenv()
@@ -113,12 +108,7 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
         # Sprache bestimmen; "lang" oder "language" werden unterstützt
         lang = data.get("lang") or data.get("language") or "de"
         print(f"🧠 Briefing-Daten empfangen von {email} (Sprache: {lang})")
-        # Je nach Modus den passenden Report-Generator wählen
-        combine_mode = os.getenv("GPT_COMBINE_MODE", "single").lower()
-        if combine_mode == "dual":
-            result = generate_full_report_dual(data, lang=lang)
-        else:
-            result = generate_full_report(data, lang=lang)
+        result = generate_full_report(data, lang=lang)
         result["email"] = email
         # Felder für das Template vorbereiten
         template_fields = {
@@ -138,7 +128,10 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
             "moonshot_vision": result.get("moonshot_vision", ""),
             "eu_ai_act": result.get("eu_ai_act", ""),
             "score_percent": result.get("score_percent", ""),
-            "checklisten": result.get("checklisten", "")
+            "checklisten": result.get("checklisten", ""),
+            # Glossar/Glossary werden aus dem Bericht übernommen, falls vorhanden
+            "glossar": result.get("glossar", ""),
+            "glossary": result.get("glossary", "")
         }
         summary_map = {"klein": "summary_klein", "kmu": "summary_kmu", "solo": "summary_solo"}
         unternehmensgroesse = data.get("unternehmensgroesse", "kmu")
@@ -148,7 +141,7 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
             "executive_summary", "summary_klein", "summary_kmu", "summary_solo",
             "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", "compliance",
             "datenschutz", "foerderprogramme", "foerdermittel", "tools",
-            "moonshot_vision", "eu_ai_act", "kurzfazit"
+            "moonshot_vision", "eu_ai_act", "kurzfazit", "glossar", "glossary"
         ]
         for key in markdown_fields:
             if template_fields.get(key):
@@ -183,29 +176,7 @@ tasks: dict[str, dict] = {}
 
 async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str):
     try:
-        # Wähle den passenden Report-Generator je nach Modus und verwende die asynchrone Variante
-        import asyncio
-        combine_mode = os.getenv("GPT_COMBINE_MODE", "single").lower()
-        try:
-            # Prüfen, ob bereits ein Eventloop existiert
-            try:
-                loop = asyncio.get_running_loop()
-                if combine_mode == "dual":
-                    result = await generate_full_report_dual_async(data, lang=lang)  # type: ignore
-                else:
-                    result = await generate_full_report_async(data, lang=lang)  # type: ignore
-            except RuntimeError:
-                # Kein Eventloop vorhanden: neuen starten
-                if combine_mode == "dual":
-                    result = asyncio.run(generate_full_report_dual_async(data, lang=lang))
-                else:
-                    result = asyncio.run(generate_full_report_async(data, lang=lang))
-        except Exception:
-            # Fallback: synchroner Aufruf
-            if combine_mode == "dual":
-                result = generate_full_report_dual(data, lang=lang)
-            else:
-                result = generate_full_report(data, lang=lang)
+        result = generate_full_report(data, lang=lang)
         result["email"] = email
         template_fields = {
             "executive_summary": result.get("executive_summary", ""),
@@ -224,7 +195,9 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
             "moonshot_vision": result.get("moonshot_vision", ""),
             "eu_ai_act": result.get("eu_ai_act", ""),
             "score_percent": result.get("score_percent", ""),
-            "checklisten": result.get("checklisten", "")
+            "checklisten": result.get("checklisten", ""),
+            "glossar": result.get("glossar", ""),
+            "glossary": result.get("glossary", "")
         }
         summary_map = {"klein": "summary_klein", "kmu": "summary_kmu", "solo": "summary_solo"}
         unternehmensgroesse = data.get("unternehmensgroesse", "kmu")
@@ -234,7 +207,7 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
             "executive_summary", "summary_klein", "summary_kmu", "summary_solo",
             "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", "compliance",
             "datenschutz", "foerderprogramme", "foerdermittel", "tools",
-            "moonshot_vision", "eu_ai_act", "kurzfazit"
+            "moonshot_vision", "eu_ai_act", "kurzfazit", "glossar", "glossary"
         ]
         for key in markdown_fields:
             if template_fields.get(key):
