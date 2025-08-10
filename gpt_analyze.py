@@ -248,26 +248,32 @@ def summarize_intro(text: str, lang: str = "de") -> str:
     """
     if not text:
         return ""
+    # Eingabetext begrenzen, um sehr lange Abschnitte zu kürzen. Dies
+    # verhindert ein Überschreiten des Tokenlimits und beschleunigt
+    # die Zusammenfassung. Wir nehmen die ersten 6000 Zeichen.
+    max_chars = 6000
+    if len(text) > max_chars:
+        text = text[:max_chars] + "…"
     # Wähle ein Modell für die Zusammenfassung. Wir nutzen standardmäßig
     # GPT‑4o, da dieses Modell stabilere und besser formatierte Ausgaben liefert.
     summary_model = os.getenv("SUMMARY_MODEL_NAME", "gpt-4o")
     try:
         if lang.startswith("de"):
+            # Die Einleitung soll für Laien verständlich sein und am Ende die wichtigsten Punkte in einer Liste aufführen.
             prompt_intro = (
-                "Fasse den folgenden Abschnitt in 4-5 Sätzen zusammen."
-                " Erstelle eine laienverständliche Einleitung, die erklärt,"
-                " worum es in diesem Kapitel geht und die Neugier weckt."
-                " Verwende leicht verständliche Sprache und verzichte auf"
-                " Aufzählungszeichen oder Listen.\n\n"
+                "Fasse den folgenden Abschnitt in 4-5 kurzen Sätzen zusammen."
+                " Schreibe eine laienverständliche Einleitung, die erläutert, worum es in diesem Kapitel geht und die Neugier weckt."
+                " Verwende einfache, klare Sprache. Danach liste die zwei bis drei wichtigsten Empfehlungen oder Erkenntnisse stichpunktartig auf."
+                " Nutze dafür echte Aufzählungszeichen (•) und setze jeden Punkt in eine eigene Zeile.\n\n"
                 f"Abschnitt:\n{text.strip()}"
             )
             system_msg = "Du bist ein professioneller Redakteur, der komplexe Inhalte verständlich zusammenfasst."
         else:
             prompt_intro = (
-                "Summarize the following section in 4-5 sentences."
-                " Provide an easy-to-understand introduction for non-experts"
-                " that explains what this chapter is about and sparks curiosity."
-                " Use plain language and avoid bullet points or lists.\n\n"
+                "Summarize the following section in 4-5 concise sentences."
+                " Provide an easy-to-understand introduction that explains what this chapter is about and sparks curiosity."
+                " Use simple, clear language. Afterwards list the two to three most important recommendations or insights as bullet points."
+                " Use real bullet points (•) and put each item on its own line.\n\n"
                 f"Section:\n{text.strip()}"
             )
             system_msg = "You are a professional editor who summarises complex content clearly and concisely."
@@ -296,6 +302,12 @@ def generate_glossary(full_text: str, lang: str = "de") -> str:
     """
     if not full_text:
         return ""
+    # Begrenze den Text für das Glossar auf max. 8000 Zeichen, um eine
+    # Überlastung des Modells zu vermeiden. Ein gekürzter Text reicht
+    # in der Regel aus, um die wichtigsten Begriffe zu extrahieren.
+    max_chars = 8000
+    if len(full_text) > max_chars:
+        full_text = full_text[:max_chars] + "…"
     glossary_model = os.getenv("SUMMARY_MODEL_NAME", "gpt-4o")
     try:
         if lang.startswith("de"):
@@ -325,6 +337,58 @@ def generate_glossary(full_text: str, lang: str = "de") -> str:
         return response.choices[0].message.content.strip()
     except Exception:
         return ""
+
+# ========================
+# Static Preface Generator
+def generate_preface(lang: str = "de", score_percent: float | None = None) -> str:
+    """
+    Generate a static preface explaining the purpose of the report. This
+    function does not call the OpenAI API, ensuring that the preface can be
+    created instantly. It optionally includes the score percentage if
+    provided. The returned string is HTML and can be inserted directly
+    into templates.
+
+    Args:
+        lang: Language code ("de" or "en") to select the text.
+        score_percent: Optional readiness score to embed into the preface.
+
+    Returns:
+        An HTML snippet containing one or two paragraphs.
+    """
+    if lang.startswith("de"):
+        preface = (
+            "<p>Dieses Dokument fasst die Ergebnisse Ihres KI‑Readiness‑Checks "
+            "zusammen und bietet individuelle Empfehlungen für die nächsten "
+            "Schritte. Es basiert auf Ihren Angaben im Fragebogen und "
+            "berücksichtigt aktuelle gesetzliche Vorgaben, Fördermöglichkeiten "
+            "sowie technologische Entwicklungen im Bereich der Künstlichen "
+            "Intelligenz. Nutzen Sie diesen Bericht als Ausgangspunkt für "
+            "Ihre weitere KI‑Strategie.</p>"
+        )
+        if score_percent is not None:
+            preface += (
+                f"<p><b>Ihr aktueller KI‑Readiness‑Score liegt bei {score_percent:.0f}%.</b> "
+                "Dieser Wert zeigt, wie gut Ihr Unternehmen bereits auf den "
+                "Einsatz von KI vorbereitet ist.</p>"
+            )
+        return preface
+    else:
+        preface = (
+            "<p>This document summarises the results of your AI readiness check "
+            "and provides tailored recommendations for your next steps. It is "
+            "based on the information you provided in the questionnaire and "
+            "takes into account current legal requirements, funding "
+            "opportunities and technological developments in artificial "
+            "intelligence. Use this report as a starting point for your AI "
+            "strategy.</p>"
+        )
+        if score_percent is not None:
+            preface += (
+                f"<p><b>Your current AI readiness score is {score_percent:.0f}%.</b> "
+                "This figure indicates how well your organisation is prepared to "
+                "adopt AI.</p>"
+            )
+        return preface
 
 # ==== Report-Assembly (alle Kapitel durchlaufen) ====
 

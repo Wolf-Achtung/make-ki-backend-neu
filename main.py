@@ -34,6 +34,7 @@ from gpt_analyze import (
     generate_glossary,
     calc_score_percent,
     fix_encoding,
+    generate_preface,
 )
 
 # --- ENV‑VARIABLEN LADEN ---
@@ -140,6 +141,12 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
             "glossar": result.get("glossar", ""),
             "glossary": result.get("glossary", "")
         }
+        # Preface voranstellen: Statische Einleitung basierend auf Sprache und Score
+        try:
+            score_val = result.get("score_percent")
+            template_fields["preface"] = generate_preface(lang, score_val)
+        except Exception:
+            template_fields["preface"] = ""
         summary_map = {"klein": "summary_klein", "kmu": "summary_kmu", "solo": "summary_solo"}
         unternehmensgroesse = data.get("unternehmensgroesse", "kmu")
         selected_key = summary_map.get(unternehmensgroesse, "summary_kmu")
@@ -298,6 +305,12 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
             "glossar": report.get("glossar", ""),
             "glossary": report.get("glossary", "")
         }
+        # Preface: static introduction with optional score
+        try:
+            score_val = report.get("score_percent")
+            template_fields["preface"] = generate_preface(lang, score_val)
+        except Exception:
+            template_fields["preface"] = ""
         # Kurzfazit je nach Unternehmensgröße aus dem Report auswählen
         summary_map = {"klein": "summary_klein", "kmu": "summary_kmu", "solo": "summary_solo"}
         unternehmensgroesse = data.get("unternehmensgroesse", "kmu")
