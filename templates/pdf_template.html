@@ -77,16 +77,16 @@ h2 {
   border-radius: 10px;
 }
 ul, ol {
-  margin-left: 1.3em;
-  margin-bottom: 1.1em;
+  margin-left: 0;
+  margin-bottom: 1.2em;
   /* Verhindere Seitenumbrüche innerhalb von Listen */
   page-break-inside: avoid;
-  padding-left: 0;
-  list-style-position: inside;
+  padding-left: 1.5em;
+  list-style-position: outside;
 }
 
 li {
-  margin-bottom: 0.3em;
+  margin-bottom: 0.4em;
   page-break-inside: avoid;
 }
 b { color: #2563eb; }
@@ -107,15 +107,17 @@ table {
   margin-top: 1em;
   margin-bottom: 1.5em;
   font-size: 1.05em;
+  border: 1px solid #d1e3fa;
 }
 th, td {
-  border: 1px solid #ccc;
+  border: 1px solid #d1e3fa;
   padding: 8px 10px;
   text-align: left;
 }
 th {
-  background-color: #f0f6fb;
+  background-color: #e7f0fd;
   color: #1e40af;
+  font-weight: 600;
 }
 .icon-row {
   display: flex;
@@ -129,18 +131,19 @@ th {
   vertical-align: middle;
 }
 .score-box {
-  background: #fff7e6;
-  border-left: 5px solid #f59e0b;
+  /* Verwende eine CI-konforme Blauton-Box für den Score */
+  background: #e7f0fd;
+  border-left: 5px solid #2563eb;
   padding: 20px 28px;
   margin: 0 auto 26px auto;
   max-width: 16cm;
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.12);
+  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.12);
   font-size: 1.15em;
-  color: #92400e;
+  color: #153e75;
 }
 .score-box b {
-  color: #b45309;
+  color: #1e40af;
 }
   </style>
 </head>
@@ -178,7 +181,8 @@ th {
 <!-- STATISCHE EINFÜHRUNG (PREFACE) -->
 {% if preface %}
 <div class="report-section">
-  <div class="chapter-box" style="background:#fdf9f0; border-left:4px solid #f59e0b;">
+  <!-- Preface box: hellblaues Panel mit dunkelblauem Rand -->
+  <div class="chapter-box" style="background:#e7f0fd; border-left:4px solid #2563eb;">
     {{ preface | safe }}
   </div>
 </div>
