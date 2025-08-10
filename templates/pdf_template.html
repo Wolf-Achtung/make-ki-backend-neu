@@ -11,22 +11,6 @@ body {
   font-family: 'Inter', Arial, sans-serif;
   color: #223561;
 }
-
-/* Verhindere Seitenumbrüche innerhalb von Absätzen, Listen und Tabellen */
-p, ul, ol, li, table {
-  page-break-inside: avoid;
-}
-
-
-/* Verhindere Seitenumbrüche innerhalb von Absätzen, Listen und Tabellen */
-p, ul, ol, li, table {
-  page-break-inside: avoid;
-}
-
-/* Reduziere die Schriftgröße für Fließtext leicht für bessere Lesbarkeit */
-.chapter-box {
-  font-size: 1em;
-}
 .logo-row {
   display: flex;
   justify-content: center;
@@ -73,7 +57,7 @@ h2 {
   margin: 0 auto 21px auto;
   max-width: 16cm;
   color: #223561;
-  /* Die Schriftgröße wurde leicht reduziert, um lange Texte kompakter darzustellen */
+  /* leicht reduzierte Grundschrift für bessere Lesbarkeit und weniger Zeilenumbrüche */
   font-size: 1.05em;
   line-height: 1.65;
   page-break-inside: avoid;
@@ -95,6 +79,15 @@ h2 {
 ul, ol {
   margin-left: 1.3em;
   margin-bottom: 1.1em;
+  /* Verhindere Seitenumbrüche innerhalb von Listen */
+  page-break-inside: avoid;
+  padding-left: 0;
+  list-style-position: inside;
+}
+
+li {
+  margin-bottom: 0.3em;
+  page-break-inside: avoid;
 }
 b { color: #2563eb; }
 @page {
@@ -154,8 +147,11 @@ th {
 <body>
 
 <!-- LOGO-ZEILE -->
-<!-- LOGO-ZEILE: temporär ausgeblendet für Testzwecke -->
-<div class="logo-row"></div>
+<div class="logo-row">
+  <!-- Use absolute paths so logos resolve correctly in the PDF service -->
+  <img src="/templates/ki-ready-2025.webp" alt="KI-Ready 2025" />
+  <img src="/templates/ki-sicherheit-logo.webp" alt="KI-Sicherheit.jetzt" />
+</div>
 
 <!-- TITELSEITE -->
 <div class="report-section">
@@ -166,14 +162,25 @@ th {
 </div>
 
 <!-- ICON-ZEILE RECHTS OBEN -->
-<!-- ICON-ZEILE RECHTS OBEN: temporär ausgeblendet für Testzwecke -->
-<div class="icon-row"></div>
+<div class="icon-row">
+  <img src="/templates/dsgvo.svg" alt="DSGVO-Konform" title="DSGVO-Konform" />
+  <img src="/templates/eu-ai.svg" alt="EU AI Act Ready" title="EU AI Act Ready" />
+</div>
 
 <!-- SCORE‑ÜBERSICHT -->
 {% if score_percent %}
 <div class="score-box">
   <p><b>KI‑Readiness‑Score:</b> {{ score_percent }} % von 100 %</p>
   <p>Dieser Wert zeigt, wie gut Ihr Unternehmen aktuell für den Einsatz von KI vorbereitet ist. Je höher der Wert, desto stärker sind Ihre digitale Reife, Ihre Automatisierung und Ihr internes Know‑how ausgeprägt.</p>
+</div>
+{% endif %}
+
+<!-- STATISCHE EINFÜHRUNG (PREFACE) -->
+{% if preface %}
+<div class="report-section">
+  <div class="chapter-box" style="background:#fdf9f0; border-left:4px solid #f59e0b;">
+    {{ preface | safe }}
+  </div>
 </div>
 {% endif %}
 
@@ -403,26 +410,6 @@ th {
   <div class="chapter-box">
     <h2>Checklisten & Leitfäden</h2>
     <div>{{ checklisten | safe }}</div>
-  </div>
-</div>
-{% endif %}
-
-<!-- GLOSSAR -->
-{% if glossar %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Glossar</h2>
-    <div>{{ glossar | safe }}</div>
-  </div>
-</div>
-{% endif %}
-
-<!-- GLOSSAR -->
-{% if glossar %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Glossar</h2>
-    <div>{{ glossar | safe }}</div>
   </div>
 </div>
 {% endif %}

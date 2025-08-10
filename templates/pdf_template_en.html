@@ -11,21 +11,6 @@ body {
   font-family: 'Inter', Arial, sans-serif;
   color: #223561;
 }
-
-/* Prevent page breaks inside paragraphs, lists and tables */
-p, ul, ol, li, table {
-  page-break-inside: avoid;
-}
-
-/* Prevent page breaks inside paragraphs, lists and tables */
-p, ul, ol, li, table {
-  page-break-inside: avoid;
-}
-
-/* Reduce font size slightly for body text for better readability */
-.chapter-box {
-  font-size: 1em;
-}
 .logo-row {
   display: flex;
   justify-content: center;
@@ -72,7 +57,7 @@ h2 {
   margin: 0 auto 21px auto;
   max-width: 16cm;
   color: #223561;
-  /* Slightly reduced font size for longer passages */
+  /* reduce base font size for improved readability */
   font-size: 1.05em;
   line-height: 1.65;
   page-break-inside: avoid;
@@ -94,6 +79,14 @@ h2 {
 ul, ol {
   margin-left: 1.3em;
   margin-bottom: 1.1em;
+  page-break-inside: avoid;
+  padding-left: 0;
+  list-style-position: inside;
+}
+
+li {
+  margin-bottom: 0.3em;
+  page-break-inside: avoid;
 }
 b { color: #2563eb; }
 @page {
@@ -152,8 +145,11 @@ th {
 <body>
 
 <!-- LOGO ROW -->
-<!-- LOGO ROW: temporarily hidden for testing -->
-<div class="logo-row"></div>
+<div class="logo-row">
+  <!-- Use absolute paths so logos resolve correctly in the PDF service -->
+  <img src="/templates/ki-ready-2025.webp" alt="AI-Ready 2025" />
+  <img src="/templates/ki-sicherheit-logo.webp" alt="KI-Sicherheit.jetzt" />
+</div>
 
 <!-- TITLE PAGE -->
 <div class="report-section">
@@ -164,14 +160,25 @@ th {
 </div>
 
 <!-- ICON ROW TOP RIGHT -->
-<!-- ICON ROW TOP RIGHT: temporarily hidden for testing -->
-<div class="icon-row"></div>
+<div class="icon-row">
+  <img src="/templates/dsgvo.svg" alt="GDPR compliant" title="GDPR compliant" />
+  <img src="/templates/eu-ai.svg" alt="EU AI Act ready" title="EU AI Act ready" />
+</div>
 
 <!-- SCORE OVERVIEW -->
 {% if score_percent %}
 <div class="score-box">
   <p><b>AI‑readiness score:</b> {{ score_percent }} % out of 100 %</p>
   <p>This score shows how well your company is currently prepared for the use of AI. The higher the value, the more advanced your digital maturity, automation and internal know‑how.</p>
+</div>
+{% endif %}
+
+<!-- STATIC PREFACE -->
+{% if preface %}
+<div class="report-section">
+  <div class="chapter-box" style="background:#fdf9f0; border-left:4px solid #f59e0b;">
+    {{ preface | safe }}
+  </div>
 </div>
 {% endif %}
 
@@ -402,26 +409,6 @@ th {
   <div class="chapter-box">
     <h2>Checklists & guides</h2>
     <div>{{ checklisten | safe }}</div>
-  </div>
-</div>
-{% endif %}
-
-<!-- GLOSSARY -->
-{% if glossary %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Glossary</h2>
-    <div>{{ glossary | safe }}</div>
-  </div>
-</div>
-{% endif %}
-
-<!-- GLOSSARY -->
-{% if glossary %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Glossary</h2>
-    <div>{{ glossary | safe }}</div>
   </div>
 </div>
 {% endif %}
