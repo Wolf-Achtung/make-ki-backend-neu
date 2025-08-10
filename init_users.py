@@ -10,7 +10,7 @@ if not DATABASE_URL:
 
 users = [
     # Admin
-    ("wolf.hohl@web.de", "admin2025!", "admin"),
+    ("bewertung@ki-sicherheit.jetzt", "admin2025!", "admin"),
 
     # Test-User mit individuellen Passwörtern
     ("j.hohl@freenet.de", "passjhohl!", "user"),
@@ -18,7 +18,7 @@ users = [
     ("post@zero2.de", "passzero2!", "user"),
     ("giselapeter@peter-partner.de", "passgisela!", "user"),
     ("stephan@meyer-brehm.de", "passstephan!", "user"),
-    ("test@example.de", "passtest!", "user"),
+    ("wolf.hohl@web.de", "passwolf!", "user"),
     ("geffertj@mac.com", "passjens!", "user"),
     ("geffertkilian@gmail.com", "passkili!", "user"),
     ("levent.graef@posteo.de", "passlevgr!", "user"),
@@ -28,6 +28,7 @@ users = [
     ("patrick@silk-relations.com", "passpat!", "user"),
     ("marc@trailerhaus-onair.de", "passmarct!", "user"),
     ("norbert@trailerhaus.de", "passgis2r!", "user"),
+    ("sonia-souto@mac.com", "pass-son!", "user"),
     ("christian.ulitzka@ulitzka-partner.de", "pass2rigz!", "user"),
 ]
 
