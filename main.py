@@ -21,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from jinja2 import Template
+import requests
 from datetime import datetime, timedelta
 import markdown
 import jwt
@@ -348,6 +349,25 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
             "progress": tasks[job_id].get("progress", total_steps),
             "total": total_steps,
         }
+
+        # Sobald der Bericht fertig gerendert ist, kann das HTML direkt an den
+        # PDF‑Service gesendet werden, um das PDF zu erzeugen und per E‑Mail
+        # zu versenden. Dadurch entfällt der separate Aufruf aus dem Frontend.
+        try:
+            pdf_service_url = os.getenv("PDF_SERVICE_URL")
+            if pdf_service_url:
+                # Header setzen: Content‑Type JSON und User‑E‑Mail, damit der
+                # PDF‑Service den Report dem Benutzer zuordnen kann.
+                headers = {"Content-Type": "application/json", "X-User-Email": email}
+                requests.post(
+                    pdf_service_url.rstrip("/") + "/generate-pdf",
+                    json={"html": html_content},
+                    headers=headers,
+                    timeout=60,
+                )
+        except Exception as e:
+            # Fehler protokollieren, aber den Report nicht weiter blockieren
+            print(f"[PDF-Service][WARN] Fehler beim Versand an PDF-Service: {e}")
     except Exception as e:
         # Fehlerfall mit Fehlermeldung und abgeschlossenem Fortschritt
         tasks[job_id] = {
