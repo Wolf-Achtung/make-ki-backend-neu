@@ -358,10 +358,14 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
             if pdf_service_url:
                 # Header setzen: Content‑Type JSON und User‑E‑Mail, damit der
                 # PDF‑Service den Report dem Benutzer zuordnen kann.
-                headers = {"Content-Type": "application/json", "X-User-Email": email}
+                # Der PDF‑Service erwartet den Bericht als reinen HTML‑String im
+                # Request‑Body. Verwende daher "data" statt "json" und
+                # setze den Content‑Type auf text/html. Zusätzlich wird
+                # die Benutzer‑E‑Mail im Header übertragen.
+                headers = {"Content-Type": "text/html", "X-User-Email": email}
                 requests.post(
                     pdf_service_url.rstrip("/") + "/generate-pdf",
-                    json={"html": html_content},
+                    data=html_content,
                     headers=headers,
                     timeout=60,
                 )
