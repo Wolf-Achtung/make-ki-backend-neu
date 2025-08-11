@@ -201,12 +201,18 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
     # Masterprompt bauen
     prompt = build_masterprompt(chapter, context, lang)
     # GPT-Call
-    # Wähle das Modell abhängig von der Umgebungsvariable GPT_MODEL_NAME.
-    # Standard ist "gpt-5". Für gpt-5 darf kein benutzerdefinierter
-    # Temperaturwert gesetzt werden, da die API sonst einen
-    # "Unsupported-Value"-Fehler zurückgibt. Für andere Modelle kann die
-    # Temperatur über GPT_TEMPERATURE konfiguriert werden (Standard 0.3).
-    model_name = os.getenv("GPT_MODEL_NAME", "gpt-5")
+    # Wähle das Modell abhängig vom Kapitel. Für das Executive‑Summary kann
+    # per EXEC_SUMMARY_MODEL ein anderes Modell konfiguriert werden. Für
+    # alle anderen Kapitel wird GPT_MODEL_NAME verwendet. Standard ist
+    # "gpt-5". Diese Trennung ermöglicht schnellere Ausgaben (z. B. mit
+    # gpt-4o) für die meisten Kapitel, während das Executive Summary auf
+    # einem hochwertigeren Modell generiert wird.
+    default_model = os.getenv("GPT_MODEL_NAME", "gpt-5")
+    if chapter == "executive_summary":
+        model_name = os.getenv("EXEC_SUMMARY_MODEL", default_model)
+    else:
+        model_name = default_model
+
     temperature_args: dict[str, float] = {}
     temp_env = os.getenv("GPT_TEMPERATURE")
     if temp_env:
@@ -216,7 +222,7 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
             temperature_value = None
     else:
         temperature_value = 0.3
-    # Nur setzen, wenn Modell nicht gpt-5 und ein Temperaturwert definiert ist
+    # Nur setzen, wenn Modell nicht gpt-5 und ein Temperaturwert definiert ist.
     if not model_name.startswith("gpt-5") and temperature_value is not None:
         temperature_args = {"temperature": temperature_value}
 
@@ -228,7 +234,25 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
         ],
         **temperature_args,
     )
-    return response.choices[0].message.content.strip()
+    section_text = response.choices[0].message.content.strip()
+    # Für die Kapitel 'tools' und 'foerderprogramme' die Länge der HTML‑Tabelle
+    # begrenzen, damit der Report kompakt bleibt. Wir behalten die Kopfzeile
+    # und maximal fünf Datenzeilen (max_rows). Falls die Tabelle kürzer
+    # ist, bleibt sie unverändert.
+    max_rows = 5
+    if chapter in {"tools", "foerderprogramme"}:
+        try:
+            parts = section_text.split("<tr>")
+            if len(parts) > (max_rows + 1):
+                header = parts[0]
+                rows = parts[1:max_rows + 1]
+                ending = ""
+                if "</table>" in parts[-1]:
+                    ending = "</table>"
+                section_text = "<tr>".join([header] + rows) + ending
+        except Exception:
+            pass
+    return section_text
 
 # ---------------------------------------------------------------------------
 # Neue Hilfsfunktionen für bessere Lesbarkeit und Glossar
