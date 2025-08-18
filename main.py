@@ -1,13 +1,13 @@
 """
-Erweiterte Version von main.py für den KI‑Readiness‑Report.
+Erweiterte Version von main.py für den KI-Readiness-Report.
 
-Diese Variante ergänzt den bestehenden FastAPI‑Service um asynchrone
-Briefing‑Endpunkte. Über `/briefing` kann weiterhin synchron ein Report
+Diese Variante ergänzt den bestehenden FastAPI-Service um asynchrone
+Briefing-Endpunkte. Über `/briefing` kann weiterhin synchron ein Report
 erstellt werden. Der Endpoint `/briefing_async` startet die
-Generierung im Hintergrund und liefert sofort eine Job‑ID zurück;
+Generierung im Hintergrund und liefert sofort eine Job-ID zurück;
 `/briefing_status/{job_id}` liefert den Fortschritt und das Ergebnis.
 
-Die Logik für JWT‑Authentifizierung, DB‑Zugriff und Feedback bleibt
+Die Logik für JWT-Authentifizierung, DB-Zugriff und Feedback bleibt
 unverändert. Neue Felder wie `score_percent` und `checklisten` werden
 ebenfalls im Report berücksichtigt.
 """
@@ -27,24 +27,14 @@ import markdown
 import jwt
 import bcrypt
 import uuid
-from mimetypes import guess_type
+
+# --- NEU: Helfer für Template-Assets & Typen ---
 import base64
+from mimetypes import guess_type
 from pathlib import Path
 
 from gpt_analyze import (
     generate_full_report,  # Vollständige Report-Generierung (synchron)
-
-# --- TEMPLATE ASSET HELPERS ---
-TPL_DIR = Path("templates")
-
-def as_data_uri(name: str) -> str:
-    try:
-        p = TPL_DIR / name
-        mime = guess_type(p.name)[0] or "application/octet-stream"
-        return f"data:{mime};base64," + base64.b64encode(p.read_bytes()).decode("ascii")
-    except Exception:
-        return ""
-
     gpt_generate_section,
     summarize_intro,
     generate_glossary,
@@ -53,7 +43,7 @@ def as_data_uri(name: str) -> str:
     generate_preface,
 )
 
-# --- ENV‑VARIABLEN LADEN ---
+# --- ENV-VARIABLEN LADEN ---
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 SECRET_KEY = os.getenv("SECRET_KEY", "my-secret")
@@ -100,6 +90,21 @@ def verify_admin(auth_header: str):
         raise HTTPException(status_code=403, detail="Admin role required")
     return payload.get("email")
 
+# --- TEMPLATE-ASSET-Helfer (Base64 für Logos/Icons) ---
+TPL_DIR = Path("templates")
+
+def as_data_uri(name: str) -> str:
+    """
+    Liest eine Datei aus templates/ ein und liefert einen data: URI (Base64).
+    Fällt auf "" zurück, falls die Datei fehlt.
+    """
+    try:
+        p = TPL_DIR / name
+        mime = guess_type(p.name)[0] or "application/octet-stream"
+        return f"data:{mime};base64," + base64.b64encode(p.read_bytes()).decode("ascii")
+    except Exception:
+        return ""
+
 # --- LOGIN ---
 @app.post("/api/login")
 async def login(data: dict):
@@ -129,11 +134,15 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
     email = payload.get("email")
     try:
         data = await request.json()
+
         # Sprache bestimmen; "lang" oder "language" werden unterstützt
         lang = data.get("lang") or data.get("language") or "de"
         print(f"🧠 Briefing-Daten empfangen von {email} (Sprache: {lang})")
+
+        # Vollständigen Report synchron generieren
         result = generate_full_report(data, lang=lang)
         result["email"] = email
+
         # Felder für das Template vorbereiten
         template_fields = {
             "executive_summary": result.get("executive_summary", ""),
@@ -153,20 +162,26 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
             "eu_ai_act": result.get("eu_ai_act", ""),
             "score_percent": result.get("score_percent", ""),
             "checklisten": result.get("checklisten", ""),
-            # Glossar/Glossary werden aus dem Bericht übernommen, falls vorhanden
             "glossar": result.get("glossar", ""),
-            "glossary": result.get("glossary", "")
+            "glossary": result.get("glossary", ""),
+            # NEU: Live-Websuche-Links (HTML) – nicht noch mal durch Markdown jagen
+            "websearch_links_foerder": result.get("websearch_links_foerder", ""),
         }
+
         # Preface voranstellen: Statische Einleitung basierend auf Sprache und Score
         try:
             score_val = result.get("score_percent")
             template_fields["preface"] = generate_preface(lang, score_val)
         except Exception:
             template_fields["preface"] = ""
+
+        # Kurzfazit je nach Unternehmensgröße auswählen (Fallback auf KMU)
         summary_map = {"klein": "summary_klein", "kmu": "summary_kmu", "solo": "summary_solo"}
         unternehmensgroesse = data.get("unternehmensgroesse", "kmu")
         selected_key = summary_map.get(unternehmensgroesse, "summary_kmu")
         template_fields["kurzfazit"] = result.get(selected_key, "")
+
+        # Markdown → HTML für die relevanten Textfelder
         markdown_fields = [
             "executive_summary", "summary_klein", "summary_kmu", "summary_solo",
             "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", "compliance",
@@ -176,9 +191,28 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
         for key in markdown_fields:
             if template_fields.get(key):
                 template_fields[key] = markdown.markdown(template_fields[key])
-        with open("templates/pdf_template.html", encoding="utf-8") as f:
+
+        # --- NEU: Kontextfelder, die das Template für Gating/Infoboxen nutzt ---
+        template_fields.update({
+            "lang": lang,
+            "unternehmensgroesse": data.get("unternehmensgroesse"),
+            "interesse_foerderung": data.get("interesse_foerderung"),
+            "hauptleistung": data.get("hauptleistung"),
+            # Logos/Icons als Base64 (funktioniert unabhängig vom PDF-Renderer)
+            "KI_READY_BASE64": as_data_uri("ki-ready-2025.webp"),
+            "KI_SICHERHEIT_BASE64": as_data_uri("ki-sicherheit-logo.png"),
+            "DSGVO_BASE64": as_data_uri("dsgvo.svg"),
+            "EU_AI_BASE64": as_data_uri("eu-ai.svg"),
+            # Optional: Pfadbasis, falls du relative Pfade statt Base64 bevorzugst
+            "BASE_URL": os.getenv("TEMPLATE_ASSET_BASE_URL", ""),
+        })
+
+        # Richtige Template-Datei je nach Sprache
+        tpl_name = "pdf_template_en.html" if str(lang).lower().startswith("en") else "pdf_template.html"
+        with open(f"templates/{tpl_name}", encoding="utf-8") as f:
             template = Template(f.read())
         html_content = template.render(**template_fields)
+
         # Usage-Log schreiben
         with get_db() as conn:
             with conn.cursor() as cur:
@@ -187,16 +221,18 @@ async def create_briefing(request: Request, authorization: str = Header(None)):
                     (email, "briefing")
                 )
                 conn.commit()
+
         return JSONResponse(content={"html": html_content})
+
     except Exception as e:
         print("❌ Fehler bei /briefing:", e)
         import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail="Interner Fehler")
 
 # ---------------------------------------------------------------------------
-# Asynchrone Briefing‑Generierung
+# Asynchrone Briefing-Generierung
 #
-# /briefing_async startet einen Job im Hintergrund und gibt sofort eine Job‑ID
+# /briefing_async startet einen Job im Hintergrund und gibt sofort eine Job-ID
 # zurück. /briefing_status/{job_id} liefert den Status und ggf. das
 # generierte HTML. Die Aufgaben werden in einem einfachen Dictionary
 # verwaltet. Für einen produktiven Einsatz sollte eine persistente Queue
@@ -206,74 +242,64 @@ tasks: dict[str, dict] = {}
 
 async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str):
     """
-    Hintergrundjob zur Erstellung des KI‑Readiness‑Reports mit Fortschrittsanzeige.
+    Hintergrundjob zur Erstellung des KI-Readiness-Reports mit Fortschrittsanzeige.
 
-    Anstelle der synchronen Komplettgenerierung werden hier die einzelnen
-    Kapitel nacheinander erzeugt. Nach jedem Kapitel wird der Fortschritt
-    aktualisiert. Am Ende wird ein Glossar erstellt und ebenfalls als
-    Fortschrittsschritt gezählt. Dieses Vorgehen erlaubt dem Frontend,
-    den Anwendern den aktuellen Stand (z. B. "Kapitel 3 von 7 fertig")
-    anzuzeigen.
-
-    Die generierten Abschnitte werden zu einem Bericht zusammengefügt,
-    zusätzlich wird ein Kurzfazit erzeugt und in die Templatefelder
-    übernommen. Treten Fehler auf, wird der Jobstatus entsprechend
-    gesetzt.
+    Kapitel werden nacheinander generiert, der Fortschritt wird nach
+    jedem Kapitel aktualisiert. Am Ende wird ein Glossar erstellt.
     """
     try:
-        # Berechnung des Scores in Prozent vorab, damit gpt_generate_section ihn nutzen kann
+        # Score vorab berechnen
         data["score_percent"] = calc_score_percent(data)
-        # Bestimmen der Branche (fallback "default")
+        # Branche (fallback "default")
         branche = data.get("branche", "default").lower()
-        # Reihenfolge der zu generierenden Kapitel; siehe generate_full_report
-        wants_funding = str(data.get("interesse_foerderung","")).lower() in {"ja","unklar"}
-        chapters = ["executive_summary","tools"] + (["foerderprogramme"] if wants_funding else []) + ["roadmap","compliance","praxisbeispiel"]
-        total_steps = len(chapters) + 1  # +1 für das Glossar
-        # Gesamtanzahl im tasks‑Dict setzen, falls noch nicht gesetzt
+
+        # --- NEU: Foerder-Gating je nach Interesse ---
+        wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja", "unklar"}
+        chapters = ["executive_summary", "tools"] + (["foerderprogramme"] if wants_funding else []) + ["roadmap", "compliance", "praxisbeispiel"]
+
+        total_steps = len(chapters) + 1  # +1 für Glossar
         tasks[job_id]["total"] = total_steps
         tasks[job_id]["progress"] = 0
+
         report: dict[str, str] = {}
         full_text_segments: list[str] = []
-        # Kapitel einzeln generieren und Fortschritt aktualisieren
+
         for chapter in chapters:
             try:
                 section_raw = gpt_generate_section(data, branche, chapter, lang=lang)
                 section = fix_encoding(section_raw)
-                # Einleitung generieren
                 intro = summarize_intro(section, lang=lang)
-                if intro:
-                    section_with_intro = f"<p>{intro}</p>\n\n{section}"
-                else:
-                    section_with_intro = section
+                section_with_intro = (f"<p>{intro}</p>\n\n{section}") if intro else section
                 report[chapter] = section_with_intro
                 full_text_segments.append(section)
             except Exception as e:
                 report[chapter] = f"[Fehler in Kapitel {chapter}: {e}]"
-            # Fortschritt erhöhen
             tasks[job_id]["progress"] += 1
+
         # Glossar generieren
         try:
             full_report_text = "\n\n".join(full_text_segments)
             glossary_text = generate_glossary(full_report_text, lang=lang)
         except Exception as e:
             glossary_text = f"[Glossar konnte nicht erstellt werden: {e}]"
-        if lang.startswith("de"):
+        if str(lang).lower().startswith("de"):
             report["glossar"] = glossary_text
         else:
             report["glossary"] = glossary_text
-        # Fortschrittsschritt für das Glossar aktualisieren
         tasks[job_id]["progress"] += 1
-        # Kurzfazit als Zusammenfassung des Gesamttextes erzeugen
+
+        # Kurzfazit aus dem Gesamttext
         try:
             summary_text = summarize_intro("\n\n".join(full_text_segments), lang=lang)
         except Exception:
             summary_text = ""
-        # Platzhalter für kurze Zusammenfassungen nach Unternehmensgröße
         report["summary_klein"] = summary_text
         report["summary_kmu"] = summary_text
         report["summary_solo"] = summary_text
-        # Score Prozent übernehmen
+
+        # Score übernehmen
         report["score_percent"] = data.get("score_percent", "")
+
         # Checklisten (HTML) laden, falls vorhanden
         try:
             from gpt_analyze import checklist_markdown_to_html
@@ -284,15 +310,16 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
                 report["checklisten"] = ""
         except Exception:
             report["checklisten"] = ""
-        # Zusätzliche Felder initialisieren, die vom Template erwartet werden
-        # Nicht generierte Felder werden mit leerem String gefüllt
+
+        # Felder initialisieren, die das Template erwartet
         default_keys = [
             "gesamtstrategie", "innovation", "praxisbeispiele", "datenschutz",
             "foerdermittel", "moonshot_vision", "eu_ai_act"
         ]
         for k in default_keys:
             report.setdefault(k, "")
-        # Nun Templatefelder aufbereiten
+
+        # Template-Felder zusammenstellen
         template_fields = {
             "executive_summary": report.get("executive_summary", ""),
             "summary_klein": report.get("summary_klein", ""),
@@ -301,7 +328,6 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
             "gesamtstrategie": report.get("gesamtstrategie", ""),
             "roadmap": report.get("roadmap", ""),
             "innovation": report.get("innovation", ""),
-            # "praxisbeispiele" wird im plural erwartet
             "praxisbeispiele": report.get("praxisbeispiel", report.get("praxisbeispiele", "")),
             "compliance": report.get("compliance", ""),
             "datenschutz": report.get("datenschutz", ""),
@@ -313,34 +339,25 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
             "score_percent": report.get("score_percent", ""),
             "checklisten": report.get("checklisten", ""),
             "glossar": report.get("glossar", ""),
-            "glossary": report.get("glossary", "")
+            "glossary": report.get("glossary", ""),
+            # NEU:
+            "websearch_links_foerder": report.get("websearch_links_foerder", ""),
         }
 
-# Zusätzliche Kontextfelder für das Template
-template_fields.update({
-    "lang": lang,
-    "unternehmensgroesse": data.get("unternehmensgroesse"),
-    "interesse_foerderung": data.get("interesse_foerderung"),
-    "hauptleistung": data.get("hauptleistung"),
-    "KI_READY_BASE64": as_data_uri("ki-ready-2025.webp"),
-    "KI_SICHERHEIT_BASE64": as_data_uri("ki-sicherheit-logo.png"),
-    "DSGVO_BASE64": as_data_uri("dsgvo.svg"),
-    "EU_AI_BASE64": as_data_uri("eu-ai.svg"),
-    "BASE_URL": os.getenv("TEMPLATE_ASSET_BASE_URL", ""),
-})
-
-        # Preface: static introduction with optional score
+        # Preface
         try:
             score_val = report.get("score_percent")
             template_fields["preface"] = generate_preface(lang, score_val)
         except Exception:
             template_fields["preface"] = ""
-        # Kurzfazit je nach Unternehmensgröße aus dem Report auswählen
+
+        # Kurzfazit je nach Unternehmensgröße
         summary_map = {"klein": "summary_klein", "kmu": "summary_kmu", "solo": "summary_solo"}
         unternehmensgroesse = data.get("unternehmensgroesse", "kmu")
         selected_key = summary_map.get(unternehmensgroesse, "summary_kmu")
         template_fields["kurzfazit"] = report.get(selected_key, "")
-        # Markdown in HTML umwandeln
+
+        # Markdown → HTML
         markdown_fields = [
             "executive_summary", "summary_klein", "summary_kmu", "summary_solo",
             "gesamtstrategie", "roadmap", "innovation", "praxisbeispiele", "compliance",
@@ -350,13 +367,27 @@ template_fields.update({
         for key in markdown_fields:
             if template_fields.get(key):
                 template_fields[key] = markdown.markdown(template_fields[key])
-        # HTML rendern
-        # Sprache beachten: passendes Template wählen
-tpl_name = "pdf_template_en.html" if str(lang).lower().startswith("en") else "pdf_template.html"
-with open(f"templates/{tpl_name}", encoding="utf-8") as f:
-    template = Template(f.read())
-html_content = template.render(**template_fields)
-        # Usage‑Log speichern
+
+        # --- NEU: Kontextfelder, die das Template für Gating/Infoboxen nutzt ---
+        template_fields.update({
+            "lang": lang,
+            "unternehmensgroesse": data.get("unternehmensgroesse"),
+            "interesse_foerderung": data.get("interesse_foerderung"),
+            "hauptleistung": data.get("hauptleistung"),
+            "KI_READY_BASE64": as_data_uri("ki-ready-2025.webp"),
+            "KI_SICHERHEIT_BASE64": as_data_uri("ki-sicherheit-logo.png"),
+            "DSGVO_BASE64": as_data_uri("dsgvo.svg"),
+            "EU_AI_BASE64": as_data_uri("eu-ai.svg"),
+            "BASE_URL": os.getenv("TEMPLATE_ASSET_BASE_URL", ""),
+        })
+
+        # HTML rendern – passendes Template je nach Sprache
+        tpl_name = "pdf_template_en.html" if str(lang).lower().startswith("en") else "pdf_template.html"
+        with open(f"templates/{tpl_name}", encoding="utf-8") as f:
+            template = Template(f.read())
+        html_content = template.render(**template_fields)
+
+        # Usage-Log speichern (best effort)
         try:
             with get_db() as conn:
                 with conn.cursor() as cur:
@@ -367,6 +398,7 @@ html_content = template.render(**template_fields)
                     conn.commit()
         except Exception:
             pass
+
         tasks[job_id] = {
             "status": "completed",
             "html": html_content,
@@ -375,18 +407,10 @@ html_content = template.render(**template_fields)
             "total": total_steps,
         }
 
-        # Sobald der Bericht fertig gerendert ist, kann das HTML direkt an den
-        # PDF‑Service gesendet werden, um das PDF zu erzeugen und per E‑Mail
-        # zu versenden. Dadurch entfällt der separate Aufruf aus dem Frontend.
+        # Optional: Direkt an PDF-Service senden
         try:
             pdf_service_url = os.getenv("PDF_SERVICE_URL")
             if pdf_service_url:
-                # Header setzen: Content‑Type JSON und User‑E‑Mail, damit der
-                # PDF‑Service den Report dem Benutzer zuordnen kann.
-                # Der PDF‑Service erwartet den Bericht als reinen HTML‑String im
-                # Request‑Body. Verwende daher "data" statt "json" und
-                # setze den Content‑Type auf text/html. Zusätzlich wird
-                # die Benutzer‑E‑Mail im Header übertragen.
                 headers = {"Content-Type": "text/html", "X-User-Email": email}
                 requests.post(
                     pdf_service_url.rstrip("/") + "/generate-pdf",
@@ -395,10 +419,9 @@ html_content = template.render(**template_fields)
                     timeout=60,
                 )
         except Exception as e:
-            # Fehler protokollieren, aber den Report nicht weiter blockieren
             print(f"[PDF-Service][WARN] Fehler beim Versand an PDF-Service: {e}")
+
     except Exception as e:
-        # Fehlerfall mit Fehlermeldung und abgeschlossenem Fortschritt
         tasks[job_id] = {
             "status": "failed",
             "error": str(e),
@@ -415,9 +438,7 @@ async def create_briefing_async(request: Request, background_tasks: BackgroundTa
     data = await request.json()
     lang = data.get("lang") or data.get("language") or "de"
     job_id = str(uuid.uuid4())
-    # Beim Start eines neuen Jobs initialisieren wir auch Fortschritt und die
-    # Gesamtzahl der Schritte (Kapitel + Glossar). Diese Werte werden im
-    # Hintergrundtask aktualisiert.
+
     tasks[job_id] = {
         "status": "pending",
         "email": email,
