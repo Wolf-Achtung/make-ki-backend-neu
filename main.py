@@ -27,9 +27,24 @@ import markdown
 import jwt
 import bcrypt
 import uuid
+from mimetypes import guess_type
+import base64
+from pathlib import Path
 
 from gpt_analyze import (
     generate_full_report,  # Vollständige Report-Generierung (synchron)
+
+# --- TEMPLATE ASSET HELPERS ---
+TPL_DIR = Path("templates")
+
+def as_data_uri(name: str) -> str:
+    try:
+        p = TPL_DIR / name
+        mime = guess_type(p.name)[0] or "application/octet-stream"
+        return f"data:{mime};base64," + base64.b64encode(p.read_bytes()).decode("ascii")
+    except Exception:
+        return ""
+
     gpt_generate_section,
     summarize_intro,
     generate_glossary,
@@ -211,14 +226,8 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
         # Bestimmen der Branche (fallback "default")
         branche = data.get("branche", "default").lower()
         # Reihenfolge der zu generierenden Kapitel; siehe generate_full_report
-        chapters = [
-            "executive_summary",
-            "tools",
-            "foerderprogramme",
-            "roadmap",
-            "compliance",
-            "praxisbeispiel",
-        ]
+        wants_funding = str(data.get("interesse_foerderung","")).lower() in {"ja","unklar"}
+        chapters = ["executive_summary","tools"] + (["foerderprogramme"] if wants_funding else []) + ["roadmap","compliance","praxisbeispiel"]
         total_steps = len(chapters) + 1  # +1 für das Glossar
         # Gesamtanzahl im tasks‑Dict setzen, falls noch nicht gesetzt
         tasks[job_id]["total"] = total_steps
@@ -306,6 +315,20 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
             "glossar": report.get("glossar", ""),
             "glossary": report.get("glossary", "")
         }
+
+# Zusätzliche Kontextfelder für das Template
+template_fields.update({
+    "lang": lang,
+    "unternehmensgroesse": data.get("unternehmensgroesse"),
+    "interesse_foerderung": data.get("interesse_foerderung"),
+    "hauptleistung": data.get("hauptleistung"),
+    "KI_READY_BASE64": as_data_uri("ki-ready-2025.webp"),
+    "KI_SICHERHEIT_BASE64": as_data_uri("ki-sicherheit-logo.png"),
+    "DSGVO_BASE64": as_data_uri("dsgvo.svg"),
+    "EU_AI_BASE64": as_data_uri("eu-ai.svg"),
+    "BASE_URL": os.getenv("TEMPLATE_ASSET_BASE_URL", ""),
+})
+
         # Preface: static introduction with optional score
         try:
             score_val = report.get("score_percent")
@@ -328,9 +351,11 @@ async def _generate_briefing_job(job_id: str, data: dict, email: str, lang: str)
             if template_fields.get(key):
                 template_fields[key] = markdown.markdown(template_fields[key])
         # HTML rendern
-        with open("templates/pdf_template.html", encoding="utf-8") as f:
-            template = Template(f.read())
-        html_content = template.render(**template_fields)
+        # Sprache beachten: passendes Template wählen
+tpl_name = "pdf_template_en.html" if str(lang).lower().startswith("en") else "pdf_template.html"
+with open(f"templates/{tpl_name}", encoding="utf-8") as f:
+    template = Template(f.read())
+html_content = template.render(**template_fields)
         # Usage‑Log speichern
         try:
             with get_db() as conn:

@@ -3,6 +3,7 @@ import json
 import yaml
 import pandas as pd
 import re
+import zipfile
 from openai import OpenAI
 from datetime import datetime
 
@@ -12,6 +13,25 @@ from innovation_intro import INNOVATION_INTRO
 from websearch_utils import serpapi_search
 
 client = OpenAI()
+
+
+def ensure_unzipped(zip_name: str, dest_dir: str):
+    """
+    If a zip file exists in the current directory, unzip it into dest_dir.
+    Does nothing if dest_dir already exists.
+    """
+    try:
+        if os.path.exists(zip_name) and not os.path.exists(dest_dir):
+            os.makedirs(dest_dir, exist_ok=True)
+            with zipfile.ZipFile(zip_name, 'r') as zf:
+                zf.extractall(dest_dir)
+    except Exception:
+        pass
+
+# Try to make prompts/branchenkontext/data available if they come as ZIPs
+ensure_unzipped("prompts.zip", "prompts_unzip")
+ensure_unzipped("branchenkontext.zip", "branchenkontext")
+ensure_unzipped("data.zip", "data")
 
 def load_yaml(path):
     with open(path, "r", encoding="utf-8") as f:
@@ -57,17 +77,17 @@ def render_template(template: str, context: dict) -> str:
     return rendered
 
 
+
 def build_masterprompt(chapter, context, lang="de"):
     """
-    Load the prompt for the given chapter and language. If the default path
-    "prompts/{lang}/{chapter}.md" is not found, fall back to other known
-    directories (e.g., unpacked zip folders) to improve robustness.
-
-    This function also renders the template with the provided context.
+    Load the prompt for the given chapter and language from several possible locations,
+    then render placeholders with the provided context. Finally, enforce a compact,
+    scannable output style (What to do / Why / Impact / Next steps).
     """
-    # try a list of possible locations for the prompt file
+    # Candidate paths in priority order
     possible_paths = [
         f"prompts/{lang}/{chapter}.md",
+        f"prompts_unzip/{lang}/{chapter}.md",
         f"{lang}/{chapter}.md",
         f"{lang}_unzip/{lang}/{chapter}.md",
         f"en_mod/en/{chapter}.md",
@@ -83,15 +103,53 @@ def build_masterprompt(chapter, context, lang="de"):
             except Exception:
                 continue
     if prompt_text is None:
-        # as a last resort, try to read the filename directly (may raise)
+        # fallback (may raise)
         prompt_text = load_prompt(f"prompts/{lang}/{chapter}.md")
 
-    # Replace placeholders in the template with context values
+    # Render placeholders
     try:
         prompt = render_template(prompt_text, context)
     except Exception as e:
-        prompt = f"[Prompt-Rendering-Fehler: {e}]\n{prompt_text}"
-    return prompt
+        prompt = f"[Prompt-Rendering-Fehler: {e}]
+{prompt_text}"
+
+    # Enforce gold-standard, scannable structure
+    if str(lang).lower().startswith("de"):
+        style = (
+            "
+
+---
+"
+            "Formatiere die Antwort kompakt und scannbar, ohne Meta-Text. "
+            "Struktur strikt einhalten:
+"
+            "- Was tun? (3–5 präzise Maßnahmen, Imperativ)
+"
+            "- Warum? (max. 2 Sätze, Impact)
+"
+            "- Nächste 3 Schritte (Checkliste, kurze Punkte)
+"
+            "Vermeide Einleitungen wie 'In diesem Kapitel geht es ...'. "
+            "Nutze klare, aktive Sprache und kurze Sätze."
+        )
+    else:
+        style = (
+            "
+
+---
+"
+            "Format the answer compactly and scannably, without meta text. "
+            "Strict structure:
+"
+            "- What to do (3–5 precise actions, imperative)
+"
+            "- Why (max. 2 sentences, impact)
+"
+            "- Next 3 steps (checklist, short bullets)
+"
+            "Avoid introductions like 'This chapter covers ...'. Use clear, active voice."
+        )
+    return prompt + style
 
 def add_innovation_features(context, branche, data):
     context["branchen_innovations_intro"] = INNOVATION_INTRO.get(branche, "")
@@ -435,14 +493,8 @@ def generate_full_report(data, lang="de"):
     # Automatisch Score berechnen und Kontext hinzufügen
     data["score_percent"] = calc_score_percent(data)
     # Reihenfolge und Kapitelnamen der Prompts
-    chapters = [
-        "executive_summary",
-        "tools",
-        "foerderprogramme",
-        "roadmap",
-        "compliance",
-        "praxisbeispiel",
-    ]
+    wants_funding = str(data.get("interesse_foerderung","")).lower() in {"ja","unklar"}
+    chapters = ["executive_summary","tools"] + (["foerderprogramme"] if wants_funding else []) + ["roadmap","compliance","praxisbeispiel"]
     report: dict[str, str] = {}
     full_text_segments: list[str] = []
     for chapter in chapters:
