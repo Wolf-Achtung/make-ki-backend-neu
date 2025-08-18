@@ -1,8 +1,8 @@
 # ----------------------------
-# Dockerfile – Multi-Stage
+# Dockerfile – Multi-Stage (fix)
 # ----------------------------
 
-# Stage 1: Builder mit Dev-Headern
+# Stage 1: Builder mit Dev-Headern (für Wheels)
 FROM python:3.11-slim-bookworm AS builder
 
 ENV PIP_NO_CACHE_DIR=1
@@ -28,7 +28,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Nur Runtime-Libs
+# Nur Runtime-Libs (HTML→PDF, Fonts, Netzwerk)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libpango-1.0-0 libpangocairo-1.0-0 \
@@ -38,6 +38,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     shared-mime-info \
     fonts-dejavu fonts-liberation \
     tzdata curl \
+    # optional, falls ihr WebP-Assets nutzt:
+    libwebp7 \
  && rm -rf /var/lib/apt/lists/*
 
 # Wheels aus Builder installieren (kein Compiler nötig)
@@ -49,4 +51,10 @@ COPY . .
 
 EXPOSE 8000
 
-ENTRYPOINT ["sh", "-c", "([ \"$RUN_DB_INIT\" = \"true\" ] || [ ! -f .seeded ]) && python full_init.py && touch .seeded || true; uvicorn main:app --host 0.0.0.0 --port 8000"]
+# Optionaler Healthcheck (aktivieren, wenn /health eingebaut ist)
+# HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+#   CMD curl -fsS http://localhost:8000/health || exit 1
+
+# DB-Init nur, wenn RUN_DB_INIT=true; sonst überspringen.
+# Danach FastAPI starten.
+ENTRYPOINT ["sh", "-c", "[ \"$RUN_DB_INIT\" = \"true\" ] && python full_init.py || echo 'DB-Init übersprungen'; uvicorn main:app --host 0.0.0.0 --port 8000"]
