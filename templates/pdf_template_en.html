@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <title>AI‑Readiness Report 2025</title>
-  <style>
+  
+  {% if BASE_URL %}<base href="{{ BASE_URL.rstrip(\'/\') }}/templates/">{% endif %}
+<style>
 body {
   background: #fff;
   margin: 0;
@@ -117,6 +119,11 @@ th {
   color: #1e40af;
   font-weight: 600;
 }
+
+thead { display: table-header-group; }
+tfoot { display: table-footer-group; }
+tr, td, th { page-break-inside: avoid; break-inside: avoid; }
+.table, .table tbody, .table tr { page-break-inside: avoid; break-inside: avoid; }
 .icon-row {
   display: flex;
   justify-content: flex-end;
@@ -146,12 +153,14 @@ th {
 </head>
 <body>
 
+{% set wants_funding = (interesse_foerderung in ['ja', 'unklar']) if interesse_foerderung is defined else True %}
+
+
 <!-- LOGO ROW -->
 <div class="logo-row">
   <!-- Use absolute paths so logos resolve correctly in the PDF service -->
-  <!-- Embedded logos as Base64 for offline availability -->
-  <img src="{{KI_READY_BASE64}}" alt="AI-Ready 2025" />
-  <img src="{{KI_SICHERHEIT_BASE64}}" alt="KI-Sicherheit.jetzt" />
+  <img src="{{ KI_READY_BASE64 or 'ki-ready-2025.webp' }}" alt="AI-Ready 2025" />
+  <img src="{{ KI_SICHERHEIT_BASE64 or 'ki-sicherheit-logo.png' }}" alt="KI-Sicherheit.jetzt" />
 </div>
 
 <!-- TITLE PAGE -->
@@ -164,8 +173,8 @@ th {
 
 <!-- ICON ROW TOP RIGHT -->
 <div class="icon-row">
-  <img src="{{DSGVO_BASE64}}" alt="GDPR compliant" title="GDPR compliant" />
-  <img src="{{EU_AI_BASE64}}" alt="EU AI Act ready" title="EU AI Act ready" />
+  <img src="{{ DSGVO_BASE64 or 'dsgvo.svg' }}" alt="GDPR compliant" title="GDPR compliant" />
+  <img src="{{ EU_AI_BASE64 or 'eu-ai.svg' }}" alt="EU AI Act ready" title="EU AI Act ready" />
 </div>
 
 <!-- SCORE OVERVIEW -->
@@ -195,7 +204,7 @@ th {
       {% if summary_klein or summary_kmu or summary_solo %}<li>Brief summary</li>{% endif %}
       {% if gesamtstrategie or roadmap %}<li>Overall strategy & roadmap</li>{% endif %}
       {% if compliance or datenschutz %}<li>Compliance & data protection</li>{% endif %}
-      {% if foerderprogramme or foerdermittel %}<li>Funding programmes</li>{% endif %}
+      {% if wants_funding and (foerderprogramme or foerdermittel) %}<li>Funding programmes</li>{% endif %}
       {% if tools or innovation %}<li>Tools & innovations</li>{% endif %}
       {% if praxisbeispiele %}<li>Practice examples</li>{% endif %}
       {% if moonshot_vision or eu_ai_act %}<li>Vision & future outlook</li>{% endif %}
@@ -239,7 +248,7 @@ th {
 {% endif %}
 
 <!-- LIVE-WEBSEARCH: FUNDING PROGRAMMES -->
-{% if websearch_links_foerder %}
+{% if wants_funding and websearch_links_foerder %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box" style="background: #f9fbfd; border-left: 5px solid #57c7fa;">
     <h2 style="color: #0e568a;">Latest funding programmes:</h2>
@@ -332,7 +341,7 @@ th {
 {% endif %}
 
 <!-- FUNDING PROGRAMMES -->
-{% if foerderprogramme or foerdermittel %}
+{% if wants_funding and (foerderprogramme or foerdermittel) %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
     <h2>Funding programmes</h2>

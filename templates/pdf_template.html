@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <title>KI‑Readiness‑Report 2025</title>
-  <style>
+  
+  {% if BASE_URL %}<base href="{{ BASE_URL.rstrip(\'/\') }}/templates/">{% endif %}
+<style>
 body {
   background: #fff;
   margin: 0;
@@ -119,6 +121,11 @@ th {
   color: #1e40af;
   font-weight: 600;
 }
+
+thead { display: table-header-group; }
+tfoot { display: table-footer-group; }
+tr, td, th { page-break-inside: avoid; break-inside: avoid; }
+.table, .table tbody, .table tr { page-break-inside: avoid; break-inside: avoid; }
 .icon-row {
   display: flex;
   justify-content: flex-end;
@@ -149,12 +156,14 @@ th {
 </head>
 <body>
 
+{% set wants_funding = (interesse_foerderung in ['ja', 'unklar']) if interesse_foerderung is defined else True %}
+
+
 <!-- LOGO-ZEILE -->
 <div class="logo-row">
   <!-- Use absolute paths so logos resolve correctly in the PDF service -->
-  <!-- Eingebettete Logos als Base64, damit sie offline verfügbar sind -->
-  <img src="{{KI_READY_BASE64}}" alt="KI-Ready 2025" />
-  <img src="{{KI_SICHERHEIT_BASE64}}" alt="KI-Sicherheit.jetzt" />
+  <img src="{{ KI_READY_BASE64 or 'ki-ready-2025.webp' }}" alt="KI-Ready 2025" />
+  <img src="{{ KI_SICHERHEIT_BASE64 or 'ki-sicherheit-logo.png' }}" alt="KI-Sicherheit.jetzt" />
 </div>
 
 <!-- TITELSEITE -->
@@ -167,8 +176,8 @@ th {
 
 <!-- ICON-ZEILE RECHTS OBEN -->
 <div class="icon-row">
-  <img src="{{DSGVO_BASE64}}" alt="DSGVO-Konform" title="DSGVO-Konform" />
-  <img src="{{EU_AI_BASE64}}" alt="EU AI Act Ready" title="EU AI Act Ready" />
+  <img src="{{ DSGVO_BASE64 or 'dsgvo.svg' }}" alt="DSGVO-Konform" title="DSGVO-Konform" />
+  <img src="{{ EU_AI_BASE64 or 'eu-ai.svg' }}" alt="EU AI Act Ready" title="EU AI Act Ready" />
 </div>
 
 <!-- SCORE‑ÜBERSICHT -->
@@ -199,7 +208,7 @@ th {
       {% if summary_klein or summary_kmu or summary_solo %}<li>Kurzfazit</li>{% endif %}
       {% if gesamtstrategie or roadmap %}<li>Gesamtstrategie & Roadmap</li>{% endif %}
       {% if compliance or datenschutz %}<li>Compliance & Datenschutz</li>{% endif %}
-      {% if foerderprogramme or foerdermittel %}<li>Förderprogramme</li>{% endif %}
+      {% if wants_funding and (websearch_links_foerder or foerderprogramme or foerdermittel) %}<li>Förderprogramme</li>{% endif %}
       {% if tools or innovation %}<li>Tools & Innovationen</li>{% endif %}
       {% if praxisbeispiele %}<li>Praxisbeispiele</li>{% endif %}
       {% if moonshot_vision or eu_ai_act %}<li>Vision & Zukunftsausblick</li>{% endif %}
@@ -242,7 +251,7 @@ th {
 </div>
 {% endif %}
 <!-- LIVE-WEBSEARCH: FÖRDERPROGRAMME -->
-{% if websearch_links_foerder %}
+{% if wants_funding and websearch_links_foerder %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box" style="background: #f9fbfd; border-left: 5px solid #57c7fa;">
     <h2 style="color: #0e568a;">Tagesaktuelle Förderprogramme:</h2>
@@ -271,24 +280,31 @@ th {
 </div>
 {% endif %}
 
+
 <!-- KURZFAZIT -->
-{% if summary_klein or summary_kmu or summary_solo %}
+{% if kurzfazit or summary_klein or summary_kmu or summary_solo %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
-    <h2>Kurzfazit</h2>
+    <h2>{% if lang == 'en' %}Brief summary{% else %}Kurzfazit{% endif %}</h2>
     {% if hauptleistung %}
       <div class="hauptleistung-infobox">
-        <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
+        <b>{% if lang == 'en' %}Main service focus:{% else %}Fokus Hauptleistung:{% endif %}</b>
+        <span>{{ hauptleistung }}</span>
       </div>
     {% endif %}
-    {% if summary_klein %}
-      <div><b>Kleine Unternehmen:</b> {{ summary_klein | safe }}</div>
-    {% endif %}
-    {% if summary_kmu %}
-      <div><b>KMU:</b> {{ summary_kmu | safe }}</div>
-    {% endif %}
-    {% if summary_solo %}
-      <div><b>Solo‑Unternehmen:</b> {{ summary_solo | safe }}</div>
+    {% if kurzfazit %}
+      <div>{{ kurzfazit | safe }}</div>
+    {% else %}
+      {% set size = unternehmensgroesse or company_size or '' %}
+      {% if size == 'solo' and summary_solo %}
+        <div><b>{% if lang == 'en' %}Solo entrepreneurs:{% else %}Solo‑Unternehmen:{% endif %}</b> {{ summary_solo | safe }}</div>
+      {% elif size == 'team' and summary_klein %}
+        <div><b>{% if lang == 'en' %}Small enterprises:{% else %}Kleine Unternehmen:{% endif %}</b> {{ summary_klein | safe }}</div>
+      {% elif size == 'kmu' and summary_kmu %}
+        <div><b>KMU:</b> {{ summary_kmu | safe }}</div>
+      {% else %}
+        {% if summary_solo %}<div><b>Solo‑Unternehmen:</b> {{ summary_solo | safe }}</div>{% endif %}
+      {% endif %}
     {% endif %}
   </div>
 </div>
@@ -335,7 +351,7 @@ th {
 {% endif %}
 
 <!-- FÖRDERPROGRAMME -->
-{% if foerderprogramme or foerdermittel %}
+{% if wants_funding and (foerderprogramme or foerdermittel) %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
     <h2>Förderprogramme</h2>
