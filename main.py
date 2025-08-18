@@ -1,4 +1,3 @@
-
 import os
 import json
 import base64
@@ -100,7 +99,7 @@ def verify_admin(authorization: str) -> str:
     return payload.get("email")
 
 def verify_admin_any(authorization: str) -> str:
-    """Accept Bearer JWT (admin) or Basic admin:password"""
+    """Akzeptiert Bearer JWT (admin) oder Basic admin:password"""
     if authorization and authorization.startswith("Basic "):
         try:
             raw = base64.b64decode(authorization.split(" ", 1)[1]).decode("utf-8")
@@ -122,42 +121,80 @@ def verify_admin_any(authorization: str) -> str:
 # Utility
 # ----------------------
 def resolve_recipient(data: Dict[str, Any], default_email: str) -> str:
+    """Bevorzugt Nutzer-Mail aus Payload; fällt auf Token-Mail zurück."""
     for key in ("email", "kontakt_email", "contact_email", "user_email"):
         v = (data.get(key) or "").strip()
         if v and "@" in v:
             return v
     return default_email
 
-def send_html_to_pdf_service(html: str, user_email: str, request_id: Optional[str]=None) -> (bool, str):
+def _post_pdf(url: str, headers: dict, html: str, timeout: httpx.Timeout):
+    """Versuch 1: text/html; Versuch 2: JSON-Fallback."""
+    # 1) text/html
+    r1 = httpx.post(
+        url,
+        content=html.encode("utf-8"),
+        headers={**headers, "Content-Type": "text/html; charset=utf-8"},
+        timeout=timeout,
+    )
+    if r1.status_code == 200:
+        return r1
+
+    # 2) JSON fallback
+    payload = {"html": html}
+    if headers.get("X-User-Email"):
+        payload["to"] = headers["X-User-Email"]
+    r2 = httpx.post(url, json=payload, headers=headers, timeout=timeout)
+    return r2
+
+def send_html_to_pdf_service(html: str, user_email: str, request_id: Optional[str]=None) -> Dict[str, Any]:
     """
-    Sendet HTML an PDF-Service. Versucht zuerst Content-Type text/html,
-    fällt bei Non-200 auf JSON zurück. Gibt (ok, status_string) zurück.
+    Schickt HTML an den PDF-Service. Der PDF-Service mailt an:
+    - ADMIN_EMAIL (im PDF-Service als ENV gesetzt)
+    - und an 'user_email' (X-User-Email Header bzw. JSON 'to').
+
+    Rückgabe:
+      {
+        "ok": bool,
+        "status": int,
+        "type": "pdf|html|json|unknown",
+        "admin": "ok|fail|skip|n/a",
+        "user":  "ok|fail|skip|n/a",
+        "error": str|None
+      }
     """
     if not PDF_SERVICE_URL:
-        return False, "PDF_SERVICE_URL missing"
+        return {"ok": False, "status": 0, "type": "unknown", "admin": "n/a", "user": "n/a", "error": "PDF_SERVICE_URL missing"}
+
     url = f"{PDF_SERVICE_URL}/generate-pdf"
-    headers = {"X-User-Email": user_email or ""}
+    headers = {}
+    if user_email:
+        headers["X-User-Email"] = user_email
     if request_id:
         headers["X-Request-ID"] = request_id
+
     timeout = httpx.Timeout(120.0, connect=20.0)
 
     try:
-        # 1) text/html
-        r = httpx.post(url, content=html.encode("utf-8"),
-                       headers={**headers, "Content-Type": "text/html; charset=utf-8"},
-                       timeout=timeout)
-        if r.status_code == 200:
-            ct = r.headers.get("content-type", "")
-            typ = "pdf" if "pdf" in ct else "html"
-            return True, f"{r.status_code} {typ}"
-        # 2) JSON fallback
-        r2 = httpx.post(url, json={"html": html, "to": user_email}, headers=headers, timeout=timeout)
-        ct = r2.headers.get("content-type", "")
-        typ = "pdf" if "pdf" in ct else "json"
-        return (r2.status_code == 200), f"{r2.status_code} {typ}"
+        resp = _post_pdf(url, headers, html, timeout)
+        ctype = resp.headers.get("content-type", "")
+        kind = "pdf" if "pdf" in ctype else ("html" if "text/html" in ctype else ("json" if "json" in ctype else "unknown"))
+        admin_hdr = resp.headers.get("x-email-admin", "n/a")
+        user_hdr  = resp.headers.get("x-email-user",  "n/a")
+        ok = (resp.status_code == 200 and ("pdf" in ctype or "application/pdf" in ctype))
+        if not ok and resp.text:
+            logger.error("PDF-SERVICE FAIL %s | %s", resp.status_code, resp.text[:400])
+        return {
+            "ok": ok,
+            "status": resp.status_code,
+            "type": kind,
+            "admin": admin_hdr,
+            "user": user_hdr,
+            "error": None if ok else (resp.text[:400] if resp.text else None),
+        }
     except Exception as e:
-        logger.error(f"[PDF] error sending to service: {e}")
-        return False, f"error: {e}"
+        logger.exception("[PDF] error sending to service: %s", e)
+        return {"ok": False, "status": 0, "type": "unknown", "admin": "n/a", "user": "n/a", "error": str(e)}
 
 # ----------------------
 # Routes
@@ -294,7 +331,7 @@ async def admin_list_users(
         with get_db() as conn, conn.cursor() as cur:
             cur.execute(f"SELECT COUNT(*) FROM users {where}", params)
             total = int(cur.fetchone()["count"])
-            # try with created_at
+            # Versuche mit created_at
             try:
                 cur.execute(
                     f"""
@@ -333,9 +370,13 @@ async def admin_list_users(
 @app.post("/pdf_test")
 async def pdf_test(authorization: str = Header(None)):
     admin_email = verify_admin_any(authorization)
-    html = "<html><body><h1>PDF Test</h1><p>Hallo Wolf 👋</p></body></html>"
-    ok, msg = send_html_to_pdf_service(html, admin_email, request_id=str(uuid.uuid4()))
-    return {"sent": ok, "status": msg}
+    html = "<!doctype html><h1>PDF Test</h1><p>Hallo Wolf 👋</p>"
+    rid = str(uuid.uuid4())
+    res = send_html_to_pdf_service(html, admin_email, request_id=rid)
+    return {
+        "ok": res["ok"], "status": res["status"], "type": res["type"],
+        "admin": res["admin"], "user": res["user"], "error": res["error"], "request_id": rid
+    }
 
 # ----------------------
 # Briefing / Report generation
@@ -377,16 +418,18 @@ def _generate_html_report(data: Dict[str, Any], lang: str) -> str:
 
     # Merge into template context
     ctx = {**context, **sections}
+
     # Score percent if available
     try:
-        if hasattr(ga, "calc_score_percent"):
+        if "score_percent" not in ctx and hasattr(ga, "calc_score_percent"):
             ctx["score_percent"] = ga.calc_score_percent(data)
     except Exception:
         pass
-    # Preface if available
+
+    # Preface fallback (korrekte Signatur)
     try:
         if "preface" not in ctx and hasattr(ga, "generate_preface"):
-            ctx["preface"] = ga.generate_preface(sections, lang)
+            ctx["preface"] = ga.generate_preface(lang=lang, score_percent=ctx.get("score_percent"))
     except Exception:
         pass
 
@@ -416,13 +459,17 @@ async def briefing(request: Request, authorization: str = Header(None)):
     email = payload.get("email")
     data = await request.json()
     lang = (data.get("lang") or data.get("language") or "de").lower()
+
     html = _generate_html_report(data, lang)
-    # Optional immediate send if requested
+
+    # Optional: sofort senden, wenn explizit gewünscht
     if data.get("send_pdf_now"):
         rid = str(uuid.uuid4())
         recipient = resolve_recipient(data, email)
-        ok, msg = send_html_to_pdf_service(html, recipient, request_id=rid)
-        return {"html": True, "pdf_sent": ok, "pdf_status": msg, "request_id": rid}
+        res = send_html_to_pdf_service(html, recipient, request_id=rid)
+        return {
+            "html": True, "pdf_sent": res["ok"], "pdf_status": res["status"], "pdf_detail": {"admin": res["admin"], "user": res["user"], "error": res["error"]}, "request_id": rid
+        }
     return {"html": True, "length": len(html)}
 
 @app.post("/briefing_async")
@@ -439,16 +486,25 @@ async def briefing_async(request: Request, background: BackgroundTasks, authoriz
         try:
             TASKS[job_id]["status"] = "generating"
             TASKS[job_id]["progress"] = 10
+
             html = _generate_html_report(data, lang)
+
             TASKS[job_id]["progress"] = 70
+
             rid = str(uuid.uuid4())
             recipient = resolve_recipient(data, email)
-            ok, msg = send_html_to_pdf_service(html, recipient, request_id=rid)
+            res = send_html_to_pdf_service(html, recipient, request_id=rid)
+
             TASKS[job_id]["progress"] = 100
-            TASKS[job_id]["status"] = "completed" if ok else "failed"
-            TASKS[job_id]["pdf_sent"] = bool(ok)
-            TASKS[job_id]["pdf_status"] = msg
+            TASKS[job_id]["status"] = "completed" if res["ok"] else "failed"
+            TASKS[job_id]["pdf_sent"] = bool(res["ok"])
+            TASKS[job_id]["pdf_status"] = res["status"]
             TASKS[job_id]["request_id"] = rid
+            TASKS[job_id]["mail_admin"] = res["admin"]
+            TASKS[job_id]["mail_user"] = res["user"]
+            if res["error"]:
+                TASKS[job_id]["pdf_error"] = res["error"]
+
         except Exception as e:
             TASKS[job_id]["status"] = "failed"
             TASKS[job_id]["error"] = str(e)
