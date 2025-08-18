@@ -2,8 +2,6 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  {% if BASE_URL %}<base href="{{ BASE_URL }}/templates/">{% endif %}
-
   <title>KI‑Readiness‑Report 2025</title>
   <style>
 body {
@@ -147,11 +145,7 @@ th {
 .score-box b {
   color: #1e40af;
 }
-  
-p, li { line-height: 1.58; }
-.report-section > .chapter-box { max-width: 16cm; margin: 0 auto; }
-.score-box p { margin: 6px 0; }
-</style>
+  </style>
 </head>
 <body>
 
@@ -159,8 +153,8 @@ p, li { line-height: 1.58; }
 <div class="logo-row">
   <!-- Use absolute paths so logos resolve correctly in the PDF service -->
   <!-- Eingebettete Logos als Base64, damit sie offline verfügbar sind -->
-  <img src="{{ KI_READY_BASE64 or 'ki-ready-2025.webp' }}" alt="KI-Ready 2025" />
-  <img src="{{ KI_SICHERHEIT_BASE64 or 'ki-sicherheit-logo.png' }}" alt="KI-Sicherheit.jetzt" />
+  <img src="{{KI_READY_BASE64}}" alt="KI-Ready 2025" />
+  <img src="{{KI_SICHERHEIT_BASE64}}" alt="KI-Sicherheit.jetzt" />
 </div>
 
 <!-- TITELSEITE -->
@@ -173,8 +167,8 @@ p, li { line-height: 1.58; }
 
 <!-- ICON-ZEILE RECHTS OBEN -->
 <div class="icon-row">
-  <img src="{{ DSGVO_BASE64 or 'dsgvo.svg' }}" alt="DSGVO-Konform" title="DSGVO-Konform" />
-  <img src="{{ EU_AI_BASE64 or 'eu-ai.svg' }}" alt="EU AI Act Ready" title="EU AI Act Ready" />
+  <img src="{{DSGVO_BASE64}}" alt="DSGVO-Konform" title="DSGVO-Konform" />
+  <img src="{{EU_AI_BASE64}}" alt="EU AI Act Ready" title="EU AI Act Ready" />
 </div>
 
 <!-- SCORE‑ÜBERSICHT -->
@@ -205,8 +199,7 @@ p, li { line-height: 1.58; }
       {% if summary_klein or summary_kmu or summary_solo %}<li>Kurzfazit</li>{% endif %}
       {% if gesamtstrategie or roadmap %}<li>Gesamtstrategie & Roadmap</li>{% endif %}
       {% if compliance or datenschutz %}<li>Compliance & Datenschutz</li>{% endif %}
-      {% set wants_funding = (interesse_foerderung == 'ja') or (interesse_foerderung == 'unklar') %}
-{% if wants_funding and (foerderprogramme or foerdermittel) %}<li>Förderprogramme</li>{% endif %}
+      {% if foerderprogramme or foerdermittel %}<li>Förderprogramme</li>{% endif %}
       {% if tools or innovation %}<li>Tools & Innovationen</li>{% endif %}
       {% if praxisbeispiele %}<li>Praxisbeispiele</li>{% endif %}
       {% if moonshot_vision or eu_ai_act %}<li>Vision & Zukunftsausblick</li>{% endif %}
@@ -249,8 +242,7 @@ p, li { line-height: 1.58; }
 </div>
 {% endif %}
 <!-- LIVE-WEBSEARCH: FÖRDERPROGRAMME -->
-{% set wants_funding = (interesse_foerderung == 'ja') or (interesse_foerderung == 'unklar') %}
-{% if wants_funding and websearch_links_foerder %}
+{% if websearch_links_foerder %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box" style="background: #f9fbfd; border-left: 5px solid #57c7fa;">
     <h2 style="color: #0e568a;">Tagesaktuelle Förderprogramme:</h2>
@@ -280,7 +272,6 @@ p, li { line-height: 1.58; }
 {% endif %}
 
 <!-- KURZFAZIT -->
-{% set size = unternehmensgroesse or company_size or '' %}
 {% if summary_klein or summary_kmu or summary_solo %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
@@ -290,14 +281,14 @@ p, li { line-height: 1.58; }
         <b>Fokus Hauptleistung:</b> <span>{{ hauptleistung }}</span>
       </div>
     {% endif %}
-    {% if size == 'solo' and summary_solo %}
-      <div><b>Solo‑Unternehmen:</b> {{ summary_solo | safe }}</div>
-    {% elif size == 'team' and summary_klein %}
+    {% if summary_klein %}
       <div><b>Kleine Unternehmen:</b> {{ summary_klein | safe }}</div>
-    {% elif size == 'kmu' and summary_kmu %}
+    {% endif %}
+    {% if summary_kmu %}
       <div><b>KMU:</b> {{ summary_kmu | safe }}</div>
-    {% else %}
-      {% if summary_solo %}<div><b>Solo‑Unternehmen:</b> {{ summary_solo | safe }}</div>{% endif %}
+    {% endif %}
+    {% if summary_solo %}
+      <div><b>Solo‑Unternehmen:</b> {{ summary_solo | safe }}</div>
     {% endif %}
   </div>
 </div>
@@ -344,8 +335,7 @@ p, li { line-height: 1.58; }
 {% endif %}
 
 <!-- FÖRDERPROGRAMME -->
-{% set wants_funding = (interesse_foerderung == 'ja') or (interesse_foerderung == 'unklar') %}
-{% if wants_funding and (foerderprogramme or foerdermittel) %}
+{% if foerderprogramme or foerdermittel %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
     <h2>Förderprogramme</h2>
