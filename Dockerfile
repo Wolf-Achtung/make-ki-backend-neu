@@ -1,48 +1,52 @@
 # ----------------------------
-# Dockerfile für KI-Readiness-Check Backend
-# inkl. automatischer DB-Initialisierung
+# Dockerfile – Multi-Stage
 # ----------------------------
 
-FROM python:3.11-slim
+# Stage 1: Builder mit Dev-Headern
+FROM python:3.11-slim-bookworm AS builder
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV LANG=C.UTF-8
+ENV PIP_NO_CACHE_DIR=1
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential python3-dev libffi-dev \
+    libcairo2-dev libxml2-dev libxslt1-dev \
+    libjpeg62-turbo-dev zlib1g-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN python -m pip install --upgrade pip wheel setuptools \
+ && pip wheel --wheel-dir=/build/wheels -r requirements.txt
+
+# Stage 2: Runtime minimal
+FROM python:3.11-slim-bookworm AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    LANG=C.UTF-8 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# Linux-Packages installieren (z. B. für Cairo/Pango etc.)
-RUN apt-get update && \
-    apt-get install -y \
-    build-essential \
-    python3-dev \
-    libffi-dev \
+# Nur Runtime-Libs
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
-    libcairo2-dev \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libgdk-pixbuf2.0-0 \
-    libgdk-pixbuf2.0-dev \
-    libxml2 \
-    libssl-dev \
-    libjpeg-dev \
-    zlib1g-dev \
+    libpango-1.0-0 libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    librsvg2-2 \
+    libxml2 libxslt1.1 \
     shared-mime-info \
-    fonts-liberation \
-    fonts-dejavu \
-    curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    fonts-dejavu fonts-liberation \
+    tzdata curl \
+ && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Wheels aus Builder installieren (kein Compiler nötig)
+COPY --from=builder /build/wheels /wheels
+RUN pip install --no-index --find-links=/wheels /wheels/*
 
+# App rein
 COPY . .
 
 EXPOSE 8000
 
-# 🚀 Variante 1: Mit kompletter DB-Initialisierung (für den ersten Run)
-ENTRYPOINT ["sh", "-c", "python full_init.py && uvicorn main:app --host 0.0.0.0 --port 8000"]
-
-# 🚀 Variante 2: Nur API starten (für Dauerbetrieb)
-# ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["sh", "-c", "([ \"$RUN_DB_INIT\" = \"true\" ] || [ ! -f .seeded ]) && python full_init.py && touch .seeded || true; uvicorn main:app --host 0.0.0.0 --port 8000"]
