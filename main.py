@@ -8,7 +8,9 @@ from typing import Any, Dict, Optional
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, HTMLResponse
-from jose import jwt, JWTError
+from jose import jwt
+from jose.exceptions import JWTError
+
 import httpx
 
 # Optional DB (wenn DATABASE_URL gesetzt ist)
