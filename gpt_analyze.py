@@ -1,4 +1,3 @@
-
 import os
 import re
 import json
@@ -29,7 +28,6 @@ except Exception:
 client = OpenAI()
 
 # ---------- ZIP bootstrap ----------
-
 def ensure_unzipped(zip_name: str, dest_dir: str):
     try:
         if os.path.exists(zip_name) and not os.path.exists(dest_dir):
@@ -44,7 +42,6 @@ ensure_unzipped("branchenkontext.zip", "branchenkontext")
 ensure_unzipped("data.zip", "data")
 
 # ---------- IO helpers ----------
-
 def load_yaml(path: str):
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
@@ -54,14 +51,14 @@ def load_text(path: str) -> str:
         return f.read()
 
 # ---------- Minimal templating ----------
-
 def render_template(template: str, context: dict) -> str:
     """
-    Very small renderer for {{ key }} and {{ key | join(', ') }}.
+    Minimaler Renderer für {{ key }} und {{ key | join(', ') }}.
+    Wird NICHT mehr für das PDF verwendet (dort Jinja).
+    Bleibt aber für Prompts etc. nützlich.
     """
     def replace_join(m: re.Match) -> str:
-        key = m.group(1)
-        sep = m.group(2)
+        key = m.group(1); sep = m.group(2)
         val = context.get(key.strip(), "")
         if isinstance(val, list):
             return sep.join(str(v) for v in val)
@@ -83,20 +80,43 @@ def render_template(template: str, context: dict) -> str:
     rendered = re.sub(r"\{\{\s*(\w+)\s*\}\}", replace_simple, rendered)
     return rendered
 
-# ---------- Context builders ----------
+# ---------- Self-employed detection ----------
+def _as_int(x):
+    try:
+        return int(str(x).strip())
+    except Exception:
+        return None
 
+def is_self_employed(data: dict) -> bool:
+    """
+    Sehr robuste Heuristik: Solo, Freelancer, self-employed, Mitarbeiterzahl <=1 etc.
+    """
+    keys_text = ["beschaeftigungsform", "beschäftigungsform", "arbeitsform", "rolle", "role", "occupation", "unternehmensform", "company_type"]
+    txt = " ".join(str(data.get(k, "") or "") for k in keys_text).lower()
+    if any(s in txt for s in ["selbst", "freelanc", "solo", "self-employ"]):
+        return True
+    for k in ["mitarbeiter", "mitarbeiterzahl", "anzahl_mitarbeiter", "employees", "employee_count", "team_size"]:
+        n = _as_int(data.get(k))
+        if n is not None and n <= 1:
+            return True
+    return False
+
+# ---------- Context builders ----------
 def build_context(data: dict, branche: str, lang: str = "de") -> dict:
-    """
-    Load sector context YAML and merge questionnaire data.
-    """
     context_path = f"branchenkontext/{branche}.{lang}.yaml"
     if not os.path.exists(context_path):
         context_path = f"branchenkontext/default.{lang}.yaml"
     context = load_yaml(context_path) if os.path.exists(context_path) else {}
     context.update(data or {})
-    # copyright defaults for footer
+
+    # Footer defaults
     context.setdefault("copyright_year", datetime.now().year)
     context.setdefault("copyright_owner", "Wolf Hohl")
+
+    # Company flags
+    context["is_self_employed"] = is_self_employed(data)
+    context.setdefault("company_size", _as_int(data.get("mitarbeiterzahl") or data.get("employees") or 1) or 1)
+
     return context
 
 def add_innovation_features(context, branche, data):
@@ -118,7 +138,6 @@ def add_websearch_links(context, branche, projektziel):
     return context
 
 # ---------- Formatting helpers ----------
-
 def fix_encoding(text: str) -> str:
     return (
         (text or "")
@@ -130,16 +149,11 @@ def fix_encoding(text: str) -> str:
     )
 
 def ensure_html(text: str, lang: str = "de") -> str:
-    """
-    Heuristically convert plain/markdown-ish into simple HTML if no tags are present.
-    Keeps existing HTML unchanged.
-    """
     t = (text or "").strip()
     if "<" in t and ">" in t:
-        return t  # looks like HTML already
+        return t
     lines = [ln.rstrip() for ln in t.splitlines() if ln.strip()]
-    html = []
-    in_ul = False
+    html = []; in_ul = False
     for ln in lines:
         if re.match(r"^[-•*]\s+", ln):
             if not in_ul:
@@ -160,11 +174,7 @@ def ensure_html(text: str, lang: str = "de") -> str:
     return "\n".join(html)
 
 # ---------- Prompt builder ----------
-
 def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
-    """
-    Load the prompt for chapter+lang and render variables. Enforce a scannable, HTML-only output style.
-    """
     search_paths = [
         f"prompts/{lang}/{chapter}.md",
         f"prompts_unzip/{lang}/{chapter}.md",
@@ -183,13 +193,26 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
             except Exception:
                 continue
     if prompt_text is None:
-        # final attempt (may fail)
-        prompt_text = load_text(f"prompts/{lang}/{chapter}.md")
+        prompt_text = f"[NO PROMPT FOUND for {chapter}/{lang}]"
 
     try:
         prompt = render_template(prompt_text, context)
     except Exception as e:
         prompt = f"[Prompt-Rendering-Fehler: {e}]\n{prompt_text}"
+
+    # Stilvorgaben + Solo-Hinweis
+    solo_note_de = (
+        "\n\nWICHTIG: Der/die Nutzer:in arbeitet SOLO-selbstständig. "
+        "Vermeide Empfehlungen, die nur für Unternehmen mit mehreren Mitarbeitenden sinnvoll sind "
+        "(Abteilungen, HR-Teams, komplexe Hierarchien). "
+        "Wenn Förderprogramme genannt werden, fokussiere Programme, die explizit Solo-Selbstständige adressieren."
+    )
+    solo_note_en = (
+        "\n\nIMPORTANT: The user is a SOLO self-employed professional. "
+        "Avoid advice that only applies to SMEs with multiple employees "
+        "(departments, HR teams, complex hierarchies). "
+        "If you mention funding, focus on programs explicitly available to solo self-employed."
+    )
 
     if str(lang).lower().startswith("de"):
         style = (
@@ -201,6 +224,8 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
             "- Warum? (max. 2 Sätze, Impact)\n"
             "- Nächste 3 Schritte (Checkliste)\n"
         )
+        if context.get("is_self_employed"):
+            style += solo_note_de
     else:
         style = (
             "\n\n---\n"
@@ -208,13 +233,15 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
             "Use <h3>, <p>, <ul>, <ol>, <table> where helpful. "
             "No meta, no preface.\n"
             "- What to do (3–5 precise actions)\n"
-            "- Why (max 2 sentences, impact)\n"
+            "- Why (max 2 sentences)\n"
             "- Next 3 steps (checklist)\n"
         )
+        if context.get("is_self_employed"):
+            style += solo_note_en
+
     return prompt + style
 
 # ---------- OpenAI calls ----------
-
 def _chat_complete(messages, model_name: Optional[str], temperature: Optional[float] = None) -> str:
     args = {"model": model_name or os.getenv("GPT_MODEL_NAME", "gpt-5"), "messages": messages}
     if temperature is None:
@@ -225,16 +252,14 @@ def _chat_complete(messages, model_name: Optional[str], temperature: Optional[fl
     return resp.choices[0].message.content.strip()
 
 def gpt_generate_section(data, branche, chapter, lang="de"):
-    # language normalization
     lang = data.get("lang") or data.get("language") or data.get("sprache") or lang
 
-    # context
     context = build_context(data, branche, lang)
     projektziel = data.get("projektziel", "")
     context = add_websearch_links(context, branche, projektziel)
     context = add_innovation_features(context, branche, data)
 
-    # checklist (optional)
+    # Checklisten optional aus data/
     if not context.get("checklisten"):
         md_path = "data/check_ki_readiness.md"
         if os.path.exists(md_path):
@@ -263,7 +288,7 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
     section_text = _chat_complete(
         messages=[
             {"role": "system", "content": (
-                "Du bist ein TÜV-zertifizierter KI-Manager, KI-Strategieberater, "
+                "Du bist TÜV-zertifizierter KI-Manager, KI-Strategieberater, "
                 "Datenschutz- und Fördermittel-Experte. "
                 "Liefere präzise, umsetzbare, aktuelle und branchenrelevante Inhalte als HTML."
             ) if str(lang).lower().startswith("de") else (
@@ -278,16 +303,12 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
 
     section_html = ensure_html(fix_encoding(section_text), lang=lang)
 
-    # limit large HTML tables for tools/funding to 5 rows
+    # große Tabellen (Tools/Förderung) auf 5 Zeilen limitieren
     if chapter in {"tools", "foerderprogramme"}:
         try:
             parts = section_html.split("<tr>")
             if len(parts) > 6:
-                header = parts[0]
-                rows = parts[1:6]
-                tail = ""
-                if "</table>" in parts[-1]:
-                    tail = "</table>"
+                header = parts[0]; rows = parts[1:6]; tail = "</table>" if "</table>" in parts[-1] else ""
                 section_html = "<tr>".join([header] + rows) + tail
         except Exception:
             pass
@@ -295,7 +316,6 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
     return section_html
 
 # ---------- Distillation helpers ----------
-
 def _distill_two_lists(html_src: str, lang: str, title_a: str, title_b: str):
     model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
     if str(lang).lower().startswith("de"):
@@ -334,8 +354,7 @@ def distill_quickwins_risks(source_html: str, lang: str = "de") -> Dict[str, str
         return {"quick_wins_html": "", "risks_html": ""}
     m = re.split(r"(?i)<h3[^>]*>", html)
     if len(m) >= 3:
-        a = "<h3>" + m[1]
-        b = "<h3>" + m[2]
+        a = "<h3>" + m[1]; b = "<h3>" + m[2]
         if "Quick Wins" in a or "Quick" in a:
             return {"quick_wins_html": a, "risks_html": b}
         else:
@@ -369,29 +388,22 @@ def distill_recommendations(source_html: str, lang: str = "de") -> str:
         return ""
 
 # ---------- Scoring ----------
-
 def calc_score_percent(data: dict) -> int:
-    score = 0
-    max_score = 35
-    try:
-        score += int(data.get("digitalisierungsgrad", 1))
-    except Exception:
-        score += 1
+    score = 0; max_score = 35
+    try: score += int(data.get("digitalisierungsgrad", 1))
+    except Exception: score += 1
     auto_map = {"sehr_niedrig": 0, "eher_niedrig": 1, "mittel": 3, "eher_hoch": 4, "sehr_hoch": 5}
     score += auto_map.get(str(data.get("automatisierungsgrad", "")).lower(), 0)
     pap_map = {"0-20": 1, "21-50": 2, "51-80": 4, "81-100": 5}
     score += pap_map.get(str(data.get("prozesse_papierlos", "0-20")), 0)
     know_map = {"keine": 0, "grundkenntnisse": 1, "mittel": 3, "fortgeschritten": 4, "expertenwissen": 5}
     score += know_map.get(str(data.get("ki_knowhow", "keine")).lower(), 0)
-    try:
-        score += int(data.get("risikofreude", 1))
-    except Exception:
-        score += 1
+    try: score += int(data.get("risikofreude", 1))
+    except Exception: score += 1
     percent = max(0, min(100, int((score / max_score) * 100)))
     return percent
 
 # ---------- Preface ----------
-
 def generate_preface(lang: str = "de", score_percent: Optional[float] = None) -> str:
     if str(lang).lower().startswith("de"):
         preface = (
@@ -420,62 +432,74 @@ def generate_preface(lang: str = "de", score_percent: Optional[float] = None) ->
         return preface
 
 # ---------- Full report generation ----------
-
 def gpt_generate_section_html(data, branche, chapter, lang="de") -> str:
     html = gpt_generate_section(data, branche, chapter, lang=lang)
     return ensure_html(html, lang)
 
 def generate_full_report(data: dict, lang: str = "de") -> dict:
     """
-    Produce chapter HTML AND template-ready fields:
+    Liefert Kapitel-HTML & Template-Felder:
       exec_summary_html, quick_wins_html, risks_html, recommendations_html,
-      roadmap_html, sections_html, (plus optional foerderprogramme/tools/compliance/praxisbeispiel),
+      roadmap_html, sections_html (+ optional foerderprogramme/tools/compliance/praxisbeispiel),
       preface, score_percent.
     """
     branche = (data.get("branche") or "default").lower()
     data["score_percent"] = calc_score_percent(data)
 
+    solo = is_self_employed(data)
     wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja", "unklar"}
-    chapters = ["executive_summary", "tools"] + (["foerderprogramme"] if wants_funding else []) + ["roadmap", "compliance", "praxisbeispiel"]
+
+    # Solo-Selbstständig: nur Förderprogramme, wenn explizit gewünscht
+    chapters = ["executive_summary", "tools"] + (["foerderprogramme"] if (wants_funding) else []) + ["roadmap", "compliance", "praxisbeispiel"]
 
     out: Dict[str, str] = {}
-    full_text_blocks = []
-
     for chap in chapters:
         try:
             html = gpt_generate_section_html(data, branche, chap, lang=lang)
             out[chap] = html
-            full_text_blocks.append(html)
         except Exception as e:
             out[chap] = f"<p>[Fehler in Kapitel {chap}: {e}]</p>"
 
     # Preface
     out["preface"] = generate_preface(lang=lang, score_percent=data.get("score_percent"))
 
-    # Distill Quick Wins & Risks from executive_summary + roadmap fallback
+    # Quick Wins & Risiken aus Executive+Roadmap
     src_for_qr = (out.get("executive_summary") or "") + "\n\n" + (out.get("roadmap") or "")
     q_r = distill_quickwins_risks(src_for_qr, lang=lang)
     out["quick_wins_html"] = q_r.get("quick_wins_html", "")
     out["risks_html"] = q_r.get("risks_html", "")
 
-    # Recommendations distilled from roadmap (+ compliance as fallback)
+    # Empfehlungen aus Roadmap (+ Compliance Fallback)
     src_for_rec = (out.get("roadmap") or "") + "\n\n" + (out.get("compliance") or "")
     out["recommendations_html"] = distill_recommendations(src_for_rec, lang=lang) or (out.get("roadmap") or "")
 
     # Roadmap block
     out["roadmap_html"] = out.get("roadmap", "")
-
-    # Exec summary passthrough
+    # Exec summary
     out["exec_summary_html"] = out.get("executive_summary", "")
 
-    # Aggregate remaining sections into sections_html
-    sections_html_parts = []
-    for k, label in [("tools", "Tools"), ("foerderprogramme", "Förderprogramme" if str(lang).lower().startswith("de") else "Funding"), ("compliance", "Compliance"), ("praxisbeispiel", "Praxisbeispiel" if str(lang).lower().startswith("de") else "Case Study")]:
-        if out.get(k):
-            sections_html_parts.append(f"<h2>{label}</h2>\n{out[k]}")
-    out["sections_html"] = "\n\n".join(sections_html_parts)
+    # Rest zu sections_html
+    parts = []
+    label_tools = "Tools"
+    label_foerd = "Förderprogramme" if str(lang).lower().startswith("de") else "Funding"
+    label_comp = "Compliance"
+    label_case = "Praxisbeispiel" if str(lang).lower().startswith("de") else "Case Study"
 
-    # Also return score_percent for the score ring
+    if out.get("tools"):
+        parts.append(f"<h2>{label_tools}</h2>\n{out['tools']}")
+    if out.get("foerderprogramme"):
+        # Solo? Kleiner Hinweis + ggf. Filterung kann der Prompt bereits
+        if solo:
+            note = "<p><em>Hinweis: Ausgewählt für Solo-Selbstständige (sofern verfügbar).</em></p>"
+            parts.append(f"<h2>{label_foerd}</h2>\n{note}\n{out['foerderprogramme']}")
+        else:
+            parts.append(f"<h2>{label_foerd}</h2>\n{out['foerderprogramme']}")
+    if out.get("compliance"):
+        parts.append(f"<h2>{label_comp}</h2>\n{out['compliance']}")
+    if out.get("praxisbeispiel"):
+        parts.append(f"<h2>{label_case}</h2>\n{out['praxisbeispiel']}")
+
+    out["sections_html"] = "\n\n".join(parts)
     out["score_percent"] = data["score_percent"]
     return out
 
