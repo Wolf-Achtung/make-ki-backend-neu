@@ -240,7 +240,7 @@ def api_login(body: Dict[str, Any]):
             # Passwortcheck via pgcrypto: crypt(<pw>, users.password)
             cur.execute(
                 "SELECT id, email, role FROM users "
-                "WHERE lower(email) = lower(%s) AND password = crypt(%s, password)",
+                "WHERE lower(email) = lower(%s) AND password_hash = crypt(%s, password_hash)",
                 (email, password),
             )
             row = cur.fetchone()
@@ -260,6 +260,14 @@ def api_login(body: Dict[str, Any]):
             return {"token": token, "email": ADMIN_LOGIN_EMAIL, "role": "admin"}
 
     raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+# -----------------------------------------------------------------------------
+# Admin Check
+# -----------------------------------------------------------------------------
+@app.get("/api/admin-check")
+def admin_check(user=Depends(current_user)):
+    return {"ok": True, "email": user.get("email"), "role": user.get("role")}
 
 
 # -----------------------------------------------------------------------------
