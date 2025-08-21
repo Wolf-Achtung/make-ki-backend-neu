@@ -24,9 +24,17 @@ except Exception:  # pragma: no cover
 # Optional: Analyse-Modul
 try:
     from gpt_analyze import analyze_briefing  # deine Datei
-from gpt_analyze import calc_score_percent
 except Exception:
     analyze_briefing = None  # Fallback unten
+
+# Sicherer, separater Import (nicht im obigen try!)
+try:
+    from gpt_analyze import calc_score_percent
+except Exception:
+    # Fallback, falls das Modul beim Boot nicht geladen werden kann
+    def calc_score_percent(_data):
+        return 0
+
 
 
 # -----------------------------------------------------------------------------
