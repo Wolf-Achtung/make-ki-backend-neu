@@ -3,6 +3,7 @@ import json
 import time
 import uuid
 import logging
+import inspect
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
@@ -263,14 +264,6 @@ def api_login(body: Dict[str, Any]):
 
 
 # -----------------------------------------------------------------------------
-# Admin Check
-# -----------------------------------------------------------------------------
-@app.get("/api/admin-check")
-def admin_check(user=Depends(current_user)):
-    return {"ok": True, "email": user.get("email"), "role": user.get("role")}
-
-
-# -----------------------------------------------------------------------------
 # PDF Smoke-Test (manuell)
 # -----------------------------------------------------------------------------
 @app.post("/pdf_test")
@@ -320,16 +313,27 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
 
             # 2) Analyse → HTML erzeugen
             html: str
-            if analyze_briefing:
-                try:
-                    # Deine Analysefunktion – erwartet dict zurück mit "html" (oder direkt HTML).
-                    result = await analyze_briefing(body) if callable(getattr(analyze_briefing, "__call__", None)) else None
-                    if isinstance(result, dict) and "html" in result:
-                        html = result["html"]
-                    elif isinstance(result, str) and "<html" in result.lower():
-                        html = result
-                    else:
-                        html = html_fallback(lang)
+if analyze_briefing:
+    try:
+        # analyze_briefing kann sync ODER async sein
+        if inspect.iscoroutinefunction(analyze_briefing):
+            result = await analyze_briefing(body)
+        else:
+            result = analyze_briefing(body)
+
+        if isinstance(result, dict) and "html" in result:
+            html = result["html"]
+        elif isinstance(result, str) and "<html" in result.lower():
+            html = result
+        else:
+            logger.warning("analyze_briefing returned unexpected result type: %s", type(result))
+            html = html_fallback(lang)
+    except Exception as ex:
+        logger.exception("analyze_briefing failed: %s", ex)
+        html = html_fallback(lang)
+else:
+    logger.warning("Analyze module not loaded; using fallback.")
+    html = html_fallback(lang)
                 except Exception as ex:
                     logger.exception("analyze_briefing failed: %s", ex)
                     html = html_fallback(lang)
