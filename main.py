@@ -27,7 +27,13 @@ try:
 from gpt_analyze import calc_score_percent
 except Exception:
     analyze_briefing = None  # Fallback unten
-
+# separat importieren, NICHT im obigen try:, damit Syntax immer korrekt bleibt
+try:
+    from gpt_analyze import calc_score_percent
+except Exception:
+    # defensiver Fallback, falls Modul beim Boot nicht verfügbar ist
+    def calc_score_percent(_data):
+        return 0
 
 # -----------------------------------------------------------------------------
 # Konfiguration / Umgebungsvariablen
