@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <title>KI‑Readiness‑Report 2025</title>
   
-  {% if BASE_URL %}<base href="{{ BASE_URL.rstrip(\'/\') }}/templates/">{% endif %}
+  {# Ensure BASE_URL is processed correctly without escaping the slash in Jinja #}
+  {% if BASE_URL %}<base href="{{ BASE_URL.rstrip('/') }}/templates/">{% endif %}
 <style>
 body {
   background: #fff;
