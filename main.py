@@ -311,33 +311,28 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
             user_email = resolve_recipient(body, default_email=user["email"])
             TASKS[job_id]["email_user"] = user_email
 
-            # 2) Analyse → HTML erzeugen
             html: str
-if analyze_briefing:
-    try:
-        # analyze_briefing kann sync ODER async sein
-        if inspect.iscoroutinefunction(analyze_briefing):
-            result = await analyze_briefing(body)
-        else:
-            result = analyze_briefing(body)
+            if analyze_briefing:
+                try:
+                    # analyze_briefing kann sync ODER async sein
+                    if inspect.iscoroutinefunction(analyze_briefing):
+                        result = await analyze_briefing(body)
+                    else:
+                        result = analyze_briefing(body)
 
-        if isinstance(result, dict) and "html" in result:
-            html = result["html"]
-        elif isinstance(result, str) and "<html" in result.lower():
-            html = result
-        else:
-            logger.warning("analyze_briefing returned unexpected result type: %s", type(result))
-            html = html_fallback(lang)
-    except Exception as ex:
-        logger.exception("analyze_briefing failed: %s", ex)
-        html = html_fallback(lang)
-else:
-    logger.warning("Analyze module not loaded; using fallback.")
-    html = html_fallback(lang)
+                    if isinstance(result, dict) and "html" in result:
+                        html = result["html"]
+                    elif isinstance(result, str) and "<html" in result.lower():
+                        html = result
+                    else:
+                        logger.warning("analyze_briefing returned unexpected type: %s", type(result))
+                        html = html_fallback(lang)
                 except Exception as ex:
                     logger.exception("analyze_briefing failed: %s", ex)
                     html = html_fallback(lang)
             else:
+                logger.warning("Analyze module not loaded; using fallback.")
+                html = html_fallback(lang)
                 html = html_fallback(lang)
 
             TASKS[job_id]["html_len"] = len(html)
