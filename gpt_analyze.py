@@ -75,6 +75,113 @@ def load_text(path: str) -> str:
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
+# ------------------------------- Fördermittel ---------------------------------
+def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
+    """
+    Generates an HTML fragment with funding programmes filtered according to
+    company size and region. It reads the CSV file in data/foerdermittel.csv
+    and picks a handful of relevant programmes. If no programmes match
+    filters, it falls back to the first few entries. The output is a list
+    with basic information and links. Language is either 'de' or 'en'.
+    """
+    import csv
+    path_csv = os.path.join("data", "foerdermittel.csv")
+    if not os.path.exists(path_csv):
+        return ""
+    programmes = []
+    try:
+        with open(path_csv, newline="", encoding="utf-8") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                programmes.append(row)
+    except Exception:
+        return ""
+    # Filter by company size (target group) where possible
+    size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
+    zielgruppe_map = {
+        "solo": ["solo", "freelancer", "freiberuflich", "einzel"],
+        "team": ["kmu", "team", "small"],
+        "kmu": ["kmu", "sme"],
+    }
+    targets = zielgruppe_map.get(size, [])
+    # Filter by region: if Bundesland provided, prefer programmes marked with that region; else include 'Bund'
+    region_code = (data.get("bundesland") or data.get("state") or "").lower()
+    def matches(row):
+        # Zielgruppe filter: if list not empty, match any keyword; else no filter
+        zg = row.get("Zielgruppe", "").lower()
+        target_ok = True if not targets else any(t in zg for t in targets)
+        # Region filter: show programmes for 'bund' or matching state code
+        reg = row.get("Region", "").lower()
+        region_ok = True
+        if region_code:
+            region_ok = (reg == region_code) or (reg == "bund")
+        return target_ok and region_ok
+    filtered = [p for p in programmes if matches(p)]
+    if not filtered:
+        filtered = programmes[:max_items]
+    selected = filtered[:max_items]
+    # Build HTML
+    if not selected:
+        return ""
+    title = "Dynamische Förderprogramme" if lang.startswith("de") else "Dynamic funding programmes"
+    html_parts = [f"<h3>{title}</h3>", "<ul>"]
+    for prog in selected:
+        name = prog.get("Name", "")
+        desc = prog.get("Beschreibung", "").strip()
+        link = prog.get("Link", "")
+        grant = prog.get("Fördersumme (€)", "")
+        # Compose line differently depending on language
+        if lang.startswith("de"):
+            line = f"<b>{name}</b>: {desc} – Förderhöhe: {grant}"
+        else:
+            line = f"<b>{name}</b>: {desc} – Funding amount: {grant}"
+        if link:
+            line += f" – <a href=\"{link}\" target=\"_blank\">Link</a>"
+        html_parts.append(f"<li>{line}</li>")
+    html_parts.append("</ul>")
+    return "\n".join(html_parts)
+
+# ---------------------------- Erweiterte Risiken -----------------------------
+def build_extended_risks(data: dict, lang: str = "de") -> str:
+    """
+    Returns an HTML fragment with additional risk messages based on the
+    questionnaire responses. If no additional risks are identified, returns
+    an empty string. The returned fragment is a list (<ul>) of items.
+    """
+    risks = []
+    dq = (data.get("datenqualitaet") or data.get("data_quality") or "").lower()
+    if dq in {"niedrig", "low"}:
+        if lang.startswith("de"):
+            risks.append("Die Datenqualität ist niedrig; unstrukturierte und lückenhafte Daten erschweren KI‑Projekte und können zu fehlerhaften Ergebnissen führen.")
+        else:
+            risks.append("Your data quality is low; unstructured or incomplete data make AI projects difficult and can lead to incorrect results.")
+    ai_rm = (data.get("ai_roadmap") or "").lower()
+    if ai_rm in {"nein", "no"}:
+        if lang.startswith("de"):
+            risks.append("Es fehlt eine klar definierte KI‑Roadmap. Ohne strategische Planung besteht das Risiko von ineffizienten Insellösungen.")
+        else:
+            risks.append("There is no clearly defined AI roadmap. Without strategic planning there is a risk of inefficient point solutions.")
+    gov = (data.get("governance") or "").lower()
+    if gov in {"nein", "no"}:
+        if lang.startswith("de"):
+            risks.append("Es bestehen keine internen Richtlinien für Daten- oder KI‑Governance; dies erhöht das Risiko von Rechtsverstößen und unsauberen Prozessen.")
+        else:
+            risks.append("There are no internal guidelines for data or AI governance; this increases the risk of legal violations and inconsistent processes.")
+    inv = (data.get("innovationskultur") or data.get("innovation_culture") or "").lower()
+    if inv in {"eher_zurueckhaltend", "sehr_zurueckhaltend", "rather_reluctant", "very_reluctant"}:
+        if lang.startswith("de"):
+            risks.append("Die Innovationskultur im Unternehmen ist zurückhaltend; eine ablehnende Haltung gegenüber neuen Technologien kann den Erfolg von KI‑Projekten gefährden.")
+        else:
+            risks.append("Your company’s innovation culture is reluctant; a sceptical attitude towards new technologies can jeopardise AI project success.")
+    if not risks:
+        return ""
+    # Build HTML list
+    parts = ["<ul>"]
+    for r in risks:
+        parts.append(f"<li>{r}</li>")
+    parts.append("</ul>")
+    return "\n".join(parts)
+
 def fix_encoding(text: str) -> str:
     return (
         (text or "")
@@ -364,18 +471,94 @@ def distill_recommendations(source_html: str, lang: str = "de") -> str:
 
 # ------------------------------- Scoring -------------------------------------
 def calc_score_percent(data: dict) -> int:
-    score = 0; max_score = 35
-    try: score += int(data.get("digitalisierungsgrad", 1))
-    except Exception: score += 1
-    auto_map = {"sehr_niedrig": 0, "eher_niedrig": 1, "mittel": 3, "eher_hoch": 4, "sehr_hoch": 5}
+    """
+    Calculate a readiness score on a 0–100 scale.
+
+    The score is based on multiple dimensions, reflecting the
+    organisation's maturity across digitalisation, automation,
+    process digitisation, internal know‑how, risk appetite and
+    newly added categories for data quality, AI roadmap, governance,
+    innovation culture and the presence of clear strategic goals. The
+    function is robust to missing or unexpected values and assigns
+    reasonable defaults where needed. The resulting percentage is
+    bounded between 0 and 100.
+    """
+    score = 0
+    # Maximum achievable score across all categories. Adjust when adding
+    # new weighted dimensions. Breakdown:
+    # - digitalisierungsgrad: up to 10
+    # - automatisierungsgrad: up to 5
+    # - prozesse_papierlos: up to 5
+    # - ki_knowhow: up to 5
+    # - risikofreude: up to 5
+    # - datenqualitaet/data_quality: up to 5
+    # - ai_roadmap: up to 5
+    # - governance: up to 5
+    # - innovationskultur/innovation_culture: up to 5
+    # - strategische_ziele/strategic_goals: 1 (presence bonus)
+    max_score = 51
+    # Digitalisation level (1–10). Use int conversion; fallback to 1.
+    try:
+        score += int(data.get("digitalisierungsgrad", 1))
+    except Exception:
+        score += 1
+    # Automation level mapping
+    auto_map = {
+        "sehr_niedrig": 0, "eher_niedrig": 1, "mittel": 3, "eher_hoch": 4, "sehr_hoch": 5,
+        "very_low": 0, "rather_low": 1, "medium": 3, "rather_high": 4, "very_high": 5,
+    }
     score += auto_map.get(str(data.get("automatisierungsgrad", "")).lower(), 0)
-    pap_map = {"0-20": 1, "21-50": 2, "51-80": 4, "81-100": 5}
-    score += pap_map.get(str(data.get("prozesse_papierlos", "0-20")), 0)
-    know_map = {"keine": 0, "grundkenntnisse": 1, "mittel": 3, "fortgeschritten": 4, "expertenwissen": 5}
-    score += know_map.get(str(data.get("ki_knowhow", "keine")).lower(), 0)
-    try: score += int(data.get("risikofreude", 1))
-    except Exception: score += 1
-    percent = max(0, min(100, int((score / max_score) * 100))))
+    # Paperless processes mapping
+    pap_map = {"0-20": 1, "21-50": 2, "51-80": 4, "81-100": 5, "0-20%": 1, "21-50%": 2, "51-80%": 4, "81-100%": 5}
+    score += pap_map.get(str(data.get("prozesse_papierlos", "0-20")).lower(), 0)
+    # Internal AI know‑how mapping
+    know_map = {
+        "keine": 0, "grundkenntnisse": 1, "mittel": 3, "fortgeschritten": 4, "expertenwissen": 5,
+        "none": 0, "basic": 1, "medium": 3, "advanced": 4, "expert": 5,
+    }
+    score += know_map.get(str(data.get("ki_knowhow", data.get("ai_knowhow", "keine"))).lower(), 0)
+    # Risk appetite (slider 1–5). Default to 1.
+    try:
+        score += int(data.get("risikofreude", data.get("risk_appetite", 1)))
+    except Exception:
+        score += 1
+    # Data quality mapping (German & English)
+    dq_map = {
+        "hoch": 5, "mittel": 3, "niedrig": 1,
+        "high": 5, "medium": 3, "low": 1,
+    }
+    dq_key = data.get("datenqualitaet") or data.get("data_quality") or ""
+    score += dq_map.get(str(dq_key).lower(), 0)
+    # AI roadmap mapping
+    roadmap_map = {
+        "ja": 5, "in_planung": 3, "nein": 1,
+        "yes": 5, "planning": 3, "no": 1,
+    }
+    roadmap_key = data.get("ai_roadmap") or ""
+    score += roadmap_map.get(str(roadmap_key).lower(), 0)
+    # Governance mapping
+    gov_map = {
+        "ja": 5, "teilweise": 3, "nein": 1,
+        "yes": 5, "partial": 3, "no": 1,
+    }
+    gov_key = data.get("governance") or ""
+    score += gov_map.get(str(gov_key).lower(), 0)
+    # Innovation culture mapping
+    inov_map = {
+        "sehr_offen": 5, "eher_offen": 4, "neutral": 3, "eher_zurueckhaltend": 2, "sehr_zurueckhaltend": 1,
+        "very_open": 5, "rather_open": 4, "neutral": 3, "rather_reluctant": 2, "very_reluctant": 1,
+    }
+    inov_key = data.get("innovationskultur") or data.get("innovation_culture") or ""
+    score += inov_map.get(str(inov_key).lower(), 0)
+    # Bonus point for clearly stated strategic goals
+    if data.get("strategische_ziele") or data.get("strategic_goals"):
+        score += 1
+    # Bound the result between 0 and 100
+    try:
+        percent = int((score / max_score) * 100)
+    except Exception:
+        percent = 0
+    percent = max(0, min(100, percent))
     return percent
 
 # ---------------------------- Kapitel erzeugen -------------------------------
@@ -443,6 +626,30 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         parts.append(f"<h2>{label_case}</h2>\n{out['praxisbeispiel']}")
 
     out["sections_html"] = "\n\n".join(parts)
+    # Füge dynamische Förderprogramme hinzu, wenn gewünscht
+    try:
+        wants_dynamic = str(data.get("interesse_foerderung", "")).lower() in {"ja", "unklar", "yes", "unsure"}
+    except Exception:
+        wants_dynamic = False
+    if wants_dynamic:
+        dynamic_html = build_dynamic_funding(data, lang=lang)
+        if dynamic_html:
+            # Stelle den dynamischen Abschnitt an den Anfang der übrigen Kapitel
+            if out.get("sections_html"):
+                out["sections_html"] = dynamic_html + "\n\n" + out["sections_html"]
+            else:
+                out["sections_html"] = dynamic_html
+    # Erweitere Risiken um zusätzliche Hinweise
+    extra_risks = build_extended_risks(data, lang=lang)
+    if extra_risks:
+        # falls bereits Risiken vorhanden sind, füge sie zusammen
+        existing = out.get("risks_html", "") or ""
+        if existing.strip():
+            # versuche eine Liste einzufügen, wenn keine vorhanden
+            combined = existing.strip() + "\n" + extra_risks
+        else:
+            combined = extra_risks
+        out["risks_html"] = combined
     out["score_percent"] = data["score_percent"]
     return out
 
