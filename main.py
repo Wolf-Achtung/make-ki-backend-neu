@@ -24,17 +24,9 @@ except Exception:  # pragma: no cover
 # Optional: Analyse-Modul
 try:
     from gpt_analyze import analyze_briefing  # deine Datei
+from gpt_analyze import calc_score_percent
 except Exception:
     analyze_briefing = None  # Fallback unten
-
-# Sicherer, separater Import (nicht im obigen try!)
-try:
-    from gpt_analyze import calc_score_percent
-except Exception:
-    # Fallback, falls das Modul beim Boot nicht geladen werden kann
-    def calc_score_percent(_data):
-        return 0
-
 
 
 # -----------------------------------------------------------------------------
@@ -86,7 +78,13 @@ def db_conn():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 
-def create_access_token(payload: Dict[str, Any], expires_seconds: int = 3600) -> str:
+def create_access_token(payload: Dict[str, Any], expires_seconds: int = 3600 * 12) -> str:
+    """
+    Erzeugt einen JWT-Token für das gegebene Payload. Standardmäßig läuft der Token
+    nach 12 Stunden ab (statt 1 Stunde). Die längere Laufzeit stellt sicher, dass
+    Nutzer bei längeren Fragebogensitzungen nicht ausgeloggt werden und 401-Fehler
+    vermieden werden. Optional kann bei Bedarf ein anderer Wert übergeben werden.
+    """
     payload = dict(payload)
     payload["exp"] = int(time.time()) + expires_seconds
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
