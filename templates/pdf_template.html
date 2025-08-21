@@ -199,26 +199,96 @@ tr, td, th { page-break-inside: avoid; break-inside: avoid; }
 {% endif %}
 
 <!-- INHALTSVERZEICHNIS -->
-{% if executive_summary or summary_klein or summary_kmu or summary_solo or gesamtstrategie or roadmap or compliance or datenschutz or foerderprogramme or foerdermittel or tools or innovation or praxisbeispiele or moonshot_vision or eu_ai_act %}
+{#
+  Für den KI‑Readiness‑Report werden die neuen Variablen
+  exec_summary_html, quick_wins_html, risks_html, recommendations_html,
+  roadmap_html und sections_html verwendet. Damit das
+  Inhaltsverzeichnis korrekt funktioniert, prüfen wir die Existenz
+  dieser Variablen und erstellen die Liste dynamisch. Die alten
+  Variablen executive_summary, gesamtstrategie usw. werden hier
+  bewusst nicht mehr abgefragt, weil sie im neuen Analyse‑Workflow
+  nicht gesetzt sind.
+#}
+{% set has_exec = exec_summary_html %}
+{% set has_qw = quick_wins_html or risks_html %}
+{% set has_rec = recommendations_html %}
+{% set has_roadmap = roadmap_html %}
+{% set has_sections = sections_html %}
+{% if has_exec or has_qw or has_rec or has_roadmap or has_sections %}
 <div class="report-section">
   <div class="chapter-box" style="box-shadow:none;">
     <h2>Inhaltsverzeichnis</h2>
     <ul>
-      {% if executive_summary %}<li>Executive Summary</li>{% endif %}
-      {% if summary_klein or summary_kmu or summary_solo %}<li>Kurzfazit</li>{% endif %}
-      {% if gesamtstrategie or roadmap %}<li>Gesamtstrategie & Roadmap</li>{% endif %}
-      {% if compliance or datenschutz %}<li>Compliance & Datenschutz</li>{% endif %}
-      {% if wants_funding and (websearch_links_foerder or foerderprogramme or foerdermittel) %}<li>Förderprogramme</li>{% endif %}
-      {% if tools or innovation %}<li>Tools & Innovationen</li>{% endif %}
-      {% if praxisbeispiele %}<li>Praxisbeispiele</li>{% endif %}
-      {% if moonshot_vision or eu_ai_act %}<li>Vision & Zukunftsausblick</li>{% endif %}
-      {% if checklisten %}<li>Checklisten & Leitfäden</li>{% endif %}
+      {% if has_exec %}<li>Executive Summary</li>{% endif %}
+      {% if has_qw %}<li>Quick Wins &amp; Risiken</li>{% endif %}
+      {% if has_rec %}<li>Empfehlungen</li>{% endif %}
+      {% if has_roadmap %}<li>Roadmap</li>{% endif %}
+      {% if has_sections %}<li>Weitere Kapitel</li>{% endif %}
     </ul>
   </div>
 </div>
 {% endif %}
 
 <!-- EXECUTIVE SUMMARY -->
+{#
+  Neue Kapitel für den KI‑Readiness‑Report. Diese Abschnitte basieren auf den
+  von generate_full_report gelieferten Variablen:
+  - exec_summary_html: Die zusammenfassende Analyse Ihres Unternehmens.
+  - quick_wins_html: Schnelle Chancen mit hohem Nutzen.
+  - risks_html: Potenzielle Risiken und Stolpersteine.
+  - recommendations_html: Individuelle Empfehlungen für nächste Schritte.
+  - roadmap_html: Eine strukturierte Roadmap zur Einführung von KI.
+  - sections_html: Weitere Kapitel wie Tools, Förderprogramme, Compliance und Praxisbeispiele.
+#}
+{% if exec_summary_html %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Executive Summary</h2>
+    <div>{{ exec_summary_html | safe }}</div>
+  </div>
+</div>
+{% endif %}
+
+{% if quick_wins_html or risks_html %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Quick Wins &amp; Risiken</h2>
+    {% if quick_wins_html %}
+      <div><b>Quick Wins:</b> {{ quick_wins_html | safe }}</div>
+    {% endif %}
+    {% if risks_html %}
+      <div style="margin-top:1em;"><b>Risiken:</b> {{ risks_html | safe }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if recommendations_html %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Empfehlungen</h2>
+    <div>{{ recommendations_html | safe }}</div>
+  </div>
+</div>
+{% endif %}
+
+{% if roadmap_html %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Roadmap</h2>
+    <div>{{ roadmap_html | safe }}</div>
+  </div>
+</div>
+{% endif %}
+
+{% if sections_html %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Weitere Kapitel</h2>
+    <div>{{ sections_html | safe }}</div>
+  </div>
+</div>
+{% endif %}
 {% if executive_summary %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
