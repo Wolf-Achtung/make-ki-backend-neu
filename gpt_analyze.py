@@ -75,64 +75,43 @@ def load_text(path: str) -> str:
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
-# ------------------------------- Fördermittel (HTML-Teaser) ------------------
-def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
-    """
-    Baut einen HTML-Teaser aus data/foerdermittel.csv. Für die Tabellenanzeige
-    nutzen wir unten build_funding_table().
-    """
-    import csv
-    path_csv = os.path.join("data", "foerdermittel.csv")
-    if not os.path.exists(path_csv):
-        return ""
-    programmes = []
-    try:
-        with open(path_csv, newline="", encoding="utf-8") as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                programmes.append(row)
-    except Exception:
-        return ""
-    size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
-    zielgruppe_map = {
-        "solo": ["solo", "freelancer", "freiberuflich", "einzel"],
-        "team": ["kmu", "team", "small"],
-        "kmu":  ["kmu", "sme"],
-    }
-    targets = zielgruppe_map.get(size, [])
-    region_code = (data.get("bundesland") or data.get("state") or "").lower()
+# ----------------------------- Encoding / HTML -------------------------------
+def fix_encoding(text: str) -> str:
+    return (
+        (text or "")
+        .replace("�", "-")
+        .replace("–", "-")
+        .replace("“", '"')
+        .replace("”", '"')
+        .replace("’", "'")
+    )
 
-    def matches(row):
-        zg = (row.get("Zielgruppe", "") or "").lower()
-        target_ok = True if not targets else any(t in zg for t in targets)
-        reg = (row.get("Region", "") or "").lower()
-        region_ok = True
-        if region_code:
-            region_ok = (reg == region_code) or (reg == "bund")
-        return target_ok and region_ok
-
-    filtered = [p for p in programmes if matches(p)]
-    if not filtered:
-        filtered = programmes[:max_items]
-    selected = filtered[:max_items]
-    if not selected:
-        return ""
-    title = "Dynamische Förderprogramme" if lang.startswith("de") else "Dynamic funding programmes"
-    html_parts = [f"<h3>{title}</h3>", "<ul>"]
-    for prog in selected:
-        name = prog.get("Name", "")
-        desc = (prog.get("Beschreibung", "") or "").strip()
-        link = prog.get("Link", "")
-        grant = prog.get("Fördersumme (€)", "")
-        if lang.startswith("de"):
-            line = f"<b>{name}</b>: {desc} – Förderhöhe: {grant}"
+def ensure_html(text: str, lang: str = "de") -> str:
+    """
+    Macht aus Plain-Text valides HTML (Absätze/Listen/Überschriften),
+    lässt vorhandenes HTML unverändert durch.
+    """
+    t = (text or "").strip()
+    if "<" in t and ">" in t:
+        return t
+    lines = [ln.rstrip() for ln in t.splitlines() if ln.strip()]
+    html = []; in_ul = False
+    for ln in lines:
+        if re.match(r"^[-•*]\s+", ln):
+            if not in_ul:
+                html.append("<ul>"); in_ul = True
+            html.append(f"<li>{re.sub(r'^[-•*]\s+','',ln).strip()}</li>")
+        elif re.match(r"^#{1,3}\s+", ln):
+            level = min(3, max(1, len(ln) - len(ln.lstrip("#"))))
+            txt = ln[level:].strip()
+            html.append(f"<h{level}>{txt}</h{level}>")
         else:
-            line = f"<b>{name}</b>: {desc} – Funding amount: {grant}"
-        if link:
-            line += f" – <a href=\"{link}\" target=\"_blank\">Link</a>"
-        html_parts.append(f"<li>{line}</li>")
-    html_parts.append("</ul>")
-    return "\n".join(html_parts)
+            if in_ul:
+                html.append("</ul>"); in_ul = False
+            html.append(f"<p>{ln}</p>")
+    if in_ul:
+        html.append("</ul>")
+    return "\n".join(html)
 
 # ---------------------------- Erweiterte Risiken -----------------------------
 def build_extended_risks(data: dict, lang: str = "de") -> str:
@@ -329,8 +308,7 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
         style = (
             "\n\n---\n"
             "Gib die Antwort AUSSCHLIESSLICH als gültiges HTML zurück (ohne <html>-Wrapper), "
-            "nutze <h3>, <p>, <ul>, <ol>, <table> wo sinnvoll. "
-            "Keine Meta-Kommentare.\n"
+            "nutze <h3>, <p>, <ul>, <ol>, <table> wo sinnvoll. Keine Meta-Kommentare.\n"
             "- Was tun? (3–5 präzise Maßnahmen, Imperativ)\n"
             "- Warum? (max. 2 Sätze)\n"
             "- Nächste 3 Schritte (Checkliste)\n"
@@ -340,8 +318,7 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     else:
         style = (
             "\n\n---\n"
-            "Return VALID HTML ONLY (no <html> wrapper). Use <h3>, <p>, <ul>, <ol>, <table> when helpful. "
-            "No meta talk.\n"
+            "Return VALID HTML ONLY (no <html> wrapper). Use <h3>, <p>, <ul>, <ol>, <table> when helpful. No meta talk.\n"
             "- What to do (3–5 actions)\n"
             "- Why (max 2 sentences)\n"
             "- Next 3 steps (checklist)\n"
@@ -360,6 +337,7 @@ def _chat_complete(messages, model_name: Optional[str], temperature: Optional[fl
     resp = client.chat.completions.create(**args)
     return resp.choices[0].message.content.strip()
 
+# ------------------------------- Kontext -------------------------------------
 def build_context(data: dict, branche: str, lang: str = "de") -> dict:
     """Kontext aus Branchen-YAML + Fragebogen-Daten zusammenführen."""
     context_path = f"branchenkontext/{branche}.{lang}.yaml"
@@ -391,6 +369,7 @@ def add_websearch_links(context, branche, projektziel):
         context["websearch_links_tools"] = []
     return context
 
+# ------------------------------ GPT-Kapitel ----------------------------------
 def gpt_generate_section(data, branche, chapter, lang="de"):
     lang = data.get("lang") or data.get("language") or data.get("sprache") or lang
     context = build_context(data, branche, lang)
@@ -398,7 +377,7 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
     context = add_websearch_links(context, branche, projektziel)
     context = add_innovation_features(context, branche, data)
 
-    # Checklisten aus data/
+    # optionale Checklisten aus data/
     if not context.get("checklisten"):
         md_path = "data/check_ki_readiness.md"
         if os.path.exists(md_path):
@@ -428,12 +407,118 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
         model_name=model_name,
         temperature=None,
     )
-
-    return section_text  # wird später durch ensure_html gewandelt
+    return section_text
 
 def gpt_generate_section_html(data, branche, chapter, lang="de") -> str:
     html = gpt_generate_section(data, branche, chapter, lang=lang)
-    return ensure_html(html, lang)
+    return ensure_html(fix_encoding(html), lang)
+
+# ------------------------------- Destillation --------------------------------
+def _distill_two_lists(html_src: str, lang: str, title_a: str, title_b: str):
+    model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
+    if str(lang).lower().startswith("de"):
+        sys = "Du extrahierst präzise Listen aus HTML."
+        usr = (f"Extrahiere aus folgendem HTML zwei kompakte Listen als HTML:\n"
+               f"<h3>{title_a}</h3><ul>…</ul>\n<h3>{title_b}</h3><ul>…</ul>\n"
+               f"- 4–6 Punkte je Liste, kurze Imperative, nur valides HTML.\n\nHTML:\n{html_src}")
+    else:
+        sys = "You extract precise lists from HTML."
+        usr = (f"From the HTML, extract two compact lists as HTML:\n"
+               f"<h3>{title_a}</h3><ul>…</ul>\n<h3>{title_b}</h3><ul>…</ul>\n"
+               f"- 4–6 bullets each, short imperatives, return VALID HTML only.\n\nHTML:\n{html_src}")
+    try:
+        out = _chat_complete([{"role":"system","content":sys},{"role":"user","content":usr}],
+                             model_name=model, temperature=0.2)
+        return ensure_html(out, lang)
+    except Exception:
+        return ""
+
+def distill_quickwins_risks(source_html: str, lang: str = "de") -> Dict[str, str]:
+    html = _distill_two_lists(source_html, lang, "Quick Wins", "Hauptrisiken" if str(lang).lower().startswith("de") else "Key Risks")
+    if not html:
+        return {"quick_wins_html": "", "risks_html": ""}
+    m = re.split(r"(?i)<h3[^>]*>", html)
+    if len(m) >= 3:
+        a = "<h3>" + m[1]; b = "<h3>" + m[2]
+        if "Quick Wins" in a or "Quick" in a:
+            return {"quick_wins_html": a, "risks_html": b}
+        else:
+            return {"quick_wins_html": b, "risks_html": a}
+    return {"quick_wins_html": html, "risks_html": ""}
+
+def distill_recommendations(source_html: str, lang: str = "de") -> str:
+    model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
+    if str(lang).lower().startswith("de"):
+        sys = "Du destillierst Maßnahmen aus HTML."
+        usr = ("Extrahiere aus dem HTML 5–8 konkrete Maßnahmen als geordnete Liste <ol>. "
+               "Imperativ, jeweils 1 Zeile. Gib nur HTML zurück.\n\n" + f"HTML:\n{source_html}")
+    else:
+        sys = "You distill actions from HTML."
+        usr = ("Extract 5–8 actionable steps as an ordered list <ol>. "
+               "Imperative, one line each. Return HTML only.\n\n" + f"HTML:\n{source_html}")
+    try:
+        out = _chat_complete([{"role":"system","content":sys},{"role":"user","content":usr}],
+                             model_name=model, temperature=0.2)
+        return ensure_html(out, lang)
+    except Exception:
+        return ""
+
+# ------------------------------- Scoring -------------------------------------
+def calc_score_percent(data: dict) -> int:
+    """
+    Readiness-Score 0–100 mit erweiterten Dimensionen (inkl. Datenqualität,
+    Roadmap, Governance, Innovationskultur, Bonus für klare Ziele).
+    Robust gegen fehlende Werte; bounded 0..100.
+    """
+    def as_int_val(v, default=0):
+        try:
+            return int(v)
+        except Exception:
+            return default
+
+    score = 0
+    max_score = 51  # Summe der Einzelskalen
+
+    score += as_int_val(data.get("digitalisierungsgrad", 1), 1)
+
+    auto_map = {
+        "sehr_niedrig": 0, "eher_niedrig": 1, "mittel": 3, "eher_hoch": 4, "sehr_hoch": 5,
+        "very_low": 0, "rather_low": 1, "medium": 3, "rather_high": 4, "very_high": 5,
+    }
+    score += auto_map.get(str(data.get("automatisierungsgrad", "")).lower(), 0)
+
+    pap_map = {"0-20": 1, "21-50": 2, "51-80": 4, "81-100": 5, "0-20%": 1, "21-50%": 2, "51-80%": 4, "81-100%": 5}
+    score += pap_map.get(str(data.get("prozesse_papierlos", "0-20")).lower(), 0)
+
+    know_map = {
+        "keine": 0, "grundkenntnisse": 1, "mittel": 3, "fortgeschritten": 4, "expertenwissen": 5,
+        "none": 0, "basic": 1, "medium": 3, "advanced": 4, "expert": 5,
+    }
+    score += know_map.get(str(data.get("ki_knowhow", data.get("ai_knowhow", "keine"))).lower(), 0)
+
+    score += as_int_val(data.get("risikofreude", data.get("risk_appetite", 1)), 1)
+
+    dq_map = {"hoch": 5, "mittel": 3, "niedrig": 1, "high": 5, "medium": 3, "low": 1}
+    score += dq_map.get(str(data.get("datenqualitaet") or data.get("data_quality") or "").lower(), 0)
+
+    roadmap_map = {"ja": 5, "in_planung": 3, "nein": 1, "yes": 5, "planning": 3, "no": 1}
+    score += roadmap_map.get(str(data.get("ai_roadmap") or "").lower(), 0)
+
+    gov_map = {"ja": 5, "teilweise": 3, "nein": 1, "yes": 5, "partial": 3, "no": 1}
+    score += gov_map.get(str(data.get("governance") or "").lower(), 0)
+
+    inov_map = {"sehr_offen": 5, "eher_offen": 4, "neutral": 3, "eher_zurueckhaltend": 2, "sehr_zurueckhaltend": 1,
+                "very_open": 5, "rather_open": 4, "neutral": 3, "rather_reluctant": 2, "very_reluctant": 1}
+    score += inov_map.get(str(data.get("innovationskultur") or data.get("innovation_culture") or "").lower(), 0)
+
+    if data.get("strategische_ziele") or data.get("strategic_goals"):
+        score += 1
+
+    try:
+        percent = int((score / max_score) * 100)
+    except Exception:
+        percent = 0
+    return max(0, min(100, percent))
 # ---------------------------- Kapitel erzeugen -------------------------------
 def generate_full_report(data: dict, lang: str = "de") -> dict:
     """
@@ -518,7 +603,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     except Exception:
         out["tools_table"] = []
 
-    # Fallbacks, wenn CSVs fehlen → aus HTML-Listen rudimentär extrahieren
+    # Fallbacks, wenn CSVs fehlen → rudimentär aus HTML-Listen extrahieren
     if wants_funding and not out.get("foerderprogramme_table"):
         teaser = out.get("foerderprogramme") or out.get("sections_html","")
         rows = []
