@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AI‑Readiness Report 2025</title>
+  <title>AI Readiness Report 2025</title>
   
-  {# Ensure BASE_URL is processed correctly without escaping the slash in Jinja #}
   {% if BASE_URL %}<base href="{{ BASE_URL.rstrip('/') }}/templates/">{% endif %}
 <style>
 body {
@@ -60,7 +59,6 @@ h2 {
   margin: 0 auto 21px auto;
   max-width: 16cm;
   color: #223561;
-  /* reduce base font size for improved readability */
   font-size: 1.05em;
   line-height: 1.65;
   page-break-inside: avoid;
@@ -68,16 +66,9 @@ h2 {
   border: 1.25px solid #d1e3fa;
   box-shadow: 0 2px 14px #e8eefd3b;
 }
-.hauptleistung-infobox {
-  background: #f0f6fb;
-  border-left: 5px solid #2563eb;
-  padding: 13px 24px;
-  margin: 0 0 18px 0;
-  font-size: 1.11em;
-  font-weight: 500;
-  color: #1e40af;
-  letter-spacing: 0.17px;
-  border-radius: 10px;
+.chapter-box--vision {
+  background: #fff8e6;
+  border-left: 5px solid #f59e0b;
 }
 ul, ol {
   margin-left: 0;
@@ -86,7 +77,6 @@ ul, ol {
   padding-left: 1.5em;
   list-style-position: outside;
 }
-
 li {
   margin-bottom: 0.4em;
   page-break-inside: avoid;
@@ -95,7 +85,8 @@ b { color: #2563eb; }
 @page {
   margin: 32mm 18mm 28mm 18mm;
   @bottom-center {
-    content: "TÜV‑certified AI management • © 2025: Wolf Hohl | kontakt@ki-sicherheit.jetzt | Page " counter(page) " of " counter(pages);
+    content: "TÜV-certified AI Management • © 2025: Wolf Hohl | "
+      "kontakt@ki-sicherheit.jetzt | Page " counter(page) " of " counter(pages);
     color: #aab8cc;
     font-family: 'Inter', Arial, sans-serif;
     font-size: 9pt;
@@ -124,7 +115,6 @@ th {
 thead { display: table-header-group; }
 tfoot { display: table-footer-group; }
 tr, td, th { page-break-inside: avoid; break-inside: avoid; }
-.table, .table tbody, .table tr { page-break-inside: avoid; break-inside: avoid; }
 .icon-row {
   display: flex;
   justify-content: flex-end;
@@ -150,43 +140,49 @@ tr, td, th { page-break-inside: avoid; break-inside: avoid; }
 .score-box b {
   color: #1e40af;
 }
-  </style>
+/* Charts */
+.chart-group { display:flex; flex-direction: column; gap:24px; }
+.chart-card { background:#f9fbff; border:1px solid #dbe8ff; border-radius:14px; padding:18px; }
+.chart-card h3 { margin:0 0 10px 0; font-size:1.05em; color:#1e3a8a; }
+canvas { max-width: 100%; height: auto; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  window.__CHART_DATA__ = {{ chart_data_json | default('{}') | safe }};
+</script>
 </head>
 <body>
 
-{% set wants_funding = (interesse_foerderung in ['ja', 'unklar']) if interesse_foerderung is defined else True %}
-
-
 <!-- LOGO ROW -->
 <div class="logo-row">
-  <!-- Use absolute paths so logos resolve correctly in the PDF service -->
-  <img src="{{ KI_READY_BASE64 or 'ki-ready-2025.webp' }}" alt="AI-Ready 2025" />
+  <img src="{{ KI_READY_BASE64 or 'ki-ready-2025.webp' }}" alt="KI-Ready 2025" />
   <img src="{{ KI_SICHERHEIT_BASE64 or 'ki-sicherheit-logo.png' }}" alt="KI-Sicherheit.jetzt" />
 </div>
 
 <!-- TITLE PAGE -->
 <div class="report-section">
   <div>
-    <h1>AI‑Readiness Report 2025</h1>
-    <div class="subtitle">Future-proof AI strategy for companies</div>
+    <h1>AI Readiness Report 2025</h1>
+    <div class="subtitle">Future-proof AI strategy for your company</div>
   </div>
 </div>
 
 <!-- ICON ROW TOP RIGHT -->
 <div class="icon-row">
-  <img src="{{ DSGVO_BASE64 or 'dsgvo.svg' }}" alt="GDPR compliant" title="GDPR compliant" />
-  <img src="{{ EU_AI_BASE64 or 'eu-ai.svg' }}" alt="EU AI Act ready" title="EU AI Act ready" />
+  <img src="{{ DSGVO_BASE64 or 'dsgvo.svg' }}" alt="GDPR Compliant" title="GDPR Compliant" />
+  <img src="{{ EU_AI_BASE64 or 'eu-ai.svg' }}" alt="EU AI Act Ready" title="EU AI Act Ready" />
 </div>
 
-<!-- SCORE OVERVIEW -->
+<!-- SCORE -->
 {% if score_percent %}
 <div class="score-box">
-  <p><b>AI‑readiness score:</b> {{ score_percent }} % out of 100 %</p>
-  <p>This score shows how well your company is currently prepared for the use of AI. The higher the value, the more advanced your digital maturity, automation and internal know‑how.</p>
+  <p><b>AI Readiness Score:</b> {{ score_percent }} % out of 100 %</p>
+  <p>This value shows how well your company is currently prepared for the use of AI. The higher the score, the stronger your digital maturity, automation, and internal know-how.</p>
 </div>
 {% endif %}
 
-<!-- STATIC PREFACE -->
+<!-- PREFACE -->
 {% if preface %}
 <div class="report-section">
   <div class="chapter-box" style="background:#e7f0fd; border-left:4px solid #2563eb;">
@@ -195,60 +191,79 @@ tr, td, th { page-break-inside: avoid; break-inside: avoid; }
 </div>
 {% endif %}
 
-<!-- TABLE OF CONTENTS -->
-{#
-  Construct the table of contents based on the new variables provided by
-  generate_full_report: exec_summary_html, quick_wins_html, risks_html,
-  recommendations_html, roadmap_html and sections_html. Legacy variables
-  such as executive_summary or gesamtstrategie are intentionally ignored
-  because they are not populated in the current workflow.
-#}
+{# TOC flags #}
+{% set has_vision = vision_html %}
 {% set has_exec = exec_summary_html %}
+{% set has_visuals = chart_data_json %}
 {% set has_qw = quick_wins_html or risks_html %}
 {% set has_rec = recommendations_html %}
 {% set has_roadmap = roadmap_html %}
 {% set has_sections = sections_html %}
-{% if has_exec or has_qw or has_rec or has_roadmap or has_sections %}
+
+<!-- TABLE OF CONTENTS -->
+{% if has_vision or has_exec or has_visuals or has_qw or has_rec or has_roadmap or has_sections %}
 <div class="report-section">
   <div class="chapter-box" style="box-shadow:none;">
-    <h2>Table of contents</h2>
+    <h2>Table of Contents</h2>
     <ul>
-      {% if has_exec %}<li>Executive summary</li>{% endif %}
-      {% if has_qw %}<li>Quick wins & Risks</li>{% endif %}
+      {% if has_vision %}<li>Visionary Recommendation</li>{% endif %}
+      {% if has_exec %}<li>Executive Summary</li>{% endif %}
+      {% if has_visuals %}<li>Visualisation</li>{% endif %}
+      {% if has_qw %}<li>Quick Wins &amp; Risks</li>{% endif %}
       {% if has_rec %}<li>Recommendations</li>{% endif %}
       {% if has_roadmap %}<li>Roadmap</li>{% endif %}
-      {% if has_sections %}<li>Other sections</li>{% endif %}
+      {% if has_sections %}<li>Further Chapters</li>{% endif %}
     </ul>
   </div>
 </div>
 {% endif %}
 
+<!-- VISION -->
+{% if vision_html %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box chapter-box--vision">
+    <h2>Visionary Recommendation</h2>
+    <div>{{ vision_html | safe }}</div>
+  </div>
+</div>
+{% endif %}
+
 <!-- EXECUTIVE SUMMARY -->
-{#
-  New sections for the AI‑readiness report. These sections rely on the
-  variables returned by generate_full_report:
-  - exec_summary_html: the overall analysis of your company
-  - quick_wins_html: high‑impact opportunities
-  - risks_html: potential risks and pitfalls
-  - recommendations_html: tailored recommendations for next steps
-  - roadmap_html: a structured roadmap for implementing AI
-  - sections_html: additional chapters such as tools, funding, compliance and case studies
-#}
 {% if exec_summary_html %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
-    <h2>Executive summary</h2>
+    <h2>Executive Summary</h2>
     <div>{{ exec_summary_html | safe }}</div>
   </div>
 </div>
 {% endif %}
 
+<!-- VISUALISATION -->
+{% if chart_data_json %}
+<div class="report-section" style="page-break-before: always;">
+  <div class="chapter-box">
+    <h2>Visualisation</h2>
+    <div class="chart-group">
+      <div class="chart-card">
+        <h3>Readiness Score</h3>
+        <canvas id="chart_score"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Benchmarks</h3>
+        <canvas id="chart_benchmarks"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- QUICK WINS & RISKS -->
 {% if quick_wins_html or risks_html %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
-    <h2>Quick wins & Risks</h2>
+    <h2>Quick Wins &amp; Risks</h2>
     {% if quick_wins_html %}
-      <div><b>Quick wins:</b> {{ quick_wins_html | safe }}</div>
+      <div><b>Quick Wins:</b> {{ quick_wins_html | safe }}</div>
     {% endif %}
     {% if risks_html %}
       <div style="margin-top:1em;"><b>Risks:</b> {{ risks_html | safe }}</div>
@@ -257,6 +272,7 @@ tr, td, th { page-break-inside: avoid; break-inside: avoid; }
 </div>
 {% endif %}
 
+<!-- RECOMMENDATIONS -->
 {% if recommendations_html %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
@@ -266,6 +282,7 @@ tr, td, th { page-break-inside: avoid; break-inside: avoid; }
 </div>
 {% endif %}
 
+<!-- ROADMAP -->
 {% if roadmap_html %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
@@ -275,223 +292,58 @@ tr, td, th { page-break-inside: avoid; break-inside: avoid; }
 </div>
 {% endif %}
 
+<!-- FURTHER CHAPTERS -->
 {% if sections_html %}
 <div class="report-section" style="page-break-before: always;">
   <div class="chapter-box">
-    <h2>Other sections</h2>
+    <h2>Further Chapters</h2>
     <div>{{ sections_html | safe }}</div>
   </div>
 </div>
 {% endif %}
-{% if executive_summary %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Executive summary</h2>
-    {% if hauptleistung %}
-      <div class="hauptleistung-infobox">
-        <b>This assessment focuses on your main service:</b>
-        <span>{{ hauptleistung }}</span>
-      </div>
-    {% endif %}
-    <div>{{ executive_summary | safe }}</div>
-  </div>
-</div>
-{% endif %}
 
-<!-- INNOVATION INTRO & GAME CHANGER BLOCKS -->
-{% if branchen_innovations_intro or gamechanger_blocks %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box" style="background: #e6f4fe; border-left: 6px solid #2563eb;">
-    <h2 style="color: #184ea4;">Innovation, trends & game changers</h2>
-    {% if branchen_innovations_intro %}
-      <div style="font-size:1.09em; font-weight:500; color:#184ea4; margin-bottom:18px;">
-        {{ branchen_innovations_intro | safe }}
-      </div>
-    {% endif %}
-    {% if gamechanger_blocks %}
-      <div style="font-size:1.07em; color:#224266;">{{ gamechanger_blocks | safe }}</div>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
+<footer>
+  {{ footer_text }}
+</footer>
 
-<!-- LIVE-WEBSEARCH: FUNDING PROGRAMMES -->
-{% if wants_funding and websearch_links_foerder %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box" style="background: #f9fbfd; border-left: 5px solid #57c7fa;">
-    <h2 style="color: #0e568a;">Latest funding programmes:</h2>
-    <div style="font-size:1.07em; color:#154e70; margin-bottom:0;">
-      {{ websearch_links_foerder | safe }}
-    </div>
-    <div style="margin-top:10px; font-size:0.98em; color:#2279b6;">
-      <em>Source: Google search results via SerpAPI, automatically generated on {{ datum }}.</em>
-    </div>
-  </div>
-</div>
-{% endif %}
+<script>
+(function(){
+  const D = window.__CHART_DATA__ || {};
+  if (!D || typeof D !== 'object') return;
 
-<!-- LIVE-WEBSEARCH: AI TOOLS -->
-{% if websearch_links_tools %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box" style="background: #f9fbfd; border-left: 5px solid #57c7fa;">
-    <h2 style="color: #0e568a;">Current AI tools & software:</h2>
-    <div style="font-size:1.07em; color:#154e70; margin-bottom:0;">
-      {{ websearch_links_tools | safe }}
-    </div>
-    <div style="margin-top:10px; font-size:0.98em; color:#2279b6;">
-      <em>Source: Google search results via SerpAPI, automatically generated on {{ datum }}.</em>
-    </div>
-  </div>
-</div>
-{% endif %}
+  // Score Donut
+  const elScore = document.getElementById('chart_score');
+  if (elScore && window.Chart && D.score != null) {
+    new Chart(elScore.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Readiness', ''],
+        datasets: [{
+          data: [D.score, Math.max(0, 100 - D.score)],
+          backgroundColor: ['#2563eb', '#e8eefd']
+        }]
+      },
+      options: { cutout: '70%', plugins: { legend: { display: false } } }
+    });
+  }
 
-<!-- BRIEF SUMMARY -->
-{% if summary_klein or summary_kmu or summary_solo %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Brief summary</h2>
-    {% if hauptleistung %}
-      <div class="hauptleistung-infobox">
-        <b>Main service focus:</b> <span>{{ hauptleistung }}</span>
-      </div>
-    {% endif %}
-    {% if summary_klein %}
-      <div><b>Small enterprises:</b> {{ summary_klein | safe }}</div>
-    {% endif %}
-    {% if summary_kmu %}
-      <div><b>SMEs:</b> {{ summary_kmu | safe }}</div>
-    {% endif %}
-    {% if summary_solo %}
-      <div><b>Solo entrepreneurs:</b> {{ summary_solo | safe }}</div>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-
-<!-- OVERALL STRATEGY & ROADMAP -->
-{% if gesamtstrategie or roadmap %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Overall strategy & roadmap</h2>
-    {% if hauptleistung %}
-      <div class="hauptleistung-infobox">
-        <b>Main service focus:</b> <span>{{ hauptleistung }}</span>
-      </div>
-    {% endif %}
-    {% if gesamtstrategie %}
-      <div>{{ gesamtstrategie | safe }}</div>
-    {% endif %}
-    {% if roadmap %}
-      <div style="margin-top: 2em;">{{ roadmap | safe }}</div>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-
-<!-- COMPLIANCE & DATA PROTECTION -->
-{% if compliance or datenschutz %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Compliance & data protection</h2>
-    {% if hauptleistung %}
-      <div class="hauptleistung-infobox">
-        <b>Main service focus:</b> <span>{{ hauptleistung }}</span>
-      </div>
-    {% endif %}
-    {% if compliance %}
-      <div>{{ compliance | safe }}</div>
-    {% endif %}
-    {% if datenschutz %}
-      <div style="margin-top: 2em;">{{ datenschutz | safe }}</div>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-
-<!-- FUNDING PROGRAMMES -->
-{% if wants_funding and (foerderprogramme or foerdermittel) %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Funding programmes</h2>
-    {% if hauptleistung %}
-      <div class="hauptleistung-infobox">
-        <b>Main service focus:</b> <span>{{ hauptleistung }}</span>
-      </div>
-    {% endif %}
-    {% if foerderprogramme %}
-      <div>{{ foerderprogramme | safe }}</div>
-    {% endif %}
-    {% if foerdermittel %}
-      <div style="margin-top:1em;">{{ foerdermittel | safe }}</div>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-
-<!-- TOOLS & INNOVATIONS -->
-{% if tools or innovation %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Tools & innovations</h2>
-    {% if hauptleistung %}
-      <div class="hauptleistung-infobox">
-        <b>Main service focus:</b> <span>{{ hauptleistung }}</span>
-      </div>
-    {% endif %}
-    {% if tools %}
-      <div>{{ tools | safe }}</div>
-    {% endif %}
-    {% if innovation %}
-      <div style="margin-top:1.6em;">{{ innovation | safe }}</div>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-
-<!-- PRACTICE EXAMPLES -->
-{% if praxisbeispiele %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Practice examples</h2>
-    {% if hauptleistung %}
-      <div class="hauptleistung-infobox">
-        <b>Main service focus:</b> <span>{{ hauptleistung }}</span>
-      </div>
-    {% endif %}
-    <div>{{ praxisbeispiele | safe }}</div>
-  </div>
-</div>
-{% endif %}
-
-<!-- VISION & FUTURE OUTLOOK -->
-{% if moonshot_vision or eu_ai_act %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Vision & future outlook</h2>
-    {% if hauptleistung %}
-      <div class="hauptleistung-infobox">
-        <b>Main service focus:</b> <span>{{ hauptleistung }}</span>
-      </div>
-    {% endif %}
-    {% if moonshot_vision %}
-      <div>{{ moonshot_vision | safe }}</div>
-    {% endif %}
-    {% if eu_ai_act %}
-      <div style="margin-top:1.4em;"><b>EU AI Act:</b> {{ eu_ai_act | safe }}</div>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-
-<!-- CHECKLISTS & GUIDES -->
-{% if checklisten %}
-<div class="report-section" style="page-break-before: always;">
-  <div class="chapter-box">
-    <h2>Checklists & guides</h2>
-    <div>{{ checklisten | safe }}</div>
-  </div>
-</div>
-{% endif %}
+  // Benchmarks Bar
+  const elBench = document.getElementById('chart_benchmarks');
+  if (elBench && window.Chart && D.dimensions && D.dimensions.labels && D.dimensions.values) {
+    new Chart(elBench.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: D.dimensions.labels,
+        datasets: [{ data: D.dimensions.values, backgroundColor: '#2563eb' }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+})();
+</script>
 
 </body>
 </html>
