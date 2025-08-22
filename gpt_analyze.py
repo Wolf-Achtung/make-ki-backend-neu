@@ -75,14 +75,11 @@ def load_text(path: str) -> str:
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
-# ------------------------------- Fördermittel ---------------------------------
+# ------------------------------- Fördermittel (HTML) -------------------------
 def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
     """
-    Generates an HTML fragment with funding programmes filtered according to
-    company size and region. It reads the CSV file in data/foerdermittel.csv
-    and picks a handful of relevant programmes. If no programmes match
-    filters, it falls back to the first few entries. The output is a list
-    with basic information and links. Language is either 'de' or 'en'.
+    Baut einen HTML-Block aus data/foerdermittel.csv (einfacher Teaser).
+    Zusätzlich liefern wir unten strukturierte Tabellen via build_funding_table().
     """
     import csv
     path_csv = os.path.join("data", "foerdermittel.csv")
@@ -96,7 +93,7 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
                 programmes.append(row)
     except Exception:
         return ""
-    # Filter by company size (target group) where possible
+
     size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
     zielgruppe_map = {
         "solo": ["solo", "freelancer", "freiberuflich", "einzel"],
@@ -104,16 +101,17 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
         "kmu":  ["kmu", "sme"],
     }
     targets = zielgruppe_map.get(size, [])
-    # Filter by region: if Bundesland provided, prefer programmes marked with that region; else include 'Bund'
     region_code = (data.get("bundesland") or data.get("state") or "").lower()
+
     def matches(row):
-        zg = row.get("Zielgruppe", "").lower()
+        zg = (row.get("Zielgruppe", "") or "").lower()
         target_ok = True if not targets else any(t in zg for t in targets)
-        reg = row.get("Region", "").lower()
+        reg = (row.get("Region", "") or "").lower()
         region_ok = True
         if region_code:
             region_ok = (reg == region_code) or (reg == "bund")
         return target_ok and region_ok
+
     filtered = [p for p in programmes if matches(p)]
     if not filtered:
         filtered = programmes[:max_items]
@@ -140,111 +138,144 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
 # ---------------------------- Erweiterte Risiken -----------------------------
 def build_extended_risks(data: dict, lang: str = "de") -> str:
     """
-    Returns an HTML fragment with additional risk messages based on the
-    questionnaire responses. If no additional risks are identified, returns
-    an empty string. The returned fragment is a list (<ul>) of items.
+    Zusätzliche Risiko-Hinweise als <ul>-Liste auf Basis der Antworten.
     """
     risks = []
     dq = (data.get("datenqualitaet") or data.get("data_quality") or "").lower()
     if dq in {"niedrig", "low"}:
-        if lang.startswith("de"):
-            risks.append("Die Datenqualität ist niedrig; unstrukturierte und lückenhafte Daten erschweren KI-Projekte und können zu fehlerhaften Ergebnissen führen.")
-        else:
-            risks.append("Your data quality is low; unstructured or incomplete data make AI projects difficult and can lead to incorrect results.")
+        risks.append("Die Datenqualität ist niedrig; unstrukturierte und lückenhafte Daten erschweren KI-Projekte und können zu fehlerhaften Ergebnissen führen."
+                     if lang.startswith("de") else
+                     "Your data quality is low; unstructured or incomplete data make AI projects difficult and can lead to incorrect results.")
     ai_rm = (data.get("ai_roadmap") or "").lower()
     if ai_rm in {"nein", "no"}:
-        if lang.startswith("de"):
-            risks.append("Es fehlt eine klar definierte KI-Roadmap. Ohne strategische Planung besteht das Risiko von ineffizienten Insellösungen.")
-        else:
-            risks.append("There is no clearly defined AI roadmap. Without strategic planning there is a risk of inefficient point solutions.")
+        risks.append("Es fehlt eine klar definierte KI-Roadmap. Ohne strategische Planung besteht das Risiko von ineffizienten Insellösungen."
+                     if lang.startswith("de") else
+                     "There is no clearly defined AI roadmap. Without strategic planning there is a risk of inefficient point solutions.")
     gov = (data.get("governance") or "").lower()
     if gov in {"nein", "no"}:
-        if lang.startswith("de"):
-            risks.append("Es bestehen keine internen Richtlinien für Daten- oder KI-Governance; dies erhöht das Risiko von Rechtsverstößen und unsauberen Prozessen.")
-        else:
-            risks.append("There are no internal guidelines for data or AI governance; this increases the risk of legal violations and inconsistent processes.")
+        risks.append("Es bestehen keine internen Richtlinien für Daten- oder KI-Governance; dies erhöht das Risiko von Rechtsverstößen und unsauberen Prozessen."
+                     if lang.startswith("de") else
+                     "There are no internal guidelines for data or AI governance; this increases the risk of legal violations and inconsistent processes.")
     inv = (data.get("innovationskultur") or data.get("innovation_culture") or "").lower()
     if inv in {"eher_zurueckhaltend", "sehr_zurueckhaltend", "rather_reluctant", "very_reluctant"}:
-        if lang.startswith("de"):
-            risks.append("Die Innovationskultur im Unternehmen ist zurückhaltend; eine ablehnende Haltung gegenüber neuen Technologien kann den Erfolg von KI-Projekten gefährden.")
-        else:
-            risks.append("Your company’s innovation culture is reluctant; a sceptical attitude towards new technologies can jeopardise AI project success.")
+        risks.append("Die Innovationskultur im Unternehmen ist zurückhaltend; eine ablehnende Haltung gegenüber neuen Technologien kann den Erfolg von KI-Projekten gefährden."
+                     if lang.startswith("de") else
+                     "Your company’s innovation culture is reluctant; a sceptical attitude towards new technologies can jeopardise AI project success.")
     if not risks:
         return ""
-    parts = ["<ul>"]
-    parts += [f"<li>{r}</li>" for r in risks]
-    parts.append("</ul>")
-    return "\n".join(parts)
+    return "<ul>" + "".join(f"<li>{r}</li>" for r in risks) + "</ul>"
 
-def fix_encoding(text: str) -> str:
-    return (
-        (text or "")
-        .replace("�", "-")
-        .replace("–", "-")
-        .replace("“", '"')
-        .replace("”", '"')
-        .replace("’", "'")
-    )
+# ----------------------------- Charts-Payload --------------------------------
+def build_chart_payload(data: dict, score_percent: int, lang: str = "de") -> dict:
+    """
+    Liefert ein JSON-Payload für Charts (Score, Benchmarks, Risiken/Kultur).
+    Templates können dieses JSON direkt an Chart.js übergeben.
+    """
+    def as_int(v, default=0):
+        try:
+            return int(v)
+        except Exception:
+            return default
 
-def ensure_html(text: str, lang: str = "de") -> str:
-    t = (text or "").strip()
-    if "<" in t and ">" in t:
-        return t
-    lines = [ln.rstrip() for ln in t.splitlines() if ln.strip()]
-    html = []; in_ul = False
-    for ln in lines:
-        if re.match(r"^[-•*]\s+", ln):
-            if not in_ul:
-                html.append("<ul>"); in_ul = True
-            item = re.sub(r"^[-•*]\s+", "", ln).strip()
-            html.append(f"<li>{item}</li>")
-        elif re.match(r"^#{1,3}\s+", ln):
-            level = len(ln) - len(ln.lstrip("#"))
-            txt = ln[level:].strip()
-            level = min(3, max(1, level))
-            html.append(f"<h{level}>{txt}</h{level}>")
-        else:
-            if in_ul:
-                html.append("</ul>"); in_ul = False
-            html.append(f"<p>{ln}</p>")
-    if in_ul:
-        html.append("</ul>")
-    return "\n".join(html)
+    digitalisierung = as_int(data.get("digitalisierungsgrad", 1), 1)
 
-# ------------------------------- Kontext -------------------------------------
-def build_context(data: dict, branche: str, lang: str = "de") -> dict:
-    context_path = f"branchenkontext/{branche}.{lang}.yaml"
-    if not os.path.exists(context_path):
-        context_path = f"branchenkontext/default.{lang}.yaml"
-    context = load_yaml(context_path) if os.path.exists(context_path) else {}
-    context.update(data or {})
+    auto_map = {"sehr_niedrig": 1, "eher_niedrig": 2, "mittel": 3, "eher_hoch": 4, "sehr_hoch": 5,
+                "very_low": 1, "rather_low": 2, "medium": 3, "rather_high": 4, "very_high": 5}
+    autom = auto_map.get(str(data.get("automatisierungsgrad","")).lower(), 1)
 
-    # Standardwerte
-    context.setdefault("copyright_year", datetime.now().year)
-    context.setdefault("copyright_owner", "Wolf Hohl")
-    context.setdefault("company_size", _as_int(data.get("mitarbeiterzahl") or data.get("employees") or 1) or 1)
+    pap_map = {"0-20": 1, "21-50": 2, "51-80": 4, "81-100": 5}
+    paperless = pap_map.get(str(data.get("prozesse_papierlos","0-20")).lower(), 1)
 
-    # Solo-Flag
-    context["is_self_employed"] = is_self_employed(data)
-    return context
+    know_map = {"keine": 1, "grundkenntnisse": 2, "mittel": 3, "fortgeschritten": 4, "expertenwissen": 5,
+                "none": 1, "basic": 2, "medium": 3, "advanced": 4, "expert": 5}
+    knowhow = know_map.get(str(data.get("ki_knowhow", data.get("ai_knowhow","keine"))).lower(), 1)
 
-def add_innovation_features(context, branche, data):
-    context["branchen_innovations_intro"] = INNOVATION_INTRO.get(branche, "")
-    try:
-        context["gamechanger_blocks"] = build_gamechanger_blocks(data, GAMECHANGER_FEATURES)
-    except Exception:
-        context["gamechanger_blocks"] = []
-    return context
+    risk = as_int(data.get("risikofreude", data.get("risk_appetite", 1)), 1)
 
-def add_websearch_links(context, branche, projektziel):
-    year = datetime.now().year
-    try:
-        context["websearch_links_foerder"] = serpapi_search(f"aktuelle Förderprogramme {branche} {projektziel} Deutschland {year}", num_results=5)
-        context["websearch_links_tools"]   = serpapi_search(f"aktuelle KI-Tools {branche} Deutschland {year}", num_results=5)
-    except Exception:
-        context["websearch_links_foerder"] = []
-        context["websearch_links_tools"] = []
-    return context
+    dq_map = {"hoch": 5, "mittel": 3, "niedrig": 1, "high": 5, "medium": 3, "low": 1}
+    dq = dq_map.get(str(data.get("datenqualitaet", data.get("data_quality",""))).lower(), 0)
+
+    roadmap_map = {"ja": 5, "in_planung": 3, "nein": 1, "yes": 5, "planning": 3, "no": 1}
+    roadmap = roadmap_map.get(str(data.get("ai_roadmap","")).lower(), 0)
+
+    gov_map = {"ja": 5, "teilweise": 3, "nein": 1, "yes": 5, "partial": 3, "no": 1}
+    gov = gov_map.get(str(data.get("governance","")).lower(), 0)
+
+    inov_map = {"sehr_offen": 5, "eher_offen": 4, "neutral": 3, "eher_zurueckhaltend": 2, "sehr_zurueckhaltend": 1,
+                "very_open": 5, "rather_open": 4, "neutral": 3, "rather_reluctant": 2, "very_reluctant": 1}
+    inov = inov_map.get(str(data.get("innovationskultur", data.get("innovation_culture",""))).lower(), 0)
+
+    labels_de = ["Digitalisierung","Automatisierung","Papierlos","KI-Know-how",
+                 "Risikofreude","Datenqualität","Roadmap","Governance","Innovationskultur"]
+    labels_en = ["Digitalisation","Automation","Paperless","AI know-how",
+                 "Risk appetite","Data quality","AI roadmap","Governance","Innovation culture"]
+    labels = labels_de if str(lang).startswith("de") else labels_en
+
+    dataset = [digitalisierung, autom, paperless, knowhow, risk, dq, roadmap, gov, inov]
+
+    # Risiko-Level (grob) — bei schlechter Datenquali oder fehlender Governance hoch
+    risk_level = 1
+    if dq == 1 or gov == 1:
+        risk_level = 3
+    elif roadmap in {1, 3}:
+        risk_level = 2
+
+    return {
+        "score": score_percent,
+        "dimensions": {"labels": labels, "values": dataset},
+        "risk_level": risk_level
+    }
+
+# ----------------------------- Tabellen-Payload ------------------------------
+def build_funding_table(data: dict, lang: str = "de", max_items: int = 6):
+    """CSV data/foerdermittel.csv → Liste von Dikt-Objekten für die Tabelle."""
+    import csv
+    path = os.path.join("data", "foerdermittel.csv")
+    if not os.path.exists(path):
+        return []
+    size = (data.get("unternehmensgroesse") or "").lower()
+    targets = {"solo": ["solo","freelancer","einzel"],
+               "team": ["kmu","team","small"],
+               "kmu":  ["kmu","sme"]}.get(size, [])
+    region = (data.get("bundesland") or "").lower()
+    rows = []
+    with open(path, newline="", encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        for row in r:
+            zg = (row.get("Zielgruppe","") or "").lower()
+            reg = (row.get("Region","") or "").lower()
+            target_ok = True if not targets else any(t in zg for t in targets)
+            region_ok = (not region) or (reg == region) or (reg == "bund")
+            if target_ok and region_ok:
+                rows.append({
+                    "name": row.get("Name",""),
+                    "zielgruppe": row.get("Zielgruppe",""),
+                    "foerderhoehe": row.get("Fördersumme (€)",""),
+                    "link": row.get("Link",""),
+                })
+    return rows[:max_items]
+
+def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int = 8):
+    """CSV data/tools.csv (optional) → Liste {name,usecase,cost,link}."""
+    import csv
+    path = os.path.join("data", "tools.csv")
+    if not os.path.exists(path):
+        return []
+    out = []
+    with open(path, newline="", encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        for row in r:
+            tags = (row.get("Tags") or row.get("Branche") or "").lower()
+            if branche and tags and branche not in tags:
+                # Falls eine Branchen-Tag-Spalte existiert und nicht passt → skip
+                continue
+            out.append({
+                "name": row.get("Name",""),
+                "usecase": row.get("Usecase") or row.get("Einsatz") or "",
+                "cost": row.get("Kosten") or row.get("Cost") or "",
+                "link": row.get("Link",""),
+            })
+    return out[:max_items]
 # ----------------------------- Prompt-Logik ----------------------------------
 def render_prompt(template_text: str, context: dict) -> str:
     """
@@ -386,7 +417,7 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
         temperature=None,
     )
 
-    return ensure_html(fix_encoding(section_text), lang=lang)
+    return ensure_html(section_text, lang=lang)
 
 # ------------------------------ Distillation ---------------------------------
 def _distill_two_lists(html_src: str, lang: str, title_a: str, title_b: str):
@@ -463,10 +494,11 @@ def distill_recommendations(source_html: str, lang: str = "de") -> str:
 # ------------------------------- Scoring -------------------------------------
 def calc_score_percent(data: dict) -> int:
     """
-    Calculate a readiness score on a 0–100 scale with extended dimensions.
+    Readiness-Score 0–100 mit erweiterten Dimensionen (inkl. Datenqualität,
+    Roadmap, Governance, Innovationskultur, Bonus für klare Ziele).
     """
     score = 0
-    max_score = 51  # siehe Breakdown in Kommentaren der ursprünglichen Version
+    max_score = 51  # Summe aller dimensionierten Punkte (siehe Kommentare)
 
     try:
         score += int(data.get("digitalisierungsgrad", 1))
@@ -494,8 +526,7 @@ def calc_score_percent(data: dict) -> int:
         score += 1
 
     dq_map = {"hoch": 5, "mittel": 3, "niedrig": 1, "high": 5, "medium": 3, "low": 1}
-    dq_key = data.get("datenqualitaet") or data.get("data_quality") or ""
-    score += dq_map.get(str(dq_key).lower(), 0)
+    score += dq_map.get(str(data.get("datenqualitaet") or data.get("data_quality") or "").lower(), 0)
 
     roadmap_map = {"ja": 5, "in_planung": 3, "nein": 1, "yes": 5, "planning": 3, "no": 1}
     score += roadmap_map.get(str(data.get("ai_roadmap") or "").lower(), 0)
@@ -505,8 +536,7 @@ def calc_score_percent(data: dict) -> int:
 
     inov_map = {"sehr_offen": 5, "eher_offen": 4, "neutral": 3, "eher_zurueckhaltend": 2, "sehr_zurueckhaltend": 1,
                 "very_open": 5, "rather_open": 4, "neutral": 3, "rather_reluctant": 2, "very_reluctant": 1}
-    inov_key = data.get("innovationskultur") or data.get("innovation_culture") or ""
-    score += inov_map.get(str(inov_key).lower(), 0)
+    score += inov_map.get(str(data.get("innovationskultur") or data.get("innovation_culture") or "").lower(), 0)
 
     if data.get("strategische_ziele") or data.get("strategic_goals"):
         score += 1
@@ -526,13 +556,13 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     Liefert Kapitel-HTML & Template-Felder:
       exec_summary_html, quick_wins_html, risks_html, recommendations_html,
       roadmap_html, sections_html (+ optional foerderprogramme/tools/compliance/praxisbeispiel),
-      preface, score_percent, chart_data.
+      preface, score_percent, chart_data, foerderprogramme_table, tools_table.
     """
     branche = (data.get("branche") or "default").lower()
     data["score_percent"] = calc_score_percent(data)
 
     solo = is_self_employed(data)
-    wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja", "unklar"}
+    wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja", "unklar", "yes", "unsure"}
 
     # Vision als eigenes Kapitel ergänzen
     chapters = ["executive_summary", "vision", "tools"] \
@@ -559,39 +589,28 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     src_for_rec = (out.get("roadmap") or "") + "\n\n" + (out.get("compliance") or "")
     out["recommendations_html"] = distill_recommendations(src_for_rec, lang=lang) or (out.get("roadmap") or "")
 
-    # Roadmap/Exec
+    # Roadmap & Exec
     out["roadmap_html"] = out.get("roadmap", "")
     out["exec_summary_html"] = out.get("executive_summary", "")
 
-    # Sammle übrige Kapitel
+    # Sammle übrige Kapitel (Vision zuerst)
     parts = []
-    label_tools = "Tools"
-    label_foerd = "Förderprogramme" if str(lang).lower().startswith("de") else "Funding"
-    label_comp = "Compliance"
-    label_case = "Praxisbeispiel" if str(lang).lower().startswith("de") else "Case Study"
-
-    # Vision ganz vorn
     if out.get("vision"):
         parts.append(f"<h2>{'Visionäre Empfehlung' if str(lang).startswith('de') else 'Visionary Recommendation'}</h2>\n{out['vision']}")
-
     if out.get("tools"):
-        parts.append(f"<h2>{label_tools}</h2>\n{out['tools']}")
+        parts.append(f"<h2>{'Tools' if str(lang).startswith('de') else 'Tools'}</h2>\n{out['tools']}")
     if out.get("foerderprogramme"):
-        note = "<p><em>Hinweis: Für Solo-Selbstständige gefiltert (sofern verfügbar).</em></p>" if solo else ""
+        label_foerd = "Förderprogramme" if str(lang).lower().startswith("de") else "Funding"
+        note = "<p><em>Hinweis: Für Solo-Selbstständige gefiltert (sofern verfügbar).</em></p>" if solo and str(lang).startswith("de") else ""
         parts.append(f"<h2>{label_foerd}</h2>\n{note}\n{out['foerderprogramme']}")
     if out.get("compliance"):
-        parts.append(f"<h2>{label_comp}</h2>\n{out['compliance']}")
+        parts.append(f"<h2>{'Compliance' if str(lang).startswith('de') else 'Compliance'}</h2>\n{out['compliance']}")
     if out.get("praxisbeispiel"):
-        parts.append(f"<h2>{label_case}</h2>\n{out['praxisbeispiel']}")
-
+        parts.append(f"<h2>{'Praxisbeispiel' if str(lang).startswith('de') else 'Case Study'}</h2>\n{out['praxisbeispiel']}")
     out["sections_html"] = "\n\n".join(parts)
 
-    # Dynamische Förderprogramme (CSV) optional davorsetzen
-    try:
-        wants_dynamic = str(data.get("interesse_foerderung", "")).lower() in {"ja", "unklar", "yes", "unsure"}
-    except Exception:
-        wants_dynamic = False
-    if wants_dynamic:
+    # Dynamische Förderprogramme (als HTML-Teaser)
+    if wants_funding:
         dynamic_html = build_dynamic_funding(data, lang=lang)
         if dynamic_html:
             out["sections_html"] = dynamic_html + ("\n\n" + out["sections_html"] if out["sections_html"] else "")
@@ -604,8 +623,17 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
 
     out["score_percent"] = data["score_percent"]
 
-    # Chart-Daten erzeugen
+    # Chart-Daten & Tabellen-Daten
     out["chart_data"] = build_chart_payload(data, out["score_percent"], lang=lang)
+    try:
+        out["foerderprogramme_table"] = build_funding_table(data, lang=lang)
+    except Exception:
+        out["foerderprogramme_table"] = []
+    try:
+        out["tools_table"] = build_tools_table(data, branche=branche, lang=lang)
+    except Exception:
+        out["tools_table"] = []
+
     return out
 
 def generate_preface(lang: str = "de", score_percent: Optional[float] = None) -> str:
@@ -718,8 +746,10 @@ async def analyze_briefing(payload: Dict[str, Any]) -> Dict[str, Any]:
             "sections_html": report.get("sections_html", ""),
             "vision_html": report.get("vision", ""),
             "chart_data_json": json.dumps(report.get("chart_data", {}), ensure_ascii=False),
+            "foerderprogramme_table": report.get("foerderprogramme_table", []),
+            "tools_table": report.get("tools_table", []),
             "footer_text": footer_text,
-            # Assets (werden inlined, auch wenn Templates feste srcs haben)
+            # Assets (Data-URIs)
             "logo_main": _data_uri_for("ki-sicherheit-logo.webp") or _data_uri_for("ki-sicherheit-logo.png"),
             "logo_tuev": _data_uri_for("tuev-logo-transparent.webp") or _data_uri_for("tuev-logo.webp"),
             "logo_euai": _data_uri_for("eu-ai.svg"),
