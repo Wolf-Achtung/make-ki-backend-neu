@@ -3,172 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <title>AI Readiness Report 2025</title>
-  
   {% if BASE_URL %}<base href="{{ BASE_URL.rstrip('/') }}/templates/">{% endif %}
-<style>
-body {
-  background: #fff;
-  margin: 0;
-  padding: 0;
-  font-family: 'Inter', Arial, sans-serif;
-  color: #223561;
-}
-.logo-row {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 38px;
-  margin-top: 24px;
-  margin-bottom: 22px;
-}
-.logo-row img {
-  height: 74px;
-  object-fit: contain;
-}
-h1 {
-  font-size: 2.5em;
-  text-align: center;
-  color: #1e3a8a;
-  letter-spacing: 1.5px;
-  font-weight: 700;
-  margin: 38px 0 12px 0;
-  text-shadow: 0 1px 0 #e3ebfa;
-}
-h2 {
-  color: #2563eb;
-  font-size: 1.25em;
-  font-weight: 700;
-  margin-top: 0;
-  margin-bottom: 18px;
-  border-bottom: 1.5px solid #e8eefd;
-  padding-bottom: 4px;
-  letter-spacing: 0.7px;
-}
-.subtitle {
-  font-size: 1.21em;
-  text-align: center;
-  color: #1e40af;
-  margin-bottom: 42px;
-  font-weight: 500;
-  letter-spacing: 0.6px;
-}
-.chapter-box {
-  background: #f4f8fc;
-  border-radius: 16px;
-  padding: 30px 32px;
-  margin: 0 auto 21px auto;
-  max-width: 16cm;
-  color: #223561;
-  font-size: 1.05em;
-  line-height: 1.65;
-  page-break-inside: avoid;
-  word-break: break-word;
-  border: 1.25px solid #d1e3fa;
-  box-shadow: 0 2px 14px #e8eefd3b;
-}
-.chapter-box--vision {
-  background: #fff8e6;
-  border-left: 5px solid #f59e0b;
-}
-ul, ol {
-  margin-left: 0;
-  margin-bottom: 1.2em;
-  page-break-inside: avoid;
-  padding-left: 1.5em;
-  list-style-position: outside;
-}
-li {
-  margin-bottom: 0.4em;
-  page-break-inside: avoid;
-}
-b { color: #2563eb; }
-@page {
-  margin: 32mm 18mm 28mm 18mm;
-  @bottom-center {
-    content: "TÜV-certified AI Management • © 2025: Wolf Hohl | "
-      "kontakt@ki-sicherheit.jetzt | Page " counter(page) " of " counter(pages);
-    color: #aab8cc;
-    font-family: 'Inter', Arial, sans-serif;
-    font-size: 9pt;
-    opacity: 0.81;
-  }
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1em;
-  margin-bottom: 1.5em;
-  font-size: 1.05em;
-  border: 1px solid #d1e3fa;
-}
-th, td {
-  border: 1px solid #d1e3fa;
-  padding: 8px 10px;
-  text-align: left;
-}
-th {
-  background-color: #e7f0fd;
-  color: #1e40af;
-  font-weight: 600;
-}
+  <style>
+    body { background:#fff; margin:0; padding:0; font-family:'Inter', Arial, sans-serif; color:#223561; }
+    h1 { font-size:2.5em; text-align:center; color:#1e3a8a; letter-spacing:1.5px; font-weight:700; margin:38px 0 12px 0; text-shadow:0 1px 0 #e3ebfa; }
+    h2 { color:#2563eb; font-size:1.25em; font-weight:700; margin-top:0; margin-bottom:18px; border-bottom:1.5px solid #e8eefd; padding-bottom:4px; letter-spacing:.7px; }
+    .subtitle { font-size:1.21em; text-align:center; color:#1e40af; margin-bottom:42px; font-weight:500; letter-spacing:.6px; }
 
-thead { display: table-header-group; }
-tfoot { display: table-footer-group; }
-tr, td, th { page-break-inside: avoid; break-inside: avoid; }
-.icon-row {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 8px;
-}
-.icon-row img {
-  height: 26px;
-  vertical-align: middle;
-}
-.score-box {
-  background: #e7f0fd;
-  border-left: 5px solid #2563eb;
-  padding: 20px 28px;
-  margin: 0 auto 26px auto;
-  max-width: 16cm;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.12);
-  font-size: 1.15em;
-  color: #153e75;
-}
-.score-box b {
-  color: #1e40af;
-}
-/* Charts */
-.chart-group { display:flex; flex-direction: column; gap:24px; }
-.chart-card { background:#f9fbff; border:1px solid #dbe8ff; border-radius:14px; padding:18px; }
-.chart-card h3 { margin:0 0 10px 0; font-size:1.05em; color:#1e3a8a; }
-canvas { max-width: 100%; height: auto; }
-</style>
+    .logo-row { display:flex; justify-content:center; align-items:center; gap:38px; margin-top:24px; margin-bottom:22px; }
+    .logo-row img { height:74px; object-fit:contain; }
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  window.__CHART_DATA__ = {{ chart_data_json | default('{}') | safe }};
-</script>
+    .icon-row { display:flex; justify-content:flex-end; align-items:center; gap:16px; margin-bottom:8px; }
+    .icon-row img { height:26px; vertical-align:middle; }
+
+    .chapter-box { background:#f4f8fc; border-radius:16px; padding:30px 32px; margin:0 auto 21px auto; max-width:16cm; color:#223561;
+                   font-size:1.05em; line-height:1.65; page-break-inside:avoid; word-break:break-word; border:1.25px solid #d1e3fa; box-shadow:0 2px 14px #e8eefd3b; }
+    .chapter-box--vision { background:#fff8e6; border-left:5px solid #f59e0b; }
+
+    ul, ol { margin-left:0; margin-bottom:1.2em; page-break-inside:avoid; padding-left:1.5em; list-style-position:outside; }
+    li { margin-bottom:.4em; page-break-inside:avoid; }
+    b { color:#2563eb; }
+
+    .score-box { background:#e7f0fd; border-left:5px solid #2563eb; padding:20px 28px; margin:0 auto 26px auto; max-width:16cm; border-radius:12px;
+                 box-shadow:0 2px 12px rgba(37,99,235,.12); font-size:1.15em; color:#153e75; }
+    .score-box b { color:#1e40af; }
+
+    table { width:100%; border-collapse:collapse; margin-top:1em; margin-bottom:1.5em; font-size:1.05em; border:1px solid #d1e3fa; }
+    th, td { border:1px solid #d1e3fa; padding:8px 10px; text-align:left; }
+    th { background:#e7f0fd; color:#1e40af; font-weight:600; }
+
+    .chart-group { display:flex; flex-direction:column; gap:24px; }
+    .chart-card { background:#f9fbff; border:1px solid #dbe8ff; border-radius:14px; padding:18px; }
+    .chart-card h3 { margin:0 0 10px 0; font-size:1.05em; color:#1e3a8a; }
+    canvas { max-width:100%; height:auto; }
+
+    @page {
+      margin:32mm 18mm 28mm 18mm;
+      @bottom-center {
+        content:"TÜV-certified AI Management • © 2025: Wolf Hohl | kontakt@ki-sicherheit.jetzt | Page " counter(page) " of " counter(pages);
+        color:#aab8cc; font-family:'Inter', Arial, sans-serif; font-size:9pt; opacity:.81;
+      }
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>window.__CHART_DATA__ = {{ chart_data_json | default('{}') | safe }};</script>
 </head>
 <body>
 
-<!-- LOGO ROW -->
+<!-- LOGOS -->
 <div class="logo-row">
   <img src="{{ KI_READY_BASE64 or 'ki-ready-2025.webp' }}" alt="KI-Ready 2025" />
   <img src="{{ KI_SICHERHEIT_BASE64 or 'ki-sicherheit-logo.png' }}" alt="KI-Sicherheit.jetzt" />
 </div>
 
-<!-- TITLE PAGE -->
+<!-- TITLE -->
 <div class="report-section">
-  <div>
-    <h1>AI Readiness Report 2025</h1>
-    <div class="subtitle">Future-proof AI strategy for your company</div>
-  </div>
+  <div><h1>AI Readiness Report 2025</h1><div class="subtitle">Future-proof AI strategy for your company</div></div>
 </div>
 
-<!-- ICON ROW TOP RIGHT -->
+<!-- ICONS -->
 <div class="icon-row">
   <img src="{{ DSGVO_BASE64 or 'dsgvo.svg' }}" alt="GDPR Compliant" title="GDPR Compliant" />
   <img src="{{ EU_AI_BASE64 or 'eu-ai.svg' }}" alt="EU AI Act Ready" title="EU AI Act Ready" />
@@ -177,21 +71,19 @@ canvas { max-width: 100%; height: auto; }
 <!-- SCORE -->
 {% if score_percent %}
 <div class="score-box">
-  <p><b>AI Readiness Score:</b> {{ score_percent }} % out of 100 %</p>
-  <p>This value shows how well your company is currently prepared for the use of AI. The higher the score, the stronger your digital maturity, automation, and internal know-how.</p>
+  <p><b>AI-Readiness Score:</b> {{ score_percent }} % of 100 %</p>
+  <p>This value shows how well your company is currently prepared for the use of AI. The higher the score, the stronger your digital maturity, automation and internal know-how.</p>
 </div>
 {% endif %}
 
 <!-- PREFACE -->
 {% if preface %}
 <div class="report-section">
-  <div class="chapter-box" style="background:#e7f0fd; border-left:4px solid #2563eb;">
-    {{ preface | safe }}
-  </div>
+  <div class="chapter-box" style="background:#e7f0fd; border-left:4px solid #2563eb;">{{ preface | safe }}</div>
 </div>
 {% endif %}
 
-{# TOC flags #}
+{# TOC-Flags #}
 {% set has_vision = vision_html %}
 {% set has_exec = exec_summary_html %}
 {% set has_visuals = chart_data_json %}
@@ -199,9 +91,11 @@ canvas { max-width: 100%; height: auto; }
 {% set has_rec = recommendations_html %}
 {% set has_roadmap = roadmap_html %}
 {% set has_sections = sections_html %}
+{% set has_funding_table = foerderprogramme_table %}
+{% set has_tools_table = tools_table %}
 
 <!-- TABLE OF CONTENTS -->
-{% if has_vision or has_exec or has_visuals or has_qw or has_rec or has_roadmap or has_sections %}
+{% if has_vision or has_exec or has_visuals or has_qw or has_rec or has_roadmap or has_sections or has_funding_table or has_tools_table %}
 <div class="report-section">
   <div class="chapter-box" style="box-shadow:none;">
     <h2>Table of Contents</h2>
@@ -212,6 +106,8 @@ canvas { max-width: 100%; height: auto; }
       {% if has_qw %}<li>Quick Wins &amp; Risks</li>{% endif %}
       {% if has_rec %}<li>Recommendations</li>{% endif %}
       {% if has_roadmap %}<li>Roadmap</li>{% endif %}
+      {% if has_funding_table %}<li>Funding Programs (table)</li>{% endif %}
+      {% if has_tools_table %}<li>AI Tools &amp; Software (table)</li>{% endif %}
       {% if has_sections %}<li>Further Chapters</li>{% endif %}
     </ul>
   </div>
@@ -220,7 +116,7 @@ canvas { max-width: 100%; height: auto; }
 
 <!-- VISION -->
 {% if vision_html %}
-<div class="report-section" style="page-break-before: always;">
+<div class="report-section" style="page-break-before:always;">
   <div class="chapter-box chapter-box--vision">
     <h2>Visionary Recommendation</h2>
     <div>{{ vision_html | safe }}</div>
@@ -228,9 +124,9 @@ canvas { max-width: 100%; height: auto; }
 </div>
 {% endif %}
 
-<!-- EXECUTIVE SUMMARY -->
+<!-- EXEC SUMMARY -->
 {% if exec_summary_html %}
-<div class="report-section" style="page-break-before: always;">
+<div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
     <h2>Executive Summary</h2>
     <div>{{ exec_summary_html | safe }}</div>
@@ -240,18 +136,13 @@ canvas { max-width: 100%; height: auto; }
 
 <!-- VISUALISATION -->
 {% if chart_data_json %}
-<div class="report-section" style="page-break-before: always;">
+<div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
     <h2>Visualisation</h2>
     <div class="chart-group">
-      <div class="chart-card">
-        <h3>Readiness Score</h3>
-        <canvas id="chart_score"></canvas>
-      </div>
-      <div class="chart-card">
-        <h3>Benchmarks</h3>
-        <canvas id="chart_benchmarks"></canvas>
-      </div>
+      <div class="chart-card"><h3>Readiness Score</h3><canvas id="chart_score"></canvas></div>
+      <div class="chart-card"><h3>Benchmarks</h3><canvas id="chart_benchmarks"></canvas></div>
+      <div class="chart-card"><h3>Risks &amp; Culture (Radar)</h3><canvas id="chart_radar"></canvas></div>
     </div>
   </div>
 </div>
@@ -259,22 +150,18 @@ canvas { max-width: 100%; height: auto; }
 
 <!-- QUICK WINS & RISKS -->
 {% if quick_wins_html or risks_html %}
-<div class="report-section" style="page-break-before: always;">
+<div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
     <h2>Quick Wins &amp; Risks</h2>
-    {% if quick_wins_html %}
-      <div><b>Quick Wins:</b> {{ quick_wins_html | safe }}</div>
-    {% endif %}
-    {% if risks_html %}
-      <div style="margin-top:1em;"><b>Risks:</b> {{ risks_html | safe }}</div>
-    {% endif %}
+    {% if quick_wins_html %}<div><b>Quick Wins:</b> {{ quick_wins_html | safe }}</div>{% endif %}
+    {% if risks_html %}<div style="margin-top:1em;"><b>Risks:</b> {{ risks_html | safe }}</div>{% endif %}
   </div>
 </div>
 {% endif %}
 
 <!-- RECOMMENDATIONS -->
 {% if recommendations_html %}
-<div class="report-section" style="page-break-before: always;">
+<div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
     <h2>Recommendations</h2>
     <div>{{ recommendations_html | safe }}</div>
@@ -284,7 +171,7 @@ canvas { max-width: 100%; height: auto; }
 
 <!-- ROADMAP -->
 {% if roadmap_html %}
-<div class="report-section" style="page-break-before: always;">
+<div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
     <h2>Roadmap</h2>
     <div>{{ roadmap_html | safe }}</div>
@@ -292,9 +179,53 @@ canvas { max-width: 100%; height: auto; }
 </div>
 {% endif %}
 
+<!-- FUNDING TABLE -->
+{% if foerderprogramme_table %}
+<div class="report-section" style="page-break-before:always;">
+  <div class="chapter-box">
+    <h2>Funding Programs (selection)</h2>
+    <table>
+      <thead><tr><th>Programme</th><th>Target Group</th><th>Funding</th><th>Link</th></tr></thead>
+      <tbody>
+        {% for p in foerderprogramme_table %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td>{{ p.zielgruppe }}</td>
+          <td>{{ p.foerderhoehe }}</td>
+          <td><a href="{{ p.link }}">Details</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- TOOLS TABLE -->
+{% if tools_table %}
+<div class="report-section" style="page-break-before:always;">
+  <div class="chapter-box">
+    <h2>AI Tools &amp; Software (selection)</h2>
+    <table>
+      <thead><tr><th>Tool</th><th>Use Case</th><th>Cost</th><th>Link</th></tr></thead>
+      <tbody>
+        {% for t in tools_table %}
+        <tr>
+          <td>{{ t.name }}</td>
+          <td>{{ t.usecase }}</td>
+          <td>{{ t.cost }}</td>
+          <td><a href="{{ t.link }}">Details</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
 <!-- FURTHER CHAPTERS -->
 {% if sections_html %}
-<div class="report-section" style="page-break-before: always;">
+<div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
     <h2>Further Chapters</h2>
     <div>{{ sections_html | safe }}</div>
@@ -302,44 +233,41 @@ canvas { max-width: 100%; height: auto; }
 </div>
 {% endif %}
 
-<footer>
-  {{ footer_text }}
-</footer>
+<footer>{{ footer_text }}</footer>
 
 <script>
 (function(){
   const D = window.__CHART_DATA__ || {};
   if (!D || typeof D !== 'object') return;
 
-  // Score Donut
-  const elScore = document.getElementById('chart_score');
-  if (elScore && window.Chart && D.score != null) {
-    new Chart(elScore.getContext('2d'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Readiness', ''],
-        datasets: [{
-          data: [D.score, Math.max(0, 100 - D.score)],
-          backgroundColor: ['#2563eb', '#e8eefd']
-        }]
-      },
-      options: { cutout: '70%', plugins: { legend: { display: false } } }
+  // Donut
+  const s = document.getElementById('chart_score');
+  if (s && window.Chart && D.score != null) {
+    new Chart(s.getContext('2d'), {
+      type:'doughnut',
+      data:{ labels:['Readiness',''], datasets:[{ data:[D.score, Math.max(0,100-D.score)], backgroundColor:['#2563eb','#e8eefd'] }] },
+      options:{ cutout:'70%', plugins:{ legend:{ display:false } } }
     });
   }
-
-  // Benchmarks Bar
-  const elBench = document.getElementById('chart_benchmarks');
-  if (elBench && window.Chart && D.dimensions && D.dimensions.labels && D.dimensions.values) {
-    new Chart(elBench.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: D.dimensions.labels,
-        datasets: [{ data: D.dimensions.values, backgroundColor: '#2563eb' }]
+  // Bar
+  const b = document.getElementById('chart_benchmarks');
+  if (b && window.Chart && D.dimensions?.labels && D.dimensions?.values) {
+    new Chart(b.getContext('2d'), {
+      type:'bar',
+      data:{ labels:D.dimensions.labels, datasets:[{ data:D.dimensions.values, backgroundColor:'#2563eb' }] },
+      options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } }
+    });
+  }
+  // Radar
+  const r = document.getElementById('chart_radar');
+  if (r && window.Chart && D.dimensions?.labels && D.dimensions?.values) {
+    new Chart(r.getContext('2d'), {
+      type:'radar',
+      data:{
+        labels:D.dimensions.labels,
+        datasets:[{ label:'Risks & Culture', data:D.dimensions.values, fill:true, backgroundColor:'rgba(37,99,235,0.20)', borderColor:'#2563eb', pointBackgroundColor:'#2563eb' }]
       },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
-      }
+      options:{ scales:{ r:{ beginAtZero:true, max:10 } }, plugins:{ legend:{ display:false } } }
     });
   }
 })();
