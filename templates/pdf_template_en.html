@@ -9,32 +9,28 @@
     h1 { font-size:2.5em; text-align:center; color:#1e3a8a; letter-spacing:1.5px; font-weight:700; margin:38px 0 12px 0; text-shadow:0 1px 0 #e3ebfa; }
     h2 { color:#2563eb; font-size:1.25em; font-weight:700; margin-top:0; margin-bottom:18px; border-bottom:1.5px solid #e8eefd; padding-bottom:4px; letter-spacing:.7px; }
     .subtitle { font-size:1.21em; text-align:center; color:#1e40af; margin-bottom:42px; font-weight:500; letter-spacing:.6px; }
-
     .logo-row { display:flex; justify-content:center; align-items:center; gap:38px; margin-top:24px; margin-bottom:22px; }
     .logo-row img { height:74px; object-fit:contain; }
-
     .icon-row { display:flex; justify-content:flex-end; align-items:center; gap:16px; margin-bottom:8px; }
     .icon-row img { height:26px; vertical-align:middle; }
-
     .chapter-box { background:#f4f8fc; border-radius:16px; padding:30px 32px; margin:0 auto 21px auto; max-width:16cm; color:#223561;
                    font-size:1.05em; line-height:1.65; page-break-inside:avoid; word-break:break-word; border:1.25px solid #d1e3fa; box-shadow:0 2px 14px #e8eefd3b; }
     .chapter-box--vision { background:#fff8e6; border-left:5px solid #f59e0b; }
-
-    ul, ol { margin-left:0; margin-bottom:1.2em; page-break-inside:avoid; padding-left:1.5em; list-style-position:outside; }
-    li { margin-bottom:.4em; page-break-inside:avoid; }
-    b { color:#2563eb; }
-
-    .score-box { background:#e7f0fd; border-left:5px solid #2563eb; padding:20px 28px; margin:0 auto 26px auto; max-width:16cm; border-radius:12px;
-                 box-shadow:0 2px 12px rgba(37,99,235,.12); font-size:1.15em; color:#153e75; }
+    .score-box { background:#e7f0fd; border-left:5px solid #2563eb; padding:20px 28px; margin:0 auto 26px auto; max-width:16cm; border-radius:12px; box-shadow:0 2px 12px rgba(37,99,235,.12); font-size:1.15em; color:#153e75; }
     .score-box b { color:#1e40af; }
 
     table { width:100%; border-collapse:collapse; margin-top:1em; margin-bottom:1.5em; font-size:1.05em; border:1px solid #d1e3fa; }
     th, td { border:1px solid #d1e3fa; padding:8px 10px; text-align:left; }
     th { background:#e7f0fd; color:#1e40af; font-weight:600; }
+    thead { display:table-header-group; } tfoot { display:table-footer-group; }
+    tr, td, th { page-break-inside:avoid; break-inside:avoid; }
+    table td, table th { word-break:normal; hyphens:manual; }
+    table a { word-break:break-all; }
 
     .chart-group { display:flex; flex-direction:column; gap:24px; }
-    .chart-card { background:#f9fbff; border:1px solid #dbe8ff; border-radius:14px; padding:18px; }
+    .chart-card { background:#f9fbff; border:1px solid #dbe8ff; border-radius:14px; padding:18px; page-break-inside:avoid; break-inside:avoid; }
     .chart-card h3 { margin:0 0 10px 0; font-size:1.05em; color:#1e3a8a; }
+    #chart_radar { height:320px; }
     canvas { max-width:100%; height:auto; }
 
     @page {
@@ -50,40 +46,51 @@
   <script>window.__CHART_DATA__ = {{ chart_data_json | default('{}') | safe }};</script>
 </head>
 <body>
-
-<!-- LOGOS -->
+<!-- Logos -->
 <div class="logo-row">
   <img src="{{ KI_READY_BASE64 or 'ki-ready-2025.webp' }}" alt="KI-Ready 2025" />
   <img src="{{ KI_SICHERHEIT_BASE64 or 'ki-sicherheit-logo.png' }}" alt="KI-Sicherheit.jetzt" />
 </div>
 
-<!-- TITLE -->
+<!-- Title -->
 <div class="report-section">
   <div><h1>AI Readiness Report 2025</h1><div class="subtitle">Future-proof AI strategy for your company</div></div>
 </div>
 
-<!-- ICONS -->
+<!-- Icons -->
 <div class="icon-row">
-  <img src="{{ DSGVO_BASE64 or 'dsgvo.svg' }}" alt="GDPR Compliant" title="GDPR Compliant" />
+  <img src="{{ DSGVO_BASE64 or 'dsgvo.svg' }}" alt="GDPR compliant" title="GDPR compliant" />
   <img src="{{ EU_AI_BASE64 or 'eu-ai.svg' }}" alt="EU AI Act Ready" title="EU AI Act Ready" />
 </div>
 
-<!-- SCORE -->
+<!-- Context box -->
+{% if hauptleistung or branche or unternehmensgroesse or bundesland %}
+<div class="chapter-box" style="background:#f9fbff;border-left:4px solid #7aa7ff;">
+  <table style="width:100%;border:0;">
+    <tr>
+      {% if branche %}<td><b>Industry:</b> {{ branche }}</td>{% endif %}
+      {% if unternehmensgroesse %}<td><b>Company size:</b> {{ unternehmensgroesse }}</td>{% endif %}
+      {% if bundesland %}<td><b>Region:</b> {{ bundesland }}</td>{% endif %}
+    </tr>
+    {% if hauptleistung %}<tr><td colspan="3"><b>Main service/product:</b> {{ hauptleistung }}</td></tr>{% endif %}
+  </table>
+</div>
+{% endif %}
+
+<!-- Score -->
 {% if score_percent %}
 <div class="score-box">
-  <p><b>AI-Readiness Score:</b> {{ score_percent }} % of 100 %</p>
-  <p>This value shows how well your company is currently prepared for the use of AI. The higher the score, the stronger your digital maturity, automation and internal know-how.</p>
+  <p><b>AI Readiness Score:</b> {{ score_percent }} % of 100 %</p>
+  <p>This value indicates how well your company is currently prepared to use AI.</p>
 </div>
 {% endif %}
 
-<!-- PREFACE -->
+<!-- Preface -->
 {% if preface %}
-<div class="report-section">
-  <div class="chapter-box" style="background:#e7f0fd; border-left:4px solid #2563eb;">{{ preface | safe }}</div>
-</div>
+<div class="report-section"><div class="chapter-box" style="background:#e7f0fd; border-left:4px solid #2563eb;">{{ preface | safe }}</div></div>
 {% endif %}
 
-{# TOC-Flags #}
+<!-- TOC -->
 {% set has_vision = vision_html %}
 {% set has_exec = exec_summary_html %}
 {% set has_visuals = chart_data_json %}
@@ -94,7 +101,6 @@
 {% set has_funding_table = foerderprogramme_table %}
 {% set has_tools_table = tools_table %}
 
-<!-- TABLE OF CONTENTS -->
 {% if has_vision or has_exec or has_visuals or has_qw or has_rec or has_roadmap or has_sections or has_funding_table or has_tools_table %}
 <div class="report-section">
   <div class="chapter-box" style="box-shadow:none;">
@@ -114,7 +120,7 @@
 </div>
 {% endif %}
 
-<!-- VISION -->
+<!-- Vision -->
 {% if vision_html %}
 <div class="report-section" style="page-break-before:always;">
   <div class="chapter-box chapter-box--vision">
@@ -124,7 +130,7 @@
 </div>
 {% endif %}
 
-<!-- EXEC SUMMARY -->
+<!-- Exec -->
 {% if exec_summary_html %}
 <div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
@@ -134,7 +140,7 @@
 </div>
 {% endif %}
 
-<!-- VISUALISATION -->
+<!-- Visualisation -->
 {% if chart_data_json %}
 <div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
@@ -147,8 +153,7 @@
   </div>
 </div>
 {% endif %}
-
-<!-- QUICK WINS & RISKS -->
+<!-- Quick Wins & Risks -->
 {% if quick_wins_html or risks_html %}
 <div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
@@ -159,27 +164,21 @@
 </div>
 {% endif %}
 
-<!-- RECOMMENDATIONS -->
+<!-- Recommendations -->
 {% if recommendations_html %}
 <div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box">
-    <h2>Recommendations</h2>
-    <div>{{ recommendations_html | safe }}</div>
-  </div>
+  <div class="chapter-box"><h2>Recommendations</h2><div>{{ recommendations_html | safe }}</div></div>
 </div>
 {% endif %}
 
-<!-- ROADMAP -->
+<!-- Roadmap -->
 {% if roadmap_html %}
 <div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box">
-    <h2>Roadmap</h2>
-    <div>{{ roadmap_html | safe }}</div>
-  </div>
+  <div class="chapter-box"><h2>Roadmap</h2><div>{{ roadmap_html | safe }}</div></div>
 </div>
 {% endif %}
 
-<!-- FUNDING TABLE -->
+<!-- Funding table -->
 {% if foerderprogramme_table %}
 <div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
@@ -201,7 +200,7 @@
 </div>
 {% endif %}
 
-<!-- TOOLS TABLE -->
+<!-- Tools table -->
 {% if tools_table %}
 <div class="report-section" style="page-break-before:always;">
   <div class="chapter-box">
@@ -223,13 +222,10 @@
 </div>
 {% endif %}
 
-<!-- FURTHER CHAPTERS -->
+<!-- Further chapters -->
 {% if sections_html %}
 <div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box">
-    <h2>Further Chapters</h2>
-    <div>{{ sections_html | safe }}</div>
-  </div>
+  <div class="chapter-box"><h2>Further Chapters</h2><div>{{ sections_html | safe }}</div></div>
 </div>
 {% endif %}
 
@@ -246,7 +242,7 @@
     new Chart(s.getContext('2d'), {
       type:'doughnut',
       data:{ labels:['Readiness',''], datasets:[{ data:[D.score, Math.max(0,100-D.score)], backgroundColor:['#2563eb','#e8eefd'] }] },
-      options:{ cutout:'70%', plugins:{ legend:{ display:false } } }
+      options:{ cutout:'70%', plugins:{ legend:{ display:false } }, maintainAspectRatio:false }
     });
   }
   // Bar
@@ -255,7 +251,14 @@
     new Chart(b.getContext('2d'), {
       type:'bar',
       data:{ labels:D.dimensions.labels, datasets:[{ data:D.dimensions.values, backgroundColor:'#2563eb' }] },
-      options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } }
+      options:{
+        plugins:{ legend:{ display:false } },
+        maintainAspectRatio:false,
+        scales:{
+          x:{ ticks:{ maxRotation:30, minRotation:30, autoSkip:false } },
+          y:{ beginAtZero:true, ticks:{ stepSize:1 } }
+        }
+      }
     });
   }
   // Radar
@@ -265,13 +268,13 @@
       type:'radar',
       data:{
         labels:D.dimensions.labels,
-        datasets:[{ label:'Risks & Culture', data:D.dimensions.values, fill:true, backgroundColor:'rgba(37,99,235,0.20)', borderColor:'#2563eb', pointBackgroundColor:'#2563eb' }]
+        datasets:[{ label:'Risks & Culture', data:D.dimensions.values, fill:true,
+                    backgroundColor:'rgba(37,99,235,0.20)', borderColor:'#2563eb', pointBackgroundColor:'#2563eb' }]
       },
-      options:{ scales:{ r:{ beginAtZero:true, max:10 } }, plugins:{ legend:{ display:false } } }
+      options:{ maintainAspectRatio:false, scales:{ r:{ beginAtZero:true, max:10 } }, plugins:{ legend:{ display:false } } }
     });
   }
 })();
 </script>
-
 </body>
 </html>
