@@ -4,6 +4,8 @@ import time
 import uuid
 import logging
 import inspect
+import importlib
+import sys
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
@@ -20,21 +22,6 @@ try:
     from psycopg2.extras import RealDictCursor
 except Exception:  # pragma: no cover
     psycopg2 = None
-
-# -----------------------------------------------------------------------------
-# Optional: Analyse-Modul (korrekt getrennte try/except-Blöcke)
-# -----------------------------------------------------------------------------
-try:
-    from gpt_analyze import analyze_briefing  # kann fehlen → Fallback unten
-except Exception:
-    analyze_briefing = None  # Fallback
-
-try:
-    from gpt_analyze import calc_score_percent
-except Exception:
-    # Defensiver Fallback, falls das Modul beim Boot nicht verfügbar ist
-    def calc_score_percent(_data: dict) -> int:
-        return 0
 
 # -----------------------------------------------------------------------------
 # Konfiguration / Umgebungsvariablen
@@ -217,11 +204,36 @@ async def send_html_to_pdf_service(
         }
 
 # -----------------------------------------------------------------------------
+# Robuster Import des Analyse-Moduls + Diagnose
+# -----------------------------------------------------------------------------
+def load_analyze_module():
+    """
+    Versucht gpt_analyze zu importieren und gibt (analyze_briefing, modul) zurück.
+    Loggt im Fehlerfall den exakten Grund.
+    """
+    try:
+        if "" not in sys.path:
+            sys.path.insert(0, "")
+        ga = importlib.import_module("gpt_analyze")
+        ab = getattr(ga, "analyze_briefing", None)
+        if ab is None:
+            logger.error("gpt_analyze geladen, aber analyze_briefing nicht gefunden.")
+        else:
+            logger.info("gpt_analyze.analyze_briefing erfolgreich geladen.")
+        return ab, ga
+    except Exception as ex:
+        logger.exception("Import von gpt_analyze fehlgeschlagen: %s", ex)
+        return None, None
+
+analyze_briefing, _GA = load_analyze_module()
+
+# -----------------------------------------------------------------------------
 # In-Memory Task-Store für Async-Flow
 # -----------------------------------------------------------------------------
 TASKS: Dict[str, Dict[str, Any]] = {}
 def new_job() -> str:
     return uuid.uuid4().hex
+
 # -----------------------------------------------------------------------------
 # Health
 # -----------------------------------------------------------------------------
@@ -232,7 +244,27 @@ def health():
         "version": APP_VERSION,
         "pdf_service": bool(PDF_SERVICE_URL),
         "db": bool(DATABASE_URL),
+        "analyze_loaded": bool(analyze_briefing),
     }
+
+# -----------------------------------------------------------------------------
+# Diagnose-Endpoint
+# -----------------------------------------------------------------------------
+@app.get("/diag/analyze", response_class=JSONResponse)
+def diag_analyze():
+    try:
+        import gpt_analyze as ga
+        funcs = [n for n in dir(ga) if not n.startswith("_")]
+        return {
+            "ok": True,
+            "module_loaded": True,
+            "has_analyze_briefing": hasattr(ga, "analyze_briefing"),
+            "has_generate_full_report": hasattr(ga, "generate_full_report"),
+            "has_calc_score_percent": hasattr(ga, "calc_score_percent"),
+            "funcs": funcs[:60],
+        }
+    except Exception as ex:
+        return {"ok": False, "module_loaded": False, "error": str(ex)}
 
 # -----------------------------------------------------------------------------
 # Login
@@ -247,7 +279,6 @@ def api_login(body: Dict[str, Any]):
         try:
             conn = db_conn()
             cur = conn.cursor()
-            # Passwortcheck via pgcrypto: crypt(<pw>, users.password)
             cur.execute(
                 "SELECT id, email, role FROM users "
                 "WHERE lower(email) = lower(%s) AND password_hash = crypt(%s, password_hash)",
@@ -261,7 +292,6 @@ def api_login(body: Dict[str, Any]):
                 return {"token": token, "email": row["email"], "role": row["role"]}
         except Exception as ex:  # pragma: no cover
             logger.exception("DB login failed: %s", ex)
-            # Fallback unten
 
     # 2) Fallback-Login per ENV (optional)
     if ADMIN_LOGIN_EMAIL and ADMIN_LOGIN_PASSWORD:
@@ -270,7 +300,6 @@ def api_login(body: Dict[str, Any]):
             return {"token": token, "email": ADMIN_LOGIN_EMAIL, "role": "admin"}
 
     raise HTTPException(status_code=401, detail="Unauthorized")
-
 
 # -----------------------------------------------------------------------------
 # PDF Smoke-Test (manuell)
@@ -287,7 +316,6 @@ async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
                 res["ok"], res["status"], res.get("user"), res.get("admin"), res.get("error"))
     return res
 
-
 # -----------------------------------------------------------------------------
 # Briefing Async → Status
 # -----------------------------------------------------------------------------
@@ -299,7 +327,7 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
     """
     lang = (body.get("lang") or "de").lower()
     job_id = new_job()
-    rid = job_id  # fürs PDF-Service-Log durchreichen
+    rid = job_id
 
     TASKS[job_id] = {
         "status": "running",
@@ -316,38 +344,32 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
 
     async def run():
         try:
-            # 1) Empfänger bestimmen
             user_email = resolve_recipient(body, default_email=user["email"])
             TASKS[job_id]["email_user"] = user_email
 
             # 2) HTML erzeugen
+            html = None
             if analyze_briefing:
                 try:
                     if inspect.iscoroutinefunction(analyze_briefing):
                         result = await analyze_briefing(body)
                     else:
                         result = analyze_briefing(body)
-
                     if isinstance(result, dict) and "html" in result:
                         html = result["html"]
                     elif isinstance(result, str) and "<html" in result.lower():
                         html = result
-                    else:
-                        logger.warning("analyze_briefing returned unexpected type: %s", type(result))
-                        html = html_fallback(lang)
                 except Exception as ex:
                     logger.exception("analyze_briefing failed: %s", ex)
-                    html = html_fallback(lang)
-            else:
+
+            if not html:
                 logger.warning("Analyze module not loaded; using fallback.")
                 html = html_fallback(lang)
 
             TASKS[job_id]["html_len"] = len(html)
 
             # 3) An PDF-Service senden
-            res = await send_html_to_pdf_service(
-                html, user_email, subject="KI-Readiness Report", lang=lang, request_id=rid
-            )
+            res = await send_html_to_pdf_service(html, user_email, subject="KI-Readiness Report", lang=lang, request_id=rid)
             TASKS[job_id]["pdf_sent"] = bool(res["ok"])
             TASKS[job_id]["pdf_status"] = res["status"]
             TASKS[job_id]["pdf_error"] = res["error"]
@@ -361,10 +383,8 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
             TASKS[job_id]["status"] = "failed"
             TASKS[job_id]["error"] = str(ex)
 
-    # Hintergrund starten
     bg.add_task(run)
     return {"ok": True, "job_id": job_id}
-
 
 @app.get("/briefing_status/{job_id}", response_class=JSONResponse)
 def briefing_status(job_id: str, user=Depends(current_user)):
@@ -372,7 +392,6 @@ def briefing_status(job_id: str, user=Depends(current_user)):
     if not info:
         raise HTTPException(status_code=404, detail="unknown job_id")
     return info
-
 
 # -----------------------------------------------------------------------------
 # Startseite (Mini-Hinweis)
@@ -388,6 +407,7 @@ def root():
   <p>Alles läuft. Endpunkte:</p>
   <ul>
     <li><code>GET /health</code></li>
+    <li><code>GET /diag/analyze</code></li>
     <li><code>POST /api/login</code> → Token</li>
     <li><code>POST /briefing_async</code> (Bearer)</li>
     <li><code>GET /briefing_status/&lt;job_id&gt;</code> (Bearer)</li>
