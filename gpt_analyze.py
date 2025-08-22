@@ -94,24 +94,41 @@ def ensure_html(text: str, lang: str = "de") -> str:
     t = (text or "").strip()
     if "<" in t and ">" in t:
         return t
+
     lines = [ln.rstrip() for ln in t.splitlines() if ln.strip()]
-    html = []; in_ul = False
+    html = []
+    in_ul = False
+
     for ln in lines:
+        # Bullet-Liste
         if re.match(r"^[-•*]\s+", ln):
             if not in_ul:
-                html.append("<ul>"); in_ul = True
-            html.append(f"<li>{re.sub(r'^[-•*]\s+','',ln).strip()}</li>")
-        elif re.match(r"^#{1,3}\s+", ln):
-            level = min(3, max(1, len(ln) - len(ln.lstrip("#"))))
+                html.append("<ul>")
+                in_ul = True
+            # WICHTIG: Kein backslash im f-string-Ausdruck → erst bereinigen, dann konkatenieren
+            item_txt = re.sub(r"^[-•*]\s+", "", ln).strip()
+            html.append("<li>" + item_txt + "</li>")
+            continue
+
+        # Überschriften mit #, ##, ###
+        if re.match(r"^#{1,3}\s+", ln):
+            level = len(ln) - len(ln.lstrip("#"))
+            level = min(3, max(1, level))
             txt = ln[level:].strip()
-            html.append(f"<h{level}>{txt}</h{level}>")
-        else:
-            if in_ul:
-                html.append("</ul>"); in_ul = False
-            html.append(f"<p>{ln}</p>")
+            html.append("<h" + str(level) + ">" + txt + "</h" + str(level) + ">")
+            continue
+
+        # Absatz
+        if in_ul:
+            html.append("</ul>")
+            in_ul = False
+        html.append("<p>" + ln + "</p>")
+
     if in_ul:
         html.append("</ul>")
+
     return "\n".join(html)
+
 
 # ---------------------------- Erweiterte Risiken -----------------------------
 def build_extended_risks(data: dict, lang: str = "de") -> str:
