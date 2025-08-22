@@ -42,7 +42,7 @@ ensure_unzipped("prompts.zip", "prompts_unzip")
 ensure_unzipped("branchenkontext.zip", "branchenkontext")
 ensure_unzipped("data.zip", "data")
 
-# ------------------------------- Helpers -------------------------------------
+# ------------------------------- Helper --------------------------------------
 def _as_int(x):
     try:
         return int(str(x).strip())
@@ -50,9 +50,7 @@ def _as_int(x):
         return None
 
 def is_self_employed(data: dict) -> bool:
-    """
-    Sehr robuste Heuristik: Solo, Freelancer, self-employed, Mitarbeiterzahl <= 1 etc.
-    """
+    """Solo/1-MA-Heuristik über Freitext/Größenfelder."""
     keys_text = [
         "beschaeftigungsform", "beschäftigungsform", "arbeitsform", "rolle",
         "role", "occupation", "unternehmensform", "company_type"
@@ -88,8 +86,8 @@ def fix_encoding(text: str) -> str:
 
 def ensure_html(text: str, lang: str = "de") -> str:
     """
-    Macht aus Plain-Text valides HTML (Absätze/Listen/Überschriften),
-    lässt vorhandenes HTML unverändert durch.
+    Aus Plaintext → valides HTML (Absätze/Listen/Überschriften),
+    vorhandenes HTML bleibt unverändert. (keine Backslashes in f-Strings!)
     """
     t = (text or "").strip()
     if "<" in t and ">" in t:
@@ -105,7 +103,6 @@ def ensure_html(text: str, lang: str = "de") -> str:
             if not in_ul:
                 html.append("<ul>")
                 in_ul = True
-            # WICHTIG: Kein backslash im f-string-Ausdruck → erst bereinigen, dann konkatenieren
             item_txt = re.sub(r"^[-•*]\s+", "", ln).strip()
             html.append("<li>" + item_txt + "</li>")
             continue
@@ -129,14 +126,13 @@ def ensure_html(text: str, lang: str = "de") -> str:
 
     return "\n".join(html)
 
-
 # ---------------------------- Erweiterte Risiken -----------------------------
 def build_extended_risks(data: dict, lang: str = "de") -> str:
-    """Zusätzliche Risiko-Hinweise als <ul>-Liste auf Basis der Antworten."""
+    """Zusätzliche Risiko-Hinweise als <ul>-Liste."""
     risks = []
     dq = (data.get("datenqualitaet") or data.get("data_quality") or "").lower()
     if dq in {"niedrig", "low"}:
-        risks.append("Die Datenqualität ist niedrig; unstrukturierte und lückenhafte Daten erschweren KI-Projekte."
+        risks.append("Die Datenqualität ist niedrig; unstrukturierte/lückenhafte Daten erschweren KI-Projekte."
                      if lang.startswith("de") else
                      "Your data quality is low; unstructured or incomplete data hinder AI projects.")
     ai_rm = (data.get("ai_roadmap") or "").lower()
@@ -160,41 +156,37 @@ def build_extended_risks(data: dict, lang: str = "de") -> str:
 
 # ----------------------------- Charts-Payload --------------------------------
 def build_chart_payload(data: dict, score_percent: int, lang: str = "de") -> dict:
-    """
-    JSON-Payload für Charts (Score, Benchmarks, Risiken/Kultur) – für Chart.js.
-    """
+    """JSON-Payload für Charts (Score, Benchmarks, Risiken/Kultur) – für Chart.js."""
     def as_int(v, default=0):
-        try:
-            return int(v)
-        except Exception:
-            return default
+        try: return int(v)
+        except Exception: return default
 
     digitalisierung = as_int(data.get("digitalisierungsgrad", 1), 1)
 
-    auto_map = {"sehr_niedrig": 1, "eher_niedrig": 2, "mittel": 3, "eher_hoch": 4, "sehr_hoch": 5,
-                "very_low": 1, "rather_low": 2, "medium": 3, "rather_high": 4, "very_high": 5}
+    auto_map = {"sehr_niedrig":1,"eher_niedrig":2,"mittel":3,"eher_hoch":4,"sehr_hoch":5,
+                "very_low":1,"rather_low":2,"medium":3,"rather_high":4,"very_high":5}
     autom = auto_map.get(str(data.get("automatisierungsgrad","")).lower(), 1)
 
-    pap_map = {"0-20": 1, "21-50": 2, "51-80": 4, "81-100": 5}
+    pap_map = {"0-20":1,"21-50":2,"51-80":4,"81-100":5}
     paperless = pap_map.get(str(data.get("prozesse_papierlos","0-20")).lower(), 1)
 
-    know_map = {"keine": 1, "grundkenntnisse": 2, "mittel": 3, "fortgeschritten": 4, "expertenwissen": 5,
-                "none": 1, "basic": 2, "medium": 3, "advanced": 4, "expert": 5}
+    know_map = {"keine":1,"grundkenntnisse":2,"mittel":3,"fortgeschritten":4,"expertenwissen":5,
+                "none":1,"basic":2,"medium":3,"advanced":4,"expert":5}
     knowhow = know_map.get(str(data.get("ki_knowhow", data.get("ai_knowhow","keine"))).lower(), 1)
 
     risk = as_int(data.get("risikofreude", data.get("risk_appetite", 1)), 1)
 
-    dq_map = {"hoch": 5, "mittel": 3, "niedrig": 1, "high": 5, "medium": 3, "low": 1}
+    dq_map = {"hoch":5,"mittel":3,"niedrig":1,"high":5,"medium":3,"low":1}
     dq = dq_map.get(str(data.get("datenqualitaet", data.get("data_quality",""))).lower(), 0)
 
-    roadmap_map = {"ja": 5, "in_planung": 3, "nein": 1, "yes": 5, "planning": 3, "no": 1}
+    roadmap_map = {"ja":5,"in_planung":3,"nein":1,"yes":5,"planning":3,"no":1}
     roadmap = roadmap_map.get(str(data.get("ai_roadmap","")).lower(), 0)
 
-    gov_map = {"ja": 5, "teilweise": 3, "nein": 1, "yes": 5, "partial": 3, "no": 1}
+    gov_map = {"ja":5,"teilweise":3,"nein":1,"yes":5,"partial":3,"no":1}
     gov = gov_map.get(str(data.get("governance","")).lower(), 0)
 
-    inov_map = {"sehr_offen": 5, "eher_offen": 4, "neutral": 3, "eher_zurueckhaltend": 2, "sehr_zurueckhaltend": 1,
-                "very_open": 5, "rather_open": 4, "neutral": 3, "rather_reluctant": 2, "very_reluctant": 1}
+    inov_map = {"sehr_offen":5,"eher_offen":4,"neutral":3,"eher_zurueckhaltend":2,"sehr_zurueckhaltend":1,
+                "very_open":5,"rather_open":4,"neutral":3,"rather_reluctant":2,"very_reluctant":1}
     inov = inov_map.get(str(data.get("innovationskultur", data.get("innovation_culture",""))).lower(), 0)
 
     labels_de = ["Digitalisierung","Automatisierung","Papierlos","KI-Know-how",
@@ -205,12 +197,9 @@ def build_chart_payload(data: dict, score_percent: int, lang: str = "de") -> dic
 
     dataset = [digitalisierung, autom, paperless, knowhow, risk, dq, roadmap, gov, inov]
 
-    # grober Risikoindikator
     risk_level = 1
-    if dq == 1 or gov == 1:
-        risk_level = 3
-    elif roadmap in {1, 3}:
-        risk_level = 2
+    if dq == 1 or gov == 1: risk_level = 3
+    elif roadmap in {1,3}: risk_level = 2
 
     return {
         "score": score_percent,
@@ -220,15 +209,14 @@ def build_chart_payload(data: dict, score_percent: int, lang: str = "de") -> dic
 
 # ----------------------------- Tabellen-Payload ------------------------------
 def build_funding_table(data: dict, lang: str = "de", max_items: int = 6):
-    """CSV data/foerdermittel.csv → Liste für die Tabelle."""
+    """CSV data/foerdermittel.csv → Liste für Förder-Tabelle."""
     import csv
     path = os.path.join("data", "foerdermittel.csv")
-    if not os.path.exists(path):
-        return []
+    if not os.path.exists(path): return []
     size = (data.get("unternehmensgroesse") or "").lower()
-    targets = {"solo": ["solo","freelancer","einzel"],
-               "team": ["kmu","team","small"],
-               "kmu":  ["kmu","sme"]}.get(size, [])
+    targets = {"solo":["solo","freelancer","einzel"],
+               "team":["kmu","team","small"],
+               "kmu":["kmu","sme"]}.get(size, [])
     region = (data.get("bundesland") or "").lower()
     rows = []
     with open(path, newline="", encoding="utf-8") as f:
@@ -248,11 +236,10 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 6):
     return rows[:max_items]
 
 def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int = 8):
-    """CSV data/tools.csv (optional) → Liste {name,usecase,cost,link}."""
+    """CSV data/tools.csv (optional) → Liste {name,usecase,cost,link} für Tools-Tabelle."""
     import csv
     path = os.path.join("data", "tools.csv")
-    if not os.path.exists(path):
-        return []
+    if not os.path.exists(path): return []
     out = []
     with open(path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
@@ -267,6 +254,64 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                 "link": row.get("Link",""),
             })
     return out[:max_items]
+
+# -------------------------- Dynamischer Förder-Teaser -------------------------
+def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
+    """
+    HTML-Teaser aus data/foerdermittel.csv (Liste).
+    Für Tabellenanzeige verwenden wir build_funding_table().
+    """
+    import csv
+    path_csv = os.path.join("data", "foerdermittel.csv")
+    if not os.path.exists(path_csv):
+        return ""
+
+    try:
+        with open(path_csv, newline="", encoding="utf-8") as csvfile:
+            programmes = list(csv.DictReader(csvfile))
+    except Exception:
+        return ""
+
+    size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
+    zielgruppe_map = {
+        "solo": ["solo", "freelancer", "freiberuflich", "einzel"],
+        "team": ["kmu", "team", "small"],
+        "kmu":  ["kmu", "sme"],
+    }
+    targets = zielgruppe_map.get(size, [])
+    region_code = (data.get("bundesland") or data.get("state") or "").lower()
+
+    def matches(row):
+        zg = (row.get("Zielgruppe", "") or "").lower()
+        target_ok = True if not targets else any(t in zg for t in targets)
+        reg = (row.get("Region", "") or "").lower()
+        region_ok = True
+        if region_code:
+            region_ok = (reg == region_code) or (reg == "bund")
+        return target_ok and region_ok
+
+    filtered = [p for p in programmes if matches(p)]
+    if not filtered:
+        filtered = programmes[:max_items]
+    selected = filtered[:max_items]
+    if not selected:
+        return ""
+
+    title = "Dynamische Förderprogramme" if lang.startswith("de") else "Dynamic funding programmes"
+    out = [f"<h3>{title}</h3>", "<ul>"]
+    for prog in selected:
+        name = prog.get("Name", "")
+        desc = (prog.get("Beschreibung", "") or "").strip()
+        link = prog.get("Link", "")
+        grant = prog.get("Fördersumme (€)", "")
+        line = (f"<b>{name}</b>: {desc} – Förderhöhe: {grant}"
+                if lang.startswith("de")
+                else f"<b>{name}</b>: {desc} – Funding amount: {grant}")
+        if link:
+            line += f" – <a href=\"{link}\" target=\"_blank\">Link</a>"
+        out.append(f"<li>{line}</li>")
+    out.append("</ul>")
+    return "\n".join(out)
 # ----------------------------- Prompt-Logik ----------------------------------
 def render_prompt(template_text: str, context: dict) -> str:
     """Minimaler Renderer für {{ key }} und {{ key | join(', ') }} in Prompts."""
@@ -394,7 +439,7 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
     context = add_websearch_links(context, branche, projektziel)
     context = add_innovation_features(context, branche, data)
 
-    # optionale Checklisten aus data/
+    # optionale Checklisten
     if not context.get("checklisten"):
         md_path = "data/check_ki_readiness.md"
         if os.path.exists(md_path):
@@ -482,50 +527,40 @@ def distill_recommendations(source_html: str, lang: str = "de") -> str:
 
 # ------------------------------- Scoring -------------------------------------
 def calc_score_percent(data: dict) -> int:
-    """
-    Readiness-Score 0–100 mit erweiterten Dimensionen (inkl. Datenqualität,
-    Roadmap, Governance, Innovationskultur, Bonus für klare Ziele).
-    Robust gegen fehlende Werte; bounded 0..100.
-    """
+    """Readiness-Score 0–100 (erweiterte Dimensionen)."""
     def as_int_val(v, default=0):
-        try:
-            return int(v)
-        except Exception:
-            return default
+        try: return int(v)
+        except Exception: return default
 
     score = 0
-    max_score = 51  # Summe der Einzelskalen
+    max_score = 51
 
     score += as_int_val(data.get("digitalisierungsgrad", 1), 1)
 
-    auto_map = {
-        "sehr_niedrig": 0, "eher_niedrig": 1, "mittel": 3, "eher_hoch": 4, "sehr_hoch": 5,
-        "very_low": 0, "rather_low": 1, "medium": 3, "rather_high": 4, "very_high": 5,
-    }
-    score += auto_map.get(str(data.get("automatisierungsgrad", "")).lower(), 0)
+    auto_map = {"sehr_niedrig":0, "eher_niedrig":1, "mittel":3, "eher_hoch":4, "sehr_hoch":5,
+                "very_low":0, "rather_low":1, "medium":3, "rather_high":4, "very_high":5}
+    score += auto_map.get(str(data.get("automatisierungsgrad","")).lower(), 0)
 
-    pap_map = {"0-20": 1, "21-50": 2, "51-80": 4, "81-100": 5, "0-20%": 1, "21-50%": 2, "51-80%": 4, "81-100%": 5}
-    score += pap_map.get(str(data.get("prozesse_papierlos", "0-20")).lower(), 0)
+    pap_map = {"0-20":1,"21-50":2,"51-80":4,"81-100":5,"0-20%":1,"21-50%":2,"51-80%":4,"81-100%":5}
+    score += pap_map.get(str(data.get("prozesse_papierlos","0-20")).lower(), 0)
 
-    know_map = {
-        "keine": 0, "grundkenntnisse": 1, "mittel": 3, "fortgeschritten": 4, "expertenwissen": 5,
-        "none": 0, "basic": 1, "medium": 3, "advanced": 4, "expert": 5,
-    }
-    score += know_map.get(str(data.get("ki_knowhow", data.get("ai_knowhow", "keine"))).lower(), 0)
+    know_map = {"keine":0,"grundkenntnisse":1,"mittel":3,"fortgeschritten":4,"expertenwissen":5,
+                "none":0,"basic":1,"medium":3,"advanced":4,"expert":5}
+    score += know_map.get(str(data.get("ki_knowhow", data.get("ai_knowhow","keine"))).lower(), 0)
 
     score += as_int_val(data.get("risikofreude", data.get("risk_appetite", 1)), 1)
 
-    dq_map = {"hoch": 5, "mittel": 3, "niedrig": 1, "high": 5, "medium": 3, "low": 1}
+    dq_map = {"hoch":5,"mittel":3,"niedrig":1,"high":5,"medium":3,"low":1}
     score += dq_map.get(str(data.get("datenqualitaet") or data.get("data_quality") or "").lower(), 0)
 
-    roadmap_map = {"ja": 5, "in_planung": 3, "nein": 1, "yes": 5, "planning": 3, "no": 1}
+    roadmap_map = {"ja":5,"in_planung":3,"nein":1,"yes":5,"planning":3,"no":1}
     score += roadmap_map.get(str(data.get("ai_roadmap") or "").lower(), 0)
 
-    gov_map = {"ja": 5, "teilweise": 3, "nein": 1, "yes": 5, "partial": 3, "no": 1}
+    gov_map = {"ja":5,"teilweise":3,"nein":1,"yes":5,"partial":3,"no":1}
     score += gov_map.get(str(data.get("governance") or "").lower(), 0)
 
-    inov_map = {"sehr_offen": 5, "eher_offen": 4, "neutral": 3, "eher_zurueckhaltend": 2, "sehr_zurueckhaltend": 1,
-                "very_open": 5, "rather_open": 4, "neutral": 3, "rather_reluctant": 2, "very_reluctant": 1}
+    inov_map = {"sehr_offen":5,"eher_offen":4,"neutral":3,"eher_zurueckhaltend":2,"sehr_zurueckhaltend":1,
+                "very_open":5,"rather_open":4,"neutral":3,"rather_reluctant":2,"very_reluctant":1}
     score += inov_map.get(str(data.get("innovationskultur") or data.get("innovation_culture") or "").lower(), 0)
 
     if data.get("strategische_ziele") or data.get("strategic_goals"):
@@ -548,7 +583,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     data["score_percent"] = calc_score_percent(data)
 
     solo = is_self_employed(data)
-    wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja", "unklar", "yes", "unsure"}
+    wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja","unklar","yes","unsure"}
 
     chapters = ["executive_summary", "vision", "tools"] \
                + (["foerderprogramme"] if wants_funding else []) \
@@ -564,13 +599,13 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # Preface
     out["preface"] = generate_preface(lang=lang, score_percent=data.get("score_percent"))
 
-    # Quick Wins & Risiken aus Executive + Roadmap destillieren
+    # Quick Wins & Risiken aus Exec + Roadmap
     src_for_qr = (out.get("executive_summary") or "") + "\n\n" + (out.get("roadmap") or "")
     q_r = distill_quickwins_risks(src_for_qr, lang=lang)
     out["quick_wins_html"] = q_r.get("quick_wins_html", "")
     out["risks_html"] = q_r.get("risks_html", "")
 
-    # Empfehlungen aus Roadmap (+ Compliance)
+    # Empfehlungen
     src_for_rec = (out.get("roadmap") or "") + "\n\n" + (out.get("compliance") or "")
     out["recommendations_html"] = distill_recommendations(src_for_rec, lang=lang) or (out.get("roadmap") or "")
 
@@ -578,24 +613,23 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     out["roadmap_html"] = out.get("roadmap", "")
     out["exec_summary_html"] = out.get("executive_summary", "")
 
-    # Sammle übrige Kapitel (Vision zuerst)
+    # Übrige Kapitel (Vision zuerst)
     parts = []
     if out.get("vision"):
         parts.append(f"<h2>{'Visionäre Empfehlung' if str(lang).startswith('de') else 'Visionary Recommendation'}</h2>\n{out['vision']}")
     if out.get("tools"):
-        parts.append(f"<h2>Tools</h2>\n{out['tools']}")
+        parts.append("<h2>Tools</h2>\n" + out["tools"])
     if out.get("foerderprogramme"):
         label_foerd = "Förderprogramme" if str(lang).startswith("de") else "Funding"
         note = "<p><em>Hinweis: Für Solo-Selbstständige gefiltert (sofern verfügbar).</em></p>" if solo and str(lang).startswith("de") else ""
         parts.append(f"<h2>{label_foerd}</h2>\n{note}\n{out['foerderprogramme']}")
     if out.get("compliance"):
-        parts.append(f"<h2>Compliance</h2>\n{out['compliance']}")
+        parts.append("<h2>Compliance</h2>\n" + out["compliance"])
     if out.get("praxisbeispiel"):
         parts.append(f"<h2>{'Praxisbeispiel' if str(lang).startswith('de') else 'Case Study'}</h2>\n{out['praxisbeispiel']}")
-
     out["sections_html"] = "\n\n".join(parts)
 
-    # Dynamischer Förder-Teaser
+    # Dynamischer Förder-Teaser (HTML-Liste)
     if wants_funding:
         dynamic_html = build_dynamic_funding(data, lang=lang)
         if dynamic_html:
@@ -620,7 +654,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     except Exception:
         out["tools_table"] = []
 
-    # Fallbacks, wenn CSVs fehlen → rudimentär aus HTML-Listen extrahieren
+    # Fallbacks, wenn CSVs fehlen → rudimentär aus HTML extrahieren
     if wants_funding and not out.get("foerderprogramme_table"):
         teaser = out.get("foerderprogramme") or out.get("sections_html","")
         rows = []
@@ -740,7 +774,7 @@ async def analyze_briefing(payload: Dict[str, Any]) -> Dict[str, Any]:
         ctx = {
             "lang": lang,
             "today": datetime.now().strftime("%Y-%m-%d"),
-            "datum": datetime.now().strftime("%Y-%m-%d"),  # für Live-Abschnitte im Template
+            "datum": datetime.now().strftime("%Y-%m-%d"),
             "score_percent": report.get("score_percent", 0),
             "preface": report.get("preface", ""),
             "exec_summary_html": report.get("exec_summary_html", ""),
@@ -754,7 +788,7 @@ async def analyze_briefing(payload: Dict[str, Any]) -> Dict[str, Any]:
             "foerderprogramme_table": report.get("foerderprogramme_table", []),
             "tools_table": report.get("tools_table", []),
             "footer_text": footer_text,
-            # Assets (Data-URIs)
+            # Assets als Data-URI
             "logo_main": _data_uri_for("ki-sicherheit-logo.webp") or _data_uri_for("ki-sicherheit-logo.png"),
             "logo_tuev": _data_uri_for("tuev-logo-transparent.webp") or _data_uri_for("tuev-logo.webp"),
             "logo_euai": _data_uri_for("eu-ai.svg"),
@@ -780,6 +814,7 @@ async def analyze_briefing(payload: Dict[str, Any]) -> Dict[str, Any]:
   <small>TÜV-zertifiziertes KI-Management © {datetime.now().year}: Wolf Hohl · E-Mail: kontakt@ki-sicherheit.jetzt</small>
 </body></html>"""
 
+    # lokale Bilder einbetten
     html = _inline_local_images(html)
 
     return {
