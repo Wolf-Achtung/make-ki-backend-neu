@@ -75,11 +75,11 @@ def load_text(path: str) -> str:
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
-# ------------------------------- Fördermittel (HTML) -------------------------
+# ------------------------------- Fördermittel (HTML-Teaser) ------------------
 def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
     """
-    Baut einen HTML-Block aus data/foerdermittel.csv (einfacher Teaser).
-    Zusätzlich liefern wir unten strukturierte Tabellen via build_funding_table().
+    Baut einen HTML-Teaser aus data/foerdermittel.csv. Für die Tabellenanzeige
+    nutzen wir unten build_funding_table().
     """
     import csv
     path_csv = os.path.join("data", "foerdermittel.csv")
@@ -93,7 +93,6 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
                 programmes.append(row)
     except Exception:
         return ""
-
     size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
     zielgruppe_map = {
         "solo": ["solo", "freelancer", "freiberuflich", "einzel"],
@@ -137,30 +136,28 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
 
 # ---------------------------- Erweiterte Risiken -----------------------------
 def build_extended_risks(data: dict, lang: str = "de") -> str:
-    """
-    Zusätzliche Risiko-Hinweise als <ul>-Liste auf Basis der Antworten.
-    """
+    """Zusätzliche Risiko-Hinweise als <ul>-Liste auf Basis der Antworten."""
     risks = []
     dq = (data.get("datenqualitaet") or data.get("data_quality") or "").lower()
     if dq in {"niedrig", "low"}:
-        risks.append("Die Datenqualität ist niedrig; unstrukturierte und lückenhafte Daten erschweren KI-Projekte und können zu fehlerhaften Ergebnissen führen."
+        risks.append("Die Datenqualität ist niedrig; unstrukturierte und lückenhafte Daten erschweren KI-Projekte."
                      if lang.startswith("de") else
-                     "Your data quality is low; unstructured or incomplete data make AI projects difficult and can lead to incorrect results.")
+                     "Your data quality is low; unstructured or incomplete data hinder AI projects.")
     ai_rm = (data.get("ai_roadmap") or "").lower()
     if ai_rm in {"nein", "no"}:
-        risks.append("Es fehlt eine klar definierte KI-Roadmap. Ohne strategische Planung besteht das Risiko von ineffizienten Insellösungen."
+        risks.append("Es fehlt eine klar definierte KI-Roadmap; Risiko ineffizienter Insellösungen."
                      if lang.startswith("de") else
-                     "There is no clearly defined AI roadmap. Without strategic planning there is a risk of inefficient point solutions.")
+                     "No clearly defined AI roadmap; risk of inefficient point solutions.")
     gov = (data.get("governance") or "").lower()
     if gov in {"nein", "no"}:
-        risks.append("Es bestehen keine internen Richtlinien für Daten- oder KI-Governance; dies erhöht das Risiko von Rechtsverstößen und unsauberen Prozessen."
+        risks.append("Keine internen Richtlinien für Daten-/KI-Governance; erhöhtes Rechts-/Prozessrisiko."
                      if lang.startswith("de") else
-                     "There are no internal guidelines for data or AI governance; this increases the risk of legal violations and inconsistent processes.")
+                     "No data/AI governance; increased legal/process risk.")
     inv = (data.get("innovationskultur") or data.get("innovation_culture") or "").lower()
     if inv in {"eher_zurueckhaltend", "sehr_zurueckhaltend", "rather_reluctant", "very_reluctant"}:
-        risks.append("Die Innovationskultur im Unternehmen ist zurückhaltend; eine ablehnende Haltung gegenüber neuen Technologien kann den Erfolg von KI-Projekten gefährden."
+        risks.append("Zurückhaltende Innovationskultur kann KI-Erfolg gefährden."
                      if lang.startswith("de") else
-                     "Your company’s innovation culture is reluctant; a sceptical attitude towards new technologies can jeopardise AI project success.")
+                     "Reluctant innovation culture can jeopardise AI project success.")
     if not risks:
         return ""
     return "<ul>" + "".join(f"<li>{r}</li>" for r in risks) + "</ul>"
@@ -168,8 +165,7 @@ def build_extended_risks(data: dict, lang: str = "de") -> str:
 # ----------------------------- Charts-Payload --------------------------------
 def build_chart_payload(data: dict, score_percent: int, lang: str = "de") -> dict:
     """
-    Liefert ein JSON-Payload für Charts (Score, Benchmarks, Risiken/Kultur).
-    Templates können dieses JSON direkt an Chart.js übergeben.
+    JSON-Payload für Charts (Score, Benchmarks, Risiken/Kultur) – für Chart.js.
     """
     def as_int(v, default=0):
         try:
@@ -213,7 +209,7 @@ def build_chart_payload(data: dict, score_percent: int, lang: str = "de") -> dic
 
     dataset = [digitalisierung, autom, paperless, knowhow, risk, dq, roadmap, gov, inov]
 
-    # Risiko-Level (grob) — bei schlechter Datenquali oder fehlender Governance hoch
+    # grober Risikoindikator
     risk_level = 1
     if dq == 1 or gov == 1:
         risk_level = 3
@@ -228,7 +224,7 @@ def build_chart_payload(data: dict, score_percent: int, lang: str = "de") -> dic
 
 # ----------------------------- Tabellen-Payload ------------------------------
 def build_funding_table(data: dict, lang: str = "de", max_items: int = 6):
-    """CSV data/foerdermittel.csv → Liste von Dikt-Objekten für die Tabelle."""
+    """CSV data/foerdermittel.csv → Liste für die Tabelle."""
     import csv
     path = os.path.join("data", "foerdermittel.csv")
     if not os.path.exists(path):
@@ -267,7 +263,6 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
         for row in r:
             tags = (row.get("Tags") or row.get("Branche") or "").lower()
             if branche and tags and branche not in tags:
-                # Falls eine Branchen-Tag-Spalte existiert und nicht passt → skip
                 continue
             out.append({
                 "name": row.get("Name",""),
@@ -278,10 +273,7 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
     return out[:max_items]
 # ----------------------------- Prompt-Logik ----------------------------------
 def render_prompt(template_text: str, context: dict) -> str:
-    """
-    Minimaler Renderer für {{ key }} und {{ key | join(', ') }}.
-    Jinja nutzen wir unten nur für das PDF-HTML, nicht für Prompts.
-    """
+    """Minimaler Renderer für {{ key }} und {{ key | join(', ') }} in Prompts."""
     def replace_join(m):
         key = m.group(1); sep = m.group(2)
         val = context.get(key.strip(), "")
@@ -289,11 +281,7 @@ def render_prompt(template_text: str, context: dict) -> str:
             return sep.join(str(v) for v in val)
         return str(val)
 
-    rendered = re.sub(
-        r"\{\{\s*(\w+)\s*\|\s*join\(\s*['\"]([^'\"]*)['\"]\s*\)\s*\}\}",
-        replace_join,
-        template_text,
-    )
+    rendered = re.sub(r"\{\{\s*(\w+)\s*\|\s*join\(\s*['\"]([^'\"]*)['\"]\s*\)\s*\}\}", replace_join, template_text)
 
     def replace_simple(m):
         key = m.group(1)
@@ -329,12 +317,12 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     solo_note_de = (
         "\n\nWICHTIG: Der/die Nutzer:in arbeitet SOLO-selbstständig. "
         "Vermeide Empfehlungen, die nur für Unternehmen mit mehreren Mitarbeitenden sinnvoll sind. "
-        "Förderprogramme nur nennen, wenn explizit für Solo-Selbstständige geeignet."
+        "Nur Förderungen listen, die für Solo-Selbstständige passen."
     )
     solo_note_en = (
         "\n\nIMPORTANT: The user is SOLO self-employed. "
-        "Avoid advice applicable only to organisations with multiple employees. "
-        "Only list funding suitable for solo self-employed."
+        "Avoid advice only applicable to organisations with multiple employees. "
+        "List only funding suitable for solo self-employed."
     )
 
     if str(lang).lower().startswith("de"):
@@ -342,7 +330,7 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
             "\n\n---\n"
             "Gib die Antwort AUSSCHLIESSLICH als gültiges HTML zurück (ohne <html>-Wrapper), "
             "nutze <h3>, <p>, <ul>, <ol>, <table> wo sinnvoll. "
-            "Keine Meta-Kommentare, keine Vorrede.\n"
+            "Keine Meta-Kommentare.\n"
             "- Was tun? (3–5 präzise Maßnahmen, Imperativ)\n"
             "- Warum? (max. 2 Sätze)\n"
             "- Nächste 3 Schritte (Checkliste)\n"
@@ -352,10 +340,9 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     else:
         style = (
             "\n\n---\n"
-            "Return VALID HTML ONLY (no <html> wrapper). "
-            "Use <h3>, <p>, <ul>, <ol>, <table> when helpful. "
-            "No meta talk, no preface.\n"
-            "- What to do (3–5 precise actions)\n"
+            "Return VALID HTML ONLY (no <html> wrapper). Use <h3>, <p>, <ul>, <ol>, <table> when helpful. "
+            "No meta talk.\n"
+            "- What to do (3–5 actions)\n"
             "- Why (max 2 sentences)\n"
             "- Next 3 steps (checklist)\n"
         )
@@ -373,25 +360,51 @@ def _chat_complete(messages, model_name: Optional[str], temperature: Optional[fl
     resp = client.chat.completions.create(**args)
     return resp.choices[0].message.content.strip()
 
+def build_context(data: dict, branche: str, lang: str = "de") -> dict:
+    """Kontext aus Branchen-YAML + Fragebogen-Daten zusammenführen."""
+    context_path = f"branchenkontext/{branche}.{lang}.yaml"
+    if not os.path.exists(context_path):
+        context_path = f"branchenkontext/default.{lang}.yaml"
+    context = load_yaml(context_path) if os.path.exists(context_path) else {}
+    context.update(data or {})
+    context.setdefault("copyright_year", datetime.now().year)
+    context.setdefault("copyright_owner", "Wolf Hohl")
+    context.setdefault("company_size", _as_int(data.get("mitarbeiterzahl") or data.get("employees") or 1) or 1)
+    context["is_self_employed"] = is_self_employed(data)
+    return context
+
+def add_innovation_features(context, branche, data):
+    context["branchen_innovations_intro"] = INNOVATION_INTRO.get(branche, "")
+    try:
+        context["gamechanger_blocks"] = build_gamechanger_blocks(data, GAMECHANGER_FEATURES)
+    except Exception:
+        context["gamechanger_blocks"] = []
+    return context
+
+def add_websearch_links(context, branche, projektziel):
+    year = datetime.now().year
+    try:
+        context["websearch_links_foerder"] = serpapi_search(f"aktuelle Förderprogramme {branche} {projektziel} Deutschland {year}", num_results=5)
+        context["websearch_links_tools"]   = serpapi_search(f"aktuelle KI-Tools {branche} Deutschland {year}", num_results=5)
+    except Exception:
+        context["websearch_links_foerder"] = []
+        context["websearch_links_tools"] = []
+    return context
+
 def gpt_generate_section(data, branche, chapter, lang="de"):
     lang = data.get("lang") or data.get("language") or data.get("sprache") or lang
-
     context = build_context(data, branche, lang)
     projektziel = data.get("projektziel", "")
     context = add_websearch_links(context, branche, projektziel)
     context = add_innovation_features(context, branche, data)
 
-    # ggf. Checklisten aus data/
+    # Checklisten aus data/
     if not context.get("checklisten"):
         md_path = "data/check_ki_readiness.md"
         if os.path.exists(md_path):
             with open(md_path, encoding="utf-8") as f:
                 md = f.read()
-            ctx_list = []
-            for ln in md.splitlines():
-                s = ln.strip()
-                if s.startswith("- "):
-                    ctx_list.append(f"<li>{s[2:].strip()}</li>")
+            ctx_list = [f"<li>{ln[2:].strip()}</li>" for ln in md.splitlines() if ln.strip().startswith("- ")]
             context["checklisten"] = "<ul>" + "\n".join(ctx_list) + "</ul>" if ctx_list else ""
         else:
             context["checklisten"] = ""
@@ -404,8 +417,7 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
     section_text = _chat_complete(
         messages=[
             {"role": "system", "content": (
-                "Du bist TÜV-zertifizierter KI-Manager, KI-Strategieberater, "
-                "Datenschutz- und Fördermittel-Experte. "
+                "Du bist TÜV-zertifizierter KI-Manager, KI-Strategieberater, Datenschutz- und Fördermittel-Experte. "
                 "Liefere präzise, umsetzbare, aktuelle und branchenrelevante Inhalte als HTML."
             ) if str(lang).lower().startswith("de") else (
                 "You are a TÜV-certified AI manager and strategy consultant. "
@@ -417,146 +429,18 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
         temperature=None,
     )
 
-    return ensure_html(section_text, lang=lang)
+    return section_text  # wird später durch ensure_html gewandelt
 
-# ------------------------------ Distillation ---------------------------------
-def _distill_two_lists(html_src: str, lang: str, title_a: str, title_b: str):
-    model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
-    if str(lang).lower().startswith("de"):
-        sys = "Du extrahierst präzise Listen aus HTML."
-        usr = (
-            f"Extrahiere aus folgendem HTML zwei kompakte Listen als HTML:\n"
-            f"<h3>{title_a}</h3><ul>…</ul>\n<h3>{title_b}</h3><ul>…</ul>\n"
-            f"- 4–6 Punkte je Liste\n"
-            f"- kurze Imperative\n"
-            f"- gib nur VALIDES HTML zurück.\n\n"
-            f"HTML:\n{html_src}"
-        )
-    else:
-        sys = "You extract precise lists from HTML."
-        usr = (
-            f"From the HTML, extract two compact lists as HTML:\n"
-            f"<h3>{title_a}</h3><ul>…</ul>\n<h3>{title_b}</h3><ul>…</ul>\n"
-            f"- 4–6 bullets each\n"
-            f"- short imperatives\n"
-            f"- return VALID HTML ONLY.\n\n"
-            f"HTML:\n{html_src}"
-        )
-    try:
-        out = _chat_complete(
-            messages=[{"role":"system", "content": sys}, {"role":"user","content": usr}],
-            model_name=model,
-            temperature=0.2,
-        )
-        return ensure_html(out, lang)
-    except Exception:
-        return ""
-
-def distill_quickwins_risks(source_html: str, lang: str = "de") -> Dict[str, str]:
-    html = _distill_two_lists(source_html, lang, "Quick Wins", "Hauptrisiken" if str(lang).lower().startswith("de") else "Key Risks")
-    if not html:
-        return {"quick_wins_html": "", "risks_html": ""}
-    m = re.split(r"(?i)<h3[^>]*>", html)
-    if len(m) >= 3:
-        a = "<h3>" + m[1]; b = "<h3>" + m[2]
-        if "Quick Wins" in a or "Quick" in a:
-            return {"quick_wins_html": a, "risks_html": b}
-        else:
-            return {"quick_wins_html": b, "risks_html": a}
-    return {"quick_wins_html": html, "risks_html": ""}
-
-def distill_recommendations(source_html: str, lang: str = "de") -> str:
-    model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
-    if str(lang).lower().startswith("de"):
-        sys = "Du destillierst Maßnahmen aus HTML."
-        usr = (
-            "Extrahiere aus dem HTML 5–8 konkrete Maßnahmen als geordnete Liste <ol>. "
-            "Imperativ, jeweils 1 Zeile. Gib nur HTML zurück.\n\n"
-            f"HTML:\n{source_html}"
-        )
-    else:
-        sys = "You distill actions from HTML."
-        usr = (
-            "Extract 5–8 actionable steps as an ordered list <ol>. "
-            "Imperative, one line each. Return HTML only.\n\n"
-            f"HTML:\n{source_html}"
-        )
-    try:
-        out = _chat_complete(
-            messages=[{"role":"system","content":sys},{"role":"user","content":usr}],
-            model_name=model,
-            temperature=0.2,
-        )
-        return ensure_html(out, lang)
-    except Exception:
-        return ""
-
-# ------------------------------- Scoring -------------------------------------
-def calc_score_percent(data: dict) -> int:
-    """
-    Readiness-Score 0–100 mit erweiterten Dimensionen (inkl. Datenqualität,
-    Roadmap, Governance, Innovationskultur, Bonus für klare Ziele).
-    """
-    score = 0
-    max_score = 51  # Summe aller dimensionierten Punkte (siehe Kommentare)
-
-    try:
-        score += int(data.get("digitalisierungsgrad", 1))
-    except Exception:
-        score += 1
-
-    auto_map = {
-        "sehr_niedrig": 0, "eher_niedrig": 1, "mittel": 3, "eher_hoch": 4, "sehr_hoch": 5,
-        "very_low": 0, "rather_low": 1, "medium": 3, "rather_high": 4, "very_high": 5,
-    }
-    score += auto_map.get(str(data.get("automatisierungsgrad", "")).lower(), 0)
-
-    pap_map = {"0-20": 1, "21-50": 2, "51-80": 4, "81-100": 5, "0-20%": 1, "21-50%": 2, "51-80%": 4, "81-100%": 5}
-    score += pap_map.get(str(data.get("prozesse_papierlos", "0-20")).lower(), 0)
-
-    know_map = {
-        "keine": 0, "grundkenntnisse": 1, "mittel": 3, "fortgeschritten": 4, "expertenwissen": 5,
-        "none": 0, "basic": 1, "medium": 3, "advanced": 4, "expert": 5,
-    }
-    score += know_map.get(str(data.get("ki_knowhow", data.get("ai_knowhow", "keine"))).lower(), 0)
-
-    try:
-        score += int(data.get("risikofreude", data.get("risk_appetite", 1)))
-    except Exception:
-        score += 1
-
-    dq_map = {"hoch": 5, "mittel": 3, "niedrig": 1, "high": 5, "medium": 3, "low": 1}
-    score += dq_map.get(str(data.get("datenqualitaet") or data.get("data_quality") or "").lower(), 0)
-
-    roadmap_map = {"ja": 5, "in_planung": 3, "nein": 1, "yes": 5, "planning": 3, "no": 1}
-    score += roadmap_map.get(str(data.get("ai_roadmap") or "").lower(), 0)
-
-    gov_map = {"ja": 5, "teilweise": 3, "nein": 1, "yes": 5, "partial": 3, "no": 1}
-    score += gov_map.get(str(data.get("governance") or "").lower(), 0)
-
-    inov_map = {"sehr_offen": 5, "eher_offen": 4, "neutral": 3, "eher_zurueckhaltend": 2, "sehr_zurueckhaltend": 1,
-                "very_open": 5, "rather_open": 4, "neutral": 3, "rather_reluctant": 2, "very_reluctant": 1}
-    score += inov_map.get(str(data.get("innovationskultur") or data.get("innovation_culture") or "").lower(), 0)
-
-    if data.get("strategische_ziele") or data.get("strategic_goals"):
-        score += 1
-
-    try:
-        percent = int((score / max_score) * 100)
-    except Exception:
-        percent = 0
-    return max(0, min(100, percent))
-# ---------------------------- Kapitel erzeugen -------------------------------
 def gpt_generate_section_html(data, branche, chapter, lang="de") -> str:
     html = gpt_generate_section(data, branche, chapter, lang=lang)
     return ensure_html(html, lang)
-
+# ---------------------------- Kapitel erzeugen -------------------------------
 def generate_full_report(data: dict, lang: str = "de") -> dict:
     """
-    Liefert Kapitel-HTML & Template-Felder:
+    Liefert Kapitel-HTML & Felder:
       exec_summary_html, quick_wins_html, risks_html, recommendations_html,
-      roadmap_html, sections_html (+ optional foerderprogramme/tools/compliance/praxisbeispiel),
-      preface, score_percent, chart_data, foerderprogramme_table, tools_table.
+      roadmap_html, sections_html, preface, score_percent,
+      chart_data, foerderprogramme_table, tools_table, vision.
     """
     branche = (data.get("branche") or "default").lower()
     data["score_percent"] = calc_score_percent(data)
@@ -564,7 +448,6 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     solo = is_self_employed(data)
     wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja", "unklar", "yes", "unsure"}
 
-    # Vision als eigenes Kapitel ergänzen
     chapters = ["executive_summary", "vision", "tools"] \
                + (["foerderprogramme"] if wants_funding else []) \
                + ["roadmap", "compliance", "praxisbeispiel"]
@@ -579,13 +462,13 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # Preface
     out["preface"] = generate_preface(lang=lang, score_percent=data.get("score_percent"))
 
-    # Quick Wins & Risiken aus Executive + Roadmap
+    # Quick Wins & Risiken aus Executive + Roadmap destillieren
     src_for_qr = (out.get("executive_summary") or "") + "\n\n" + (out.get("roadmap") or "")
     q_r = distill_quickwins_risks(src_for_qr, lang=lang)
     out["quick_wins_html"] = q_r.get("quick_wins_html", "")
     out["risks_html"] = q_r.get("risks_html", "")
 
-    # Empfehlungen aus Roadmap (+ Compliance Fallback)
+    # Empfehlungen aus Roadmap (+ Compliance)
     src_for_rec = (out.get("roadmap") or "") + "\n\n" + (out.get("compliance") or "")
     out["recommendations_html"] = distill_recommendations(src_for_rec, lang=lang) or (out.get("roadmap") or "")
 
@@ -598,33 +481,34 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     if out.get("vision"):
         parts.append(f"<h2>{'Visionäre Empfehlung' if str(lang).startswith('de') else 'Visionary Recommendation'}</h2>\n{out['vision']}")
     if out.get("tools"):
-        parts.append(f"<h2>{'Tools' if str(lang).startswith('de') else 'Tools'}</h2>\n{out['tools']}")
+        parts.append(f"<h2>Tools</h2>\n{out['tools']}")
     if out.get("foerderprogramme"):
-        label_foerd = "Förderprogramme" if str(lang).lower().startswith("de") else "Funding"
+        label_foerd = "Förderprogramme" if str(lang).startswith("de") else "Funding"
         note = "<p><em>Hinweis: Für Solo-Selbstständige gefiltert (sofern verfügbar).</em></p>" if solo and str(lang).startswith("de") else ""
         parts.append(f"<h2>{label_foerd}</h2>\n{note}\n{out['foerderprogramme']}")
     if out.get("compliance"):
-        parts.append(f"<h2>{'Compliance' if str(lang).startswith('de') else 'Compliance'}</h2>\n{out['compliance']}")
+        parts.append(f"<h2>Compliance</h2>\n{out['compliance']}")
     if out.get("praxisbeispiel"):
         parts.append(f"<h2>{'Praxisbeispiel' if str(lang).startswith('de') else 'Case Study'}</h2>\n{out['praxisbeispiel']}")
+
     out["sections_html"] = "\n\n".join(parts)
 
-    # Dynamische Förderprogramme (als HTML-Teaser)
+    # Dynamischer Förder-Teaser
     if wants_funding:
         dynamic_html = build_dynamic_funding(data, lang=lang)
         if dynamic_html:
             out["sections_html"] = dynamic_html + ("\n\n" + out["sections_html"] if out["sections_html"] else "")
 
-    # Risiken um zusätzliche Hinweise erweitern
+    # Risiken erweitern
     extra_risks = build_extended_risks(data, lang=lang)
     if extra_risks:
         existing = out.get("risks_html", "") or ""
         out["risks_html"] = (existing.strip() + "\n" + extra_risks) if existing.strip() else extra_risks
 
+    # Charts & Tabellen
     out["score_percent"] = data["score_percent"]
-
-    # Chart-Daten & Tabellen-Daten
     out["chart_data"] = build_chart_payload(data, out["score_percent"], lang=lang)
+
     try:
         out["foerderprogramme_table"] = build_funding_table(data, lang=lang)
     except Exception:
@@ -633,6 +517,24 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         out["tools_table"] = build_tools_table(data, branche=branche, lang=lang)
     except Exception:
         out["tools_table"] = []
+
+    # Fallbacks, wenn CSVs fehlen → aus HTML-Listen rudimentär extrahieren
+    if wants_funding and not out.get("foerderprogramme_table"):
+        teaser = out.get("foerderprogramme") or out.get("sections_html","")
+        rows = []
+        for m in re.finditer(r"<b>([^<]+)</b>.*?(?:Förderhöhe|Funding amount):\s*([^<]+).*?<a[^>]*href=\"([^\"]+)\"", teaser, re.I|re.S):
+            name, amount, link = m.groups()
+            rows.append({"name": name.strip(), "zielgruppe": "", "foerderhoehe": amount.strip(), "link": link})
+        out["foerderprogramme_table"] = rows[:6]
+
+    if not out.get("tools_table"):
+        html_tools = out.get("tools") or out.get("sections_html","")
+        rows = []
+        for m in re.finditer(r'<a[^>]*href="([^"]+)"[^>]*>([^<]+)</a>', html_tools, re.I):
+            link, name = m.group(1), m.group(2)
+            if name and link:
+                rows.append({"name": name.strip(), "usecase": "", "cost": "", "link": link})
+        out["tools_table"] = rows[:8]
 
     return out
 
@@ -652,13 +554,13 @@ def generate_preface(lang: str = "de", score_percent: Optional[float] = None) ->
         return preface
     else:
         preface = (
-            "<p>This document summarises your AI readiness results and provides "
+            "<p>This document summarises your AI-readiness results and provides "
             "tailored next steps. It is based on your input and considers legal "
             "requirements, funding options and current AI developments.</p>"
         )
         if score_percent is not None:
             preface += (
-                f"<p><b>Your current AI readiness score is {score_percent:.0f}%.</b> "
+                f"<p><b>Your current AI-readiness score is {score_percent:.0f}%.</b> "
                 "It indicates how prepared you are to adopt AI.</p>"
             )
         return preface
@@ -736,6 +638,7 @@ async def analyze_briefing(payload: Dict[str, Any]) -> Dict[str, Any]:
         ctx = {
             "lang": lang,
             "today": datetime.now().strftime("%Y-%m-%d"),
+            "datum": datetime.now().strftime("%Y-%m-%d"),  # für Live-Abschnitte im Template
             "score_percent": report.get("score_percent", 0),
             "preface": report.get("preface", ""),
             "exec_summary_html": report.get("exec_summary_html", ""),
@@ -772,10 +675,7 @@ async def analyze_briefing(payload: Dict[str, Any]) -> Dict[str, Any]:
   <h2>Nächste Schritte</h2>{report.get("recommendations_html","") or report.get("roadmap_html","")}
   {report.get("sections_html","")}
   <hr>
-  <small>
-    TÜV-zertifiziertes KI-Management © {datetime.now().year}: Wolf Hohl ·
-    E-Mail: kontakt@ki-sicherheit.jetzt
-  </small>
+  <small>TÜV-zertifiziertes KI-Management © {datetime.now().year}: Wolf Hohl · E-Mail: kontakt@ki-sicherheit.jetzt</small>
 </body></html>"""
 
     html = _inline_local_images(html)
