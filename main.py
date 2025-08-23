@@ -336,22 +336,28 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
     if analyze_fn:
         try:
             result = analyze_fn(body, lang=lang)
-            # result kann entweder ein dict (report) oder direktes HTML sein
+            # result kann entweder ein dict (mit 'html') oder direktes HTML (str) sein
             if isinstance(result, dict):
+                html_ready = result.get("html")
+                if isinstance(html_ready, str) and html_ready.strip():
+                    # Fertig gerendertes HTML aus gpt_analyze.analyze_briefing verwenden
+                    return strip_code_fences(html_ready)
+                # Legacy-Fallback: falls kein 'html' enthalten, unten weiter mit einfachem Renderer
                 report = result
             elif isinstance(result, str):
-                # Dann ist das schon das komplette HTML
+                # Ergebnis ist bereits das komplette HTML
                 return strip_code_fences(result)
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
 
-    # Fallback-Report (minimal)
+    # Fallback-Report (minimal) – nur, wenn 'html' nicht vorlag / Fehler auftrat
     if not report:
         report = {
             "title": "KI-Readiness Report" if lang.startswith("de") else "AI Readiness Report",
             "executive_summary": "Analysemodul nicht geladen – Fallback.",
             "score_percent": 0,
         }
+    # Minimaler Fallback: einfacher Token-Replacer (ohne Jinja-Logik)
     return render_html_from_report(report, lang)
 
 def resolve_recipient(user_claims: Dict[str, Any], body: Dict[str, Any]) -> str:
