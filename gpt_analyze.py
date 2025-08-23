@@ -308,7 +308,9 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
     return section_text
 
 def gpt_generate_section_html(data, branche, chapter, lang="de") -> str:
-    return ensure_html(fix_encoding(gpt_generate_section(data, branche, chapter, lang=lang)), lang)
+    # Konsequente Normalisierung gegen leere/kaputte PDFs
+    html = gpt_generate_section(data, branche, chapter, lang=lang)
+    return ensure_html(strip_code_fences(fix_encoding(html)), lang)
 # gpt_analyze.py — Teil 3/4
 
 def build_chart_payload(data: dict, score_percent: int, lang: str = "de") -> dict:
@@ -381,7 +383,6 @@ def calc_score_percent(data: dict) -> int:
     w = {"digit": 1, "auto": 1, "paperless": 1, "knowhow": 1, "risk": 1, "dq": 1, "roadmap": 1, "gov": 1, "innov": 1}
     w.update(_weights_from_env())
 
-    # Rohwerte 0..5
     def as_int_val(v, d=0):
         try:
             return int(v)
@@ -411,7 +412,6 @@ def calc_score_percent(data: dict) -> int:
         "innov": inov_map.get(str(data.get("innovationskultur") or data.get("innovation_culture") or "").lower(), 0),
     }
 
-    # gewichtete Summe
     max_each = 5
     total_weight = sum(w.values())
     weighted = sum(vals[k] * w[k] for k in vals)
@@ -472,9 +472,6 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
     return out[:max_items]
 
 def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
-    """
-    Erzeugt eine kleine HTML-Liste dynamischer Förderprogramme (aus CSV, optional gefiltert).
-    """
     import csv
     path = os.path.join("data", "foerdermittel.csv")
     if not os.path.exists(path):
@@ -576,7 +573,7 @@ def build_extended_risks(data: dict, lang: str = "de") -> str:
         risks.append("Keine Daten-/KI-Governance; erhöhtes Rechts-/Prozessrisiko."
                      if lang == "de" else "No data/AI governance; increased legal/process risk.")
     inv = (data.get("innovationskultur") or data.get("innovation_culture") or "").lower()
-    if inv in {"eher_zurueckhaltend", "sehr_zurueckhaltend", "rather_reluctant", "very_reluctant"}:
+    if inv in {"eher_zurueckhaltend", "sehr_zurückhaltend", "rather_reluctant", "very_reluctant"}:
         risks.append("Zurückhaltende Innovationskultur kann KI-Erfolg gefährden."
                      if lang == "de" else "Reluctant innovation culture can jeopardise AI success.")
     if not risks:
@@ -584,10 +581,6 @@ def build_extended_risks(data: dict, lang: str = "de") -> str:
     return "<ul>" + "".join(f"<li>{r}</li>" for r in risks) + "</ul>"
 
 def build_one_pager(report: Dict[str, Any], lang: str = "de") -> str:
-    """
-    Kompakter One-Pager-Block für das PDF (ohne <html>-Wrapper).
-    Enthält Score, Quick Wins, Nächste Schritte + Mini-Snippets.
-    """
     score = report.get("score_percent", 0)
     quick = report.get("quick_wins_html", "")
     steps = report.get("recommendations_html", "") or report.get("roadmap_html", "")
@@ -603,7 +596,6 @@ def build_one_pager(report: Dict[str, Any], lang: str = "de") -> str:
             tds = []
             for c in cols:
                 val = r.get(c.lower(), r.get(c)) or ""
-                # Link-Spalte clever rendern
                 if c.lower() in {"link"} and val:
                     tds.append(f'<td><a href="{val}" target="_blank">{val}</a></td>')
                 else:
@@ -694,6 +686,33 @@ def _inline_local_images(html: str) -> str:
         return m.group(0).replace(src, data) if data else m.group(0)
     return re.sub(r'src="([^"]+)"', repl, html)
 
+def _toc_from_report(report: Dict[str, Any], lang: str) -> str:
+    toc_items = []
+    def add(title_key, title_label):
+        if report.get(title_key):
+            toc_items.append(f"<li>{title_label}</li>")
+    if lang == "de":
+        add("exec_summary_html", "Executive Summary")
+        add("vision", "Visionäre Empfehlung")
+        if report.get("chart_data"): toc_items.append("<li>Visualisierung</li>")
+        if report.get("quick_wins_html") or report.get("risks_html"): toc_items.append("<li>Quick Wins & Risiken</li>")
+        add("recommendations_html", "Empfehlungen")
+        add("roadmap_html", "Roadmap")
+        if report.get("foerderprogramme_table"): toc_items.append("<li>Förderprogramme</li>")
+        if report.get("tools_table"): toc_items.append("<li>KI-Tools & Software</li>")
+        add("sections_html", "Weitere Kapitel")
+    else:
+        add("exec_summary_html", "Executive summary")
+        add("vision", "Visionary recommendation")
+        if report.get("chart_data"): toc_items.append("<li>Visuals</li>")
+        if report.get("quick_wins_html") or report.get("risks_html"): toc_items.append("<li>Quick wins & key risks</li>")
+        add("recommendations_html", "Recommendations")
+        add("roadmap_html", "Roadmap")
+        if report.get("foerderprogramme_table"): toc_items.append("<li>Funding programmes</li>")
+        if report.get("tools_table"): toc_items.append("<li>AI tools</li>")
+        add("sections_html", "Additional sections")
+    return "<ul>" + "".join(toc_items) + "</ul>" if toc_items else ""
+
 def generate_full_report(data: dict, lang: str = "de") -> dict:
     """
     Ruft die Kapitel nacheinander ab (stabil) und erstellt strukturierte HTML-Snippets + Tabellen.
@@ -705,25 +724,34 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja", "unklar", "yes", "unsure"}
 
     chapters = ["executive_summary", "vision", "tools"] + (["foerderprogramme"] if wants_funding else []) + ["roadmap", "compliance", "praxisbeispiel"]
-    out: Dict[str, str] = {}
+    out: Dict[str, Any] = {}
     for chap in chapters:
         try:
-            out[chap] = gpt_generate_section_html(data, branche, chap, lang=lang)
+            sect_html = gpt_generate_section_html(data, branche, chap, lang=lang)
+            out[chap] = ensure_html(strip_code_fences(fix_encoding(sect_html)), lang)
         except Exception as e:
             out[chap] = f"<p>[Fehler in Kapitel {chap}: {e}]</p>"
 
     # Präambel & Destillate
     out["preface"] = generate_preface(lang=lang, score_percent=data.get("score_percent"))
+
     src_for_qr = (out.get("executive_summary") or "") + "\n\n" + (out.get("roadmap") or "")
     q_r = distill_quickwins_risks(src_for_qr, lang=lang)
     out["quick_wins_html"] = q_r.get("quick_wins_html", "")
     out["risks_html"] = q_r.get("risks_html", "")
+
     src_for_rec = (out.get("roadmap") or "") + "\n\n" + (out.get("compliance") or "")
     out["recommendations_html"] = distill_recommendations(src_for_rec, lang=lang) or (out.get("roadmap") or "")
     out["roadmap_html"] = out.get("roadmap", "")
     out["exec_summary_html"] = out.get("executive_summary", "")
 
-    # Sektionen zusammensetzen
+    # Vision-Block zusätzlich als "vision_html" verfügbar machen
+    if out.get("vision"):
+        out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>"
+    else:
+        out["vision_html"] = ""
+
+    # Sektionen zusammensetzen (Weitere Kapitel)
     parts = []
     if out.get("vision"):
         parts.append(f"<h2>{'Visionäre Empfehlung' if lang=='de' else 'Visionary Recommendation'}</h2>\n{out['vision']}")
@@ -737,7 +765,6 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         parts.append("<h2>Compliance</h2>\n" + out["compliance"])
     if out.get("praxisbeispiel"):
         parts.append(f"<h2>{'Praxisbeispiel' if lang=='de' else 'Case Study'}</h2>\n{out['praxisbeispiel']}")
-
     out["sections_html"] = "\n\n".join(parts)
 
     # Zusätzliche dynamische Förderliste oben einblenden
@@ -752,7 +779,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         existing = out.get("risks_html", "") or ""
         out["risks_html"] = (existing.strip() + "\n" + extra_risks) if existing.strip() else extra_risks
 
-    # Tabellen (CSV → Dict-Listen)
+    # Tabellen (CSV → Dict-Listen), plus Fallbacks aus GPT-HTML
     out["score_percent"] = data["score_percent"]
     out["chart_data"] = build_chart_payload(data, out["score_percent"], lang=lang)
 
@@ -766,13 +793,17 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     except Exception:
         out["tools_table"] = []
 
-    # Wenn noch keine Fundings/Tools aus CSV: heuristisch aus HTML extrahieren
+    # Fallback aus GPT-HTML, falls CSV leer blieb
     if wants_funding and not out.get("foerderprogramme_table"):
         teaser = out.get("foerderprogramme") or out.get("sections_html", "")
         rows = []
-        for m in re.finditer(r"<b>([^<]+)</b>.*?(?:Förderhöhe|Funding amount):\s*([^<]+).*?<a[^>]*href=\"([^\"]+)\"", teaser, re.I | re.S):
+        # robusteres Parsing (ohne <b> Zwang)
+        for m in re.finditer(
+            r"(?:<b>)?([^<]+?)(?:</b>)?.*?(?:Förderhöhe|Funding amount)[:\s]*([^<]+).*?<a[^>]*href=\"([^\"]+)\"",
+            teaser, re.I | re.S
+        ):
             name, amount, link = m.groups()
-            rows.append({"name": name.strip(), "zielgruppe": "", "foerderhoehe": amount.strip(), "link": link})
+            rows.append({"name": (name or "").strip(), "zielgruppe": "", "foerderhoehe": (amount or "").strip(), "link": link})
         out["foerderprogramme_table"] = rows[:6]
 
     if not out.get("tools_table"):
@@ -784,8 +815,9 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                 rows.append({"name": name.strip(), "usecase": "", "cost": "", "link": link})
         out["tools_table"] = rows[:8]
 
-    # One-Pager erzeugen
+    # One-Pager erzeugen + TOC generieren
     out["one_pager_html"] = build_one_pager(out, lang=lang)
+    out["toc_html"] = _toc_from_report(out, lang)
 
     return out
 
@@ -831,12 +863,14 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
     if template_name:
         tmpl = env.get_template(template_name)
         footer_de = (
-            "TÜV-zertifiziertes KI-Management © {year}: Wolf Hohl · E-Mail: kontakt@ki-sicherheit.jetzt · "
-            "Alle Inhalte ohne Gewähr; dieses Dokument ersetzt keine Rechtsberatung."
+            "TÜV-zertifiziertes KI-Management © {year}: Wolf Hohl · "
+            "E-Mail: kontakt@ki-sicherheit.jetzt · DSGVO- & EU-AI-Act-konform · "
+            "Alle Angaben ohne Gewähr; keine Rechtsberatung."
         )
         footer_en = (
-            "TÜV-certified AI Management © {year}: Wolf Hohl · Email: kontakt@ki-sicherheit.jetzt · "
-            "No legal advice; use at your own discretion."
+            "TÜV-certified AI Management © {year}: Wolf Hohl · "
+            "Email: kontakt@ki-sicherheit.jetzt · GDPR & EU-AI-Act compliant · "
+            "No legal advice."
         )
         footer_text = (footer_de if lang == "de" else footer_en).format(year=datetime.now().year)
         ctx = {
@@ -851,8 +885,9 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             "recommendations_html": report.get("recommendations_html", ""),
             "roadmap_html": report.get("roadmap_html", ""),
             "sections_html": report.get("sections_html", ""),
-            "vision_html": report.get("vision", ""),
+            "vision_html": report.get("vision_html", ""),
             "one_pager_html": report.get("one_pager_html", ""),
+            "toc_html": report.get("toc_html", ""),
             "chart_data_json": json.dumps(report.get("chart_data", {}), ensure_ascii=False),
             "foerderprogramme_table": report.get("foerderprogramme_table", []),
             "tools_table": report.get("tools_table", []),
@@ -882,7 +917,7 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
   <small>TÜV-zertifiziertes KI-Management © {datetime.now().year}: Wolf Hohl · E-Mail: kontakt@ki-sicherheit.jetzt</small>
 </body></html>"""
 
-    # Lokale Bilder inline einbetten (robuster PDF-Render)
+    # Lokale Bilder inline einbetten (robuster PDF-Render) + Code-Fences weg
     html = _inline_local_images(strip_code_fences(html))
 
     return {
