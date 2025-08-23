@@ -408,6 +408,10 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
             if not user_email:
                 raise RuntimeError("No recipient (user email) available")
 
+            head = html[:400]
+            if ("{{" in head) or ("{%" in head):
+                logger.error("[PDF] unresolved template markers detected in head — check call path")
+
             # 3) An PDF-Service senden
             res = await send_html_to_pdf_service(
                 html, user_email, subject="KI-Readiness Report", lang=lang, request_id=rid
