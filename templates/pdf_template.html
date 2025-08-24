@@ -1,285 +1,229 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>KI-Readiness-Report 2025</title>
-  {% if BASE_URL %}<base href="{{ BASE_URL.rstrip('/') }}/templates/">{% endif %}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KI-Readiness-Report</title>
   <style>
-    body { background:#fff; margin:0; padding:0; font-family:'Inter', Arial, sans-serif; color:#223561; }
-    h1 { font-size:2.5em; text-align:center; color:#1e3a8a; letter-spacing:1.5px; font-weight:700;
-         margin:38px 0 12px 0; text-shadow:0 1px 0 #e3ebfa; }
-    h2 { color:#2563eb; font-size:1.25em; font-weight:700; margin-top:0; margin-bottom:18px;
-         border-bottom:1.5px solid #e8eefd; padding-bottom:4px; letter-spacing:.7px; }
-    .subtitle { font-size:1.21em; text-align:center; color:#1e40af; margin-bottom:42px; font-weight:500; letter-spacing:.6px; }
-    .logo-row { display:flex; justify-content:center; align-items:center; gap:38px; margin-top:24px; margin-bottom:22px; }
-    .logo-row img { height:74px; object-fit:contain; }
-    .icon-row { display:flex; justify-content:flex-end; align-items:center; gap:16px; margin-bottom:8px; }
-    .icon-row img { height:26px; vertical-align:middle; }
-    .chapter-box { background:#f4f8fc; border-radius:16px; padding:30px 32px; margin:0 auto 21px auto; max-width:16cm; color:#223561;
-                   font-size:1.05em; line-height:1.65; page-break-inside:avoid; word-break:break-word; border:1.25px solid #d1e3fa;
-                   box-shadow:0 2px 14px #e8eefd3b; }
-    .chapter-box--vision { background:#fff8e6; border-left:5px solid #f59e0b; }
-    .score-box { background:#e7f0fd; border-left:5px solid #2563eb; padding:20px 28px; margin:0 auto 26px auto; max-width:16cm;
-                 border-radius:12px; box-shadow:0 2px 12px rgba(37,99,235,.12); font-size:1.15em; color:#153e75; }
-    .score-box b { color:#1e40af; }
+    :root{
+      --brand-blue:#1f66ff; --brand-green:#18a999; --ink:#0a122a; --muted:#5b6b7a;
+      --bg:#f6f9fc; --card:#ffffff; --border:#e5ecf4;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;font:14px/1.55 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+    h1,h2,h3{margin:0 0 .5rem 0;font-weight:700}
+    h1{font-size:28px} h2{font-size:20px;border-bottom:2px solid var(--border);padding-bottom:.35rem;margin-top:1.2rem}
+    h3{font-size:16px;margin:.8rem 0 .4rem}
+    p{margin:.35rem 0} small,em{color:var(--muted)}
+    ul,ol{margin:.4rem 0 .6rem 1.2rem} a{color:var(--brand-blue);text-decoration:none;border-bottom:1px solid rgba(31,102,255,.35)}
+    .container{padding:22px}
+    .header{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,var(--brand-blue),var(--brand-green));color:#fff;border-bottom:4px solid #0b3dd6}
+    .header .inner{display:flex;gap:16px;align-items:center;padding:14px 22px}
+    .header img{height:38px}
+    .badge{margin-left:auto;opacity:.95}
+    .meta{display:flex;gap:18px;flex-wrap:wrap;color:#fff;font-size:12px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+    .grid{display:grid;gap:14px}
+    .grid.cols-2{grid-template-columns:1fr 1fr}
+    .footer{margin-top:18px;padding-top:8px;border-top:1px dashed var(--border);font-size:12px;color:var(--muted)}
+    table{width:100%;border-collapse:collapse;margin:.4rem 0}
+    th,td{border:1px solid var(--border);padding:8px;text-align:left;vertical-align:top}
+    th{background:var(--brand-blue);color:#fff}
+    .svgbox{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px}
+    .caption{font-size:12px;color:var(--muted);margin-top:.25rem}
+    @page{size:A4 margin:16mm}
+    .onepager{page-break-inside:avoid}
+    .section{page-break-inside:auto}
 
-    table { width:100%; border-collapse:collapse; margin-top:1em; margin-bottom:1.5em; font-size:1.05em; border:1px solid #d1e3fa; }
-    th, td { border:1px solid #d1e3fa; padding:8px 10px; text-align:left; }
-    th { background:#e7f0fd; color:#1e40af; font-weight:600; }
-    thead { display:table-header-group; } tfoot { display:table-footer-group; }
-    tr, td, th { page-break-inside:avoid; break-inside:avoid; }
-    table td, table th { word-break:normal; hyphens:manual; }
-    table a { word-break:break-all; }
+    /* Cover */
+    .cover{background:linear-gradient(180deg,#eef4ff,#ffffff); border:1px solid var(--border); border-radius:16px; padding:24px; margin:16px 0 24px}
+    .cover h1{font-size:30px}
+    .score-pill{display:inline-block;background:#eaf6ff;border:1px solid #b5d6f6;border-radius:999px;padding:6px 10px;font-weight:700}
 
-    .chart-group { display:flex; flex-direction:column; gap:24px; }
-    .chart-card { background:#f9fbff; border:1px solid #dbe8ff; border-radius:14px; padding:18px; page-break-inside:avoid; break-inside:avoid; }
-    .chart-card h3 { margin:0 0 10px 0; font-size:1.05em; color:#1e3a8a; }
-    #chart_radar { height:320px; } /* Fix für Puppeteer */
-    canvas { max-width:100%; height:auto; }
+    /* TOC & Vision */
+    .toc-card{background:var(--card);border:1px dashed var(--border);border-radius:14px;padding:14px}
+    .toc-card ul{margin:.3rem 0 .2rem 1rem}
+    .toc-card li{margin:.15rem 0}
+    .vision-card{background:linear-gradient(180deg, rgba(24,169,153,.08), rgba(31,102,255,.08));
+      border:1px solid rgba(31,102,255,.25); border-left:4px solid var(--brand-blue); border-radius:12px; padding:14px; }
 
-    @page {
-      margin:32mm 18mm 28mm 18mm;
-      @bottom-center {
-        content:"TÜV-zertifiziertes KI-Management • © 2025: Wolf Hohl | kontakt@ki-sicherheit.jetzt | Seite " counter(page) " von " counter(pages);
-        color:#aab8cc; font-family:'Inter', Arial, sans-serif; font-size:9pt; opacity:.81;
-      }
+    /* Timeline (Roadmap) */
+    .timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .t-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
+    .t-title{font-weight:700;margin-bottom:.2rem}
+
+    @media print {
+      *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body{ background:#fff; color:#0a122a; }
+      a{ color:#0a122a; border-bottom:1px dotted #999; text-decoration:none; }
+      thead{ display: table-header-group; } tfoot{ display: table-footer-group; }
     }
   </style>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>window.__CHART_DATA__ = {{ chart_data_json | default('{}') | safe }};</script>
 </head>
 <body>
-<!-- Logos -->
-<div class="logo-row">
-  <img src="{{ KI_READY_BASE64 or 'ki-ready-2025.webp' }}" alt="KI-Ready 2025" />
-  <img src="{{ KI_SICHERHEIT_BASE64 or 'ki-sicherheit-logo.png' }}" alt="KI-Sicherheit.jetzt" />
-</div>
-
-<!-- Titel -->
-<div class="report-section">
-  <div><h1>KI-Readiness-Report 2025</h1><div class="subtitle">Zukunftssichere KI-Strategie für Unternehmen</div></div>
-</div>
-
-<!-- Icons -->
-<div class="icon-row">
-  <img src="{{ DSGVO_BASE64 or 'dsgvo.svg' }}" alt="DSGVO-Konform" title="DSGVO-Konform" />
-  <img src="{{ EU_AI_BASE64 or 'eu-ai.svg' }}" alt="EU AI Act Ready" title="EU AI Act Ready" />
-</div>
-
-<!-- Kontext-Infobox -->
-{% if hauptleistung or branche or unternehmensgroesse or bundesland %}
-<div class="chapter-box" style="background:#f9fbff;border-left:4px solid #7aa7ff;">
-  <table style="width:100%;border:0;">
-    <tr>
-      {% if branche %}<td><b>Branche:</b> {{ branche }}</td>{% endif %}
-      {% if unternehmensgroesse %}<td><b>Größe:</b> {{ unternehmensgroesse }}</td>{% endif %}
-      {% if bundesland %}<td><b>Bundesland:</b> {{ bundesland }}</td>{% endif %}
-    </tr>
-    {% if hauptleistung %}<tr><td colspan="3"><b>Hauptleistung:</b> {{ hauptleistung }}</td></tr>{% endif %}
-  </table>
-</div>
-{% endif %}
-
-<!-- Score -->
-{% if score_percent %}
-<div class="score-box">
-  <p><b>KI-Readiness-Score:</b> {{ score_percent }} % von 100 %</p>
-  <p>Dieser Wert zeigt, wie gut Ihr Unternehmen aktuell auf den Einsatz von KI vorbereitet ist.</p>
-</div>
-{% endif %}
-
-<!-- Preface -->
-{% if preface %}
-<div class="report-section"><div class="chapter-box" style="background:#e7f0fd; border-left:4px solid #2563eb;">{{ preface | safe }}</div></div>
-{% endif %}
-
-<!-- TOC -->
-{% set has_vision = vision_html %}
-{% set has_exec = exec_summary_html %}
-{% set has_visuals = chart_data_json %}
-{% set has_qw = quick_wins_html or risks_html %}
-{% set has_rec = recommendations_html %}
-{% set has_roadmap = roadmap_html %}
-{% set has_sections = sections_html %}
-{% set has_funding_table = foerderprogramme_table %}
-{% set has_tools_table = tools_table %}
-
-{% if has_vision or has_exec or has_visuals or has_qw or has_rec or has_roadmap or has_sections or has_funding_table or has_tools_table %}
-<div class="report-section">
-  <div class="chapter-box" style="box-shadow:none;">
-    <h2>Inhaltsverzeichnis</h2>
-    <ul>
-      {% if has_vision %}<li>Visionäre Empfehlung</li>{% endif %}
-      {% if has_exec %}<li>Executive Summary</li>{% endif %}
-      {% if has_visuals %}<li>Visualisierung</li>{% endif %}
-      {% if has_qw %}<li>Quick Wins &amp; Risiken</li>{% endif %}
-      {% if has_rec %}<li>Empfehlungen</li>{% endif %}
-      {% if has_roadmap %}<li>Roadmap</li>{% endif %}
-      {% if has_funding_table %}<li>Förderprogramme (Tabelle)</li>{% endif %}
-      {% if has_tools_table %}<li>KI-Tools &amp; Software (Tabelle)</li>{% endif %}
-      {% if has_sections %}<li>Weitere Kapitel</li>{% endif %}
-    </ul>
-  </div>
-</div>
-{% endif %}
-
-<!-- Vision -->
-{% if vision_html %}
-<div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box chapter-box--vision">
-    <h2>Visionäre Empfehlung</h2>
-    <div>{{ vision_html | safe }}</div>
-  </div>
-</div>
-{% endif %}
-
-<!-- Exec -->
-{% if exec_summary_html %}
-<div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box">
-    <h2>Executive Summary</h2>
-    <div>{{ exec_summary_html | safe }}</div>
-  </div>
-</div>
-{% endif %}
-
-<!-- Visualisierung -->
-{% if chart_data_json %}
-<div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box">
-    <h2>Visualisierung</h2>
-    <div class="chart-group">
-      <div class="chart-card"><h3>Readiness-Score</h3><canvas id="chart_score"></canvas></div>
-      <div class="chart-card"><h3>Benchmarks</h3><canvas id="chart_benchmarks"></canvas></div>
-      <div class="chart-card"><h3>Risiken &amp; Kultur (Radar)</h3><canvas id="chart_radar"></canvas></div>
+  <div class="header">
+    <div class="inner">
+      {% if logo_main %}<img src="{{ logo_main }}" alt="KI-Sicherheit" />{% endif %}
+      <div>
+        <h1>KI-Readiness-Report 2025</h1>
+        <div class="meta">
+          <div>Datum: {{ datum }}</div><div>Sprache: DE</div><div>Score: <b>{{ "%d"|format(score_percent) }}%</b></div>
+        </div>
+      </div>
+      <div class="badge">{% if badge_ready %}<img src="{{ badge_ready }}" alt="Badge" style="height:38px">{% endif %}</div>
     </div>
   </div>
-</div>
-{% endif %}
-<!-- Quick Wins & Risiken -->
-{% if quick_wins_html or risks_html %}
-<div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box">
-    <h2>Quick Wins &amp; Risiken</h2>
-    {% if quick_wins_html %}<div><b>Quick Wins:</b> {{ quick_wins_html | safe }}</div>{% endif %}
-    {% if risks_html %}<div style="margin-top:1em;"><b>Risiken:</b> {{ risks_html | safe }}</div>{% endif %}
+
+  <div class="container">
+    <!-- Cover (kompakter Einstieg) -->
+    <div class="cover">
+      <h1>Ihr KI-Readiness-Überblick</h1>
+      <p class="score-pill">Gesamt-Score: {{ "%d"|format(score_percent) }}%</p>
+      {% if preface %}<div style="margin-top:.6rem">{{ preface|safe }}</div>{% endif %}
+      {% if branche or unternehmensgroesse or bundesland or hauptleistung %}
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:.6rem">
+          <div><b>Branche:</b> {{ branche or "-" }}</div>
+          <div><b>Größe:</b> {{ unternehmensgroesse or "-" }}</div>
+          <div><b>Bundesland:</b> {{ bundesland or "-" }}</div>
+          <div><b>Hauptleistung:</b> {{ hauptleistung or "-" }}</div>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if toc_html and toc_html|trim %}
+      <div class="card toc-card">
+        <h2>Inhaltsverzeichnis</h2>
+        {{ toc_html|safe }}
+      </div>
+    {% endif %}
+
+    <!-- One-Pager -->
+    <div class="grid cols-2 onepager">
+      {% if exec_summary_html and exec_summary_html|trim %}
+      <div class="card">
+        <h2>Executive Summary</h2>
+        <div>{{ exec_summary_html|safe }}</div>
+      </div>
+      {% endif %}
+
+      <div class="card">
+        <h2>Score & Visualisierung</h2>
+        <div class="svgbox">
+          <svg id="gauge" viewBox="0 0 200 120" width="100%" height="140"></svg>
+          <div class="caption">Gesamt-Score (0–100)</div>
+        </div>
+        <div class="svgbox" style="margin-top:8px">
+          <svg id="radar" viewBox="0 0 220 220" width="100%" height="220"></svg>
+          <div class="caption">Dimensionen</div>
+        </div>
+      </div>
+    </div>
+
+    {% if (quick_wins_html and quick_wins_html|trim) or (risks_html and risks_html|trim) %}
+    <div class="grid cols-2 section">
+      {% if quick_wins_html and quick_wins_html|trim %}
+      <div class="card">
+        <h2>Quick Wins ⚡</h2>
+        <div>{{ quick_wins_html|safe }}</div>
+      </div>
+      {% endif %}
+      {% if risks_html and risks_html|trim %}
+      <div class="card">
+        <h2>Hauptrisiken ⚠️</h2>
+        <div>{{ risks_html|safe }}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="grid cols-2 section">
+      {% if recommendations_html and recommendations_html|trim %}
+      <div class="card">
+        <h2>Empfehlungen (Next Steps) 🎯</h2>
+        <div>{{ recommendations_html|safe }}</div>
+      </div>
+      {% endif %}
+      {% if roadmap_html and roadmap_html|trim %}
+      <div class="card">
+        <h2>Roadmap</h2>
+        <!-- Timeline-Optik = einfache 3-Karten Darstellung; Inhalt kommt aus roadmap_html -->
+        <div class="timeline">
+          <div class="t-card"><div class="t-title">30 Tage</div><div>{{ roadmap_html|safe }}</div></div>
+          <div class="t-card"><div class="t-title">3 Monate</div><div><!-- mittelfristige Teile in roadmap_html markieren --></div></div>
+          <div class="t-card"><div class="t-title">12 Monate</div><div><!-- langfristige Teile in roadmap_html markieren --></div></div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="grid cols-2 section">
+      <div class="card">
+        <h2>Förderprogramme (Auswahl)</h2>
+        {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
+        <table>
+          <thead><tr><th>Programm</th><th>Zielgruppe</th><th>Förderhöhe</th><th>Link</th></tr></thead>
+          <tbody>
+          {% for p in foerderprogramme_table %}
+            <tr><td>{{ p.name }}</td><td>{{ p.zielgruppe }}</td><td>{{ p.foerderhoehe }}</td>
+              <td>{% if p.link %}<a href="{{ p.link }}">Details</a>{% endif %}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<p><em>Keine Programme in der Datenbasis.</em></p>{% endif %}
+      </div>
+
+      <div class="card">
+        <h2>KI-Tools & Software</h2>
+        {% if tools_table and tools_table|length>0 %}
+        <table>
+          <thead><tr><th>Tool</th><th>Einsatz</th><th>Kosten</th><th>Link</th></tr></thead>
+          <tbody>
+          {% for t in tools_table %}
+            <tr><td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.cost }}</td>
+              <td>{% if t.link %}<a href="{{ t.link }}">Details</a>{% endif %}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<p><em>Tool-Liste wird dynamisch ergänzt.</em></p>{% endif %}
+      </div>
+    </div>
+
+    {% if vision_html or sections_html %}
+    <div class="card section">
+      <h2>Vision & Weitere Kapitel</h2>
+      {% if vision_html %}<div class="vision-card" style="margin-bottom:.6rem">{{ vision_html|safe }}</div>{% endif %}
+      {% if sections_html %}<div>{{ sections_html|safe }}</div>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="footer">
+      <div style="display:flex;align-items:center;gap:12px">
+        {% if logo_tuev %}<img src="{{ logo_tuev }}" alt="TÜV" style="height:18px">{% endif %}
+        {% if logo_euai %}<img src="{{ logo_euai }}" alt="EU AI" style="height:18px">{% endif %}
+        {% if logo_dsgvo %}<img src="{{ logo_dsgvo }}" alt="DSGVO" style="height:18px">{% endif %}
+        <span>© 2025 KI-Sicherheit.jetzt – DSGVO & EU-AI-Act-Ready – Wolf Hohl</span>
+      </div>
+    </div>
   </div>
-</div>
-{% endif %}
 
-<!-- Empfehlungen -->
-{% if recommendations_html %}
-<div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box"><h2>Empfehlungen</h2><div>{{ recommendations_html | safe }}</div></div>
-</div>
-{% endif %}
-
-<!-- Roadmap -->
-{% if roadmap_html %}
-<div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box"><h2>Roadmap</h2><div>{{ roadmap_html | safe }}</div></div>
-</div>
-{% endif %}
-
-<!-- Förderprogramme Tabelle -->
-{% if foerderprogramme_table %}
-<div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box">
-    <h2>Förderprogramme (Auswahl)</h2>
-    <table>
-      <thead><tr><th>Programm</th><th>Zielgruppe</th><th>Förderhöhe</th><th>Link</th></tr></thead>
-      <tbody>
-        {% for p in foerderprogramme_table %}
-        <tr>
-          <td>{{ p.name }}</td>
-          <td>{{ p.zielgruppe }}</td>
-          <td>{{ p.foerderhoehe }}</td>
-          <td><a href="{{ p.link }}">Details</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-{% endif %}
-
-<!-- Tools Tabelle -->
-{% if tools_table %}
-<div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box">
-    <h2>KI-Tools &amp; Software (Auswahl)</h2>
-    <table>
-      <thead><tr><th>Tool</th><th>Einsatz</th><th>Kosten</th><th>Link</th></tr></thead>
-      <tbody>
-        {% for t in tools_table %}
-        <tr>
-          <td>{{ t.name }}</td>
-          <td>{{ t.usecase }}</td>
-          <td>{{ t.cost }}</td>
-          <td><a href="{{ t.link }}">Details</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-{% endif %}
-
-<!-- Weitere Kapitel -->
-{% if sections_html %}
-<div class="report-section" style="page-break-before:always;">
-  <div class="chapter-box"><h2>Weitere Kapitel</h2><div>{{ sections_html | safe }}</div></div>
-</div>
-{% endif %}
-
-<footer>{{ footer_text }}</footer>
-
-<!-- Charts Rendering -->
-<script>
-(function(){
-  const D = window.__CHART_DATA__ || {};
-  if (!D || typeof D !== 'object') return;
-
-  // Donut
-  const s = document.getElementById('chart_score');
-  if (s && window.Chart && D.score != null) {
-    new Chart(s.getContext('2d'), {
-      type:'doughnut',
-      data:{ labels:['Readiness',''], datasets:[{ data:[D.score, Math.max(0,100-D.score)], backgroundColor:['#2563eb','#e8eefd'] }] },
-      options:{ cutout:'70%', plugins:{ legend:{ display:false } }, maintainAspectRatio:false }
-    });
-  }
-  // Bar
-  const b = document.getElementById('chart_benchmarks');
-  if (b && window.Chart && D.dimensions?.labels && D.dimensions?.values) {
-    new Chart(b.getContext('2d'), {
-      type:'bar',
-      data:{ labels:D.dimensions.labels, datasets:[{ data:D.dimensions.values, backgroundColor:'#2563eb' }] },
-      options:{
-        plugins:{ legend:{ display:false } },
-        maintainAspectRatio:false,
-        scales:{
-          x:{ ticks:{ maxRotation:30, minRotation:30, autoSkip:false } },
-          y:{ beginAtZero:true, ticks:{ stepSize:1 } }
-        }
-      }
-    });
-  }
-  // Radar
-  const r = document.getElementById('chart_radar');
-  if (r && window.Chart && D.dimensions?.labels && D.dimensions?.values) {
-    new Chart(r.getContext('2d'), {
-      type:'radar',
-      data:{
-        labels:D.dimensions.labels,
-        datasets:[{ label:'Risiken & Kultur', data:D.dimensions.values, fill:true,
-                    backgroundColor:'rgba(37,99,235,0.20)', borderColor:'#2563eb', pointBackgroundColor:'#2563eb' }]
-      },
-      options:{ maintainAspectRatio:false, scales:{ r:{ beginAtZero:true, max:10 } }, plugins:{ legend:{ display:false } } }
-    });
-  }
-})();
-</script>
+  <!-- Charts (offline SVG) -->
+  <script>
+    (function(){
+      const data = ({{ chart_data_json | safe }}) || { score: 0, dimensions: { labels: [], values: [] } };
+      const g = document.getElementById('gauge');
+      const pct = Math.max(0, Math.min(100, parseInt(data.score||0)));
+      const cx=100, cy=100, r=90, toXY=(ang)=>[cx+r*Math.cos(ang), cy+r*Math.sin(ang)];
+      const bg=`M ${toXY(Math.PI).join(' ')} A ${r} ${r} 0 0 1 ${toXY(0).join(' ')}`;
+      const ang=Math.PI*(1-pct/100), arc=(pct>50)?1:0;
+      const fg=`M ${toXY(Math.PI).join(' ')} A ${r} ${r} 0 ${arc} 1 ${toXY(ang).join(' ')}`;
+      g.innerHTML=`<path d="${bg}" fill="none" stroke="#e5ecf4" stroke-width="16"/><path d="${fg}" fill="none" stroke="url(#grad)" stroke-width="16" stroke-linecap="round"/><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1f66ff"/><stop offset="100%" stop-color="#18a999"/></linearGradient></defs><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="28" font-weight="700" fill="#0a122a">${pct}%</text>`;
+      const rsvg=document.getElementById('radar'), L=(data.dimensions&&data.dimensions.labels)||[], V=(data.dimensions&&data.dimensions.values)||[], R=90,CX=110,CY=110,N=L.length||6;
+      const ring=(k)=>`<circle cx="${CX}" cy="${CY}" r="${(R/5)*k}" fill="none" stroke="#e5ecf4" stroke-width="1"/>`;
+      let grid=Array.from({length:5},(_,i)=>ring(i+1)).join(''); for(let i=0;i<N;i++){const a=-Math.PI/2+i*(2*Math.PI/N);grid+=`<line x1="${CX}" y1="${CY}" x2="${CX+90*Math.cos(a)}" y2="${CY+90*Math.sin(a)}" stroke="#e5ecf4" stroke-width="1"/>`;}
+      const pts=V.map((v,i)=>{const a=-Math.PI/2+i*(2*Math.PI/N), rr=(Math.max(0,Math.min(5,parseFloat(v)||0))/5)*90; return `${CX+rr*Math.cos(a)},${CY+rr*Math.sin(a)}`}).join(' ');
+      let lbl=''; for(let i=0;i<N;i++){const a=-Math.PI/2+i*(2*Math.PI/N),x=CX+(90+12)*Math.cos(a),y=CY+(90+12)*Math.sin(a); lbl+=`<text x="${x}" y="${y}" font-size="9" text-anchor="middle" fill="#5b6b7a">${L[i]||''}</text>`;}
+      rsvg.innerHTML=`${grid}<polygon points="${pts}" fill="rgba(31,102,255,0.18)" stroke="#1f66ff" stroke-width="2"/>${lbl}`;
+    })();
+  </script>
 </body>
 </html>
