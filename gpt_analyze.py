@@ -189,7 +189,7 @@ def render_prompt(template_text: str, context: dict) -> str:
 
 def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     """
-    Sucht kapitel-spezifische Prompt-Datei (DE/EN) und fügt Stilregeln hinzu.
+    Baut das Kapitelprompt und erzwingt kurze, präzise HTML-Ausgaben.
     """
     search_paths = [
         f"prompts/{lang}/{chapter}.md",
@@ -202,55 +202,60 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     for p in search_paths:
         if os.path.exists(p):
             try:
-                prompt_text = load_text(p)
-                break
+                prompt_text = load_text(p); break
             except Exception:
                 continue
     if prompt_text is None:
         prompt_text = f"[NO PROMPT FOUND for {chapter}/{lang}]"
 
     prompt = render_prompt(prompt_text, context)
+    is_de = (lang == "de")
 
-    # Stil/Struktur je Sprache
-    if lang == "de":
-        style = (
-            "\n\n---\n"
-            "Gib die Antwort AUSSCHLIESSLICH als gültiges HTML zurück (ohne <html>-Wrapper). "
-            "Nutze <h3>, <p>, <ul>, <ol>, <table> wo sinnvoll. Keine Meta-Kommentare.\n"
-            "- Was tun? (3–5 präzise Maßnahmen, Imperativ)\n"
-            "- Warum? (max. 2 Sätze)\n"
-            "- Nächste 3 Schritte (Checkliste)\n"
-        )
-        if context.get("is_self_employed"):
-            style += (
-                "\n\nWICHTIG: Solo-Selbstständig. "
-                "Vermeide Empfehlungen für größere Unternehmen. "
-                "Nur Förderungen, die für Solo-Selbstständige taugen."
-            )
-    else:
-        style = (
-            "\n\n---\nReturn VALID HTML ONLY (no <html> wrapper). Use <h3>, <p>, <ul>, <ol>, <table>. No meta talk.\n"
-            "- What to do (3–5 actions)\n- Why (max 2 sentences)\n- Next 3 steps (checklist)\n"
-        )
-        if context.get("is_self_employed"):
-            style += (
-                "\n\nIMPORTANT: Solo self-employed. "
-                "Avoid large-organisation advice. Only list funding suitable for solo self-employed."
-            )
+    base_rules_de = (
+        "Gib die Antwort ausschließlich als gültiges HTML ohne <html>-Wrapper zurück. "
+        "Nutze nur <h3>, <p>, <ul>, <ol>, <table>. Keine Meta-Kommentare. Schreibe klar und prägnant."
+    )
+    base_rules_en = (
+        "Return VALID HTML only (no <html> wrapper). Use only <h3>, <p>, <ul>, <ol>, <table>. "
+        "No meta talk. Be concise and precise."
+    )
+    style = ("\n\n---\n" + (base_rules_de if is_de else base_rules_en) +
+             "\n- Verwende kurze Sätze, vermeide Wiederholungen." if is_de else
+             "\n- Use short sentences; avoid repetition.")
 
-    # Spezielle Kapitel-Tuning (Vision, Tools, Förderungen)
+    # Kapitel-spezifische Constraints
+    if chapter == "executive_summary":
+        style += ("\n- Gliedere in: <h3>Was tun?</h3> <ul>…</ul> <h3>Warum?</h3> <p>…</p> "
+                  "<h3>Nächste 3 Schritte</h3> <ol>…</ol>" if is_de else
+                  "\n- Structure: <h3>What to do?</h3><ul>…</ul><h3>Why?</h3><p>…</p>"
+                  "<h3>Next 3 steps</h3><ol>…</ol>")
+        style += ("\n- Maximal 5 Bullet-Points pro Liste." if is_de else "\n- Max 5 bullets per list.")
+
     if chapter == "vision":
-        style += (
-            "\n\n— Form: Nenne eine kühne Gamechanger-Idee (Titel + 1-Satz-Pitch), "
-            "einen konkreten MVP (in 2–4 Wochen machbar, grobe Kosten), "
-            "und 3 messbare KPIs (z. B. Leads, Zeitersparnis, Kostenersparnis)."
-        )
-    if chapter == "tools":
-        style += "\n\n— Struktur: Tabelle <table> mit Spalten: Name | Usecase | Kosten | Link."
+        style += ("\n- Form: 1 kühne Idee mit Titel + 1 Satz; 1 MVP (2–4 Wochen, grobe Kosten); "
+                  "3 KPIs in <ul>." if is_de else
+                  "\n- Form: 1 bold idea (title + one-liner); 1 MVP (2–4 weeks, rough cost); "
+                  "3 KPIs in <ul>.")
+        style += ("\n- Vermeide Allgemeinplätze; passe auf Branche und Größe an." if is_de else
+                  "\n- No genericities; adapt to industry and size.")
+
+    if chapter in ("tools",):
+        style += ("\n- Gib eine Tabelle <table> mit Spalten: Name | Usecase | Kosten | Link zurück." if is_de else
+                  "\n- Return a <table> with columns: Name | Use case | Cost | Link.")
+        style += ("\n- Maximal 7 Zeilen; nur EU/DSGVO-taugliche Tools nennen." if is_de else
+                  "\n- Max 7 rows; prefer GDPR/EU-friendly tools.")
+
     if chapter in ("foerderprogramme", "foerderung", "funding"):
-        style += "\n\n— Struktur: Tabelle <table> mit Spalten: Name | Zielgruppe | Förderhöhe | Link."
+        style += ("\n- Tabelle <table>: Name | Zielgruppe | Förderhöhe | Link. Maximal 5 Zeilen." if is_de else
+                  "\n- Table <table>: Name | Target group | Amount | Link. Max 5 rows.")
+
+    # Solo-Selbstständig-Vorgabe
+    if context.get("is_self_employed"):
+        style += ("\n- Solo-Selbstständig: Empfehlungen skalierbar halten; Förderungen für Einzelunternehmen priorisieren." if is_de else
+                  "\n- Solo self-employed: keep recommendations scalable; prioritize funding suitable for individuals.")
 
     return prompt + style
+
 
 def _chat_complete(messages, model_name: Optional[str], temperature: Optional[float] = None) -> str:
     """
