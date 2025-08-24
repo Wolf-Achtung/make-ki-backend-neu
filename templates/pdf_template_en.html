@@ -61,9 +61,14 @@
   </div>
 
   <div class="container">
+    <!-- Cover (intro + large Gauge) -->
     <div class="cover">
       <h1>Your AI-readiness at a glance</h1>
       <p class="score-pill">Overall score: {{ "%d"|format(score_percent) }}%</p>
+      <div class="svgbox" style="margin-top:8px">
+        <svg id="gauge" viewBox="0 0 200 120" width="100%" height="140"></svg>
+        <div class="caption">Overall score (0–100)</div>
+      </div>
       {% if preface %}<div style="margin-top:.6rem">{{ preface|safe }}</div>{% endif %}
       {% if branche or unternehmensgroesse or bundesland or hauptleistung %}
         <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:.6rem">
@@ -90,14 +95,10 @@
       </div>
       {% endif %}
       <div class="card">
-        <h2>Score & visuals</h2>
+        <h2>Dimensions</h2>
         <div class="svgbox">
-          <svg id="gauge" viewBox="0 0 200 120" width="100%" height="140"></svg>
-          <div class="caption">Overall score (0–100)</div>
-        </div>
-        <div class="svgbox" style="margin-top:8px">
           <svg id="radar" viewBox="0 0 220 220" width="100%" height="220"></svg>
-          <div class="caption">Dimensions</div>
+          <div class="caption">Digitalisation · Automation · Paperless · AI know-how · …</div>
         </div>
       </div>
     </div>
@@ -121,8 +122,8 @@
         <div class="card"><h2>Roadmap</h2>
           <div class="timeline">
             <div class="t-card"><div class="t-title">30 days</div><div>{{ roadmap_html|safe }}</div></div>
-            <div class="t-card"><div class="t-title">3 months</div><div><!-- mid-term subset --></div></div>
-            <div class="t-card"><div class="t-title">12 months</div><div><!-- long-term subset --></div></div>
+            <div class="t-card"><div class="t-title">3 months</div><div><!-- optional mid-term subset --></div></div>
+            <div class="t-card"><div class="t-title">12 months</div><div><!-- optional long-term subset --></div></div>
           </div>
         </div>
       {% endif %}
@@ -181,12 +182,15 @@
   <script>
     (function(){
       const data = ({{ chart_data_json | safe }}) || { score: 0, dimensions: { labels: [], values: [] } };
+      // Gauge (on cover)
       const g=document.getElementById('gauge'); const pct=Math.max(0,Math.min(100,parseInt(data.score||0)));
       const cx=100, cy=100, r=90, toXY=(a)=>[cx+r*Math.cos(a), cy+r*Math.sin(a)];
       const bg=`M ${toXY(Math.PI).join(' ')} A ${r} ${r} 0 0 1 ${toXY(0).join(' ')}`;
       const ang=Math.PI*(1-pct/100), arc=(pct>50)?1:0;
       const fg=`M ${toXY(Math.PI).join(' ')} A ${r} ${r} 0 ${arc} 1 ${toXY(ang).join(' ')}`;
       g.innerHTML = `<path d="${bg}" fill="none" stroke="#e5ecf4" stroke-width="16"/><path d="${fg}" fill="none" stroke="url(#grad)" stroke-width="16" stroke-linecap="round"/><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1f66ff"/><stop offset="100%" stop-color="#18a999"/></linearGradient></defs><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="28" font-weight="700" fill="#0a122a">${pct}%</text>`;
+
+      // Radar (Dimensions)
       const rsvg=document.getElementById('radar'), L=(data.dimensions&&data.dimensions.labels)||[], V=(data.dimensions&&data.dimensions.values)||[], R=90,CX=110,CY=110,N=L.length||6;
       const ring=(k)=>`<circle cx="${CX}" cy="${CY}" r="${(R/5)*k}" fill="none" stroke="#e5ecf4" stroke-width="1"/>`; let grid=Array.from({length:5},(_,i)=>ring(i+1)).join('');
       for(let i=0;i<N;i++){const a=-Math.PI/2+i*(2*Math.PI/N); grid+=`<line x1="${CX}" y1="${CY}" x2="${CX+90*Math.cos(a)}" y2="${CY+90*Math.sin(a)}" stroke="#e5ecf4" stroke-width="1"/>`;}

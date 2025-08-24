@@ -52,6 +52,10 @@
     .t-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
     .t-title{font-weight:700;margin-bottom:.2rem}
 
+    /* Checkbox look for Compliance lists */
+    .checklist li::marker{content:"☐ "; color:#5b6b7a}
+    .checklist li.checked::marker{content:"☑ "; color:#1f66ff}
+
     @media print {
       *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body{ background:#fff; color:#0a122a; }
@@ -75,10 +79,14 @@
   </div>
 
   <div class="container">
-    <!-- Cover (kompakter Einstieg) -->
+    <!-- Cover (Einstieg + großer Gauge) -->
     <div class="cover">
       <h1>Ihr KI-Readiness-Überblick</h1>
       <p class="score-pill">Gesamt-Score: {{ "%d"|format(score_percent) }}%</p>
+      <div class="svgbox" style="margin-top:8px">
+        <svg id="gauge" viewBox="0 0 200 120" width="100%" height="140"></svg>
+        <div class="caption">Gesamt-Score (0–100)</div>
+      </div>
       {% if preface %}<div style="margin-top:.6rem">{{ preface|safe }}</div>{% endif %}
       {% if branche or unternehmensgroesse or bundesland or hauptleistung %}
         <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:.6rem">
@@ -105,16 +113,11 @@
         <div>{{ exec_summary_html|safe }}</div>
       </div>
       {% endif %}
-
       <div class="card">
-        <h2>Score & Visualisierung</h2>
+        <h2>Dimensionen</h2>
         <div class="svgbox">
-          <svg id="gauge" viewBox="0 0 200 120" width="100%" height="140"></svg>
-          <div class="caption">Gesamt-Score (0–100)</div>
-        </div>
-        <div class="svgbox" style="margin-top:8px">
           <svg id="radar" viewBox="0 0 220 220" width="100%" height="220"></svg>
-          <div class="caption">Dimensionen</div>
+          <div class="caption">Digitalisierung · Automatisierung · Papierlos · Know-how · …</div>
         </div>
       </div>
     </div>
@@ -146,11 +149,10 @@
       {% if roadmap_html and roadmap_html|trim %}
       <div class="card">
         <h2>Roadmap</h2>
-        <!-- Timeline-Optik = einfache 3-Karten Darstellung; Inhalt kommt aus roadmap_html -->
         <div class="timeline">
           <div class="t-card"><div class="t-title">30 Tage</div><div>{{ roadmap_html|safe }}</div></div>
-          <div class="t-card"><div class="t-title">3 Monate</div><div><!-- mittelfristige Teile in roadmap_html markieren --></div></div>
-          <div class="t-card"><div class="t-title">12 Monate</div><div><!-- langfristige Teile in roadmap_html markieren --></div></div>
+          <div class="t-card"><div class="t-title">3 Monate</div><div><!-- optional: mittelfristige Teile extrahieren --></div></div>
+          <div class="t-card"><div class="t-title">12 Monate</div><div><!-- optional: langfristige Teile extrahieren --></div></div>
         </div>
       </div>
       {% endif %}
@@ -210,6 +212,7 @@
   <script>
     (function(){
       const data = ({{ chart_data_json | safe }}) || { score: 0, dimensions: { labels: [], values: [] } };
+      // Gauge (auf dem Cover)
       const g = document.getElementById('gauge');
       const pct = Math.max(0, Math.min(100, parseInt(data.score||0)));
       const cx=100, cy=100, r=90, toXY=(ang)=>[cx+r*Math.cos(ang), cy+r*Math.sin(ang)];
@@ -217,9 +220,12 @@
       const ang=Math.PI*(1-pct/100), arc=(pct>50)?1:0;
       const fg=`M ${toXY(Math.PI).join(' ')} A ${r} ${r} 0 ${arc} 1 ${toXY(ang).join(' ')}`;
       g.innerHTML=`<path d="${bg}" fill="none" stroke="#e5ecf4" stroke-width="16"/><path d="${fg}" fill="none" stroke="url(#grad)" stroke-width="16" stroke-linecap="round"/><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1f66ff"/><stop offset="100%" stop-color="#18a999"/></linearGradient></defs><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="28" font-weight="700" fill="#0a122a">${pct}%</text>`;
+
+      // Radar (Dimensionen)
       const rsvg=document.getElementById('radar'), L=(data.dimensions&&data.dimensions.labels)||[], V=(data.dimensions&&data.dimensions.values)||[], R=90,CX=110,CY=110,N=L.length||6;
       const ring=(k)=>`<circle cx="${CX}" cy="${CY}" r="${(R/5)*k}" fill="none" stroke="#e5ecf4" stroke-width="1"/>`;
-      let grid=Array.from({length:5},(_,i)=>ring(i+1)).join(''); for(let i=0;i<N;i++){const a=-Math.PI/2+i*(2*Math.PI/N);grid+=`<line x1="${CX}" y1="${CY}" x2="${CX+90*Math.cos(a)}" y2="${CY+90*Math.sin(a)}" stroke="#e5ecf4" stroke-width="1"/>`;}
+      let grid=Array.from({length:5},(_,i)=>ring(i+1)).join('');
+      for(let i=0;i<N;i++){const a=-Math.PI/2+i*(2*Math.PI/N); grid+=`<line x1="${CX}" y1="${CY}" x2="${CX+90*Math.cos(a)}" y2="${CY+90*Math.sin(a)}" stroke="#e5ecf4" stroke-width="1"/>`;}
       const pts=V.map((v,i)=>{const a=-Math.PI/2+i*(2*Math.PI/N), rr=(Math.max(0,Math.min(5,parseFloat(v)||0))/5)*90; return `${CX+rr*Math.cos(a)},${CY+rr*Math.sin(a)}`}).join(' ');
       let lbl=''; for(let i=0;i<N;i++){const a=-Math.PI/2+i*(2*Math.PI/N),x=CX+(90+12)*Math.cos(a),y=CY+(90+12)*Math.sin(a); lbl+=`<text x="${x}" y="${y}" font-size="9" text-anchor="middle" fill="#5b6b7a">${L[i]||''}</text>`;}
       rsvg.innerHTML=`${grid}<polygon points="${pts}" fill="rgba(31,102,255,0.18)" stroke="#1f66ff" stroke-width="2"/>${lbl}`;
