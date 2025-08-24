@@ -787,6 +787,8 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # Tabellen (CSV → Dict-Listen), plus Fallbacks aus GPT-HTML
     out["score_percent"] = data["score_percent"]
     out["chart_data"] = build_chart_payload(data, out["score_percent"], lang=lang)
+    # ⬇️ Neu: JSON-Encoding hier (einmalig), damit Templates IMMER Daten bekommen
+    out["chart_data_json"] = json.dumps(out["chart_data"], ensure_ascii=False)
 
     try:
         out["foerderprogramme_table"] = build_funding_table(data, lang=lang)
@@ -893,7 +895,7 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             "vision_html": report.get("vision_html", ""),
             "one_pager_html": report.get("one_pager_html", ""),
             "toc_html": report.get("toc_html", ""),
-            "chart_data_json": json.dumps(report.get("chart_data", {}), ensure_ascii=False),
+            "chart_data_json": report.get("chart_data_json", "{}"),
             "foerderprogramme_table": report.get("foerderprogramme_table", []),
             "tools_table": report.get("tools_table", []),
             "footer_text": footer_text,
