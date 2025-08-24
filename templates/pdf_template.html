@@ -52,7 +52,7 @@
     .t-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
     .t-title{font-weight:700;margin-bottom:.2rem}
 
-    /* Checkbox look for Compliance lists */
+    /* Compliance-Checkboxlook */
     .checklist li::marker{content:"☐ "; color:#5b6b7a}
     .checklist li.checked::marker{content:"☑ "; color:#1f66ff}
 
@@ -138,7 +138,6 @@
       {% endif %}
     </div>
     {% endif %}
-
     <div class="grid cols-2 section">
       {% if recommendations_html and recommendations_html|trim %}
       <div class="card">
@@ -212,6 +211,7 @@
   <script>
     (function(){
       const data = ({{ chart_data_json | safe }}) || { score: 0, dimensions: { labels: [], values: [] } };
+
       // Gauge (auf dem Cover)
       const g = document.getElementById('gauge');
       const pct = Math.max(0, Math.min(100, parseInt(data.score||0)));
@@ -221,7 +221,7 @@
       const fg=`M ${toXY(Math.PI).join(' ')} A ${r} ${r} 0 ${arc} 1 ${toXY(ang).join(' ')}`;
       g.innerHTML=`<path d="${bg}" fill="none" stroke="#e5ecf4" stroke-width="16"/><path d="${fg}" fill="none" stroke="url(#grad)" stroke-width="16" stroke-linecap="round"/><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1f66ff"/><stop offset="100%" stop-color="#18a999"/></linearGradient></defs><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="28" font-weight="700" fill="#0a122a">${pct}%</text>`;
 
-      // Radar (Dimensionen)
+      // Radar (Dimensionen im One-Pager)
       const rsvg=document.getElementById('radar'), L=(data.dimensions&&data.dimensions.labels)||[], V=(data.dimensions&&data.dimensions.values)||[], R=90,CX=110,CY=110,N=L.length||6;
       const ring=(k)=>`<circle cx="${CX}" cy="${CY}" r="${(R/5)*k}" fill="none" stroke="#e5ecf4" stroke-width="1"/>`;
       let grid=Array.from({length:5},(_,i)=>ring(i+1)).join('');
