@@ -562,6 +562,188 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                 rows.append({"name":name.strip(),"usecase":"","cost":"","link":link})
         out["tools_table"] = rows[:8]
 
+    # --- Zusätzliche Kennzahlen, Benchmarks, Timeline und Risiken ---
+    # Hilfsfunktionen zum Parsen von Zahlen und Benchmarks
+    def _to_num(v):
+        """Try to parse a percentage or numeric string into an int between 0 and 100."""
+        if v is None:
+            return 0
+        try:
+            # accept values like "35", "35%", "0.35"
+            s = str(v).strip().replace(",", ".")
+            m = re.search(r"(\d+[\.,]?\d*)", s)
+            if m:
+                num = float(m.group(1))
+                # if it's a fraction, scale
+                if num <= 1.0:
+                    num = num * 100.0
+                return max(0, min(100, int(round(num))))
+        except Exception:
+            pass
+        return 0
+
+    # KPI-Kacheln: Score, Benchmark, Top-Priorität, Budget
+    kpis = []
+    # Score
+    kpis.append({"label": "Score" if lang != "de" else "Score", "value": f"{int(data.get('score_percent',0))}%"})
+    # Benchmark aus Branchenkontext (Digitalisierungs-/Automatisierungsgrad aus YAML)
+    bench_val = 0
+    try:
+        branche_key = (data.get("branche") or "default").lower()
+        ctx_bench = load_yaml(f"branchenkontext/{branche_key}.{lang}.yaml") if os.path.exists(f"branchenkontext/{branche_key}.{lang}.yaml") else {}
+        bench_str = ctx_bench.get("benchmark", "")
+        # parse first number as benchmark percentage
+        m = re.search(r"(\d+)", str(bench_str))
+        if m:
+            bench_val = int(m.group(1))
+    except Exception:
+        bench_val = 0
+    kpis.append({"label": "Benchmark" if lang != "de" else "Benchmark", "value": f"{bench_val}%"})
+    # Top-Priorität: nutze erstes Projektziel oder Usecase als Schlagwort
+    pri = data.get("projektziel") or data.get("ziel") or data.get("ki_usecases") or []
+    pri_val = ""
+    if isinstance(pri, list):
+        pri_val = str(pri[0]) if pri else ""
+    elif isinstance(pri, str):
+        pri_val = pri.split(",")[0]
+    kpis.append({"label": "Top-Priorität" if lang == "de" else "Top priority", "value": pri_val or "-"})
+    # Budgetklasse: aus Investitionsbudget
+    budget = data.get("investitionsbudget") or data.get("budget") or ""
+    kpis.append({"label": "Budget" if lang == "de" else "Budget", "value": budget or "-"})
+    out["kpis"] = kpis
+
+    # Benchmarks für horizontale Balken (Ihr Wert vs. Branche)
+    benchmarks = {}
+    # Eigene Werte
+    own_digi = _to_num(data.get("digitalisierungsgrad") or data.get("digitalisierungsgrad (%)") or data.get("digitalisierungs_score"))
+    own_auto = _to_num(data.get("automatisierungsgrad") or data.get("automatisierungsgrad (%)") or data.get("automatisierungs_score"))
+    own_paper = _to_num(data.get("prozesse_papierlos") or data.get("papierlos") or data.get("paperless"))
+    own_know = _to_num(data.get("ki_knowhow") or data.get("knowhow") or data.get("ai_knowhow"))
+    # Branchen-Benchmarks aus Kontext
+    dig_bench = 0
+    aut_bench = 0
+    try:
+        if ctx_bench:
+            bstr = str(ctx_bench.get("benchmark", ""))
+            m_d = re.search(r"Digitalisierungsgrad\s*[:=]\s*(\d+)", bstr)
+            m_a = re.search(r"Automatisierungsgrad\s*[:=]\s*(\d+)", bstr)
+            if m_d: dig_bench = int(m_d.group(1))
+            if m_a: aut_bench = int(m_a.group(1))
+    except Exception:
+        pass
+    # Papierlos und Know-how haben keine Branchenwerte in YAML; setze 50 als neutralen Richtwert
+    paper_bench = 50
+    know_bench = 50
+    benchmarks = {
+        ("Digitalisierung" if lang == "de" else "Digitalisation"): {"self": own_digi, "industry": dig_bench},
+        ("Automatisierung" if lang == "de" else "Automation"): {"self": own_auto, "industry": aut_bench},
+        ("Papierlos" if lang == "de" else "Paperless"): {"self": own_paper, "industry": paper_bench},
+        ("Know-how" if lang == "de" else "Know‑how"): {"self": own_know, "industry": know_bench},
+    }
+    out["benchmarks"] = benchmarks
+
+    # Timeline-Sektion aus der Roadmap extrahieren (30/3M/12M)
+    def _distill_timeline_sections(source_html: str, lang: str = "de") -> Dict[str, List[str]]:
+        """Extrahiert 2–3 stichpunktartige Maßnahmen für 30 Tage, 3 Monate, 12 Monate."""
+        if not source_html:
+            return {}
+        model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
+        if lang == "de":
+            sys = "Du extrahierst präzise Listen aus HTML."
+            usr = ("<h3>30 Tage</h3><ul>…</ul><h3>3 Monate</h3><ul>…</ul><h3>12 Monate</h3><ul>…</ul>\n"
+                   "- 2–3 Punkte je Liste (Stichworte ohne Erklärungen)\n\nHTML:\n" + source_html)
+        else:
+            sys = "You extract concise lists from HTML."
+            usr = ("<h3>30 days</h3><ul>…</ul><h3>3 months</h3><ul>…</ul><h3>12 months</h3><ul>…</ul>\n"
+                   "- 2–3 bullets per list (short phrases only)\n\nHTML:\n" + source_html)
+        try:
+            out_html = _chat_complete([
+                {"role": "system", "content": sys},
+                {"role": "user", "content": usr}
+            ], model_name=model, temperature=0.2)
+            html = ensure_html(out_html, lang)
+        except Exception:
+            return {}
+        # parse lists
+        res = {"t30": [], "t90": [], "t365": []}
+        for match in re.finditer(r"<h3[^>]*>([^<]+)</h3>\s*<ul>(.*?)</ul>", html, re.S|re.I):
+            header = match.group(1).lower()
+            items_html = match.group(2)
+            items = re.findall(r"<li[^>]*>(.*?)</li>", items_html, re.S)
+            items = [re.sub(r"<[^>]+>", "", it).strip() for it in items]
+            items = [it for it in items if it]
+            if '30' in header:
+                res['t30'] = items[:3]
+            elif '3' in header and ('monate' in header or 'months' in header):
+                res['t90'] = items[:3]
+            elif '12' in header:
+                res['t365'] = items[:3]
+        return res
+
+    timeline_sections = _distill_timeline_sections(out.get("roadmap_html", ""), lang=lang)
+    out["timeline"] = timeline_sections
+
+    # Risiko-Heatmap heuristisch erstellen
+    risk_rows = []
+    # Bias/Transparenz – höheres Risiko bei geringem KI-Know-how
+    know = own_know
+    if know < 30:
+        bias_lvl = 'hoch'
+    elif know < 60:
+        bias_lvl = 'mittel'
+    else:
+        bias_lvl = 'niedrig'
+    risk_rows.append({"category": "Bias/Transparenz" if lang == "de" else "Bias/Transparency", "level": bias_lvl})
+    # Datenschutz/AVV – höheres Risiko bei niedrigen Papierlos-Werten
+    if own_paper < 30:
+        ds_lvl = 'hoch'
+    elif own_paper < 60:
+        ds_lvl = 'mittel'
+    else:
+        ds_lvl = 'niedrig'
+    risk_rows.append({"category": "Datenschutz/AVV" if lang == "de" else "Data protection/AV", "level": ds_lvl})
+    # Lieferantenrisiko – setze medium als Default
+    risk_rows.append({"category": "Lieferanten-Risiko" if lang == "de" else "Supplier risk", "level": 'mittel' if lang == 'de' else 'medium'})
+    # Abhängigkeit Anbieter – Risiko hoch bei geringem Digitalisierungsgrad
+    if own_digi < 30:
+        dep_lvl = 'hoch'
+    elif own_digi < 60:
+        dep_lvl = 'mittel'
+    else:
+        dep_lvl = 'niedrig'
+    risk_rows.append({"category": "Abhängigkeit Anbieter" if lang == "de" else "Vendor lock-in", "level": dep_lvl})
+    out["risk_heatmap"] = risk_rows
+
+    # Förder-Badges aus erster Programmeinträgen
+    badges = []
+    try:
+        for row in (out.get("foerderprogramme_table") or [])[:2]:
+            zg = (row.get("zielgruppe") or "").lower()
+            # Solo/KMU Badge
+            if 'solo' in zg or 'freelanc' in zg or 'freiberuf' in zg:
+                badges.append("Solo-geeignet" if lang == "de" else "solo-friendly")
+            elif 'kmu' in zg or 'sme' in zg:
+                badges.append("KMU-geeignet" if lang == "de" else "SME-friendly")
+            # Region Badge
+            region = (data.get("bundesland") or data.get("state") or "").strip()
+            if region:
+                badges.append(region)
+            # Förderhöhe Badge
+            fstr = row.get("foerderhoehe") or row.get("amount") or ""
+            m = re.search(r"(\d+\s*%|\d+[\.,]\d+\s*%)", fstr.replace('bis zu','').replace('bis','').replace('up to',''))
+            if m:
+                percent = m.group(1).strip()
+                badges.append(("bis " + percent) if lang == "de" else ("up to " + percent))
+            # Break after first row
+    except Exception:
+        pass
+    # Entferne Duplikate, behalte Reihenfolge
+    seen = set(); unique_badges = []
+    for b in badges:
+        if b and b not in seen:
+            seen.add(b); unique_badges.append(b)
+    out["funding_badges"] = unique_badges
+
     # One-Pager & TOC
     out["one_pager_html"] = ""  # optionaler Block (nicht genutzt)
     out["toc_html"] = _toc_from_report(out, lang)
@@ -622,6 +804,12 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             "logo_euai": _data_uri_for("eu-ai.svg"),
             "logo_dsgvo": _data_uri_for("dsgvo.svg"),
             "badge_ready": _data_uri_for("ki-ready-2025.webp"),
+            # neue Kontexte für KPI-Kacheln, Benchmarks, Timeline, Risiko-Heatmap & Förder-Badges
+            "kpis": report.get("kpis", []),
+            "benchmarks": report.get("benchmarks", {}),
+            "timeline": report.get("timeline", {}),
+            "risk_heatmap": report.get("risk_heatmap", []),
+            "funding_badges": report.get("funding_badges", []),
         }
         html = tmpl.render(**ctx)
     else:
