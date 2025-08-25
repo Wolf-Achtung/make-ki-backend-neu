@@ -1,24 +1,23 @@
-Current AI tools & software for {{ branche }} (status as of {{ datum }})
+# Current AI tools & software for {{ branche }} (status as of {{ datum }})
 
-Create a structured overview of the most relevant AI tools for {{ branche }} with a focus on your main service {{ hauptleistung }}. Take into account your company size ({{ unternehmensgroesse }}) and investment budget ({{ investitionsbudget }}).
+Create a structured overview of the most relevant AI tools for {{ branche }}:
 
-1. Selection criteria:
+**1. Selection criteria:**  
+- Practical relevance, degree of innovation, data protection (DE/EU)
+- Compatibility with your IT infrastructure ({{ it_infrastruktur }}) and company size ({{ unternehmensgroesse }})
+- Reference to typical use cases (e.g., {{ hauptleistung }}, {{ projektziel }}, {{ zielgruppen }})
 
-• Relevance for typical use cases such as {{ hauptleistung }} and {{ projektziel }}, and a high degree of innovation  
-• Compatibility with your IT infrastructure ({{ it_infrastruktur }}) and suitability for the target group {{ zielgruppen }}  
-• Preference for GDPR/EU‑compliant providers; only tools available in EU/DE markets
-
-2. Sector context:
-
-• Use the sector‑specific tool list as a starting point:  
-  {{ tools_list }}  
-• Add at most 1–2 current tools from web‑search results if they provide genuine added value:  
+**2. Industry context:**  
+- Use this industry‑specific tool list as inspiration:  
+  {{ tools_list }}
+- Additionally integrate the following up‑to‑date web search links (only if they contain new/relevant tools):  
   {{ websearch_links_tools }}
 
-3. Presentation:
+**3. Presentation:**  
+– For each tool list the **name**, **provider**, **link**, a one‑sentence description of its main use, and a **privacy** column indicating the data protection status (e.g., GDPR compliant, EU only). Short labels like “Privacy” help to avoid line breaks in the header.
+– List a maximum of 3–5 tools; exclude duplicate mentions from other chapters (e.g., Executive Summary, funding programmes, roadmap).
+– Do not include any generic best‑practice tips or introductory advice – these belong in the roadmap.
 
-• Present the tools in an HTML table with the columns **Name**, **Use case**, **Cost** and **Link**.  
-• For **Cost**, give a rough indication (e.g., “from €29/month” or “free”); omit provider names and data‑privacy comments.  
-• List no more than 5–7 tools that are particularly suitable for {{ branche }} and {{ hauptleistung }}.
-
-*Do not include generic introductions or practical tips – these belong in the action plan.*
+**Tip:**  
+– Use an HTML table for the overview with reasonably wide columns so that headings and important words do not wrap.
+– **Important:** Output the table directly without enclosing it in ``` code fences – otherwise the report will show the source code instead of the table.

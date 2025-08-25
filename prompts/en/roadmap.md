@@ -1,22 +1,16 @@
-Action plan: digitalisation & AI in {{ branche }} (main service {{ hauptleistung }})
+# Action plan: digitalisation & AI in {{ branche }} (focus {{ hauptleistung }})
 
-Create a concrete action plan for the next 12 months, structured by time horizons:
+Develop an action plan for the next 12 months with three time horizons: **0–3 months**, **3–6 months** and **6–12 months**. For each phase list 2–3 priority measures (bullet + one‑sentence recommendation) aligned with your strategic goals ({{ projektziel }}) and priority use cases ({{ ki_usecases }}).
 
-30 days: immediately implementable steps
+**Note:**
+* Consider industry‑specific challenges, company size ({{ unternehmensgroesse }}), digitalisation and automation levels ({{ digitalisierungsgrad }}/{{ automatisierungsgrad }}), the proportion of paperless processes ({{ prozesse_papierlos }}), existing AI deployments ({{ ki_einsatz | join(', ') }}) and internal AI know‑how ({{ ki_knowhow }}), as well as your risk appetite ({{ risikofreude }}).
+* Align measures with your investment budget ({{ investitionsbudget }}) and mention relevant tools or funding only briefly – details are provided in their own chapters.
+* Avoid generic tips; every step must be individually meaningful and concrete.
 
-3 months: medium‑term measures/milestones
+**Example for a prioritised timeline:**  
+  – **0–3 months:** Finalise the questionnaire and test a GPT prototype; publish a mini‑landing page; start the first feedback loop.  
+  – **3–6 months:** Run a pilot project with 1–2 customers or partner companies in {{ branche }}; optimise processes; submit funding applications.  
+  – **6–12 months:** Turn the MVP into a scalable white‑label advisory tool; expand into new markets; build partner networks.  
+Use these examples as a guide and tailor the specific measures to your main service and company size.
 
-12 months: long‑term roadmap for sustainable success
-
-Note:
-
-Take into account industry‑specific challenges, your company size ({{ unternehmensgroesse }}), the current digitalisation and automation levels ({{ digitalisierungsgrad }}/{{ automatisierungsgrad }}), the proportion of paperless processes ({{ prozesse_papierlos }}), existing AI deployments ({{ ki_einsatz | join(', ') }}) and the internal AI know‑how ({{ ki_knowhow }}).
-
-Refer to the most important tools or funding programmes, but without repeating them – details are in their own chapters!
-
-Provide a clear action suggestion for each measure (keyword + one‑sentence implementation recommendation) and align the measures with your main goal {{ projektziel | join(', ') }} and the prioritised use cases {{ ki_usecases | join(', ') }}.
-
-No generic tips; only individually appropriate steps based on the analysis. Avoid using placeholders like {{ tools_list[0].name }}—instead be specific, for example “Automate processes with a selected AI tool.” Also consider your investment budget ({{ investitionsbudget }}) and your risk tolerance ({{ risikofreude }}).
-
-Tip:
-Use bullet points and avoid duplication with other chapters!
+**Tip:** Use bullet points and avoid repetition with other chapters.

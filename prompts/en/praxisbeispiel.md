@@ -2,6 +2,7 @@
 
 {{ best_practice }}
 
-- Select a current, relevant case study from the {{ branche }} sector with a focus on {{ hauptleistung }} from the industry context file.
-- Do not include any lists, tools or funding programmes; describe in 2–3 sentences how the example was implemented and what benefit it delivered.
-- Briefly assess what lessons comparable companies ({{ unternehmensgroesse }}, {{ unternehmensform }}) can draw from it.
+- Choose one current, relevant case from the **{{ branche }}** sector with a comparable company size and main service (**{{ hauptleistung }}**) (see the industry context file).
+- Describe in 2–3 sentences how the project was implemented and what tangible result it achieved (e.g. **40 % less time per project**, **30 % higher customer satisfaction** or **20 % revenue growth**).  
+  Avoid using lists and do not mention any other tools or programmes.
+- Briefly state what lessons similar companies can draw from this example and how it aligns with your own vision.
