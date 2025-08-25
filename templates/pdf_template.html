@@ -34,34 +34,13 @@
     @page{size:A4 margin:16mm}
     .onepager{page-break-inside:avoid}
     .section{page-break-inside:auto}
-
-    /* Cover */
-    .cover{background:linear-gradient(180deg,#eef4ff,#ffffff); border:1px solid var(--border); border-radius:16px; padding:24px; margin:16px 0 24px}
-    .cover h1{font-size:30px}
-    .score-pill{display:inline-block;background:#eaf6ff;border:1px solid #b5d6f6;border-radius:999px;padding:6px 10px;font-weight:700}
-
-    /* TOC & Vision */
     .toc-card{background:var(--card);border:1px dashed var(--border);border-radius:14px;padding:14px}
-    .toc-card ul{margin:.3rem 0 .2rem 1rem}
-    .toc-card li{margin:.15rem 0}
-    .vision-card{background:linear-gradient(180deg, rgba(24,169,153,.08), rgba(31,102,255,.08));
-      border:1px solid rgba(31,102,255,.25); border-left:4px solid var(--brand-blue); border-radius:12px; padding:14px; }
-
-    /* Timeline (Roadmap) */
+    .vision-card{background:linear-gradient(180deg, rgba(24,169,153,.08), rgba(31,102,255,.08));border:1px solid rgba(31,102,255,.25);border-left:4px solid var(--brand-blue);border-radius:12px;padding:14px;}
     .timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
     .t-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
     .t-title{font-weight:700;margin-bottom:.2rem}
-
-    /* Compliance-Checkboxlook */
     .checklist li::marker{content:"☐ "; color:#5b6b7a}
     .checklist li.checked::marker{content:"☑ "; color:#1f66ff}
-
-    @media print {
-      *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      body{ background:#fff; color:#0a122a; }
-      a{ color:#0a122a; border-bottom:1px dotted #999; text-decoration:none; }
-      thead{ display: table-header-group; } tfoot{ display: table-footer-group; }
-    }
   </style>
 </head>
 <body>
@@ -79,23 +58,14 @@
   </div>
 
   <div class="container">
-    <!-- Cover (Einstieg + großer Gauge) -->
-    <div class="cover">
-      <h1>Ihr KI-Readiness-Überblick</h1>
-      <p class="score-pill">Gesamt-Score: {{ "%d"|format(score_percent) }}%</p>
+    <!-- Cover mit großem Gauge -->
+    <div class="card">
+      <h2>Ihr KI-Readiness-Überblick</h2>
       <div class="svgbox" style="margin-top:8px">
         <svg id="gauge" viewBox="0 0 200 120" width="100%" height="140"></svg>
         <div class="caption">Gesamt-Score (0–100)</div>
       </div>
       {% if preface %}<div style="margin-top:.6rem">{{ preface|safe }}</div>{% endif %}
-      {% if branche or unternehmensgroesse or bundesland or hauptleistung %}
-        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:.6rem">
-          <div><b>Branche:</b> {{ branche or "-" }}</div>
-          <div><b>Größe:</b> {{ unternehmensgroesse or "-" }}</div>
-          <div><b>Bundesland:</b> {{ bundesland or "-" }}</div>
-          <div><b>Hauptleistung:</b> {{ hauptleistung or "-" }}</div>
-        </div>
-      {% endif %}
     </div>
 
     {% if toc_html and toc_html|trim %}
@@ -105,7 +75,7 @@
       </div>
     {% endif %}
 
-    <!-- One-Pager -->
+    <!-- One-Pager: Executive & Radar -->
     <div class="grid cols-2 onepager">
       {% if exec_summary_html and exec_summary_html|trim %}
       <div class="card">
@@ -122,26 +92,24 @@
       </div>
     </div>
 
+    <!-- Quick Wins & Risiken im 2-Spalten-Block -->
     {% if (quick_wins_html and quick_wins_html|trim) or (risks_html and risks_html|trim) %}
     <div class="grid cols-2 section">
-      {% if quick_wins_html and quick_wins_html|trim %}
       <div class="card">
-        <h2>Quick Wins ⚡</h2>
-        <div>{{ quick_wins_html|safe }}</div>
+        <h2>⚡ Quick Wins</h2>
+        <div>{{ (quick_wins_html or '')|safe }}</div>
       </div>
-      {% endif %}
-      {% if risks_html and risks_html|trim %}
       <div class="card">
-        <h2>Hauptrisiken ⚠️</h2>
-        <div>{{ risks_html|safe }}</div>
+        <h2>⚠️ Hauptrisiken</h2>
+        <div>{{ (risks_html or '')|safe }}</div>
       </div>
-      {% endif %}
     </div>
     {% endif %}
+    <!-- Empfehlungen & Roadmap -->
     <div class="grid cols-2 section">
       {% if recommendations_html and recommendations_html|trim %}
       <div class="card">
-        <h2>Empfehlungen (Next Steps) 🎯</h2>
+        <h2>Empfehlungen (Top 5) 🎯</h2>
         <div>{{ recommendations_html|safe }}</div>
       </div>
       {% endif %}
@@ -150,51 +118,65 @@
         <h2>Roadmap</h2>
         <div class="timeline">
           <div class="t-card"><div class="t-title">30 Tage</div><div>{{ roadmap_html|safe }}</div></div>
-          <div class="t-card"><div class="t-title">3 Monate</div><div><!-- optional: mittelfristige Teile extrahieren --></div></div>
-          <div class="t-card"><div class="t-title">12 Monate</div><div><!-- optional: langfristige Teile extrahieren --></div></div>
+          <div class="t-card"><div class="t-title">3 Monate</div><div><!-- optional: mid-term subset --></div></div>
+          <div class="t-card"><div class="t-title">12 Monate</div><div><!-- optional: long-term subset --></div></div>
         </div>
       </div>
       {% endif %}
     </div>
 
+    <!-- Förderprogramme & Tools (mit Fallback) -->
     <div class="grid cols-2 section">
       <div class="card">
         <h2>Förderprogramme (Auswahl)</h2>
         {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
-        <table>
-          <thead><tr><th>Programm</th><th>Zielgruppe</th><th>Förderhöhe</th><th>Link</th></tr></thead>
-          <tbody>
-          {% for p in foerderprogramme_table %}
-            <tr><td>{{ p.name }}</td><td>{{ p.zielgruppe }}</td><td>{{ p.foerderhoehe }}</td>
-              <td>{% if p.link %}<a href="{{ p.link }}">Details</a>{% endif %}</td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        {% else %}<p><em>Keine Programme in der Datenbasis.</em></p>{% endif %}
+          <table>
+            <thead><tr><th>Programm</th><th>Zielgruppe</th><th>Förderhöhe</th><th>Link</th></tr></thead>
+            <tbody>
+            {% for p in foerderprogramme_table %}
+              <tr><td>{{ p.name }}</td><td>{{ p.zielgruppe }}</td><td>{{ p.foerderhoehe }}</td>
+                <td>{% if p.link %}<a href="{{ p.link }}">Details</a>{% endif %}</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        {% elif dynamic_funding_html and dynamic_funding_html|trim %}
+          {{ dynamic_funding_html|safe }}
+        {% else %}
+          <p><em>Keine Programme in der Datenbasis.</em></p>
+        {% endif %}
       </div>
 
       <div class="card">
         <h2>KI-Tools & Software</h2>
         {% if tools_table and tools_table|length>0 %}
-        <table>
-          <thead><tr><th>Tool</th><th>Einsatz</th><th>Kosten</th><th>Link</th></tr></thead>
-          <tbody>
-          {% for t in tools_table %}
-            <tr><td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.cost }}</td>
-              <td>{% if t.link %}<a href="{{ t.link }}">Details</a>{% endif %}</td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        {% else %}<p><em>Tool-Liste wird dynamisch ergänzt.</em></p>{% endif %}
+          <table>
+            <thead><tr><th>Tool</th><th>Einsatz</th><th>Kosten</th><th>Link</th></tr></thead>
+            <tbody>
+            {% for t in tools_table %}
+              <tr><td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.cost }}</td>
+                <td>{% if t.link %}<a href="{{ t.link }}">Details</a>{% endif %}</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p><em>Tool-Liste wird dynamisch ergänzt.</em></p>
+        {% endif %}
       </div>
     </div>
 
-    {% if vision_html or sections_html %}
-    <div class="card section">
-      <h2>Vision & Weitere Kapitel</h2>
-      {% if vision_html %}<div class="vision-card" style="margin-bottom:.6rem">{{ vision_html|safe }}</div>{% endif %}
-      {% if sections_html %}<div>{{ sections_html|safe }}</div>{% endif %}
-    </div>
+    <!-- Vision separat, nicht doppelt -->
+    {% if vision_html %}
+      <div class="card section">
+        <h2>Vision</h2>
+        <div class="vision-card">{{ vision_html|safe }}</div>
+      </div>
+    {% endif %}
+
+    {% if sections_html %}
+      <div class="card section">
+        <h2>Weitere Kapitel</h2>
+        <div>{{ sections_html|safe }}</div>
+      </div>
     {% endif %}
 
     <div class="footer">
@@ -212,7 +194,7 @@
     (function(){
       const data = ({{ chart_data_json | safe }}) || { score: 0, dimensions: { labels: [], values: [] } };
 
-      // Gauge (auf dem Cover)
+      // Gauge (Cover)
       const g = document.getElementById('gauge');
       const pct = Math.max(0, Math.min(100, parseInt(data.score||0)));
       const cx=100, cy=100, r=90, toXY=(ang)=>[cx+r*Math.cos(ang), cy+r*Math.sin(ang)];
@@ -221,7 +203,7 @@
       const fg=`M ${toXY(Math.PI).join(' ')} A ${r} ${r} 0 ${arc} 1 ${toXY(ang).join(' ')}`;
       g.innerHTML=`<path d="${bg}" fill="none" stroke="#e5ecf4" stroke-width="16"/><path d="${fg}" fill="none" stroke="url(#grad)" stroke-width="16" stroke-linecap="round"/><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#1f66ff"/><stop offset="100%" stop-color="#18a999"/></linearGradient></defs><text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="28" font-weight="700" fill="#0a122a">${pct}%</text>`;
 
-      // Radar (Dimensionen im One-Pager)
+      // Radar (One-Pager)
       const rsvg=document.getElementById('radar'), L=(data.dimensions&&data.dimensions.labels)||[], V=(data.dimensions&&data.dimensions.values)||[], R=90,CX=110,CY=110,N=L.length||6;
       const ring=(k)=>`<circle cx="${CX}" cy="${CY}" r="${(R/5)*k}" fill="none" stroke="#e5ecf4" stroke-width="1"/>`;
       let grid=Array.from({length:5},(_,i)=>ring(i+1)).join('');
