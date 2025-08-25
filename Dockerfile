@@ -57,4 +57,4 @@ EXPOSE 8000
 
 # DB-Init nur, wenn RUN_DB_INIT=true; sonst überspringen.
 # Danach FastAPI starten.
-//ENTRYPOINT ["sh", "-c", "[ \"$RUN_DB_INIT\" = \"true\" ] && python full_init.py || echo 'DB-Init übersprungen'; uvicorn main:app --host 0.0.0.0 --port 8000"]
+ENTRYPOINT ["sh", "-c", "[ \"$RUN_DB_INIT\" = \"true\" ] && python full_init.py || echo 'DB-Init übersprungen'; uvicorn main:app --host 0.0.0.0 --port 8000"]
