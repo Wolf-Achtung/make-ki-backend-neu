@@ -41,6 +41,29 @@
     .t-title{font-weight:700;margin-bottom:.2rem}
     .checklist li::marker{content:"☐ "; color:#5b6b7a}
     .checklist li.checked::marker{content:"☑ "; color:#1f66ff}
+
+    /* KPI-Tiles */
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin-top:.6rem}
+    .kpi-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
+    .kpi-item .kpi-label{font-size:12px;color:var(--muted);margin-bottom:2px}
+    .kpi-item .kpi-value{font-size:20px;font-weight:700}
+    /* Benchmark bars */
+    .benchmark-bars{margin-top:.6rem}
+    .benchmark-row{display:flex;align-items:center;margin-bottom:6px;font-size:12px}
+    .benchmark-label{width:90px;color:var(--muted);font-weight:500}
+    .benchmark-bar{flex:1;height:8px;background:#e5ecf4;border-radius:4px;position:relative}
+    .benchmark-bar span.you{display:block;height:8px;background:var(--brand-blue);border-radius:4px}
+    .benchmark-bar span.avg{position:absolute;top:-3px;width:2px;height:14px;background:var(--brand-green)}
+    /* Risk heatmap */
+    .risk-table{width:100%;border-collapse:collapse;margin-top:.6rem;font-size:12px}
+    .risk-table th,.risk-table td{border:1px solid var(--border);padding:6px;text-align:center}
+    .risk-table th{background:var(--brand-blue);color:#fff}
+    .risk-low{background:#e5f3ff}
+    .risk-mid{background:#fff7e6}
+    .risk-high{background:#ffe5e5}
+    /* Funding badges */
+    .funding-badges{margin-top:.5rem;display:flex;flex-wrap:wrap;gap:6px}
+    .funding-badge{padding:4px 8px;border-radius:8px;background:var(--brand-blue);color:#fff;font-size:10px;white-space:nowrap}
   </style>
 </head>
 <body>
@@ -66,6 +89,13 @@
         <div class="caption">Gesamt-Score (0–100)</div>
       </div>
       {% if preface %}<div style="margin-top:.6rem">{{ preface|safe }}</div>{% endif %}
+      {% if kpis and kpis|length > 0 %}
+        <div class="kpi-grid">
+          {% for item in kpis %}
+            <div class="kpi-item"><div class="kpi-label">{{ item.label }}</div><div class="kpi-value">{{ item.value }}</div></div>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
 
     {% if toc_html and toc_html|trim %}
@@ -89,6 +119,20 @@
           <svg id="radar" viewBox="0 0 220 220" width="100%" height="220"></svg>
           <div class="caption">Digitalisierung · Automatisierung · Papierlos · Know-how · …</div>
         </div>
+        {% if benchmarks and benchmarks.items()|length > 0 %}
+        <div class="benchmark-bars">
+          {% for key, b in benchmarks.items() %}
+            <div class="benchmark-row">
+              <div class="benchmark-label">{{ key }}</div>
+              <div class="benchmark-bar">
+                <span class="you" style="width:{{ b.self }}%"></span>
+                <span class="avg" style="left:{{ b.industry }}%"></span>
+              </div>
+            </div>
+          {% endfor %}
+          <div class="caption" style="font-size:10px;margin-top:.25rem">Balken: Ihr Wert (blau), Branchen-Benchmark (grün)</div>
+        </div>
+        {% endif %}
       </div>
     </div>
 
@@ -116,11 +160,15 @@
       {% if roadmap_html and roadmap_html|trim %}
       <div class="card">
         <h2>Roadmap</h2>
-        <div class="timeline">
-          <div class="t-card"><div class="t-title">30 Tage</div><div>{{ roadmap_html|safe }}</div></div>
-          <div class="t-card"><div class="t-title">3 Monate</div><div><!-- optional: mid-term subset --></div></div>
-          <div class="t-card"><div class="t-title">12 Monate</div><div><!-- optional: long-term subset --></div></div>
+        {% if timeline and (timeline.t30 or timeline.t90 or timeline.t365) %}
+        <div class="swimlane">
+          <div><h3>30 Tage</h3><ul>{% for it in timeline.t30 %}<li>{{ it }}</li>{% endfor %}</ul></div>
+          <div><h3>3 Monate</h3><ul>{% for it in timeline.t90 %}<li>{{ it }}</li>{% endfor %}</ul></div>
+          <div><h3>12 Monate</h3><ul>{% for it in timeline.t365 %}<li>{{ it }}</li>{% endfor %}</ul></div>
         </div>
+        {% else %}
+        <div>{{ roadmap_html|safe }}</div>
+        {% endif %}
       </div>
       {% endif %}
     </div>
@@ -139,6 +187,13 @@
             {% endfor %}
             </tbody>
           </table>
+          {% if funding_badges and funding_badges|length>0 %}
+          <div class="funding-badges">
+            {% for b in funding_badges %}
+              <span class="funding-badge">{{ b }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
         {% elif dynamic_funding_html and dynamic_funding_html|trim %}
           {{ dynamic_funding_html|safe }}
         {% else %}
@@ -163,6 +218,27 @@
         {% endif %}
       </div>
     </div>
+
+    {% if risk_heatmap and risk_heatmap|length>0 %}
+    <div class="card section">
+      <h2>Risiko-Heatmap</h2>
+      <table class="risk-table">
+        <thead>
+          <tr><th></th><th>Niedrig</th><th>Mittel</th><th>Hoch</th></tr>
+        </thead>
+        <tbody>
+        {% for row in risk_heatmap %}
+          <tr>
+            <td>{{ row.category }}</td>
+            <td class="{% if row.level == 'niedrig' %}risk-low{% endif %}"></td>
+            <td class="{% if row.level == 'mittel' %}risk-mid{% endif %}"></td>
+            <td class="{% if row.level == 'hoch' %}risk-high{% endif %}"></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
 
     <!-- Vision separat, nicht doppelt -->
     {% if vision_html %}
