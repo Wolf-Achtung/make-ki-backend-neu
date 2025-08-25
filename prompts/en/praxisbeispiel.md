@@ -2,6 +2,6 @@
 
 {{ best_practice }}
 
-- Present a single current, relevant example from the {{ branche }} sector (main service: {{ hauptleistung }}) (taken from the industry context file).
-- Do not include any lists, or further tools or programmes.
-- Provide a brief assessment of what the example means for similar companies.
+- Select a current, relevant case study from the {{ branche }} sector with a focus on {{ hauptleistung }} from the industry context file.
+- Do not include any lists, tools or funding programmes; describe in 2–3 sentences how the example was implemented and what benefit it delivered.
+- Briefly assess what lessons comparable companies ({{ unternehmensgroesse }}, {{ unternehmensform }}) can draw from it.

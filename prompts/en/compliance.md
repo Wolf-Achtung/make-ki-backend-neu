@@ -1,33 +1,30 @@
 Compliance status & recommendations for {{ branche }} (main service {{ hauptleistung }})
 
-Analyse the compliance situation (standards, guidelines, to‑dos) for the company based on your form data (e.g., availability of a data protection officer, technical security measures, DPIA/DSFA, reporting paths, erasure rules, knowledge of the EU AI Act, etc.).
+Analyse the company’s compliance status based on the form data, company size ({{ unternehmensgroesse }}), legal form ({{ unternehmensform }}) and main service {{ hauptleistung }}. The focus is on data protection and AI regulation.
 
 1. Legal requirements & guidelines:
 
-GDPR, ePrivacy, Digital Services Act, competition law, consumer protection, industry‑specific standards: {{ branchenspezifische_standards }}
-Take into account your answers regarding a data protection officer ({{ datenschutzbeauftragter }}) and technical measures ({{ technische_massnahmen }}).
+• Identify relevant laws such as GDPR, ePrivacy, the Digital Services Act, competition law and consumer protection, as well as industry‑specific standards: {{ branchenspezifische_standards }}.  
+• Consider whether a data protection officer is in place ({{ datenschutzbeauftragter }}) and which technical measures have already been implemented ({{ technische_massnahmen }}).
 
 2. Consent management & customer rights:
 
-Consent management, CRM, privacy by design/default, special features: {{ consent_besonderheiten }}
-Consider your existing processes ({{ meldewege }}, {{ loeschregeln }}) and the internal AI know‑how ({{ ki_knowhow }}).
+• Describe how consent is obtained and documented (consent management), whether privacy by design/default is implemented and any particular issues arising from the service {{ hauptleistung }} ({{ consent_besonderheiten }}).  
+• Include existing reporting channels and erasure rules ({{ meldewege }}, {{ loeschregeln }}) and assess the internal AI know‑how ({{ ki_knowhow }}).
 
 3. AI‑specific compliance:
 
-Documentation, transparency, fairness, bias analyses, impact assessments
+• Assess documentation obligations, transparency, fairness and bias analyses for AI‑supported consulting ({{ hauptleistung }}), particularly when using GPT‑based models.  
+• Take into account EU AI Act compliance and required risk analyses.
 
 4. Immediate actions & strategic steps:
 
-Data protection check, AI governance, staff training, supplier auditing, DSMS introduction: {{ compliance_schritte }}
+• Provide 3–4 prioritised measures for the short and medium term (e.g., data‑protection audit, template contracts for data processing, introduction of a data protection management system, training).  
+• Consider company size: for solo self‑employed advisors suggest lean processes and, if necessary, outsourcing (e.g., appointing an external data protection officer).
 
 5. Weaknesses & solutions:
 
-Name 2–3 current weaknesses (e.g., data silos, consent, audit)
+• Name 2–3 specific weaknesses (e.g., lack of erasure policies, unclear data flows, insufficient documentation).  
+• For each weakness provide a proposed solution or an initial step.
 
-For each weakness: 1 proposed solution
-
-6. Tables/checklists:
-{{ checklisten }}
-
-IMPORTANT:
-Do not list any tools, funding programmes or roadmap measures – everything has its own chapter.
+*Do not include generic checklists and do not mention tools, funding programmes or roadmap actions – those have their own chapters.*
