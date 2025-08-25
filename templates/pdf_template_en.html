@@ -226,14 +226,17 @@
       </div>
     {% endif %}
 
-    <div class="footer">
-      <div style="display:flex;align-items:center;gap:12px">
-        {% if logo_tuev %}<img src="{{ logo_tuev }}" alt="TÜV" style="height:18px">{% endif %}
-        {% if logo_euai %}<img src="{{ logo_euai }}" alt="EU AI" style="height:18px">{% endif %}
-        {% if logo_dsgvo %}<img src="{{ logo_dsgvo }}" alt="GDPR" style="height:18px">{% endif %}
-        <span>© 2025 KI-Sicherheit.jetzt – GDPR & EU-AI-Act-Ready – Wolf Hohl</span>
-      </div>
-    </div>
+<div class="footer">
+  <div style="display:flex;align-items:center;gap:12px">
+    {% if logo_tuev %}<img src="{{ logo_tuev }}" alt="TÜV" style="height:18px">{% endif %}
+    {% if logo_euai %}<img src="{{ logo_euai }}" alt="EU AI" style="height:18px">{% endif %}
+    {% if logo_dsgvo %}<img src="{{ logo_dsgvo }}" alt="DSGVO" style="height:18px">{% endif %}
+    <span>© 2025 KI-Sicherheit.jetzt – DSGVO & EU-AI-Act-Ready – Wolf Hohl</span>
+  </div>
+  <div style="margin-top:4px; font-size:11px; color:#6b7280">
+    {{ footer_text|safe }}
+  </div>
+</div>
   </div>
 
   <!-- Charts (offline SVG) -->
