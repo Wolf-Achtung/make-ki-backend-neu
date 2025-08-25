@@ -1,12 +1,15 @@
 import psycopg2
 import os
-from dotenv import load_dotenv
+# .env optional laden (lokal), auf Railway kommen Vars aus dem Environment
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
-load_dotenv('env')
-DATABASE_URL = os.getenv("DATABASE_URL")
-
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or os.getenv("DATABASE_PUBLIC_URL")
 if not DATABASE_URL:
-    raise Exception("DATABASE_URL not found in environment.")
+    raise SystemExit("DATABASE_URL not set")
 
 users = [
     # Admin
