@@ -320,11 +320,45 @@ def _weights_from_env() -> Dict[str, int]:
     except Exception: return {}
 
 def calc_score_percent(data: dict) -> int:
-    # (legacy – aktueller Score wird oben im Report gesetzt; Funktion beibehalten)
+    """
+    Berechne einen einfachen Readiness‑Score aus den Fragebogendaten.
+    Falls im Payload bereits "score_percent" definiert ist und >0, wird dieser Wert genutzt.
+    Andernfalls wird ein Durchschnitt aus dem Digitalisierungsgrad und dem Automatisierungsgrad gebildet.
+    Dabei werden Textwerte ("sehr_niedrig", "eher_hoch" usw.) in Prozentskalen umgerechnet.
+    """
     try:
-        return int(data.get("score_percent", 0))
+        # falls ein Score vorgegeben wurde und > 0, einfach übernehmen
+        raw = data.get("score_percent")
+        if raw is not None:
+            try:
+                val = int(str(raw).strip())
+                if val > 0:
+                    return val
+            except Exception:
+                pass
     except Exception:
-        return 0
+        pass
+    # Digitalisierungsgrad: Zahlen extrahieren und begrenzen
+    dig_raw = str(data.get("digitalisierungsgrad") or data.get("digitalisierungsgrad (%)") or "").strip()
+    dig_val = 0
+    try:
+        m = re.search(r"(\d+)", dig_raw)
+        if m:
+            dig_val = int(m.group(1))
+    except Exception:
+        dig_val = 0
+    dig_val = max(0, min(100, dig_val))
+    # Automatisierungsgrad: Textwerte in Prozent umrechnen
+    auto_raw = str(data.get("automatisierungsgrad") or data.get("automatisierungsgrad (%)") or "").lower().strip()
+    auto_map = {
+        "sehr_niedrig": 20, "eher_niedrig": 40, "mittel": 60, "eher_hoch": 80, "sehr_hoch": 100,
+        "very_low": 20, "rather_low": 40, "medium": 60, "rather_high": 80, "very_high": 100,
+    }
+    auto_val = auto_map.get(auto_raw, 0)
+    # Wenn beide Werte vorliegen, bildet der Score den Durchschnitt
+    if dig_val > 0 or auto_val > 0:
+        return int(round((dig_val + auto_val) / 2))
+    return 0
 
 def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> List[Dict[str, str]]:
     import csv, os
