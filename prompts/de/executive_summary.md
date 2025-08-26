@@ -4,6 +4,7 @@ Erstellen Sie eine prägnante Management‑Zusammenfassung für die Geschäftsf�
 
 * **KI‑Readiness‑Score:** {{ score_percent }} % (Benchmark: {{ benchmark }})
 * **Top‑Chancen:** Nennen Sie drei branchenspezifische Chancen, die sich aus {{ hauptleistung }} und Ihren strategischen Zielen ergeben. Greifen Sie dabei explizit die Freitext‑Angaben aus dem Fragebogen auf (z. B. „größtes Potenzial“, „Moonshot“).  
+  Beziehen Sie auch die Felder „{{ groesstes_potenzial }}“ (größtes Potenzial für KI), „{{ bereich_potenzial }}“ (Einsatzbereich), Ihre langfristige Vision („{{ moonshot }}“) und Ihre strategischen Hauptziele („{{ strategische_ziele }}“ bzw. „{{ goals }}“) mit ein.
 * **Zentrale Risiken:** Beschreiben Sie zwei Hauptrisiken oder Hemmnisse (z. B. Datenschutz, Bias, Abhängigkeit von Anbietern) und begründen Sie diese kurz.  
 * **Nächste Schritte:** Listen Sie drei kurz‑ bis mittelfristige Maßnahmen als nummerierte Liste auf. Empfohlenes Format:  
   1) **MVP‑Portal entwickeln:** Fragebogen finalisieren und GPT‑Auswertung als Minimum‑Viable‑Product live schalten.  

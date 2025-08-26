@@ -14,10 +14,10 @@ Create a structured overview of the most relevant AI tools for {{ branche }}:
   {{ websearch_links_tools }}
 
 **3. Presentation:**  
-– For each tool list the **name**, **provider**, **link**, a one‑sentence description of its main use, and a **privacy** column indicating the data protection status (e.g., GDPR compliant, EU only). Short labels like “Privacy” help to avoid line breaks in the header.
-– List a maximum of 3–5 tools; exclude duplicate mentions from other chapters (e.g., Executive Summary, funding programmes, roadmap).
+– Use an HTML table with four columns: **Name**, **Use case**, **Cost**, and **Link**.
+– For **Cost**, provide an approximate range (e.g., “from €29/month”, “free”); there is no need to include provider or privacy columns.
+– List at most 5–7 tools and choose only solutions that are particularly relevant to {{ branche }} and your main service {{ hauptleistung }}. Avoid duplicate mentions from other chapters.
 – Do not include any generic best‑practice tips or introductory advice – these belong in the roadmap.
 
 **Tip:**  
-– Use an HTML table for the overview with reasonably wide columns so that headings and important words do not wrap.
-– **Important:** Output the table directly without enclosing it in ``` code fences – otherwise the report will show the source code instead of the table.
+– Output the table directly as HTML (without ``` code fences). Keep column headers short to avoid line breaks.

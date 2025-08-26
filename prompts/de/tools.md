@@ -13,11 +13,11 @@ Erstellen Sie eine strukturierte Übersicht über die relevantesten KI-Tools fü
 - Integrieren Sie zusätzlich die folgenden tagesaktuellen Websearch-Links (nur, wenn sie neue/relevante Tools enthalten):  
   {{ websearch_links_tools }}
 
-**3. Darstellung:**  
-– Für jedes Tool: **Name**, **Anbieter**, **Link**, ein Satz zum Haupteinsatz sowie eine kurze Spalte **Datenschutz** (z. B. DSGVO‑konform, EU). Verwenden Sie bewusst kurze Spaltenüberschriften, damit diese nicht umbrechen müssen.
-– Listen Sie maximal 3–5 Tools auf; doppelte Nennungen aus anderen Kapiteln (z. B. Executive Summary, Förderprogramme, Roadmap) **ausschließen**.
-– KEINE generischen Praxistipps oder Einführungsratschläge – diese stehen in der Roadmap.
+**3. Darstellung:**
+– Nutzen Sie eine HTML‑Tabelle mit vier Spalten: **Name**, **Usecase/Einsatz**, **Kosten**, **Link**.
+– Geben Sie zu **Kosten** eine grobe Preisspanne an (z. B. „ab 29 €/Monat“, „kostenlos“); Anbieter‑ oder Datenschutz‑Spalten sind nicht erforderlich.
+– Listen Sie maximal 5–7 Tools auf und wählen Sie nur Lösungen, die für {{ branche }} und Ihre Hauptleistung {{ hauptleistung }} besonders relevant sind. Vermeiden Sie doppelte Erwähnungen in anderen Kapiteln.
+– Keine generischen Praxistipps oder Einführungsratschläge – diese gehören in die Roadmap.
 
-**Tipp:**  
-– Verwenden Sie für die Übersicht eine HTML‑Tabelle mit ausreichend breiten Spalten, damit Überschriften und wichtige Worte nicht umbrechen.
-– **Wichtig:** Geben Sie die Tabelle direkt aus, ohne sie in ```‑Codeblöcke einzubetten – sonst erscheint der Quellcode im Report statt der Tabelle.
+**Tipp:**
+– Geben Sie die Tabelle direkt als HTML aus (ohne ```‑Codefences). Achten Sie auf kurze Spaltenüberschriften, damit sie nicht umbrechen.

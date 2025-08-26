@@ -3,7 +3,7 @@
 Present the 3–5 most relevant funding programmes (current, for {{ branche }}, {{ bundesland }}, {{ unternehmensgroesse }}) in a table. Take into account your previous funding experiences ({{ bisherige_foerdermittel }}) and your interest in further funding ({{ interesse_foerderung }}).
 
 **1. Criteria:**  
-- Current funding amount, target group, funding focus (AI/digitalisation), deadlines, source link
+- Funding amount (sum or percentage), target group, funding focus (AI/digitalisation), deadlines and point of contact/link
 
 **2. Industry context:**  
 - Use the industry‑specific funding list:  
@@ -13,8 +13,9 @@ Present the 3–5 most relevant funding programmes (current, for {{ branche }}, 
  - Also consider your answers on existing funding and current funding interests.
 
 **3. Presentation:**
-- Use concise column names to keep the table compact: for each programme list the **name**, **link**, **target group**, **funding** and **deadline**. Avoid long labels like “Funding rate” that may wrap across lines.
-- Do not mention tools or measures – they are covered in their own chapters.
+- Use an HTML table with four columns: **Name**, **Target group**, **Amount** and **Link**.
+- Summarise the funding amount concisely (e.g., “up to 50 %”, “max. €10 000”). List 3–5 programmes that fit your industry {{ branche }}, region {{ bundesland }} and company size {{ unternehmensgroesse }}, and avoid duplicates.
+- Do not mention tools or measures – they have their own chapters.
 
 **Table format (HTML)!**
 

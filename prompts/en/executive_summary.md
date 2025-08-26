@@ -3,7 +3,7 @@
 Provide a concise management summary tailored to the sector {{ branche }} (main service: {{ hauptleistung }}). Focus on the free‑text responses and strategic goals and formulate concrete, personalised recommendations:
 
 * **AI readiness score:** {{ score_percent }} % (benchmark: {{ benchmark }})
-* **Top opportunities:** Mention three sector‑specific opportunities arising from {{ hauptleistung }} and your strategic objectives, explicitly referencing free‑text answers (e.g., “greatest potential” or “moonshot”).  
+* **Top opportunities:** Mention three sector‑specific opportunities arising from {{ hauptleistung }} and your strategic objectives. Explicitly reference the free‑text responses – such as “greatest potential” ({{ groesstes_potenzial }}), the preferred application area ({{ bereich_potenzial }}), your moonshot vision ({{ moonshot }}), and the strategic goals ({{ strategische_ziele }} / {{ goals }}).
 * **Key risks:** Describe two main risks or obstacles (e.g., data privacy, bias, vendor lock‑in) and briefly explain why they are relevant.  
 * **Next steps:** Provide three clear short‑ to medium‑term actions in the following structure:  
   1) **Develop an MVP portal:** Finalise the questionnaire and launch a minimal GPT‑powered analysis.  
