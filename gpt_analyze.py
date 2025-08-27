@@ -521,7 +521,28 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     out["quick_wins_html"], out["risks_html"] = q_r.get("quick_wins_html",""), q_r.get("risks_html","")
 
     src_for_rec = (out.get("roadmap") or "") + "\n\n" + (out.get("compliance") or "")
-    out["recommendations_html"] = distill_recommendations(src_for_rec, lang=lang) or (out.get("roadmap") or "")
+    # Generate recommendations from the roadmap and compliance sections.  If the
+    # language model returns an ordered list (<ol>), we remove duplicate list
+    # items to avoid repeating suggestions already covered elsewhere.
+    rec_html = distill_recommendations(src_for_rec, lang=lang)
+    if rec_html:
+        # De‑duplicate <li> entries while preserving order
+        try:
+            items = re.findall(r"<li[^>]*>(.*?)</li>", rec_html, re.S)
+            seen = set()
+            unique_items = []
+            for it in items:
+                # Normalise whitespace and HTML tags
+                txt = re.sub(r"<[^>]+>", "", it).strip()
+                if txt and txt not in seen:
+                    seen.add(txt)
+                    unique_items.append(it)
+            if unique_items:
+                # reconstruct HTML with unique items
+                rec_html = "<ol>" + "".join([f"<li>{it}</li>" for it in unique_items]) + "</ol>"
+        except Exception:
+            pass
+    out["recommendations_html"] = rec_html or (out.get("roadmap") or "")
     out["roadmap_html"] = out.get("roadmap","")
     out["exec_summary_html"] = out.get("executive_summary","")
 
@@ -601,13 +622,24 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         """
         Map textual responses to a numeric score.  The questionnaire uses verbal
         scales (e.g. "Eher hoch", "Mittel").  Provide a dictionary mapping of
-        normalized lowercase responses to a value between 0 and 100.  Unknown
-        responses default to 0.
+        normalised lowercase responses to a value between 0 and 100.  If the
+        exact key is not found, perform a fuzzy match where a mapping key
+        appears as a substring of the user input.  This allows responses such
+        as "eher hoch" or "hoch (schätzung)" to map correctly.  Unknown
+        responses default to ``0``.
         """
         if not value:
             return 0
         key = str(value).strip().lower()
-        return mapping.get(key, 0)
+        # First try exact match
+        if key in mapping:
+            return mapping[key]
+        # Fuzzy substring matching: check longer keys first to avoid
+        # matching "hoch" inside "eher hoch" incorrectly.
+        for k in sorted(mapping.keys(), key=len, reverse=True):
+            if k and k in key:
+                return mapping[k]
+        return 0
 
     # ----------------------------------------------------------------------
     # KPI tiles: show the four core readiness dimensions instead of a single
@@ -959,7 +991,8 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             "ueber_mich_html": report.get("ueber_mich_html", ""),
             "glossary_html": report.get("glossary_html", ""),
             # QR code linking to the KI‑Sicherheit website
-            "qr_code_uri": generate_qr_code_uri("https://ki-sicherheit.jetzt"),
+            # QR‑Codes are omitted in the Gold‑Standard version.
+            "qr_code_uri": "",
             "funding_badges": report.get("funding_badges", []),
         }
         html = tmpl.render(**ctx)
