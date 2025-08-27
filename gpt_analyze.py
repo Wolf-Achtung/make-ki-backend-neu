@@ -400,6 +400,23 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
             usecase = row.get("Funktion/Zweck") or row.get("Einsatz") or row.get("Usecase") or ""
             # Cost/effort fields: prefer explicit cost, otherwise effort estimates
             cost = row.get("Kosten") or row.get("Cost") or row.get("Aufwand") or row.get("Beispiel-Aufwand") or ""
+            # Convert numeric cost/effort values into descriptive categories.  Some CSVs encode
+            # cost as integers from 1 to 5 (effort levels).  Map these to human-readable
+            # strings in the current language.  If the value is not numeric, leave as is.
+            def _map_cost(value: str, lang: str) -> str:
+                if not value:
+                    return ""
+                v = str(value).strip()
+                try:
+                    n = int(float(v))
+                except Exception:
+                    return v  # return original if not numeric
+                if lang.lower().startswith("de"):
+                    mapping = {1: "gering", 2: "niedrig", 3: "mittel", 4: "hoch", 5: "sehr hoch"}
+                else:
+                    mapping = {1: "low", 2: "low", 3: "medium", 4: "high", 5: "very high"}
+                return mapping.get(n, v)
+            cost = _map_cost(cost, lang)
             link = row.get("Link/Website") or row.get("Link") or row.get("Website") or ""
             out.append({"name": name, "usecase": usecase, "cost": cost, "link": link})
     return out[:max_items]
@@ -640,16 +657,10 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # Vision separat (NICHT in sections_html mischen)
     out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>" if out.get("vision") else ""
 
-    # sections_html (ohne Vision)
+    # sections_html (ohne Vision) — in Gold-Standard, Tools und Förderprogramme werden
+    # nicht mehr als lange Textabschnitte eingebunden, da sie in separaten
+    # Tabellen dargestellt werden.  Behalte nur Compliance und Praxisbeispiel.
     parts = []
-    # Tools section
-    if out.get("tools"):
-        parts.append("<h2>Tools</h2>\n" + out["tools"])
-    # Funding section
-    if out.get("foerderprogramme"):
-        label_foerd = "Förderprogramme" if lang == "de" else "Funding"
-        note = "<p><em>Hinweis: Für Solo-Selbstständige gefiltert (sofern verfügbar).</em></p>" if solo and lang == "de" else ""
-        parts.append(f"<h2>{label_foerd}</h2>\n{note}\n{out['foerderprogramme']}")
     # Compliance section
     if out.get("compliance"):
         parts.append("<h2>Compliance</h2>\n" + out["compliance"])
