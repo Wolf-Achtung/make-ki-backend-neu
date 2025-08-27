@@ -355,17 +355,53 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> Lis
     return rows[:max_items]
 
 def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int = 8) -> List[Dict[str, str]]:
+    """
+    Assemble a list of AI tools filtered by the respondent's industry/branch.
+
+    The original tools CSV uses German column names such as "Tool-Name"
+    and "Funktion/Zweck" rather than the English names used in earlier
+    iterations.  To support both formats, this function now attempts to
+    retrieve values from multiple possible column headings.  It also
+    gracefully handles missing cost information by falling back to the
+    effort (Aufwand) fields.
+
+    Parameters
+    ----------
+    data: dict
+        The questionnaire response data.  Not currently used but kept for
+        consistency with other build_* functions.
+    branche: str
+        A lowercased branch name to filter tools.  If empty, no filter is
+        applied.
+    lang: str
+        Language code (unused here but reserved for future localisation).
+    max_items: int
+        Maximum number of tools to return.
+
+    Returns
+    -------
+    List[Dict[str, str]]
+        A list of dicts with keys ``name``, ``usecase``, ``cost`` and ``link``.
+    """
     import csv, os
     path = os.path.join("data", "tools.csv")
-    if not os.path.exists(path): return []
-    out = []
+    if not os.path.exists(path):
+        return []
+    out: List[Dict[str, str]] = []
     with open(path, newline="", encoding="utf-8") as f:
-        r = csv.DictReader(f)
-        for row in r:
+        reader = csv.DictReader(f)
+        for row in reader:
             tags = (row.get("Tags") or row.get("Branche") or "").lower()
-            if branche and tags and branche not in tags: continue
-            out.append({"name":row.get("Name",""),"usecase":row.get("Usecase") or row.get("Einsatz") or "",
-                        "cost":row.get("Kosten") or row.get("Cost") or "","link":row.get("Link","")})
+            # Filter by branche if provided
+            if branche and tags and branche not in tags:
+                continue
+            # Column name fallbacks
+            name = row.get("Tool-Name") or row.get("Name") or row.get("Tool") or ""
+            usecase = row.get("Funktion/Zweck") or row.get("Einsatz") or row.get("Usecase") or ""
+            # Cost/effort fields: prefer explicit cost, otherwise effort estimates
+            cost = row.get("Kosten") or row.get("Cost") or row.get("Aufwand") or row.get("Beispiel-Aufwand") or ""
+            link = row.get("Link/Website") or row.get("Link") or row.get("Website") or ""
+            out.append({"name": name, "usecase": usecase, "cost": cost, "link": link})
     return out[:max_items]
 
 def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
@@ -472,26 +508,61 @@ def _inline_local_images(html: str) -> str:
     return re.sub(r'src="([^"]+)"', repl, html)
 
 def _toc_from_report(report: Dict[str, Any], lang: str) -> str:
-    toc_items = []
-    def add(key, label):
-        if report.get(key): toc_items.append(f"<li>{label}</li>")
+    """
+    Build a simple table of contents based on which sections of the report
+    actually contain content.  The Gold‑Standard no longer includes a
+    separate entry for a visualisation page; charts and bars are embedded
+    directly within the relevant sections (e.g. Dimensionen).  Therefore we
+    omit any TOC items for visualisation or visuals entirely.
+
+    Parameters
+    ----------
+    report: dict
+        The assembled report context with optional HTML strings for each
+        section.
+    lang: str
+        Either "de" or "en", used to translate the labels.
+
+    Returns
+    -------
+    str
+        An unordered list (``<ul>...</ul>``) with list items for each
+        section that has content.  If no sections are present, an empty
+        string is returned.
+    """
+    toc_items: List[str] = []
+
+    def add(key: str, label: str) -> None:
+        if report.get(key):
+            toc_items.append(f"<li>{label}</li>")
+
     if lang == "de":
         add("exec_summary_html", "Executive Summary")
-        if report.get("chart_data"): toc_items.append("<li>Visualisierung</li>")
-        if report.get("quick_wins_html") or report.get("risks_html"): toc_items.append("<li>Quick Wins & Risiken</li>")
-        add("recommendations_html", "Empfehlungen"); add("roadmap_html", "Roadmap")
-        if report.get("foerderprogramme_table"): toc_items.append("<li>Förderprogramme</li>")
-        if report.get("tools_table"): toc_items.append("<li>KI-Tools & Software</li>")
+        # Do not append a separate 'Visualisierung' entry; visuals live in
+        # the Dimensionen section in the Gold‑Standard.
+        if report.get("quick_wins_html") or report.get("risks_html"):
+            toc_items.append("<li>Quick Wins & Risiken</li>")
+        add("recommendations_html", "Empfehlungen")
+        add("roadmap_html", "Roadmap")
+        if report.get("foerderprogramme_table"):
+            toc_items.append("<li>Förderprogramme</li>")
+        if report.get("tools_table"):
+            toc_items.append("<li>KI-Tools & Software</li>")
         add("sections_html", "Weitere Kapitel")
     else:
-        add("exec_summary_html","Executive summary")
-        if report.get("chart_data"): toc_items.append("<li>Visuals</li>")
-        if report.get("quick_wins_html") or report.get("risks_html"): toc_items.append("<li>Quick wins & key risks</li>")
-        add("recommendations_html", "Recommendations"); add("roadmap_html","Roadmap")
-        if report.get("foerderprogramme_table"): toc_items.append("<li>Funding programmes</li>")
-        if report.get("tools_table"): toc_items.append("<li>AI tools</li>")
-        add("sections_html","Additional sections")
-    return "<ul>" + "".join(toc_items) + "</ul>" if toc_items else ""
+        add("exec_summary_html", "Executive summary")
+        # No visuals entry in English either
+        if report.get("quick_wins_html") or report.get("risks_html"):
+            toc_items.append("<li>Quick wins & key risks</li>")
+        add("recommendations_html", "Recommendations")
+        add("roadmap_html", "Roadmap")
+        if report.get("foerderprogramme_table"):
+            toc_items.append("<li>Funding programmes</li>")
+        if report.get("tools_table"):
+            toc_items.append("<li>AI tools</li>")
+        add("sections_html", "Additional sections")
+
+    return f"<ul>{''.join(toc_items)}</ul>" if toc_items else ""
 
 def generate_full_report(data: dict, lang: str = "de") -> dict:
     branche = (data.get("branche") or "default").lower()
