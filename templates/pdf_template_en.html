@@ -276,6 +276,21 @@ endif %}"></td>
           </div>
         {% endif %}
 
+        {% if ueber_mich_html and ueber_mich_html|trim %}
+          <div class="card section">
+            <h2>About me</h2>
+            <div>{{ ueber_mich_html|safe }}</div>
+            {% if qr_code_uri %}<div style="margin-top:.6rem;text-align:center"><img src="{{ qr_code_uri }}" alt="QR Code" style="height:80px"></div>{% endif %}
+          </div>
+        {% endif %}
+
+        {% if glossary_html and glossary_html|trim %}
+          <div class="card section">
+            <h2>Glossary</h2>
+            <div>{{ glossary_html|safe }}</div>
+          </div>
+        {% endif %}
+
     <div class="footer">
       <div style="display:flex;align-items:center;gap:12px">
         {% if logo_tuev %}<img src="{{ logo_tuev }}" alt="TÜV" 
