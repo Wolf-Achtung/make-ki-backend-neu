@@ -321,43 +321,17 @@ def _weights_from_env() -> Dict[str, int]:
 
 def calc_score_percent(data: dict) -> int:
     """
-    Berechne einen einfachen Readiness‑Score aus den Fragebogendaten.
-    Falls im Payload bereits "score_percent" definiert ist und >0, wird dieser Wert genutzt.
-    Andernfalls wird ein Durchschnitt aus dem Digitalisierungsgrad und dem Automatisierungsgrad gebildet.
-    Dabei werden Textwerte ("sehr_niedrig", "eher_hoch" usw.) in Prozentskalen umgerechnet.
+    Deprecated global readiness score.
+
+    The Gold‑Standard version of the KI‑Readiness report no longer uses an
+    aggregated readiness score. To maintain backwards compatibility this
+    function now always returns ``0``.  The individual readiness dimensions
+    (digitalisation, automation, paperless processes and AI know‑how) are
+    displayed separately as KPI tiles instead of a single score.
     """
-    try:
-        # falls ein Score vorgegeben wurde und > 0, einfach übernehmen
-        raw = data.get("score_percent")
-        if raw is not None:
-            try:
-                val = int(str(raw).strip())
-                if val > 0:
-                    return val
-            except Exception:
-                pass
-    except Exception:
-        pass
-    # Digitalisierungsgrad: Zahlen extrahieren und begrenzen
-    dig_raw = str(data.get("digitalisierungsgrad") or data.get("digitalisierungsgrad (%)") or "").strip()
-    dig_val = 0
-    try:
-        m = re.search(r"(\d+)", dig_raw)
-        if m:
-            dig_val = int(m.group(1))
-    except Exception:
-        dig_val = 0
-    dig_val = max(0, min(100, dig_val))
-    # Automatisierungsgrad: Textwerte in Prozent umrechnen
-    auto_raw = str(data.get("automatisierungsgrad") or data.get("automatisierungsgrad (%)") or "").lower().strip()
-    auto_map = {
-        "sehr_niedrig": 20, "eher_niedrig": 40, "mittel": 60, "eher_hoch": 80, "sehr_hoch": 100,
-        "very_low": 20, "rather_low": 40, "medium": 60, "rather_high": 80, "very_high": 100,
-    }
-    auto_val = auto_map.get(auto_raw, 0)
-    # Wenn beide Werte vorliegen, bildet der Score den Durchschnitt
-    if dig_val > 0 or auto_val > 0:
-        return int(round((dig_val + auto_val) / 2))
+    # Previously this function computed an average of the digitalisation and
+    # automation degrees.  Returning zero ensures any legacy code expecting
+    # an integer still functions without surfacing a misleading aggregate.
     return 0
 
 def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> List[Dict[str, str]]:
@@ -522,7 +496,11 @@ def _toc_from_report(report: Dict[str, Any], lang: str) -> str:
 def generate_full_report(data: dict, lang: str = "de") -> dict:
     branche = (data.get("branche") or "default").lower()
     lang = _norm_lang(lang)
-    data["score_percent"] = calc_score_percent(data)
+    # Gold‑Standard: do not calculate an aggregate score.  Instead, we rely on the
+    # four core readiness dimensions (digitalisation, automation, paperless and AI
+    # know‑how) which are presented as individual KPI tiles.  Explicitly set
+    # score_percent to None to avoid including the score in the preface.
+    data["score_percent"] = None
     solo = is_self_employed(data)
     wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja","unklar","yes","unsure"}
 
@@ -616,34 +594,36 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             pass
         return 0
 
-    # KPI-Kacheln: Score, Benchmark, Top-Priorität, Budget
+    # ----------------------------------------------------------------------
+    # KPI tiles: show the four core readiness dimensions instead of a single
+    # aggregate score.  Each dimension is displayed with its own value.  The
+    # keys for these values are mapped from the questionnaire responses.
+    # ----------------------------------------------------------------------
+    # Helper to normalise numeric strings to an integer percentage
+    def _dim_value(key: str) -> int:
+        return _to_num(data.get(key) or 0)
+    own_digi = _dim_value("digitalisierungsgrad") or _dim_value("digitalisierungsgrad (%)") or _dim_value("digitalisierungs_score")
+    own_auto = _dim_value("automatisierungsgrad") or _dim_value("automatisierungsgrad (%)") or _dim_value("automatisierungs_score")
+    own_paper = _dim_value("prozesse_papierlos") or _dim_value("papierlos") or _dim_value("paperless")
+    own_know = _dim_value("ki_knowhow") or _dim_value("knowhow") or _dim_value("ai_knowhow")
+
     kpis = []
-    # Score
-    kpis.append({"label": "Score" if lang != "de" else "Score", "value": f"{int(data.get('score_percent',0))}%"})
-    # Benchmark aus Branchenkontext (Digitalisierungs-/Automatisierungsgrad aus YAML)
-    bench_val = 0
-    try:
-        branche_key = (data.get("branche") or "default").lower()
-        ctx_bench = load_yaml(f"branchenkontext/{branche_key}.{lang}.yaml") if os.path.exists(f"branchenkontext/{branche_key}.{lang}.yaml") else {}
-        bench_str = ctx_bench.get("benchmark", "")
-        # parse first number as benchmark percentage
-        m = re.search(r"(\d+)", str(bench_str))
-        if m:
-            bench_val = int(m.group(1))
-    except Exception:
-        bench_val = 0
-    kpis.append({"label": "Benchmark" if lang != "de" else "Benchmark", "value": f"{bench_val}%"})
-    # Top-Priorität: nutze erstes Projektziel oder Usecase als Schlagwort
-    pri = data.get("projektziel") or data.get("ziel") or data.get("ki_usecases") or []
-    pri_val = ""
-    if isinstance(pri, list):
-        pri_val = str(pri[0]) if pri else ""
-    elif isinstance(pri, str):
-        pri_val = pri.split(",")[0]
-    kpis.append({"label": "Top-Priorität" if lang == "de" else "Top priority", "value": pri_val or "-"})
-    # Budgetklasse: aus Investitionsbudget
-    budget = data.get("investitionsbudget") or data.get("budget") or ""
-    kpis.append({"label": "Budget" if lang == "de" else "Budget", "value": budget or "-"})
+    kpis.append({
+        "label": "Digitalisierung" if lang == "de" else "Digitalisation",
+        "value": f"{own_digi}%"
+    })
+    kpis.append({
+        "label": "Automatisierung" if lang == "de" else "Automation",
+        "value": f"{own_auto}%"
+    })
+    kpis.append({
+        "label": "Papierlos" if lang == "de" else "Paperless",
+        "value": f"{own_paper}%"
+    })
+    kpis.append({
+        "label": "KI-Know-how" if lang == "de" else "AI know‑how",
+        "value": f"{own_know}%"
+    })
     out["kpis"] = kpis
 
     # Benchmarks für horizontale Balken (Ihr Wert vs. Branche)
