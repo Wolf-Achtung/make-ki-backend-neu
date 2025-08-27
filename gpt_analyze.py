@@ -575,7 +575,22 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     solo = is_self_employed(data)
     wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja","unklar","yes","unsure"}
 
-    chapters = ["executive_summary","vision","tools"] + (["foerderprogramme"] if wants_funding else []) + ["roadmap","compliance","praxisbeispiel"]
+    # Gold‑Standard: separate quick wins, risks and recommendations into their own GPT calls
+    chapters = [
+        "executive_summary",
+        "vision",
+        # generate quick wins independently so they don't overlap with roadmap
+        "quick_wins",
+        # generate key risks independently
+        "risks",
+        "tools",
+    ] + (["foerderprogramme"] if wants_funding else []) + [
+        "roadmap",
+        "compliance",
+        "praxisbeispiel",
+        # generate top recommendations separately
+        "recommendations",
+    ]
     out: Dict[str, Any] = {}
     for chap in chapters:
         try:
@@ -584,51 +599,63 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         except Exception as e:
             out[chap] = f"<p>[Fehler in Kapitel {chap}: {e}]</p>"
 
-    # Präambel & Destillate
+    # Präambel
     out["preface"] = generate_preface(lang=lang, score_percent=data.get("score_percent"))
 
-    src_for_qr = (out.get("executive_summary") or "") + "\n\n" + (out.get("roadmap") or "")
-    q_r = distill_quickwins_risks(src_for_qr, lang=lang)
-    out["quick_wins_html"], out["risks_html"] = q_r.get("quick_wins_html",""), q_r.get("risks_html","")
-
-    src_for_rec = (out.get("roadmap") or "") + "\n\n" + (out.get("compliance") or "")
-    # Generate recommendations from the roadmap and compliance sections.  If the
-    # language model returns an ordered list (<ol>), we remove duplicate list
-    # items to avoid repeating suggestions already covered elsewhere.
-    rec_html = distill_recommendations(src_for_rec, lang=lang)
-    if rec_html:
-        # De‑duplicate <li> entries while preserving order
-        try:
-            items = re.findall(r"<li[^>]*>(.*?)</li>", rec_html, re.S)
-            seen = set()
-            unique_items = []
-            for it in items:
-                # Normalise whitespace and HTML tags
-                txt = re.sub(r"<[^>]+>", "", it).strip()
-                if txt and txt not in seen:
-                    seen.add(txt)
-                    unique_items.append(it)
-            if unique_items:
-                # reconstruct HTML with unique items
-                rec_html = "<ol>" + "".join([f"<li>{it}</li>" for it in unique_items]) + "</ol>"
-        except Exception:
-            pass
-    out["recommendations_html"] = rec_html or (out.get("roadmap") or "")
-    out["roadmap_html"] = out.get("roadmap","")
-    out["exec_summary_html"] = out.get("executive_summary","")
+    # Use the explicitly generated chapters for quick wins, risks and recommendations
+    # Instead of distilling them from other sections.  If the chapter result is
+    # empty, fall back to distillation for backwards compatibility.
+    qw_html = ensure_html(strip_code_fences(fix_encoding(out.get("quick_wins") or "")), lang)
+    rk_html = ensure_html(strip_code_fences(fix_encoding(out.get("risks") or "")), lang)
+    rec_html = ensure_html(strip_code_fences(fix_encoding(out.get("recommendations") or "")), lang)
+    # Fallback to distillation if no content was generated
+    if not qw_html and not rk_html:
+        src_for_qr = (out.get("executive_summary") or "") + "\n\n" + (out.get("roadmap") or "")
+        q_r = distill_quickwins_risks(src_for_qr, lang=lang)
+        qw_html, rk_html = q_r.get("quick_wins_html", ""), q_r.get("risks_html", "")
+    if not rec_html:
+        src_for_rec = (out.get("roadmap") or "") + "\n\n" + (out.get("compliance") or "")
+        rec_html = distill_recommendations(src_for_rec, lang=lang)
+        # Remove duplicate list items if any
+        if rec_html:
+            try:
+                items = re.findall(r"<li[^>]*>(.*?)</li>", rec_html, re.S)
+                seen = set()
+                unique_items = []
+                for it in items:
+                    txt = re.sub(r"<[^>]+>", "", it).strip()
+                    if txt and txt not in seen:
+                        seen.add(txt)
+                        unique_items.append(it)
+                if unique_items:
+                    rec_html = "<ol>" + "".join([f"<li>{it}</li>" for it in unique_items]) + "</ol>"
+            except Exception:
+                pass
+    out["quick_wins_html"] = qw_html
+    out["risks_html"] = rk_html
+    out["recommendations_html"] = rec_html
+    out["roadmap_html"] = out.get("roadmap", "")
+    out["exec_summary_html"] = out.get("executive_summary", "")
 
     # Vision separat (NICHT in sections_html mischen)
     out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>" if out.get("vision") else ""
 
     # sections_html (ohne Vision)
     parts = []
-    if out.get("tools"): parts.append("<h2>Tools</h2>\n" + out["tools"])
+    # Tools section
+    if out.get("tools"):
+        parts.append("<h2>Tools</h2>\n" + out["tools"])
+    # Funding section
     if out.get("foerderprogramme"):
         label_foerd = "Förderprogramme" if lang == "de" else "Funding"
         note = "<p><em>Hinweis: Für Solo-Selbstständige gefiltert (sofern verfügbar).</em></p>" if solo and lang == "de" else ""
         parts.append(f"<h2>{label_foerd}</h2>\n{note}\n{out['foerderprogramme']}")
-    if out.get("compliance"): parts.append("<h2>Compliance</h2>\n" + out["compliance"])
-    if out.get("praxisbeispiel"): parts.append(f"<h2>{'Praxisbeispiel' if lang=='de' else 'Case Study'}</h2>\n" + out["praxisbeispiel"])
+    # Compliance section
+    if out.get("compliance"):
+        parts.append("<h2>Compliance</h2>\n" + out["compliance"])
+    # Praxisbeispiel
+    if out.get("praxisbeispiel"):
+        parts.append(f"<h2>{'Praxisbeispiel' if lang=='de' else 'Case study'}</h2>\n" + out["praxisbeispiel"])
     out["sections_html"] = "\n\n".join(parts)
 
     # dynamische Förderliste separat bereitstellen (falls Tabelle leer)
