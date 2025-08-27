@@ -581,18 +581,33 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         if v is None:
             return 0
         try:
-            # accept values like "35", "35%", "0.35"
+            # accept values like "35", "35%", "0.35", "7" (slider 1–10)
             s = str(v).strip().replace(",", ".")
             m = re.search(r"(\d+[\.,]?\d*)", s)
             if m:
                 num = float(m.group(1))
-                # if it's a fraction, scale
+                # If the number is a fraction (<=1), scale to percentage
                 if num <= 1.0:
                     num = num * 100.0
+                # If the number is between 1 and 10 and an integer (slider), scale to 0–100
+                elif num <= 10 and num == int(num):
+                    num = num * 10.0
                 return max(0, min(100, int(round(num))))
         except Exception:
             pass
         return 0
+
+    def _map_scale_text(value: str, mapping: Dict[str, int]) -> int:
+        """
+        Map textual responses to a numeric score.  The questionnaire uses verbal
+        scales (e.g. "Eher hoch", "Mittel").  Provide a dictionary mapping of
+        normalized lowercase responses to a value between 0 and 100.  Unknown
+        responses default to 0.
+        """
+        if not value:
+            return 0
+        key = str(value).strip().lower()
+        return mapping.get(key, 0)
 
     # ----------------------------------------------------------------------
     # KPI tiles: show the four core readiness dimensions instead of a single
@@ -603,9 +618,30 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     def _dim_value(key: str) -> int:
         return _to_num(data.get(key) or 0)
     own_digi = _dim_value("digitalisierungsgrad") or _dim_value("digitalisierungsgrad (%)") or _dim_value("digitalisierungs_score")
-    own_auto = _dim_value("automatisierungsgrad") or _dim_value("automatisierungsgrad (%)") or _dim_value("automatisierungs_score")
+    # Automatisierungsgrad kann verbal angegeben sein (z. B. "Eher hoch").  Verwende eine Mapping-Tabelle.
+    auto_mapping = {
+        "gar nicht": 0,
+        "nicht": 0,
+        "eher niedrig": 25,
+        "niedrig": 25,
+        "mittel": 50,
+        "eher hoch": 75,
+        "hoch": 75,
+        "sehr hoch": 90,
+    }
+    know_mapping = {
+        "sehr niedrig": 10,
+        "niedrig": 25,
+        "mittel": 50,
+        "hoch": 75,
+        "sehr hoch": 90,
+    }
+    # Read raw responses
+    raw_auto = data.get("automatisierungsgrad") or data.get("automatisierungsgrad (%)") or data.get("automatisierungs_score")
+    raw_know = data.get("ki_knowhow") or data.get("knowhow") or data.get("ai_knowhow")
+    own_auto = _dim_value("automatisierungsgrad") or _dim_value("automatisierungsgrad (%)") or _dim_value("automatisierungs_score") or _map_scale_text(raw_auto, auto_mapping)
     own_paper = _dim_value("prozesse_papierlos") or _dim_value("papierlos") or _dim_value("paperless")
-    own_know = _dim_value("ki_knowhow") or _dim_value("knowhow") or _dim_value("ai_knowhow")
+    own_know = _dim_value("ki_knowhow") or _dim_value("knowhow") or _dim_value("ai_knowhow") or _map_scale_text(raw_know, know_mapping)
 
     kpis = []
     kpis.append({
@@ -761,7 +797,103 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # One-Pager & TOC
     out["one_pager_html"] = ""  # optionaler Block (nicht genutzt)
     out["toc_html"] = _toc_from_report(out, lang)
+
+    # Append personal and glossary sections
+    out["ueber_mich_html"] = build_ueber_mich_section(lang=lang)
+    out["glossary_html"] = build_glossary_section(lang=lang)
     return out
+
+
+def build_ueber_mich_section(lang: str = "de") -> str:
+    """
+    Build an "Über mich" section for the report.  Uses the user's profile to
+    provide a personal introduction.  In a production system this information
+    might come from user metadata; here it is hardcoded based on the project
+    description.
+
+    :param lang: language code
+    :return: HTML string with the personal introduction
+    """
+    if lang == "de":
+        return (
+            "<p><strong>Über den Autor</strong></p>"
+            "<p>Wolf Hohl ist Texter, Schriftsteller und Gesellschafter mit über 30 Jahren Erfahrung in "
+            "Marketing und Kommunikation. Als ehemaliger Geschäftsführer von Kinotrailer‑Produktionen hat er "
+            "über 50 Mio € Umsatz verantwortet. Heute lebt er in Berlin, liest viel, macht Yoga und kocht gerne. "
+            "Mit dem KI‑Readiness‑Report möchte er Unternehmen helfen, Chancen der künstlichen Intelligenz zu "
+            "identifizieren und pragmatisch umzusetzen. Als Solo‑Berater ist er dabei unabhängig und "
+            "zertifizierter KI‑Manager in Ausbildung.</p>"
+            "<p>Sie erreichen ihn unter <a href=\"mailto:kontakt@ki-sicherheit.jetzt\">kontakt@ki-sicherheit.jetzt</a> "
+            "oder über seine Website <a href=\"https://ki-sicherheit.jetzt\">ki-sicherheit.jetzt</a>.</p>"
+        )
+    else:
+        return (
+            "<p><strong>About the author</strong></p>"
+            "<p>Wolf Hohl is a copywriter, author and former managing director with more than 30 years of experience "
+            "in marketing and communications. In his previous role in cinema trailer production he generated over "
+            "€50 million in revenue. Today he lives in Berlin, reads a lot, practices yoga and enjoys cooking. As a solo "
+            "consultant and aspiring certified AI manager, his mission is to help organisations recognise and realise the "
+            "potential of artificial intelligence.</p>"
+            "<p>You can reach him at <a href=\"mailto:kontakt@ki-sicherheit.jetzt\">kontakt@ki-sicherheit.jetzt</a> "
+            "or via his website <a href=\"https://ki-sicherheit.jetzt\">ki-sicherheit.jetzt</a>.</p>"
+        )
+
+
+def build_glossary_section(lang: str = "de") -> str:
+    """
+    Build a simple glossary of key terms used in the report.  This helps readers
+    unfamiliar with AI or compliance terminology.  Definitions are intentionally
+    kept brief and non‑technical.
+
+    :param lang: language code
+    :return: HTML string with glossary entries
+    """
+    if lang == "de":
+        entries = {
+            "KI (Künstliche Intelligenz)": "Technologien, die aus Daten lernen und selbstständig Entscheidungen treffen oder Empfehlungen aussprechen.",
+            "DSGVO": "Datenschutz-Grundverordnung der EU; regelt den Umgang mit personenbezogenen Daten.",
+            "DSFA": "Datenschutz-Folgenabschätzung; Analyse der Risiken für Betroffene bei bestimmten Datenverarbeitungen.",
+            "EU AI Act": "Zukünftige EU-Verordnung, die Anforderungen und Risikoklassen für KI-Systeme festlegt.",
+            "Quick Win": "Maßnahme mit geringem Aufwand und schnellem Nutzen.",
+            "MVP": "Minimum Viable Product; erste funktionsfähige Version eines Produkts mit minimalem Funktionsumfang.",
+        }
+        out = ["<p><strong>Glossar</strong></p>"]
+        out.append("<ul>")
+        for term, definition in entries.items():
+            out.append(f"<li><strong>{term}</strong>: {definition}</li>")
+        out.append("</ul>")
+        return "\n".join(out)
+    else:
+        entries = {
+            "AI (Artificial Intelligence)": "Technologies that learn from data and can make decisions or generate recommendations on their own.",
+            "GDPR": "General Data Protection Regulation; EU regulation governing personal data processing.",
+            "DPIA": "Data Protection Impact Assessment; analysis of risks to individuals for certain processing operations.",
+            "EU AI Act": "Upcoming EU legislation specifying requirements and risk classes for AI systems.",
+            "Quick Win": "Action with low effort and immediate benefit.",
+            "MVP": "Minimum Viable Product; first working version of a product with core functionality only.",
+        }
+        out = ["<p><strong>Glossary</strong></p>"]
+        out.append("<ul>")
+        for term, definition in entries.items():
+            out.append(f"<li><strong>{term}</strong>: {definition}</li>")
+        out.append("</ul>")
+        return "\n".join(out)
+
+
+def generate_qr_code_uri(link: str) -> str:
+    """
+    Generate a QR code image URI for the given link.  This implementation
+    delegates the generation to Google's Chart API, which returns a PNG QR code.
+    Note: this relies on external network access when rendering the PDF; if
+    offline use is required, consider bundling a pre‑generated QR code.
+
+    :param link: URL to encode in the QR code
+    :return: direct link to a QR code image
+    """
+    from urllib.parse import quote
+    encoded = quote(link, safe='')
+    # 200x200 pixel PNG QR code
+    return f"https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl={encoded}&choe=UTF-8"
 
 def generate_preface(lang: str = "de", score_percent: Optional[float] = None) -> str:
     if lang == "de":
@@ -823,6 +955,11 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             "benchmarks": report.get("benchmarks", {}),
             "timeline": report.get("timeline", {}),
             "risk_heatmap": report.get("risk_heatmap", []),
+            # personal & glossary sections
+            "ueber_mich_html": report.get("ueber_mich_html", ""),
+            "glossary_html": report.get("glossary_html", ""),
+            # QR code linking to the KI‑Sicherheit website
+            "qr_code_uri": generate_qr_code_uri("https://ki-sicherheit.jetzt"),
             "funding_badges": report.get("funding_badges", []),
         }
         html = tmpl.render(**ctx)
