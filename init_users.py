@@ -34,6 +34,7 @@ users = [
     ("sonia-souto@mac.com", "pass-son!", "user"),
     ("christian.ulitzka@ulitzka-partner.de", "pass2rigz!", "user"),
     ("srack@gmx.net", "pass2rack!", "user"),
+    ("buss@maria-hilft.de", "pass2sab!", "user"),
 ]
 
 
