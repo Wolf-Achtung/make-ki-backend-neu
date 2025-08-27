@@ -695,13 +695,10 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     out["kpis"] = kpis
 
     # Benchmarks für horizontale Balken (Ihr Wert vs. Branche)
-    benchmarks = {}
-    # Eigene Werte
-    own_digi = _to_num(data.get("digitalisierungsgrad") or data.get("digitalisierungsgrad (%)") or data.get("digitalisierungs_score"))
-    own_auto = _to_num(data.get("automatisierungsgrad") or data.get("automatisierungsgrad (%)") or data.get("automatisierungs_score"))
-    own_paper = _to_num(data.get("prozesse_papierlos") or data.get("papierlos") or data.get("paperless"))
-    own_know = _to_num(data.get("ki_knowhow") or data.get("knowhow") or data.get("ai_knowhow"))
-    # Branchen-Benchmarks aus Kontext
+    # Verwendet die zuvor berechneten eigenen Werte (own_digi, own_auto, own_paper, own_know)
+    # anstatt sie erneut mit _to_num neu zu bestimmen. Dadurch bleiben Mapping
+    # Ergebnisse (z. B. „eher hoch" → 75) konsistent in KPI-Kacheln und Benchmarks.
+    # Branchen-Benchmarks aus dem Kontext (falls vorhanden)
     dig_bench = 0
     aut_bench = 0
     try:
@@ -709,13 +706,18 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             bstr = str(ctx_bench.get("benchmark", ""))
             m_d = re.search(r"Digitalisierungsgrad\s*[:=]\s*(\d+)", bstr)
             m_a = re.search(r"Automatisierungsgrad\s*[:=]\s*(\d+)", bstr)
-            if m_d: dig_bench = int(m_d.group(1))
-            if m_a: aut_bench = int(m_a.group(1))
+            if m_d:
+                dig_bench = int(m_d.group(1))
+            if m_a:
+                aut_bench = int(m_a.group(1))
     except Exception:
+        # Wenn Benchmarks nicht geparst werden können, verbleiben sie bei 0
         pass
     # Papierlos und Know-how haben keine Branchenwerte in YAML; setze 50 als neutralen Richtwert
     paper_bench = 50
     know_bench = 50
+    # Erstelle Benchmark‑Dictionary, das die eigenen Werte aus den vorab
+    # berechneten KPI-Variablen übernimmt. So stimmen Balken und KPI-Kacheln überein.
     benchmarks = {
         ("Digitalisierung" if lang == "de" else "Digitalisation"): {"self": own_digi, "industry": dig_bench},
         ("Automatisierung" if lang == "de" else "Automation"): {"self": own_auto, "industry": aut_bench},
