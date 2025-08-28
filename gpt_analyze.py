@@ -54,7 +54,27 @@ def _norm_lang(lang: Optional[str]) -> str:
     return "de" if l.startswith("de") else "en"
 
 def fix_encoding(text: str) -> str:
+    """
+    Normalize a text snippet by replacing common problematic unicode characters
+    with ASCII equivalents.  This helper is used before any HTML is parsed to
+    avoid character encoding issues in the generated report.  It leaves most
+    content untouched but ensures dashes and quotes are consistent.
+    """
     return (text or "").replace("�", "-").replace("–", "-").replace("“", '"').replace("”", '"').replace("’", "'")
+
+# Remove hidden or zero‑width unicode characters that sometimes leak from
+# questionnaires or copy/paste operations.  Without sanitisation these
+# characters show up as squares (e.g. "￾") in the rendered PDF.  Apply to
+# every string output produced by the report generator.
+def _sanitize_text(value: str) -> str:
+    if not value:
+        return value
+    # Define a set of invisible or problematic code points to remove
+    bad_chars = ["\uFFFE", "\uFEFF", "\u200B", "\u00AD"]
+    text = str(value)
+    for ch in bad_chars:
+        text = text.replace(ch, "")
+    return text
 
 def strip_code_fences(text: str) -> str:
     """
@@ -951,6 +971,13 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # Append personal and glossary sections
     out["ueber_mich_html"] = build_ueber_mich_section(lang=lang)
     out["glossary_html"] = build_glossary_section(lang=lang)
+
+    # Sanitize all string outputs to remove invisible or problematic unicode characters.
+    # This prevents stray characters like "\uFFFE" appearing in the rendered PDF.
+    for k, v in list(out.items()):
+        if isinstance(v, str):
+            out[k] = _sanitize_text(v)
+
     return out
 
 
@@ -1046,20 +1073,28 @@ def generate_qr_code_uri(link: str) -> str:
     return f"https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl={encoded}&choe=UTF-8"
 
 def generate_preface(lang: str = "de", score_percent: Optional[float] = None) -> str:
+    """
+    Build a short introductory paragraph for the report.  In the Gold‑Standard
+    version we avoid referring to a single aggregated readiness score and
+    instead describe the report itself.  For German users the report is
+    labelled as "KI‑Status‑Report", for English readers the term
+    "AI readiness" remains, but no explicit score is included.
+    """
     if lang == "de":
-        preface = ("<p>Dieses Dokument fasst die Ergebnisse Ihres KI‑Status‑Reports zusammen und bietet individuelle "
-                   "Empfehlungen für die nächsten Schritte. Es basiert auf Ihren Angaben und berücksichtigt aktuelle gesetzliche "
-                   "Vorgaben, Fördermöglichkeiten und technologische Entwicklungen.</p>")
-        if score_percent is not None:
-            preface += (f"<p><b>Ihr aktueller KI-Readiness-Score liegt bei {score_percent:.0f}%.</b> "
-                        "Dieser Wert zeigt, wie gut Sie auf den Einsatz von KI vorbereitet sind.</p>")
+        preface = (
+            "<p>Dieses Dokument fasst die Ergebnisse Ihres <b>KI‑Status‑Reports</b> zusammen "
+            "und bietet individuelle Empfehlungen für die nächsten Schritte. Es basiert auf Ihren Angaben und "
+            "berücksichtigt aktuelle gesetzliche Vorgaben, Fördermöglichkeiten und technologische Entwicklungen.</p>"
+        )
+        # In the Gold‑Standard version no aggregated score is displayed.  The individual
+        # KPIs for Digitalisierung, Automatisierung, Papierlosigkeit und KI‑Know‑how
+        # are visualised elsewhere in the report.
         return preface
     else:
-        preface = ("<p>This document summarises your AI-readiness results and provides tailored next steps. "
-                   "It is based on your input and considers legal requirements, funding options and current AI developments.</p>")
-        if score_percent is not None:
-            preface += (f"<p><b>Your current AI-readiness score is {score_percent:.0f}%.</b> "
-                        "It indicates how prepared you are to adopt AI.</p>")
+        preface = (
+            "<p>This document summarises your <b>AI readiness report</b> and provides tailored next steps. "
+            "It is based on your input and considers legal requirements, funding options and current AI developments.</p>"
+        )
         return preface
 
 def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dict[str, Any]:
@@ -1115,16 +1150,25 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
         }
         html = tmpl.render(**ctx)
     else:
-        title = "KI‑Status‑Report" if lang == "de" else "AI Readiness Report"
-        html = f"""<!doctype html><html><head><meta charset="utf-8"><style>body{{font-family:Arial;padding:24px;}}</style></head>
-<body><h1>{title} · {datetime.now().strftime("%Y-%m-%d")}</h1>
-<div>{report.get("preface","")}</div>
-<h2>Executive Summary</h2>{report.get("exec_summary_html","")}
-<div style="display:flex;gap:24px;"><div style="flex:1">{report.get("quick_wins_html","")}</div>
-<div style="flex:1">{report.get("risks_html","")}</div></div>
-<h2>{'Nächste Schritte' if lang=='de' else 'Next steps'}</h2>{report.get("recommendations_html","") or report.get("roadmap_html","")}
-{report.get("sections_html","")}
-<hr><small>TÜV-zertifiziertes KI-Management © {datetime.now().year}: Wolf Hohl · E-Mail: kontakt@ki-sicherheit.jetzt</small></body></html>"""
+        # Fallback rendering (rarely used) without Jinja templates.  Use the new
+        # report names.  For German we call it KI‑Status‑Report, in English
+        # the classic AI Readiness name remains.  The aggregated score is not
+        # referenced here.
+        title = "KI-Status-Report" if lang == "de" else "AI Readiness Report"
+        html = (
+            f"<!doctype html><html><head><meta charset='utf-8'>"
+            f"<style>body{{font-family:Arial;padding:24px;}}</style></head>"
+            f"<body><h1>{title} · {datetime.now().strftime('%Y-%m-%d')}</h1>"
+            f"<div>{report.get('preface','')}</div>"
+            f"<h2>{'Executive Summary' if lang!='de' else 'Executive Summary'}</h2>{report.get('exec_summary_html','')}"
+            f"<div style='display:flex;gap:24px;'><div style='flex:1'>{report.get('quick_wins_html','')}</div>"
+            f"<div style='flex:1'>{report.get('risks_html','')}</div></div>"
+            f"<h2>{'Next steps' if lang!='de' else 'Nächste Schritte'}</h2>"
+            f"{report.get('recommendations_html','') or report.get('roadmap_html','')}"
+            f"{report.get('sections_html','')}"
+            f"<hr><small>TÜV-zertifiziertes KI-Management © {datetime.now().year}: Wolf Hohl · "
+            f"E-Mail: kontakt@ki-sicherheit.jetzt</small></body></html>"
+        )
 
     html = _inline_local_images(strip_code_fences(html))
     return {"html": html, "lang": lang, "score_percent": report.get("score_percent", 0),
