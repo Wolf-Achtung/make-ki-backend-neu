@@ -441,7 +441,14 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
         r_ok = True if not region else (reg == region or reg == "bund")
         return t_ok and r_ok
 
+    # Filter programmes by region and target group.  If a specific region is
+    # provided, prioritise exact regional programmes first, then federal
+    # ("bund") programmes, then all others.  This ensures regionally
+    # relevant offers like "Coaching BONUS Berlin" appear before general
+    # listings.
     filtered = [p for p in programmes if matches(p)] or programmes[:max_items]
+    if region:
+        filtered = sorted(filtered, key=lambda p: (0 if (p.get("Region", "").lower() == region) else (1 if p.get("Region", "").lower() == "bund" else 2)))
     selected = filtered[:max_items]
     if not selected: return ""
     title = "Dynamische Förderprogramme" if lang == "de" else "Dynamic funding programmes"
@@ -1040,7 +1047,7 @@ def generate_qr_code_uri(link: str) -> str:
 
 def generate_preface(lang: str = "de", score_percent: Optional[float] = None) -> str:
     if lang == "de":
-        preface = ("<p>Dieses Dokument fasst die Ergebnisse Ihres KI-Readiness-Checks zusammen und bietet individuelle "
+        preface = ("<p>Dieses Dokument fasst die Ergebnisse Ihres KI‑Status‑Reports zusammen und bietet individuelle "
                    "Empfehlungen für die nächsten Schritte. Es basiert auf Ihren Angaben und berücksichtigt aktuelle gesetzliche "
                    "Vorgaben, Fördermöglichkeiten und technologische Entwicklungen.</p>")
         if score_percent is not None:
@@ -1108,7 +1115,7 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
         }
         html = tmpl.render(**ctx)
     else:
-        title = "KI-Readiness Report" if lang == "de" else "AI Readiness Report"
+        title = "KI‑Status‑Report" if lang == "de" else "AI Readiness Report"
         html = f"""<!doctype html><html><head><meta charset="utf-8"><style>body{{font-family:Arial;padding:24px;}}</style></head>
 <body><h1>{title} · {datetime.now().strftime("%Y-%m-%d")}</h1>
 <div>{report.get("preface","")}</div>
