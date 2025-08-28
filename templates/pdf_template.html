@@ -3,7 +3,7 @@
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <title>KI-Readiness-Report</title>
+      <title>KI-Status-Report</title>
       <style>
         :root{
           --brand-blue:#1f66ff; --brand-green:#18a999; --ink:#0a122a; 
@@ -100,7 +100,7 @@ blue);color:#fff;font-size:10px;white-space:nowrap}
           {% if logo_main %}<img src="{{ logo_main }}" alt="KI-Sicherheit" />{% 
 endif %}
           <div>
-            <h1>KI-Readiness-Report 2025</h1>
+            <h1>KI-Status-Report 2025</h1>
             <div class="meta">
               <div>Datum: {{ datum }}</div><div>Sprache: DE</div>
             </div>
@@ -113,7 +113,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
       <div class="container">
         <!-- Cover mit großem Gauge -->
         <div class="card">
-          <h2>Ihr KI-Readiness-Überblick</h2>
+          <h2>Ihr KI-Status-Überblick</h2>
 
           {% if preface %}<div style="margin-top:.6rem">{{ preface|safe 
 }}</div>{% endif %}
@@ -144,12 +144,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
           {% endif %}
           <div class="card">
             <h2>Dimensionen</h2>
-            <div class="svgbox">
-              <svg id="radar" viewBox="0 0 220 220" width="100%" 
-height="220"></svg>
-              <div class="caption">Digitalisierung · Automatisierung · Papierlos
- · Know-how · …</div>
-            </div>
+            {# Radar chart removed in the Gold-Standard.  We keep only the bar chart below. #}
             {% if benchmarks and benchmarks.items()|length > 0 %}
             <div class="benchmark-bars">
               {% for key, b in benchmarks.items() %}
@@ -245,14 +240,16 @@ endif %}</td></tr>
             <h2>KI-Tools & Software</h2>
             {% if tools_table and tools_table|length>0 %}
               <table>
-                <thead><tr><th>Tool</th><th>Einsatz</th><th>Kosten</th><th>Link<
-/th></tr></thead>
+                <thead>
+  <tr>
+    <th>Tool</th><th>Einsatz</th><th>Kosten</th><th>Link</th>
+  </tr>
+</thead>
                 <tbody>
                 {% for t in tools_table %}
                   <tr><td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.cost
   }}</td>
-                    <td>{% if t.link %}<a href="{{ t.link }}">Details</a>{% 
-endif %}</td></tr>
+                    <td>{% if t.link %}<a href="{{ t.link }}">Link</a>{% endif %}</td></tr>
                 {% endfor %}
                 </tbody>
               </table>
