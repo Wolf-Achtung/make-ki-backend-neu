@@ -191,8 +191,7 @@ group</th><th>Amount</th><th>Link</th></tr></thead>
                 {% for row in foerderprogramme_table %}
                   <tr><td>{{ row.name }}</td><td>{{ row.zielgruppe }}</td><td>{{
   row.foerderhoehe }}</td>
-                    <td>{% if row.link %}<a href="{{ row.link }}">Details</a>{% 
- endif %}</td></tr>
+                    <td>{% if row.link %}<a href="{{ row.link }}">Link</a>{% endif %}</td></tr>
                 {% endfor %}
                 </tbody>
               </table>

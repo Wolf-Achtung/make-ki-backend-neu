@@ -211,14 +211,12 @@ risks_html|trim) %}
             <h2>Förderprogramme (Auswahl)</h2>
             {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
               <table>
-                <thead><tr><th>Programm</th><th>Zielgruppe</th><th>Förderhöhe</t
-h><th>Link</th></tr></thead>
+                <thead><tr><th>Programm</th><th>Zielgruppe</th><th>Förderhöhe</th><th>Link</th></tr></thead>
                 <tbody>
                 {% for p in foerderprogramme_table %}
                   <tr><td>{{ p.name }}</td><td>{{ p.zielgruppe }}</td><td>{{ 
 p.foerderhoehe }}</td>
-                    <td>{% if p.link %}<a href="{{ p.link }}">Details</a>{% 
-endif %}</td></tr>
+                    <td>{% if p.link %}<a href="{{ p.link }}">Link</a>{% endif %}</td></tr>
                 {% endfor %}
                 </tbody>
               </table>
@@ -300,7 +298,7 @@ endif %}</td></tr>
 
         {% if ueber_mich_html and ueber_mich_html|trim %}
           <div class="card section">
-            <h2>Über mich</h2>
+            <h2>Leistung &amp; Nachweis</h2>
             <div>{{ ueber_mich_html|safe }}</div>
             {# QR-Code removed in Gold-Standard #}
           </div>
