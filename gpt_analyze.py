@@ -454,12 +454,24 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     targets = {"solo":["solo","freelancer","freiberuflich","einzel"],"team":["kmu","team","small"],"kmu":["kmu","sme"]}.get(size,[])
     region = (data.get("bundesland") or data.get("state") or "").lower()
 
-    def matches(row):
-        zg = (row.get("Zielgruppe","") or "").lower()
-        reg = (row.get("Region","") or "").lower()
+    def matches(row: dict) -> bool:
+        """
+        Determine whether a funding row matches the desired target group and region.  We
+        perform case-insensitive substring matching for regions to handle cases
+        where the CSV contains combined regions (e.g. "Berlin / Brandenburg").
+        The row is considered a match if either the row's region exactly matches
+        the selected region, the selected region is contained within the row's
+        region string, or the row is a federal programme (region == "bund").
+        Target groups are matched by substring as before.
+        """
+        zg = (row.get("Zielgruppe", "") or "").lower()
+        reg = (row.get("Region", "") or "").lower()
+        # Match target groups via substring if any target token appears
         t_ok = True if not targets else any(t in zg for t in targets)
-        r_ok = True if not region else (reg == region or reg == "bund")
-        return t_ok and r_ok
+        if not region:
+            return t_ok
+        regmatch = (reg == region) or (region in reg) or (reg == "bund")
+        return t_ok and regmatch
 
     # Filter programmes by region and target group.  If a specific region is
     # provided, prioritise exact regional programmes first, then federal
@@ -991,28 +1003,39 @@ def build_ueber_mich_section(lang: str = "de") -> str:
     :param lang: language code
     :return: HTML string with the personal introduction
     """
+    # In the Gold‑Standard version we avoid a biographical third‑person description.
+    # Instead we provide a neutral, service‑oriented introduction based on the
+    # "Leistung & Nachweis" concept.  The wording emphasises the role of a
+    # TÜV‑certified AI manager and the specific areas of expertise.  The
+    # contact information remains unchanged.  Note that the surrounding
+    # template already includes a heading ("Über mich"/"About me"), so we
+    # omit any additional headings here.
     if lang == "de":
         return (
-            "<p><strong>Über den Autor</strong></p>"
-            "<p>Wolf Hohl ist Texter, Schriftsteller und Gesellschafter mit über 30 Jahren Erfahrung in "
-            "Marketing und Kommunikation. Als ehemaliger Geschäftsführer von Kinotrailer‑Produktionen hat er "
-            "über 50 Mio € Umsatz verantwortet. Heute lebt er in Berlin, liest viel, macht Yoga und kocht gerne. "
-            "Mit dem KI‑Readiness‑Report möchte er Unternehmen helfen, Chancen der künstlichen Intelligenz zu "
-            "identifizieren und pragmatisch umzusetzen. Als Solo‑Berater ist er dabei unabhängig und "
-            "zertifizierter KI‑Manager in Ausbildung.</p>"
-            "<p>Sie erreichen ihn unter <a href=\"mailto:kontakt@ki-sicherheit.jetzt\">kontakt@ki-sicherheit.jetzt</a> "
-            "oder über seine Website <a href=\"https://ki-sicherheit.jetzt\">ki-sicherheit.jetzt</a>.</p>"
+            "<p>Als TÜV-zertifizierter KI-Manager begleite ich Unternehmen bei der sicheren "
+            "Einführung, Nutzung und Audit-Vorbereitung von KI – mit klarer Strategie, "
+            "dokumentierter Förderfähigkeit und DSGVO-Konformität.</p>"
+            "<ul>"
+            "<li><strong>KI-Strategie & Audit:</strong> TÜV-zertifizierte Entwicklung und Vorbereitung auf Prüfungen</li>"
+            "<li><strong>EU AI Act & DSGVO:</strong> Beratung entlang aktueller Vorschriften und Standards</li>"
+            "<li><strong>Dokumentation & Governance:</strong> Aufbau förderfähiger KI-Prozesse und Nachweise</li>"
+            "<li><strong>Minimiertes Haftungsrisiko:</strong> Vertrauen bei Kunden, Partnern und Behörden</li>"
+            "</ul>"
+            "<p>Kontakt: <a href=\"mailto:kontakt@ki-sicherheit.jetzt\">kontakt@ki-sicherheit.jetzt</a> · "
+            "<a href=\"https://ki-sicherheit.jetzt\">ki-sicherheit.jetzt</a></p>"
         )
     else:
         return (
-            "<p><strong>About the author</strong></p>"
-            "<p>Wolf Hohl is a copywriter, author and former managing director with more than 30 years of experience "
-            "in marketing and communications. In his previous role in cinema trailer production he generated over "
-            "€50 million in revenue. Today he lives in Berlin, reads a lot, practices yoga and enjoys cooking. As a solo "
-            "consultant and aspiring certified AI manager, his mission is to help organisations recognise and realise the "
-            "potential of artificial intelligence.</p>"
-            "<p>You can reach him at <a href=\"mailto:kontakt@ki-sicherheit.jetzt\">kontakt@ki-sicherheit.jetzt</a> "
-            "or via his website <a href=\"https://ki-sicherheit.jetzt\">ki-sicherheit.jetzt</a>.</p>"
+            "<p>As a TÜV-certified AI manager I support organisations in safely implementing, using and preparing "
+            "for audits of AI, focusing on clear strategy, documented eligibility for funding and GDPR compliance.</p>"
+            "<ul>"
+            "<li><strong>AI strategy & audit:</strong> Certified development and audit preparation</li>"
+            "<li><strong>EU AI Act & GDPR:</strong> Guidance along current regulations and standards</li>"
+            "<li><strong>Documentation & governance:</strong> Establishing fundable AI processes and evidence</li>"
+            "<li><strong>Minimised liability risk:</strong> Building trust with clients, partners and authorities</li>"
+            "</ul>"
+            "<p>Contact: <a href=\"mailto:kontakt@ki-sicherheit.jetzt\">kontakt@ki-sicherheit.jetzt</a> · "
+            "<a href=\"https://ki-sicherheit.jetzt\">ki-sicherheit.jetzt</a></p>"
         )
 
 
