@@ -38,7 +38,7 @@ var(--border);font-size:12px;color:var(--muted)}
 align:left;vertical-align:top}
         th{background:var(--brand-blue);color:#fff}
         .svgbox{background:var(--card);border:1px solid var(--border);border-
-radius:14px;padding:10px;display:none}
+radius:14px;padding:10px}
         .caption{font-size:12px;color:var(--muted);margin-top:.25rem}
         @page{size:A4 margin:16mm}
         .onepager{page-break-inside:avoid}
@@ -245,7 +245,8 @@ endif %}</td></tr>
             <h2>KI-Tools & Software</h2>
             {% if tools_table and tools_table|length>0 %}
               <table>
-                <thead><tr><th>Tool</th><th>Einsatz</th><th>Kosten</th><th>Link</th></tr></thead>
+                <thead><tr><th>Tool</th><th>Einsatz</th><th>Kosten</th><th>Link<
+/th></tr></thead>
                 <tbody>
                 {% for t in tools_table %}
                   <tr><td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.cost
