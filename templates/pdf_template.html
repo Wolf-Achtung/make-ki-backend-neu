@@ -100,9 +100,9 @@ size:12px}
         .risk-table th,.risk-table td{border:1px solid 
 var(--border);padding:6px;text-align:center}
         .risk-table th{background:var(--brand-blue);color:#fff}
-        .risk-low{background:#e5f3ff}
-        .risk-mid{background:#fff7e6}
-        .risk-high{background:#ffe5e5}
+        .risk-low{background:#D7F3E8}
+        .risk-mid{background:#CFE3FF}
+        .risk-high{background:#0D3B66;color:#fff}
         /* Funding badges */
         .funding-badges{margin-top:.5rem;display:flex;flex-wrap:wrap;gap:6px}
         .funding-badge{padding:4px 8px;border-radius:8px;background:var(--brand-
@@ -113,11 +113,7 @@ blue);color:#fff;font-size:10px;white-space:nowrap}
     a { word-break: break-word; }
 
       </style>
-    <style>
-.risk-low{background:#D7F3E8!important;}
-.risk-mid{background:#CFE3FF!important;}
-.risk-high{background:#0D3B66!important;color:#fff!important;}
-</style>
+    
 </head>
     <body>
       <div class="header">
@@ -292,8 +288,8 @@ risks_html|trim) %}
                 <tbody>
                 {% for t in tools_table %}
                   <tr>
-                    <td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.datenschutz or 'n/a' }}</td><td>{{ t.cost or 'n/a' }}</td>
-                    <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
+                    <td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.datenschutz or t.datensitz or 'n/a' }}</td><td>{{ t.cost or 'n/a' }}</td>
+                    <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% else %}—{% endif %}</td>
                   </tr>
                 {% endfor %}
                 </tbody>
