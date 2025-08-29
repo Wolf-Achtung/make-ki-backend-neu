@@ -72,8 +72,14 @@ bottom:2px}
         /* The blue bar (your value).  Use relative positioning so the width
            attribute (set inline via style="width:XX%;") applies correctly. */
         .benchmark-bar span.you{
+          /* Render the own-value bar as an absolutely positioned element so the
+             inline width (set via style="width:XX%;") takes effect.  Without
+             absolute positioning the bar may not be visible in some PDF
+             renderers. */
           display:block;
-          position:relative;
+          position:absolute;
+          left:0;
+          top:0;
           height:8px;
           background:var(--brand-blue);
           border-radius:4px;

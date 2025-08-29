@@ -61,8 +61,12 @@ radius:12px;padding:10px;text-align:center}
         .benchmark-bar{flex:1;height:8px;background:#e5ecf4;border-radius:4px;position:relative;overflow:hidden}
         /* Blue bar representing your value: relative so width style works */
         .benchmark-bar span.you{
+          /* Render the own-value bar as an absolutely positioned element so the
+             inline width (set via style="width:XX%;") takes effect. */
           display:block;
-          position:relative;
+          position:absolute;
+          left:0;
+          top:0;
           height:8px;
           background:var(--brand-blue);
           border-radius:4px;
