@@ -1,11 +1,11 @@
 Glossary & further sources
 
-• Briefly explain technical terms (in parentheses or footnote).
-• If necessary, refer to the appendix or these links for detailed explanations:
+• Give a short explanation for any technical term you use (in brackets or footnotes).
+• For more detail, point readers to the appendix or to these links:
   – Funding programmes: {{ websearch_links_foerder }}
   – Tools: {{ websearch_links_tools }}
 
-Tip: If a topic has been explained earlier, refer back to it instead of repeating it.
-All recommendations should instil confidence and be easy to implement.
+Tip: If you’ve already explained something earlier, just refer back to it instead of repeating yourself.
+Keep all recommendations upbeat and grounded in real‑world practice.
 
 End of report
