@@ -1,66 +1,56 @@
-Tool-Name,Branche,Unternehmensgröße,Funktion/Zweck,Link/Website,Aufwand,Beispiel-Aufwand,Kurze Beschreibung,Kompatibilität/Integration,Logo,Copyright
-Canva,Marketing & Werbung,alle,Design & Content Creation,https://www.canva.com,1,Anmeldung, sofort nutzbar,Social-Media-Grafiken & Präsentationen,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Writesonic,Marketing & Werbung,alle,KI-Textgenerator,https://writesonic.com,2,Registrierung, Einführung,Texterstellung für Kampagnen,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-AdCreative.ai,Marketing & Werbung,KMU,KI-Banner & Werbeanzeigen,https://www.adcreative.ai,2,Einarbeitung, erste Ergebnisse sofort,Werbebanner automatisch generieren,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Buffer,Marketing & Werbung,alle,Social Media Automation,https://buffer.com,1,Registrierung, erste Kanäle verbinden,Geplantes, automatisiertes Posting,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Brandwatch,Marketing & Werbung,KMU,Social Listening & Analyse,https://www.brandwatch.com,3,Onboarding, Training,Social-Media-Analyse mit KI,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-
-Asana,Beratung & Dienstleistungen,alle,Projektmanagement,https://asana.com,1,Account, direkt nutzbar,Projekte und Aufgaben digital steuern,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Miro,Beratung & Dienstleistungen,alle,Online-Whiteboard & KI-Brainstorming,https://miro.com,2,Registrierung, Onboarding,Visuelles Brainstorming & KI-Funktionen,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Zapier,Beratung & Dienstleistungen,alle,Automatisierung,https://zapier.com,2,Account, erster Workflow,Workflows mit KI-Anbindung,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Jasper,Beratung & Dienstleistungen,alle,KI-Content & Text,https://www.jasper.ai,2,Registrierung, Einführung,Texte, Angebote & Reports mit KI,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Notion,Beratung & Dienstleistungen,alle,Consulting-Wissensmanagement,https://notion.so,1,Registrierung, sofort,Projekte, Checklisten & Beratungsdoku,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-
-GitHub Copilot,IT & Software,alle,KI-Codeunterstützung,https://github.com/features/copilot,2,Installation, Integration,KI-Code-Vervollständigung,VSCode,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Dataiku,IT & Software,KMU,KI-Prozessanalyse,https://dataiku.com,3,Einrichtung, Datenimport,KI-getriebene Analyse & Automatisierung,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Slack,IT & Software,alle,Team-Kommunikation,https://slack.com,1,Registrierung, sofort,Chat, Teamarbeit, Integrationen,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Tableau,IT & Software,alle,Datenvisualisierung,https://tableau.com,2,Datenimport, Schulung,Dashboards & Berichte,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-n8n,IT & Software,KMU,No-Code Automatisierung,https://n8n.io,2,Deployment, Workflow bauen,Automatisierte Workflows,Web/Cloud/Self-Hosted,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-
-Planerio,Handwerk,KMU,Schichtplanung & Disposition,https://www.planerio.de,2,Import Mitarbeiter, Einrichtung,Automatisierte Einsatzplanung,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Meisterwerk,Handwerk,KMU,Auftragsverwaltung,https://meisterwerk.app,1,Account, Stammdaten anlegen,Digitale Baustellenakte,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-OpenAI-Tabellen,Handwerk,KMU,Kalkulation & Angebot,https://platform.openai.com,2,Einarbeitung, Vorlage laden,KI-gestützte Angebotskalkulation,Web/CSV,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Sage,Handwerk,alle,Buchhaltung & Rechnungswesen,https://www.sage.com,2,Registrierung, Datenimport,Buchhaltung und Lohn digitalisieren,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-JobRouter,Handwerk,KMU,Workflow-Automatisierung,https://jobrouter.com,3,Setup, Onboarding,Digitale Workflows von Angebot bis Abnahme,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-
-Doctolib,Gesundheitswesen,alle,Online-Terminmanagement,https://www.doctolib.de,1,Registrierung, Integration,Automatisierte Terminvergabe,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Infermedica,Gesundheitswesen,alle,KI-Patienten-Check,https://infermedica.com,2,Implementierung, Onboarding,KI-Anamnese & Triage,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Planerio,Gesundheitswesen,alle,Schichtplanung,https://www.planerio.de,2,Import Mitarbeiter, Einrichtung,Einsatzplanung für Praxen,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Amboss,Gesundheitswesen,alle,KI-gestütztes Nachschlagewerk,https://amboss.com,1,Account, direkt nutzen,Medizinische Entscheidungsunterstützung,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-CureBot,Gesundheitswesen,KMU,KI-Chatbot für Praxen,https://curebot.de,2,Einrichtung, Trainingsphase,Patientenfragen KI-gestützt beantworten,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-
-Capmo,Bauwesen,KMU,KI-Baustellenmanagement,https://www.capmo.de,2,Registrierung, Onboarding,Digitale Baudokumentation,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-PlanRadar,Bauwesen,alle,Baumängel & Dokumentation,https://www.planradar.com,2,Anlegen, Dokumentieren,KI-gestützte Mängelerfassung,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-BauMaster,Bauwesen,KMU,Projektplanung,https://www.baumaster.com,2,Import Projekte, Einrichtung,Digitalisierte Projektsteuerung,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-DocuWare,Bauwesen,alle,Dokumentenmanagement,https://www.docuware.com,2,Einrichtung, Integration,Digitale Akte & Archiv,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-OpenAI-Tabellen,Bauwesen,KMU,Kalkulation & Angebot,https://platform.openai.com,2,Einarbeitung, Vorlage laden,KI-gestützte Angebotskalkulation,Web/CSV,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-
-Shopify,Handel & E-Commerce,alle,Onlineshop-Plattform,https://shopify.de,1,Account, Shop anlegen,Webshop mit KI-Funktionen,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Algolia,Handel & E-Commerce,alle,Produktsuche & Empfehlungen,https://algolia.com,2,Account, Integration,Personalisierte Produktempfehlungen,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Epoq,Handel & E-Commerce,KMU,Recommendation Engine,https://www.epoq.de,2,Setup, Anpassung,Personalisierte Empfehlungen,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Billbee,Handel & E-Commerce,KMU,Multichannel-Order-Management,https://billbee.io,2,Account, Import,Automatisierung von Bestellungen,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-parcelLab,Handel & E-Commerce,KMU,KI-Versandkommunikation,https://parcellab.com,2,Integration, Einrichtung,Kundenkommunikation Versand,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-
-MindSphere,Industrie/Produktion,KMU,Predictive Maintenance,https://siemens.mindsphere.io,4,Einrichtung, Partner,KI-basierte Wartung & Prognosen,Cloud,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Dataiku,Industrie/Produktion,KMU,Prozessanalyse,https://dataiku.com,3,Einrichtung, Datenimport,KI-getriebene Prozessoptimierung,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-FactoryCube,Industrie/Produktion,KMU,Produktionsdatenerfassung,https://factorycube.io,2,Setup, Einweisung,Maschinendaten mit KI auswerten,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Senseforce,Industrie/Produktion,KMU,Datenvisualisierung,https://senseforce.io,2,Account, Integration,Dashboards für Produktion,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Tableau,Industrie/Produktion,alle,Dashboards & Analyse,https://tableau.com,2,Datenimport, Schulung,Visualisierung Produktionsdaten,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-
-DATEV,Finanzen & Versicherungen,alle,Buchhaltung & Steuer,https://www.datev.de,1,Account, Datenimport,Buchhaltung digitalisieren,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-finAPI,Finanzen & Versicherungen,alle,Finanzdatenanalyse,https://finapi.io,2,Integration, API-Key,KI-Analyse von Zahlungsströmen,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-DataGuard,Finanzen & Versicherungen,alle,Datenschutzmanagement,https://dataguard.de,3,Registrierung, Setup,DSGVO-Compliance,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Priverion,Finanzen & Versicherungen,KMU,Datenschutzmanagement,https://priverion.com,3,Onboarding, Einrichtung,Datenschutz-Dokumente managen,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Personetics,Finanzen & Versicherungen,KMU,KI-Kundenberatung,https://personetics.com,3,Integration, Onboarding,KI-gestützte Finanzberatung,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-
-Sdui,Bildung,alle,Lernplattform,https://sdui.de,1,Account, Einführung,KI-gestützte Lernpfade,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Knewton,Bildung,alle,KI-Adaptive Learning,https://knewton.com,2,Registrierung, Setup,Individuelle Lernwege,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Coursera,Bildung,alle,Online-Kurse & Zertifikate,https://coursera.org,1,Account, Kurs wählen,Kurse & KI-Fortbildung,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Quizlet,Bildung,alle,KI-Lernkarten,https://quizlet.com,1,Registrierung, sofort,KI-gestütztes Lernen,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Examio,Bildung,KMU,Prüfungsautomatisierung,https://examio.com,2,Integration, Einrichtung,KI-basierte Prüfungsaufgaben,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-
-Zapier,Sonstige,alle,Automatisierung,https://zapier.com,2,Account, erster Workflow,Allgemeine Automatisierungen,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Notion,Sonstige,alle,Wissensmanagement,https://notion.so,1,Registrierung, sofort nutzbar,Allgemeines Wissensmanagement,Web/App,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-OpenAI GPT,Sonstige,alle,KI-Text & Analyse,https://chat.openai.com,1,Account, sofort nutzbar,Texte, Recherche, FAQ,Online,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Google Forms,Sonstige,alle,Umfragen & Feedback,https://forms.google.com,1,Account, Vorlage wählen,Feedback & Datenerhebung,Web,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
-Power Automate,Sonstige,alle,Prozessautomatisierung,https://powerautomate.microsoft.com,2,Account, erster Flow,Automatisierte Prozesse,Web/API,https://ki-sicherheit.jetzt/logo/ki-sicherheit-logo.png,© KI-Sicherheit.jetzt
+Tool-Name,Branche,Branche-Slugs,Unternehmensgröße,Funktion/Zweck,Link/Website,Kostenkategorie,Kurze Beschreibung,Kompatibilität/Integration,Datensitz,Tags
+Canva,Marketing & Werbung,marketing,alle,Design & Content Creation,https://www.canva.com,sehr gering, sofort nutzbar,Social-Media-Grafiken & Präsentationen,,
+Writesonic,Marketing & Werbung,marketing,alle,KI-Textgenerator,https://writesonic.com,gering, Einführung,Texterstellung für Kampagnen,,
+AdCreative.ai,Marketing & Werbung,marketing,KMU,KI-Banner & Werbeanzeigen,https://www.adcreative.ai,gering, erste Ergebnisse sofort,Werbebanner automatisch generieren,,
+Buffer,Marketing & Werbung,marketing,alle,Social Media Automation,https://buffer.com,sehr gering, erste Kanäle verbinden,Geplantes,,
+Brandwatch,Marketing & Werbung,marketing,KMU,Social Listening & Analyse,https://www.brandwatch.com,mittel, Training,Social-Media-Analyse mit KI,,
+Asana,Beratung & Dienstleistungen,beratung,alle,Projektmanagement,https://asana.com,sehr gering, direkt nutzbar,Projekte und Aufgaben digital steuern,,
+Miro,Beratung & Dienstleistungen,beratung,alle,Online-Whiteboard & KI-Brainstorming,https://miro.com,gering, Onboarding,Visuelles Brainstorming & KI-Funktionen,,
+Zapier,Beratung & Dienstleistungen,beratung,alle,Automatisierung,https://zapier.com,gering, erster Workflow,Workflows mit KI-Anbindung,,
+Jasper,Beratung & Dienstleistungen,beratung,alle,KI-Content & Text,https://www.jasper.ai,gering, Einführung,Texte,,
+Notion,Beratung & Dienstleistungen,beratung,alle,Consulting-Wissensmanagement,https://notion.so,sehr gering, sofort,Projekte,,
+GitHub Copilot,IT & Software,it,alle,KI-Codeunterstützung,https://github.com/features/copilot,gering, Integration,KI-Code-Vervollständigung,,
+Dataiku,IT & Software,it,KMU,KI-Prozessanalyse,https://dataiku.com,mittel, Datenimport,KI-getriebene Analyse & Automatisierung,,
+Slack,IT & Software,it,alle,Team-Kommunikation,https://slack.com,sehr gering, sofort,Chat,,
+Tableau,IT & Software,it,alle,Datenvisualisierung,https://tableau.com,gering, Schulung,Dashboards & Berichte,,
+n8n,IT & Software,it,KMU,No-Code Automatisierung,https://n8n.io,gering, Workflow bauen,Automatisierte Workflows,,
+Planerio,Handwerk,bau,KMU,Schichtplanung & Disposition,https://www.planerio.de,gering, Einrichtung,Automatisierte Einsatzplanung,,
+Meisterwerk,Handwerk,bau,KMU,Auftragsverwaltung,https://meisterwerk.app,sehr gering, Stammdaten anlegen,Digitale Baustellenakte,,
+OpenAI-Tabellen,Handwerk,bau,KMU,Kalkulation & Angebot,https://platform.openai.com,gering, Vorlage laden,KI-gestützte Angebotskalkulation,,
+Sage,Handwerk,bau,alle,Buchhaltung & Rechnungswesen,https://www.sage.com,gering, Datenimport,Buchhaltung und Lohn digitalisieren,,
+JobRouter,Handwerk,bau,KMU,Workflow-Automatisierung,https://jobrouter.com,mittel, Onboarding,Digitale Workflows von Angebot bis Abnahme,,
+Doctolib,Gesundheitswesen,gesundheit,alle,Online-Terminmanagement,https://www.doctolib.de,sehr gering, Integration,Automatisierte Terminvergabe,,
+Infermedica,Gesundheitswesen,gesundheit,alle,KI-Patienten-Check,https://infermedica.com,gering, Onboarding,KI-Anamnese & Triage,,
+Planerio,Gesundheitswesen,gesundheit,alle,Schichtplanung,https://www.planerio.de,gering, Einrichtung,Einsatzplanung für Praxen,,
+Amboss,Gesundheitswesen,gesundheit,alle,KI-gestütztes Nachschlagewerk,https://amboss.com,sehr gering, direkt nutzen,Medizinische Entscheidungsunterstützung,,
+CureBot,Gesundheitswesen,gesundheit,KMU,KI-Chatbot für Praxen,https://curebot.de,gering, Trainingsphase,Patientenfragen KI-gestützt beantworten,,
+Capmo,Bauwesen,bauwesen,KMU,KI-Baustellenmanagement,https://www.capmo.de,gering, Onboarding,Digitale Baudokumentation,,
+PlanRadar,Bauwesen,bauwesen,alle,Baumängel & Dokumentation,https://www.planradar.com,gering, Dokumentieren,KI-gestützte Mängelerfassung,,
+BauMaster,Bauwesen,bauwesen,KMU,Projektplanung,https://www.baumaster.com,gering, Einrichtung,Digitalisierte Projektsteuerung,,
+DocuWare,Bauwesen,bauwesen,alle,Dokumentenmanagement,https://www.docuware.com,gering, Integration,Digitale Akte & Archiv,,
+OpenAI-Tabellen,Bauwesen,bauwesen,KMU,Kalkulation & Angebot,https://platform.openai.com,gering, Vorlage laden,KI-gestützte Angebotskalkulation,,
+Shopify,Handel & E-Commerce,handel,alle,Onlineshop-Plattform,https://shopify.de,sehr gering, Shop anlegen,Webshop mit KI-Funktionen,,
+Algolia,Handel & E-Commerce,handel,alle,Produktsuche & Empfehlungen,https://algolia.com,gering, Integration,Personalisierte Produktempfehlungen,,
+Epoq,Handel & E-Commerce,handel,KMU,Recommendation Engine,https://www.epoq.de,gering, Anpassung,Personalisierte Empfehlungen,,
+Billbee,Handel & E-Commerce,handel,KMU,Multichannel-Order-Management,https://billbee.io,gering, Import,Automatisierung von Bestellungen,,
+parcelLab,Handel & E-Commerce,handel,KMU,KI-Versandkommunikation,https://parcellab.com,gering, Einrichtung,Kundenkommunikation Versand,,
+MindSphere,Industrie/Produktion,industrie,KMU,Predictive Maintenance,https://siemens.mindsphere.io,hoch, Partner,KI-basierte Wartung & Prognosen,,
+Dataiku,Industrie/Produktion,industrie,KMU,Prozessanalyse,https://dataiku.com,mittel, Datenimport,KI-getriebene Prozessoptimierung,,
+FactoryCube,Industrie/Produktion,industrie,KMU,Produktionsdatenerfassung,https://factorycube.io,gering, Einweisung,Maschinendaten mit KI auswerten,,
+Senseforce,Industrie/Produktion,industrie,KMU,Datenvisualisierung,https://senseforce.io,gering, Integration,Dashboards für Produktion,,
+Tableau,Industrie/Produktion,industrie,alle,Dashboards & Analyse,https://tableau.com,gering, Schulung,Visualisierung Produktionsdaten,,
+DATEV,Finanzen & Versicherungen,finanzen,alle,Buchhaltung & Steuer,https://www.datev.de,sehr gering, Datenimport,Buchhaltung digitalisieren,,
+finAPI,Finanzen & Versicherungen,finanzen,alle,Finanzdatenanalyse,https://finapi.io,gering, API-Key,KI-Analyse von Zahlungsströmen,,
+DataGuard,Finanzen & Versicherungen,finanzen,alle,Datenschutzmanagement,https://dataguard.de,mittel, Setup,DSGVO-Compliance,,
+Priverion,Finanzen & Versicherungen,finanzen,KMU,Datenschutzmanagement,https://priverion.com,mittel, Einrichtung,Datenschutz-Dokumente managen,,
+Personetics,Finanzen & Versicherungen,finanzen,KMU,KI-Kundenberatung,https://personetics.com,mittel, Onboarding,KI-gestützte Finanzberatung,,
+Sdui,Bildung,bildung,alle,Lernplattform,https://sdui.de,sehr gering, Einführung,KI-gestützte Lernpfade,,
+Knewton,Bildung,bildung,alle,KI-Adaptive Learning,https://knewton.com,gering, Setup,Individuelle Lernwege,,
+Coursera,Bildung,bildung,alle,Online-Kurse & Zertifikate,https://coursera.org,sehr gering, Kurs wählen,Kurse & KI-Fortbildung,,
+Quizlet,Bildung,bildung,alle,KI-Lernkarten,https://quizlet.com,sehr gering, sofort,KI-gestütztes Lernen,,
+Examio,Bildung,bildung,KMU,Prüfungsautomatisierung,https://examio.com,gering, Einrichtung,KI-basierte Prüfungsaufgaben,,
+Zapier,Sonstige,sonstige,alle,Automatisierung,https://zapier.com,gering, erster Workflow,Allgemeine Automatisierungen,,
+Notion,Sonstige,sonstige,alle,Wissensmanagement,https://notion.so,sehr gering, sofort nutzbar,Allgemeines Wissensmanagement,,
+OpenAI GPT,Sonstige,sonstige,alle,KI-Text & Analyse,https://chat.openai.com,sehr gering, sofort nutzbar,Texte,,
+Google Forms,Sonstige,sonstige,alle,Umfragen & Feedback,https://forms.google.com,sehr gering, Vorlage wählen,Feedback & Datenerhebung,,
+Power Automate,Sonstige,sonstige,alle,Prozessautomatisierung,https://powerautomate.microsoft.com,gering, erster Flow,Automatisierte Prozesse,,
