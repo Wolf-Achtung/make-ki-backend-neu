@@ -1254,7 +1254,7 @@ def build_ueber_mich_section(lang: str = "de") -> str:
         return (
             "<p>Als TÜV-zertifizierter KI-Manager begleite ich Unternehmen bei der sicheren "
             "Einführung, Nutzung und Audit-Vorbereitung von KI – mit klarer Strategie, "
-            "dokumentierter Förderfähigkeit und DSGVO-Konformität.</p>"
+            "dokumentierter Förderfähigkeit und DSGVO-Konformität. <a href="https://ki-sicherheit.jetzt/termin" target="_blank" rel="noopener">Jetzt Erstgespräch buchen</a>.</p>"
             "<ul>"
             "<li><strong>KI-Strategie & Audit:</strong> TÜV-zertifizierte Entwicklung und Vorbereitung auf Prüfungen</li>"
             "<li><strong>EU AI Act & DSGVO:</strong> Beratung entlang aktueller Vorschriften und Standards</li>"
@@ -1262,7 +1262,7 @@ def build_ueber_mich_section(lang: str = "de") -> str:
             "<li><strong>Minimiertes Haftungsrisiko:</strong> Vertrauen bei Kunden, Partnern und Behörden</li>"
             "</ul>"
             "<p>Kontakt: <a href=\"mailto:kontakt@ki-sicherheit.jetzt\">kontakt@ki-sicherheit.jetzt</a> · "
-            "<a href=\"https://ki-sicherheit.jetzt\">ki-sicherheit.jetzt</a></p>"
+            "<a href=\"https://ki-sicherheit.jetzt\">ki-sicherheit.jetzt</a> <a href="https://ki-sicherheit.jetzt/termin" target="_blank" rel="noopener">Jetzt Erstgespräch buchen</a>.</p>"
         )
     else:
         return (
