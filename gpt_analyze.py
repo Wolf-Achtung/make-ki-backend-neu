@@ -243,6 +243,14 @@ def render_prompt(template_text: str, context: dict) -> str:
     return re.sub(r"\{\{\s*(\w+)\s*\}\}", replace_simple, template_text)
 
 def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
+    """
+    Construct the master prompt for a given chapter and language.  This helper
+    loads the base chapter prompt, prepends the optional prefix and appends
+    the optional suffix.  It also appends chapter‑specific style rules to
+    instruct the LLM how to structure its response.  A global base rule
+    enforces valid HTML output and concise language.
+    """
+    # Candidate search paths for the chapter prompt; first match wins.
     search_paths = [
         f"prompts/{lang}/{chapter}.md",
         f"prompts_unzip/{lang}/{chapter}.md",
@@ -254,13 +262,37 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     for p in search_paths:
         if os.path.exists(p):
             try:
-                prompt_text = load_text(p); break
+                prompt_text = load_text(p)
+                break
             except Exception:
                 continue
     if prompt_text is None:
         prompt_text = f"[NO PROMPT FOUND for {chapter}/{lang}]"
 
-    prompt = render_prompt(prompt_text, context)
+    # Render the chapter prompt with context placeholders
+    base_prompt = render_prompt(prompt_text, context)
+
+    # Helper to load optional prefix/suffix pieces.  The prefix introduces
+    # background context and high‑level instructions; the suffix provides
+    # guidance on glossary, linking and tone.  Missing files are ignored.
+    def _load_prompt_piece(piece_name: str) -> str:
+        candidates = [
+            f"prompts/{lang}/{piece_name}.md",
+            f"prompts_unzip/{lang}/{piece_name}.md",
+            f"{lang}/{piece_name}.md",
+        ]
+        for path in candidates:
+            if os.path.exists(path):
+                try:
+                    return load_text(path)
+                except Exception:
+                    pass
+        return ""
+
+    prefix = _load_prompt_piece("prompt_prefix")
+    suffix = _load_prompt_piece("prompt_suffix")
+
+    # Determine base rules and chapter‑specific style instructions
     is_de = (lang == "de")
     base_rules = (
         "Gib die Antwort ausschließlich als gültiges HTML ohne <html>-Wrapper zurück. "
@@ -270,48 +302,61 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     )
     style = "\n\n---\n" + base_rules
 
+    # Chapter-specific structure guidelines
     if chapter == "executive_summary":
-        # Das Executive Summary wird im Gold‑Standard in vier klare Abschnitte unterteilt.  
-        # Für DE: KPI‑Überblick (1–2 Sätze), Top‑Chancen (3 bullets), Zentrale Risiken (2–3 bullets) und Nächste Schritte (nummerierte Liste).  
-        # Für EN: KPI overview (1–2 sentences), Opportunities, Risks and Next steps.  
-        # Wir reduzieren die Anzahl der Punkte pro Liste, damit der Bericht fokussiert und übersichtlich bleibt.
+        # Gold‑standard structure: KPI overview, Top opportunities, Key risks, Next steps
         style += (
-            "\n- Gliedere in: <h3>KPI‑Überblick</h3><p>…</p>"
-            "<h3>Top‑Chancen</h3><ul>…</ul>"
-            "<h3>Zentrale Risiken</h3><ul>…</ul>"
-            "<h3>Nächste Schritte</h3><ol>…</ol>"
-            "\n- Maximal 3 Punkte pro Liste. Fette jeweils das erste Schlüsselwort."
-            if is_de else
-            "\n- Structure: <h3>KPI overview</h3><p>…</p>"
-            "<h3>Opportunities</h3><ul>…</ul>"
-            "<h3>Risks</h3><ul>…</ul>"
-            "<h3>Next steps</h3><ol>…</ol>"
+            "\n- Gliedere in: <h3>KPI-Überblick</h3><ul>…</ul><h3>Top-Chancen</h3><ul>…</ul>"
+            "<h3>Zentrale Risiken</h3><ul>…</ul><h3>Nächste Schritte</h3><ul>…</ul>"
+            "\n- Maximal 3 Bullet-Points pro Liste. Fette jeweils das erste Schlüsselwort."
+            if is_de
+            else
+            "\n- Structure: <h3>KPI overview</h3><ul>…</ul><h3>Top opportunities</h3><ul>…</ul>"
+            "<h3>Key risks</h3><ul>…</ul><h3>Next steps</h3><ul>…</ul>"
             "\n- Max 3 bullets per list. Bold the first keyword per bullet."
         )
 
     if chapter == "vision":
-        style += ("\n- Form: 1 kühne Idee (Titel + 1 Satz); 1 MVP (2–4 Wochen, grobe Kosten); 3 KPIs in <ul>. "
-                  "Branchen-/Größenbezug, keine Allgemeinplätze."
-                  if is_de else
-                  "\n- Form: 1 bold idea (title + one-liner); 1 MVP (2–4 weeks, rough cost); 3 KPIs in <ul>. "
-                  "Adapt to industry/size, avoid genericities.")
+        style += (
+            "\n- Form: 1 kühne Idee (Titel + 1 Satz); 1 MVP (2–4 Wochen, grobe Kosten); 3 KPIs in <ul>. "
+            "Branchen-/Größenbezug, keine Allgemeinplätze."
+            if is_de
+            else
+            "\n- Form: 1 bold idea (title + one-liner); 1 MVP (2–4 weeks, rough cost); 3 KPIs in <ul>. "
+            "Adapt to industry/size, avoid genericities."
+        )
 
     if chapter == "tools":
-        style += ("\n- <table> mit Spalten: Name | Usecase | Kosten | Link. Max. 7 Zeilen, DSGVO/EU-freundlich."
-                  if is_de else
-                  "\n- <table> columns: Name | Use case | Cost | Link. Max 7 rows. Prefer GDPR/EU-friendly tools.")
+        style += (
+            "\n- <table> mit Spalten: Name | Usecase | Kosten | Link. Max. 7 Zeilen, DSGVO/EU-freundlich."
+            if is_de
+            else
+            "\n- <table> columns: Name | Use case | Cost | Link. Max 7 rows. Prefer GDPR/EU-friendly tools."
+        )
 
     if chapter in ("foerderprogramme", "foerderung", "funding"):
-        style += ("\n- <table>: Name | Zielgruppe | Förderhöhe | Link. Max. 5 Zeilen."
-                  if is_de else
-                  "\n- <table>: Name | Target group | Amount | Link. Max 5 rows.")
+        style += (
+            "\n- <table>: Name | Zielgruppe | Förderhöhe | Link. Max. 5 Zeilen."
+            if is_de
+            else
+            "\n- <table>: Name | Target group | Amount | Link. Max 5 rows."
+        )
 
     if context.get("is_self_employed"):
-        style += ("\n- Solo-Selbstständig: Empfehlungen skalierbar halten; passende Förderungen priorisieren."
-                  if is_de else
-                  "\n- Solo self-employed: keep recommendations scalable; prioritize suitable funding.")
+        style += (
+            "\n- Solo-Selbstständig: Empfehlungen skalierbar halten; passende Förderungen priorisieren."
+            if is_de
+            else
+            "\n- Solo self-employed: keep recommendations scalable; prioritize suitable funding."
+        )
 
-    return prompt + style
+    # Compose the final master prompt: prefix, base prompt, style and suffix
+    parts: List[str] = []
+    for piece in (prefix, base_prompt, style, suffix):
+        if piece and str(piece).strip():
+            parts.append(piece)
+    full_prompt = "\n\n".join(parts)
+    return full_prompt
 
 def _chat_complete(messages, model_name: Optional[str], temperature: Optional[float] = None) -> str:
     args = {"model": model_name or os.getenv("GPT_MODEL_NAME", "gpt-5"), "messages": messages}
