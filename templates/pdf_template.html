@@ -6,9 +6,14 @@
       <title>KI-Status-Report</title>
       <style>
         :root{
-          --brand-blue:#1f66ff; --brand-green:#18a999; --ink:#0a122a; 
---muted:#5b6b7a;
-          --bg:#f6f9fc; --card:#ffffff; --border:#e5ecf4;
+          /* Updated brand colours to match the website: deep blue and soft green */
+          --brand-blue:#0B314F;
+          --brand-green:#62C6A4;
+          --ink:#0a122a;
+          --muted:#5b6b7a;
+          --bg:#f6f9fc;
+          --card:#ffffff;
+          --border:#e5ecf4;
         }
         *{box-sizing:border-box}
         html,body{margin:0;padding:0;font:14px/1.55 Inter,system-ui,-apple-
@@ -58,11 +63,14 @@ radius:12px;padding:12px}
         /* KPI-Tiles */
         .kpi-grid{display:grid;grid-template-columns:repeat(auto-
 fit,minmax(110px,1fr));gap:12px;margin-top:.6rem}
-        .kpi-item{background:var(--card);border:1px solid var(--border);border-
-radius:12px;padding:10px;text-align:center}
-        .kpi-item .kpi-label{font-size:12px;color:var(--muted);margin-
-bottom:2px}
-        .kpi-item .kpi-value{font-size:20px;font-weight:700}
+        .kpi-item{border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
+        /* Colourful KPI cards: assign different tones to the first four items */
+        .kpi-item:nth-child(1){background:var(--brand-blue);color:#fff;}
+        .kpi-item:nth-child(2){background:#355E8C;color:#fff;}
+        .kpi-item:nth-child(3){background:var(--brand-green);color:#fff;}
+        .kpi-item:nth-child(4){background:#A0D9C9;color:#fff;}
+        .kpi-item .kpi-value{font-size:20px;font-weight:700;margin-bottom:2px}
+        .kpi-item .kpi-label{font-size:12px;font-weight:500;opacity:.95}
         /* Benchmark bars */
         .benchmark-bars{margin-top:.6rem}
         .benchmark-row{display:flex;align-items:center;margin-bottom:6px;font-size:12px}
@@ -154,13 +162,23 @@ alt="Badge" style="height:38px">{% endif %}</div>
 
         <!-- One-Pager: Executive & Radar -->
         <div class="grid cols-2 onepager">
+          {# Executive Summary card #}
           {% if exec_summary_html and exec_summary_html|trim %}
           <div class="card">
             <h2>Executive Summary</h2>
-            <div>{{ exec_summary_html|safe }}
-{% if benchmarks and benchmarks.items()|length > 0 %}
-<p><b>KPI-Überblick:</b> {% for key, b in benchmarks.items() %}{{ key }} {{ b.self }}% ( {{ 'hoch' if (b.self|float) >= 75 else ('mittel' if (b.self|float) >= 50 else 'niedrig') }}; Branchenschnitt {{ b.industry }}% ){% if not loop.last %} · {% endif %}{% endfor %}</p>
-{% endif %}</div>
+            {% if benchmarks and benchmarks.items()|length > 0 %}
+            <div class="kpi-grid">
+              {% for key, b in benchmarks.items() %}
+              <div class="kpi-item">
+                <div class="kpi-value">{{ b.self }}%</div>
+                <div class="kpi-label">{{ key }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+            <div class="exec-content" style="margin-top:.6rem">
+              {{ exec_summary_html|safe }}
+            </div>
           </div>
           {% endif %}
           {# Dimension card removed in the Gold‑Standard. #}
