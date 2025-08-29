@@ -78,7 +78,7 @@ def _sanitize_text(value: str) -> str:
     # For example, GPT‑3 or GPT‑Analyse is replaced by "LLM‑gestützte Auswertung"
     # to stay vendor neutral.  The replacements apply across all languages.
     replacements = {
-        # Vendor-specific model names
+        # Vendor-specific model names and phrases
         "GPT-3": "LLM-gestützte Auswertung",
         "GPT‑3": "LLM-gestützte Auswertung",
         # Analysis phrasing
@@ -99,7 +99,28 @@ def _sanitize_text(value: str) -> str:
         "GPT-Prototyp": "KI-Prototyp",
         "GPT‑Prototyp": "KI-Prototyp",
         "GPT-Prototypen": "KI-Prototypen",
-        "GPT‑Prototypen": "KI-Prototypen"
+        "GPT‑Prototypen": "KI-Prototypen",
+        # Gestützte phrasing (both dashed and hyphenated variations)
+        "GPT-gestützt": "LLM-gestützte",
+        "GPT‑gestützt": "LLM-gestützte",
+        "GPT-gestützte": "LLM-gestützte",
+        "GPT‑gestützte": "LLM-gestützte",
+        "GPT-gestützten": "LLM-gestützten",
+        "GPT‑gestützten": "LLM-gestützten",
+        # Combined phrases with Auswertung/Technologie
+        "GPT-gestützte Auswertung": "LLM-gestützte Auswertung",
+        "GPT‑gestützte Auswertung": "LLM-gestützte Auswertung",
+        "GPT-gestützte Technologie": "LLM-gestützte Technologie",
+        "GPT‑gestützte Technologie": "LLM-gestützte Technologie",
+        # Portal/Flow terminology
+        "GPT-Portal": "KI-Portal",
+        "GPT‑Portal": "KI-Portal",
+        "GPT-Flow": "KI-Flow",
+        "GPT‑Flow": "KI-Flow",
+        # Additional past participle forms (lowercase variants)
+        "gpt-ausgewertete": "LLM-gestützte",
+        "gpt-ausgewerteten": "LLM-gestützten",
+        "gpt-gestützt": "LLM-gestützte"
     }
     for old, new in replacements.items():
         if old in text:
