@@ -144,7 +144,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
       <div class="container">
         <!-- Cover mit großem Gauge -->
         <div class="card">
-          <h2>Ihr KI-Status-Überblick</h2>
+          <h2 id="overview">Ihr KI-Status-Überblick</h2>
 
           {% if preface %}<div style="margin-top:.6rem">{{ preface|safe 
 }}</div>{% endif %}
@@ -155,7 +155,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
 
         {% if toc_html and toc_html|trim %}
           <div class="card toc-card">
-            <h2>Inhaltsverzeichnis</h2>
+            <h2 id="toc">Inhaltsverzeichnis</h2>
             {{ toc_html|safe }}
           </div>
         {% endif %}
@@ -165,7 +165,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
           {# Executive Summary card #}
           {% if exec_summary_html and exec_summary_html|trim %}
           <div class="card">
-            <h2>Executive Summary</h2>
+            <h2 id="exec-summary">Executive Summary</h2>
             {% if benchmarks and benchmarks.items()|length > 0 %}
             <div class="kpi-grid">
               {% for key, b in benchmarks.items() %}
@@ -189,11 +189,11 @@ alt="Badge" style="height:38px">{% endif %}</div>
 risks_html|trim) %}
         <div class="grid cols-2 section">
           <div class="card">
-            <h2>⚡ Quick Wins</h2>
+            <h2 id="quickwins">⚡ Quick Wins</h2>
             <div>{{ (quick_wins_html or '')|safe }}</div>
           </div>
           <div class="card">
-            <h2>⚠️ Hauptrisiken</h2>
+            <h2 id="risks">⚠️ Hauptrisiken</h2>
             <div>{{ (risks_html or '')|safe }}</div>
           </div>
         </div>
@@ -202,13 +202,13 @@ risks_html|trim) %}
         <div class="grid cols-2 section">
           {% if recommendations_html and recommendations_html|trim %}
           <div class="card">
-            <h2>Empfehlungen (Top 5) </h2>
+            <h2 id="recommendations">Empfehlungen (Top 5) </h2>
             <div>{{ recommendations_html|safe }}</div>
           </div>
           {% endif %}
           {% if roadmap_html and roadmap_html|trim %}
           <div class="card">
-            <h2>Roadmap</h2>
+            <h2 id="roadmap">Roadmap</h2>
             {% if timeline and (timeline.t30 or timeline.t90 or timeline.t365) 
 %}
             <div class="swimlane">
@@ -229,7 +229,7 @@ risks_html|trim) %}
         <!-- Förderprogramme & Tools (mit Fallback) -->
         <div class="grid cols-2 section">
           <div class="card">
-            <h2>Förderprogramme (Auswahl)</h2>
+            <h2 id="funding">Förderprogramme (Auswahl)</h2>
             {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
               <table>
                 <thead>
@@ -274,7 +274,7 @@ risks_html|trim) %}
           </div>
 
           <div class="card">
-            <h2>KI-Tools &amp; Software</h2>
+            <h2 id="tools">KI-Tools &amp; Software</h2>
             {% if tools_table and tools_table|length>0 %}
               <table>
                 <thead>
@@ -303,21 +303,21 @@ risks_html|trim) %}
         <!-- Vision separat, nicht doppelt -->
         {% if vision_html %}
           <div class="card section">
-            <h2>Vision</h2>
+            <h2 id="vision">Vision</h2>
             <div class="vision-card">{{ vision_html|safe }}</div>
           </div>
         {% endif %}
 
         {% if sections_html %}
           <div class="card section">
-            <h2>Weitere Kapitel</h2>
+            <h2 id="sections">Weitere Kapitel</h2>
             <div>{{ sections_html|safe }}</div>
           </div>
         {% endif %}
 
         {% if ueber_mich_html and ueber_mich_html|trim %}
           <div class="card section">
-            <h2>Leistung &amp; Nachweis</h2>
+            <h2 id="about">Leistung &amp; Nachweis</h2>
             <div>{{ ueber_mich_html|safe }}</div>
             {# QR-Code removed in Gold-Standard #}
           </div>
@@ -325,7 +325,7 @@ risks_html|trim) %}
 
         {% if glossary_html and glossary_html|trim %}
           <div class="card section">
-            <h2>Glossar</h2>
+            <h2 id="glossary">Glossar</h2>
             <div>{{ glossary_html|safe }}</div>
           </div>
         {% endif %}

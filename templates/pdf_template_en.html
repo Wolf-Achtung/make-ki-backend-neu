@@ -134,7 +134,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
       <div class="container">
         <!-- Cover: Gauge -->
         <div class="card">
-          <h2>Your AI-readiness at a glance</h2>
+          <h2 id="overview">Your AI-readiness at a glance</h2>
 
           {% if preface %}<div style="margin-top:.6rem">{{ preface|safe 
 }}</div>{% endif %}
@@ -145,7 +145,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
 
         {% if toc_html and toc_html|trim %}
           <div class="card toc-card">
-            <h2>Table of contents</h2>
+            <h2 id="toc">Table of contents</h2>
             {{ toc_html|safe }}
           </div>
         {% endif %}
@@ -154,7 +154,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
           {# Executive summary card #}
           {% if exec_summary_html and exec_summary_html|trim %}
           <div class="card">
-            <h2>Executive summary</h2>
+            <h2 id="exec-summary">Executive summary</h2>
             {% if benchmarks and benchmarks.items()|length > 0 %}
             <div class="kpi-grid">
               {% for key, b in benchmarks.items() %}
@@ -176,19 +176,19 @@ alt="Badge" style="height:38px">{% endif %}</div>
         {% if (quick_wins_html and quick_wins_html|trim) or (risks_html and 
 risks_html|trim) %}
         <div class="grid cols-2 section">
-          <div class="card"><h2>⚡ Quick wins</h2><div>{{ (quick_wins_html or 
+          <div class="card"><h2 id="quickwins">⚡ Quick wins</h2><div>{{ (quick_wins_html or 
  '')|safe }}</div></div>
-          <div class="card"><h2>⚠️ Key risks</h2><div>{{ (risks_html or '')|safe
+          <div class="card"><h2 id="risks">⚠️ Key risks</h2><div>{{ (risks_html or '')|safe
   }}</div></div>
         </div>
         {% endif %}
         <div class="grid cols-2 section">
           {% if recommendations_html and recommendations_html|trim %}
-            <div class="card"><h2>Recommendations (Top 5) </h2><div>{{ 
+            <div class="card"><h2 id="recommendations">Recommendations (Top 5) </h2><div>{{ 
  recommendations_html|safe }}</div></div>
           {% endif %}
           {% if roadmap_html and roadmap_html|trim %}
-            <div class="card"><h2>Roadmap</h2>
+            <div class="card"><h2 id="roadmap">Roadmap</h2>
               {% if timeline and (timeline.t30 or timeline.t90 or timeline.t365)
   %}
               <div class="swimlane">
@@ -208,7 +208,7 @@ risks_html|trim) %}
 
         <div class="grid cols-2 section">
           <div class="card">
-            <h2>Funding programmes</h2>
+            <h2 id="funding">Funding programmes</h2>
             {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
               <table>
                 <thead>
@@ -253,7 +253,7 @@ risks_html|trim) %}
           </div>
 
           <div class="card">
-            <h2>AI tools</h2>
+            <h2 id="tools">AI tools</h2>
             {% if tools_table and tools_table|length>0 %}
               <table>
                 <thead>
@@ -311,21 +311,21 @@ endif %}"></td>
 
         {% if vision_html %}
           <div class="card section">
-            <h2>Visionary recommendation</h2>
+            <h2 id="vision">Visionary recommendation</h2>
             <div class="vision-card">{{ vision_html|safe }}</div>
           </div>
         {% endif %}
 
         {% if sections_html %}
           <div class="card section">
-            <h2>Additional sections</h2>
+            <h2 id="sections">Additional sections</h2>
             <div>{{ sections_html|safe }}</div>
           </div>
         {% endif %}
 
         {% if ueber_mich_html and ueber_mich_html|trim %}
           <div class="card section">
-            <h2>About me</h2>
+            <h2 id="about">About me</h2>
             <div>{{ ueber_mich_html|safe }}</div>
             {# QR-Code removed in Gold-Standard #}
           </div>
@@ -333,7 +333,7 @@ endif %}"></td>
 
         {% if glossary_html and glossary_html|trim %}
           <div class="card section">
-            <h2>Glossary</h2>
+            <h2 id="glossary">Glossary</h2>
             <div>{{ glossary_html|safe }}</div>
           </div>
         {% endif %}
