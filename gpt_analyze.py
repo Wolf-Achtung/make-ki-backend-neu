@@ -421,8 +421,25 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> Lis
             t_ok = True if not targets else any(t in zg for t in targets)
             r_ok = True if not region else (reg == region or reg == "bund")
             if t_ok and r_ok:
-                rows.append({"name":row.get("Name",""),"zielgruppe":row.get("Zielgruppe",""),
-                             "foerderhoehe":row.get("Fördersumme (€)",""),"link":row.get("Link","")})
+                # Assemble a more detailed funding record.  In the Gold‑Standard report
+                # the funding table should include additional context such as the
+                # programme region, a short description of the purpose (Beschreibung)
+                # and the submission deadline.  These fields are optional in the
+                # CSV but are included here when present.  We also retain the
+                # original funding amount column for continuity.
+                rows.append({
+                    "name": row.get("Name", ""),
+                    "zielgruppe": row.get("Zielgruppe", ""),
+                    "region": row.get("Region", ""),
+                    "foerderhoehe": row.get("Fördersumme (€)", ""),
+                    # Use the description as a simple purpose indicator; fall back to
+                    # an empty string if none exists.  The field name may vary
+                    # across CSVs (e.g. "Beschreibung" in German).  Use both
+                    # German and English keys for robustness.
+                    "zweck": row.get("Beschreibung", row.get("Purpose", "")),
+                    "deadline": row.get("Deadline", ""),
+                    "link": row.get("Link", "")
+                })
     return rows[:max_items]
 
 def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int = 8) -> List[Dict[str, str]]:
@@ -491,7 +508,19 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                 return mapping.get(n, v)
             cost = _map_cost(cost, lang)
             link = row.get("Link/Website") or row.get("Link") or row.get("Website") or ""
-            out.append({"name": name, "usecase": usecase, "cost": cost, "link": link})
+            # Attempt to extract a data residency / protection hint.  Some CSVs
+            # include a column such as "Datenschutz" or "Datensitz" to indicate
+            # whether the tool is hosted in the EU or abroad.  If not present,
+            # fall back to an empty string.  This value will populate the
+            # "Datensitz" column in the Gold‑Standard report.
+            datenschutz = row.get("Datenschutz") or row.get("Datensitz") or row.get("Datensitz (EU/US)") or ""
+            out.append({
+                "name": name,
+                "usecase": usecase,
+                "cost": cost,
+                "link": link,
+                "datenschutz": datenschutz
+            })
     return out[:max_items]
 
 def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
