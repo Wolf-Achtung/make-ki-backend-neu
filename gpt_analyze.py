@@ -271,11 +271,23 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     style = "\n\n---\n" + base_rules
 
     if chapter == "executive_summary":
-        style += ("\n- Gliedere in: <h3>Was tun?</h3><ul>…</ul><h3>Warum?</h3><p>…</p><h3>Nächste 3 Schritte</h3><ol>…</ol>"
-                  "\n- Maximal 5 Bullet-Points pro Liste. Fette jeweils das erste Schlüsselwort."
-                  if is_de else
-                  "\n- Structure: <h3>What to do?</h3><ul>…</ul><h3>Why?</h3><p>…</p><h3>Next 3 steps</h3><ol>…</ol>"
-                  "\n- Max 5 bullets per list. Bold the first keyword per bullet.")
+        # Das Executive Summary wird im Gold‑Standard in vier klare Abschnitte unterteilt.  
+        # Für DE: KPI‑Überblick (1–2 Sätze), Top‑Chancen (3 bullets), Zentrale Risiken (2–3 bullets) und Nächste Schritte (nummerierte Liste).  
+        # Für EN: KPI overview (1–2 sentences), Opportunities, Risks and Next steps.  
+        # Wir reduzieren die Anzahl der Punkte pro Liste, damit der Bericht fokussiert und übersichtlich bleibt.
+        style += (
+            "\n- Gliedere in: <h3>KPI‑Überblick</h3><p>…</p>"
+            "<h3>Top‑Chancen</h3><ul>…</ul>"
+            "<h3>Zentrale Risiken</h3><ul>…</ul>"
+            "<h3>Nächste Schritte</h3><ol>…</ol>"
+            "\n- Maximal 3 Punkte pro Liste. Fette jeweils das erste Schlüsselwort."
+            if is_de else
+            "\n- Structure: <h3>KPI overview</h3><p>…</p>"
+            "<h3>Opportunities</h3><ul>…</ul>"
+            "<h3>Risks</h3><ul>…</ul>"
+            "<h3>Next steps</h3><ol>…</ol>"
+            "\n- Max 3 bullets per list. Bold the first keyword per bullet."
+        )
 
     if chapter == "vision":
         style += ("\n- Form: 1 kühne Idee (Titel + 1 Satz); 1 MVP (2–4 Wochen, grobe Kosten); 3 KPIs in <ul>. "
