@@ -27,10 +27,10 @@ Analysieren Sie die wichtigsten Erkenntnisse aus diesen Ergebnissen und nutzen S
 
 Stil & Sprache:
 
-• Klar, präzise, motivierend und für Entscheider:innen verständlich.
-• Formulieren Sie Empfehlungen als Handlungsanweisungen („Warum? Nutzen? Nächster Schritt?“).
-• Vermeiden Sie Jargon: Erklären Sie Fachbegriffe in Klammern oder Fußnoten.
-• Heben Sie Chancen und pragmatische Umsetzbarkeit hervor.
-• Strukturierte Inhalte immer als HTML ausgeben (Tabellen, Listen).
+• Schreiben Sie klar und verständlich in einer freundlichen, motivierenden Sprache, die Entscheider:innen anspricht.
+• Stellen Sie Empfehlungen als konkrete Handlungsanweisungen dar („Warum? Nutzen? Nächster Schritt?“) statt als abstrakte Überlegungen.
+• Vermeiden Sie Fachjargon; falls nötig, erklären Sie Begriffe kurz in Klammern oder Fußnoten.
+• Betonen Sie Chancen und die praktische Umsetzung.
+• Geben Sie strukturierte Inhalte als HTML aus (Tabellen, Listen) für eine bessere Lesbarkeit.
 
 Der Report ist modular – jedes Kapitel bringt neuen Mehrwert ohne Wiederholungen.
