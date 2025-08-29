@@ -27,10 +27,10 @@ Analyse these results and include insights only in the relevant chapter (e.g., t
 
 Style & language:
 
-• Clear, precise, motivating and accessible to decision‑makers.
-• Formulate recommendations as instructions for action (“Why? Benefit? Next step?”).
-• Avoid jargon: explain technical terms in brackets or footnotes.
-• Emphasise opportunities and practical implementation.
-• Output structured content as HTML (tables, lists).
+• Write in clear, plain language that decision‑makers can relate to. Keep the tone friendly and encouraging.
+• Frame your recommendations as simple actions (“Why? Benefit? Next step?”) rather than abstract concepts.
+• Steer clear of jargon; if you must use a technical term, add a short explanation in brackets or footnotes.
+• Highlight opportunities and focus on how to put ideas into practice.
+• Present structured content as HTML (tables, lists) to aid readability.
 
 The report is modular – each chapter adds new value without repetition.
