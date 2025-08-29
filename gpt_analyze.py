@@ -535,16 +535,46 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     if region:
         filtered = sorted(filtered, key=lambda p: (0 if (p.get("Region", "").lower() == region) else (1 if p.get("Region", "").lower() == "bund" else 2)))
     selected = filtered[:max_items]
-    if not selected: return ""
+    if not selected:
+        return ""
+    # Determine current month/year for the 'Stand' note.  This helps the
+    # reader understand when the funding list was generated.  We fall back
+    # gracefully if obtaining the current date fails.
+    try:
+        now = datetime.now()
+        if lang == "de":
+            stand = now.strftime("%m/%Y")
+        else:
+            # Use full month name in English for clarity
+            stand = now.strftime("%B %Y")
+    except Exception:
+        stand = ""
     title = "Dynamische Förderprogramme" if lang == "de" else "Dynamic funding programmes"
-    out = [f"<h3>{title}</h3>","<ul>"]
+    out = [f"<h3>{title}</h3>", "<ul>"]
     for p in selected:
-        name = p.get("Name",""); desc = (p.get("Beschreibung","") or "").strip()
-        link = p.get("Link",""); grant = p.get("Fördersumme (€)","")
-        line = (f"<b>{name}</b>: {desc} – Förderhöhe: {grant}" if lang=="de" else f"<b>{name}</b>: {desc} – Funding amount: {grant}")
-        if link: line += f' – <a href="{link}" target="_blank">Link</a>'
+        name = p.get("Name", "")
+        desc = (p.get("Beschreibung", "") or "").strip()
+        link = p.get("Link", "")
+        grant = p.get("Fördersumme (€)", "")
+        # Construct the description based on language and availability of a grant value
+        if lang == "de":
+            line = f"<b>{name}</b>: {desc}"
+            if grant:
+                line += f" – Förderhöhe: {grant}"
+        else:
+            line = f"<b>{name}</b>: {desc}"
+            if grant:
+                line += f" – Funding amount: {grant}"
+        if link:
+            line += f' – <a href="{link}" target="_blank">Link</a>'
         out.append(f"<li>{line}</li>")
     out.append("</ul>")
+    # Append a note about when the funding list was compiled
+    if stand:
+        if lang == "de":
+            out.append(f"<p style=\"font-size:10px;color:var(--muted);margin-top:.2rem\">Stand: {stand}</p>")
+        else:
+            out.append(f"<p style=\"font-size:10px;color:var(--muted);margin-top:.2rem\">Updated: {stand}</p>")
     return "\n".join(out)
 # gpt_analyze.py — Gold-Standard (Teil 4/4)
 
@@ -959,6 +989,9 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # Fallback: wenn keine Automatisierungs-Benchmark erkannt, setze einen neutralen Standardwert (35%).
     if aut_bench == 0:
         aut_bench = 35
+    # Setze für den Digitalisierungs-Benchmark einen neutralen Wert (50 %), falls er nicht vorhanden ist.
+    if dig_bench == 0:
+        dig_bench = 50
     # Papierlos und Know-how haben keine Branchenwerte in YAML; setze 50 als neutralen Richtwert
     paper_bench = 50
     know_bench = 50
