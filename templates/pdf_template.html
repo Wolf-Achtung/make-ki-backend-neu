@@ -113,7 +113,12 @@ blue);color:#fff;font-size:10px;white-space:nowrap}
     a { word-break: break-word; }
 
       </style>
-    </head>
+    <style>
+.risk-low{background:#D7F3E8!important;}
+.risk-mid{background:#CFE3FF!important;}
+.risk-high{background:#0D3B66!important;color:#fff!important;}
+</style>
+</head>
     <body>
       <div class="header">
         <div class="inner">
@@ -159,7 +164,10 @@ alt="Badge" style="height:38px">{% endif %}</div>
           {% if exec_summary_html and exec_summary_html|trim %}
           <div class="card">
             <h2>Executive Summary</h2>
-            <div>{{ exec_summary_html|safe }}</div>
+            <div>{{ exec_summary_html|safe }}
+{% if benchmarks and benchmarks.items()|length > 0 %}
+<p><b>KPI-Überblick:</b> {% for key, b in benchmarks.items() %}{{ key }} {{ b.self }}% ( {{ 'hoch' if (b.self|float) >= 75 else ('mittel' if (b.self|float) >= 50 else 'niedrig') }}; Branchenschnitt {{ b.industry }}% ){% if not loop.last %} · {% endif %}{% endfor %}</p>
+{% endif %}</div>
           </div>
           {% endif %}
           <div class="card">
@@ -256,6 +264,8 @@ risks_html|trim) %}
                 {% endfor %}
                 </tbody>
               </table>
+<p class="caption">Stand: {{ funding_stand or datum }}</p>
+
               {% if funding_badges and funding_badges|length>0 %}
               <div class="funding-badges" style="margin-top:.2rem">
                 {% for b in funding_badges %}
@@ -282,7 +292,7 @@ risks_html|trim) %}
                 <tbody>
                 {% for t in tools_table %}
                   <tr>
-                    <td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.datenschutz }}</td><td>{{ t.cost }}</td>
+                    <td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.datenschutz or 'n/a' }}</td><td>{{ t.cost or 'n/a' }}</td>
                     <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
                   </tr>
                 {% endfor %}

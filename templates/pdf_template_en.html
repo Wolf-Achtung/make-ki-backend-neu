@@ -98,7 +98,12 @@ blue);color:#fff;font-size:10px;white-space:nowrap}
     tr { page-break-inside: avoid; }
     a { word-break: break-word; }
       </style>
-    </head>
+    <style>
+.risk-low{background:#D7F3E8!important;}
+.risk-mid{background:#CFE3FF!important;}
+.risk-high{background:#0D3B66!important;color:#fff!important;}
+</style>
+</head>
     <body>
       <div class="header">
         <div class="inner">
@@ -227,6 +232,8 @@ risks_html|trim) %}
                 {% endfor %}
                 </tbody>
               </table>
+<p class="caption">As of: {{ funding_stand or today }}</p>
+
               {% if funding_badges and funding_badges|length>0 %}
               <div class="funding-badges" style="margin-top:.2rem">
                 {% for b in funding_badges %}
@@ -259,8 +266,8 @@ risks_html|trim) %}
                   <tr>
                     <td>{{ t.name }}</td>
                     <td>{{ t.usecase }}</td>
-                    <td>{{ t.datenschutz }}</td>
-                    <td>{{ t.cost }}</td>
+                    <td>{{ t.datenschutz or 'n/a' }}</td>
+                    <td>{{ t.cost or 'n/a' }}</td>
                     <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
