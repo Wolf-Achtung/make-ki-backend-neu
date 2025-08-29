@@ -231,18 +231,33 @@ risks_html|trim) %}
             <h2>Förderprogramme (Auswahl)</h2>
             {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
               <table>
-                <thead><tr><th>Programm</th><th>Zielgruppe</th><th>Förderhöhe</th><th>Link</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Programm</th>
+                    <th>Zielgruppe</th>
+                    <th>Region</th>
+                    <th>Förderhöhe</th>
+                    <th>Zweck</th>
+                    <th>Deadline</th>
+                    <th>Link</th>
+                  </tr>
+                </thead>
                 <tbody>
                 {% for p in foerderprogramme_table %}
-                  <tr><td>{{ p.name }}</td><td>{{ p.zielgruppe }}</td><td>{{ 
-p.foerderhoehe }}</td>
-                    <td>{% if p.link %}<a href="{{ p.link }}">Link</a>{% endif %}</td></tr>
+                  <tr>
+                    <td>{{ p.name }}</td>
+                    <td>{{ p.zielgruppe }}</td>
+                    <td>{{ p.region }}</td>
+                    <td>{{ p.foerderhoehe }}</td>
+                    <td>{{ p.zweck }}</td>
+                    <td>{{ p.deadline }}</td>
+                    <td>{% if p.link %}<a href="{{ p.link }}">Link</a>{% endif %}</td>
+                  </tr>
                 {% endfor %}
                 </tbody>
               </table>
-              <p style="font-size:9px;color:var(--muted);margin-top:.2rem">Kostenangaben: sehr gering&nbsp;=&nbsp;Kosten &lt; €100/Monat; sehr hoch&nbsp;=&nbsp;&gt; €1.000/Monat</p>
               {% if funding_badges and funding_badges|length>0 %}
-              <div class="funding-badges">
+              <div class="funding-badges" style="margin-top:.2rem">
                 {% for b in funding_badges %}
                   <span class="funding-badge">{{ b }}</span>
                 {% endfor %}
@@ -256,22 +271,24 @@ p.foerderhoehe }}</td>
           </div>
 
           <div class="card">
-            <h2>KI-Tools & Software</h2>
+            <h2>KI-Tools &amp; Software</h2>
             {% if tools_table and tools_table|length>0 %}
               <table>
                 <thead>
-  <tr>
-    <th>Tool</th><th>Einsatz</th><th>Kosten</th><th>Link</th>
-  </tr>
-</thead>
+                  <tr>
+                    <th>Tool</th><th>Einsatzgebiet</th><th>Datensitz</th><th>Kosten</th><th>Link</th>
+                  </tr>
+                </thead>
                 <tbody>
                 {% for t in tools_table %}
-                  <tr><td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.cost
-  }}</td>
-                    <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td></tr>
+                  <tr>
+                    <td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.datenschutz }}</td><td>{{ t.cost }}</td>
+                    <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
+                  </tr>
                 {% endfor %}
                 </tbody>
               </table>
+              <p style="font-size:9px;color:var(--muted);margin-top:.2rem">Kostenkategorien: sehr gering = &lt; €100/Monat; gering = €100–500/Monat; mittel = €500–1.000/Monat; hoch = &gt; €1.000/Monat.</p>
             {% else %}
               <p><em>Tool-Liste wird dynamisch ergänzt.</em></p>
             {% endif %}
@@ -299,6 +316,7 @@ p.foerderhoehe }}</td>
             {% endfor %}
             </tbody>
           </table>
+          <p style="font-size:9px;color:var(--muted);margin-top:.2rem">Niedrig&nbsp;=&nbsp;minimales Risiko; Mittel&nbsp;=&nbsp;moderates Risiko; Hoch&nbsp;=&nbsp;signifikantes Risiko.</p>
         </div>
         {% endif %}
 
