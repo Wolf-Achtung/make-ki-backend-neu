@@ -78,16 +78,28 @@ def _sanitize_text(value: str) -> str:
     # For example, GPT‑3 or GPT‑Analyse is replaced by "LLM‑gestützte Auswertung"
     # to stay vendor neutral.  The replacements apply across all languages.
     replacements = {
+        # Vendor-specific model names
         "GPT-3": "LLM-gestützte Auswertung",
         "GPT‑3": "LLM-gestützte Auswertung",
+        # Analysis phrasing
         "GPT-Analyse": "LLM-gestützte Analyse",
         "GPT‑Analyse": "LLM-gestützte Analyse",
+        # Technology phrasing
         "GPT-Technologie": "LLM-gestützte Technologie",
         "GPT‑Technologie": "LLM-gestützte Technologie",
+        # Generic base phrasing
         "GPT basierte": "LLM-gestützte",
         "GPT‑basierte": "LLM-gestützte",
+        # Past participle variations
         "GPT-ausgewerteten": "LLM-gestützten",
-        "GPT‑ausgewerteten": "LLM-gestützten"
+        "GPT‑ausgewerteten": "LLM-gestützten",
+        "GPT-ausgewertete": "LLM-gestützte",
+        "GPT‑ausgewertete": "LLM-gestützte",
+        # Prototype references
+        "GPT-Prototyp": "KI-Prototyp",
+        "GPT‑Prototyp": "KI-Prototyp",
+        "GPT-Prototypen": "KI-Prototypen",
+        "GPT‑Prototypen": "KI-Prototypen"
     }
     for old, new in replacements.items():
         if old in text:
@@ -923,6 +935,9 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     except Exception:
         # Wenn Benchmarks nicht geparst werden können, verbleiben sie bei 0
         pass
+    # Fallback: wenn keine Automatisierungs-Benchmark erkannt, setze einen neutralen Standardwert (35%).
+    if aut_bench == 0:
+        aut_bench = 35
     # Papierlos und Know-how haben keine Branchenwerte in YAML; setze 50 als neutralen Richtwert
     paper_bench = 50
     know_bench = 50
