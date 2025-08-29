@@ -27,7 +27,7 @@ decoration:none;border-bottom:1px solid rgba(31,102,255,.35)}
         .card{background:var(--card);border:1px solid var(--border);border-
 radius:14px;padding:16px}
         .grid{display:grid;gap:14px}
-.grid.cols-2{grid-template-columns:1fr 1fr}
+.grid.cols-2{grid-template-columns:1fr}
         .footer{margin-top:18px;padding-top:8px;border-top:1px dashed 
 var(--border);font-size:12px;color:#6b7280}
         table{width:100%;border-collapse:collapse;margin:.4rem 0}
@@ -49,6 +49,13 @@ radius:12px;padding:12px}
         /* KPI Tiles */
         .kpi-grid{display:grid;grid-template-columns:repeat(auto-
 fit,minmax(110px,1fr));gap:12px;margin-top:.6rem}
+/* KPI progress bar + benchmark marker */
+.kpi-progress{margin-top:.35rem}
+.kpi-bar-wrap{position:relative;height:6px;background:#e7eef5;border-radius:4px;overflow:hidden}
+.kpi-bar{position:absolute;height:100%;left:0;top:0;background:var(--brand-green);width:0%}
+.kpi-benchmark-marker{position:absolute;top:-3px;width:2px;height:12px;background:#0B314F;opacity:.8}
+.kpi-caption{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:.2rem}
+
         .kpi-item{border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
         /* Colourful KPI cards: use brand colours for up to four metrics */
         .kpi-item:nth-child(1){background:var(--brand-blue);color:#fff;}
@@ -134,7 +141,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
       <div class="container">
         <!-- Cover: Gauge -->
         <div class="card">
-          <h2 id="overview">Your AI-readiness at a glance</h2>
+          <h2>Your AI-readiness at a glance</h2>
 
           {% if preface %}<div style="margin-top:.6rem">{{ preface|safe 
 }}</div>{% endif %}
@@ -145,7 +152,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
 
         {% if toc_html and toc_html|trim %}
           <div class="card toc-card">
-            <h2 id="toc">Table of contents</h2>
+            <h2>Table of contents</h2>
             {{ toc_html|safe }}
           </div>
         {% endif %}
@@ -159,7 +166,16 @@ alt="Badge" style="height:38px">{% endif %}</div>
             <div class="kpi-grid">
               {% for key, b in benchmarks.items() %}
               <div class="kpi-item">
-                <div class="kpi-value">{{ b.self }}%</div>
+                <div class="kpi-value">{{ b.self }}%
+              <div class="kpi-progress">
+                <div class="kpi-bar-wrap">
+                  <div class="kpi-bar" style="width: {{ b.self }}%"></div>
+                  <div class="kpi-benchmark-marker" style="left: calc({{ b.benchmark|default(0) }}% - 1px)"></div>
+                </div>
+                <div class="kpi-caption">
+                  <span>Your score</span><span>Benchmark {{ b.benchmark|default(0) }}%</span>
+                </div>
+              </div></div>
                 <div class="kpi-label">{{ key }}</div>
               </div>
               {% endfor %}
@@ -169,6 +185,13 @@ alt="Badge" style="height:38px">{% endif %}</div>
               {{ exec_summary_html|safe }}
             </div>
           </div>
+
+<div class="card section roi_box">
+  <h3>ROI quick estimate</h3>
+  <p><b>{{ roi.roi_low }}–{{ roi.roi_high }} €</b> / 12 Monate (Teamgröße: {{ roi.headcount }}).</p>
+  <p style="font-size:12px;color:var(--muted)">Assumptions: {hours_low}–{hours_high}h/week per person, {rate_low}–{rate_high} €/h, tool cost ~{annual_tool_cost} €/year.</p>
+</div>
+
           {% endif %}
           {# Dimensions card removed in the Gold‑Standard. #}
         </div>
@@ -184,7 +207,7 @@ risks_html|trim) %}
         {% endif %}
         <div class="grid cols-2 section">
           {% if recommendations_html and recommendations_html|trim %}
-            <div class="card"><h2 id="recommendations">Recommendations (Top 5) </h2><div>{{ 
+            <div class="card"><h2>Recommendations (Top 5) </h2><div>{{ 
  recommendations_html|safe }}</div></div>
           {% endif %}
           {% if roadmap_html and roadmap_html|trim %}
@@ -208,7 +231,7 @@ risks_html|trim) %}
 
         <div class="grid cols-2 section">
           <div class="card">
-            <h2 id="funding">Funding programmes</h2>
+            <h2>Funding programmes</h2>
             {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
               <table>
                 <thead>
@@ -253,7 +276,7 @@ risks_html|trim) %}
           </div>
 
           <div class="card">
-            <h2 id="tools">AI tools</h2>
+            <h2>AI tools</h2>
             {% if tools_table and tools_table|length>0 %}
               <table>
                 <thead>
@@ -311,21 +334,21 @@ endif %}"></td>
 
         {% if vision_html %}
           <div class="card section">
-            <h2 id="vision">Visionary recommendation</h2>
+            <h2>Visionary recommendation</h2>
             <div class="vision-card">{{ vision_html|safe }}</div>
           </div>
         {% endif %}
 
         {% if sections_html %}
           <div class="card section">
-            <h2 id="sections">Additional sections</h2>
+            <h2>Additional sections</h2>
             <div>{{ sections_html|safe }}</div>
           </div>
         {% endif %}
 
         {% if ueber_mich_html and ueber_mich_html|trim %}
           <div class="card section">
-            <h2 id="about">About me</h2>
+            <h2>About me</h2>
             <div>{{ ueber_mich_html|safe }}</div>
             {# QR-Code removed in Gold-Standard #}
           </div>
@@ -333,7 +356,7 @@ endif %}"></td>
 
         {% if glossary_html and glossary_html|trim %}
           <div class="card section">
-            <h2 id="glossary">Glossary</h2>
+            <h2>Glossary</h2>
             <div>{{ glossary_html|safe }}</div>
           </div>
         {% endif %}
@@ -383,5 +406,11 @@ fill="#5b6b7a">${L[i]||''}</text>`;}
 fill="rgba(31,102,255,0.18)" stroke="#1f66ff" stroke-width="2"/>${lbl}`;
         })();
       -->
-    </body>
+    
+<footer style="margin-top:1.2rem;padding:10px 16px;border-top:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;align-items:center;">
+  <span>Questions about this report? Happy to help.</span>
+  <a href="https://ki-sicherheit.jetzt/termin" target="_blank" rel="noopener" style="background:var(--brand-blue);color:#fff;padding:6px 12px;border-radius:8px;text-decoration:none;">Book intro call</a>
+</footer>
+
+</body>
     </html>
