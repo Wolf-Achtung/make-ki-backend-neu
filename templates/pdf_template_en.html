@@ -103,6 +103,14 @@ blue);color:#fff;font-size:10px;white-space:nowrap}
 .risk-mid{background:#CFE3FF!important;}
 .risk-high{background:#0D3B66!important;color:#fff!important;}
 </style>
+<style>
+/* New layout rules: each section starts on a new page and has generous spacing */
+.section{
+  page-break-before: always;
+  break-before: page;
+  margin-top: 2rem;
+}
+</style>
 </head>
     <body>
       <div class="header">
@@ -127,12 +135,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
           {% if preface %}<div style="margin-top:.6rem">{{ preface|safe 
 }}</div>{% endif %}
           {% if kpis and kpis|length > 0 %}
-            <div class="kpi-grid">
-              {% for item in kpis %}
-                <div class="kpi-item"><div class="kpi-label">{{ item.label 
-}}</div><div class="kpi-value">{{ item.value }}</div></div>
-              {% endfor %}
-            </div>
+            {# KPI tiles removed in the Gold‑Standard.  KPI overview appears only in the Executive summary. #}
           {% endif %}
         </div>
 
@@ -145,28 +148,9 @@ alt="Badge" style="height:38px">{% endif %}</div>
 
         <div class="grid cols-2 onepager">
           {% if exec_summary_html and exec_summary_html|trim %}
-          <div class="card"><h2>Executive summary</h2><div>{{ 
-exec_summary_html|safe }}</div></div>
+          <div class="card"><h2>Executive summary</h2><div>{{ exec_summary_html|safe }}{% if benchmarks and benchmarks.items()|length > 0 %}<p><b>KPI overview:</b> {% for key, b in benchmarks.items() %}{{ key }} {{ b.self }}% ( {{ 'high' if (b.self|float) >= 75 else ('medium' if (b.self|float) >= 50 else 'low') }}; sector benchmark {{ b.industry }}% ){% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}</div></div>
           {% endif %}
-          <div class="card">
-            <h2>Dimensions</h2>
-            {# Radar chart removed in the Gold-Standard.  Only bar charts are rendered below. #}
-            {% if benchmarks and benchmarks.items()|length > 0 %}
-            <div class="benchmark-bars">
-              {% for key, b in benchmarks.items() %}
-                <div class="benchmark-row">
-                  <div class="benchmark-label">{{ key }}</div>
-                  <div class="benchmark-bar">
-                    <span class="you" style="width:{{ b.self }}%;"></span>
-                    <span class="avg" style="left:{{ b.industry }}%;"></span>
-                  </div>
-                </div>
-              {% endfor %}
-              <div class="caption" style="font-size:10px;margin-
-top:.25rem">Bars: your value (blue), sector benchmark (green)</div>
-            </div>
-            {% endif %}
-          </div>
+          {# Dimensions card removed in the Gold‑Standard. #}
         </div>
 
         {% if (quick_wins_html and quick_wins_html|trim) or (risks_html and 
@@ -280,7 +264,7 @@ risks_html|trim) %}
           </div>
         </div>
 
-        {% if risk_heatmap and risk_heatmap|length>0 %}
+{% if false and risk_heatmap and risk_heatmap|length>0 %}
         <div class="card section">
           <h2>Risk heatmap</h2>
           <table class="risk-table">

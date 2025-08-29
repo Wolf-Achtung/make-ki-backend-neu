@@ -42,7 +42,7 @@ radius:14px;padding:10px}
         .caption{font-size:12px;color:var(--muted);margin-top:.25rem}
         @page{size:A4 margin:16mm}
         .onepager{page-break-inside:avoid}
-        .section{page-break-inside:auto}
+        .section{page-break-inside:auto;page-break-before:always;break-before:page;margin-top:2rem}
         .toc-card{background:var(--card);border:1px dashed var(--border);border-
 radius:14px;padding:14px}
         .vision-card{background:linear-gradient(180deg, rgba(24,169,153,.08), 
@@ -94,15 +94,13 @@ bottom:2px}
           background:var(--brand-green);
           z-index:2;
         }
-        /* Risk heatmap */
-        .risk-table{width:100%;border-collapse:collapse;margin-top:.6rem;font-
-size:12px}
-        .risk-table th,.risk-table td{border:1px solid 
-var(--border);padding:6px;text-align:center}
+        /* Risk heatmap styles (kept for reference but no longer used) */
+        .risk-table{width:100%;border-collapse:collapse;margin-top:.6rem;font-size:12px}
+        .risk-table th,.risk-table td{border:1px solid var(--border);padding:6px;text-align:center}
         .risk-table th{background:var(--brand-blue);color:#fff}
-        .risk-low{background:#e5f3ff}
-        .risk-mid{background:#fff7e6}
-        .risk-high{background:#ffe5e5}
+        .risk-low{background:#D7F3E8!important;}
+        .risk-mid{background:#CFE3FF!important;}
+        .risk-high{background:#0D3B66!important;color:#fff!important;}
         /* Funding badges */
         .funding-badges{margin-top:.5rem;display:flex;flex-wrap:wrap;gap:6px}
         .funding-badge{padding:4px 8px;border-radius:8px;background:var(--brand-
@@ -143,12 +141,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
           {% if preface %}<div style="margin-top:.6rem">{{ preface|safe 
 }}</div>{% endif %}
           {% if kpis and kpis|length > 0 %}
-            <div class="kpi-grid">
-              {% for item in kpis %}
-                <div class="kpi-item"><div class="kpi-label">{{ item.label 
-}}</div><div class="kpi-value">{{ item.value }}</div></div>
-              {% endfor %}
-            </div>
+            {# KPI tiles removed in the Gold‑Standard.  The KPI overview appears only in the Executive Summary. #}
           {% endif %}
         </div>
 
@@ -170,25 +163,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
 {% endif %}</div>
           </div>
           {% endif %}
-          <div class="card">
-            <h2>Dimensionen</h2>
-            {# Radar chart removed in the Gold-Standard.  We keep only the bar chart below. #}
-            {% if benchmarks and benchmarks.items()|length > 0 %}
-            <div class="benchmark-bars">
-              {% for key, b in benchmarks.items() %}
-                <div class="benchmark-row">
-                  <div class="benchmark-label">{{ key }}</div>
-                  <div class="benchmark-bar">
-                    <span class="you" style="width:{{ b.self }}%;"></span>
-                    <span class="avg" style="left:{{ b.industry }}%;"></span>
-                  </div>
-                </div>
-              {% endfor %}
-              <div class="caption" style="font-size:10px;margin-
-top:.25rem">Balken: Ihr Wert (blau), Branchen-Benchmark (grün)</div>
-            </div>
-            {% endif %}
-          </div>
+          {# Dimension card removed in the Gold‑Standard. #}
         </div>
 
         <!-- Quick Wins & Risiken im 2-Spalten-Block -->
@@ -305,30 +280,7 @@ risks_html|trim) %}
           </div>
         </div>
 
-        {% if risk_heatmap and risk_heatmap|length>0 %}
-        <div class="card section">
-          <h2>Risiko-Heatmap</h2>
-          <table class="risk-table">
-            <thead>
-              <tr><th></th><th>Niedrig</th><th>Mittel</th><th>Hoch</th></tr>
-            </thead>
-            <tbody>
-            {% for row in risk_heatmap %}
-              <tr>
-                <td>{{ row.category }}</td>
-                <td class="{% if row.level == 'niedrig' %}risk-low{% endif 
-%}"></td>
-                <td class="{% if row.level == 'mittel' %}risk-mid{% endif 
-%}"></td>
-                <td class="{% if row.level == 'hoch' %}risk-high{% endif 
-%}"></td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-          <p style="font-size:9px;color:var(--muted);margin-top:.2rem">Niedrig&nbsp;=&nbsp;minimales Risiko; Mittel&nbsp;=&nbsp;moderates Risiko; Hoch&nbsp;=&nbsp;signifikantes Risiko.</p>
-        </div>
-        {% endif %}
+        {# Risk heatmap removed in the Gold‑Standard.  Key risks are described in the text instead. #}
 
         <!-- Vision separat, nicht doppelt -->
         {% if vision_html %}
