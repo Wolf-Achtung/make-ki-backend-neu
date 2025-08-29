@@ -21,6 +21,7 @@ Formuliere **eine visionäre Empfehlung (Gamechanger‑Idee)**, die individuell 
 **Inhaltliche Leitplanken:**  
 – Fokus auf zukunftsweisende, transformative Maßnahmen (z. B. Aufbau neuer digitaler Services, Automatisierung, datengetriebene Geschäftsmodelle, KI‑gestützte Plattformen).  
 – Die Empfehlung muss **konkret, messbar und branchenspezifisch** sein und sich an der Hauptleistung {{ hauptleistung }} sowie der Unternehmensgröße {{ unternehmensgroesse }} orientieren.  
+– Vermeide vage Formulierungen („KI‑gestützte Plattform“) und beschreibe stattdessen ein spezifisches Konzept, das zur Branche passt (z. B. bei Beratung: „Beratungs‑Autopilot“ mit vorqualifizierendem Fragebogen und automatisierter Angebotsausarbeitung).  
 – Füge, falls sinnvoll, ein kurzes Beispiel oder einen Vergleich zur Verdeutlichung hinzu.
 
 **Beispielstruktur:**
