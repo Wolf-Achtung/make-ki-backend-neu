@@ -11,10 +11,7 @@ Analysieren Sie die Compliance-Lage (Standards, Richtlinien, ToDos) für das Unt
   Berücksichtigen Sie bestehende Prozesse (Meldewege: {{ meldewege }}, Löschregeln: {{ loeschregeln }}) sowie das interne KI‑Know‑how ({{ ki_knowhow }}).
 
 **3. KI-spezifische Compliance:**  
-- Gehen Sie auf besondere Pflichten bei der Nutzung von KI ein: Dokumentationsanforderungen, Transparenzpflichten, Fairness‑ und Bias‑Analysen, Folgenabschätzungen und Anforderungen des EU AI Act.  
-  Fassen Sie diese Anforderungen in einer kleinen Tabelle zusammen (drei Spalten: Use‑Case, Risiko‑Klasse, Pflichten).  
-  Listen Sie 2–3 zentrale Use‑Cases des Unternehmens auf, ordnen Sie diese den Risiko‑Klassen des EU AI Act (niedrig/mittel/hoch) zu und nennen Sie für jede Klasse die wichtigsten Pflichten (z. B. Monitoring, Dokumentation, menschliche Aufsicht).  
-  Ergänzen Sie im Anschluss einen kurzen „Artefakte‑Kasten“ (Stichwortliste als Absatz) mit Nachweisen wie **ROPA/AVV**, **Prompt‑Versionen**, **Change‑Log** und **Reviewer‑Protokollen**, um die Audit‑Readiness hervorzuheben.
+- Gehen Sie auf besondere Pflichten bei der Nutzung von KI ein: Dokumentationsanforderungen, Transparenzpflichten, Fairness und Bias‑Analysen, Folgenabschätzungen und ggf. Anforderungen des EU AI Act.
 
 **4. Sofortmaßnahmen & strategische Schritte:**  
 - Nennen Sie 3–4 priorisierte Maßnahmen, die kurz‑ bis mittelfristig umzusetzen sind. Beispiele: Datenschutz‑Check, Erstellung einer Auftragsverarbeitungsvereinbarung, Einführung eines AI‑Governance‑Rahmens, gezielte Mitarbeiterschulungen, Lieferantenprüfung oder Einführung eines Datenschutz‑Management‑Systems (DSMS).  
