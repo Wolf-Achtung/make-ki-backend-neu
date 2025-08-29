@@ -406,41 +406,90 @@ def calc_score_percent(data: dict) -> int:
     return 0
 
 def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> List[Dict[str, str]]:
-    import csv, os
+    """
+    Assemble a list of funding programmes filtered by company size and region.
+
+    The Gold‑Standard version of the funding table exposes additional
+    information beyond the original prototype.  Each entry now contains
+    the programme name, the region in which it is offered, the maximum
+    grant or subsidy amount ("quote"), a brief purpose/description and
+    its application deadline or cycle.  These additional fields allow
+    the PDF template to render a more informative table with separate
+    columns for each property.
+
+    Parameters
+    ----------
+    data: dict
+        The questionnaire response containing optional filters for
+        company size (``unternehmensgroesse``/``company_size``) and
+        region (``bundesland``/``state``).
+    lang: str
+        Language code (currently unused but reserved for future
+        localisation of headings).
+    max_items: int
+        Maximum number of programme entries to return.
+
+    Returns
+    -------
+    List[Dict[str, str]]
+        A list of dictionaries where each dictionary has the keys
+        ``name``, ``region``, ``quote``, ``zweck``, ``deadline`` and
+        ``link``.  Missing values are returned as empty strings.
+    """
+    import csv
+    import os
     path = os.path.join("data", "foerdermittel.csv")
-    if not os.path.exists(path): return []
+    if not os.path.exists(path):
+        return []
+    # Determine target group filters based on company size.  If no size
+    # is provided, no filter is applied.
     size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
-    targets = {"solo":["solo","freelancer","freiberuflich","einzel"],"team":["kmu","team","small"],"kmu":["kmu","sme"]}.get(size,[])
+    targets = {
+        "solo": ["solo", "freelancer", "freiberuflich", "einzel"],
+        "team": ["kmu", "team", "small"],
+        "kmu": ["kmu", "sme"]
+    }.get(size, [])
+    # Extract the region filter (Bundesland/State) from the response and
+    # normalise to lowercase.  If no region is provided we include all
+    # regions.
     region = (data.get("bundesland") or data.get("state") or "").lower()
-    rows = []
+    programmes: List[Dict[str, str]] = []
     with open(path, newline="", encoding="utf-8") as f:
-        r = csv.DictReader(f)
-        for row in r:
-            zg = (row.get("Zielgruppe","") or "").lower()
-            reg = (row.get("Region","") or "").lower()
-            t_ok = True if not targets else any(t in zg for t in targets)
-            r_ok = True if not region else (reg == region or reg == "bund")
-            if t_ok and r_ok:
-                # Assemble a more detailed funding record.  In the Gold‑Standard report
-                # the funding table should include additional context such as the
-                # programme region, a short description of the purpose (Beschreibung)
-                # and the submission deadline.  These fields are optional in the
-                # CSV but are included here when present.  We also retain the
-                # original funding amount column for continuity.
-                rows.append({
-                    "name": row.get("Name", ""),
-                    "zielgruppe": row.get("Zielgruppe", ""),
-                    "region": row.get("Region", ""),
-                    "foerderhoehe": row.get("Fördersumme (€)", ""),
-                    # Use the description as a simple purpose indicator; fall back to
-                    # an empty string if none exists.  The field name may vary
-                    # across CSVs (e.g. "Beschreibung" in German).  Use both
-                    # German and English keys for robustness.
-                    "zweck": row.get("Beschreibung", row.get("Purpose", "")),
-                    "deadline": row.get("Deadline", ""),
-                    "link": row.get("Link", "")
-                })
-    return rows[:max_items]
+        reader = csv.DictReader(f)
+        for row in reader:
+            # Target group filter: if the questionnaire specifies a company
+            # size (solo/team/kmu), only include programmes whose
+            # "Zielgruppe" column contains one of the target strings.
+            zg = (row.get("Zielgruppe", "") or "").lower()
+            if targets:
+                if not any(token in zg for token in targets):
+                    continue
+            # Region filter: include programmes matching the selected
+            # region exactly or federal programmes ("bund").  If no
+            # region filter is provided, include all programmes.
+            reg = (row.get("Region", "") or "").lower()
+            if region:
+                if not (reg == region or reg == "bund"):
+                    continue
+            # Build the dictionary for the table.  Use descriptive
+            # property names to match the updated PDF template.
+            programmes.append({
+                "name": row.get("Name", ""),
+                "region": row.get("Region", ""),
+                # Use the Förderhöhe column (amount in €) as the quota/max.
+                # If a percentage is present in the string (e.g. "50 %"), it
+                # will be preserved.  Otherwise the amount range is shown.
+                "quote": row.get("Fördersumme (€)", ""),
+                # Use Beschreibung (description) if available, otherwise the
+                # programme type (e.g. "Zuschuss", "Kredit").  This
+                # provides a short purpose for the table.
+                "zweck": row.get("Beschreibung", "") or row.get("Typ", ""),
+                # Use the Deadline column (often "laufend" for ongoing) to
+                # indicate the application deadline or cycle.
+                "deadline": row.get("Deadline", ""),
+                "link": row.get("Link", "")
+            })
+    return programmes[:max_items]
 
 def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int = 8) -> List[Dict[str, str]]:
     """
@@ -508,19 +557,7 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                 return mapping.get(n, v)
             cost = _map_cost(cost, lang)
             link = row.get("Link/Website") or row.get("Link") or row.get("Website") or ""
-            # Attempt to extract a data residency / protection hint.  Some CSVs
-            # include a column such as "Datenschutz" or "Datensitz" to indicate
-            # whether the tool is hosted in the EU or abroad.  If not present,
-            # fall back to an empty string.  This value will populate the
-            # "Datensitz" column in the Gold‑Standard report.
-            datenschutz = row.get("Datenschutz") or row.get("Datensitz") or row.get("Datensitz (EU/US)") or ""
-            out.append({
-                "name": name,
-                "usecase": usecase,
-                "cost": cost,
-                "link": link,
-                "datenschutz": datenschutz
-            })
+            out.append({"name": name, "usecase": usecase, "cost": cost, "link": link})
     return out[:max_items]
 
 def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
