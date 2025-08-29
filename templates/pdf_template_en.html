@@ -55,15 +55,28 @@ radius:12px;padding:10px;text-align:center}
         .kpi-item .kpi-value{font-size:20px;font-weight:700}
         /* Benchmark bars */
         .benchmark-bars{margin-top:.6rem}
-        .benchmark-row{display:flex;align-items:center;margin-bottom:6px;font-
-size:12px}
+        .benchmark-row{display:flex;align-items:center;margin-bottom:6px;font-size:12px}
         .benchmark-label{width:90px;color:#6b7280;font-weight:500}
-        .benchmark-bar{flex:1;height:8px;background:#e5ecf4;border-
-radius:4px;position:relative;overflow:hidden}
-        .benchmark-bar span.you{display:block;position:absolute;left:0;top:0;height:8px;background:var(--brand-
-blue);border-radius:4px;z-index:1}
-        .benchmark-bar span.avg{position:absolute;top:-
-3px;width:2px;height:14px;background:var(--brand-green);z-index:2}
+        /* Container: grey background and relative positioning */
+        .benchmark-bar{flex:1;height:8px;background:#e5ecf4;border-radius:4px;position:relative;overflow:hidden}
+        /* Blue bar representing your value: relative so width style works */
+        .benchmark-bar span.you{
+          display:block;
+          position:relative;
+          height:8px;
+          background:var(--brand-blue);
+          border-radius:4px;
+          z-index:1;
+        }
+        /* Green marker for industry benchmark */
+        .benchmark-bar span.avg{
+          position:absolute;
+          top:-3px;
+          width:2px;
+          height:14px;
+          background:var(--brand-green);
+          z-index:2;
+        }
         /* Risk heatmap */
         .risk-table{width:100%;border-collapse:collapse;margin-top:.6rem;font-
 size:12px}
@@ -214,16 +227,15 @@ group</th><th>Amount</th><th>Link</th></tr></thead>
             <h2>AI tools</h2>
             {% if tools_table and tools_table|length>0 %}
               <table>
-                <thead><tr><th>Name</th><th>Use 
-case</th><th>Cost</th><th>Link</th></tr></thead>
+                <thead><tr><th>Name</th><th>Use case</th><th>Cost</th><th>Link</th></tr></thead>
                 <tbody>
                 {% for t in tools_table %}
-                  <tr><td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.cost
-  }}</td>
+                  <tr><td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.cost }}</td>
                     <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td></tr>
                 {% endfor %}
                 </tbody>
               </table>
+              <p style="font-size:9px;color:var(--muted);margin-top:.2rem">Cost scale: very low&nbsp;=&nbsp;cost &lt; €100/month; very high&nbsp;=&nbsp;&gt; €1,000/month</p>
             {% else %}
               <p><em>Tool list will be populated dynamically.</em></p>
             {% endif %}

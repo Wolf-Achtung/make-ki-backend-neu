@@ -65,17 +65,29 @@ bottom:2px}
         .kpi-item .kpi-value{font-size:20px;font-weight:700}
         /* Benchmark bars */
         .benchmark-bars{margin-top:.6rem}
-        .benchmark-row{display:flex;align-items:center;margin-bottom:6px;font-
-size:12px}
+        .benchmark-row{display:flex;align-items:center;margin-bottom:6px;font-size:12px}
         .benchmark-label{width:90px;color:var(--muted);font-weight:500}
-        .benchmark-bar{flex:1;height:8px;background:#e5ecf4;border-
-radius:4px;position:relative;overflow:hidden}
-        /* The blue bar ("you") stretches from the left edge to the percentage
-           value.  Position absolute ensures it overlays the grey background. */
-        .benchmark-bar span.you{display:block;position:absolute;left:0;top:0;height:8px;background:var(--brand-
-blue);border-radius:4px;z-index:1}
-        .benchmark-bar span.avg{position:absolute;top:-
-3px;width:2px;height:14px;background:var(--brand-green);z-index:2}
+        /* Container for each bar: light grey background and relative positioning */
+        .benchmark-bar{flex:1;height:8px;background:#e5ecf4;border-radius:4px;position:relative;overflow:hidden}
+        /* The blue bar (your value).  Use relative positioning so the width
+           attribute (set inline via style="width:XX%;") applies correctly. */
+        .benchmark-bar span.you{
+          display:block;
+          position:relative;
+          height:8px;
+          background:var(--brand-blue);
+          border-radius:4px;
+          z-index:1;
+        }
+        /* The green marker (industry benchmark) appears as a thin line */
+        .benchmark-bar span.avg{
+          position:absolute;
+          top:-3px;
+          width:2px;
+          height:14px;
+          background:var(--brand-green);
+          z-index:2;
+        }
         /* Risk heatmap */
         .risk-table{width:100%;border-collapse:collapse;margin-top:.6rem;font-
 size:12px}
