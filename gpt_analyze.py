@@ -242,30 +242,6 @@ def render_prompt(template_text: str, context: dict) -> str:
         return ", ".join(str(v) for v in val) if isinstance(val, list) else str(val)
     return re.sub(r"\{\{\s*(\w+)\s*\}\}", replace_simple, template_text)
 
-def _estimate_roi(ctx: Dict[str, Any]) -> Dict[str, Any]:
-    solo = _is_solo(ctx)
-    headcount = _estimate_headcount(ctx)
-    # Assumptions
-    hours_low, hours_high = (1, 2) if solo else (0.5, 1.5)
-    rate_low, rate_high = (35, 60) if solo else (30, 50)
-    tool_cost_month = 60 if solo else 150
-    months = 12
-    def annual_savings(h):
-        return h * 52 * (rate_low + rate_high)/2 * headcount
-    save_low = hours_low * 52 * rate_low * headcount
-    save_high = hours_high * 52 * rate_high * headcount
-    cost = tool_cost_month * months
-    roi_low = max(0, save_low - cost)
-    roi_high = max(0, save_high - cost)
-    return {
-        'headcount': headcount,
-        'hours_low': hours_low, 'hours_high': hours_high,
-        'rate_low': rate_low, 'rate_high': rate_high,
-        'annual_savings_low': int(save_low), 'annual_savings_high': int(save_high),
-        'annual_tool_cost': int(cost),
-        'roi_low': int(roi_low), 'roi_high': int(roi_high)
-    }
-
 def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     search_paths = [
         f"prompts/{lang}/{chapter}.md",
@@ -295,28 +271,11 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     style = "\n\n---\n" + base_rules
 
     if chapter == "executive_summary":
-        # Das Executive Summary wird im Gold‑Standard in vier klare Abschnitte unterteilt.  
-        # Für DE: KPI‑Überblick (1–2 Sätze), Top‑Chancen (3 bullets), Zentrale Risiken (2–3 bullets) und Nächste Schritte (nummerierte Liste).  
-        # Für EN: KPI overview (1–2 sentences), Opportunities, Risks and Next steps.  
-        # Wir reduzieren die Anzahl der Punkte pro Liste, damit der Bericht fokussiert und übersichtlich bleibt.
-        style += (
-        # audience-specific tone
-        if _is_solo(context):
-            style += ("\n- Address a solo entrepreneur: focus on quick wins, low-cost tooling, minimal governance, measurable personal time-savings.")
-        else:
-            style += ("\n- Address an SME team: include governance, onboarding, simple KPIs per department, and change management notes.")
-            "\n- Gliedere in: <h3>KPI‑Überblick</h3><p>…</p>"
-            "<h3>Top‑Chancen</h3><ul>…</ul>"
-            "<h3>Zentrale Risiken</h3><ul>…</ul>"
-            "<h3>Nächste Schritte</h3><ol>…</ol>"
-            "\n- Maximal 3 Punkte pro Liste. Fette jeweils das erste Schlüsselwort."
-            if is_de else
-            "\n- Structure: <h3>KPI overview</h3><p>…</p>"
-            "<h3>Opportunities</h3><ul>…</ul>"
-            "<h3>Risks</h3><ul>…</ul>"
-            "<h3>Next steps</h3><ol>…</ol>"
-            "\n- Max 3 bullets per list. Bold the first keyword per bullet."
-        )
+        style += ("\n- Gliedere in: <h3>Was tun?</h3><ul>…</ul><h3>Warum?</h3><p>…</p><h3>Nächste 3 Schritte</h3><ol>…</ol>"
+                  "\n- Maximal 5 Bullet-Points pro Liste. Fette jeweils das erste Schlüsselwort."
+                  if is_de else
+                  "\n- Structure: <h3>What to do?</h3><ul>…</ul><h3>Why?</h3><p>…</p><h3>Next 3 steps</h3><ol>…</ol>"
+                  "\n- Max 5 bullets per list. Bold the first keyword per bullet.")
 
     if chapter == "vision":
         style += ("\n- Form: 1 kühne Idee (Titel + 1 Satz); 1 MVP (2–4 Wochen, grobe Kosten); 3 KPIs in <ul>. "
