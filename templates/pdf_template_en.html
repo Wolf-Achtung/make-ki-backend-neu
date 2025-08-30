@@ -100,7 +100,14 @@ var(--border);padding:6px;text-align:center}
 blue);color:#fff;font-size:10px;white-space:nowrap}
     thead { display: table-header-group; }
     tr { page-break-inside: avoid; }
-    a { word-break: break-word; }
+    /* Prevent awkward line breaks within hyperlinks: force URLs to stay on
+       one line and disable hyphenation.  This keeps tool names and links
+       intact in the generated PDF. */
+    a {
+      white-space: nowrap;
+      word-break: normal;
+      hyphens: none;
+    }
       </style>
     <style>
 .risk-low{background:#D7F3E8!important;}

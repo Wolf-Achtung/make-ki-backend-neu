@@ -116,7 +116,15 @@ blue);color:#fff;font-size:10px;white-space:nowrap}
 
     thead { display: table-header-group; }
     tr { page-break-inside: avoid; }
-    a { word-break: break-word; }
+        /* Ensure links do not break in the middle of words.  Without this
+           declaration long URLs or tool names may wrap awkwardly in the PDF,
+           splitting words across lines.  Use nowrap and disable hyphenation
+           for more professional rendering. */
+        a {
+          white-space: nowrap;
+          word-break: normal;
+          hyphens: none;
+        }
 
       </style>
     <style>
