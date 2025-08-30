@@ -137,7 +137,18 @@ def strip_code_fences(text: str) -> str:
     t = t.replace("```html", "```").replace("```HTML", "```")
     while "```" in t:
         t = t.replace("```", "")
-    return t.replace("`", "")
+    # Remove backtick characters entirely (both inline and fenced)
+    t = t.replace("`", "")
+    # Remove any unresolved Jinja-like placeholders such as {{ variable }} that may
+    # appear in the generated output if the language model echoes template syntax.
+    # These placeholders usually indicate missing context values.  Stripping them
+    # prevents leaked template directives from showing up in the final report.
+    try:
+        t = re.sub(r"\{\{[^}]+\}\}", "", t)
+    except Exception:
+        # If regex fails for any reason, leave the text unchanged
+        pass
+    return t
 
 def ensure_html(text: str, lang: str = "de") -> str:
     """
@@ -244,8 +255,13 @@ def render_prompt(template_text: str, context: dict) -> str:
 
 def _load_prompt_piece(lang: str, name: str) -> str:
     """
-    Load an optional prompt fragment (prefix/suffix) from various search paths.
-    Returns an empty string if no file is found.
+    Load an optional prompt fragment (prefix or suffix) from several search paths.
+    The first file found is returned.  If no file exists, return an empty string.
+
+    This helper allows the report generator to prepend a common intro (prefix)
+    and append a common outro (suffix) to every prompt.  It checks both the
+    primary ``prompts/{lang}`` folder and any unpacked ``prompts_unzip``
+    directory.  Additional fallback paths may be added in future releases.
     """
     candidates = [
         f"prompts/{lang}/{name}.md",
@@ -262,10 +278,35 @@ def _load_prompt_piece(lang: str, name: str) -> str:
 
 
 def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
-    # Determine which prompt file to use for the requested chapter.  The first
-    # matching file in the search paths wins.  We prioritise the unpacked
-    # `prompts/{lang}/chapter.md` so that updated prompts override any legacy
-    # files in zipped folders.  Fall back gracefully if nothing is found.
+    """
+    Construct a fully rendered prompt for a given report chapter.
+
+    This function locates the correct prompt template file for the requested
+    chapter, fills in placeholders using the provided context, and then
+    combines it with global style rules and optional prefix/suffix snippets.
+    It enforces the Gold‑Standard executive summary structure and ensures
+    responses are returned as valid HTML without wrappers.  When a
+    self‑employed respondent is detected, additional advice is appended.
+
+    Parameters
+    ----------
+    chapter : str
+        The name of the report section (e.g. 'executive_summary').
+    context : dict
+        A dictionary of response data and contextual values.
+    lang : str, optional
+        The language code ('de' or 'en').  Defaults to 'de'.
+
+    Returns
+    -------
+    str
+        A complete prompt consisting of prefix, rendered template, style hints
+        and suffix.
+    """
+    # Determine the prompt file to use.  Updated prompts in the ``prompts``
+    # directory take precedence over any legacy files in zip folders.  We
+    # intentionally stop at the first found match to avoid mixing old and new
+    # prompt styles.
     search_paths = [
         f"prompts/{lang}/{chapter}.md",
         f"prompts_unzip/{lang}/{chapter}.md",
@@ -284,11 +325,12 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     if prompt_text is None:
         prompt_text = f"[NO PROMPT FOUND for {chapter}/{lang}]"
 
-    # Render the template with context placeholders first (e.g. {{ branche }})
+    # Render any simple placeholders (e.g. {{ branche }}, {{ company_size }})
+    # before adding style rules.  ``render_prompt`` also supports {{ key | join(', ') }}.
     prompt = render_prompt(prompt_text, context)
-    is_de = (lang == "de")
 
-    # Base formatting rules: always return valid HTML fragments without wrappers.
+    is_de = (lang == "de")
+    # Core HTML formatting guideline: deliver valid HTML fragments without wrappers.
     base_rules = (
         "Gib die Antwort ausschließlich als gültiges HTML ohne <html>-Wrapper zurück. "
         "Nutze <h3>, <p>, <ul>, <ol>, <table>. Keine Meta-Kommentare. Kurze Sätze."
@@ -298,9 +340,10 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     )
     style = "\n\n---\n" + base_rules
 
-    # Chapter-specific style hints
+    # Chapter-specific formatting guidelines.  The executive summary uses a
+    # four‑block structure in the Gold‑Standard: KPI overview, top opportunities,
+    # key risks and next steps.  Each list should contain at most three points.
     if chapter == "executive_summary":
-        # Use the new four-block structure: KPI overview, Top chances, Key risks, Next steps.
         style += (
             "\n- Gliedere in: <h3>KPI-Überblick</h3><p>…</p><h3>Top-Chancen</h3><ul>…</ul>"
             "<h3>Zentrale Risiken</h3><ul>…</ul><h3>Nächste Schritte</h3><ol>…</ol>"
@@ -311,7 +354,7 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
             "<h3>Key risks</h3><ul>…</ul><h3>Next steps</h3><ol>…</ol>"
             "\n- Max 3 bullets per list. Bold the first keyword in each."
         )
-
+    # Guidance for vision chapters remains unchanged.
     if chapter == "vision":
         style += (
             "\n- Form: 1 kühne Idee (Titel + 1 Satz); 1 MVP (2–4 Wochen, grobe Kosten); 3 KPIs in <ul>. "
@@ -321,7 +364,6 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
             "\n- Form: 1 bold idea (title + one-liner); 1 MVP (2–4 weeks, rough cost); 3 KPIs in <ul>. "
             "Adapt to industry/size, avoid genericities."
         )
-
     if chapter == "tools":
         style += (
             "\n- <table> mit Spalten: Name | Usecase | Kosten | Link. Max. 7 Zeilen, DSGVO/EU-freundlich."
@@ -329,7 +371,6 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
             else
             "\n- <table> columns: Name | Use case | Cost | Link. Max 7 rows. Prefer GDPR/EU-friendly tools."
         )
-
     if chapter in ("foerderprogramme", "foerderung", "funding"):
         style += (
             "\n- <table>: Name | Zielgruppe | Förderhöhe | Link. Max. 5 Zeilen."
@@ -337,7 +378,6 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
             else
             "\n- <table>: Name | Target group | Amount | Link. Max 5 rows."
         )
-
     if context.get("is_self_employed"):
         style += (
             "\n- Solo-Selbstständig: Empfehlungen skalierbar halten; passende Förderungen priorisieren."
@@ -346,19 +386,30 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
             "\n- Solo self-employed: keep recommendations scalable; prioritize suitable funding."
         )
 
-    # Prepend prefix and append suffix if available
+    # Load optional prefix and suffix fragments.  These files can include
+    # glossaries, tone hints or links to further resources.  They are only
+    # attached if non-empty.
     prefix = _load_prompt_piece(lang, "prompt_prefix")
     suffix = _load_prompt_piece(lang, "prompt_suffix")
+
     parts: List[str] = []
-    for piece in [prefix, prompt, style, suffix]:
-        if piece and piece.strip():
-            parts.append(piece)
+    for part in [prefix, prompt, style, suffix]:
+        if part and part.strip():
+            parts.append(part)
     return "\n\n".join(parts)
 
 def _chat_complete(messages, model_name: Optional[str], temperature: Optional[float] = None) -> str:
+    """
+    Wrapper around the OpenAI ChatCompletion call that enforces a deterministic
+    temperature and merges the provided model name with environment defaults.
+
+    Determinism: Unless a temperature is explicitly passed, this helper
+    defaults to zero so that identical prompts produce identical outputs.  For
+    non-``gpt-5`` models the temperature is set via API parameters; for
+    GPT‑5 models the temperature is ignored as the platform may not support it.
+    """
     args = {"model": model_name or os.getenv("GPT_MODEL_NAME", "gpt-5"), "messages": messages}
-    # Use a deterministic default temperature when none is provided.  A value of 0
-    # ensures that identical inputs produce consistent outputs across runs.
+    # Use deterministic behaviour by default
     if temperature is None:
         temperature = float(os.getenv("GPT_TEMPERATURE", "0"))
     if not str(args["model"]).startswith("gpt-5"):
