@@ -242,7 +242,30 @@ def render_prompt(template_text: str, context: dict) -> str:
         return ", ".join(str(v) for v in val) if isinstance(val, list) else str(val)
     return re.sub(r"\{\{\s*(\w+)\s*\}\}", replace_simple, template_text)
 
+def _load_prompt_piece(lang: str, name: str) -> str:
+    """
+    Load an optional prompt fragment (prefix/suffix) from various search paths.
+    Returns an empty string if no file is found.
+    """
+    candidates = [
+        f"prompts/{lang}/{name}.md",
+        f"prompts_unzip/{lang}/{name}.md",
+        f"{lang}/{name}.md",
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            try:
+                return load_text(p)
+            except Exception:
+                continue
+    return ""
+
+
 def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
+    # Determine which prompt file to use for the requested chapter.  The first
+    # matching file in the search paths wins.  We prioritise the unpacked
+    # `prompts/{lang}/chapter.md` so that updated prompts override any legacy
+    # files in zipped folders.  Fall back gracefully if nothing is found.
     search_paths = [
         f"prompts/{lang}/{chapter}.md",
         f"prompts_unzip/{lang}/{chapter}.md",
@@ -250,61 +273,94 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
         f"de_unzip/de/{chapter}.md",
         f"en_unzip/en/{chapter}.md",
     ]
-    prompt_text = None
+    prompt_text: Optional[str] = None
     for p in search_paths:
         if os.path.exists(p):
             try:
-                prompt_text = load_text(p); break
+                prompt_text = load_text(p)
+                break
             except Exception:
                 continue
     if prompt_text is None:
         prompt_text = f"[NO PROMPT FOUND for {chapter}/{lang}]"
 
+    # Render the template with context placeholders first (e.g. {{ branche }})
     prompt = render_prompt(prompt_text, context)
     is_de = (lang == "de")
+
+    # Base formatting rules: always return valid HTML fragments without wrappers.
     base_rules = (
         "Gib die Antwort ausschließlich als gültiges HTML ohne <html>-Wrapper zurück. "
         "Nutze <h3>, <p>, <ul>, <ol>, <table>. Keine Meta-Kommentare. Kurze Sätze."
-        if is_de else
+        if is_de
+        else
         "Return VALID HTML only (no <html> wrapper). Use <h3>, <p>, <ul>, <ol>, <table>. No meta talk. Be concise."
     )
     style = "\n\n---\n" + base_rules
 
+    # Chapter-specific style hints
     if chapter == "executive_summary":
-        style += ("\n- Gliedere in: <h3>Was tun?</h3><ul>…</ul><h3>Warum?</h3><p>…</p><h3>Nächste 3 Schritte</h3><ol>…</ol>"
-                  "\n- Maximal 5 Bullet-Points pro Liste. Fette jeweils das erste Schlüsselwort."
-                  if is_de else
-                  "\n- Structure: <h3>What to do?</h3><ul>…</ul><h3>Why?</h3><p>…</p><h3>Next 3 steps</h3><ol>…</ol>"
-                  "\n- Max 5 bullets per list. Bold the first keyword per bullet.")
+        # Use the new four-block structure: KPI overview, Top chances, Key risks, Next steps.
+        style += (
+            "\n- Gliedere in: <h3>KPI-Überblick</h3><p>…</p><h3>Top-Chancen</h3><ul>…</ul>"
+            "<h3>Zentrale Risiken</h3><ul>…</ul><h3>Nächste Schritte</h3><ol>…</ol>"
+            "\n- Maximal 3 Punkte pro Liste. Fette jeweils das erste Schlüsselwort."
+            if is_de
+            else
+            "\n- Structure: <h3>KPI overview</h3><p>…</p><h3>Top opportunities</h3><ul>…</ul>"
+            "<h3>Key risks</h3><ul>…</ul><h3>Next steps</h3><ol>…</ol>"
+            "\n- Max 3 bullets per list. Bold the first keyword in each."
+        )
 
     if chapter == "vision":
-        style += ("\n- Form: 1 kühne Idee (Titel + 1 Satz); 1 MVP (2–4 Wochen, grobe Kosten); 3 KPIs in <ul>. "
-                  "Branchen-/Größenbezug, keine Allgemeinplätze."
-                  if is_de else
-                  "\n- Form: 1 bold idea (title + one-liner); 1 MVP (2–4 weeks, rough cost); 3 KPIs in <ul>. "
-                  "Adapt to industry/size, avoid genericities.")
+        style += (
+            "\n- Form: 1 kühne Idee (Titel + 1 Satz); 1 MVP (2–4 Wochen, grobe Kosten); 3 KPIs in <ul>. "
+            "Branchen-/Größenbezug, keine Allgemeinplätze."
+            if is_de
+            else
+            "\n- Form: 1 bold idea (title + one-liner); 1 MVP (2–4 weeks, rough cost); 3 KPIs in <ul>. "
+            "Adapt to industry/size, avoid genericities."
+        )
 
     if chapter == "tools":
-        style += ("\n- <table> mit Spalten: Name | Usecase | Kosten | Link. Max. 7 Zeilen, DSGVO/EU-freundlich."
-                  if is_de else
-                  "\n- <table> columns: Name | Use case | Cost | Link. Max 7 rows. Prefer GDPR/EU-friendly tools.")
+        style += (
+            "\n- <table> mit Spalten: Name | Usecase | Kosten | Link. Max. 7 Zeilen, DSGVO/EU-freundlich."
+            if is_de
+            else
+            "\n- <table> columns: Name | Use case | Cost | Link. Max 7 rows. Prefer GDPR/EU-friendly tools."
+        )
 
     if chapter in ("foerderprogramme", "foerderung", "funding"):
-        style += ("\n- <table>: Name | Zielgruppe | Förderhöhe | Link. Max. 5 Zeilen."
-                  if is_de else
-                  "\n- <table>: Name | Target group | Amount | Link. Max 5 rows.")
+        style += (
+            "\n- <table>: Name | Zielgruppe | Förderhöhe | Link. Max. 5 Zeilen."
+            if is_de
+            else
+            "\n- <table>: Name | Target group | Amount | Link. Max 5 rows."
+        )
 
     if context.get("is_self_employed"):
-        style += ("\n- Solo-Selbstständig: Empfehlungen skalierbar halten; passende Förderungen priorisieren."
-                  if is_de else
-                  "\n- Solo self-employed: keep recommendations scalable; prioritize suitable funding.")
+        style += (
+            "\n- Solo-Selbstständig: Empfehlungen skalierbar halten; passende Förderungen priorisieren."
+            if is_de
+            else
+            "\n- Solo self-employed: keep recommendations scalable; prioritize suitable funding."
+        )
 
-    return prompt + style
+    # Prepend prefix and append suffix if available
+    prefix = _load_prompt_piece(lang, "prompt_prefix")
+    suffix = _load_prompt_piece(lang, "prompt_suffix")
+    parts: List[str] = []
+    for piece in [prefix, prompt, style, suffix]:
+        if piece and piece.strip():
+            parts.append(piece)
+    return "\n\n".join(parts)
 
 def _chat_complete(messages, model_name: Optional[str], temperature: Optional[float] = None) -> str:
     args = {"model": model_name or os.getenv("GPT_MODEL_NAME", "gpt-5"), "messages": messages}
+    # Use a deterministic default temperature when none is provided.  A value of 0
+    # ensures that identical inputs produce consistent outputs across runs.
     if temperature is None:
-        temperature = float(os.getenv("GPT_TEMPERATURE", "0.3"))
+        temperature = float(os.getenv("GPT_TEMPERATURE", "0"))
     if not str(args["model"]).startswith("gpt-5"):
         args["temperature"] = temperature
     resp = client.chat.completions.create(**args)
