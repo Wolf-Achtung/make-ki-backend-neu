@@ -7,7 +7,7 @@ Kontext:
 
 • Branche: {{ branche }}  • Hauptleistung: {{ hauptleistung }}  • Unternehmensgröße: {{ unternehmensgroesse }}
 • Selbstständigkeit: {{ selbststaendig }} • Bundesland / Region: {{ bundesland }} • Zielgruppen: {{ zielgruppen | join(', ') }}
-• KI‑Readiness‑Score: {{ score_percent }} % • Benchmark: {{ benchmark }}
+• Digitalisierungsgrad: {{ digitalisierungsgrad }} % • Automatisierungsgrad: {{ automatisierungsgrad }} % • Papierlosigkeit: {{ prozesse_papierlos }} % • KI‑Know‑how: {{ ki_knowhow }} %
 
 Weitere Formulardaten (z. B. Jahresumsatz, IT‑Infrastruktur, interne KI‑Kompetenzen, Datenquellen, Digitalisierungs‑ und Automatisierungsgrad, bestehende KI‑Einsätze, Projektziele) liegen als Variablen vor und werden in den passenden Kapiteln berücksichtigt.
 Checklisten, branchenspezifische Tools, Förderungen und Praxisbeispiele werden pro Kapitel als Variable bereitgestellt.

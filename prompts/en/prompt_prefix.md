@@ -7,7 +7,7 @@ Context:
 
 • Industry: {{ branche }}  • Main service: {{ hauptleistung }}  • Company size: {{ unternehmensgroesse }}
 • Self‑employment: {{ selbststaendig }} • Region: {{ bundesland }} • Target groups: {{ zielgruppen | join(', ') }}
-• AI readiness score: {{ score_percent }} % • Benchmark: {{ benchmark }}
+• Digitalisation: {{ digitalisierungsgrad }} % • Automation: {{ automatisierungsgrad }} % • Paperless: {{ prozesse_papierlos }} % • AI know-how: {{ ki_knowhow }} %
 
 Additional form data (annual revenue, IT infrastructure, internal AI competences, data sources, digitalisation and automation levels, existing AI deployments, project goals, etc.) are available as variables and should be referenced in the relevant chapters.
 Checklists, sector‑specific tools, funding programmes and best‑practice examples are also provided as variables per chapter.
