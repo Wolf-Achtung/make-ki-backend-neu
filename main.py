@@ -51,29 +51,6 @@ if CORS_ALLOW == ["*"]:
 # App & CORS
 # ----------------------------
 
-# --- Postgres connection pool (for feedback persistence) ---
-DB_POOL = None
-def _init_db_pool():
-    global DB_POOL
-    dsn = os.getenv("DATABASE_URL")
-    if not dsn:
-        logger.warning("[DB] DATABASE_URL missing – feedback will be logged only")
-        return
-    try:
-        DB_POOL = SimpleConnectionPool(1, 5, dsn, connect_timeout=5, keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=5)
-        logger.info("[DB] Pool initialized")
-    except Exception as e:
-        logger.exception("[DB] Pool init failed: %s", e)
-        DB_POOL = None
-
-@app.on_event("startup")
-async def _on_startup_init_db():
-    try:
-        _init_db_pool()
-    except Exception as e:
-        logger.exception("[DB] startup init failed: %s", e)
-
-@app.on_event("shutdown")
 async def _on_shutdown_close_db():
     global DB_POOL
     try:
@@ -114,6 +91,31 @@ def create_access_token(data: Dict[str, Any], expires_in: int = JWT_EXP_SECONDS)
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
 
 def decode_token(token: str) -> Dict[str, Any]:
+
+# --- Postgres connection pool (for feedback persistence) ---
+DB_POOL = None
+def _init_db_pool():
+    global DB_POOL
+    dsn = os.getenv("DATABASE_URL")
+    if not dsn:
+        logger.warning("[DB] DATABASE_URL missing – feedback will be logged only")
+        return
+    try:
+        DB_POOL = SimpleConnectionPool(1, 5, dsn, connect_timeout=5, keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=5)
+        logger.info("[DB] Pool initialized")
+    except Exception as e:
+        logger.exception("[DB] Pool init failed: %s", e)
+        DB_POOL = None
+
+@app.on_event("startup")
+async def _on_startup_init_db():
+    try:
+        _init_db_pool()
+    except Exception as e:
+        logger.exception("[DB] startup init failed: %s", e)
+
+@app.on_event("shutdown")
+
     return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
 
 def current_user(request: Request) -> Dict[str, Any]:
