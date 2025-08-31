@@ -1,19 +1,4 @@
-import psycopg2
-import os
-# .env optional laden (lokal), auf Railway kommen Vars aus dem Environment
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except Exception:
-    pass
 
-DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or os.getenv("DATABASE_PUBLIC_URL")
-if not DATABASE_URL:
-    raise SystemExit("DATABASE_URL not set")
-
-users = [
-    # Admin
-    ("bewertung@ki-sicherheit.jetzt", "admin2025!", "admin"),
 
     # Test-User mit individuellen Passwörtern
     ("j.hohl@freenet.de", "passjhohl!", "user"),
@@ -34,6 +19,7 @@ users = [
     ("sonia-souto@mac.com", "pass-son!", "user"),
     ("christian.ulitzka@ulitzka-partner.de", "pass2rigz!", "user"),
     ("srack@gmx.net", "pass2rack!", "user"),
+    ("buss@maria-hilft.de", "pass2mar!", "user"),
 ]
 
 
