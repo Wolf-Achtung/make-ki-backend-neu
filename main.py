@@ -132,9 +132,11 @@ class Feedback(BaseModel):
 
 
 
-async def _handle_feedback(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
-    """Schreibt Feedback in DB (falls verfügbar), sonst loggt – gibt immer 200 zurück."""
-    try:
+async def _handle_feedback(payload: Feedback, request: Request, authorization: Optional[str] = None):
+        # Accept Authorization header even without FastAPI's Header dependency
+        if authorization is None:
+            authorization = request.headers.get("authorization")
+
         user_email = None
         if authorization and authorization.strip().lower().startswith("bearer "):
             token = authorization.split(" ", 1)[1].strip()
@@ -143,6 +145,8 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
                 user_email = claims.get("email") or claims.get("sub")
             except Exception as e:
                 logging.getLogger(__name__).info("[FEEDBACK] Token nicht validiert: %s", repr(e))
+
+
 
         data = payload.dict()
         if not data.get("timestamp"):
@@ -199,15 +203,15 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
 # Feedback-Endpunkte
 # ----------------------------
 @app.post("/feedback")
-async def feedback_root(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
+async def feedback_root(payload: Feedback, request: Request, authorization: Optional[str] = None):
     return await _handle_feedback(payload, request, authorization)
 
 @app.post("/api/feedback")
-async def feedback_api(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
+async def feedback_api(payload: Feedback, request: Request, authorization: Optional[str] = None):
     return await _handle_feedback(payload, request, authorization)
 
 @app.post("/v1/feedback")
-async def feedback_v1(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
+async def feedback_v1(payload: Feedback, request: Request, authorization: Optional[str] = None):
     return await _handle_feedback(payload, request, authorization)
 
 
