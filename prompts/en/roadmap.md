@@ -8,7 +8,7 @@ Develop an action plan for the next 12 months with three time horizons: **0–3
 * Avoid generic advice; every step must be meaningful, concrete and tailored to the company.
 
 **Example timeline:**  
-  – **0–3 months:** Finalise the questionnaire and test a GPT prototype; publish a landing page; begin a feedback loop.  
+  – **0–3 months:** Finalise the questionnaire and test a LLM prototype (AI prototype); publish a landing page; begin a feedback loop.  
   – **3–6 months:** Run a pilot project with 1–2 clients or partners; streamline processes; submit funding applications.  
   – **6–12 months:** Expand the MVP into a scalable advisory tool; develop a partner network; prepare for scale.
 

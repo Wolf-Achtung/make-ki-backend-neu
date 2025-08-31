@@ -8,7 +8,7 @@ Erarbeiten Sie einen Maßnahmenplan für die nächsten 12 Monate mit drei Zeitst
 * Formulieren Sie keine generischen Tipps; jeder Schritt muss individuell sinnvoll und konkret sein.
 
 **Beispiel für eine priorisierte Roadmap:**  
-  – **0–3 Monate:** Fragebogen fertigstellen und GPT‑Prototyp testen; Mini‑Landingpage veröffentlichen; erste Feedbackschleife starten.  
+  – **0–3 Monate:** Fragebogen fertigstellen und LLM‑Prototyp (KI‑Prototyp) testen; Mini‑Landingpage veröffentlichen; erste Feedbackschleife starten.  
   – **3–6 Monate:** Pilotprojekt mit 1–2 Kunden oder Partnerbetrieben ({{ branche }}) durchführen; Prozesse optimieren; Förderanträge stellen.  
   – **6–12 Monate:** Aus dem MVP ein skalierbares White‑Label‑Beratungstool entwickeln; neue Märkte erschließen; Partnernetzwerk ausbauen.  
 Nutzen Sie diese Beispiele als Leitfaden und passen Sie die konkreten Maßnahmen an Ihre Hauptleistung und Unternehmensgröße an.
