@@ -261,14 +261,20 @@ risks_html|trim) %}
 
           <div class="card">
             <h2>AI tools</h2>
+    {% if tools_table and tools_table|length>0 %}
+      {% set ns = namespace(has_ds=false, has_cost=false) %}
+      {% for t in tools_table %}
+        {% if t.datenschutz %}{% set ns.has_ds = true %}{% endif %}
+        {% if t.cost %}{% set ns.has_cost = true %}{% endif %}
+      {% endfor %}
             {% if tools_table and tools_table|length>0 %}
               <table>
                 <thead>
                   <tr>
                     <th>Name</th>
                     <th>Application</th>
-                    <th>Data region</th>
-                    <th>Cost</th>
+                    {% if ns.has_ds %}<th>Data region</th>{% endif %}
+                    {% if ns.has_cost %}<th>Cost</th>{% endif %}
                     <th>Link</th>
                   </tr>
                 </thead>
@@ -277,8 +283,8 @@ risks_html|trim) %}
                   <tr>
                     <td>{{ t.name }}</td>
                     <td>{{ t.usecase }}</td>
-                    <td>{{ t.datenschutz or 'n/a' }}</td>
-                    <td>{{ t.cost or 'n/a' }}</td>
+                    {% if ns.has_ds %}<td>{{ t.datenschutz }}</td>{% endif %}
+                    {% if ns.has_cost %}<td>{{ t.cost }}</td>{% endif %}
                     <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
