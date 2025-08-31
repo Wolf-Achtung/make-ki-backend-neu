@@ -9,12 +9,13 @@ import logging
 import importlib
 from typing import Any, Dict, Optional
 
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from jose import jwt
 from jose.exceptions import JWTError
 import httpx
+from pydantic import BaseModel
 
 # ----------------------------
 # Basis-Config & Logger
@@ -459,6 +460,62 @@ async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
     res = await send_html_to_pdf_service(html, to, subject="KI-Readiness Report (Test)", lang=lang, request_id="pdf_test")
     return res
 
+
+
+# ----------------------------
+# Feedback Endpoints (accept multiple routes)
+# ----------------------------
+class Feedback(BaseModel):
+    email: Optional[str] = None
+    variant: Optional[str] = None
+    report_version: Optional[str] = None
+    hilfe: Optional[str] = None
+    verstaendlich_analyse: Optional[str] = None
+    verstaendlich_empfehlung: Optional[str] = None
+    vertrauen: Optional[str] = None
+    dauer: Optional[str] = None
+    best: Optional[str] = None
+    next: Optional[str] = None
+    timestamp: Optional[str] = None
+
+async def _handle_feedback(payload: Feedback, request: Request, authorization: Optional[str]):
+    """
+    Minimaler Handler: prüft optional JWT, loggt die Nutzdaten und bestätigt mit 200.
+    Optional: Hier DB-Insert ergänzen (z.B. in Tabelle 'feedback', JSONB-Spalte 'details').
+    """
+    try:
+        # Wenn Authorization gesetzt ist, Token validieren (optional)
+        if authorization and authorization.strip().lower().startswith("bearer "):
+            token = authorization.split(" ", 1)[1].strip()
+            try:
+                claims = decode_token(token)
+                # claims['email'] steht häufig zur Verfügung
+            except Exception as e:
+                # Nicht fatal – wir akzeptieren auch anonymes Feedback
+                logger.info("[FEEDBACK] Token konnte nicht validiert werden: %s", repr(e))
+
+        ua = request.headers.get("user-agent", "")
+        ip = request.client.host if request.client else ""
+        data = payload.dict()
+        # Log als Minimal-Ersatz für DB
+        logger.info("[FEEDBACK] ip=%s ua=%s data=%s", ip, ua, json.dumps(data, ensure_ascii=False))
+        return {"ok": True}
+    except Exception as e:
+        logger.exception("[FEEDBACK] Fehler: %s", e)
+        raise HTTPException(status_code=500, detail="feedback failed")
+
+@app.post("/feedback")
+async def feedback_root(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
+    return await _handle_feedback(payload, request, authorization)
+
+@app.post("/api/feedback")
+async def feedback_api(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
+    return await _handle_feedback(payload, request, authorization)
+
+@app.post("/v1/feedback")
+async def feedback_v1(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
+    return await _handle_feedback(payload, request, authorization)
+
 # ----------------------------
 # Root: kleine HTML-Startseite
 # ----------------------------
@@ -478,5 +535,8 @@ def root():
     <li><code>POST /briefing_async</code> (Bearer)</li>
     <li><code>GET /briefing_status/&lt;job_id&gt;</code> (Bearer)</li>
     <li><code>POST /pdf_test</code> (Bearer)</li>
+      <li><code>POST /feedback</code></li>
+    <li><code>POST /api/feedback</code></li>
+    <li><code>POST /v1/feedback</code></li>
   </ul>
 </body></html>""")
