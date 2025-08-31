@@ -7,6 +7,8 @@ import uuid
 import json
 import logging
 import importlib
+import psycopg2
+from psycopg2.pool import SimpleConnectionPool
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, Header
@@ -48,6 +50,40 @@ if CORS_ALLOW == ["*"]:
 # ----------------------------
 # App & CORS
 # ----------------------------
+
+# --- Postgres connection pool (for feedback persistence) ---
+DB_POOL = None
+def _init_db_pool():
+    global DB_POOL
+    dsn = os.getenv("DATABASE_URL")
+    if not dsn:
+        logger.warning("[DB] DATABASE_URL missing – feedback will be logged only")
+        return
+    try:
+        DB_POOL = SimpleConnectionPool(1, 5, dsn, connect_timeout=5, keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=5)
+        logger.info("[DB] Pool initialized")
+    except Exception as e:
+        logger.exception("[DB] Pool init failed: %s", e)
+        DB_POOL = None
+
+@app.on_event("startup")
+async def _on_startup_init_db():
+    try:
+        _init_db_pool()
+    except Exception as e:
+        logger.exception("[DB] startup init failed: %s", e)
+
+@app.on_event("shutdown")
+async def _on_shutdown_close_db():
+    global DB_POOL
+    try:
+        if DB_POOL:
+            DB_POOL.closeall()
+            DB_POOL = None
+            logger.info("[DB] Pool closed")
+    except Exception as e:
+        logger.exception("[DB] shutdown close failed: %s", e)
+
 app = FastAPI(title=APP_NAME)
 app.add_middleware(
     CORSMiddleware,
@@ -478,28 +514,66 @@ class Feedback(BaseModel):
     next: Optional[str] = None
     timestamp: Optional[str] = None
 
+
 async def _handle_feedback(payload: Feedback, request: Request, authorization: Optional[str]):
-    """
-    Minimaler Handler: prüft optional JWT, loggt die Nutzdaten und bestätigt mit 200.
-    Optional: Hier DB-Insert ergänzen (z.B. in Tabelle 'feedback', JSONB-Spalte 'details').
-    """
+    """Persist feedback if DB is available; otherwise log-only."""
     try:
-        # Wenn Authorization gesetzt ist, Token validieren (optional)
+        user_email = None
         if authorization and authorization.strip().lower().startswith("bearer "):
             token = authorization.split(" ", 1)[1].strip()
             try:
                 claims = decode_token(token)
-                # claims['email'] steht häufig zur Verfügung
+                user_email = claims.get("email") or claims.get("sub")
             except Exception as e:
-                # Nicht fatal – wir akzeptieren auch anonymes Feedback
                 logger.info("[FEEDBACK] Token konnte nicht validiert werden: %s", repr(e))
 
         ua = request.headers.get("user-agent", "")
         ip = request.client.host if request.client else ""
         data = payload.dict()
-        # Log als Minimal-Ersatz für DB
-        logger.info("[FEEDBACK] ip=%s ua=%s data=%s", ip, ua, json.dumps(data, ensure_ascii=False))
+        if 'timestamp' not in data or not data.get('timestamp'):
+            from datetime import datetime
+            data['timestamp'] = datetime.utcnow().isoformat()
+
+        inserted = False
+        if DB_POOL:
+            try:
+                conn = DB_POOL.getconn()
+                try:
+                    with conn:
+                        with conn.cursor() as cur:
+                            cur.execute("""
+                                CREATE TABLE IF NOT EXISTS feedback (
+                                    id SERIAL PRIMARY KEY,
+                                    email TEXT,
+                                    variant TEXT,
+                                    report_version TEXT,
+                                    details JSONB,
+                                    user_agent TEXT,
+                                    ip TEXT,
+                                    created_at TIMESTAMPTZ DEFAULT now()
+                                );
+                            """)
+                            cur.execute(
+                                "INSERT INTO feedback (email, variant, report_version, details, user_agent, ip) VALUES (%s,%s,%s,%s::jsonb,%s,%s)",
+                                (user_email or data.get('email'),
+                                 data.get('variant'),
+                                 data.get('report_version'),
+                                 json.dumps(data, ensure_ascii=False),
+                                 ua, ip)
+                            )
+                    inserted = True
+                finally:
+                    DB_POOL.putconn(conn)
+            except Exception as e:
+                logger.exception("[FEEDBACK] DB insert failed: %s", e)
+
+        if not inserted:
+            logger.info("[FEEDBACK] (log-only) ip=%s ua=%s data=%s", ip, ua, json.dumps(data, ensure_ascii=False))
         return {"ok": True}
+    except Exception as e:
+        logger.exception("[FEEDBACK] Fehler: %s", e)
+        raise HTTPException(status_code=500, detail="feedback failed")
+
     except Exception as e:
         logger.exception("[FEEDBACK] Fehler: %s", e)
         raise HTTPException(status_code=500, detail="feedback failed")
