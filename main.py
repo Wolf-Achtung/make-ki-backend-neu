@@ -7,11 +7,18 @@ import uuid
 import json
 import logging
 import importlib
-import psycopg2
-from psycopg2.pool import SimpleConnectionPool
+
+# Optional DB imports for feedback persistence
+try:
+    import psycopg2  # type: ignore
+    from psycopg2.pool import SimpleConnectionPool  # type: ignore
+except Exception as _e:
+    psycopg2 = None
+    SimpleConnectionPool = None  # type: ignore
+
 from typing import Any, Dict, Optional
 
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, Header
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from jose import jwt
@@ -50,17 +57,6 @@ if CORS_ALLOW == ["*"]:
 # ----------------------------
 # App & CORS
 # ----------------------------
-
-async def _on_shutdown_close_db():
-    global DB_POOL
-    try:
-        if DB_POOL:
-            DB_POOL.closeall()
-            DB_POOL = None
-            logger.info("[DB] Pool closed")
-    except Exception as e:
-        logger.exception("[DB] shutdown close failed: %s", e)
-
 app = FastAPI(title=APP_NAME)
 app.add_middleware(
     CORSMiddleware,
@@ -69,6 +65,152 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
+# ----------------------------
+# DB-Pool (optional, idempotent)
+# ----------------------------
+DB_POOL = None
+
+def _init_db_pool():
+    """Initialisiert Postgres-Pool, wenn DATABASE_URL & psycopg2 vorhanden sind."""
+    global DB_POOL
+    dsn = os.getenv("DATABASE_URL")
+    if not dsn:
+        logging.getLogger(__name__).warning("[DB] DATABASE_URL fehlt – Feedback wird nur geloggt.")
+        return
+    if SimpleConnectionPool is None:
+        logging.getLogger(__name__).warning("[DB] psycopg2 nicht installiert – Feedback wird nur geloggt.")
+        return
+    try:
+        DB_POOL = SimpleConnectionPool(
+            1, 5, dsn,
+            connect_timeout=5,
+            keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=5
+        )
+        logging.getLogger(__name__).info("[DB] Pool initialisiert")
+    except Exception as e:
+        logging.getLogger(__name__).exception("[DB] Pool-Init fehlgeschlagen: %s", e)
+        DB_POOL = None
+
+@app.on_event("startup")
+async def _on_startup_db_pool():
+    try:
+        _init_db_pool()
+    except Exception as e:
+        logging.getLogger(__name__).exception("[DB] Startup-Init fehlgeschlagen: %s", e)
+
+@app.on_event("shutdown")
+async def _on_shutdown_db_pool():
+    global DB_POOL
+    try:
+        if DB_POOL:
+            DB_POOL.closeall()
+            DB_POOL = None
+            logging.getLogger(__name__).info("[DB] Pool geschlossen")
+    except Exception as e:
+        logging.getLogger(__name__).exception("[DB] Shutdown-Close fehlgeschlagen: %s", e)
+
+
+
+# ----------------------------
+# Feedback-Model
+# ----------------------------
+class Feedback(BaseModel):
+    email: Optional[str] = None
+    variant: Optional[str] = None
+    report_version: Optional[str] = None
+    hilfe: Optional[str] = None
+    verstaendlich_analyse: Optional[str] = None
+    verstaendlich_empfehlung: Optional[str] = None
+    vertrauen: Optional[str] = None
+    dauer: Optional[str] = None
+    best: Optional[str] = None
+    next: Optional[str] = None
+    timestamp: Optional[str] = None
+
+
+
+async def _handle_feedback(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
+    """Schreibt Feedback in DB (falls verfügbar), sonst loggt – gibt immer 200 zurück."""
+    try:
+        user_email = None
+        if authorization and authorization.strip().lower().startswith("bearer "):
+            token = authorization.split(" ", 1)[1].strip()
+            try:
+                claims = decode_token(token)  # vorhandene Funktion
+                user_email = claims.get("email") or claims.get("sub")
+            except Exception as e:
+                logging.getLogger(__name__).info("[FEEDBACK] Token nicht validiert: %s", repr(e))
+
+        data = payload.dict()
+        if not data.get("timestamp"):
+            from datetime import datetime
+            data["timestamp"] = datetime.utcnow().isoformat()
+
+        ua = request.headers.get("user-agent", "")
+        ip = request.client.host if request.client else ""
+
+        inserted = False
+        if 'DB_POOL' in globals() and DB_POOL:
+            try:
+                conn = DB_POOL.getconn()
+                try:
+                    with conn:
+                        with conn.cursor() as cur:
+                            cur.execute("""
+                                CREATE TABLE IF NOT EXISTS feedback (
+                                    id SERIAL PRIMARY KEY,
+                                    email TEXT,
+                                    variant TEXT,
+                                    report_version TEXT,
+                                    details JSONB,
+                                    user_agent TEXT,
+                                    ip TEXT,
+                                    created_at TIMESTAMPTZ DEFAULT now()
+                                );
+                            """)
+                            cur.execute(
+                                "INSERT INTO feedback (email, variant, report_version, details, user_agent, ip) VALUES (%s,%s,%s,%s::jsonb,%s,%s)",
+                                (user_email or data.get('email'),
+                                 data.get('variant'),
+                                 data.get('report_version'),
+                                 json.dumps(data, ensure_ascii=False),
+                                 ua, ip)
+                            )
+                    inserted = True
+                finally:
+                    DB_POOL.putconn(conn)
+            except Exception as e:
+                logging.getLogger(__name__).exception("[FEEDBACK] DB insert failed: %s", e)
+
+        if not inserted:
+            logging.getLogger(__name__).info("[FEEDBACK] (log-only) ip=%s ua=%s data=%s", ip, ua, json.dumps(data, ensure_ascii=False))
+
+        return {"ok": True, "stored": bool(inserted)}
+    except Exception as e:
+        logging.getLogger(__name__).exception("[FEEDBACK] Fehler: %s", e)
+        raise HTTPException(status_code=500, detail="feedback failed")
+
+
+
+# ----------------------------
+# Feedback-Endpunkte
+# ----------------------------
+@app.post("/feedback")
+async def feedback_root(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
+    return await _handle_feedback(payload, request, authorization)
+
+@app.post("/api/feedback")
+async def feedback_api(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
+    return await _handle_feedback(payload, request, authorization)
+
+@app.post("/v1/feedback")
+async def feedback_v1(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
+    return await _handle_feedback(payload, request, authorization)
+
+
 
 # ----------------------------
 # In-Memory Job Store
@@ -91,31 +233,6 @@ def create_access_token(data: Dict[str, Any], expires_in: int = JWT_EXP_SECONDS)
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
 
 def decode_token(token: str) -> Dict[str, Any]:
-
-# --- Postgres connection pool (for feedback persistence) ---
-DB_POOL = None
-def _init_db_pool():
-    global DB_POOL
-    dsn = os.getenv("DATABASE_URL")
-    if not dsn:
-        logger.warning("[DB] DATABASE_URL missing – feedback will be logged only")
-        return
-    try:
-        DB_POOL = SimpleConnectionPool(1, 5, dsn, connect_timeout=5, keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=5)
-        logger.info("[DB] Pool initialized")
-    except Exception as e:
-        logger.exception("[DB] Pool init failed: %s", e)
-        DB_POOL = None
-
-@app.on_event("startup")
-async def _on_startup_init_db():
-    try:
-        _init_db_pool()
-    except Exception as e:
-        logger.exception("[DB] startup init failed: %s", e)
-
-@app.on_event("shutdown")
-
     return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
 
 def current_user(request: Request) -> Dict[str, Any]:
@@ -498,100 +615,6 @@ async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
     res = await send_html_to_pdf_service(html, to, subject="KI-Readiness Report (Test)", lang=lang, request_id="pdf_test")
     return res
 
-
-
-# ----------------------------
-# Feedback Endpoints (accept multiple routes)
-# ----------------------------
-class Feedback(BaseModel):
-    email: Optional[str] = None
-    variant: Optional[str] = None
-    report_version: Optional[str] = None
-    hilfe: Optional[str] = None
-    verstaendlich_analyse: Optional[str] = None
-    verstaendlich_empfehlung: Optional[str] = None
-    vertrauen: Optional[str] = None
-    dauer: Optional[str] = None
-    best: Optional[str] = None
-    next: Optional[str] = None
-    timestamp: Optional[str] = None
-
-
-async def _handle_feedback(payload: Feedback, request: Request, authorization: Optional[str]):
-    """Persist feedback if DB is available; otherwise log-only."""
-    try:
-        user_email = None
-        if authorization and authorization.strip().lower().startswith("bearer "):
-            token = authorization.split(" ", 1)[1].strip()
-            try:
-                claims = decode_token(token)
-                user_email = claims.get("email") or claims.get("sub")
-            except Exception as e:
-                logger.info("[FEEDBACK] Token konnte nicht validiert werden: %s", repr(e))
-
-        ua = request.headers.get("user-agent", "")
-        ip = request.client.host if request.client else ""
-        data = payload.dict()
-        if 'timestamp' not in data or not data.get('timestamp'):
-            from datetime import datetime
-            data['timestamp'] = datetime.utcnow().isoformat()
-
-        inserted = False
-        if DB_POOL:
-            try:
-                conn = DB_POOL.getconn()
-                try:
-                    with conn:
-                        with conn.cursor() as cur:
-                            cur.execute("""
-                                CREATE TABLE IF NOT EXISTS feedback (
-                                    id SERIAL PRIMARY KEY,
-                                    email TEXT,
-                                    variant TEXT,
-                                    report_version TEXT,
-                                    details JSONB,
-                                    user_agent TEXT,
-                                    ip TEXT,
-                                    created_at TIMESTAMPTZ DEFAULT now()
-                                );
-                            """)
-                            cur.execute(
-                                "INSERT INTO feedback (email, variant, report_version, details, user_agent, ip) VALUES (%s,%s,%s,%s::jsonb,%s,%s)",
-                                (user_email or data.get('email'),
-                                 data.get('variant'),
-                                 data.get('report_version'),
-                                 json.dumps(data, ensure_ascii=False),
-                                 ua, ip)
-                            )
-                    inserted = True
-                finally:
-                    DB_POOL.putconn(conn)
-            except Exception as e:
-                logger.exception("[FEEDBACK] DB insert failed: %s", e)
-
-        if not inserted:
-            logger.info("[FEEDBACK] (log-only) ip=%s ua=%s data=%s", ip, ua, json.dumps(data, ensure_ascii=False))
-        return {"ok": True}
-    except Exception as e:
-        logger.exception("[FEEDBACK] Fehler: %s", e)
-        raise HTTPException(status_code=500, detail="feedback failed")
-
-    except Exception as e:
-        logger.exception("[FEEDBACK] Fehler: %s", e)
-        raise HTTPException(status_code=500, detail="feedback failed")
-
-@app.post("/feedback")
-async def feedback_root(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
-    return await _handle_feedback(payload, request, authorization)
-
-@app.post("/api/feedback")
-async def feedback_api(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
-    return await _handle_feedback(payload, request, authorization)
-
-@app.post("/v1/feedback")
-async def feedback_v1(payload: Feedback, request: Request, authorization: Optional[str] = Header(None)):
-    return await _handle_feedback(payload, request, authorization)
-
 # ----------------------------
 # Root: kleine HTML-Startseite
 # ----------------------------
@@ -611,7 +634,8 @@ def root():
     <li><code>POST /briefing_async</code> (Bearer)</li>
     <li><code>GET /briefing_status/&lt;job_id&gt;</code> (Bearer)</li>
     <li><code>POST /pdf_test</code> (Bearer)</li>
-      <li><code>POST /feedback</code></li>
+  
+    <li><code>POST /feedback</code></li>
     <li><code>POST /api/feedback</code></li>
     <li><code>POST /v1/feedback</code></li>
   </ul>
