@@ -309,10 +309,6 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     # prompt styles.
     search_paths = [
         f"prompts/{lang}/{chapter}.md",
-        f"prompts_unzip/{lang}/{chapter}.md",
-        f"{lang}/{chapter}.md",
-        f"de_unzip/de/{chapter}.md",
-        f"en_unzip/en/{chapter}.md",
     ]
     prompt_text: Optional[str] = None
     for p in search_paths:
