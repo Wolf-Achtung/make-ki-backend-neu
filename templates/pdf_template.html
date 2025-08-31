@@ -35,7 +35,7 @@ decoration:none;border-bottom:1px solid rgba(31,102,255,.35)}
         .card{background:var(--card);border:1px solid var(--border);border-
 radius:14px;padding:16px}
         .grid{display:grid;gap:14px}
-.grid.cols-2{grid-template-columns:1fr}
+.grid.cols-2{grid-template-columns:1fr 1fr}
         .footer{margin-top:18px;padding-top:8px;border-top:1px dashed 
 var(--border);font-size:12px;color:var(--muted)}
         table{width:100%;border-collapse:collapse;margin:.4rem 0}
@@ -116,7 +116,15 @@ blue);color:#fff;font-size:10px;white-space:nowrap}
 
     thead { display: table-header-group; }
     tr { page-break-inside: avoid; }
-    a { word-break: break-word; }
+        /* Ensure links do not break in the middle of words.  Without this
+           declaration long URLs or tool names may wrap awkwardly in the PDF,
+           splitting words across lines.  Use nowrap and disable hyphenation
+           for more professional rendering. */
+        a {
+          white-space: nowrap;
+          word-break: normal;
+          hyphens: none;
+        }
 
       </style>
     <style>
@@ -329,6 +337,13 @@ risks_html|trim) %}
             <div>{{ glossary_html|safe }}</div>
           </div>
         {% endif %}
+
+    <div class="card section">
+  <div style="margin-top:.2rem;padding:10px 12px;border:1px solid #D5E3F7;border-radius:10px;background:#F6FAFF;">
+    <b>Ihre Meinung zählt:</b>
+    <a href="https://make.ki-sicherheit.jetzt/formular/feedback.html?variant={ { unternehmensgroesse|urlencode } }&version={ { datum|default('0.9') } }">Feedback geben (2–3&nbsp;Min.)</a>
+  </div>
+</div>
 
     <div class="footer">
       <div style="display:flex;align-items:center;gap:12px">

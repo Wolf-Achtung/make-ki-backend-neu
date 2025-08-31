@@ -261,20 +261,14 @@ risks_html|trim) %}
 
           <div class="card">
             <h2>AI tools</h2>
-    {% if tools_table and tools_table|length>0 %}
-      {% set ns = namespace(has_ds=false, has_cost=false) %}
-      {% for t in tools_table %}
-        {% if t.datenschutz %}{% set ns.has_ds = true %}{% endif %}
-        {% if t.cost %}{% set ns.has_cost = true %}{% endif %}
-      {% endfor %}
             {% if tools_table and tools_table|length>0 %}
               <table>
                 <thead>
                   <tr>
                     <th>Name</th>
                     <th>Application</th>
-                    {% if ns.has_ds %}<th>Data region</th>{% endif %}
-                    {% if ns.has_cost %}<th>Cost</th>{% endif %}
+                    <th>Data region</th>
+                    <th>Cost</th>
                     <th>Link</th>
                   </tr>
                 </thead>
@@ -283,8 +277,8 @@ risks_html|trim) %}
                   <tr>
                     <td>{{ t.name }}</td>
                     <td>{{ t.usecase }}</td>
-                    {% if ns.has_ds %}<td>{{ t.datenschutz }}</td>{% endif %}
-                    {% if ns.has_cost %}<td>{{ t.cost }}</td>{% endif %}
+                    <td>{{ t.datenschutz or 'n/a' }}</td>
+                    <td>{{ t.cost or 'n/a' }}</td>
                     <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
@@ -350,6 +344,13 @@ endif %}"></td>
             <div>{{ glossary_html|safe }}</div>
           </div>
         {% endif %}
+
+    <div class="card section">
+  <div style="margin-top:.2rem;padding:10px 12px;border:1px solid #D5E3F7;border-radius:10px;background:#F6FAFF;">
+    <b>Your opinion matters:</b>
+    <a href="https://make.ki-sicherheit.jetzt/formular/feedback_en.html?variant={ { company_size|default(unternehmensgroesse)|urlencode } }&version={ { today|default('0.9') } }">Give feedback (2–3&nbsp;min)</a>
+  </div>
+</div>
 
     <div class="footer">
       <div style="display:flex;align-items:center;gap:12px">
