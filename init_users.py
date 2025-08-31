@@ -6,7 +6,7 @@
     ("post@zero2.de", "passzero2!", "user"),
     ("giselapeter@peter-partner.de", "passgisela!", "user"),
     ("stephan@meyer-brehm.de", "passstephan!", "user"),
-    ("wolf.hohl@web.de", "passwolf!", "user"),
+    ("wolf.hohl@web.de", "passwolfi!", "user"),
     ("geffertj@mac.com", "passjens!", "user"),
     ("geffertkilian@gmail.com", "passkili!", "user"),
     ("levent.graef@posteo.de", "passlevgr!", "user"),
