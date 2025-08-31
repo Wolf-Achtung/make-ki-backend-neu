@@ -133,7 +133,9 @@ class Feedback(BaseModel):
 
 
 async def _handle_feedback(payload: Feedback, request: Request, authorization: Optional[str] = None):
-        # Accept Authorization header even without FastAPI's Header dependency
+    """Schreibt Feedback in DB (falls verfügbar), sonst loggt – gibt immer 200 zurück."""
+    try:
+        # Authorization Header manuell lesen (kein FastAPI Header-Dependency)
         if authorization is None:
             authorization = request.headers.get("authorization")
 
@@ -145,8 +147,6 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
                 user_email = claims.get("email") or claims.get("sub")
             except Exception as e:
                 logging.getLogger(__name__).info("[FEEDBACK] Token nicht validiert: %s", repr(e))
-
-
 
         data = payload.dict()
         if not data.get("timestamp"):
@@ -174,7 +174,8 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
                                     ip TEXT,
                                     created_at TIMESTAMPTZ DEFAULT now()
                                 );
-                            """)
+                            """
+                            )
                             cur.execute(
                                 "INSERT INTO feedback (email, variant, report_version, details, user_agent, ip) VALUES (%s,%s,%s,%s::jsonb,%s,%s)",
                                 (user_email or data.get('email'),
@@ -638,7 +639,7 @@ def root():
     <li><code>POST /briefing_async</code> (Bearer)</li>
     <li><code>GET /briefing_status/&lt;job_id&gt;</code> (Bearer)</li>
     <li><code>POST /pdf_test</code> (Bearer)</li>
-  
+
     <li><code>POST /feedback</code></li>
     <li><code>POST /api/feedback</code></li>
     <li><code>POST /v1/feedback</code></li>
