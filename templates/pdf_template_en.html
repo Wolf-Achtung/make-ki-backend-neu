@@ -162,7 +162,8 @@ alt="Badge" style="height:38px">{% endif %}</div>
           </div>
         {% endif %}
 
-        <div class="grid cols-2 onepager">
+        <!-- One-Pager: Executive summary only -->
+        <div class="onepager">
           {# Executive summary card #}
           {% if exec_summary_html and exec_summary_html|trim %}
           <div class="card">
@@ -176,13 +177,13 @@ alt="Badge" style="height:38px">{% endif %}</div>
               </div>
               {% endfor %}
             </div>
+            <p class="caption">Benchmarks: industry median ({{ datum }})</p>
             {% endif %}
             <div class="exec-content" style="margin-top:.6rem">
               {{ exec_summary_html|safe }}
             </div>
           </div>
           {% endif %}
-          {# Dimensions card removed in the Gold‑Standard. #}
         </div>
 
         {% if (quick_wins_html and quick_wins_html|trim) or (risks_html and 
