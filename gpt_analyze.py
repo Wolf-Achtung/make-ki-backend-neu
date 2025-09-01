@@ -198,6 +198,76 @@ def build_context(data: dict, branche: str, lang: str = "de") -> dict:
 
     context.update(data or {})
     context["lang"] = lang
+
+    # -------------------------------------------------------------------------
+    # Normalize and classify the company size.  Many prompts rely on a unified
+    # variable name (company_size_label) and a category (company_size_category)
+    # to tailor recommendations.  Without this classification the templates
+    # cannot personalise the content or generate the correct feedback links.
+    # Determine the employee count from various possible fields.  If the
+    # organisation is self‑employed (solo) this overrides other counts.
+    def _get_employee_count(d: dict) -> Optional[int]:
+        for key in [
+            "mitarbeiter", "mitarbeiterzahl", "anzahl_mitarbeiter", "employees",
+            "employee_count", "team_size", "anzahl_mitarbeiterinnen"
+        ]:
+            v = d.get(key)
+            n = _as_int(v)
+            if n is not None:
+                return n
+        # sometimes the size is encoded as a string category like "Solo",
+        # "2-10", "11-100"; extract lower bound
+        sz = (d.get("unternehmensgroesse") or d.get("company_size") or "").strip().lower()
+        if sz:
+            if any(s in sz for s in ["solo", "einzel", "self"]):
+                return 1
+            m = re.match(r"(\d+)", sz)
+            if m:
+                try:
+                    return int(m.group(1))
+                except Exception:
+                    pass
+        return None
+
+    emp_count = _get_employee_count(context)
+    self_emp = is_self_employed(context)
+    # Determine the category and human‑readable label based on language
+    category = "solo" if self_emp else None
+    if category is None:
+        if emp_count is None:
+            # fallback: if no information, treat as team
+            category = "team"
+        elif emp_count <= 1:
+            category = "solo"
+        elif emp_count <= 10:
+            category = "team"
+        else:
+            category = "kmu"
+    # Assign labels per language
+    if lang == "de":
+        if category == "solo":
+            label = "Solo-Unternehmer:in"
+        elif category == "team":
+            label = "Team (2–10 Mitarbeitende)"
+        else:
+            label = "KMU (11+ Mitarbeitende)"
+    else:
+        if category == "solo":
+            label = "Solo entrepreneur"
+        elif category == "team":
+            label = "Small team (2–10 people)"
+        else:
+            label = "SME (11+ people)"
+
+    context["company_size_category"] = category
+    context["company_size_label"] = label
+    # Provide backwards‑compatibility aliases
+    context["unternehmensgroesse"] = label  # German alias used in some templates
+    context["self_employed"] = "Yes" if self_emp else "No"
+    context["selbststaendig"] = "Ja" if self_emp and lang == "de" else ("Nein" if lang == "de" else context["self_employed"])
+    # Normalise company_form: if provided, leave as is; else derive from context
+    cf = context.get("rechtsform") or context.get("company_form") or context.get("legal_form")
+    context["company_form"] = cf or ""
     context["branche"] = branche
     context.setdefault("copyright_year", datetime.now().year)
     context.setdefault("copyright_owner", "Wolf Hohl")
@@ -271,11 +341,20 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     style = "\n\n---\n" + base_rules
 
     if chapter == "executive_summary":
-        style += ("\n- Gliedere in: <h3>Was tun?</h3><ul>…</ul><h3>Warum?</h3><p>…</p><h3>Nächste 3 Schritte</h3><ol>…</ol>"
-                  "\n- Maximal 5 Bullet-Points pro Liste. Fette jeweils das erste Schlüsselwort."
-                  if is_de else
-                  "\n- Structure: <h3>What to do?</h3><ul>…</ul><h3>Why?</h3><p>…</p><h3>Next 3 steps</h3><ol>…</ol>"
-                  "\n- Max 5 bullets per list. Bold the first keyword per bullet.")
+        # Gold‑Standard: use a four‑part structure for the executive summary and cap the number of points.
+        # For German reports we instruct the model to produce sections for KPI overview, top opportunities,
+        # central risks and next steps.  Each list must contain at most three items and the first word
+        # of each list item should be bold to aid readability.  Tools or funding should not be mentioned
+        # in this section.
+        style += (
+            "\n- Verwende die folgende Struktur: <h3>KPI‑Überblick</h3><p>…</p><h3>Top‑Chancen</h3><ul>…</ul><h3>Zentrale Risiken</h3><ul>…</ul><h3>Nächste Schritte</h3><ol>…</ol>"
+            "\n- Maximal 3 Punkte pro Liste. Fette jeweils das erste Wort in jedem Punkt."
+            "\n- Keine Erwähnung von Tools oder Förderprogrammen in der Executive Summary."
+            if is_de else
+            "\n- Use this structure: <h3>KPI overview</h3><p>…</p><h3>Top opportunities</h3><ul>…</ul><h3>Key risks</h3><ul>…</ul><h3>Next steps</h3><ol>…</ol>"
+            "\n- Limit each list to a maximum of 3 points. Bold the first word in each point."
+            "\n- Do not mention tools or funding programmes in the executive summary."
+        )
 
     if chapter == "vision":
         style += ("\n- Form: 1 kühne Idee (Titel + 1 Satz); 1 MVP (2–4 Wochen, grobe Kosten); 3 KPIs in <ul>. "
@@ -1373,6 +1452,67 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
                      "Email: kontakt@ki-sicherheit.jetzt · GDPR & EU-AI-Act compliant · "
                      "No legal advice.")
         footer_text = (footer_de if lang == "de" else footer_en).format(year=datetime.now().year)
+        # Compute company size classification for template variables.  We reuse
+        # the logic from build_context to ensure consistent labels.  Because
+        # build_context already normalises language, ensure lang is resolved.
+        def _compute_size_info(d: dict) -> Dict[str, str]:
+            # Determine employee count similar to build_context
+            def get_count():
+                for key in [
+                    "mitarbeiter", "mitarbeiterzahl", "anzahl_mitarbeiter", "employees",
+                    "employee_count", "team_size", "anzahl_mitarbeiterinnen"
+                ]:
+                    v = d.get(key)
+                    n = _as_int(v)
+                    if n is not None:
+                        return n
+                sz = (d.get("unternehmensgroesse") or d.get("company_size") or "").strip().lower()
+                if sz:
+                    if any(s in sz for s in ["solo", "einzel", "self"]):
+                        return 1
+                    m = re.match(r"(\d+)", sz)
+                    if m:
+                        try:
+                            return int(m.group(1))
+                        except Exception:
+                            pass
+                return None
+            emp_count = get_count()
+            self_emp = is_self_employed(d)
+            category = "solo" if self_emp else None
+            if category is None:
+                if emp_count is None:
+                    category = "team"
+                elif emp_count <= 1:
+                    category = "solo"
+                elif emp_count <= 10:
+                    category = "team"
+                else:
+                    category = "kmu"
+            if lang_resolved == "de":
+                if category == "solo":
+                    label = "Solo-Unternehmer:in"
+                elif category == "team":
+                    label = "Team (2–10 Mitarbeitende)"
+                else:
+                    label = "KMU (11+ Mitarbeitende)"
+            else:
+                if category == "solo":
+                    label = "Solo entrepreneur"
+                elif category == "team":
+                    label = "Small team (2–10 people)"
+                else:
+                    label = "SME (11+ people)"
+            return {
+                "company_size_category": category,
+                "company_size_label": label,
+                "unternehmensgroesse": label,
+                "selbststaendig": "Ja" if self_emp and lang_resolved == "de" else ("Nein" if lang_resolved == "de" else ("Yes" if self_emp else "No")),
+                "self_employed": "Yes" if self_emp else "No",
+            }
+
+        lang_resolved = lang  # use the resolved language from outer scope
+        size_info = _compute_size_info(payload)
         ctx = {
             "lang": lang,
             "today": datetime.now().strftime("%Y-%m-%d"),
@@ -1410,6 +1550,8 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             # QR‑Codes are omitted in the Gold‑Standard version.
             "qr_code_uri": "",
             "funding_badges": report.get("funding_badges", []),
+            # company size info for feedback links and prompt context
+            **size_info,
         }
         html = tmpl.render(**ctx)
     else:
