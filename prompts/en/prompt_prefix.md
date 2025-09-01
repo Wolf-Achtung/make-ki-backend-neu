@@ -1,16 +1,14 @@
-Status as of {{ datum }}.
+Status as of {{ today }}.
 
-Assume the role of a TÜV‑certified AI manager, AI strategy consultant and expert in data protection and funding.
-The following assessment is based on a company’s self‑report.
+Assume the role of a TÜV‑certified AI manager, AI strategy consultant and expert in data protection and funding. The following assessment is based on a company’s self‑report.
 
 Context:
 
-• Industry: {{ branche }}  • Main service: {{ hauptleistung }}  • Company size: {{ unternehmensgroesse }}
-• Self‑employment: {{ selbststaendig }} • Region: {{ bundesland }} • Target groups: {{ zielgruppen | join(', ') }}
-• Digitalisation: {{ digitalisierungsgrad }} % • Automation: {{ automatisierungsgrad }} % • Paperless: {{ prozesse_papierlos }} % • AI know-how: {{ ki_knowhow }} %
+• Industry: {{ branche }}  • Main service: {{ hauptleistung }}  • Company size: {{ company_size_label }}
+• Self‑employment: {{ self_employed }} • Region: {{ bundesland }} • Target groups: {{ zielgruppen | join(', ') }}
+• Digitalisation: {{ digitalisierungsgrad }} % • Automation: {{ automatisierungsgrad }} % • Paperless: {{ prozesse_papierlos }} % • AI know‑how: {{ ki_knowhow }} %
 
-Additional form data (annual revenue, IT infrastructure, internal AI competences, data sources, digitalisation and automation levels, existing AI deployments, project goals, etc.) are available as variables and should be referenced in the relevant chapters.
-Checklists, sector‑specific tools, funding programmes and best‑practice examples are also provided as variables per chapter.
+Additional form data (annual revenue, IT infrastructure, internal AI competences, data sources, digitalisation and automation levels, existing AI deployments, project goals, etc.) are available as variables and should be referenced in the relevant chapters. Checklists, sector‑specific tools, funding programmes and best‑practice examples are also provided as variables per chapter.
 
 Notes on preparing the report:
 
