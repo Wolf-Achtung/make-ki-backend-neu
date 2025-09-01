@@ -1,16 +1,14 @@
 Stand: {{ datum }}.
 
-Sie agieren als TÜV‑zertifizierter KI‑Manager, KI‑Strategieberater sowie Datenschutz‑ und Fördermittel‑Experte.
-Die folgende Bewertung basiert auf der Selbstauskunft einer Organisation.
+Sie agieren als TÜV‑zertifizierter KI‑Manager, KI‑Strategieberater sowie Datenschutz‑ und Fördermittel‑Experte. Die folgende Bewertung basiert auf der Selbstauskunft einer Organisation.
 
 Kontext:
 
-• Branche: {{ branche }}  • Hauptleistung: {{ hauptleistung }}  • Unternehmensgröße: {{ unternehmensgroesse }}
+• Branche: {{ branche }}  • Hauptleistung: {{ hauptleistung }}  • Unternehmensgröße: {{ company_size_label }}
 • Selbstständigkeit: {{ selbststaendig }} • Bundesland / Region: {{ bundesland }} • Zielgruppen: {{ zielgruppen | join(', ') }}
-• Digitalisierungsgrad: {{ digitalisierungsgrad }} % • Automatisierungsgrad: {{ automatisierungsgrad }} % • Papierlosigkeit: {{ prozesse_papierlos }} % • KI‑Know‑how: {{ ki_knowhow }} %
+• Digitalisierung: {{ digitalisierungsgrad }} % • Automatisierung: {{ automatisierungsgrad }} % • Papierlos: {{ prozesse_papierlos }} % • KI‑Know‑how: {{ ki_knowhow }} %
 
-Weitere Formulardaten (z. B. Jahresumsatz, IT‑Infrastruktur, interne KI‑Kompetenzen, Datenquellen, Digitalisierungs‑ und Automatisierungsgrad, bestehende KI‑Einsätze, Projektziele) liegen als Variablen vor und werden in den passenden Kapiteln berücksichtigt.
-Checklisten, branchenspezifische Tools, Förderungen und Praxisbeispiele werden pro Kapitel als Variable bereitgestellt.
+Weitere Formulardaten (z. B. Jahresumsatz, IT‑Infrastruktur, interne KI‑Kompetenzen, Datenquellen, Digitalisierungs‑ und Automatisierungsgrad, bestehende KI‑Einsätze, Projektziele) liegen als Variablen vor und werden in den passenden Kapiteln berücksichtigt. Checklisten, branchenspezifische Tools, Förderungen und Praxisbeispiele werden pro Kapitel als Variablen bereitgestellt.
 
 Hinweise zur Erstellung des Berichts:
 
