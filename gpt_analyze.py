@@ -8,55 +8,6 @@ import mimetypes
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-def _cap_list_items(html: str, max_items: int = 3) -> str:
-    """Keep only the first ``max_items`` <li> items per <ul>/<ol> in the given HTML."""
-    if not html:
-        return html
-    def _trim_list(m):
-        tag, inner = m.group(1), m.group(2)
-        items = re.findall(r"<li[^>]*>.*?</li>", inner, re.S|re.I)
-        keep = "".join(items[:max_items])
-        return f"<{tag}>{keep}</{tag}>"
-    return re.sub(r"<(ul|ol)[^>]*>(.*?)</\1>", _trim_list, html, flags=re.S|re.I)
-
-def _build_roi_paragraph(data: dict, lang: str = "de") -> str:
-    """Create a tiny ROI paragraph if both budget and time horizon are present.
-    Uses pragmatic ranges; avoids exact financial advice."""
-    # Detect budget (numbers like 5000, "€ 10.000") and timeframe (weeks/months)
-    raw_budget = None
-    for k in ("budget_eur","budget","invest","investment","budget_monat"):
-        v = data.get(k)
-        if v:
-            raw_budget = str(v); break
-    raw_time = None
-    for k in ("zeitrahmen","zeitfenster","zeit_horizont","zeit","timeframe","horizon","time_window"):
-        v = data.get(k)
-        if v:
-            raw_time = str(v); break
-    if not (raw_budget and raw_time):
-        return ""
-    # Parse numeric budget
-    m = re.search(r"(\d+[\.,]?\d*)", raw_budget.replace(" ", ""))
-    budget_num = None
-    if m:
-        try:
-            budget_num = float(m.group(1).replace(".", "").replace(",", "."))
-        except Exception:
-            budget_num = None
-    # Heuristic ROI band based on budget size
-    if budget_num is None:
-        band = "3–6" if lang == "de" else "3–6"
-    elif budget_num <= 5000:
-        band = "1–3"
-    elif budget_num <= 20000:
-        band = "3–6"
-    else:
-        band = "6–12"
-    if lang == "de":
-        return f"<p><b>ROI‑Schätzung:</b> Mit einem Budget von {raw_budget} und einem Zeithorizont von {raw_time} ist bei fokussiertem MVP‑Umfang typischerweise eine Amortisation nach {band} Monaten erreichbar – vorausgesetzt, die Maßnahmen liefern mindestens moderate Effizienzgewinne (z. B. 10–20&nbsp;% in einem Kernprozess). Diese Angabe ist eine grobe Orientierung.</p>"
-    else:
-        return f"<p><b>ROI estimate:</b> With a budget of {raw_budget} and a time horizon of {raw_time}, a focused MVP typically pays back within {band} months, assuming moderate efficiency gains (e.g., 10–20% in a core process). This is a rough guide.</p>"
-
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from openai import OpenAI
 
@@ -895,12 +846,6 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     out["recommendations_html"] = rec_html
     out["roadmap_html"] = out.get("roadmap", "")
     out["exec_summary_html"] = out.get("executive_summary", "")
-    # Cap lists to 3 bullets in Executive Summary
-    out["exec_summary_html"] = _cap_list_items(out["exec_summary_html"], max_items=3)
-    # Optional ROI paragraph
-    roi_par = _build_roi_paragraph(data, lang=lang)
-    if roi_par:
-        out["exec_summary_html"] = out["exec_summary_html"] + "\n" + roi_par
 
     # Vision separat (NICHT in sections_html mischen)
     out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>" if out.get("vision") else ""
@@ -1056,8 +1001,20 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # anstatt sie erneut mit _to_num neu zu bestimmen. Dadurch bleiben Mapping
     # Ergebnisse (z. B. „eher hoch" → 75) konsistent in KPI-Kacheln und Benchmarks.
     # Branchen-Benchmarks aus dem Kontext (falls vorhanden)
-    dig_bench = int(str(data.get('benchmark_digitalisierung', '') or '50').split('%')[0]) if str(data.get('benchmark_digitalisierung','')).strip() else 50
-aut_bench = int(str(data.get('benchmark_automatisierung', '') or '35').split('%')[0]) if str(data.get('benchmark_automatisierung','')).strip() else 35
+    dig_bench = 0
+    aut_bench = 0
+    try:
+        if ctx_bench:
+            bstr = str(ctx_bench.get("benchmark", ""))
+            m_d = re.search(r"Digitalisierungsgrad\s*[:=]\s*(\d+)", bstr)
+            m_a = re.search(r"Automatisierungsgrad\s*[:=]\s*(\d+)", bstr)
+            if m_d:
+                dig_bench = int(m_d.group(1))
+            if m_a:
+                aut_bench = int(m_a.group(1))
+    except Exception:
+        # Wenn Benchmarks nicht geparst werden können, verbleiben sie bei 0
+        pass
     # Fallback: wenn keine Automatisierungs-Benchmark erkannt, setze einen neutralen Standardwert (35%).
     if aut_bench == 0:
         aut_bench = 35
@@ -1070,11 +1027,7 @@ aut_bench = int(str(data.get('benchmark_automatisierung', '') or '35').split('%'
     # Erstelle Benchmark‑Dictionary, das die eigenen Werte aus den vorab
     # berechneten KPI-Variablen übernimmt. So stimmen Balken und KPI-Kacheln überein.
     benchmarks = {
-        ("Digitalisierung" if lang == "de" else "Digitalisation"): {"self": int(max(0, min(100, own_digi))), "industry": int(max(0, min(100, dig_bench)))},
-        ("Automatisierung" if lang == "de" else "Automation"): {"self": int(max(0, min(100, own_auto))), "industry": int(max(0, min(100, aut_bench)))},
-        ("Papierlos" if lang == "de" else "Paperless"): {"self": int(max(0, min(100, own_paper))), "industry": int(max(0, min(100, paper_bench)))},
-        ("Know-how" if lang == "de" else "Know‑how"): {"self": int(max(0, min(100, own_know))), "industry": int(max(0, min(100, know_bench)))},
-    },
+        ("Digitalisierung" if lang == "de" else "Digitalisation"): {"self": own_digi, "industry": dig_bench},
         ("Automatisierung" if lang == "de" else "Automation"): {"self": own_auto, "industry": aut_bench},
         ("Papierlos" if lang == "de" else "Paperless"): {"self": own_paper, "industry": paper_bench},
         ("Know-how" if lang == "de" else "Know‑how"): {"self": own_know, "industry": know_bench},
