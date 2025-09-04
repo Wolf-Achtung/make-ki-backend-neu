@@ -688,51 +688,47 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
 
 def distill_quickwins_risks(source_html: str, lang: str = "de") -> Dict[str, str]:
     """
-    Extract concise lists of quick wins and key risks from a longer HTML string.
-
-    The Gold‑Standard report limits both quick wins and risks to a maximum of
-    three items.  This function instructs the underlying language model to
-    return exactly three bullets per list, ensuring that the resulting lists
-    remain focused and digestible for decision makers.  Only valid HTML is
-    returned.
-
-    Parameters
-    ----------
-    source_html: str
-        The original HTML block containing quick wins and risks.
-    lang: str, optional
-        The language of the report ("de" or "en").  Language‑specific
-        instructions are provided to the model.
-
-    Returns
-    -------
-    Dict[str, str]
-        A dictionary with ``quick_wins_html`` and ``risks_html`` keys, each
-        containing an HTML fragment for the respective list.
+    Extract succinct quick‑wins and risks lists from an HTML section.  The model
+    is asked to return at most three bullets per list to keep the report
+    focused.  The returned HTML will contain two <h3> sections: one for the
+    quick wins and one for the key risks.  If the extraction fails, empty
+    strings are returned.  See `_chat_complete` for details on the model call.
     """
     model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
     if lang == "de":
         sys = "Du extrahierst präzise Listen aus HTML."
-        # Instruct the model to produce exactly three items per list.  This
-        # helps prevent long enumerations in the Gold‑Standard report.
-        usr = f"<h3>Quick Wins</h3><ul>…</ul><h3>Hauptrisiken</h3><ul>…</ul>\n- 3 Punkte je Liste, nur HTML.\n\nHTML:\n{source_html}"
+        # Bitte maximal drei Einträge pro Liste liefern, um die Lesbarkeit zu erhöhen.
+        usr = (
+            f"<h3>Quick Wins</h3><ul>…</ul><h3>Hauptrisiken</h3><ul>…</ul>\n"
+            f"- maximal drei Punkte je Liste, nur HTML.\n\nHTML:\n{source_html}"
+        )
     else:
         sys = "You extract precise lists from HTML."
-        usr = f"<h3>Quick wins</h3><ul>…</ul><h3>Key risks</h3><ul>…</ul>\n- 3 bullets each, HTML only.\n\nHTML:\n{source_html}"
+        usr = (
+            f"<h3>Quick wins</h3><ul>…</ul><h3>Key risks</h3><ul>…</ul>\n"
+            f"- no more than three bullets each, HTML only.\n\nHTML:\n{source_html}"
+        )
     try:
-        out = _chat_complete([
-            {"role": "system", "content": sys},
-            {"role": "user", "content": usr}
-        ], model_name=model, temperature=0.2)
+        out = _chat_complete(
+            [
+                {"role": "system", "content": sys},
+                {"role": "user", "content": usr},
+            ],
+            model_name=model,
+            temperature=0.2,
+        )
         html = ensure_html(out, lang)
     except Exception:
         return {"quick_wins_html": "", "risks_html": ""}
 
+    # Split the output into the quick wins and risks sections.  We assume
+    # exactly two <h3> headings: one for Quick Wins and one for Risks.  If
+    # ordering is reversed, swap accordingly.
     m = re.split(r"(?i)<h3[^>]*>", html)
     if len(m) >= 3:
         a = "<h3>" + m[1]
         b = "<h3>" + m[2]
-        if "Quick" in a or "wins" in a:
+        if "Quick" in a or "Wins" in a:
             return {"quick_wins_html": a, "risks_html": b}
         else:
             return {"quick_wins_html": b, "risks_html": a}
@@ -936,8 +932,10 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             "Security vulnerabilities: Poorly secured AI systems invite attacks",
             "Insufficient documentation: Missing documentation makes audits and proofs difficult"
         ]
-    # Determine target number of risks: 5 for a comprehensive list, minimum 3.
-    target_count = 5
+    # Determine target number of risks: 3 for a focused list.  Reducing the
+    # number of fallback risks keeps the report concise and highlights the
+    # most important challenges.
+    target_count = 3
     if len(items) < target_count:
         needed = target_count - len(items)
         for fr in fallback_risks:
@@ -956,6 +954,24 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     out["recommendations_html"] = rec_html
     out["roadmap_html"] = out.get("roadmap", "")
     out["exec_summary_html"] = out.get("executive_summary", "")
+    # Entferne einzelne KPI‑Schlagwörter, die das LLM gelegentlich als separate
+    # Absätze in die Zusammenfassung einfügt.  Diese Begriffe sollten nur im
+    # KPI‑Überblick auftauchen und nicht in den nächsten Schritten erscheinen.
+    kpi_words = ["Digitalisierung", "Automatisierung", "Papierlos", "Paperless", "Know-how", "Know‑how", "Knowhow"]
+    if out["exec_summary_html"]:
+        cleaned_lines = []
+        # Split on paragraph tags to avoid removing legitimate occurrences in sentences
+        parts = re.split(r"(<p>.*?</p>)", out["exec_summary_html"], flags=re.S)
+        for part in parts:
+            # Only process actual paragraph tags
+            if part.startswith("<p") and part.endswith("</p>"):
+                # Extract inner text
+                inner = re.sub(r"<[^>]+>", "", part).strip()
+                # Skip if the paragraph consists solely of a KPI word
+                if inner in kpi_words:
+                    continue
+            cleaned_lines.append(part)
+        out["exec_summary_html"] = "".join(cleaned_lines)
 
     # Vision separat (NICHT in sections_html mischen)
     out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>" if out.get("vision") else ""
