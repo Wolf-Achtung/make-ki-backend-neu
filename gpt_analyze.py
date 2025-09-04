@@ -687,51 +687,24 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
 # gpt_analyze.py — Gold-Standard (Teil 4/4)
 
 def distill_quickwins_risks(source_html: str, lang: str = "de") -> Dict[str, str]:
-    """
-    Extract succinct quick‑wins and risks lists from an HTML section.  The model
-    is asked to return at most three bullets per list to keep the report
-    focused.  The returned HTML will contain two <h3> sections: one for the
-    quick wins and one for the key risks.  If the extraction fails, empty
-    strings are returned.  See `_chat_complete` for details on the model call.
-    """
     model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
     if lang == "de":
         sys = "Du extrahierst präzise Listen aus HTML."
-        # Bitte maximal drei Einträge pro Liste liefern, um die Lesbarkeit zu erhöhen.
-        usr = (
-            f"<h3>Quick Wins</h3><ul>…</ul><h3>Hauptrisiken</h3><ul>…</ul>\n"
-            f"- maximal drei Punkte je Liste, nur HTML.\n\nHTML:\n{source_html}"
-        )
+        usr = f"<h3>Quick Wins</h3><ul>…</ul><h3>Hauptrisiken</h3><ul>…</ul>\n- 3–5 Punkte je Liste, nur HTML.\n\nHTML:\n{source_html}"
     else:
         sys = "You extract precise lists from HTML."
-        usr = (
-            f"<h3>Quick wins</h3><ul>…</ul><h3>Key risks</h3><ul>…</ul>\n"
-            f"- no more than three bullets each, HTML only.\n\nHTML:\n{source_html}"
-        )
+        usr = f"<h3>Quick wins</h3><ul>…</ul><h3>Key risks</h3><ul>…</ul>\n- 3–5 bullets each, HTML only.\n\nHTML:\n{source_html}"
     try:
-        out = _chat_complete(
-            [
-                {"role": "system", "content": sys},
-                {"role": "user", "content": usr},
-            ],
-            model_name=model,
-            temperature=0.2,
-        )
+        out = _chat_complete([{"role":"system","content":sys},{"role":"user","content":usr}], model_name=model, temperature=0.2)
         html = ensure_html(out, lang)
     except Exception:
-        return {"quick_wins_html": "", "risks_html": ""}
+        return {"quick_wins_html":"","risks_html":""}
 
-    # Split the output into the quick wins and risks sections.  We assume
-    # exactly two <h3> headings: one for Quick Wins and one for Risks.  If
-    # ordering is reversed, swap accordingly.
     m = re.split(r"(?i)<h3[^>]*>", html)
     if len(m) >= 3:
-        a = "<h3>" + m[1]
-        b = "<h3>" + m[2]
-        if "Quick" in a or "Wins" in a:
-            return {"quick_wins_html": a, "risks_html": b}
-        else:
-            return {"quick_wins_html": b, "risks_html": a}
+        a = "<h3>" + m[1]; b = "<h3>" + m[2]
+        if "Quick" in a: return {"quick_wins_html": a, "risks_html": b}
+        else:           return {"quick_wins_html": b, "risks_html": a}
     return {"quick_wins_html": html, "risks_html": ""}
 
 def distill_recommendations(source_html: str, lang: str = "de") -> str:
@@ -913,65 +886,66 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         items = re.findall(r"<li[^>]*>(.*?)</li>", risks_list_html, re.S)
     except Exception:
         items = []
-    # Provide fallback risk items by language.  Include up to five categories
-    # to ensure a well-rounded risk overview.  Items are ordered by typical
-    # severity and relevance for KI-Projekte.
+    # Provide fallback risk items by language.  In the Gold-Standard the
+    # risks section should highlight only the most critical hurdles.  To
+    # avoid overwhelming the reader, limit the list to three items.  Items
+    # are ordered by typical severity and relevance for AI projects and are
+    # tailored to common obstacles such as legal uncertainty, poor data
+    # quality and resource constraints.
     if lang == "de":
         fallback_risks = [
-            "Bias/Transparenz: Unzureichende Prüfungen können diskriminierende Ergebnisse hervorbringen",
-            "Lieferanten-Abhängigkeit: Abhängigkeit von einzelnen KI-Anbietern kann Kosten und Risiken erhöhen",
-            "Rechtslage: Unklare Compliance- und Haftungsfragen bergen juristische Risiken",
-            "Sicherheitslücken: Unzureichend gesicherte KI-Systeme bieten Angriffsflächen",
-            "Dokumentation: Fehlende Dokumentation erschwert Audits und Nachweise"
+            "Rechtslage & Datenschutz: Unklare Compliance- und Haftungsfragen bergen juristische Risiken",
+            "Datenqualität & Nachvollziehbarkeit: Schlechte oder unstrukturierte Daten erschweren KI-Projekte und können Ergebnisse verzerren",
+            "Ressourcen- und Budgetdruck: Mangelnde Kapazitäten und begrenztes Budget limitieren die Umsetzungskraft"
         ]
     else:
         fallback_risks = [
-            "Bias/Transparency: Insufficient checks can lead to discriminatory outcomes",
-            "Vendor lock-in: Dependence on single AI providers increases costs and risks",
-            "Regulatory uncertainty: Lack of clear compliance and liability can lead to legal issues",
-            "Security vulnerabilities: Poorly secured AI systems invite attacks",
-            "Insufficient documentation: Missing documentation makes audits and proofs difficult"
+            "Regulatory & data protection: Unclear compliance and liability rules pose legal risks",
+            "Data quality & traceability: Poor or unstructured data hampers AI projects and can skew results",
+            "Resources & budget constraints: Limited capacity and budget restrict execution"
         ]
-    # Determine target number of risks: 3 for a focused list.  Reducing the
-    # number of fallback risks keeps the report concise and highlights the
-    # most important challenges.
+    # Determine target number of risks: limit to three to maintain focus.
     target_count = 3
+    # If there are fewer items than required, append fallback risks (avoiding duplicates)
     if len(items) < target_count:
         needed = target_count - len(items)
         for fr in fallback_risks:
             if needed <= 0:
                 break
-            # avoid adding if similar category already present
+            # Avoid adding duplicates based on the category (text before colon)
             if not any(fr.split(":")[0] in re.sub(r"<[^>]+>", "", it) for it in items):
-                risks_list_html += f"<li>{fr}</li>"
                 items.append(fr)
                 needed -= 1
-        # ensure at least a <ul> wrapper
-        if risks_list_html.strip() and not risks_list_html.strip().startswith("<ul"):
-            risks_list_html = "<ul>" + risks_list_html + "</ul>"
-    # Use the augmented risks list
+    # If there are more items than allowed, trim to the desired count
+    if len(items) > target_count:
+        items = items[:target_count]
+    # Rebuild the risks HTML from the final list of items
+    if items:
+        risks_list_html = "<ul>" + "".join(f"<li>{it}</li>" for it in items) + "</ul>"
+    else:
+        risks_list_html = ""
     out["risks_html"] = risks_list_html
     out["recommendations_html"] = rec_html
     out["roadmap_html"] = out.get("roadmap", "")
     out["exec_summary_html"] = out.get("executive_summary", "")
-    # Entferne einzelne KPI‑Schlagwörter, die das LLM gelegentlich als separate
-    # Absätze in die Zusammenfassung einfügt.  Diese Begriffe sollten nur im
-    # KPI‑Überblick auftauchen und nicht in den nächsten Schritten erscheinen.
-    kpi_words = ["Digitalisierung", "Automatisierung", "Papierlos", "Paperless", "Know-how", "Know‑how", "Knowhow"]
+    # Remove stray KPI keyword lines (e.g. "Digitalisierung Automatisierung Papierlos KI‑Know‑how") that
+    # occasionally appear in the executive summary, particularly within the
+    # "Nächste Schritte" list.  These terms are meant only as KPI labels and
+    # should not show up as standalone items or paragraphs.  Clean both
+    # German and English variants in a case-insensitive manner.  We
+    # specifically look for sequences of the four KPI labels separated by
+    # whitespace and remove the entire line or list item they occupy.
     if out["exec_summary_html"]:
+        # German pattern: remove lines containing all four KPI labels
+        pattern_de = r"(?im)^\s*(?:<[^>]+>)?\s*(Digitalisierung\s+Automatisierung\s+Papierlos(?:keit)?\s+KI[-\s]?Know[-\s]?how)\s*(?:</[^>]+>)?\s*$"
+        # English pattern
+        pattern_en = r"(?im)^\s*(?:<[^>]+>)?\s*(Digitalisation\s+Automation\s+Paperless\s+AI\s+know[-\s]?how)\s*(?:</[^>]+>)?\s*$"
         cleaned_lines = []
-        # Split on paragraph tags to avoid removing legitimate occurrences in sentences
-        parts = re.split(r"(<p>.*?</p>)", out["exec_summary_html"], flags=re.S)
-        for part in parts:
-            # Only process actual paragraph tags
-            if part.startswith("<p") and part.endswith("</p>"):
-                # Extract inner text
-                inner = re.sub(r"<[^>]+>", "", part).strip()
-                # Skip if the paragraph consists solely of a KPI word
-                if inner in kpi_words:
-                    continue
-            cleaned_lines.append(part)
-        out["exec_summary_html"] = "".join(cleaned_lines)
+        for line in out["exec_summary_html"].splitlines():
+            if re.search(pattern_de, line) or re.search(pattern_en, line):
+                continue
+            cleaned_lines.append(line)
+        out["exec_summary_html"] = "\n".join(cleaned_lines)
 
     # Vision separat (NICHT in sections_html mischen)
     out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>" if out.get("vision") else ""
