@@ -687,24 +687,55 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
 # gpt_analyze.py — Gold-Standard (Teil 4/4)
 
 def distill_quickwins_risks(source_html: str, lang: str = "de") -> Dict[str, str]:
+    """
+    Extract concise lists of quick wins and key risks from a longer HTML string.
+
+    The Gold‑Standard report limits both quick wins and risks to a maximum of
+    three items.  This function instructs the underlying language model to
+    return exactly three bullets per list, ensuring that the resulting lists
+    remain focused and digestible for decision makers.  Only valid HTML is
+    returned.
+
+    Parameters
+    ----------
+    source_html: str
+        The original HTML block containing quick wins and risks.
+    lang: str, optional
+        The language of the report ("de" or "en").  Language‑specific
+        instructions are provided to the model.
+
+    Returns
+    -------
+    Dict[str, str]
+        A dictionary with ``quick_wins_html`` and ``risks_html`` keys, each
+        containing an HTML fragment for the respective list.
+    """
     model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
     if lang == "de":
         sys = "Du extrahierst präzise Listen aus HTML."
-        usr = f"<h3>Quick Wins</h3><ul>…</ul><h3>Hauptrisiken</h3><ul>…</ul>\n- 3–5 Punkte je Liste, nur HTML.\n\nHTML:\n{source_html}"
+        # Instruct the model to produce exactly three items per list.  This
+        # helps prevent long enumerations in the Gold‑Standard report.
+        usr = f"<h3>Quick Wins</h3><ul>…</ul><h3>Hauptrisiken</h3><ul>…</ul>\n- 3 Punkte je Liste, nur HTML.\n\nHTML:\n{source_html}"
     else:
         sys = "You extract precise lists from HTML."
-        usr = f"<h3>Quick wins</h3><ul>…</ul><h3>Key risks</h3><ul>…</ul>\n- 3–5 bullets each, HTML only.\n\nHTML:\n{source_html}"
+        usr = f"<h3>Quick wins</h3><ul>…</ul><h3>Key risks</h3><ul>…</ul>\n- 3 bullets each, HTML only.\n\nHTML:\n{source_html}"
     try:
-        out = _chat_complete([{"role":"system","content":sys},{"role":"user","content":usr}], model_name=model, temperature=0.2)
+        out = _chat_complete([
+            {"role": "system", "content": sys},
+            {"role": "user", "content": usr}
+        ], model_name=model, temperature=0.2)
         html = ensure_html(out, lang)
     except Exception:
-        return {"quick_wins_html":"","risks_html":""}
+        return {"quick_wins_html": "", "risks_html": ""}
 
     m = re.split(r"(?i)<h3[^>]*>", html)
     if len(m) >= 3:
-        a = "<h3>" + m[1]; b = "<h3>" + m[2]
-        if "Quick" in a: return {"quick_wins_html": a, "risks_html": b}
-        else:           return {"quick_wins_html": b, "risks_html": a}
+        a = "<h3>" + m[1]
+        b = "<h3>" + m[2]
+        if "Quick" in a or "wins" in a:
+            return {"quick_wins_html": a, "risks_html": b}
+        else:
+            return {"quick_wins_html": b, "risks_html": a}
     return {"quick_wins_html": html, "risks_html": ""}
 
 def distill_recommendations(source_html: str, lang: str = "de") -> str:
