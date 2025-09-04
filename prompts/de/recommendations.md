@@ -1,12 +1,17 @@
-Empfehlungen – Top 5
-Formuliere eine HTML‑Liste (<ol>…</ol>) mit den fünf wichtigsten Empfehlungen für dieses Unternehmen. Jede Empfehlung soll mit einem fetten Aktionswort beginnen und in einem Satz das Ziel sowie den erwarteten Impact (Hoch/Mittel/Niedrig) und den erforderlichen Aufwand (Hoch/Mittel/Niedrig) in Klammern am Ende enthalten, zum Beispiel (H/M). Greife dabei auf Vision, strategische Ziele, größtes Potenzial und Moonshot zurück und verknüpfe branchenspezifische Benchmarks, Chancen und Risiken. Kombiniere strategische Weichenstellungen (Governance, Zusammenarbeit, Datengrundlage) mit konkreten nächsten Schritten (Piloten, Prototypen, Trainings). Wiederhole keine Punkte aus den Quick‑Wins oder der Roadmap.
+# Empfehlungen – Top 5
+
+Formuliere eine HTML‑Liste (`<ol>…</ol>`) mit den fünf wichtigsten Empfehlungen für dieses Unternehmen. Jede Empfehlung soll mit einem fetten Aktionswort beginnen und in einem Satz das Ziel sowie den erwarteten Impact (Hoch/Mittel/Niedrig) und den erforderlichen Aufwand (Hoch/Mittel/Niedrig) in Klammern am Ende enthalten, zum Beispiel `(H/M)`. Greife dabei auf Vision, strategische Ziele, größtes Potenzial und Moonshot zurück und verknüpfe branchenspezifische Benchmarks, Chancen und Risiken. Kombiniere strategische Weichenstellungen (Governance, Zusammenarbeit, Datengrundlage) mit konkreten nächsten Schritten (Piloten, Prototypen, Trainings). Wiederhole keine Punkte aus den Quick‑Wins oder der Roadmap.
+
 Berücksichtige die Unternehmensgröße lediglich intern, um die Empfehlungen für Solo‑Selbstständige, kleine Teams (2–10) oder KMU (11–100) zu skalieren, ohne diese Kategorien wörtlich im Bericht zu nennen. Verwende einen freundlichen, beratenden Ton, der motiviert und nicht belehrend wirkt.
+
 Beispiel:
+
+```
 <ol>
   <li><b>Kooperationen ausbauen:</b> Schließe strategische Partnerschaften mit KI‑Technologieanbietern, um dein Angebot zu erweitern und Ressourcen effizient zu nutzen (H/M).</li>
   <li><b>Compliance verankern:</b> Baue dein Datenschutz‑ und Governance‑Management aus und passe Prozesse an den EU‑AI‑Act an, um Rechtsrisiken zu minimieren (M/M).</li>
   <li><b>Datenqualität verbessern:</b> Etabliere ein strukturiertes Datenmanagement (z. B. CRM) und führe ein Data‑Clearing durch, um eine solide Grundlage für KI‑Projekte zu schaffen (M/M).</li>
-  <li><b>Pilotprojekte starten:</b> Wähle einen priorisierten Use Case aus und setze einen MVP um, um innerhalb von 3 Monaten messbare Ergebnisse zu erzielen (M/M).</li>
+  <li><b>Pilotprojekte starten:</b> Wähle einen priorisierten Use Case aus und setze einen MVP um, um innerhalb von 3 Monaten messbare Ergebnisse zu erzielen (M/M).</li>
   <li><b>Team befähigen:</b> Führe kurze Workshops zur KI‑Sensibilisierung und Rollenklärung durch, um Akzeptanz und Know‑how im Team aufzubauen (L/L).</li>
 </ol>
- 
+```
