@@ -2,6 +2,8 @@
 
 Create an HTML unordered list (`<ul>…</ul>`) containing **no more than three key risks** associated with the company’s adoption of artificial intelligence. Each bullet should begin with a bold keyword (`<b>…</b>`) and consist of a single sentence describing the risk and, where appropriate, a brief suggestion for mitigating it. Use the questionnaire responses on compliance, obstacles, risk appetite and data protection, as well as external factors such as uncertain regulation, limited budget, time constraints and data quality. **Important:** The KPI categories (digitalisation, automation, paperless processes and AI know‑how) are not risks and must not be listed here. Keep the language succinct and clear, avoiding repetition.
 
+Optionally, you can also consider context factors such as time capacity (`time_capacity`), existing tools (`existing_tools`), regulated industry flags (`regulated_industry`), training interests (`training_interests`) and the vision priority (`vision_priority`) to identify resource constraints, compliance requirements, learning needs or strategic focuses as additional risk dimensions. Do not mention these variable names verbatim.
+
 Example:
 
 ```
