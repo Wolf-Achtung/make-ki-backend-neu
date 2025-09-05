@@ -551,9 +551,17 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
         A list of dicts with keys ``name``, ``usecase``, ``cost`` and ``link``.
     """
     import csv, os
+    # Prefer the tools.csv inside the data folder.  If it does not exist (for example in test
+    # environments), fall back to a root-level tools.csv.  This ensures that updated
+    # tool metadata (e.g. data residency and cost hints) is always loaded, regardless of
+    # where the CSV file is placed.  See data/tools.csv for details.
     path = os.path.join("data", "tools.csv")
     if not os.path.exists(path):
-        return []
+        alt_path = "tools.csv"
+        if os.path.exists(alt_path):
+            path = alt_path
+        else:
+            return []
     out: List[Dict[str, str]] = []
     with open(path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -885,18 +893,15 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             except Exception:
                 pass
     out["quick_wins_html"] = qw_html
-    # If the risks list is too short, append default items to ensure at least 3 risks are shown.
     # Parse the current risks_html for list items
     risks_list_html = rk_html or ""
     try:
         items = re.findall(r"<li[^>]*>(.*?)</li>", risks_list_html, re.S)
     except Exception:
         items = []
-    # Provide fallback risk items by language.  The Gold‑Standard version limits
-    # the number of risks to a maximum of three, focusing on the most
-    # pressing hurdles for small and mid‑sized companies.  Items are ordered by
-    # typical severity and relevance for AI projects.  Each entry contains a
-    # short title and a succinct description separated by a colon.
+    # For the Gold‑Standard we enforce exactly three risks.  If there are more
+    # than three, truncate the list; if fewer, append fallback items up to three.
+    # Items are ordered by typical severity and relevance.
     if lang == "de":
         fallback_risks = [
             "Rechtslage & Datenschutz: Unklare Compliance- und Haftungsfragen sowie Datenschutzpflichten können juristische Risiken bergen",
@@ -909,8 +914,13 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             "Data quality & traceability: Unstructured or incomplete data hampers meaningful analysis and undermines transparency",
             "Resource & budget constraints: Limited funds or capacity slow down projects and reduce the likelihood of success"
         ]
-    # Determine target number of risks: limit to 3 for a concise overview.
     target_count = 3
+    # Trim existing items if there are too many
+    if len(items) > target_count:
+        items = items[:target_count]
+        # rebuild the HTML from the trimmed items
+        risks_list_html = "<ul>" + "".join([f"<li>{it}</li>" for it in items]) + "</ul>"
+    # If there are fewer items, append fallback ones
     if len(items) < target_count:
         needed = target_count - len(items)
         for fr in fallback_risks:
@@ -918,13 +928,15 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                 break
             # avoid adding if similar category already present
             if not any(fr.split(":")[0] in re.sub(r"<[^>]+>", "", it) for it in items):
+                # append to html and update items list
+                if not risks_list_html:
+                    risks_list_html = "<ul>"
                 risks_list_html += f"<li>{fr}</li>"
                 items.append(fr)
                 needed -= 1
-        # ensure at least a <ul> wrapper
-        if risks_list_html.strip() and not risks_list_html.strip().startswith("<ul"):
-            risks_list_html = "<ul>" + risks_list_html + "</ul>"
-    # Use the augmented risks list
+        if risks_list_html and not risks_list_html.endswith("</ul>"):
+            risks_list_html += "</ul>"
+    # Assign the final HTML back
     out["risks_html"] = risks_list_html
     out["recommendations_html"] = rec_html
     out["roadmap_html"] = out.get("roadmap", "")
