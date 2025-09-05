@@ -1,11 +1,12 @@
-Glossary & further sources
+Glossary & Further References
 
-• Give a short explanation for any technical term you use (in brackets or footnotes).
-• For more detail, point readers to the appendix or to these links:
-  – Funding programmes: {{ websearch_links_foerder }}
-  – Tools: {{ websearch_links_tools }}
+• Provide a brief explanation of each technical term either in parentheses within the text or as a numbered footnote.  If the term has already been explained earlier in the report, refer back to that explanation rather than repeating it.
+• When additional information is relevant, point readers to helpful sources, such as funding programme links ({{ websearch_links_foerder }}) or tool recommendations ({{ websearch_links_tools }}).
 
-Tip: If you’ve already explained something earlier, just refer back to it instead of repeating yourself.
-Keep all recommendations upbeat and grounded in real‑world practice.
+You may plan internally how you will explain terms and cite sources, but do not output this planning.  The checklist itself is not part of the report.
 
-End of report
+Tip: Keep explanations concise and positive.  All recommendations and notes should be encouraging and easy for readers to act on.
+
+After adding a new explanation or reference, check that it is clear, correctly placed and helpful.  Revise as necessary.
+
+— End of report —

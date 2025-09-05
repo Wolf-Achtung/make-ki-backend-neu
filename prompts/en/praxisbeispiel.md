@@ -1,8 +1,11 @@
-# Best practice example
+## Best practice example
 
 {{ best_practice }}
 
-• Choose a recent, relevant case from the **{{ branche }}** sector with a comparable company size and main service (**{{ hauptleistung }}**) using the industry context file.  
-If no suitable real-world case is available, craft a brief fictional scenario (2–3 sentences) based on the free-text responses. Tailor this example to the company size: solo, small team or SME.
-• Describe in 2–3 sentences how the project was carried out and what tangible results it achieved (e.g., **35–40 % less time per project**, **20–25 % higher customer satisfaction**, **15–20 % revenue growth**). Use ranges to convey approximate impact.  
-• Briefly state what lessons other companies can draw from this example and how it aligns with your own strategic vision. Avoid lists and do not mention tools or funding programmes.
+You may internally plan the steps to select and describe an appropriate example (2–3 lines), but do not output this checklist.
+
+- Choose one current, relevant case from the {{ branche }} sector with comparable company size and main service ({{ hauptleistung }}) (see the industry context file). If no suitable real‑world example is available, create a short, fictional scenario (2–3 sentences) based on the free‑text responses. Adapt it to the company size: solo, small team or SME.
+- In 2–3 sentences, describe how the project was implemented and what specific results were achieved (e.g. **40 % less time required**, **30 % higher customer satisfaction** or **20 % revenue growth**). Avoid lists and do not mention further tools or programmes.
+- Briefly indicate what lessons similar companies can learn and how the example contributes to their vision.
+
+After writing the description, validate in 1–2 sentences that the scenario is clear, relevant and meets the specifications. Only proceed if validation passes; otherwise, make targeted adjustments.

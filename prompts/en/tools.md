@@ -1,23 +1,25 @@
-# Current AI tools & software for {{ branche }} (status as of {{ datum }})
+# AI tools & software for {{ branche }} (as of {{ datum }})
 
-Provide a structured overview of the most relevant AI tools for {{ branche }}.
+Provide a clear overview of the most relevant AI tools for {{ branche }}, taking into account the main service ({{ hauptleistung }}), company size ({{ unternehmensgroesse }}) and IT infrastructure ({{ it_infrastruktur }}). Use the industry‑specific tool list ({{ tools_list }}) and complement it with current web‑search links ({{ websearch_links_tools }}) where useful. Choose only solutions that align with typical use cases in {{ branche }} and the strategic goals.
 
-**1. Selection criteria:**  
-- Practical relevance, degree of innovation and data protection (EU/EAA).  
-- Compatibility with your IT infrastructure ({{ it_infrastruktur }}) and company size ({{ unternehmensgroesse }}).  
-- Reference to typical use cases (e.g., {{ hauptleistung }}, {{ projektziel }}, {{ zielgruppen }}).
+Return the tools in an HTML table with five columns:
 
-**2. Industry context:**  
-- Use the industry‑specific tool list for inspiration:  
-  {{ tools_list }}
-- Additionally integrate up‑to‑date web search results if they contain new or relevant tools:  
-  {{ websearch_links_tools }}
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Use case</th>
+    <th>Data region</th>
+    <th>Cost</th>
+    <th>Link</th>
+  </tr>
+  <!-- up to 5–7 rows, fewer if fewer suitable tools are available -->
+</table>
 
-**3. Presentation:**  
-- Use an HTML table with five columns: **Name**, **Use case**, **Data region**, **Cost**, and **Link**.  
-- For **Data region**, indicate the provider’s primary data centre location (e.g., “EU”, “US”) or “n/a” if unknown. For **Cost**, give an approximate range (e.g., “free”, “from €29/month”).  
-- List at most 5–7 tools and choose only those that are particularly relevant to {{ branche }} and {{ hauptleistung }}. Avoid duplicate mentions from other chapters.  
-- Do not include best‑practice tips or generic advice; such guidance belongs in the roadmap.
+Guidelines:
 
-**Tip:**  
-– Output the table directly as HTML (without code fences). Keep column headers short to avoid line breaks.
+- Choose a maximum of 5–7 tools; if fewer are appropriate, list only those. If no suitable tools are found, output only the note “No relevant tools found.”
+- For each solution, state the main use case in 1–2 sentences, the data region (e.g. EU, USA/EU, or “variable”), an approximate price range (like “from €29/month”, “free”, “from €100/month”) and a link to the vendor’s website.
+- Consider regulatory requirements (especially if {{ bundesland }} imposes stricter rules) and data‑protection preferences; favour EU or DE hosting where relevant.
+- Do not repeat tools from other chapters and avoid general tips.
+
+The output must be a pure HTML snippet containing the table above, or, if no tools are found, only the note. Do not include code fences or extra explanations.

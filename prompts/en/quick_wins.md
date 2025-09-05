@@ -1,17 +1,17 @@
-# Quick wins – immediate actions
+# Quick Wins – immediate actions
 
-Create an HTML unordered list (`<ul>…</ul>`) containing **no more than three quick wins** that the company can implement within the next 0–3 months. Each bullet should start with a bold keyword (`<b>…</b>`) and consist of a single sentence that describes the action and its expected benefit. Use the company’s free‑text responses (vision, moonshot, greatest potential, application area, strategic goals) and industry context to propose **tailored, practical suggestions**. Keep the tone friendly and positive. Avoid vague phrases or repetition, and choose quick wins that suit solo professionals, small teams (2–10) or SMEs (11–100) without explicitly naming these categories in the report.
+Generate an HTML unordered list (`<ul>…</ul>`) with up to three quick wins. Each line should begin with a bold keyword (`<b>…</b>`) and describe a specific measure that can realistically be implemented within the next 0–3 months. Keep each line to one sentence and clearly state the benefit.
 
-Consider the weekly time capacity (`time_capacity`), any existing tools (`existing_tools`), regulated industry flags (`regulated_industry`), training interests (`training_interests`) and the prioritised vision element (`vision_priority`) to fine‑tune your quick wins to the company's resources, compliance framework, learning needs and strategic focus. Do not explicitly mention these variable names in the text.
+Use the free‑text fields (vision, biggest potential, moonshot, application area, strategic goals) and industry context to tailor suggestions. Optionally consider weekly time capacity, existing tools, regulated industry status, training interests and vision priority to align quick wins with resources, compliance and learning needs—without naming those variables.
 
-  If the available time capacity is very limited, favour quick wins that require minimal effort. When the training interest “Automation & scripts” is selected, a quick win can include a small automation or scripting solution (for example a workflow using n8n or Zapier). If data quality is poor, be sure to propose a data inventory or data‑cleaning quick win.
+Guidelines:
 
-Example:
+- **Data inventory:** If data quality is low or unclear, a structured data inventory or data clean‑up should be the first quick win.
+- **Automation & scripts:** When there is interest in automation or a lack of time, a small automation (e.g. with n8n or Zapier) or a simple script tackling the biggest bottleneck can be a quick win.
+- **Governance light:** For solo businesses or small teams, drafting a one‑page AI policy can be a meaningful quick win.
+- **Pilot & feedback:** If the greatest potential includes GPT‑based services or an AI portal, a lean MVP pilot with initial customers or partners can be a valuable quick win.
+- Choose up to three quick wins; avoid repeating items from the recommendations or the action plan.
 
-```
-<ul>
-  <li><b>MVP portal:</b> Finalise the questionnaire and publish a lean MVP portal with AI analysis to gather early feedback.</li>
-  <li><b>Pilot partners:</b> Recruit 1–2 partners in the priority use case and measure success using concrete metrics such as hours saved.</li>
-  <li><b>Data inventory:</b> Create a structured inventory of all relevant data sources to build a solid foundation for future AI projects.</li>
-</ul>
-```
+If insufficient context is available, list the few quick wins that are possible. If no meaningful suggestions can be derived, output the following list: `<ul><li>No quick wins available. Additional information is needed for specific suggestions.</li></ul>`.
+
+Return only an HTML block containing the unordered list with 1–3 `<li>` elements, or the above error message.

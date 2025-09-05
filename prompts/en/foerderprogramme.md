@@ -1,21 +1,24 @@
-# Funding programmes for digitalisation & AI (status as of {{ datum }})
+# Funding programmes for digitalisation & AI (as of {{ datum }})
 
-List the 3–5 most relevant funding programmes currently available for {{ branche }} in {{ bundesland }} and for company size {{ unternehmensgroesse }}. Take into account previous funding experiences ({{ bisherige_foerdermittel }}) and your stated interest in additional funding ({{ interesse_foerderung }}).
+List the 3–5 most relevant funding programmes available for the {{ branche }} sector in the region {{ bundesland }} and for company size {{ unternehmensgroesse }}. Consider past funding experience ({{ bisherige_foerdermittel }}) and current interest in additional funding ({{ interesse_foerderung }}). Use programmes from {{ foerderprogramme_list }} and supplement them with recent web‑search results ({{ websearch_links_foerder }}) if appropriate.
 
-**1. Criteria:**  
-- Funding amount (percentage or maximum sum), target group, region, funding purpose and deadline.  
-- Ensure each programme is applicable to the industry and company size.
+Present the programmes in an HTML table with four columns:
 
-**2. Industry context:**  
-- Use the industry‑specific funding list:  
-  {{ foerderprogramme_list }}
-- If available, add programmes or updates from web search results:  
-  {{ websearch_links_foerder }}
-- Consider your answers about existing funding and current funding interests.
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Target group</th>
+    <th>Funding amount</th>
+    <th>Link</th>
+  </tr>
+  <!-- list up to five programmes -->
+</table>
 
-**3. Presentation:**  
-- Use an HTML table with seven columns: **Name**, **Target group**, **Region**, **Amount**, **Purpose**, **Deadline**, and **Link**.  
-- Summarise the funding amount concisely (e.g., “up to 50 %”, “max. €10 000”). Show 3–5 programmes that fit your industry, region and company size, avoiding duplicates.  
-- Do not mention tools or measures here – they are covered in other chapters.
+Guidelines:
 
-**Note:** Output the HTML table directly and **do not wrap it in a code block** (no ``` fencing). Otherwise the source code will appear instead of the formatted table.
+- Select 3–5 programmes that best match {{ branche }}, {{ bundesland }} and {{ unternehmensgroesse }}. If no suitable programmes are found, output only the empty table followed by the note “No suitable funding programmes found for the selected criteria.”
+- Summarise the funding amount concisely (e.g. “up to 50%” or “max. €10 000”). Sort programmes by relevance (sector > region > company size).
+- Take into account previous funding and interest in further programmes to personalise your selection.
+- Do not mention tools or other measures here; these are covered in separate chapters.
+
+The output must be a pure HTML snippet: either the table with 0–5 data rows or, if no programmes fit, the empty table and the note. Do not add comments or extra explanations.

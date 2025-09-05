@@ -1,15 +1,17 @@
-# Executive summary
+# Executive Summary
 
-Craft a warm, optimistic and practical executive summary for the {{ branche }} sector and your main service {{ hauptleistung }}. Use the company’s free‑text answers and strategic goals to provide down‑to‑earth guidance. Keep it clear and conversational, avoiding any marketing fluff.
+Craft a warm, practical summary for decision makers in the {{ branche }} sector and for the main service {{ hauptleistung }}. Use free‑text responses, vision, strategic goals and context variables to make the report personal and relevant. Avoid marketing jargon; maintain a friendly, optimistic and encouraging tone.
 
-* **KPI overview:** In a couple of sentences, explain how the company scores on digitalisation, automation, paperless processes and AI know‑how compared with peers in the industry. Point out whether it’s ahead, on par or trailing. These four themes are metrics only and must not be listed as risks.
-* **Top opportunities:** Mention up to three sector‑specific opportunities that arise from {{ hauptleistung }} and the strategic goals. Draw on free‑text entries such as (if available) “biggest potential”, “application area”, “moonshot” and “strategic goals”. Explain the specific benefit of each opportunity in a single sentence.
-  If the free‑text fields (“biggest potential”, “moonshot” or the vision text) explicitly refer to GPT‑based services or a lightweight AI portal for SMEs, spell this out as one of the top opportunities (e.g. “GPT‑based services for SMEs”).
-* **Key risks:** List up to three major risks or obstacles (e.g. data privacy and compliance issues, bias and transparency concerns, vendor lock‑in, uncertain legal situation, limited budget or lack of time) and briefly outline their potential impact and how to mitigate them. Avoid naming the KPI categories (digitalisation, automation, paperless processes and AI know‑how) as risks.
-* **Next steps:** Suggest up to three tangible actions for the coming months. For each action, describe what to do, the expected benefit and an approximate time frame (e.g. “finish the questionnaire and launch an MVP within 2 months”). Tailor your advice to the company’s size ({{ company_size_label }}) and legal form ({{ company_form }}). For solo entrepreneurs, keep the steps lean and scalable; for SMEs you may also mention structural measures. Always keep the budget in mind.
+The summary consists of four clearly structured sections (maximum three points each):
 
-* **Additional personalisation:** When available, use the time capacity (`time_capacity`), existing systems and tools (`existing_tools`), regulated industry flags (`regulated_industry`), training interests (`training_interests`) and the priority of the vision elements (`vision_priority`) to fine‑tune your opportunities, risks and next steps to the company's resources, compliance context, learning needs and strategic preferences. However, do not explicitly name these variable identifiers in the report.
+* **KPI overview:** Briefly explain how the company compares to peers in digitalisation, automation, paperless processes and AI know‑how (ahead, on par or behind). These terms are metrics only and must not appear in other sections.
 
-Every point should reflect the specific context of the company. Avoid generic statements, repetition and unnecessary jargon. Don’t mention tools or funding programmes here; they have their own chapters.
+* **Top opportunities:** List up to three sector‑specific opportunities emerging from {{ hauptleistung }} and the strategic goals. Draw on hints such as “biggest potential”, “application area”, “vision” and “moonshot”. If the vision or potential mentions GPT‑based services or a lightweight AI portal for SMEs, call this out explicitly as an opportunity. Describe the concrete benefit of each opportunity in one sentence.
 
-* **Optional ROI estimate:** If both `budget` and a time horizon (e.g. `timeframe` or `zeitrahmen`) are present, add a short paragraph at the end with a realistic ROI range, without introducing new placeholders. Present the benefits optimistically yet realistically.
+* **Key risks:** List up to three major risks or obstacles (e.g. legal & compliance, data protection & data quality, budget/resource constraints or time pressure). Explain the potential impact and suggest a mitigation. Do not mention any of the KPI categories (digitalisation, automation, paperless processes, AI know‑how) as risks.
+
+* **Next steps:** Recommend up to three concrete actions for the coming months. For each, describe what to do, the expected benefit and an approximate time frame. Adapt to company size {{ company_size_label }} and available budget: solo firms with limited time get lean, scalable actions; SMEs may pursue structural projects. Optionally refine using time capacity, existing tools, regulated industry status, training interests and vision priority—without naming these variables.
+
+Optionally end with a short ROI estimate if both budget and time frame are available, phrased realistically and optimistically.
+
+Avoid generic statements, repetition and jargon. Do not mention tools or funding programmes in this section; they belong elsewhere.
