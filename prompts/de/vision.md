@@ -1,37 +1,40 @@
-# Visionäre Empfehlung (Gamechanger)
+Developer: ## Rolle und Ziel
+- Dieses Prompt-Template erzeugt eine individuelle, visionäre Empfehlung (Gamechanger-Idee) als valides HTML-Fragment für B2B-Kund:innen, zugeschnitten auf Branche, Hauptleistung, Unternehmensgröße, -form und Standort (deutsches Bundesland).
 
-**Kontext:**
-- Branche: {{ branche }}
-- Hauptleistung: {{ hauptleistung }}
-- Unternehmensgröße: {{ unternehmensgroesse }}
-- Unternehmensform: {{ unternehmensform }}
-- Bundesland: {{ bundesland }}
+## Arbeitsablauf
+- Beginne mit einer kurzen Checkliste der Teilaufgaben: (1) Prüfe Eingabewerte auf Gültigkeit, (2) Generiere kühne Idee und Vision-Statement als <h3> und <p>, (3) Formuliere MVP mit Kostenangabe, (4) Liefere 3 branchenspezifische KPIs als <ul>, (5) Überprüfe Struktur und Format auf Korrektheit.
 
-**Aufgabe:**
-Formuliere **eine visionäre Empfehlung (Gamechanger‑Idee)**, die individuell zu Branche, Hauptleistung, Unternehmensgröße, Unternehmensform und Standort passt. Die Empfehlung soll ambitioniert, aber realistisch sein und dem Unternehmen einen klaren Wettbewerbsvorteil verschaffen.
+## Anweisungen
+- Nutze alle übergebenen Platzhalterwerte, um eine zukunftsweisende, konkrete und messbare Empfehlung zu erstellen.
+- Die Antwort MUSS ein valides HTML-Fragment (kein <html>-Wrapper) in exakt der folgenden Reihenfolge sein:
+    1. <h3> für die kühne Idee (ein prägnanter Titel), gefolgt von <p> mit einem einzeiligen Vision-Statement (max. 1 Satz).
+    2. <h3> für den MVP mit Titel „MVP (2–4 Wochen, ab {Betrag} €)“, gefolgt von <p> mit einer kurzen MVP-Beschreibung (max. 2 Sätze, inkl. Kosten im Format „ab {ganzzahliger Betrag} €“).
+    3. <ul> mit genau 3 <li>-KPIs (Indikator + gerundeter Prozentwert im Format „+30 %“ / „–20 %“).
 
-**Format:**  
-– Gib die Antwort ausschließlich als **valides HTML** zurück (kein `<html>`‑Wrapper).  
-– Verwende eine klare Dreiteilung:  
-  1. **Kühne Idee** (Titel in `<h3>` + ein Satz im `<p>`): Beschreibe die transformative Vision (z. B. „Automatisierte Online‑Beratung“).  
-  2. **MVP** (ebenfalls `<h3>` + kurzer Absatz): Erkläre einen minimal funktionsfähigen Prototyp, der in 2–4 Wochen umgesetzt werden kann, inklusive grober Kosten (z. B. „ab 5 000 €“).  
-  3. **KPIs**: Liste drei messbare Erfolgskennzahlen in einem `<ul>`; typische KPIs sind etwa **Kundenbindung**, **Zeitersparnis** und **Marktanteil** (oder vergleichbare Kennzahlen, passend zu {{ hauptleistung }}).  
-– Maximal 8 Sätze insgesamt; keine Floskeln oder Allgemeinplätze.
+## Teilausgaben
+- Keine Floskeln oder Allgemeinplätze. Maximal 8 Sätze gesamt.
+- Fokus: transformative Maßnahmen, konkrete und branchenspezifische Ideen (z. B. digitale Services, Automatisierung, KI, datengetriebene Modelle); messbar und an Hauptleistung und Unternehmensgröße orientiert.
+- Optional: ein konkretes Beispiel oder Vergleich zur Verdeutlichung, falls angemessen (maximal 1 Satz).
+- Kostenformat immer als ganzzahliger Betrag ab 1 000 €, mit schmalem Leerzeichen bei vierstelligen Zahlen (z. B. „ab 5 000 €“).
+- KPIs müssen relevant und branchenspezifisch sein, Prozentwerte gerundet, maximal 3 Indikatoren.
+- Platzhalter („{{ ... }}“) sind Pflicht, dürfen nicht leer, nicht generisch oder ungültig (wie „unbekannt“, „-“) sein.
 
-**Inhaltliche Leitplanken:**  
-– Fokus auf zukunftsweisende, transformative Maßnahmen (z. B. Aufbau neuer digitaler Services, Automatisierung, datengetriebene Geschäftsmodelle, KI‑gestützte Plattformen).  
-– Die Empfehlung muss **konkret, messbar und branchenspezifisch** sein und sich an der Hauptleistung {{ hauptleistung }} sowie der Unternehmensgröße {{ unternehmensgroesse }} orientieren.  
-– Füge, falls sinnvoll, ein kurzes Beispiel oder einen Vergleich zur Verdeutlichung hinzu.
+## Fehlerbehandlung
+- Enthält mindestens ein Pflichtwert einen ungültigen, leeren oder nichtssagenden Wert, gib exakt folgendes HTML-Fragment zurück:
+<p>Fehler: Ungültige oder fehlende Eingabedaten für mindestens ein Pflichtfeld.</p>
 
-**Beispielstruktur:**
-```html
-<h3>Kühne Idee: Automatisierte Online‑Beratung</h3>
-<p>Durch eine vollständig digitalisierte Beratungsplattform, die GPT‑basierte Fragebögen auswertet, werden Kunden in Echtzeit bedient.</p>
-<h3>MVP (2–4 Wochen, ab 5 000 €)</h3>
-<p>Entwicklung eines minimalen Prototyps mit Fragebogen‑Integration, GPT‑Auswertung und einfacher Weboberfläche.</p>
-<ul>
-  <li>Kundenbindung: +30 %</li>
-  <li>Zeitersparnis pro Projekt: −40 %</li>
-  <li>Marktanteil nach 12 Monaten: +25 %</li>
-</ul>
-```
+## Kontextdaten
+- Pflicht-Platzhalter: {{ branche }}, {{ hauptleistung }}, {{ unternehmensgroesse }}, {{ unternehmensform }}, {{ bundesland }} — jeweils als beschreibender String, nicht leer.
+
+## Reasoning, Planung, Überprüfung (intern)
+- Prüfe intern Schritt für Schritt, ob alle Pflichtfelder gültig sind. Halte Struktur und Format exakt ein. Teste die finale HTML-Ausgabe auf strikte Gültigkeit. Nach jeder relevanten Aktion: prüfe, ob das Teilergebnis gültig und formattreu ist, bevor der nächste Schritt folgt.
+
+## Format
+- Antwort ist ausschließlich ein HTML-Fragment gemäß Spezifikation, keine Kommentare, Erläuterungen oder anderen Ausgaben.
+- Bei Fehlern immer die spezifizierte Fehlermeldung in <p> zurückgeben.
+
+## Umfang
+- Ausgaben immer präzise/knapp, nie geschwätzig/unpräzise.
+
+## Agentik und Stopp
+- Erstelle den Vorschlag autonom gemäß dieser Instruktion, stoppe nach vollständigem, korrekt formatierten HTML-Fragment.

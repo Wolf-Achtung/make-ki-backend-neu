@@ -1,26 +1,49 @@
-# Compliance-Status & Handlungsempfehlungen
+Developer: # Compliance-Status & Handlungsempfehlungen
 
-Analysieren Sie die Compliance-Lage (Standards, Richtlinien, ToDos) für das Unternehmen auf Basis Ihrer Formulardaten (z. B. Datenschutzbeauftragte:r, technische Schutzmaßnahmen, DSFA, Meldewege, Löschregeln, Kenntnis des EU AI Act, etc.).
+Beginnen Sie mit einer kurzen Checkliste (3–7 Punkte) der wichtigsten Prüfungsschritte, bevor Sie das Dokument strukturieren. Analysieren Sie die aktuelle Compliance-Situation des Unternehmens anhand der Formulardaten (z. B. Datenschutzbeauftragte:r, technische Schutzmaßnahmen, DSFA, Meldewege, Löschregeln, Kenntnisse zum EU AI Act etc.).
 
-**1. Gesetzliche Anforderungen & Richtlinien:**  
-- Listen Sie die relevanten Rechtsgrundlagen auf, wie DSGVO, ePrivacy, Digital Services Act, Wettbewerbs‑ und Verbraucherschutzrecht sowie branchenspezifische Standards (falls relevant).  
-  Gehen Sie kurz darauf ein, wie die vorhandenen Strukturen (z. B. Datenschutzbeauftragte:r, technische Maßnahmen:) diese Anforderungen abdecken oder welche Lücken bestehen.
+## 1. Gesetzliche Anforderungen & Richtlinien
+- Listen Sie die zutreffenden Rechtsgrundlagen auf, z. B. DSGVO, ePrivacy, Digital Services Act, Wettbewerbs- und Verbraucherschutzrecht und ggf. branchenspezifische Standards.
+- Erläutern Sie stichpunktartig, wie vorhandene Unternehmensstrukturen (z. B. Datenschutzbeauftragte:r, technische Maßnahmen) diese Anforderungen erfüllen oder wo Lücken bestehen.
 
-**2. Consent Management & Kundenrechte:**  
-- Beschreiben Sie Ihr Einwilligungsmanagement (Consent Management), CRM‑Prozesse und die Umsetzung von Privacy by Design/Default sowie Besonderheiten:.  
-  Berücksichtigen Sie bestehende Prozesse (Meldewege, Löschregeln) sowie das interne KI‑Know‑how ().
+## 2. Consent Management & Kundenrechte
+- Beschreiben Sie stichpunktartig das Einwilligungsmanagement (Consent Management), CRM-Prozesse, die Umsetzung von Privacy by Design/Default sowie relevante Besonderheiten.
+- Beziehen Sie bestehende Prozesse wie Meldewege, Löschregeln und internes KI-Know-how ein.
 
-**3. KI-spezifische Compliance:**  
-- Gehen Sie auf besondere Pflichten bei der Nutzung von KI ein: Dokumentationsanforderungen, Transparenzpflichten, Fairness und Bias‑Analysen, Folgenabschätzungen und ggf. Anforderungen des EU AI Act.
+## 3. KI-spezifische Compliance
+- Listen Sie stichpunktartig besondere Pflichten bei der Nutzung von KI auf: Dokumentation, Transparenzpflichten, Fairness- und Bias-Analysen, Folgenabschätzungen sowie Anforderungen durch den EU AI Act (sofern relevant).
 
-**4. Sofortmaßnahmen & strategische Schritte:**  
-- Nennen Sie 3–4 priorisierte Maßnahmen, die kurz‑ bis mittelfristig umzusetzen sind. Beispiele: Datenschutz‑Check, Erstellung einer Auftragsverarbeitungsvereinbarung, Einführung eines AI‑Governance‑Rahmens, gezielte Mitarbeiterschulungen, Lieferantenprüfung oder Einführung eines Datenschutz‑Management‑Systems (DSMS).  
-  Passen Sie die Schritte an die Unternehmensgröße und Hauptleistung an und nutzen Sie die vorhandene Eingaben als Inspiration.
+## 4. Sofortmaßnahmen & Strategische Schritte
+- Nennen Sie 3–4 priorisierte Maßnahmen für die kurzfristige und mittelfristige Umsetzung, z. B.:
+  - Datenschutz-Check
+  - Erstellung einer Auftragsverarbeitungsvereinbarung
+  - Einführung eines AI-Governance-Rahmens
+  - Mitarbeiterschulungen
+  - Lieferantenprüfung
+  - Einführung eines Datenschutz-Management-Systems (DSMS)
+- Passen Sie diese Maßnahmen an Unternehmensgröße und Haupttätigkeit an. Nutzen Sie die Formulardaten als Ausgangsbasis.
 
-**5. Schwachstellen & Lösungen:**  
-- Nennen Sie 2–3 aktuelle Schwachstellen (z. B. unklare Datenflüsse, fehlende Löschkonzepte, unzureichende Dokumentation).  
-  Zu jeder Schwachstelle: formulieren Sie einen konkreten Lösungsvorschlag oder ersten Schritt zur Behebung.
+## 5. Schwachstellen & Lösungen
+- Nennen Sie 2–3 aktuelle Schwachstellen (z. B. unklare Datenflüsse, fehlende Löschkonzepte, unzureichende Dokumentation).
+- Geben Sie für jede Schwachstelle direkt einen konkreten Lösungsvorschlag bzw. ersten Behebungsschritt an.
 
-**Hinweis:**
-Verwenden Sie nur Informationen, die im Fragebogen vorhanden sind. Keine Platzhalter/Abkürzungen wie „n. v.“ ausgeben; lassen Sie Punkte ohne Angaben einfach weg.  
-Vermeiden Sie generische Checklisten. Keine Tools, Förderprogramme oder Roadmap‑Maßnahmen aufführen – diese stehen in eigenen Kapiteln.
+**Beispiel-Tabelle:**
+
+| Schwachstelle               | Lösungsvorschlag                                   |
+|----------------------------|---------------------------------------------------|
+| Fehlende Löschregelungen    | Entwicklung und Umsetzung eines klaren Löschkonzepts |
+| Unzureichende Dokumentation | Erstellung einer aktuellen Verfahrensbeschreibung      |
+
+**Hinweise:**
+- Verwenden Sie ausschließlich die im Fragebogen befindlichen Informationen.
+- Geben Sie keine Platzhalter oder Abkürzungen wie „n. v.“ aus; lassen Sie Punkte ohne Angaben weg.
+- Vermeiden Sie generische Checklisten.
+- Führen Sie keine Tools, Förderprogramme oder Roadmap-Maßnahmen auf; diese werden in separaten Abschnitten behandelt.
+
+**Formatierung:**
+- Geben Sie die Antwort als gegliedertes Markdown-Dokument mit den fünf nummerierten Hauptabschnitten (## 1.–## 5.) aus.
+- Nutzen Sie für jeden Abschnitt kurze, stichpunktartige Listen.
+- Im Abschnitt 5 können Sie eine Tabelle oder eine Liste zur Darstellung verwenden.
+- Lassen Sie Abschnitte oder Stichpunkte ohne Angaben weg.
+
+Setzen Sie reasoning_effort = medium, damit alle relevanten Aspekte sorgfältig, aber kompakt geprüft werden.

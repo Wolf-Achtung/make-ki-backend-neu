@@ -1,21 +1,34 @@
-# Empfehlungen – Top 5
+Developer: # Empfehlungen – Top 5
 
-Formuliere eine HTML‑Liste (`<ol>…</ol>`) mit den fünf wichtigsten Empfehlungen für dieses Unternehmen. Jede Empfehlung soll mit einem fetten Aktionswort beginnen und in einem Satz das Ziel sowie den erwarteten Impact (Hoch/Mittel/Niedrig) und den erforderlichen Aufwand (Hoch/Mittel/Niedrig) in Klammern am Ende enthalten, zum Beispiel `(H/M)`. Greife dabei auf Vision, strategische Ziele, größtes Potenzial und Moonshot zurück und verknüpfe branchenspezifische Benchmarks, Chancen und Risiken. Kombiniere strategische Weichenstellungen (Governance, Zusammenarbeit, Datengrundlage) mit konkreten nächsten Schritten (Piloten, Prototypen, Trainings). Wiederhole keine Punkte aus den Quick‑Wins oder der Roadmap.
+Beginne mit einer kurzen, internen Checkliste (3–7 Punkte), um den Ablauf zu strukturieren: Analysiere die Eingaben, bestimme strategische Prioritäten, entwickle spezifische Empfehlungen, prüfe auf Redundanz mit Quick Wins oder Roadmap, passe Empfehlungen an die Unternehmensgröße an, validiere die Sortierung nach Relevanz und Aufwand, und überprüfe Format und Stil.
 
-Berücksichtige die Unternehmensgröße lediglich intern, um die Empfehlungen für Solo‑Selbstständige, kleine Teams (2–10) oder KMU (11–100) zu skalieren, ohne diese Kategorien wörtlich im Bericht zu nennen. Verwende einen freundlichen, beratenden Ton, der motiviert und nicht belehrend wirkt.
+Erstelle eine HTML-Ordered-List (`<ol>...</ol>`) mit den fünf wichtigsten Empfehlungen für das Unternehmen. Jede Empfehlung beginnt mit einem fett formatierten Aktionswort und beschreibt in einem Satz das Ziel, den erwarteten Impact sowie den erforderlichen Aufwand. Am Satzende steht das Kräfteverhältnis Impact/Aufwand als Kürzel in Klammern, z. B. `(H/M)` (mögliche Werte: Hoch (H), Mittel (M), Niedrig (L)).
 
-  Für Solo‑Unternehmen oder sehr kleine Teams mit einem geringen Zeitbudget sollten die Empfehlungen kostengünstig und modular sein (z. B. Nutzung externer LLM‑Services, einfache Governance‑Leitlinien, kurze Automatisierungs‑Workshops).  Größere KMU können auch aufwändigere Projekte wie eigene Datenplattformen, eine LLMOps‑Pipeline oder eine White‑Label‑Beratungslösung umsetzen.  Berücksichtige außerdem die angegebenen Trainingsinteressen (z. B. Automatisierung & Skripte) und die Vision‑Priorität, um passende Weiterbildungsangebote oder Produktentwicklungen anzustoßen.
+Berücksichtige Vision, strategische Ziele, größtes Potenzial, Moonshot, branchenspezifische Benchmarks, Chancen und Risiken. Kombiniere strategische Weichenstellungen (wie Governance, Zusammenarbeit, Datengrundlage) mit konkreten nächsten Schritten (wie Piloten, Prototypen, Trainings). Wiederhole keine Punkte aus Quick Wins oder der Roadmap.
 
-Nutze optional das wöchentliche Zeitbudget (`zeitbudget`), bereits vorhandene Tools (`vorhandene_tools`), Angaben zu regulierten Branchen (`regulierte_branche`), Trainingsinteressen (`trainings_interessen`) und die Präferenz für Visionselemente (`vision_prioritaet`), um deine Empfehlungen noch genauer auf die Ressourcen, Compliance‑Anforderungen, Weiterbildungspläne und strategischen Prioritäten des Unternehmens abzustimmen. Erwähne diese Variablennamen nicht explizit im Report.
+Passe die Empfehlungen der Unternehmensgröße an: Für Solo-Unternehmen bzw. kleine Teams (< 11 Personen) sind sie möglichst kosteneffizient und modular, große KMU (11–100 Personen) können auch komplexere Vorhaben angehen. Gib die Kategorien nicht explizit im Bericht an. Berücksichtige Trainingsbedarfe und die Priorisierung von Visionselementen, um passende Weiterbildungsangebote oder Produktideen anzustoßen.
 
-Beispiel:
+Optional kannst du das wöchentliche Zeitbudget, vorhandene Tools, Angaben zur regulierten Branche, Trainingsinteressen und die Präferenz für Visionselemente nutzen, um Empfehlungen feiner abzustimmen – erwähne Variablennamen im Bericht nicht wörtlich.
 
+Sollten einzelne Informationen (z. B. Trainingsinteressen) fehlen, orientiere dich an den verbleibenden Angaben.
+
+Wähle und sortiere die Empfehlungen nach strategischer Relevanz und Gesamtnutzen. Bei Gleichstand ist der geringere Aufwand ausschlaggebend.
+
+Nach Abschluss überprüfe final, dass die Ausgabe exakt fünf Empfehlungen umfasst, jede den Vorgaben entspricht und das HTML-Format korrekt ist. Gib ausschließlich ein HTML-`<ol>` mit exakt fünf `<li>`-Elementen zurück.
+
+- Jede Empfehlung folgt diesem Muster:
+  - **Fettes Aktionswort:** Das erste Wort ist fett und beschreibt die empfohlene Handlung.
+  - Klarer Satz zu Ziel, strategischer Bedeutung und ggf. branchenspezifischem Kontext.
+  - Am Ende das Kürzel im Format `(Impact/Aufwand)`, Werte: H, M, L.
+- Empfehlungen sind nach strategischer Priorität sowie erwartetem Nutzen sortiert; bei Gleichstand gilt der niedrigere Aufwand.
+- Variablennamen oder interne Kategorien (z. B. „zeitbudget“, „trainings_interessen“ oder Unternehmensgrößen) nicht explizit nennen.
+- Fehlen Informationen, ignoriere sie und nutze verbleibende Angaben.
+- Schreibe in einem motivierenden, beratenden Stil.
+
+**Beispiel:**
 ```
 <ol>
-  <li><b>Kooperationen ausbauen:</b> Schließe strategische Partnerschaften mit KI‑Technologieanbietern, um dein Angebot zu erweitern und Ressourcen effizient zu nutzen (H/M).</li>
-  <li><b>Compliance verankern:</b> Baue dein Datenschutz‑ und Governance‑Management aus und passe Prozesse an den EU‑AI‑Act an, um Rechtsrisiken zu minimieren (M/M).</li>
-  <li><b>Datenqualität verbessern:</b> Etabliere ein strukturiertes Datenmanagement (z. B. CRM) und führe ein Data‑Clearing durch, um eine solide Grundlage für KI‑Projekte zu schaffen (M/M).</li>
-  <li><b>Pilotprojekte starten:</b> Wähle einen priorisierten Use Case aus und setze einen MVP um, um innerhalb von 3 Monaten messbare Ergebnisse zu erzielen (M/M).</li>
-  <li><b>Team befähigen:</b> Führe kurze Workshops zur KI‑Sensibilisierung und Rollenklärung durch, um Akzeptanz und Know‑how im Team aufzubauen (L/L).</li>
+  <li><b>Empfehlung:</b> … (H/M)</li>
+  …
 </ol>
 ```

@@ -1,16 +1,57 @@
-# Maßnahmenplan: Digitalisierung & KI in {{ branche }} (Schwerpunkt {{ hauptleistung }})
+Developer: # Maßnahmenplan: Digitalisierung & KI in {{ branche }} (Schwerpunkt {{ hauptleistung }})
 
-Erarbeiten Sie einen Maßnahmenplan für die nächsten 12 Monate mit drei Zeitstufen: **0–3 Monate**, **3–6 Monate** und **6–12 Monate**. Geben Sie je Zeitstufe 2–3 priorisierte Maßnahmen an (Stichwort + ein Satz Umsetzung), die sich an Ihren strategischen Zielen ({{ projektziel }}) und priorisierten Usecases ({{ ki_usecases }}) orientieren.
+Beginnen Sie mit einer prägnanten Checkliste (3–7 Stichpunkte), welche konzeptionellen Schritte für die Erstellung des Maßnahmenplans durchgeführt werden.
 
-**Beachten Sie dabei:**
-* Berücksichtigen Sie branchenspezifische Herausforderungen, Unternehmensgröße ({{ unternehmensgroesse }}), Digitalisierungs- und Automatisierungsgrad ({{ digitalisierungsgrad }}/{{ automatisierungsgrad }}), den Anteil papierloser Prozesse ({{ prozesse_papierlos }}), vorhandene KI‑Einsätze ({{ ki_einsatz | join(', ') }}) sowie Ihr internes KI‑Know‑how ({{ ki_knowhow }}) und Ihre Risikofreude ({{ risikofreude }}).
-* Richten Sie die Maßnahmen an Ihrem Investitionsbudget ({{ investitionsbudget }}) aus und nennen Sie nur knapp relevante Tools oder Förderprogramme – Details stehen in separaten Kapiteln.
-* Formulieren Sie keine generischen Tipps; jeder Schritt muss individuell sinnvoll und konkret sein.
+Erstellen Sie einen Maßnahmenplan für die kommenden 12 Monate, unterteilt in drei Zeitstufen: **0–3 Monate**, **3–6 Monate** und **6–12 Monate**. Listen Sie für jede Zeitstufe 2–3 priorisierte Maßnahmen auf. Jede Maßnahme besteht aus einem Stichwort (`title`) und einer kurzen ein-Satz-Umsetzung (`description`). Richten Sie die Auswahl an Ihren strategischen Zielen ({{ projektziel }}) und priorisierten Usecases ({{ ki_usecases }}) aus.
 
-**Beispiel für eine priorisierte Roadmap:**  
-  – **0–3 Monate:** Fragebogen fertigstellen und LLM‑Prototyp (KI‑Prototyp) testen; Mini‑Landingpage veröffentlichen; erste Feedbackschleife starten.  
-  – **3–6 Monate:** Pilotprojekt mit 1–2 Kunden oder Partnerbetrieben ({{ branche }}) durchführen; Prozesse optimieren; Förderanträge stellen.  
-  – **6–12 Monate:** Aus dem MVP ein skalierbares White‑Label‑Beratungstool entwickeln; neue Märkte erschließen; Partnernetzwerk ausbauen.  
-Nutzen Sie diese Beispiele als Leitfaden und passen Sie die konkreten Maßnahmen an Ihre Hauptleistung und Unternehmensgröße an.
+**Berücksichtigen Sie:**
+- Branchenspezifische Herausforderungen
+- Unternehmensgröße ({{ unternehmensgroesse }})
+- Digitalisierungs- und Automatisierungsgrad ({{ digitalisierungsgrad }}/{{ automatisierungsgrad }})
+- Anteil papierloser Prozesse ({{ prozesse_papierlos }})
+- Vorhandene KI-Einsätze ({{ ki_einsatz | join(', ') }})
+- Internes KI-Know-how ({{ ki_knowhow }}) und Risikofreude ({{ risikofreude }})
 
-**Tipp:** Nutzen Sie Bulletpoints und vermeiden Sie Wiederholungen mit anderen Kapiteln.
+Passen Sie die Maßnahmen außerdem dem Investitionsbudget ({{ investitionsbudget }}) an und nennen Sie relevante Tools oder Förderprogramme nur stichpunktartig – Details erscheinen in separaten Kapiteln.
+
+**Wichtige Hinweise:**
+- Vermeiden Sie generische Tipps; jede Maßnahme muss individuell sinnvoll und konkret sein.
+- Nutzen Sie stichpunktartige Darstellung und vermeiden Sie Wiederholungen anderer Kapitel.
+
+**Beispielhafte Roadmap:**
+
+– **0–3 Monate:** Fragebogen finalisieren und LLM-Prototyp testen; Mini-Landingpage veröffentlichen; erste Feedbackschleife starten.
+– **3–6 Monate:** Pilotprojekt mit 1–2 Kunden oder Partnerbetrieben ({{ branche }}) durchführen; Prozesse weiter optimieren; Förderanträge stellen.
+– **6–12 Monate:** MVP zu skalierbarem White-Label-Beratungstool weiterentwickeln; neue Märkte erschließen; Partnernetzwerk ausbauen.
+
+Nutzen Sie diese Beispiele als Orientierung und passen Sie die Inhalte individuell an Hauptleistung und Unternehmensgröße an.
+
+## Output Format
+
+Liefern Sie das Ergebnis ausschließlich als Markdown-JSON-Codeblock im folgenden Schema:
+
+```json
+{
+  "branche": "string (wie übergeben)",
+  "hauptleistung": "string (wie übergeben)",
+  "zeitplan": [
+    {
+      "zeitstufe": "0–3 Monate" | "3–6 Monate" | "6–12 Monate",
+      "massnahmen": [
+        { "title": "string", "description": "string" },
+        { "title": "string", "description": "string" },
+        { "title": "string", "description": "string" }
+      ]
+    },
+    ...
+  ]
+}
+```
+
+- Felder wie "zeitstufe" und "massnahmen" sind immer erforderlich.
+- Für jede Zeitstufe müssen 2–3 Maßnahmen enthalten sein.
+- Verwenden Sie die übergebenen Platzhalterwerte für alle Variablen (meist Strings, `ki_einsatz` als Komma-getrennte Zeichenkette).
+- Fehlt ein Wert, geben Sie das entsprechende Feld als leeren String oder eine leere Liste aus (z. B. `"investitionsbudget": ""`).
+- Geben Sie keinerlei zusätzliche Kommentare oder Erklärungen außerhalb des JSON-Codeblocks aus.
+
+Überprüfen Sie am Ende, ob das JSON alle geforderten Felder vollständig und korrekt enthält. Wenn nicht, verbessern Sie die Ausgabe entsprechend.

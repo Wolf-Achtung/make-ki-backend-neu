@@ -1,15 +1,50 @@
-# Executive Summary
+Developer: # Executive Summary
 
-Erstelle eine herzliche, praxisorientierte Zusammenfassung für die Führungsebene der Branche {{ branche }} und das Hauptangebot {{ hauptleistung }}. Nutze die Freitext‑Angaben und strategischen Ziele des Unternehmens, um konkrete, persönliche Empfehlungen zu formulieren. Vermeide jeglichen Marketing‑Jargon und halte die Sprache freundlich, optimistisch und ermutigend.
+Erstelle eine herzliche, praxisnahe Zusammenfassung für die Führungsebene der Branche {{ branche }} und das Hauptangebot {{ hauptleistung }}. Beginne mit einer kurzen, konzeptuellen Checkliste (3-7 Punkte), die die geplanten Schritte zur Erstellung der Zusammenfassung abbildet; halte die Punkte auf abstraktem Niveau. Integriere die Freitextangaben sowie die strategischen Unternehmensziele und leite daraus konkrete, persönliche Empfehlungen ab. Vermeide Marketing-Jargon; formuliere durchgehend freundlich, optimistisch und ermutigend.
 
-* **KPI‑Überblick:** Erläutere in wenigen Sätzen, wie das Unternehmen bei Digitalisierung, Automatisierung, Papierlosigkeit und KI‑Know‑how im Branchenvergleich abschneidet. Hebe hervor, ob es der Konkurrenz voraus ist, gleichauf liegt oder hinterherhinkt. Diese vier Themen dienen ausschließlich als Kennzahlen – sie dürfen nicht als Risiken genannt werden.
-* **Top‑Chancen:** Beschreibe bis zu drei branchenspezifische Chancen, die sich aus {{ hauptleistung }} und den strategischen Zielen ergeben. Nutze (falls vorhanden) Freitext‑Hinweise wie „größtes Potenzial“, „Einsatzbereich“, „Moonshot“ und „strategische Ziele“. Erkläre zu jeder Chance den konkreten Nutzen in einem Satz. 
-  Wenn im Freitext „größtes Potenzial“, „Moonshot“ oder das visionäre Feld explizit auf GPT‑basierte Services oder ein KI‑Portal für KMU hinweist, benenne diese Services klar als eine der Top‑Chancen (z. B. „GPT‑basierte Services für KMU“).
-* **Zentrale Risiken:** Liste bis zu drei wesentliche Risiken oder Hürden (z. B. Datenschutz, Bias und Transparenz, Abhängigkeit von Anbietern, unsichere Rechtslage, begrenztes Budget oder Zeitmangel) auf. Erkläre kurz, welche Auswirkungen sie haben und wie sie minimiert werden können. Vermeide die Nennung der KPI‑Kategorien (Digitalisierung, Automatisierung, Papierlosigkeit, KI‑Know‑how) als Risiken.
-* **Nächste Schritte:** Empfiehl bis zu drei konkrete Maßnahmen für die kommenden Monate. Für jede Maßnahme: Was ist zu tun, welcher Nutzen wird erwartet und in welchem Zeitrahmen (z. B. „Fragebogen abschließen und MVP in 2 Monaten starten“). Passe deine Empfehlungen an die Unternehmensgröße {{ company_size_label }} und die Rechtsform {{ company_form }} an. Für Solo‑Selbstständige sollten die Schritte schlank und skalierbar bleiben; für KMU können auch strukturelle Maßnahmen aufgeführt werden. Berücksichtige das Budget.
+Nach Erstellung des Outputs validiere in 1-2 Sätzen, dass zentrale Chancen, Risiken und Maßnahmen in Bezug auf die strategischen Ziele und Spezifika des Unternehmens enthalten sind; gleiche ggf. Anpassungen an, falls Validierung nicht erfüllt wird.
 
-* **Weitere Personalisierung:** Nutze, wenn vorhanden, das Zeitbudget (`zeitbudget`), bestehende Systeme und Werkzeuge (`vorhandene_tools`), Angaben zu regulierten Branchen (`regulierte_branche`), Trainingsinteressen (`trainings_interessen`) und die Präferenz für Visionselemente (`vision_prioritaet`), um deine Chancen, Risiken und nächsten Schritte noch feiner auf die individuellen Ressourcen, Compliance‑Rahmen, Lernbedarfe und strategischen Prioritäten des Unternehmens zuzuschneiden. Nenne diese Variablennamen jedoch nicht explizit im Report.
+## Output Format
 
-Jeder Punkt soll den spezifischen Kontext des Unternehmens widerspiegeln. Vermeide Allgemeinplätze, Wiederholungen und unnötigen Fachjargon. Tools oder Förderprogramme werden in separaten Kapiteln behandelt und dürfen hier nicht erwähnt werden.
+Formatiere deine Antwort exakt im folgenden JSON-Schema. Halte die Reihenfolge der Felder und deren Benennung strikt ein. Lasse optionale Felder leer oder weg, sofern entsprechende Informationen fehlen.
 
-* **Optionale ROI‑Schätzung:** Wenn sowohl `budget` als auch ein Zeithorizont (z. B. `zeitrahmen` oder `timeframe`) vorhanden sind, füge am Ende einen kurzen Absatz mit einer realistischen ROI‑Schätzung (als Spanne) hinzu, ohne neue Platzhalter einzuführen. Stelle den Nutzen optimistisch, aber realistisch dar.
+```json
+{
+  "kpi_ueberblick": "<Kurzer Fließtext mit KPI-Überblick>",
+  "top_chancen": [
+    {
+      "titel": "<Kurzbezeichnung der Chance>",
+      "beschreibung": "<Konkreter Nutzen dieser Chance in einem Satz>"
+    }
+    // maximal drei Chancen insgesamt
+  ],
+  "zentrale_risiken": [
+    {
+      "titel": "<Kurzbezeichnung des Risikos>",
+      "auswirkung": "<Beschreibung der möglichen Auswirkungen>",
+      "minimierung": "<Wie das Risiko minimiert werden kann>"
+    }
+    // maximal drei Risiken insgesamt
+  ],
+  "naechste_schritte": [
+    {
+      "maßnahme": "<Konkrete Maßnahme>",
+      "nutzen": "<Erwarteter Nutzen dieser Maßnahme>",
+      "zeitrahmen": "<Konkretisierter Zeitrahmen, falls vorhanden>"
+    }
+    // maximal drei Schritte insgesamt
+  ],
+  "roi_schaetzung": "<Kurzer Absatz mit realistisch eingeschätztem ROI (optional, nur wenn Budget & Zeithorizont vorhanden)>"
+}
+```
+
+## Inhaltliche Vorgaben
+
+- **kpi_ueberblick**: Kurze Einschätzung, wo das Unternehmen bei Digitalisierung, Automatisierung, Papierlosigkeit und KI-Know-how im Branchenvergleich steht (Vorsprung, gleichauf oder hinterher). Diese Themen gelten ausschließlich als Kennzahlen und dürfen nicht als Risiken erscheinen.
+- **top_chancen**: Bis zu drei relevante, branchenspezifische Chancen aus {{ hauptleistung }} und den strategischen Zielen; berücksichtige Freitext wie „größtes Potenzial“, „Einsatzbereich“, „Moonshot“ oder „strategische Ziele“. Bei explizitem Bezug auf GPT-basierte Services oder ein KI-Portal für KMU, benenne diese klar als Chance.
+- **zentrale_risiken**: Bis zu drei wesentliche Risiken/Hürden wie Datenschutz, Bias, Transparenz, Anbieterabhängigkeit, Rechtslage, begrenztes Budget oder Zeitmangel. Beschreibe Auswirkungen und entsprechende Gegenmaßnahmen. KPI-Kategorien dürfen nicht als Risiko auftauchen.
+- **naechste_schritte**: Bis zu drei konkrete Maßnahmen für die kommenden Monate. Zu jeder: was ist zu tun, welcher Nutzen wird erwartet, und welcher Zeitrahmen gilt. Passe Empfehlungen an Unternehmensgröße {{ company_size_label }} und Rechtsform {{ company_form }} an (für Solo-Selbstständige: schlank und skalierbar; für KMU: strukturelle Maßnahmen möglich). Immer Budget berücksichtigen.
+- **Weitere Personalisierung**: Berücksichtige ggf. Zeitbudget, vorhandene Systeme/Werkzeuge, regulierte Branchen, Trainingsinteressen sowie Visionselemente zur Individualisierung. Variablennamen nicht explizit erwähnen.
+- **roi_schaetzung**: Feld nur ausfüllen, wenn Budget und Zeithorizont verfügbar sind; andernfalls Feld leer lassen oder ganz weglassen.
+
+Allgemein: Jeder Punkt spiegelt den spezifischen Unternehmenskontext wider. Vermeide Allgemeinplätze, Wiederholungen und unnötigen Fachjargon. Keine Erwähnung von Tools oder Förderprogrammen. Fehlende optionale Angaben lassen das jeweilige Feld im JSON leer oder entfallen.

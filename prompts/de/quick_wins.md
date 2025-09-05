@@ -1,17 +1,38 @@
-# Quick Wins – sofort umsetzbare Maßnahmen
+Developer: # Quick Wins – Sofort umsetzbare Maßnahmen
 
-Erstelle eine HTML‑Liste (`<ul>…</ul>`) mit **maximal drei Quick Wins** für das Unternehmen. Jede Zeile soll ein Satz sein und eine konkrete Sofortmaßnahme beschreiben, die innerhalb der nächsten 0–3 Monate umgesetzt werden kann. Verwende die Angaben aus den Freitextfeldern (Vision, Moonshot, größtes Potenzial, Einsatzbereich, strategische Ziele) sowie branchenspezifische Kontextdaten, um **maßgeschneiderte und praxisnahe Vorschläge** zu machen. Markiere das erste Schlüsselwort jedes Punkts fett (`<b>…</b>`) und beschreibe den Nutzen klar und positiv. Vermeide generische Phrasen oder Wiederholungen und orientiere dich an der Unternehmensgröße (Solo, kleines Team, KMU), ohne diese Kategorien wörtlich zu nennen.
+Beginne mit einer kurzen internen Checkliste (3–7 Konzepte) der wichtigsten Schritte, um die Anforderungen in eine passende HTML-Liste umzusetzen.
 
-Berücksichtige optional das wöchentliche Zeitbudget (`zeitbudget`), bereits vorhandene Tools (`vorhandene_tools`), Hinweise auf regulierte Branchen (`regulierte_branche`), Trainingsinteressen (`trainings_interessen`) und die Priorisierung der Vision (`vision_prioritaet`), um die Quick Wins noch präziser an Ressourcen, Compliance‑Rahmen, Weiterbildungsbedarf und strategische Ausrichtung anzupassen. Nutze diese Variablennamen nicht explizit im Text.
+Erstelle eine HTML-Liste (`<ul>...</ul>`) mit **höchstens drei Quick Wins** für das Unternehmen. Jeder Listenpunkt soll ein prägnanter Satz sein, der eine konkrete Sofortmaßnahme beschreibt, die innerhalb der nächsten 0–3 Monate realistisch umsetzbar ist. Nutze die Angaben aus den Freitextfeldern (Vision, Moonshot, größtes Potenzial, Einsatzbereich, strategische Ziele) sowie branchenspezifische Informationen, um **passgenaue und praxisnahe Vorschläge** zu machen. Hebe das jeweils erste Schlüsselwort jedes Punkts fett hervor (`<b>...</b>`) und formuliere den Nutzen klar sowie positiv. Vermeide dabei allgemeine Formulierungen und Wiederholungen und passe die Empfehlungen an die Unternehmensgröße an, ohne diese explizit zu nennen.
 
-  Wenn das Zeitbudget sehr gering ist, sollten die Quick Wins vor allem Maßnahmen mit geringem Aufwand beinhalten. Ist „Automatisierung & Skripte“ als Trainingsinteresse ausgewählt, kann ein Quick Win eine kleine Automatisierungs‑ oder Skript‑Lösung (z. B. Workflow mit n8n oder Zapier) sein. Bei niedriger Datenqualität sollte unbedingt eine Dateninventur oder ein Data‑Clearing als Quick Win vorgeschlagen werden.
+Berücksichtige optional das wöchentliche Zeitbudget, bestehende Tools, Hinweise auf regulierte Branchen, Trainingsinteressen und die Priorisierung der Vision, um die Quick Wins noch genauer an Ressourcen, Compliance-Anforderungen, Weiterbildungsbedarf und Strategie anzupassen, ohne diese Variablennamen direkt zu verwenden.
 
-Beispiel:
+- Bei sehr knappem Zeitbudget fokussiere Quick Wins auf geringstmöglichen Aufwand.
+- Ist „Automatisierung & Skripte“ als Trainingsinteresse gewählt, kann eine Automatisierungs- oder Skript-Lösung (z. B. mit n8n oder Zapier) ein Quick Win sein.
+- Bei niedriger Datenqualität sollte immer eine Dateninventur oder ein Data Cleansing als Quick Win erwogen werden.
 
+Wenn zu wenig Kontext oder keine verwertbaren Eingaben vorhanden sind:
+- Gib Quick Wins aus, die an bewährten, leicht umsetzbaren und branchentypischen Sofortmaßnahmen orientiert sind – sofern möglich.
+- Liefere bis zu drei Vorschläge; falls weniger möglich sind, gib nur diese aus.
+- Ist gar kein sinnvoller Quick Win ableitbar, gib exakt folgende Fehlermeldung als `<ul>`-Element zurück: `<ul><li>Keine Quick Wins ableitbar. Für konkrete Vorschläge werden mehr Angaben benötigt.</li></ul>`
+
+Nach Erstellen der Liste führe eine kurze Überprüfung durch und stelle sicher, dass alle Listeneinträge den Anforderungen entsprechen und keine allgemeingültigen oder redundanten Vorschläge enthalten. Korrigiere die Ausgabe bei Bedarf.
+
+## Output Format
+
+Die Ausgabe ist **ausschließlich** ein HTML-Block, der entweder:
+- eine ungeordnete Liste (`<ul>...</ul>`) mit 1–3 `<li>`-Elementen für die Quick Wins enthält (keinerlei zusätzliche Metainformation),
+- oder – falls keine passenden Vorschläge möglich sind – die oben festgelegte Fehlermeldung im `<ul>`-Block zeigt.
+
+Beispiel für erfolgreiche Ausgabe:
 ```
 <ul>
-  <li><b>MVP‑Portal:</b> Fragebogen finalisieren und die KI‑Auswertung als schlankes MVP‑Portal veröffentlichen, um frühzeitig Feedback zu sammeln.</li>
-  <li><b>Pilotpartner:</b> 1–2 Partner im priorisierten Einsatzbereich gewinnen und anhand konkreter Kennzahlen (z. B. Zeitersparnis) den Nutzen messen.</li>
-  <li><b>Dateninventur:</b> Eine strukturierte Liste aller relevanten Datenquellen anlegen, um eine solide Basis für zukünftige KI‑Projekte zu schaffen.</li>
+  <li><b>MVP-Portal:</b> Fragebogen fertigstellen und KI-Auswertung als kompaktes MVP-Portal veröffentlichen, um frühzeitig Feedback zu erhalten.</li>
+  <li><b>Pilotpartner:</b> 1–2 Partner im wichtigsten Einsatzbereich gewinnen und mit klaren Kennzahlen (z. B. Zeitersparnis) den Nutzen belegen.</li>
+  <li><b>Dateninventur:</b> Alle relevanten Datenquellen systematisch erfassen, um eine solide Grundlage für kommende KI-Projekte zu schaffen.</li>
 </ul>
+```
+
+Beispiel bei Fehler oder fehlendem Input:
+```
+<ul><li>Keine Quick Wins ableitbar. Für konkrete Vorschläge werden mehr Angaben benötigt.</li></ul>
 ```
