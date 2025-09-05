@@ -4,6 +4,8 @@ Formuliere eine HTML‑Liste (`<ol>…</ol>`) mit den fünf wichtigsten Empfehlu
 
 Berücksichtige die Unternehmensgröße lediglich intern, um die Empfehlungen für Solo‑Selbstständige, kleine Teams (2–10) oder KMU (11–100) zu skalieren, ohne diese Kategorien wörtlich im Bericht zu nennen. Verwende einen freundlichen, beratenden Ton, der motiviert und nicht belehrend wirkt.
 
+Passe die Empfehlungen auch an das verfügbare Budget (`budget`) und das Zeitbudget (`zeitbudget`) an: Solo‑Unternehmen mit geringem Budget (z. B. weniger als 10 000 €) und begrenzter Zeitkapazität (unter 5 Stunden pro Woche) benötigen kostengünstige, skalierbare Maßnahmen wie externe Tools, einfache Governance‑Leitlinien oder modulare Workshops. Größere Teams oder KMU mit höheren Budgets können komplexere Initiativen wie eigene LLM‑Pipelines, umfassende Schulungen oder funktionsübergreifende Projekte angehen. Verwende diese Variablennamen nicht explizit im Report.
+
 Nutze optional das wöchentliche Zeitbudget (`zeitbudget`), bereits vorhandene Tools (`vorhandene_tools`), Angaben zu regulierten Branchen (`regulierte_branche`), Trainingsinteressen (`trainings_interessen`) und die Präferenz für Visionselemente (`vision_prioritaet`), um deine Empfehlungen noch genauer auf die Ressourcen, Compliance‑Anforderungen, Weiterbildungspläne und strategischen Prioritäten des Unternehmens abzustimmen. Erwähne diese Variablennamen nicht explizit im Report.
 
 Beispiel:
