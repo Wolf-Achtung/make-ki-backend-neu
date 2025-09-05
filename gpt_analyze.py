@@ -551,10 +551,11 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
         A list of dicts with keys ``name``, ``usecase``, ``cost`` and ``link``.
     """
     import csv, os
-    # Prefer the tools.csv inside the data folder.  If it does not exist (for example in test
-    # environments), fall back to a root-level tools.csv.  This ensures that updated
-    # tool metadata (e.g. data residency and cost hints) is always loaded, regardless of
-    # where the CSV file is placed.  See data/tools.csv for details.
+    # Determine the CSV path.  By default the file is extracted to the
+    # `data` directory when `data.zip` is unzipped.  If this path does not
+    # exist (e.g. when running outside the unzipped context), fall back to
+    # a top‑level ``tools.csv`` so that updated tool information is still
+    # loaded.  Without a valid CSV we return an empty list.
     path = os.path.join("data", "tools.csv")
     if not os.path.exists(path):
         alt_path = "tools.csv"
@@ -893,15 +894,18 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             except Exception:
                 pass
     out["quick_wins_html"] = qw_html
+    # If the risks list is too short, append default items to ensure at least 3 risks are shown.
     # Parse the current risks_html for list items
     risks_list_html = rk_html or ""
     try:
         items = re.findall(r"<li[^>]*>(.*?)</li>", risks_list_html, re.S)
     except Exception:
         items = []
-    # For the Gold‑Standard we enforce exactly three risks.  If there are more
-    # than three, truncate the list; if fewer, append fallback items up to three.
-    # Items are ordered by typical severity and relevance.
+    # Provide fallback risk items by language.  The Gold‑Standard version limits
+    # the number of risks to a maximum of three, focusing on the most
+    # pressing hurdles for small and mid‑sized companies.  Items are ordered by
+    # typical severity and relevance for AI projects.  Each entry contains a
+    # short title and a succinct description separated by a colon.
     if lang == "de":
         fallback_risks = [
             "Rechtslage & Datenschutz: Unklare Compliance- und Haftungsfragen sowie Datenschutzpflichten können juristische Risiken bergen",
@@ -914,13 +918,8 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             "Data quality & traceability: Unstructured or incomplete data hampers meaningful analysis and undermines transparency",
             "Resource & budget constraints: Limited funds or capacity slow down projects and reduce the likelihood of success"
         ]
+    # Determine target number of risks: limit to 3 for a concise overview.
     target_count = 3
-    # Trim existing items if there are too many
-    if len(items) > target_count:
-        items = items[:target_count]
-        # rebuild the HTML from the trimmed items
-        risks_list_html = "<ul>" + "".join([f"<li>{it}</li>" for it in items]) + "</ul>"
-    # If there are fewer items, append fallback ones
     if len(items) < target_count:
         needed = target_count - len(items)
         for fr in fallback_risks:
@@ -928,15 +927,13 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                 break
             # avoid adding if similar category already present
             if not any(fr.split(":")[0] in re.sub(r"<[^>]+>", "", it) for it in items):
-                # append to html and update items list
-                if not risks_list_html:
-                    risks_list_html = "<ul>"
                 risks_list_html += f"<li>{fr}</li>"
                 items.append(fr)
                 needed -= 1
-        if risks_list_html and not risks_list_html.endswith("</ul>"):
-            risks_list_html += "</ul>"
-    # Assign the final HTML back
+        # ensure at least a <ul> wrapper
+        if risks_list_html.strip() and not risks_list_html.strip().startswith("<ul"):
+            risks_list_html = "<ul>" + risks_list_html + "</ul>"
+    # Use the augmented risks list
     out["risks_html"] = risks_list_html
     out["recommendations_html"] = rec_html
     out["roadmap_html"] = out.get("roadmap", "")
@@ -946,34 +943,46 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # -------------------------------------------------------------------------
     # Remove stray KPI category lines from the executive summary
     #
-    # In some drafts the LLM may insert a line containing only the KPI names
-    # (e.g. "Digitalisierung Automatisierung Papierlos Know-how").  These
-    # phrases are metrics and should not appear in the narrative text.  We
-    # remove any paragraphs or list items whose plain text consists solely of
-    # the four KPI labels (in German or English, with optional punctuation).
+    # In some drafts the LLM may insert lines containing only the KPI
+    # category names (e.g. "Digitalisierung", "Papierlos" or the full
+    # sequence "Digitalisierung Automatisierung Papierlos Know‑how").  These
+    # terms are metrics and should not appear in the narrative text.  We
+    # remove any line whose plain text consists solely of KPI keywords in
+    # either German or English (with optional hyphens or spaces).  Lines
+    # containing additional narrative are preserved.
     try:
-        esc_html = out["exec_summary_html"] or ""
+        esc_html = out.get("exec_summary_html") or ""
         if esc_html:
-            # Split into lines to check each element separately
             lines = esc_html.splitlines()
-            cleaned = []
-            # Define regex patterns for German and English KPI strings
-            patterns = [
-                r"\bDigitalisierung\b.*\bAutomatisierung\b.*\bPapierlos\b.*\b(KI-)?Know-how\b",
-                r"\bDigitalisation\b.*\bAutomation\b.*\bPaperless\b.*\bAI\s+know-how\b"
-            ]
+            cleaned: List[str] = []
+            # Define KPI keyword sets for German and English.  Lowercase
+            # comparisons are used to avoid case sensitivity issues.
+            kpi_terms_de = {"digitalisierung", "automatisierung", "papierlos", "papierlosigkeit", "ki know-how", "know-how"}
+            kpi_terms_en = {"digitalisation", "automation", "paperless", "ai know-how", "ai know how"}
             for ln in lines:
-                # Remove HTML tags to get plain text
+                # Strip HTML tags and whitespace
                 plain = re.sub(r"<[^>]+>", "", ln).strip()
-                match = False
-                for p in patterns:
-                    if re.search(p, plain, flags=re.IGNORECASE):
-                        match = True
-                        break
-                if not match:
-                    cleaned.append(ln)
+                if not plain:
+                    # Skip empty lines entirely
+                    continue
+                # Normalise text: lowercase and replace multiple spaces/hyphens
+                norm = re.sub(r"[^a-zA-ZäöüÄÖÜß\s-]", "", plain).lower().strip()
+                # Tokenise on whitespace or hyphens
+                tokens = [t.strip() for t in re.split(r"[\s/-]+", norm) if t.strip()]
+                # Determine if all tokens are KPI keywords (de or en)
+                if tokens:
+                    # Some tokens may be combined (e.g. "ki", "know", "how")
+                    # Reconstruct phrases for EN/DE sets
+                    joined = " ".join(tokens)
+                    all_de = all(tok in kpi_terms_de or joined in kpi_terms_de for tok in tokens)
+                    all_en = all(tok in kpi_terms_en or joined in kpi_terms_en for tok in tokens)
+                    if all_de or all_en:
+                        # Skip this line entirely
+                        continue
+                cleaned.append(ln)
             out["exec_summary_html"] = "\n".join(cleaned)
     except Exception:
+        # If cleaning fails, leave the original executive summary unchanged
         pass
 
     # Vision separat (NICHT in sections_html mischen)
