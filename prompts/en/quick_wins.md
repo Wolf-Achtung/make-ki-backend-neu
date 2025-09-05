@@ -4,6 +4,8 @@ Create an HTML unordered list (`<ul>…</ul>`) containing **no more than three q
 
 Consider the weekly time capacity (`time_capacity`), any existing tools (`existing_tools`), regulated industry flags (`regulated_industry`), training interests (`training_interests`) and the prioritised vision element (`vision_priority`) to fine‑tune your quick wins to the company's resources, compliance framework, learning needs and strategic focus. Do not explicitly mention these variable names in the text.
 
+If the data quality is flagged as low (for example when the `data_quality` field is set to “low” or similarly worded), ensure that at least one quick win focuses on capturing and structuring data – for instance by setting up a simple CRM/ERP system or conducting a comprehensive data inventory.
+
 Example:
 
 ```

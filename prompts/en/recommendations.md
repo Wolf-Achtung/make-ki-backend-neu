@@ -4,6 +4,8 @@ Write an HTML ordered list (`<ol>…</ol>`) containing the five most important r
 
 Take the company size into account internally only, tailoring recommendations for solo professionals, small teams (2–10) or SMEs (11–100) without naming these categories explicitly. Adopt a friendly, advisory tone that motivates rather than lectures.
 
+Adjust the recommendations to the available budget (`budget`) and time capacity (`time_capacity`): solo professionals with limited funds (e.g. below €10,000) and only a few hours per week (under 5 hours) should receive affordable, scalable actions such as using third‑party tools, setting up simple governance guidelines or running modular workshops. Larger teams or SMEs with greater resources can pursue more ambitious initiatives like building their own LLM pipelines, running comprehensive training programmes or launching cross‑functional projects. Do not mention these variable names explicitly in the report.
+
 Where available, also factor in the weekly time capacity (`time_capacity`), existing tools (`existing_tools`), regulated industry flags (`regulated_industry`), training interests (`training_interests`) and the priority of the vision elements (`vision_priority`) to tailor your recommendations to the company's resources, compliance obligations, learning plans and strategic focus. Do not reference these variable names explicitly in the report.
 
 Example:
