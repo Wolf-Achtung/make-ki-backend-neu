@@ -1,8 +1,8 @@
-Developer: # Praxisbeispiel
+# Praxisbeispiel
 
 {{ best_practice }}
 
-Beginnen Sie mit einer kurzen Checkliste (3–5 Punkte), die die Teilschritte zur Auswahl und Beschreibung des passenden Praxisbeispiels skizziert. 
+Nutze intern eine kurze Checkliste, um die Teilschritte zur Auswahl und Beschreibung des passenden Praxisbeispiels zu planen – gib diese Checkliste nicht im Output aus.
 
 - Wählen Sie ein einzelnes, aktuelles Beispiel aus der Branche **{{ branche }}**, das eine vergleichbare Unternehmensgröße und Hauptleistung (**{{ hauptleistung }}**) aufweist (siehe Branchen-Kontextdatei). Falls kein passendes Beispiel vorhanden ist, entwickeln Sie ein kurzes, fiktives Szenario (2–3 Sätze) basierend auf den Freitextangaben. Passen Sie das Szenario an die Unternehmensgröße an: Solo-Unternehmen, kleines Team oder KMU.
 - Beschreiben Sie in 2–3 Sätzen, wie das Projekt umgesetzt wurde und welches konkrete Ergebnis erzielt wurde (z. B. **40 % geringerer Zeitaufwand**, **30 % höhere Kundenzufriedenheit** oder **20 % Umsatzwachstum**). Vermeiden Sie Listen und erwähnen Sie keine weiteren Tools oder Programme.

@@ -1,8 +1,10 @@
-Developer: ## Rolle und Ziel
-- Dieses Prompt-Template erzeugt eine individuelle, visionäre Empfehlung (Gamechanger-Idee) als valides HTML-Fragment für B2B-Kund:innen, zugeschnitten auf Branche, Hauptleistung, Unternehmensgröße, -form und Standort (deutsches Bundesland).
+## Rolle und Ziel
+
+Dieses Prompt‑Template erzeugt eine individuelle, visionäre Empfehlung (Gamechanger‑Idee) als valides HTML‑Fragment für B2B‑Kund:innen, zugeschnitten auf Branche, Hauptleistung, Unternehmensgröße, ‑form und Standort (deutsches Bundesland).
 
 ## Arbeitsablauf
-- Beginne mit einer kurzen Checkliste der Teilaufgaben: (1) Prüfe Eingabewerte auf Gültigkeit, (2) Generiere kühne Idee und Vision-Statement als <h3> und <p>, (3) Formuliere MVP mit Kostenangabe, (4) Liefere 3 branchenspezifische KPIs als <ul>, (5) Überprüfe Struktur und Format auf Korrektheit.
+
+Du kannst intern (nicht in der Ausgabe) eine kurze Checkliste der Teilaufgaben erstellen: (1) Eingabewerte auf Gültigkeit prüfen, (2) kühne Idee und Vision‑Statement generieren, (3) einen MVP mit Kostenangabe formulieren, (4) drei branchenspezifische KPIs liefern und (5) Struktur und Format auf Korrektheit prüfen.
 
 ## Anweisungen
 - Nutze alle übergebenen Platzhalterwerte, um eine zukunftsweisende, konkrete und messbare Empfehlung zu erstellen.

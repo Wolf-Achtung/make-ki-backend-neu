@@ -1,34 +1,17 @@
-Developer: # Empfehlungen – Top 5
+# Empfehlungen – Top 5
 
-Beginne mit einer kurzen, internen Checkliste (3–7 Punkte), um den Ablauf zu strukturieren: Analysiere die Eingaben, bestimme strategische Prioritäten, entwickle spezifische Empfehlungen, prüfe auf Redundanz mit Quick Wins oder Roadmap, passe Empfehlungen an die Unternehmensgröße an, validiere die Sortierung nach Relevanz und Aufwand, und überprüfe Format und Stil.
+Erstelle eine HTML‑Liste (`<ol>…</ol>`) mit den fünf wichtigsten Empfehlungen für das Unternehmen. Jede Empfehlung beginnt mit einem fett formatierten Aktionswort und beschreibt in einem Satz das Ziel, den erwarteten Impact und den erforderlichen Aufwand. Am Ende steht das Verhältnis Impact/Aufwand als Kürzel in Klammern (z. B. `(H/M)`, `(M/M)`, `(L/L)`).
 
-Erstelle eine HTML-Ordered-List (`<ol>...</ol>`) mit den fünf wichtigsten Empfehlungen für das Unternehmen. Jede Empfehlung beginnt mit einem fett formatierten Aktionswort und beschreibt in einem Satz das Ziel, den erwarteten Impact sowie den erforderlichen Aufwand. Am Satzende steht das Kräfteverhältnis Impact/Aufwand als Kürzel in Klammern, z. B. `(H/M)` (mögliche Werte: Hoch (H), Mittel (M), Niedrig (L)).
+Berücksichtige Vision, strategische Ziele, größtes Potenzial, Moonshot, branchenspezifische Benchmarks sowie die Chancen und Risiken aus der Executive Summary. Kombiniere strategische Weichenstellungen (Governance, Zusammenarbeit, Datengrundlage, Compliance) mit konkreten nächsten Schritten (Piloten, Prototypen, Trainings). Wiederhole keine Punkte aus Quick Wins oder dem Maßnahmenplan.
 
-Berücksichtige Vision, strategische Ziele, größtes Potenzial, Moonshot, branchenspezifische Benchmarks, Chancen und Risiken. Kombiniere strategische Weichenstellungen (wie Governance, Zusammenarbeit, Datengrundlage) mit konkreten nächsten Schritten (wie Piloten, Prototypen, Trainings). Wiederhole keine Punkte aus Quick Wins oder der Roadmap.
+Passe die Empfehlungen intern an die Unternehmensgröße (Solo, kleines Team, KMU), das verfügbare Zeitbudget, mögliche regulatorische Anforderungen, vorhandene Werkzeuge, Trainingsinteressen und die Vision‑Priorität an – ohne diese Variablennamen wörtlich zu nennen. Kleine Unternehmen benötigen kosteneffiziente und modulare Maßnahmen; größere KMU können komplexere Vorhaben angehen.
 
-Passe die Empfehlungen der Unternehmensgröße an: Für Solo-Unternehmen bzw. kleine Teams (< 11 Personen) sind sie möglichst kosteneffizient und modular, große KMU (11–100 Personen) können auch komplexere Vorhaben angehen. Gib die Kategorien nicht explizit im Bericht an. Berücksichtige Trainingsbedarfe und die Priorisierung von Visionselementen, um passende Weiterbildungsangebote oder Produktideen anzustoßen.
+Eine mögliche Struktur (die du sinngemäß aufgreifen kannst):
 
-Optional kannst du das wöchentliche Zeitbudget, vorhandene Tools, Angaben zur regulierten Branche, Trainingsinteressen und die Präferenz für Visionselemente nutzen, um Empfehlungen feiner abzustimmen – erwähne Variablennamen im Bericht nicht wörtlich.
+1. **Fokussieren:** Vision und Strategie schärfen, Prioritäten festlegen und eine Roadmap formulieren, die das größte Potenzial (z. B. GPT‑Services oder ein KI‑Portal) konkretisiert. *(H/M)*
+2. **Datenbasis stärken:** Dateninventur durchführen, zentrale Datenquellen aufbauen (z. B. CRM/ERP) und die Datenqualität verbessern, um eine solide Grundlage für KI‑Anwendungen zu schaffen. *(M/M)*
+3. **Governance etablieren:** Ein schlankes KI‑Governance‑Rahmenwerk implementieren, inklusive Datenschutz‑Checks, Fairness‑Prüfungen und Compliance‑Prozessen; für Solo‑Unternehmen genügt eine kurze „AI‑Policy Light“. *(M/M)*
+4. **Pilotieren & skalieren:** Einen priorisierten Use‑Case (z. B. GPT‑basiertes Service‑MVP) prototypisch umsetzen, mit ausgewählten Partnern testen und bei Erfolg skalieren; dabei schnelle Feedback‑Schleifen nutzen. *(M/M)*
+5. **Befähigen & vernetzen:** Team und Stakeholder durch gezielte Schulungen, Workshops oder externe Coachings weiterbilden, Netzwerke und Partnerschaften aufbauen und Trainingsinteressen (z. B. Automatisierung & Skripte) aufgreifen. *(L/L)*
 
-Sollten einzelne Informationen (z. B. Trainingsinteressen) fehlen, orientiere dich an den verbleibenden Angaben.
-
-Wähle und sortiere die Empfehlungen nach strategischer Relevanz und Gesamtnutzen. Bei Gleichstand ist der geringere Aufwand ausschlaggebend.
-
-Nach Abschluss überprüfe final, dass die Ausgabe exakt fünf Empfehlungen umfasst, jede den Vorgaben entspricht und das HTML-Format korrekt ist. Gib ausschließlich ein HTML-`<ol>` mit exakt fünf `<li>`-Elementen zurück.
-
-- Jede Empfehlung folgt diesem Muster:
-  - **Fettes Aktionswort:** Das erste Wort ist fett und beschreibt die empfohlene Handlung.
-  - Klarer Satz zu Ziel, strategischer Bedeutung und ggf. branchenspezifischem Kontext.
-  - Am Ende das Kürzel im Format `(Impact/Aufwand)`, Werte: H, M, L.
-- Empfehlungen sind nach strategischer Priorität sowie erwartetem Nutzen sortiert; bei Gleichstand gilt der niedrigere Aufwand.
-- Variablennamen oder interne Kategorien (z. B. „zeitbudget“, „trainings_interessen“ oder Unternehmensgrößen) nicht explizit nennen.
-- Fehlen Informationen, ignoriere sie und nutze verbleibende Angaben.
-- Schreibe in einem motivierenden, beratenden Stil.
-
-**Beispiel:**
-```
-<ol>
-  <li><b>Empfehlung:</b> … (H/M)</li>
-  …
-</ol>
-```
+Sortiere deine tatsächlichen Empfehlungen nach strategischer Relevanz und Gesamtnutzen; bei Gleichstand wähle die Maßnahme mit geringerem Aufwand. Die Ausgabe besteht ausschließlich aus einem HTML‑`<ol>` mit fünf `<li>`‑Elementen.
