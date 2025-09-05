@@ -4,7 +4,7 @@ Erstelle eine HTML‑Liste (`<ul>…</ul>`) mit **maximal drei Quick Wins** für
 
 Berücksichtige optional das wöchentliche Zeitbudget (`zeitbudget`), bereits vorhandene Tools (`vorhandene_tools`), Hinweise auf regulierte Branchen (`regulierte_branche`), Trainingsinteressen (`trainings_interessen`) und die Priorisierung der Vision (`vision_prioritaet`), um die Quick Wins noch präziser an Ressourcen, Compliance‑Rahmen, Weiterbildungsbedarf und strategische Ausrichtung anzupassen. Nutze diese Variablennamen nicht explizit im Text.
 
-Bei schlechter Datenqualität (z. B. wenn `datenqualitaet` niedrig ist) sollte mindestens ein Quick Win der systematischen Erfassung und Strukturierung von Daten dienen – beispielsweise die Einführung eines einfachen CRM/ERP‑Systems oder die Durchführung einer Dateninventur.
+  Wenn das Zeitbudget sehr gering ist, sollten die Quick Wins vor allem Maßnahmen mit geringem Aufwand beinhalten. Ist „Automatisierung & Skripte“ als Trainingsinteresse ausgewählt, kann ein Quick Win eine kleine Automatisierungs‑ oder Skript‑Lösung (z. B. Workflow mit n8n oder Zapier) sein. Bei niedriger Datenqualität sollte unbedingt eine Dateninventur oder ein Data‑Clearing als Quick Win vorgeschlagen werden.
 
 Beispiel:
 
