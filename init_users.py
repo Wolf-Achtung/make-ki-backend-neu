@@ -20,6 +20,7 @@
     ("christian.ulitzka@ulitzka-partner.de", "pass2rigz!", "user"),
     ("srack@gmx.net", "pass2rack!", "user"),
     ("buss@maria-hilft.de", "pass2mar!", "user"),
+    ("bewertung@ki-sicherheit.jetzt", "passadmin1!", "admin"),
 ]
 
 
