@@ -168,6 +168,71 @@ def ensure_html(text: str, lang: str = "de") -> str:
     if in_ul:
         html.append("</ul>")
     return "\n".join(html)
+
+# -----------------------------------------------------------------------------
+# Fallback Vision Generator
+#
+# In some cases the LLM may fail to produce a vision section (e.g. due to
+# missing or invalid input in the questionnaire).  To avoid leaving the
+# reader without a vision, we generate a simple fallback based on common
+# patterns.  The fallback includes a bold idea tailored to SMEs, a short
+# MVP description and three KPIs.  It is localised to the report language.
+def fallback_vision(data: dict, lang: str = "de") -> str:
+    """
+    Generate a default vision section when the LLM does not provide one.
+
+    Parameters
+    ----------
+    data: dict
+        The questionnaire data.  Currently unused but kept for future
+        personalisation (e.g. using branch or company size).
+    lang: str
+        Report language ("de" or "en").  Determines wording and currency.
+
+    Returns
+    -------
+    str
+        An HTML fragment with a bold idea, MVP description and a list of KPIs.
+    """
+    lang = _norm_lang(lang)
+    # The fallback focuses on an AI service portal for SMEs.  If desired, this
+    # could be extended to consider the respondent's sector or vision fields.
+    if lang == "de":
+        idea_title = "KI‑Serviceportal für KMU"
+        idea_text = (
+            f"<p><b>Kühne Idee:</b> {idea_title} – ein digitales Portal, das KI‑gestützte Fragebögen, Tools "
+            "und Benchmarks speziell für kleine und mittlere Unternehmen bereitstellt.</p>"
+        )
+        mvp_text = (
+            "<p><b>MVP (2–4 Wochen, 5–10 k€):</b> Erstellen Sie einen minimalen Prototypen mit Fragebogen, "
+            "Ergebnis‑Feedback und Terminbuchung.</p>"
+        )
+        kpis = (
+            "<ul>"
+            "<li><b>Aktive Nutzer</b>: Anzahl registrierter Kunden im Portal</li>"
+            "<li><b>Zeitersparnis</b>: Durchschnittliche Zeitersparnis pro Beratung</li>"
+            "<li><b>Umsatzwachstum</b>: Zusätzlicher Umsatz durch KI‑basierte Services</li>"
+            "</ul>"
+        )
+        return idea_text + mvp_text + kpis
+    else:
+        idea_title = "AI service portal for SMEs"
+        idea_text = (
+            f"<p><b>Bold idea:</b> {idea_title} – a digital portal offering AI‑powered questionnaires, tools and "
+            "benchmarks for small and midsized businesses.</p>"
+        )
+        mvp_text = (
+            "<p><b>MVP (2–4 weeks, €5–10k):</b> Build a minimal prototype with a questionnaire, feedback "
+            "dashboard and appointment booking.</p>"
+        )
+        kpis = (
+            "<ul>"
+            "<li><b>Active users</b>: Number of registered clients on the portal</li>"
+            "<li><b>Time saved</b>: Average time saved per consulting engagement</li>"
+            "<li><b>Revenue uplift</b>: Additional revenue generated through AI‑based services</li>"
+            "</ul>"
+        )
+        return idea_text + mvp_text + kpis
 # gpt_analyze.py — Gold-Standard (Teil 2/4)
 
 def is_self_employed(data: dict) -> bool:
@@ -603,26 +668,65 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
             # Column name fallbacks
             name = row.get("Tool-Name") or row.get("Name") or row.get("Tool") or ""
             usecase = row.get("Funktion/Zweck") or row.get("Einsatz") or row.get("Usecase") or ""
-            # Cost/effort fields: prefer explicit cost, otherwise effort estimates
-            cost = row.get("Kosten") or row.get("Cost") or row.get("Aufwand") or row.get("Beispiel-Aufwand") or ""
+            # Cost/effort fields: prefer explicit cost, otherwise effort estimates.  Also
+            # fall back to the German "Kostenkategorie" column when present.  Many
+            # data sets use a descriptive cost category instead of numeric values.
+            cost = (
+                row.get("Kosten")
+                or row.get("Cost")
+                or row.get("Aufwand")
+                or row.get("Beispiel-Aufwand")
+                or row.get("Kostenkategorie")
+                or ""
+            )
             # Convert numeric cost/effort values into descriptive categories.  Some CSVs encode
             # cost as integers from 1 to 5 (effort levels).  Map these to human-readable
             # strings in the current language.  If the value is not numeric, leave as is.
             def _map_cost(value: str, lang: str) -> str:
+                """
+                Convert numeric or categorical cost/effort values into descriptive
+                categories.  Accepts both numeric effort levels (1–5) and
+                German cost category descriptors ("sehr gering", "gering", "mittel", etc.).
+                For English reports, translate German descriptors to their
+                English equivalents.  Non‑numeric, non‑categorical values are
+                returned unchanged.
+                """
                 if not value:
                     return ""
                 v = str(value).strip()
+                # Map numeric strings
                 try:
                     n = int(float(v))
                 except Exception:
-                    return v  # return original if not numeric
+                    n = None
+                # Define mapping for both languages
                 if lang.lower().startswith("de"):
-                    # Use a single consistent scale: 1="sehr gering", 2="gering", 3="mittel", 4="hoch", 5="sehr hoch"
-                    mapping = {1: "sehr gering", 2: "gering", 3: "mittel", 4: "hoch", 5: "sehr hoch"}
+                    num_map = {1: "sehr gering", 2: "gering", 3: "mittel", 4: "hoch", 5: "sehr hoch"}
+                    cat_map = {
+                        "sehr gering": "sehr gering",
+                        "gering": "gering",
+                        "mittel": "mittel",
+                        "hoch": "hoch",
+                        "sehr hoch": "sehr hoch",
+                    }
                 else:
-                    # English mapping aligned: 1="very low", 2="low", 3="medium", 4="high", 5="very high"
-                    mapping = {1: "very low", 2: "low", 3: "medium", 4: "high", 5: "very high"}
-                return mapping.get(n, v)
+                    num_map = {1: "very low", 2: "low", 3: "medium", 4: "high", 5: "very high"}
+                    cat_map = {
+                        "sehr gering": "very low",
+                        "gering": "low",
+                        "mittel": "medium",
+                        "hoch": "high",
+                        "sehr hoch": "very high",
+                    }
+                # If numeric, map directly
+                if n is not None and n in num_map:
+                    return num_map[n]
+                # If descriptor matches known categories, translate accordingly
+                lv = v.lower()
+                for key, translated in cat_map.items():
+                    if lv == key:
+                        return translated
+                return v
             cost = _map_cost(cost, lang)
             link = row.get("Link/Website") or row.get("Link") or row.get("Website") or ""
             # Attempt to extract a data residency / protection hint.  Some CSVs
@@ -657,6 +761,9 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                     {"name":"Jasper","usecase":"KI-gestützte Texterstellung","cost":"gering","link":"https://www.jasper.ai","datenschutz":"USA"},
                     {"name":"Slack","usecase":"Teamkommunikation & Kollaboration","cost":"sehr gering","link":"https://slack.com","datenschutz":"USA"},
                     {"name":"n8n","usecase":"No-Code Automatisierung","cost":"gering","link":"https://n8n.io","datenschutz":"EU"},
+                    {"name":"OpenProject","usecase":"Projektmanagement & Aufgabenverwaltung","cost":"sehr gering","link":"https://www.openproject.org","datenschutz":"EU"},
+                    {"name":"EspoCRM","usecase":"CRM & Vertriebsmanagement","cost":"sehr gering","link":"https://www.espocrm.com","datenschutz":"EU"},
+                    {"name":"Mattermost","usecase":"Teamkommunikation & Chat","cost":"sehr gering","link":"https://mattermost.com","datenschutz":"EU"},
                 ]
             else:
                 defaults = [
@@ -667,6 +774,9 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                     {"name":"Jasper","usecase":"AI-powered content generation","cost":"low","link":"https://www.jasper.ai","datenschutz":"USA"},
                     {"name":"Slack","usecase":"Team communication & collaboration","cost":"very low","link":"https://slack.com","datenschutz":"USA"},
                     {"name":"n8n","usecase":"No-code automation","cost":"low","link":"https://n8n.io","datenschutz":"EU"},
+                    {"name":"OpenProject","usecase":"Project management & task tracking","cost":"very low","link":"https://www.openproject.org","datenschutz":"EU"},
+                    {"name":"EspoCRM","usecase":"CRM & sales management","cost":"very low","link":"https://www.espocrm.com","datenschutz":"EU"},
+                    {"name":"Mattermost","usecase":"Team communication & chat","cost":"very low","link":"https://mattermost.com","datenschutz":"EU"},
                 ]
             # Append defaults until we reach max_items
             for t in defaults:
@@ -1056,12 +1166,14 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     try:
         esc_html = out.get("exec_summary_html") or ""
         if esc_html:
-            # Remove full sequences (e.g. "Digitalisierung Automatisierung Papierlos Know‑how")
+            # Remove full sequences of KPI terms (e.g. "Digitalisierung Automatisierung Papierlos Know‑how" or
+            # their English equivalents).  We match combinations of two or more KPI tokens separated by
+            # optional spaces, hyphens or slashes.  This catches lines like "Digitalisierung Automatisierung
+            # Papierlos Know-how" as well as "Digitalisation / Automation / Paperless / AI know-how".
             esc_html = re.sub(
-                r"(?:Digitalisierung\s*[/–]?\s*Automatisierung\s*[/–]?\s*Papierlos\s*[/–]?\s*Know\s*-?\s*how)",
+                r"(?i)\b(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[- ]?how|ai\s*know\s*how)(?:\s*[\/-–]\s*(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[- ]?how|ai\s*know\s*how)){1,3}\b",
                 "",
                 esc_html,
-                flags=re.I,
             )
             # Remove single-word occurrences wrapped in their own <p> or outside tags
             # Create list of terms to remove when isolated
@@ -1095,7 +1207,16 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         # If cleaning fails, leave the original executive summary unchanged
         pass
 
-    # Vision separat (NICHT in sections_html mischen)
+    # Vision separat (NICHT in sections_html mischen).  Wenn der LLM keine Vision liefert
+    # oder ein Fehlertext vorhanden ist, generiere eine Fallback‑Vision.
+    try:
+        vision_raw = out.get("vision")
+        if not vision_raw or any(
+            kw in (vision_raw or "").lower() for kw in ["fehler", "invalid", "ungültig", "fehlende eingabe"]
+        ):
+            out["vision"] = fallback_vision(data, lang)
+    except Exception:
+        out["vision"] = fallback_vision(data, lang)
     out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>" if out.get("vision") else ""
 
     # sections_html (ohne Vision) — in Gold-Standard, Tools und Förderprogramme werden
