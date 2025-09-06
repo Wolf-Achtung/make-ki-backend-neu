@@ -2,7 +2,7 @@
 
 Erstelle eine HTML‑Liste (`<ul>…</ul>`) mit höchstens drei Quick Wins für das Unternehmen. Jede Zeile soll ein prägnanter Satz sein, der eine konkrete Sofortmaßnahme beschreibt, die innerhalb der nächsten 0–3 Monate realistisch umsetzbar ist. Beginne jede Zeile mit einem fettgedruckten Schlüsselwort (`<b>…</b>`) und formuliere den Nutzen klar und positiv.
 
-Nutze die Angaben aus den Freitextfeldern (Vision, größtes Potenzial, Moonshot, Einsatzbereich, strategische Ziele) sowie branchenspezifische Informationen, um maßgeschneiderte Vorschläge zu machen. Berücksichtige optional das wöchentliche Zeitbudget, vorhandene Werkzeuge, Hinweise auf regulierte Branchen, Trainingsinteressen und die Vision‑Priorität, um die Quick Wins weiter an Ressourcen, Compliance‑Rahmen, Lernbedarf und Strategie anzupassen – ohne die Variablennamen wörtlich zu nennen.
+Nutze die Angaben aus den Freitextfeldern (Vision, größtes Potenzial, Moonshot, Einsatzbereich, strategische Ziele) sowie branchenspezifische Informationen, um maßgeschneiderte Vorschläge zu machen. Berücksichtige optional das wöchentliche Zeitbudget, vorhandene Werkzeuge, Hinweise auf regulierte Branchen, Trainingsinteressen und die Vision‑Priorität, um die Quick Wins weiter an Ressourcen, Compliance‑Rahmen, Lernbedarf und Strategie anzupassen – ohne die Variablennamen wörtlich zu nennen. Je geringer das Zeitbudget (z. B. ≤ 5 Stunden pro Woche), desto kleiner und schneller sollte der Quick Win sein; bei größerem Zeitbudget (z. B. 5–15 Stunden) dürfen die Maßnahmen etwas umfangreicher ausfallen.
 
 Beachte folgende Leitlinien:
 
