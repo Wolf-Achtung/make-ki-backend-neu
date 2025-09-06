@@ -566,11 +566,40 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
     out: List[Dict[str, str]] = []
     with open(path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
+        # Determine the respondent's company size.  Use `company_size_category` if set
+        # (solo, team, kmu) and fall back to `unternehmensgroesse`/`company_size`.
+        size = (data.get("company_size_category") or data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
+        # Normalise to a simple size key.  We'll allow KMU entries for larger teams and
+        # include "alle" for everyone.
+        if size:
+            if "solo" in size:
+                user_size = "solo"
+            elif "team" in size or "2" in size or "10" in size:
+                user_size = "team"
+            elif "kmu" in size or "11" in size:
+                user_size = "kmu"
+            else:
+                user_size = ""
+        else:
+            user_size = ""
         for row in reader:
-            tags = (row.get("Tags") or row.get("Branche") or "").lower()
-            # Filter by branche if provided
-            if branche and tags and branche not in tags:
-                continue
+            # Determine the row's industry / branch slugs and size.
+            # Some CSVs use "Branche-Slugs" or "Branche" or "Tags" for industry tags.
+            tags = (row.get("Branche-Slugs") or row.get("Tags") or row.get("Branche") or "").lower()
+            row_size = (row.get("Unternehmensgröße") or row.get("Unternehmensgroesse") or "").lower()
+            # Filter by branche if provided.  Only match when the user's branche slug
+            # appears in the row's tags or if no branche is provided.  This ensures we
+            # prioritise industry‑specific tools.
+            if branche:
+                if tags and branche not in tags:
+                    continue
+            # Filter by company size: include if row_size is empty ("alle") or matches
+            # the user's size or is more general (e.g. "kmu" applies to both teams and kmus).
+            if user_size:
+                if row_size and row_size not in ("alle", user_size):
+                    # Allow KMU tools for team and solo as a fallback but skip very specific mismatches
+                    if not ((row_size == "kmu" and user_size in ("team", "kmu")) or (row_size == "team" and user_size == "solo")):
+                        continue
             # Column name fallbacks
             name = row.get("Tool-Name") or row.get("Name") or row.get("Tool") or ""
             usecase = row.get("Funktion/Zweck") or row.get("Einsatz") or row.get("Usecase") or ""
@@ -609,6 +638,46 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                 "link": link,
                 "datenschutz": datenschutz
             })
+    # If no tools were matched (or only a handful), append a curated set of
+    # widely used tools suitable for all company sizes and industries.  This
+    # ensures that the table is always populated even when the CSV filter
+    # yields few or no entries.  Each entry provides a name, use case,
+    # estimated cost category (language sensitive) and an official link.  The
+    # data protection field hints at EU/US hosting.  These defaults only
+    # apply when fewer than half of the desired max_items were found.
+    try:
+        min_needed = max(0, max_items - len(out))
+        if len(out) < 4 and min_needed > 0:
+            if lang.lower().startswith("de"):
+                defaults = [
+                    {"name":"Notion","usecase":"Wissensmanagement & Projektplanung","cost":"sehr gering","link":"https://www.notion.so","datenschutz":"USA/EU"},
+                    {"name":"Zapier","usecase":"Automatisierung & Integration","cost":"gering","link":"https://zapier.com","datenschutz":"USA/EU"},
+                    {"name":"Asana","usecase":"Projekt- und Aufgabenmanagement","cost":"sehr gering","link":"https://asana.com","datenschutz":"USA/EU"},
+                    {"name":"Miro","usecase":"Visuelle Zusammenarbeit & Brainstorming","cost":"gering","link":"https://miro.com","datenschutz":"USA/EU"},
+                    {"name":"Jasper","usecase":"KI-gestützte Texterstellung","cost":"gering","link":"https://www.jasper.ai","datenschutz":"USA"},
+                    {"name":"Slack","usecase":"Teamkommunikation & Kollaboration","cost":"sehr gering","link":"https://slack.com","datenschutz":"USA"},
+                    {"name":"n8n","usecase":"No-Code Automatisierung","cost":"gering","link":"https://n8n.io","datenschutz":"EU"},
+                ]
+            else:
+                defaults = [
+                    {"name":"Notion","usecase":"Knowledge management & project planning","cost":"very low","link":"https://www.notion.so","datenschutz":"USA/EU"},
+                    {"name":"Zapier","usecase":"Automation & integration","cost":"low","link":"https://zapier.com","datenschutz":"USA/EU"},
+                    {"name":"Asana","usecase":"Project & task management","cost":"very low","link":"https://asana.com","datenschutz":"USA/EU"},
+                    {"name":"Miro","usecase":"Visual collaboration & brainstorming","cost":"low","link":"https://miro.com","datenschutz":"USA/EU"},
+                    {"name":"Jasper","usecase":"AI-powered content generation","cost":"low","link":"https://www.jasper.ai","datenschutz":"USA"},
+                    {"name":"Slack","usecase":"Team communication & collaboration","cost":"very low","link":"https://slack.com","datenschutz":"USA"},
+                    {"name":"n8n","usecase":"No-code automation","cost":"low","link":"https://n8n.io","datenschutz":"EU"},
+                ]
+            # Append defaults until we reach max_items
+            for t in defaults:
+                if len(out) >= max_items:
+                    break
+                # Avoid duplicates based on name
+                if any((t["name"] == existing.get("name")) for existing in out):
+                    continue
+                out.append(t)
+    except Exception:
+        pass
     return out[:max_items]
 
 def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
@@ -875,6 +944,39 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         src_for_qr = (out.get("executive_summary") or "") + "\n\n" + (out.get("roadmap") or "")
         q_r = distill_quickwins_risks(src_for_qr, lang=lang)
         qw_html, rk_html = q_r.get("quick_wins_html", ""), q_r.get("risks_html", "")
+
+    # ------------------------------------------------------------------
+    # Ensure that the quick wins section is never empty.  In some rare
+    # cases the LLM returns no quick wins (or simply states that no quick
+    # wins can be derived), which leaves the reader without actionable
+    # next steps.  When this happens we fall back to a set of generic
+    # quick wins tailored to organisations of all sizes.  The fallback
+    # emphasises a data inventory, simple automation and a lean AI policy.
+    # Each fallback is localised according to the report language.
+    def _default_quick_wins(lang: str) -> str:
+        if lang == "de":
+            return (
+                "<h3>Quick&nbsp;Wins</h3>"
+                "<ul>"
+                "<li><b>Dateninventur</b>: Erfassen Sie alle relevanten Kunden‑, Projekt‑ und Marketingdaten an einem Ort und bereinigen Sie sie, um eine solide Datengrundlage aufzubauen.</li>"
+                "<li><b>Mini‑Automatisierung</b>: Automatisieren Sie wiederkehrende Aufgaben mit No‑Code‑Tools wie Zapier oder n8n, um sich Zeit für die Beratung zu verschaffen.</li>"
+                "<li><b>KI‑Policy Light</b>: Formulieren Sie eine einseitige Richtlinie, die den internen Umgang mit generativer KI und Datenschutz regelt.</li>"
+                "</ul>"
+            )
+        else:
+            return (
+                "<h3>Quick&nbsp;wins</h3>"
+                "<ul>"
+                "<li><b>Data inventory</b>: Consolidate all relevant customer, project and marketing data in one place and clean it to build a solid foundation.</li>"
+                "<li><b>Mini automation</b>: Use no‑code tools such as Zapier or n8n to automate repetitive tasks and free up time for consulting.</li>"
+                "<li><b>Lightweight AI policy</b>: Draft a one‑page guideline that defines how to use generative AI responsibly and protect data.</li>"
+                "</ul>"
+            )
+
+    # If quick wins section is blank or contains a placeholder indicating
+    # that no quick wins could be derived, insert the default quick wins.
+    if not qw_html or re.search(r"keine\s*quick", qw_html, re.I):
+        qw_html = _default_quick_wins(lang)
     if not rec_html:
         src_for_rec = (out.get("roadmap") or "") + "\n\n" + (out.get("compliance") or "")
         rec_html = distill_recommendations(src_for_rec, lang=lang)
@@ -949,35 +1051,43 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # terms are metrics and should not appear in the narrative text.  We
     # remove any line whose plain text consists solely of KPI keywords in
     # either German or English (with optional hyphens or spaces).  Lines
-    # containing additional narrative are preserved.
+    # containing additional narrative are preserved.  In addition, remove
+    # standalone occurrences of these keywords between list items.
     try:
         esc_html = out.get("exec_summary_html") or ""
         if esc_html:
+            # Remove full sequences (e.g. "Digitalisierung Automatisierung Papierlos Know‑how")
+            esc_html = re.sub(
+                r"(?:Digitalisierung\s*[/–]?\s*Automatisierung\s*[/–]?\s*Papierlos\s*[/–]?\s*Know\s*-?\s*how)",
+                "",
+                esc_html,
+                flags=re.I,
+            )
+            # Remove single-word occurrences wrapped in their own <p> or outside tags
+            # Create list of terms to remove when isolated
+            kpi_single = ["Digitalisierung", "Automatisierung", "Papierlos", "Papierlosigkeit", "Know‑how", "AI know‑how", "AI know how"]
+            for term in kpi_single:
+                # Remove <p>Term</p> or <li>Term</li> with no other content
+                esc_html = re.sub(rf"<p>\s*{term}\s*</p>", "", esc_html, flags=re.I)
+                esc_html = re.sub(rf"<li>\s*{term}\s*</li>", "", esc_html, flags=re.I)
+                # Remove occurrences of term on its own line separated by HTML breaks
+                esc_html = re.sub(rf"\n\s*{term}\s*\n", "\n", esc_html, flags=re.I)
+            # Re-split by lines to remove any line that contains only KPI tokens
             lines = esc_html.splitlines()
             cleaned: List[str] = []
-            # Define KPI keyword sets for German and English.  Lowercase
-            # comparisons are used to avoid case sensitivity issues.
             kpi_terms_de = {"digitalisierung", "automatisierung", "papierlos", "papierlosigkeit", "ki know-how", "know-how"}
             kpi_terms_en = {"digitalisation", "automation", "paperless", "ai know-how", "ai know how"}
             for ln in lines:
-                # Strip HTML tags and whitespace
                 plain = re.sub(r"<[^>]+>", "", ln).strip()
                 if not plain:
-                    # Skip empty lines entirely
                     continue
-                # Normalise text: lowercase and replace multiple spaces/hyphens
                 norm = re.sub(r"[^a-zA-ZäöüÄÖÜß\s-]", "", plain).lower().strip()
-                # Tokenise on whitespace or hyphens
                 tokens = [t.strip() for t in re.split(r"[\s/-]+", norm) if t.strip()]
-                # Determine if all tokens are KPI keywords (de or en)
                 if tokens:
-                    # Some tokens may be combined (e.g. "ki", "know", "how")
-                    # Reconstruct phrases for EN/DE sets
                     joined = " ".join(tokens)
                     all_de = all(tok in kpi_terms_de or joined in kpi_terms_de for tok in tokens)
                     all_en = all(tok in kpi_terms_en or joined in kpi_terms_en for tok in tokens)
                     if all_de or all_en:
-                        # Skip this line entirely
                         continue
                 cleaned.append(ln)
             out["exec_summary_html"] = "\n".join(cleaned)
