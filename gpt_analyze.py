@@ -728,6 +728,9 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                         return translated
                 return v
             cost = _map_cost(cost, lang)
+            # Ensure a cost category is always present; if empty after mapping, set to 'n/a'
+            if not cost:
+                cost = "n/a"
             link = row.get("Link/Website") or row.get("Link") or row.get("Website") or ""
             # Attempt to extract a data residency / protection hint.  Some CSVs
             # include a column such as "Datenschutz" or "Datensitz" to indicate
@@ -751,38 +754,46 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
     # apply when fewer than half of the desired max_items were found.
     try:
         min_needed = max(0, max_items - len(out))
+        # Always ensure a few open-source alternatives are present for teams and SMEs.
+        # Insert open-source tools if not already included.
+        open_source_names = {"OpenProject", "EspoCRM", "Mattermost"}
+        if lang.lower().startswith("de"):
+            defaults = [
+                {"name":"Notion","usecase":"Wissensmanagement & Projektplanung","cost":"sehr gering","link":"https://www.notion.so","datenschutz":"USA/EU"},
+                {"name":"Zapier","usecase":"Automatisierung & Integration","cost":"gering","link":"https://zapier.com","datenschutz":"USA/EU"},
+                {"name":"Asana","usecase":"Projekt- und Aufgabenmanagement","cost":"sehr gering","link":"https://asana.com","datenschutz":"USA/EU"},
+                {"name":"Miro","usecase":"Visuelle Zusammenarbeit & Brainstorming","cost":"gering","link":"https://miro.com","datenschutz":"USA/EU"},
+                {"name":"Jasper","usecase":"KI-gestützte Texterstellung","cost":"gering","link":"https://www.jasper.ai","datenschutz":"USA"},
+                {"name":"Slack","usecase":"Teamkommunikation & Kollaboration","cost":"sehr gering","link":"https://slack.com","datenschutz":"USA"},
+                {"name":"n8n","usecase":"No-Code Automatisierung","cost":"gering","link":"https://n8n.io","datenschutz":"EU"},
+                {"name":"OpenProject","usecase":"Projektmanagement & Aufgabenverwaltung","cost":"sehr gering","link":"https://www.openproject.org","datenschutz":"EU"},
+                {"name":"EspoCRM","usecase":"CRM & Vertriebsmanagement","cost":"sehr gering","link":"https://www.espocrm.com","datenschutz":"EU"},
+                {"name":"Mattermost","usecase":"Teamkommunikation & Chat","cost":"sehr gering","link":"https://mattermost.com","datenschutz":"EU"},
+            ]
+        else:
+            defaults = [
+                {"name":"Notion","usecase":"Knowledge management & project planning","cost":"very low","link":"https://www.notion.so","datenschutz":"USA/EU"},
+                {"name":"Zapier","usecase":"Automation & integration","cost":"low","link":"https://zapier.com","datenschutz":"USA/EU"},
+                {"name":"Asana","usecase":"Project & task management","cost":"very low","link":"https://asana.com","datenschutz":"USA/EU"},
+                {"name":"Miro","usecase":"Visual collaboration & brainstorming","cost":"low","link":"https://miro.com","datenschutz":"USA/EU"},
+                {"name":"Jasper","usecase":"AI-powered content generation","cost":"low","link":"https://www.jasper.ai","datenschutz":"USA"},
+                {"name":"Slack","usecase":"Team communication & collaboration","cost":"very low","link":"https://slack.com","datenschutz":"USA"},
+                {"name":"n8n","usecase":"No-code automation","cost":"low","link":"https://n8n.io","datenschutz":"EU"},
+                {"name":"OpenProject","usecase":"Project management & task tracking","cost":"very low","link":"https://www.openproject.org","datenschutz":"EU"},
+                {"name":"EspoCRM","usecase":"CRM & sales management","cost":"very low","link":"https://www.espocrm.com","datenschutz":"EU"},
+                {"name":"Mattermost","usecase":"Team communication & chat","cost":"very low","link":"https://mattermost.com","datenschutz":"EU"},
+            ]
+        # Always insert open-source tools if they are missing, regardless of current list length.
+        # We'll add them before trimming to max_items so that at least one open-source tool
+        # appears in the final list.  Maintain insertion order as defined in defaults.
+        for t in defaults:
+            if t["name"] in open_source_names and all((t["name"] != existing.get("name")) for existing in out):
+                out.append(t)
+        # Append additional defaults only if we have fewer than half of the desired items.
         if len(out) < 4 and min_needed > 0:
-            if lang.lower().startswith("de"):
-                defaults = [
-                    {"name":"Notion","usecase":"Wissensmanagement & Projektplanung","cost":"sehr gering","link":"https://www.notion.so","datenschutz":"USA/EU"},
-                    {"name":"Zapier","usecase":"Automatisierung & Integration","cost":"gering","link":"https://zapier.com","datenschutz":"USA/EU"},
-                    {"name":"Asana","usecase":"Projekt- und Aufgabenmanagement","cost":"sehr gering","link":"https://asana.com","datenschutz":"USA/EU"},
-                    {"name":"Miro","usecase":"Visuelle Zusammenarbeit & Brainstorming","cost":"gering","link":"https://miro.com","datenschutz":"USA/EU"},
-                    {"name":"Jasper","usecase":"KI-gestützte Texterstellung","cost":"gering","link":"https://www.jasper.ai","datenschutz":"USA"},
-                    {"name":"Slack","usecase":"Teamkommunikation & Kollaboration","cost":"sehr gering","link":"https://slack.com","datenschutz":"USA"},
-                    {"name":"n8n","usecase":"No-Code Automatisierung","cost":"gering","link":"https://n8n.io","datenschutz":"EU"},
-                    {"name":"OpenProject","usecase":"Projektmanagement & Aufgabenverwaltung","cost":"sehr gering","link":"https://www.openproject.org","datenschutz":"EU"},
-                    {"name":"EspoCRM","usecase":"CRM & Vertriebsmanagement","cost":"sehr gering","link":"https://www.espocrm.com","datenschutz":"EU"},
-                    {"name":"Mattermost","usecase":"Teamkommunikation & Chat","cost":"sehr gering","link":"https://mattermost.com","datenschutz":"EU"},
-                ]
-            else:
-                defaults = [
-                    {"name":"Notion","usecase":"Knowledge management & project planning","cost":"very low","link":"https://www.notion.so","datenschutz":"USA/EU"},
-                    {"name":"Zapier","usecase":"Automation & integration","cost":"low","link":"https://zapier.com","datenschutz":"USA/EU"},
-                    {"name":"Asana","usecase":"Project & task management","cost":"very low","link":"https://asana.com","datenschutz":"USA/EU"},
-                    {"name":"Miro","usecase":"Visual collaboration & brainstorming","cost":"low","link":"https://miro.com","datenschutz":"USA/EU"},
-                    {"name":"Jasper","usecase":"AI-powered content generation","cost":"low","link":"https://www.jasper.ai","datenschutz":"USA"},
-                    {"name":"Slack","usecase":"Team communication & collaboration","cost":"very low","link":"https://slack.com","datenschutz":"USA"},
-                    {"name":"n8n","usecase":"No-code automation","cost":"low","link":"https://n8n.io","datenschutz":"EU"},
-                    {"name":"OpenProject","usecase":"Project management & task tracking","cost":"very low","link":"https://www.openproject.org","datenschutz":"EU"},
-                    {"name":"EspoCRM","usecase":"CRM & sales management","cost":"very low","link":"https://www.espocrm.com","datenschutz":"EU"},
-                    {"name":"Mattermost","usecase":"Team communication & chat","cost":"very low","link":"https://mattermost.com","datenschutz":"EU"},
-                ]
-            # Append defaults until we reach max_items
             for t in defaults:
                 if len(out) >= max_items:
                     break
-                # Avoid duplicates based on name
                 if any((t["name"] == existing.get("name")) for existing in out):
                     continue
                 out.append(t)
@@ -793,14 +804,28 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
 def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> str:
     import csv, os
     path = os.path.join("data", "foerdermittel.csv")
-    if not os.path.exists(path): return ""
+    # If the expected file is missing (e.g. due to nested archive structure),
+    # fall back to a nested `data/data/foerdermittel.csv` before aborting.
+    if not os.path.exists(path):
+        alt = os.path.join("data", "data", "foerdermittel.csv")
+        if os.path.exists(alt):
+            path = alt
+        else:
+            return ""
     try:
         with open(path, newline="", encoding="utf-8") as csvfile:
             programmes = list(csv.DictReader(csvfile))
     except Exception:
         return ""
     size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
-    targets = {"solo":["solo","freelancer","freiberuflich","einzel"],"team":["kmu","team","small"],"kmu":["kmu","sme"]}.get(size,[])
+    # Expand the target group mapping: solo respondents may also be eligible for KMU programmes, since
+    # many funding schemes target both freelancers and small businesses.  We include common
+    # synonyms to improve matching.  For teams and KMU we include general SME terms.
+    targets = {
+        "solo": ["solo", "freelancer", "freiberuflich", "einzel", "kmu"],
+        "team": ["kmu", "team", "small"],
+        "kmu": ["kmu", "sme"]
+    }.get(size, [])
     region = (data.get("bundesland") or data.get("state") or "").lower()
 
     def matches(row: dict) -> bool:
@@ -1153,52 +1178,76 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     out["exec_summary_html"] = out.get("executive_summary", "")
 
     # -------------------------------------------------------------------------
-    # Remove stray KPI category lines from the executive summary
-    #
-    # In some drafts the LLM may insert lines containing only the KPI
-    # category names (e.g. "Digitalisierung", "Papierlos" or the full
-    # sequence "Digitalisierung Automatisierung Papierlos Know‑how").  These
-    # terms are metrics and should not appear in the narrative text.  We
-    # remove any line whose plain text consists solely of KPI keywords in
-    # either German or English (with optional hyphens or spaces).  Lines
-    # containing additional narrative are preserved.  In addition, remove
-    # standalone occurrences of these keywords between list items.
+        # Remove stray KPI category lines from the executive summary
+        #
+        # In some drafts the LLM may insert lines containing only the KPI
+        # category names (e.g. "Digitalisierung", "Papierlos" or the full
+        # sequence "Digitalisierung Automatisierung Papierlos Know‑how").  These
+        # terms are metrics and should not appear in the narrative text.  We
+        # remove any line whose plain text consists solely of KPI keywords in
+        # either German or English (with optional hyphens or spaces).  Lines
+        # containing additional narrative are preserved.  In addition, remove
+        # standalone occurrences of these keywords between list items.  This logic
+        # is robust to various hyphen types and whitespace variations.
     try:
         esc_html = out.get("exec_summary_html") or ""
         if esc_html:
-            # Remove full sequences of KPI terms (e.g. "Digitalisierung Automatisierung Papierlos Know‑how" or
-            # their English equivalents).  We match combinations of two or more KPI tokens separated by
-            # optional spaces, hyphens or slashes.  This catches lines like "Digitalisierung Automatisierung
-            # Papierlos Know-how" as well as "Digitalisation / Automation / Paperless / AI know-how".
-            esc_html = re.sub(
-                r"(?i)\b(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[- ]?how|ai\s*know\s*how)(?:\s*[\/-–]\s*(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[- ]?how|ai\s*know\s*how)){1,3}\b",
-                "",
-                esc_html,
+            # First remove any sequences of KPI terms separated by spaces, hyphens or slashes.
+            # This catches lines like "Digitalisierung Automatisierung Papierlos Know-how" as well as
+            # "Digitalisation / Automation / Paperless / AI know-how" in either language.  We allow
+            # between one and three separators to match up to four terms in a row.
+            pattern_multi = (
+                r"(?i)\b(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[\-\s]?how|ai\s*know\s*how)"
+                r"(?:\s*[\/-–]\s*(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[\-\s]?how|ai\s*know\s*how)){1,3}\b"
             )
-            # Remove single-word occurrences wrapped in their own <p> or outside tags
-            # Create list of terms to remove when isolated
-            kpi_single = ["Digitalisierung", "Automatisierung", "Papierlos", "Papierlosigkeit", "Know‑how", "AI know‑how", "AI know how"]
+            esc_html = re.sub(pattern_multi, "", esc_html)
+            # Define a comprehensive list of single KPI terms (case-insensitive).  Include variations
+            # with and without hyphens and different spellings.  These will be stripped when they
+            # appear as standalone paragraphs or list items.
+            kpi_single = [
+                "digitalisierung", "digitalisation",
+                "automatisierung", "automation",
+                "papierlos", "paperless",
+                "papierlosigkeit",
+                "know-how", "know how", "know‑how", "knowhow",
+                "ai know-how", "ai know how", "ai know‑how", "ki know-how", "ki know how",
+            ]
+            # Remove isolated occurrences wrapped in <p> or <li> tags (case-insensitive).
             for term in kpi_single:
-                # Remove <p>Term</p> or <li>Term</li> with no other content
                 esc_html = re.sub(rf"<p>\s*{term}\s*</p>", "", esc_html, flags=re.I)
                 esc_html = re.sub(rf"<li>\s*{term}\s*</li>", "", esc_html, flags=re.I)
-                # Remove occurrences of term on its own line separated by HTML breaks
-                esc_html = re.sub(rf"\n\s*{term}\s*\n", "\n", esc_html, flags=re.I)
-            # Re-split by lines to remove any line that contains only KPI tokens
+            # Split by lines and filter out lines that consist solely of KPI terms (ignoring HTML tags).
             lines = esc_html.splitlines()
             cleaned: List[str] = []
-            kpi_terms_de = {"digitalisierung", "automatisierung", "papierlos", "papierlosigkeit", "ki know-how", "know-how"}
-            kpi_terms_en = {"digitalisation", "automation", "paperless", "ai know-how", "ai know how"}
+            # For exact match removal, prepare a set of KPI strings without HTML.
+            kpi_exact = set(
+                [
+                    "digitalisierung", "digitalisation",
+                    "automatisierung", "automation",
+                    "papierlos", "paperless",
+                    "papierlosigkeit",
+                    "know-how", "know how", "knowhow",
+                    "ki know-how", "ki know how", "ai know-how", "ai know how", "ai know‑how",
+                ]
+            )
             for ln in lines:
+                # Remove HTML tags and strip whitespace.
                 plain = re.sub(r"<[^>]+>", "", ln).strip()
                 if not plain:
                     continue
-                norm = re.sub(r"[^a-zA-ZäöüÄÖÜß\s-]", "", plain).lower().strip()
-                tokens = [t.strip() for t in re.split(r"[\s/-]+", norm) if t.strip()]
+                # Normalise hyphens to spaces and lowercase the text.
+                norm_plain = re.sub(r"[-–‑]", " ", plain).lower().strip()
+                # Remove punctuation (except letters and spaces).
+                norm_plain = re.sub(r"[^a-zäöüß\s]", "", norm_plain)
+                # Check if the entire cleaned line matches any KPI term exactly.
+                # We also strip extra spaces to catch lines like "papierlos   " or "ai know how".
+                if norm_plain and norm_plain in kpi_exact:
+                    continue
+                # Additionally, check if the cleaned line splits into tokens that are all KPI terms.
+                tokens = [t for t in re.split(r"\s+", norm_plain) if t]
                 if tokens:
-                    joined = " ".join(tokens)
-                    all_de = all(tok in kpi_terms_de or joined in kpi_terms_de for tok in tokens)
-                    all_en = all(tok in kpi_terms_en or joined in kpi_terms_en for tok in tokens)
+                    all_de = all(tok in {"digitalisierung", "automatisierung", "papierlos", "papierlosigkeit", "know", "how", "ki", "knowhow"} for tok in tokens)
+                    all_en = all(tok in {"digitalisation", "automation", "paperless", "ai", "know", "how", "knowhow"} for tok in tokens)
                     if all_de or all_en:
                         continue
                 cleaned.append(ln)
@@ -1210,10 +1259,14 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # Vision separat (NICHT in sections_html mischen).  Wenn der LLM keine Vision liefert
     # oder ein Fehlertext vorhanden ist, generiere eine Fallback‑Vision.
     try:
-        vision_raw = out.get("vision")
-        if not vision_raw or any(
-            kw in (vision_raw or "").lower() for kw in ["fehler", "invalid", "ungültig", "fehlende eingabe"]
-        ):
+        vision_raw = out.get("vision") or ""
+        # If vision is empty or contains error indicators (in multiple languages), fallback.
+        err_keywords = [
+            "fehler", "invalid", "ungültig", "ungültige", "fehlende eingabedaten",
+            "missing input", "error", "fehlende eingabe"
+        ]
+        lower_vision = vision_raw.lower() if isinstance(vision_raw, str) else ""
+        if not vision_raw or any(kw in lower_vision for kw in err_keywords):
             out["vision"] = fallback_vision(data, lang)
     except Exception:
         out["vision"] = fallback_vision(data, lang)

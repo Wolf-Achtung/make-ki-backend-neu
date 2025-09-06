@@ -54,3 +54,8 @@ Notion,Sonstige,,alle,Wissensmanagement,https://notion.so,sehr gering, sofort nu
 OpenAI GPT,Sonstige,,alle,KI-Text & Analyse,https://chat.openai.com,sehr gering, sofort nutzbar,Texte,n/a,
 Google Forms,Sonstige,,alle,Umfragen & Feedback,https://forms.google.com,sehr gering, Vorlage wählen,Feedback & Datenerhebung,n/a,
 Power Automate,Sonstige,,alle,Prozessautomatisierung,https://powerautomate.microsoft.com,gering, erster Flow,Automatisierte Prozesse,n/a,
+
+# Open‑Source Alternativen für Teams und KMU
+OpenProject,Sonstige,,KMU,Projektmanagement & Aufgabenverwaltung,https://www.openproject.org,sehr gering,Open‑Source Plattform für Projekt- und Aufgabenverwaltung,GitHub / CSV,EU,open-source
+EspoCRM,Sonstige,,KMU,CRM & Vertriebsmanagement,https://www.espocrm.com,sehr gering,Open‑Source CRM-System zur Verwaltung von Kundenbeziehungen,REST API,EU,open-source
+Mattermost,Sonstige,,KMU,Teamkommunikation & Chat,https://mattermost.com,sehr gering,Open‑Source Alternative zu Slack für sichere Teamkommunikation,Integrationen mit GitLab und Jira,EU,open-source
