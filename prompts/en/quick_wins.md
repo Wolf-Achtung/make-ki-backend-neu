@@ -2,7 +2,7 @@
 
 Generate an HTML unordered list (`<ul>…</ul>`) with up to three quick wins. Each line should begin with a bold keyword (`<b>…</b>`) and describe a specific measure that can realistically be implemented within the next 0–3 months. Keep each line to one sentence and clearly state the benefit.
 
-Use the free‑text fields (vision, biggest potential, moonshot, application area, strategic goals) and industry context to tailor suggestions. Optionally consider weekly time capacity, existing tools, regulated industry status, training interests and vision priority to align quick wins with resources, compliance and learning needs—without naming those variables.
+Use the free‑text fields (vision, biggest potential, moonshot, application area, strategic goals) and industry context to tailor suggestions. Optionally consider weekly time capacity, existing tools, regulated industry status, training interests and vision priority to align quick wins with resources, compliance and learning needs—without naming those variables. The lower the time capacity (e.g. ≤ 5 hours per week) the smaller and quicker the quick win should be; with more time available (e.g. 5–15 hours) the actions may be slightly more involved.
 
 Guidelines:
 
