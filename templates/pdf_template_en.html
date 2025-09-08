@@ -56,7 +56,15 @@ fit,minmax(110px,1fr));gap:12px;margin-top:.6rem}
         .kpi-item:nth-child(3){background:var(--brand-green);color:#fff;}
         .kpi-item:nth-child(4){background:#A0D9C9;color:#fff;}
         .kpi-item .kpi-value{font-size:20px;font-weight:700;margin-bottom:2px}
-        .kpi-item .kpi-label{font-size:12px;font-weight:500;opacity:.95}
+        /* Hide KPI labels in the gold standard: the descriptive texts are
+           summarised in sentences in the executive summary.  This prevents
+           stray single-word lines (e.g. "Digitalization", "Automation")
+           from appearing in the PDF text extraction. */
+        .kpi-item .kpi-label{
+          font-size:0;
+          line-height:0;
+          opacity:0;
+        }
         /* Benchmark bars */
         .benchmark-bars{margin-top:.6rem}
         .benchmark-row{display:flex;align-items:center;margin-bottom:6px;font-size:12px}
