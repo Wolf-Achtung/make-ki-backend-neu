@@ -874,6 +874,10 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     try:
         with open(path, newline="", encoding="utf-8") as csvfile:
             programmes = list(csv.DictReader(csvfile))
+            # Filter out empty or null rows to avoid NoneType errors.  Some CSV files
+            # may contain blank lines or partially filled rows; these produce
+            # dictionaries with all values None.  Skip such entries.
+            programmes = [p for p in programmes if p and any(v for v in p.values())]
     except Exception:
         return ""
     size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
@@ -907,6 +911,9 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
         "mv": "mecklenburg-vorpommern",
         "rp": "rheinland-pfalz",
         "ni": "niedersachsen",
+        # Additional abbreviations for Bremen and Niedersachen to increase coverage
+        "hb": "bremen",
+        "nds": "niedersachsen",
     }
     # Use the mapped region if available; otherwise fall back to the original
     region_mapped = alias_map.get(region_lower, region_lower)
@@ -922,8 +929,16 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
         region string, or the row is a federal programme (region == "bund").
         Target groups are matched by substring as before.
         """
-        zg = (row.get("Zielgruppe", "") or "").lower()
-        reg = (row.get("Region", "") or "").lower()
+        # Guard against non-dictionary rows (e.g. None or lists) that may slip
+        # through the CSV parser.  Without this check the code below would
+        # raise an AttributeError when calling row.get.
+        if not isinstance(row, dict):
+            return False
+        zg_val = row.get("Zielgruppe", "")
+        reg_val = row.get("Region", "")
+        # Normalise to empty strings when None
+        zg = (zg_val or "").lower() if isinstance(zg_val, str) else ""
+        reg = (reg_val or "").lower() if isinstance(reg_val, str) else ""
         # Match target groups via substring if any target token appears
         t_ok = True if not targets else any(t in zg for t in targets)
         if not region:
@@ -947,7 +962,9 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     region_matches = []
     if region:
         for p in programmes:
-            reg = (p.get("Region", "").lower() or "")
+            # Safely lower-case the region value to avoid NoneType errors
+            reg_val = p.get("Region") if isinstance(p, dict) else None
+            reg = ((reg_val or "").lower()) if isinstance(reg_val, str) else ""
             try:
                 name = p.get("Name", "").strip()
             except Exception:
@@ -960,7 +977,12 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     filtered = [p for p in programmes if matches(p)]
     if region:
         # Sort matches: exact region first, then federal ('bund'), then others.
-        filtered = sorted(filtered, key=lambda p: (0 if (p.get("Region", "").lower() == region) else (1 if p.get("Region", "").lower() == "bund" else 2)))
+        filtered = sorted(
+            filtered,
+            key=lambda p: 0
+            if (((p.get("Region") or "").lower()) == region)
+            else (1 if (((p.get("Region") or "").lower()) == "bund") else 2),
+        )
     # Build the selected list: include up to two regional programmes first (if available).
     selected: List[dict] = []
     used_names = set()
@@ -990,7 +1012,9 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
             if not name or name in used_names:
                 continue
             if region:
-                reg = (p.get("Region", "").lower() or "")
+                # Safely lower-case region for fill programmes
+                reg_val = p.get("Region") if isinstance(p, dict) else None
+                reg = ((reg_val or "").lower()) if isinstance(reg_val, str) else ""
                 if not (reg == region or reg == "bund"):
                     continue
             selected.append(p)
@@ -999,14 +1023,15 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     # only federal (bund) programmes are present, append the first non-federal programme
     # from the full list that has not been selected yet.  This helps surface regional
     # programmes for awareness even when the user is not from that region.
-    has_non_federal = any((p.get("Region", "").lower() != "bund") for p in selected)
+    has_non_federal = any(((p.get("Region") or "").lower() != "bund") for p in selected)
     if not has_non_federal:
         for p in programmes:
             try:
                 name = p.get("Name", "").strip()
             except Exception:
                 name = ""
-            reg = (p.get("Region", "").lower() or "")
+            reg_val = p.get("Region") if isinstance(p, dict) else None
+            reg = ((reg_val or "").lower()) if isinstance(reg_val, str) else ""
             if not name or name in used_names:
                 continue
             if reg and reg != "bund":
