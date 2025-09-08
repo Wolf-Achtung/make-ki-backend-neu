@@ -767,6 +767,9 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
             # fall back to an empty string.  This value will populate the
             # "Datensitz" column in the Gold‑Standard report.
             datenschutz = row.get("Datenschutz") or row.get("Datensitz") or row.get("Datensitz (EU/US)") or ""
+            # Ensure datenschutz always has a value (n/a) when empty
+            if not datenschutz:
+                datenschutz = "n/a"
             out.append({
                 "name": name,
                 "usecase": usecase,
@@ -817,6 +820,11 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
         # appears in the final list.  Maintain insertion order as defined in defaults.
         for t in defaults:
             if t["name"] in open_source_names and all((t["name"] != existing.get("name")) for existing in out):
+                # Guarantee datenschutz and cost fields are filled for default tools
+                if not t.get("datenschutz"):
+                    t["datenschutz"] = "n/a"
+                if not t.get("cost"):
+                    t["cost"] = "n/a"
                 out.append(t)
         # Append additional defaults only if we have fewer than half of the desired items.
         if len(out) < 4 and min_needed > 0:
@@ -825,6 +833,11 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                     break
                 if any((t["name"] == existing.get("name")) for existing in out):
                     continue
+                # Guarantee datenschutz and cost fields are filled for default tools
+                if not t.get("datenschutz"):
+                    t["datenschutz"] = "n/a"
+                if not t.get("cost"):
+                    t["cost"] = "n/a"
                 out.append(t)
         # Guarantee at least one open‑source tool appears for teams and SMEs.
         try:
@@ -836,6 +849,11 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
             if not has_os:
                 for t in defaults:
                     if t["name"] in open_source_names and all((t["name"] != existing.get("name")) for existing in out):
+                        # Guarantee datenschutz and cost fields are filled for default tools
+                        if not t.get("datenschutz"):
+                            t["datenschutz"] = "n/a"
+                        if not t.get("cost"):
+                            t["cost"] = "n/a"
                         out.append(t)
                         break
     except Exception:
@@ -862,8 +880,11 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     # Expand the target group mapping: solo respondents may also be eligible for KMU programmes, since
     # many funding schemes target both freelancers and small businesses.  We include common
     # synonyms to improve matching.  For teams and KMU we include general SME terms.
+    # Expand the target group mapping: Solo respondents may also be eligible for
+    # programmes targeting KMU/startups since many funding schemes use diverse
+    # terminology (e.g. "Start-up", "Gründung").  Add common synonyms here.
     targets = {
-        "solo": ["solo", "freelancer", "freiberuflich", "einzel", "kmu"],
+        "solo": ["solo", "freelancer", "freiberuflich", "einzel", "kmu", "startup", "start-up", "gründung", "gründungs", "unternehmer"] ,
         "team": ["kmu", "team", "small"],
         "kmu": ["kmu", "sme"]
     }.get(size, [])
@@ -922,39 +943,58 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     # representative set of opportunities.  This addresses cases where only a
     # single regional programme exists (e.g. Berlin), ensuring that the list
     # never appears empty or too short.
+    # Collect programmes matching the desired region exactly to prioritise regional schemes.
+    region_matches = []
+    if region:
+        for p in programmes:
+            reg = (p.get("Region", "").lower() or "")
+            try:
+                name = p.get("Name", "").strip()
+            except Exception:
+                name = ""
+            if not name:
+                continue
+            if reg == region:
+                region_matches.append(p)
+    # Filter programmes by region and target group.
     filtered = [p for p in programmes if matches(p)]
     if region:
         # Sort matches: exact region first, then federal ('bund'), then others.
         filtered = sorted(filtered, key=lambda p: (0 if (p.get("Region", "").lower() == region) else (1 if p.get("Region", "").lower() == "bund" else 2)))
-    # Start with the filtered list and then append additional programmes until
-    # we reach the desired length.  Avoid duplicates by tracking names.
+    # Build the selected list: include up to two regional programmes first (if available).
     selected: List[dict] = []
     used_names = set()
+    if region_matches:
+        for p in region_matches:
+            name = p.get("Name", "").strip() if p.get("Name") else ""
+            if name and name not in used_names:
+                selected.append(p)
+                used_names.add(name)
+            if len(selected) >= 2:
+                break
+    # Then add further programmes from the filtered list up to max_items.
     for p in filtered:
         if len(selected) >= max_items:
             break
-        name = p.get("Name", "").strip()
+        name = p.get("Name", "").strip() if p.get("Name") else ""
         if not name or name in used_names:
             continue
         selected.append(p)
         used_names.add(name)
-    # If not enough programmes were selected, append more from the full list
-    # (prioritising those with matching target groups) until the list is full.
+    # If still not enough programmes, append from all programmes matching region or 'bund'
     if len(selected) < max_items:
         for p in programmes:
             if len(selected) >= max_items:
                 break
-            name = p.get("Name", "").strip()
+            name = p.get("Name", "").strip() if p.get("Name") else ""
             if not name or name in used_names:
                 continue
-            # Skip if region specified and programme region does not match region or 'bund' for fill.
             if region:
                 reg = (p.get("Region", "").lower() or "")
                 if not (reg == region or reg == "bund"):
                     continue
             selected.append(p)
             used_names.add(name)
-
     # Ensure at least one non-federal programme is displayed when possible.  If after selection
     # only federal (bund) programmes are present, append the first non-federal programme
     # from the full list that has not been selected yet.  This helps surface regional
@@ -962,7 +1002,10 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     has_non_federal = any((p.get("Region", "").lower() != "bund") for p in selected)
     if not has_non_federal:
         for p in programmes:
-            name = p.get("Name", "").strip()
+            try:
+                name = p.get("Name", "").strip()
+            except Exception:
+                name = ""
             reg = (p.get("Region", "").lower() or "")
             if not name or name in used_names:
                 continue
@@ -1818,27 +1861,51 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # Förder-Badges aus erster Programmeinträgen
     badges = []
     try:
-        for row in (out.get("foerderprogramme_table") or [])[:2]:
+        # Only generate badges from the first funding entry.  We convert
+        # abbreviations to full names and capitalise the region.  A maximum of
+        # one funding row is used to avoid cluttering the report with badges.
+        if (out.get("foerderprogramme_table") or []):
+            row = (out.get("foerderprogramme_table") or [])[0]
             zg = (row.get("zielgruppe") or "").lower()
-            # Solo/KMU Badge
-            if 'solo' in zg or 'freelanc' in zg or 'freiberuf' in zg:
+            # Solo/KMU badge
+            if any(tok in zg for tok in ["solo", "freelanc", "freiberuf", "einzel"]):
                 badges.append("Solo-geeignet" if lang == "de" else "solo-friendly")
-            elif 'kmu' in zg or 'sme' in zg:
+            elif any(tok in zg for tok in ["kmu", "sme"]):
                 badges.append("KMU-geeignet" if lang == "de" else "SME-friendly")
-            # Region Badge
-            region = (data.get("bundesland") or data.get("state") or "").strip()
-            if region:
-                badges.append(region)
-            # Förderhöhe Badge
+            # Region badge: map abbreviations to full names via alias_map, then title-case
+            user_region = (data.get("bundesland") or data.get("state") or "").strip()
+            # Reuse alias map from dynamic funding
+            alias_map_local = {
+                "nrw": "Nordrhein-Westfalen",
+                "by": "Bayern",
+                "bw": "Baden-Württemberg",
+                "be": "Berlin",
+                "bb": "Brandenburg",
+                "he": "Hessen",
+                "hh": "Hamburg",
+                "sl": "Saarland",
+                "sn": "Sachsen",
+                "st": "Sachsen-Anhalt",
+                "sh": "Schleswig-Holstein",
+                "th": "Thüringen",
+                "mv": "Mecklenburg-Vorpommern",
+                "rp": "Rheinland-Pfalz",
+                "ni": "Niedersachsen",
+            }
+            if user_region:
+                region_key = user_region.lower()
+                full_region = alias_map_local.get(region_key, user_region)
+                # Capitalise the first letter if not all caps
+                badges.append(full_region if full_region.istitle() else full_region.title())
+            # Förderhöhe badge: parse percentage values
             fstr = row.get("foerderhoehe") or row.get("amount") or ""
             m = re.search(r"(\d+\s*%|\d+[\.,]\d+\s*%)", fstr.replace('bis zu','').replace('bis','').replace('up to',''))
             if m:
                 percent = m.group(1).strip()
                 badges.append(("bis " + percent) if lang == "de" else ("up to " + percent))
-            # Break after first row
     except Exception:
         pass
-    # Entferne Duplikate, behalte Reihenfolge
+    # Remove duplicates while preserving order
     seen = set(); unique_badges = []
     for b in badges:
         if b and b not in seen:

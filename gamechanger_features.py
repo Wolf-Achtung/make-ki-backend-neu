@@ -2,7 +2,7 @@
 
 GAMECHANGER_FEATURES = {
     "moonshot": True,
-    "maturity_benchmark": False,
+    "maturity_benchmark": True,
     "foerder_forecast": True,
     "next_steps": True,
     "realtime_check": True,
