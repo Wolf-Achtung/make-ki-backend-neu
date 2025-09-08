@@ -556,6 +556,29 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> Lis
     size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
     targets = {"solo":["solo","freelancer","freiberuflich","einzel"],"team":["kmu","team","small"],"kmu":["kmu","sme"]}.get(size,[])
     region = (data.get("bundesland") or data.get("state") or "").lower()
+    # Map common Bundesland abbreviations (e.g. "NRW", "BY") to their full
+    # names for more robust matching against the CSV.  Without this
+    # normalisation a user selecting "NRW" would not match rows with
+    # "Nordrhein‑Westfalen" in the Region column.  Keep the value in lower
+    # case to match against the lowercased CSV values below.
+    alias_map = {
+        "nrw": "nordrhein-westfalen",
+        "by": "bayern",
+        "bw": "baden-württemberg",
+        "be": "berlin",
+        "bb": "brandenburg",
+        "he": "hessen",
+        "hh": "hamburg",
+        "sl": "saarland",
+        "sn": "sachsen",
+        "st": "sachsen-anhalt",
+        "sh": "schleswig-holstein",
+        "th": "thüringen",
+        "mv": "mecklenburg-vorpommern",
+        "rp": "rheinland-pfalz",
+        "ni": "niedersachsen",
+    }
+    region = alias_map.get(region, region)
     rows = []
     with open(path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
@@ -844,7 +867,29 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
         "team": ["kmu", "team", "small"],
         "kmu": ["kmu", "sme"]
     }.get(size, [])
-    region = (data.get("bundesland") or data.get("state") or "").lower()
+    region = (data.get("bundesland") or data.get("state") or "").strip()
+    region_lower = region.lower()
+    # Map Bundesland abbreviations to full names to improve region matching
+    alias_map = {
+        "nrw": "nordrhein-westfalen",
+        "by": "bayern",
+        "bw": "baden-württemberg",
+        "be": "berlin",
+        "bb": "brandenburg",
+        "he": "hessen",
+        "hh": "hamburg",
+        "sl": "saarland",
+        "sn": "sachsen",
+        "st": "sachsen-anhalt",
+        "sh": "schleswig-holstein",
+        "th": "thüringen",
+        "mv": "mecklenburg-vorpommern",
+        "rp": "rheinland-pfalz",
+        "ni": "niedersachsen",
+    }
+    # Use the mapped region if available; otherwise fall back to the original
+    region_mapped = alias_map.get(region_lower, region_lower)
+    region = region_mapped
 
     def matches(row: dict) -> bool:
         """
@@ -940,7 +985,33 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     except Exception:
         stand = ""
     title = "Dynamische Förderprogramme" if lang == "de" else "Dynamic funding programmes"
-    out = [f"<h3>{title}</h3>", "<ul>"]
+    # Prepare a hint when no region was specified.  We select an example
+    # programme from the first non-federal entry to give readers an idea of
+    # what a state-level funding scheme looks like.  This hint appears
+    # before the list of programmes.
+    note_html = ""
+    if not region:
+        example = None
+        # Find the first programme with a specific region (not 'bund').
+        for p in programmes:
+            try:
+                reg = (p.get("Region", "") or "").strip()
+            except Exception:
+                reg = ""
+            if reg and reg.lower() != "bund":
+                example = p
+                break
+        if example:
+            ex_name = example.get("Name", "").strip()
+            ex_reg = example.get("Region", "").strip()
+            if lang == "de":
+                note_html = f"<p><em>Kein Bundesland ausgewählt – Beispiel Landesprogramm: <b>{ex_name}</b> ({ex_reg}).</em></p>"
+            else:
+                note_html = f"<p><em>No state selected – example regional programme: <b>{ex_name}</b> ({ex_reg}).</em></p>"
+    out = [f"<h3>{title}</h3>"]
+    if note_html:
+        out.append(note_html)
+    out.append("<ul>")
     for p in selected:
         name = p.get("Name", "")
         desc = (p.get("Beschreibung", "") or "").strip()
@@ -1348,6 +1419,48 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             out["exec_summary_html"] = "\n".join(cleaned)
     except Exception:
         # If cleaning fails, leave the original executive summary unchanged
+        pass
+
+    # Perform an additional pass to remove any residual KPI-only lines that may remain.
+    # This pass scans each line of the executive summary after the initial
+    # cleaning and drops lines composed solely of KPI terms (e.g.
+    # "Digitalisierung / Automatisierung / Papierlos / Know-how").  It is
+    # agnostic to case, hyphens, slashes and non-breaking spaces.  Without
+    # this extra step, isolated KPI lines may occasionally persist at the end
+    # of the summary due to subtle encoding variations.
+    try:
+        esc_html2 = out.get("exec_summary_html") or ""
+        if esc_html2:
+            def _is_kpi_only(line: str) -> bool:
+                # Remove HTML tags, trim whitespace and normalise separators
+                import re as _re
+                plain = _re.sub(r"<[^>]+>", "", line or "").strip()
+                if not plain:
+                    return False
+                # Replace NBSP (\xa0) and various dash/slash characters with spaces
+                norm = _re.sub(r"[\u00A0\u2011\u2012\u2013\u2014\u2015/\\-]+", " ", plain).lower()
+                # Remove punctuation except letters and spaces
+                norm = _re.sub(r"[^a-zäöüß\s]", "", norm)
+                tokens = [t for t in norm.split() if t]
+                if not tokens:
+                    return False
+                kpi_terms = {
+                    "digitalisierung", "digitalisation",
+                    "automatisierung", "automation",
+                    "papierlos", "paperless", "papierlosigkeit",
+                    "know", "how", "knowhow", "knowhow", "knowhow",  # duplicates for robustness
+                    "ki", "ai"
+                }
+                # If all tokens are KPI terms (or combinations like "know how"), mark for removal
+                return all(tok in kpi_terms for tok in tokens)
+            lines = esc_html2.splitlines()
+            cleaned_lines = []
+            for ln in lines:
+                if _is_kpi_only(ln):
+                    continue
+                cleaned_lines.append(ln)
+            out["exec_summary_html"] = "\n".join(cleaned_lines)
+    except Exception:
         pass
 
     # Vision separat (NICHT in sections_html mischen).  Wenn der LLM keine Vision liefert
