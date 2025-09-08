@@ -551,16 +551,44 @@ def calc_score_percent(data: dict) -> int:
 
 def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> List[Dict[str, str]]:
     import csv, os
+    # Try to load the funding data from the canonical location.  If the
+    # ``data`` directory does not exist (e.g. when running from the project
+    # root without the unzipped assets), fall back to a top‑level
+    # ``foerdermittel.csv`` file.  Without this fallback the report would
+    # silently omit all programmes.
     path = os.path.join("data", "foerdermittel.csv")
-    if not os.path.exists(path): return []
+    if not os.path.exists(path):
+        alt = os.path.join("data", "data", "foerdermittel.csv")
+        if os.path.exists(alt):
+            path = alt
+        else:
+            # Final fallback: attempt to use a CSV in the project root.  This
+            # supports cases where the developer has placed the updated
+            # foerdermittel.csv alongside gpt_analyze.py.
+            root_csv = "foerdermittel.csv"
+            if os.path.exists(root_csv):
+                path = root_csv
+            else:
+                return []
     size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
-    targets = {"solo":["solo","freelancer","freiberuflich","einzel"],"team":["kmu","team","small"],"kmu":["kmu","sme"]}.get(size,[])
+    # Expand the target group mapping: Solo respondents may also be eligible
+    # for programmes targeting startups, founders or freelancers.  By
+    # including common synonyms here we increase the likelihood of matching
+    # entries in the CSV.  Teams and KMUs retain their existing mappings.
+    targets_map = {
+        "solo": [
+            "solo", "freelancer", "freiberuflich", "einzel",
+            "kmu", "startup", "start-up", "gründung", "gründungs", "unternehmer"
+        ],
+        "team": ["kmu", "team", "small"],
+        "kmu": ["kmu", "sme"]
+    }
+    targets = targets_map.get(size, [])
     region = (data.get("bundesland") or data.get("state") or "").lower()
     # Map common Bundesland abbreviations (e.g. "NRW", "BY") to their full
-    # names for more robust matching against the CSV.  Without this
-    # normalisation a user selecting "NRW" would not match rows with
-    # "Nordrhein‑Westfalen" in the Region column.  Keep the value in lower
-    # case to match against the lowercased CSV values below.
+    # names for more robust matching against the CSV.  Also include
+    # additional abbreviations (HB, NDS) used in some contexts.  Keep the
+    # value in lower case to match against the lowercased CSV values below.
     alias_map = {
         "nrw": "nordrhein-westfalen",
         "by": "bayern",
@@ -577,6 +605,8 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> Lis
         "mv": "mecklenburg-vorpommern",
         "rp": "rheinland-pfalz",
         "ni": "niedersachsen",
+        "hb": "bremen",
+        "nds": "niedersachsen",
     }
     region = alias_map.get(region, region)
     rows = []
@@ -864,11 +894,17 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     import csv, os
     path = os.path.join("data", "foerdermittel.csv")
     # If the expected file is missing (e.g. due to nested archive structure),
-    # fall back to a nested `data/data/foerdermittel.csv` before aborting.
+    # fall back to a nested ``data/data/foerdermittel.csv`` or a top‑level
+    # ``foerdermittel.csv`` before aborting.  This makes the function more
+    # resilient to different project layouts and ensures the dynamic funding
+    # section is populated even when the ``data`` directory is absent.
     if not os.path.exists(path):
-        alt = os.path.join("data", "data", "foerdermittel.csv")
-        if os.path.exists(alt):
-            path = alt
+        alt1 = os.path.join("data", "data", "foerdermittel.csv")
+        alt2 = "foerdermittel.csv"
+        if os.path.exists(alt1):
+            path = alt1
+        elif os.path.exists(alt2):
+            path = alt2
         else:
             return ""
     try:
@@ -1893,35 +1929,43 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             row = (out.get("foerderprogramme_table") or [])[0]
             zg = (row.get("zielgruppe") or "").lower()
             # Solo/KMU badge
-            if any(tok in zg for tok in ["solo", "freelanc", "freiberuf", "einzel"]):
-                badges.append("Solo-geeignet" if lang == "de" else "solo-friendly")
-            elif any(tok in zg for tok in ["kmu", "sme"]):
-                badges.append("KMU-geeignet" if lang == "de" else "SME-friendly")
-            # Region badge: map abbreviations to full names via alias_map, then title-case
-            user_region = (data.get("bundesland") or data.get("state") or "").strip()
-            # Reuse alias map from dynamic funding
-            alias_map_local = {
-                "nrw": "Nordrhein-Westfalen",
-                "by": "Bayern",
-                "bw": "Baden-Württemberg",
-                "be": "Berlin",
-                "bb": "Brandenburg",
-                "he": "Hessen",
-                "hh": "Hamburg",
-                "sl": "Saarland",
-                "sn": "Sachsen",
-                "st": "Sachsen-Anhalt",
-                "sh": "Schleswig-Holstein",
-                "th": "Thüringen",
-                "mv": "Mecklenburg-Vorpommern",
-                "rp": "Rheinland-Pfalz",
-                "ni": "Niedersachsen",
-            }
-            if user_region:
-                region_key = user_region.lower()
-                full_region = alias_map_local.get(region_key, user_region)
-                # Capitalise the first letter if not all caps
-                badges.append(full_region if full_region.istitle() else full_region.title())
+            # In the Gold‑Standard report we deliberately omit explicit
+            # "Solo-geeignet" or "KMU-geeignet" badges from the funding
+            # section.  Including these labels led to stray lines such as
+            # "Solo-geeignet" appearing after the funding table in the PDF.
+            # If desired, these badges can be re-enabled by uncommenting
+            # the code below.
+            # if any(tok in zg for tok in ["solo", "freelanc", "freiberuf", "einzel"]):
+            #     badges.append("Solo-geeignet" if lang == "de" else "solo-friendly")
+            # elif any(tok in zg for tok in ["kmu", "sme"]):
+            #     badges.append("KMU-geeignet" if lang == "de" else "SME-friendly")
+            # Region badge: map abbreviations to full names via alias_map.  We
+            # no longer append the region name as a badge to avoid stray
+            # abbreviations like "be" appearing in the funding table.  If
+            # desired, a region badge can be added here by uncommenting the
+            # following lines.
+            # user_region = (data.get("bundesland") or data.get("state") or "").strip()
+            # alias_map_local = {
+            #     "nrw": "Nordrhein-Westfalen",
+            #     "by": "Bayern",
+            #     "bw": "Baden-Württemberg",
+            #     "be": "Berlin",
+            #     "bb": "Brandenburg",
+            #     "he": "Hessen",
+            #     "hh": "Hamburg",
+            #     "sl": "Saarland",
+            #     "sn": "Sachsen",
+            #     "st": "Sachsen-Anhalt",
+            #     "sh": "Schleswig-Holstein",
+            #     "th": "Thüringen",
+            #     "mv": "Mecklenburg-Vorpommern",
+            #     "rp": "Rheinland-Pfalz",
+            #     "ni": "Niedersachsen",
+            # }
+            # if user_region:
+            #     region_key = user_region.lower()
+            #     full_region = alias_map_local.get(region_key, user_region)
+            #     badges.append(full_region if full_region.istitle() else full_region.title())
             # Förderhöhe badge: parse percentage values
             fstr = row.get("foerderhoehe") or row.get("amount") or ""
             m = re.search(r"(\d+\s*%|\d+[\.,]\d+\s*%)", fstr.replace('bis zu','').replace('bis','').replace('up to',''))
