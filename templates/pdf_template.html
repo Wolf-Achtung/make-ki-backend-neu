@@ -184,8 +184,9 @@ alt="Badge" style="height:38px">{% endif %}</div>
               {% for key, b in benchmarks.items() %}
               <div class="kpi-item">
                 <div class="kpi-value">{{ b.self }}%</div>
-                <!-- Hide KPI labels by applying zero font-size and opacity.  The labels remain in the DOM to preserve spacing but are invisible in the PDF text. -->
-                <div class="kpi-label" style="font-size:0;line-height:0;opacity:0">{{ key }}</div>
+                {# Omit the KPI label entirely in the Gold‑Standard report.  Removing
+                   the label prevents stray lines like "Digitalisierung / Automatisierung / Papierlos / Know‑how"
+                   from appearing in the PDF text while keeping the coloured KPI indicators intact. #}
               </div>
               {% endfor %}
             </div>
