@@ -609,34 +609,29 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> Lis
         "nds": "niedersachsen",
     }
     region = alias_map.get(region, region)
-    rows = []
+    rows: List[Dict[str, str]] = []
     with open(path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
         for row in r:
-            zg = (row.get("Zielgruppe","") or "").lower()
-            reg = (row.get("Region","") or "").lower()
+            zg = (row.get("Zielgruppe", "") or "").lower()
+            reg = (row.get("Region", "") or "").lower()
+            # If a company size is specified, attempt to match target groups; otherwise ignore.
             t_ok = True if not targets else any(t in zg for t in targets)
+            # Always consider rows in the selected region; also include federal programmes.
             r_ok = True if not region else (reg == region or reg == "bund")
             if t_ok and r_ok:
-                # Assemble a more detailed funding record.  In the Gold‑Standard report
-                # the funding table should include additional context such as the
-                # programme region, a short description of the purpose (Beschreibung)
-                # and the submission deadline.  These fields are optional in the
-                # CSV but are included here when present.  We also retain the
-                # original funding amount column for continuity.
                 rows.append({
                     "name": row.get("Name", ""),
                     "zielgruppe": row.get("Zielgruppe", ""),
                     "region": row.get("Region", ""),
                     "foerderhoehe": row.get("Fördersumme (€)", ""),
-                    # Use the description as a simple purpose indicator; fall back to
-                    # an empty string if none exists.  The field name may vary
-                    # across CSVs (e.g. "Beschreibung" in German).  Use both
-                    # German and English keys for robustness.
                     "zweck": row.get("Beschreibung", row.get("Purpose", "")),
                     "deadline": row.get("Deadline", ""),
                     "link": row.get("Link", "")
                 })
+    # Sort selected rows so that exact region programmes appear first, then federal programmes, then others.
+    if region:
+        rows = sorted(rows, key=lambda p: 0 if (p.get("region", "").lower() == region) else (1 if (p.get("region", "").lower() == "bund") else 2))
     return rows[:max_items]
 
 def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int = 8) -> List[Dict[str, str]]:
@@ -674,13 +669,24 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
     # exist (e.g. when running outside the unzipped context), fall back to
     # a top‑level ``tools.csv`` so that updated tool information is still
     # loaded.  Without a valid CSV we return an empty list.
+    # Try to locate the tools CSV in a variety of locations.  When running
+    # outside of the original repository context there may be no ``data``
+    # directory at the project root.  To remain robust we attempt the
+    # conventional ``data/tools.csv`` first, then fall back to a top level
+    # ``tools.csv``, and finally look inside the nested backend folder used
+    # during development (``ki_backend/make-ki-backend-neu-main/data/tools.csv``).
     path = os.path.join("data", "tools.csv")
     if not os.path.exists(path):
         alt_path = "tools.csv"
         if os.path.exists(alt_path):
             path = alt_path
         else:
-            return []
+            # Final fallback: look for a tools.csv packaged in the backend
+            nested = os.path.join("ki_backend", "make-ki-backend-neu-main", "data", "tools.csv")
+            if os.path.exists(nested):
+                path = nested
+            else:
+                return []
     out: List[Dict[str, str]] = []
     with open(path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -1019,16 +1025,18 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
             if (((p.get("Region") or "").lower()) == region)
             else (1 if (((p.get("Region") or "").lower()) == "bund") else 2),
         )
-    # Build the selected list: include up to two regional programmes first (if available).
+    # Build the selected list: include regional programmes first (if available).
     selected: List[dict] = []
     used_names = set()
+    # Prioritise all programmes whose region exactly matches the user's region.
     if region_matches:
         for p in region_matches:
             name = p.get("Name", "").strip() if p.get("Name") else ""
             if name and name not in used_names:
                 selected.append(p)
                 used_names.add(name)
-            if len(selected) >= 2:
+            # Do not prematurely break here; include all region matches up to max_items.
+            if len(selected) >= max_items:
                 break
     # Then add further programmes from the filtered list up to max_items.
     for p in filtered:
