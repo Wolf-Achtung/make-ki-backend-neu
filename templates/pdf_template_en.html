@@ -173,7 +173,8 @@ alt="Badge" style="height:38px">{% endif %}</div>
               {% for key, b in benchmarks.items() %}
               <div class="kpi-item">
                 <div class="kpi-value">{{ b.self }}%</div>
-                <div class="kpi-label">{{ key }}</div>
+                {# Omit the KPI label entirely in the Gold‑Standard report to
+                   avoid stray KPI names appearing in the extracted PDF text. #}
               </div>
               {% endfor %}
             </div>
@@ -326,6 +327,23 @@ endif %}"></td>
           <div class="card section">
             <h2>Visionary recommendation</h2>
             <div class="vision-card">{{ vision_html|safe }}</div>
+          </div>
+        {% endif %}
+
+        {# Innovation & Gamechanger section: display the sector innovation intro
+           and gamechanger prompts when present.  This helps highlight
+           visionary features such as moonshots, maturity benchmarks and
+           upcoming funding trends in English reports.  Each instruction
+           is separated by a line break. #}
+        {% if branchen_innovations_intro or gamechanger_blocks %}
+          <div class="card section">
+            <h2>Innovation &amp; Gamechanger</h2>
+            {% if branchen_innovations_intro %}
+              <p>{{ branchen_innovations_intro }}</p>
+            {% endif %}
+            {% if gamechanger_blocks %}
+              <p>{{ gamechanger_blocks|replace('\n', '<br>')|safe }}</p>
+            {% endif %}
           </div>
         {% endif %}
 

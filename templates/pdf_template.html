@@ -70,7 +70,17 @@ fit,minmax(110px,1fr));gap:12px;margin-top:.6rem}
         .kpi-item:nth-child(3){background:var(--brand-green);color:#fff;}
         .kpi-item:nth-child(4){background:#A0D9C9;color:#fff;}
         .kpi-item .kpi-value{font-size:20px;font-weight:700;margin-bottom:2px}
-        .kpi-item .kpi-label{font-size:12px;font-weight:500;opacity:.95}
+        .kpi-item .kpi-label{
+          /* Hide KPI labels in the Gold‑Standard report.  The labels
+             (e.g. "Digitalisierung", "Automatisierung") previously
+             appeared as stray lines at the end of the executive summary
+             when the PDF was parsed.  Hiding them prevents these
+             artefacts while keeping the KPI values visible. */
+          font-size:0;
+          line-height:0;
+          opacity:0;
+          height:0;
+        }
         /* Benchmark bars */
         .benchmark-bars{margin-top:.6rem}
         .benchmark-row{display:flex;align-items:center;margin-bottom:6px;font-size:12px}
@@ -184,7 +194,13 @@ alt="Badge" style="height:38px">{% endif %}</div>
               {% for key, b in benchmarks.items() %}
               <div class="kpi-item">
                 <div class="kpi-value">{{ b.self }}%</div>
-                <div class="kpi-label">{{ key }}</div>
+                {# Omit the KPI label entirely in the Gold‑Standard report.  We
+                   previously hid the label via CSS, but some PDF extractors
+                   still captured it, resulting in stray lines like
+                   "Digitalisierung / Automatisierung / Papierlos / Know‑how" in
+                   the parsed text.  Removing the label prevents these
+                   artefacts altogether while keeping the coloured KPI
+                   indicators intact. #}
               </div>
               {% endfor %}
             </div>
@@ -314,10 +330,29 @@ risks_html|trim) %}
         {# Risk heatmap removed in the Gold‑Standard.  Key risks are described in the text instead. #}
 
         <!-- Vision separat, nicht doppelt -->
+
         {% if vision_html %}
           <div class="card section">
             <h2>Vision</h2>
             <div class="vision-card">{{ vision_html|safe }}</div>
+          </div>
+        {% endif %}
+
+        {# Gamechanger & Innovation: optional section
+           If the context contains an innovation intro or gamechanger prompts,
+           display them in a dedicated card.  This brings the visionary
+           features such as Moonshot, maturity benchmarks and forecasts
+           into the report without requiring a separate LLM call.  Each
+           instruction is separated by a line break. #}
+        {% if branchen_innovations_intro or gamechanger_blocks %}
+          <div class="card section">
+            <h2>Innovation &amp; Gamechanger</h2>
+            {% if branchen_innovations_intro %}
+              <p>{{ branchen_innovations_intro }}</p>
+            {% endif %}
+            {% if gamechanger_blocks %}
+              <p>{{ gamechanger_blocks|replace('\n', '<br>')|safe }}</p>
+            {% endif %}
           </div>
         {% endif %}
 
