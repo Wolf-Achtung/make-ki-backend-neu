@@ -648,6 +648,12 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
         else:
             user_size = ""
         for row in reader:
+            # Skip comment or header rows that start with a '#'.
+            # Some CSVs include comment lines such as '# Open‑Source Alternativen …'.  We
+            # ignore these to avoid them appearing as malformed tool entries.
+            name_field = row.get("Tool-Name") or row.get("Name") or row.get("Tool") or ""
+            if isinstance(name_field, str) and name_field.strip().startswith("#"):
+                continue
             # Determine the row's industry / branch slugs and size.
             # Some CSVs use "Branche-Slugs" or "Branche" or "Tags" for industry tags.
             tags = (row.get("Branche-Slugs") or row.get("Tags") or row.get("Branche") or "").lower()
@@ -666,12 +672,12 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                     if not ((row_size == "kmu" and user_size in ("team", "kmu")) or (row_size == "team" and user_size == "solo")):
                         continue
             # Column name fallbacks
-            name = row.get("Tool-Name") or row.get("Name") or row.get("Tool") or ""
+            name = name_field
             usecase = row.get("Funktion/Zweck") or row.get("Einsatz") or row.get("Usecase") or ""
             # Cost/effort fields: prefer explicit cost, otherwise effort estimates.  Also
             # fall back to the German "Kostenkategorie" column when present.  Many
             # data sets use a descriptive cost category instead of numeric values.
-            cost = (
+            cost_raw = (
                 row.get("Kosten")
                 or row.get("Cost")
                 or row.get("Aufwand")
@@ -727,7 +733,7 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                     if lv == key:
                         return translated
                 return v
-            cost = _map_cost(cost, lang)
+            cost = _map_cost(cost_raw, lang)
             # Ensure a cost category is always present; if empty after mapping, set to 'n/a'
             if not cost:
                 cost = "n/a"
@@ -797,6 +803,18 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
                 if any((t["name"] == existing.get("name")) for existing in out):
                     continue
                 out.append(t)
+        # Guarantee at least one open‑source tool appears for teams and SMEs.
+        try:
+            size_raw = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
+        except Exception:
+            size_raw = ""
+        if size_raw in {"team", "kmu", "kmus", "kmu (11–100)", "11-100", "2-10"}:
+            has_os = any(item.get("name") in open_source_names for item in out)
+            if not has_os:
+                for t in defaults:
+                    if t["name"] in open_source_names and all((t["name"] != existing.get("name")) for existing in out):
+                        out.append(t)
+                        break
     except Exception:
         pass
     return out[:max_items]
@@ -852,10 +870,61 @@ def build_dynamic_funding(data: dict, lang: str = "de", max_items: int = 5) -> s
     # ("bund") programmes, then all others.  This ensures regionally
     # relevant offers like "Coaching BONUS Berlin" appear before general
     # listings.
-    filtered = [p for p in programmes if matches(p)] or programmes[:max_items]
+    # Filter programmes by region/target group.  If a specific region is provided,
+    # prioritise exact regional programmes first, then federal programmes.  If
+    # fewer than ``max_items`` programmes match, append additional entries from
+    # the full list (excluding duplicates) so that the reader always sees a
+    # representative set of opportunities.  This addresses cases where only a
+    # single regional programme exists (e.g. Berlin), ensuring that the list
+    # never appears empty or too short.
+    filtered = [p for p in programmes if matches(p)]
     if region:
+        # Sort matches: exact region first, then federal ('bund'), then others.
         filtered = sorted(filtered, key=lambda p: (0 if (p.get("Region", "").lower() == region) else (1 if p.get("Region", "").lower() == "bund" else 2)))
-    selected = filtered[:max_items]
+    # Start with the filtered list and then append additional programmes until
+    # we reach the desired length.  Avoid duplicates by tracking names.
+    selected: List[dict] = []
+    used_names = set()
+    for p in filtered:
+        if len(selected) >= max_items:
+            break
+        name = p.get("Name", "").strip()
+        if not name or name in used_names:
+            continue
+        selected.append(p)
+        used_names.add(name)
+    # If not enough programmes were selected, append more from the full list
+    # (prioritising those with matching target groups) until the list is full.
+    if len(selected) < max_items:
+        for p in programmes:
+            if len(selected) >= max_items:
+                break
+            name = p.get("Name", "").strip()
+            if not name or name in used_names:
+                continue
+            # Skip if region specified and programme region does not match region or 'bund' for fill.
+            if region:
+                reg = (p.get("Region", "").lower() or "")
+                if not (reg == region or reg == "bund"):
+                    continue
+            selected.append(p)
+            used_names.add(name)
+
+    # Ensure at least one non-federal programme is displayed when possible.  If after selection
+    # only federal (bund) programmes are present, append the first non-federal programme
+    # from the full list that has not been selected yet.  This helps surface regional
+    # programmes for awareness even when the user is not from that region.
+    has_non_federal = any((p.get("Region", "").lower() != "bund") for p in selected)
+    if not has_non_federal:
+        for p in programmes:
+            name = p.get("Name", "").strip()
+            reg = (p.get("Region", "").lower() or "")
+            if not name or name in used_names:
+                continue
+            if reg and reg != "bund":
+                selected.append(p)
+                used_names.add(name)
+                break
     if not selected:
         return ""
     # Determine current month/year for the 'Stand' note.  This helps the
@@ -1193,14 +1262,24 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         esc_html = out.get("exec_summary_html") or ""
         if esc_html:
             # First remove any sequences of KPI terms separated by spaces, hyphens or slashes.
-            # This catches lines like "Digitalisierung Automatisierung Papierlos Know-how" as well as
-            # "Digitalisation / Automation / Paperless / AI know-how" in either language.  We allow
+            # This catches lines like "Digitalisierung Automatisierung Papierlos Know‑how" as well as
+            # "Digitalisation / Automation / Paperless / AI know‑how" in either language.  We allow
             # between one and three separators to match up to four terms in a row.
             pattern_multi = (
-                r"(?i)\b(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[\-\s]?how|ai\s*know\s*how)"
-                r"(?:\s*[\/-–]\s*(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[\-\s]?how|ai\s*know\s*how)){1,3}\b"
+                r"(?i)\b(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[\-\s]?how|ai\s*know\s*how|ki\s*know\s*how)"
+                r"(?:\s*[\/-–]\s*(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[\-\s]?how|ai\s*know\s*how|ki\s*know\s*how)){1,3}\b"
             )
             esc_html = re.sub(pattern_multi, "", esc_html)
+            # Remove <p> or <li> elements that contain only KPI terms or sequences.  Use a broad
+            # pattern to capture variants with spaces, hyphens or slashes.  This removes cases
+            # like <p>Digitalisierung / Automatisierung</p> or <li>Papierlos Know-how</li>.
+            pattern_wrapped = (
+                r"(?is)<(p|li)[^>]*>\s*(?:"  # start tag
+                r"(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[\-\s]?how|ai\s*know\s*how|ki\s*know\s*how)"
+                r"(?:\s*[\/-–]\s*(?:digitalisierung|digitalisation|automatisierung|automation|papierlos(?:igkeit)?|paperless|know[\-\s]?how|ai\s*know\s*how|ki\s*know\s*how))*)"  # allow multiple terms
+                r"\s*</\1>"
+            )
+            esc_html = re.sub(pattern_wrapped, "", esc_html)
             # Define a comprehensive list of single KPI terms (case-insensitive).  Include variations
             # with and without hyphens and different spellings.  These will be stripped when they
             # appear as standalone paragraphs or list items.
@@ -1220,35 +1299,50 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             lines = esc_html.splitlines()
             cleaned: List[str] = []
             # For exact match removal, prepare a set of KPI strings without HTML.
-            kpi_exact = set(
-                [
-                    "digitalisierung", "digitalisation",
-                    "automatisierung", "automation",
-                    "papierlos", "paperless",
-                    "papierlosigkeit",
-                    "know-how", "know how", "knowhow",
-                    "ki know-how", "ki know how", "ai know-how", "ai know how", "ai know‑how",
-                ]
-            )
+            kpi_exact = set([
+                "digitalisierung", "digitalisation",
+                "automatisierung", "automation",
+                "papierlos", "paperless",
+                "papierlosigkeit",
+                "know-how", "know how", "knowhow",
+                "ki know-how", "ki know how", "ai know-how", "ai know how", "ai know‑how",
+                "ki knowhow", "ai knowhow"
+            ])
+            # Define a token set of KPI terms across languages.  Any line that
+            # splits into tokens all contained within this set will be removed.
+            kpi_tokens = {
+                "digitalisierung", "digitalisation",
+                "automatisierung", "automation",
+                "papierlos", "paperless", "papierlosigkeit",
+                "know", "how", "knowhow",
+                "ki", "ai"
+            }
             for ln in lines:
                 # Remove HTML tags and strip whitespace.
                 plain = re.sub(r"<[^>]+>", "", ln).strip()
                 if not plain:
                     continue
-                # Normalise hyphens to spaces and lowercase the text.
-                norm_plain = re.sub(r"[-–‑]", " ", plain).lower().strip()
+                # Normalise hyphens, slashes and NBSPs to spaces and lowercase the text.
+                norm_plain = re.sub(r"[\xa0\-–\u2011/]+", " ", plain).lower().strip()
                 # Remove punctuation (except letters and spaces).
                 norm_plain = re.sub(r"[^a-zäöüß\s]", "", norm_plain)
-                # Check if the entire cleaned line matches any KPI term exactly.
-                # We also strip extra spaces to catch lines like "papierlos   " or "ai know how".
-                if norm_plain and norm_plain in kpi_exact:
+                # Collapse multiple spaces
+                norm_plain = re.sub(r"\s+", " ", norm_plain).strip()
+                if not norm_plain:
                     continue
-                # Additionally, check if the cleaned line splits into tokens that are all KPI terms.
-                tokens = [t for t in re.split(r"\s+", norm_plain) if t]
+                # If the entire line matches exactly a KPI term, drop it.
+                if norm_plain in kpi_exact:
+                    continue
+                # Split into tokens and drop if the entire set of tokens consists only of KPI words.
+                tokens = [t for t in norm_plain.split() if t]
+                # Drop lines consisting solely of KPI tokens or where at least three KPI tokens appear.
                 if tokens:
-                    all_de = all(tok in {"digitalisierung", "automatisierung", "papierlos", "papierlosigkeit", "know", "how", "ki", "knowhow"} for tok in tokens)
-                    all_en = all(tok in {"digitalisation", "automation", "paperless", "ai", "know", "how", "knowhow"} for tok in tokens)
-                    if all_de or all_en:
+                    # If all tokens are KPI tokens, skip this line.
+                    if all(tok in kpi_tokens for tok in tokens):
+                        continue
+                    # If at least three tokens are KPI tokens (e.g. "digitalisierung automatisierung papierlos know how"), drop.
+                    kpi_count = sum(1 for tok in tokens if tok in kpi_tokens)
+                    if kpi_count >= 3 and kpi_count == len(tokens):
                         continue
                 cleaned.append(ln)
             out["exec_summary_html"] = "\n".join(cleaned)
