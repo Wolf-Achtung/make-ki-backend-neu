@@ -13,6 +13,8 @@ KPI tiles & benchmarks: {{ kpis|tojson }} · {{ benchmarks|tojson }}
 Optional funding badges: {{ funding_badges|default([])|join(', ') }}
 
 Output rules (hard): Return VALID HTML only (no <html> wrapper). Use only <h3>, <p>, <ul>, <ol>, <table>.
+  
+  **Important:** The output must **not** contain any template syntax such as `{{ ... }}`. Instead, write actual numbers or neutral default values (e.g., 50 %) in place of placeholders.
 Length limits (hard): approx. half a page total; each section ~80–120 words; bullet items one line.
 Prohibited: Tool names, filler, placeholders.
 
