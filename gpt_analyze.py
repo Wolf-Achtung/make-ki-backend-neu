@@ -1340,6 +1340,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     chapters = [
         "executive_summary",
         "vision",
+        "gamechanger",
         # generate quick wins independently so they don't overlap with roadmap
         "quick_wins",
         # generate key risks independently
@@ -1362,6 +1363,10 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
 
     # Präambel
     out["preface"] = generate_preface(lang=lang, score_percent=data.get("score_percent"))
+
+    # Gamechanger HTML aus Kapitel übernehmen (falls generiert)
+    gc_html = ensure_html(strip_code_fences(fix_encoding(out.get("gamechanger") or "")), lang)
+    out["gamechanger_html"] = gc_html
 
     # Use the explicitly generated chapters for quick wins, risks and recommendations
     # Instead of distilling them from other sections.  If the chapter result is
