@@ -603,7 +603,7 @@ def calc_score_percent(data: dict) -> int:
     # an integer still functions without surfacing a misleading aggregate.
     return 0
 
-def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> List[Dict[str, str]]:
+def build_funding_table(data: dict, lang: str = "de", max_items: int = 8) -> List[Dict[str, str]]:
     import csv, os
     # Determine the path to the funding CSV.  Prefer the ``data`` directory, then
     # nested ``data/data`` and finally a project‑root CSV.  If no CSV exists
@@ -638,13 +638,26 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> Lis
         rows = _read_md_table(md_path)
     # Determine the respondent's company size and map to target group tokens.
     size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
+    # Expand the target group synonyms to recognise more variations used in the
+    # funding dataset.  Solo entrepreneurs and startups are often described
+    # interchangeably, so include related terms such as "startups", "start‑up",
+    # "gründung" and synonyms for self‑employment.  The team and SME buckets
+    # likewise accept broader descriptors.  This ensures that entries with
+    # slightly different spellings (e.g. "Startups", "Gründungs", "soloselbstständig")
+    # are considered a match.
     targets_map = {
         "solo": [
-            "solo", "freelancer", "freiberuflich", "einzel",
-            "kmu", "startup", "start-up", "gründung", "gründungs", "unternehmer"
+            "solo", "solo-", "solo/self", "freelancer", "freiberuflich", "einzel",
+            "startups", "startup", "start-up", "start-up", "gründung", "gründungs",
+            "unternehmer", "gründer", "selbstständig", "soloselbstständig", "soloselbststaendig", "freiberufler"
         ],
-        "team": ["kmu", "team", "small"],
-        "kmu": ["kmu", "sme"]
+        "team": [
+            "team", "small", "kmu", "kmus", "startup", "startups", "start-up",
+            "gründung", "gründungs", "selbstständig", "selbststaendig"
+        ],
+        "kmu": [
+            "kmu", "kmus", "sme", "mittelstand", "small", "mid-sized"
+        ]
     }
     targets = targets_map.get(size, [])
     # Normalise the requested region and map common abbreviations to full names.
@@ -700,6 +713,67 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> Lis
             selected,
             key=lambda p: 0 if ((p.get("region", "").lower()) == region) else (1 if ((p.get("region", "").lower()) == "bund") else 2)
         )
+
+        # Ensure that at least two region‑specific programmes are present.  If
+        # there are fewer than two region matches in the initial selection,
+        # search the full dataset for additional entries matching the
+        # respondent's region and append them.  This prevents the table from
+        # listing mostly federal programmes when suitable local programmes
+        # exist.  Duplicate entries are avoided by checking against the
+        # selected list.  Only names and essential fields are extracted to
+        # preserve privacy and formatting.
+        region_specific = [p for p in selected if p.get("region", "").lower() == region]
+        if len(region_specific) < 2:
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                if ((row.get("Region") or "").lower()) == region:
+                    candidate = {
+                        "name": row.get("Name", ""),
+                        "zielgruppe": row.get("Zielgruppe", ""),
+                        "region": row.get("Region", ""),
+                        "foerderhoehe": row.get("Fördersumme (€)", ""),
+                        "zweck": row.get("Beschreibung", row.get("Purpose", "")),
+                        "deadline": row.get("Deadline", ""),
+                        "link": row.get("Link", "")
+                    }
+                    # only append if not already selected
+                    if not any((candidate.get("name") == s.get("name") and candidate.get("region") == s.get("region")) for s in selected):
+                        selected.append(candidate)
+                        region_specific.append(candidate)
+                    if len(region_specific) >= 2:
+                        break
+
+        # Guarantee inclusion of the Berlin Gründungsbonus when the region is Berlin.
+        # The existing selection may exclude this programme if the target group
+        # filtering misses the "Startups" tag.  Explicitly add it by name when
+        # appropriate.
+        if region == "berlin":
+            found = any("gründungsbonus berlin" in (p.get("name") or "").lower() for p in selected)
+            if not found:
+                for row in rows:
+                    if not isinstance(row, dict):
+                        continue
+                    name_lc = (row.get("Name", "").lower())
+                    if "gründungsbonus" in name_lc and "berlin" in name_lc:
+                        candidate = {
+                            "name": row.get("Name", ""),
+                            "zielgruppe": row.get("Zielgruppe", ""),
+                            "region": row.get("Region", ""),
+                            "foerderhoehe": row.get("Fördersumme (€)", ""),
+                            "zweck": row.get("Beschreibung", row.get("Purpose", "")),
+                            "deadline": row.get("Deadline", ""),
+                            "link": row.get("Link", "")
+                        }
+                        if not any((candidate.get("name") == s.get("name") and candidate.get("region") == s.get("region")) for s in selected):
+                            selected.append(candidate)
+                        break
+
+    # Finally, cap the list to the maximum number of items.  The max_items
+    # parameter is raised to 8 in the Gold‑Standard to provide a richer set
+    # of programmes while still keeping the table concise.  If the caller
+    # specifies a smaller value via the function argument, that override is
+    # respected.
     return selected[:max_items]
 
 def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int = 8) -> List[Dict[str, str]]:
@@ -1337,9 +1411,17 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     wants_funding = str(data.get("interesse_foerderung", "")).lower() in {"ja","unklar","yes","unsure"}
 
     # Gold‑Standard: separate quick wins, risks and recommendations into their own GPT calls
+    # Compose the list of chapters that will be generated by the LLM.  In the
+    # Gold‑Standard version we separate key sections into their own calls to
+    # avoid overlap (e.g. quick wins vs. roadmap).  We also explicitly
+    # include a "gamechanger" chapter immediately after the vision.  The
+    # corresponding HTML is stored in out["gamechanger_html"] and passed to
+    # the template.  Without this entry the Innovation & Gamechanger card
+    # will not show LLM content.
     chapters = [
         "executive_summary",
         "vision",
+        # generate gamechanger recommendations directly after the vision
         "gamechanger",
         # generate quick wins independently so they don't overlap with roadmap
         "quick_wins",
@@ -1363,10 +1445,6 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
 
     # Präambel
     out["preface"] = generate_preface(lang=lang, score_percent=data.get("score_percent"))
-
-    # Gamechanger HTML aus Kapitel übernehmen (falls generiert)
-    gc_html = ensure_html(strip_code_fences(fix_encoding(out.get("gamechanger") or "")), lang)
-    out["gamechanger_html"] = gc_html
 
     # Use the explicitly generated chapters for quick wins, risks and recommendations
     # Instead of distilling them from other sections.  If the chapter result is
@@ -1476,6 +1554,18 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     out["roadmap_html"] = out.get("roadmap", "")
     # Initialise the executive summary HTML.  We will clean stray KPI lines below.
     out["exec_summary_html"] = out.get("executive_summary", "")
+
+    # ------------------------------------------------------------------------
+    # Add the gamechanger HTML.  The LLM returns raw HTML for the
+    # "gamechanger" chapter which may be wrapped in code fences.  Convert it
+    # into safe HTML using the same helper functions as other sections.  If
+    # the gamechanger chapter is empty or missing, an empty string is stored.
+    try:
+        gc_raw = out.get("gamechanger") or ""
+        gc_html = ensure_html(strip_code_fences(fix_encoding(gc_raw)), lang)
+    except Exception:
+        gc_html = ""
+    out["gamechanger_html"] = gc_html
 
     # -------------------------------------------------------------------------
         # Remove stray KPI category lines from the executive summary
@@ -2051,6 +2141,29 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         if isinstance(v, str):
             out[k] = _sanitize_text(v)
 
+    # -------------------------------------------------------------------------
+    # Add branch innovation introduction and gamechanger blocks to the report
+    #
+    # The Innovation & Gamechanger section of the PDF relies on two context
+    # variables: ``branchen_innovations_intro`` and ``gamechanger_blocks``.
+    # These are normally computed via ``build_context`` and
+    # ``add_innovation_features`` during prompt generation.  However, the
+    # HTML returned from GPT does not expose these values directly.  To
+    # ensure that the corresponding section is rendered in the final PDF, we
+    # recompute the context here using the questionnaire data and branch.
+    # If any error occurs (e.g. missing helper functions), the values
+    # default to empty strings so that the template simply omits the card.
+    try:
+        tmp_ctx = build_context(data, branche, lang)
+        tmp_ctx = add_innovation_features(tmp_ctx, branche, data)
+        out["branchen_innovations_intro"] = tmp_ctx.get("branchen_innovations_intro", "")
+        out["gamechanger_blocks"] = tmp_ctx.get("gamechanger_blocks", "")
+    except Exception:
+        # In case of failure, ensure the keys exist but are empty to avoid
+        # template errors.
+        out.setdefault("branchen_innovations_intro", "")
+        out.setdefault("gamechanger_blocks", "")
+
     return out
 
 
@@ -2292,6 +2405,17 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             # QR‑Codes are omitted in the Gold‑Standard version.
             "qr_code_uri": "",
             "funding_badges": report.get("funding_badges", []),
+            # Expose innovation & gamechanger content to the template.  Without
+            # these keys the "Innovation & Gamechanger" card remains hidden,
+            # even though the gamechanger_blocks and industry intros are
+            # computed during report generation.  By passing them through
+            # analyse_briefing we allow the Jinja template to conditionally
+            # render the section when content is available.
+            "branchen_innovations_intro": report.get("branchen_innovations_intro", ""),
+            "gamechanger_blocks": report.get("gamechanger_blocks", ""),
+            # The LLM-generated Innovation & Gamechanger chapter.  When present
+            # this HTML is rendered in place of the fallback intro/blocks.
+            "gamechanger_html": report.get("gamechanger_html", ""),
             # company size info for feedback links and prompt context
             **size_info,
         }
