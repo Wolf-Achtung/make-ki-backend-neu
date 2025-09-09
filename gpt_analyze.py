@@ -41,6 +41,11 @@ def ensure_unzipped(zip_name: str, dest_dir: str):
 ensure_unzipped("prompts.zip", "prompts_unzip")
 ensure_unzipped("branchenkontext.zip", "branchenkontext")
 ensure_unzipped("data.zip", "data")
+# Automatically unpack additional data archives such as aus-Data.zip.  This
+# allows the report generator to find updated CSVs or Markdown tables
+# packaged externally.  If aus-Data.zip is present it will be extracted
+# into the ``data`` directory the first time this module is imported.
+ensure_unzipped("aus-Data.zip", "data")
 
 # ---------- kleine Helfer ----------
 def _as_int(x):
@@ -168,6 +173,55 @@ def ensure_html(text: str, lang: str = "de") -> str:
     if in_ul:
         html.append("</ul>")
     return "\n".join(html)
+
+def _read_md_table(path: str) -> List[dict]:
+    """
+    Parse a Markdown table into a list of dictionaries.
+
+    This helper supports simple tables with a header line and a
+    delimiter line (---).  All subsequent lines are treated as rows.
+    Empty or missing cells are converted to the empty string.  If the
+    file does not exist or lacks a valid header, an empty list is
+    returned.  The function is tolerant of whitespace and ignores
+    completely empty lines.
+
+    Parameters
+    ----------
+    path : str
+        The file system path to the Markdown file.  If the file does not
+        exist an empty list is returned.
+
+    Returns
+    -------
+    List[dict]
+        A list of row dictionaries keyed by the header names.
+    """
+    if not os.path.exists(path):
+        return []
+    try:
+        lines = [ln.rstrip("\n") for ln in open(path, encoding="utf-8").read().splitlines() if ln.strip()]
+    except Exception:
+        return []
+    # A valid markdown table must have at least two lines: header and delimiter
+    if len(lines) < 2 or "|" not in lines[0] or "|" not in lines[1]:
+        return []
+    # Extract header cells, trimming leading/trailing pipes and spaces
+    headers = [h.strip().strip("|").strip() for h in lines[0].split("|") if h.strip()]
+    rows: List[dict] = []
+    # Skip the delimiter row (second line); process subsequent lines as data
+    for ln in lines[2:]:
+        # Skip lines that do not contain any pipe delimiters
+        if "|" not in ln:
+            continue
+        cells = [c.strip().strip("|").strip() for c in ln.split("|")]
+        # Skip completely empty rows
+        if not any(cells):
+            continue
+        # Build row dictionary.  If there are fewer cells than headers,
+        # missing values default to an empty string.
+        row = {headers[i]: (cells[i] if i < len(cells) else "") for i in range(len(headers))}
+        rows.append(row)
+    return rows
 
 # -----------------------------------------------------------------------------
 # Fallback Vision Generator
@@ -551,30 +605,39 @@ def calc_score_percent(data: dict) -> int:
 
 def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> List[Dict[str, str]]:
     import csv, os
-    # Try to load the funding data from the canonical location.  If the
-    # ``data`` directory does not exist (e.g. when running from the project
-    # root without the unzipped assets), fall back to a top‑level
-    # ``foerdermittel.csv`` file.  Without this fallback the report would
-    # silently omit all programmes.
+    # Determine the path to the funding CSV.  Prefer the ``data`` directory, then
+    # nested ``data/data`` and finally a project‑root CSV.  If no CSV exists
+    # the subsequent fallback will use a Markdown file.
     path = os.path.join("data", "foerdermittel.csv")
     if not os.path.exists(path):
         alt = os.path.join("data", "data", "foerdermittel.csv")
         if os.path.exists(alt):
             path = alt
         else:
-            # Final fallback: attempt to use a CSV in the project root.  This
-            # supports cases where the developer has placed the updated
-            # foerdermittel.csv alongside gpt_analyze.py.
             root_csv = "foerdermittel.csv"
             if os.path.exists(root_csv):
                 path = root_csv
-            else:
-                return []
+    # Load rows from the CSV if present.  We read the raw CSV rows without
+    # filtering so that the filtering logic below operates on the full set.
+    rows: List[Dict[str, str]] = []
+    if os.path.exists(path):
+        try:
+            with open(path, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    rows.append(row)
+        except Exception:
+            rows = []
+    # If no rows were loaded from the CSV, attempt to parse a Markdown table
+    # stored alongside the data.  This fallback allows the report to function
+    # when only a ``check_foerdermittel.md`` file is provided (e.g. when the
+    # user packages data in MD format).  A missing or invalid MD file will
+    # simply result in an empty list and thus no funding entries.
+    if not rows:
+        md_path = os.path.join("data", "check_foerdermittel.md")
+        rows = _read_md_table(md_path)
+    # Determine the respondent's company size and map to target group tokens.
     size = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
-    # Expand the target group mapping: Solo respondents may also be eligible
-    # for programmes targeting startups, founders or freelancers.  By
-    # including common synonyms here we increase the likelihood of matching
-    # entries in the CSV.  Teams and KMUs retain their existing mappings.
     targets_map = {
         "solo": [
             "solo", "freelancer", "freiberuflich", "einzel",
@@ -584,11 +647,8 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> Lis
         "kmu": ["kmu", "sme"]
     }
     targets = targets_map.get(size, [])
+    # Normalise the requested region and map common abbreviations to full names.
     region = (data.get("bundesland") or data.get("state") or "").lower()
-    # Map common Bundesland abbreviations (e.g. "NRW", "BY") to their full
-    # names for more robust matching against the CSV.  Also include
-    # additional abbreviations (HB, NDS) used in some contexts.  Keep the
-    # value in lower case to match against the lowercased CSV values below.
     alias_map = {
         "nrw": "nordrhein-westfalen",
         "by": "bayern",
@@ -609,30 +669,38 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 6) -> Lis
         "nds": "niedersachsen",
     }
     region = alias_map.get(region, region)
-    rows: List[Dict[str, str]] = []
-    with open(path, newline="", encoding="utf-8") as f:
-        r = csv.DictReader(f)
-        for row in r:
-            zg = (row.get("Zielgruppe", "") or "").lower()
-            reg = (row.get("Region", "") or "").lower()
-            # If a company size is specified, attempt to match target groups; otherwise ignore.
-            t_ok = True if not targets else any(t in zg for t in targets)
-            # Always consider rows in the selected region; also include federal programmes.
-            r_ok = True if not region else (reg == region or reg == "bund")
-            if t_ok and r_ok:
-                rows.append({
-                    "name": row.get("Name", ""),
-                    "zielgruppe": row.get("Zielgruppe", ""),
-                    "region": row.get("Region", ""),
-                    "foerderhoehe": row.get("Fördersumme (€)", ""),
-                    "zweck": row.get("Beschreibung", row.get("Purpose", "")),
-                    "deadline": row.get("Deadline", ""),
-                    "link": row.get("Link", "")
-                })
-    # Sort selected rows so that exact region programmes appear first, then federal programmes, then others.
+    # Build a list of selected funding rows that match the target group and
+    # region criteria.  Normalise strings to lower case before comparison.  If
+    # no targets are specified we accept all entries.  We also accept
+    # federal programmes (region == "bund").
+    selected: List[Dict[str, str]] = []
+    for row in rows:
+        # Guard against non‑dict rows (may come from MD parser)
+        if not isinstance(row, dict):
+            continue
+        zg = ((row.get("Zielgruppe") or "").lower()) if isinstance(row.get("Zielgruppe"), str) else ""
+        reg = ((row.get("Region") or "").lower()) if isinstance(row.get("Region"), str) else ""
+        # Filter by target group
+        t_ok = True if not targets else any(t in zg for t in targets)
+        # Filter by region: if region is specified, require exact region or federal (bund)
+        r_ok = True if not region else (reg == region or reg == "bund")
+        if t_ok and r_ok:
+            selected.append({
+                "name": row.get("Name", ""),
+                "zielgruppe": row.get("Zielgruppe", ""),
+                "region": row.get("Region", ""),
+                "foerderhoehe": row.get("Fördersumme (€)", ""),
+                "zweck": row.get("Beschreibung", row.get("Purpose", "")),
+                "deadline": row.get("Deadline", ""),
+                "link": row.get("Link", "")
+            })
+    # Sort the selected entries: exact regional matches first, then federal (bund), then others.
     if region:
-        rows = sorted(rows, key=lambda p: 0 if (p.get("region", "").lower() == region) else (1 if (p.get("region", "").lower() == "bund") else 2))
-    return rows[:max_items]
+        selected = sorted(
+            selected,
+            key=lambda p: 0 if ((p.get("region", "").lower()) == region) else (1 if ((p.get("region", "").lower()) == "bund") else 2)
+        )
+    return selected[:max_items]
 
 def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int = 8) -> List[Dict[str, str]]:
     """
@@ -675,207 +743,183 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
     # conventional ``data/tools.csv`` first, then fall back to a top level
     # ``tools.csv``, and finally look inside the nested backend folder used
     # during development (``ki_backend/make-ki-backend-neu-main/data/tools.csv``).
+    # Locate the tools CSV by searching several potential paths.  We prefer the
+    # ``data/tools.csv`` location but fall back to a project‑root CSV or the
+    # nested backend CSV.  If none exist, we will later attempt to parse
+    # a Markdown table.
     path = os.path.join("data", "tools.csv")
     if not os.path.exists(path):
-        alt_path = "tools.csv"
-        if os.path.exists(alt_path):
-            path = alt_path
-        else:
-            # Final fallback: look for a tools.csv packaged in the backend
-            nested = os.path.join("ki_backend", "make-ki-backend-neu-main", "data", "tools.csv")
-            if os.path.exists(nested):
-                path = nested
-            else:
-                return []
+        for cand in [
+            "tools.csv",
+            os.path.join("ki_backend", "make-ki-backend-neu-main", "data", "tools.csv"),
+        ]:
+            if os.path.exists(cand):
+                path = cand
+                break
+    rows_csv: List[dict] = []
+    # Read the CSV if available
+    if os.path.exists(path):
+        try:
+            with open(path, newline="", encoding="utf-8") as f:
+                rows_csv = list(csv.DictReader(f))
+        except Exception:
+            rows_csv = []
+    # If the CSV is empty or missing, attempt to parse a Markdown table in
+    # ``data/tools.md``.  This fallback ensures tool information is still
+    # available when provided in markdown format.
+    if not rows_csv:
+        md_tools = os.path.join("data", "tools.md")
+        rows_csv = _read_md_table(md_tools)
     out: List[Dict[str, str]] = []
-    with open(path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        # Determine the respondent's company size.  Use `company_size_category` if set
-        # (solo, team, kmu) and fall back to `unternehmensgroesse`/`company_size`.
-        size = (data.get("company_size_category") or data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
-        # Normalise to a simple size key.  We'll allow KMU entries for larger teams and
-        # include "alle" for everyone.
-        if size:
-            if "solo" in size:
-                user_size = "solo"
-            elif "team" in size or "2" in size or "10" in size:
-                user_size = "team"
-            elif "kmu" in size or "11" in size:
-                user_size = "kmu"
-            else:
-                user_size = ""
+    # Determine the respondent's company size category to filter tools by size.
+    size = (data.get("company_size_category") or data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
+    if size:
+        if "solo" in size:
+            user_size = "solo"
+        elif "team" in size or "2" in size or "10" in size:
+            user_size = "team"
+        elif "kmu" in size or "11" in size:
+            user_size = "kmu"
         else:
             user_size = ""
-        for row in reader:
-            # Skip comment or header rows that start with a '#'.
-            # Some CSVs include comment lines such as '# Open‑Source Alternativen …'.  We
-            # ignore these to avoid them appearing as malformed tool entries.
-            name_field = row.get("Tool-Name") or row.get("Name") or row.get("Tool") or ""
-            if isinstance(name_field, str) and name_field.strip().startswith("#"):
+    else:
+        user_size = ""
+    # Iterate over the parsed rows (CSV or MD) and apply filtering by branch and
+    # company size.  Column names may vary between datasets so we attempt
+    # multiple fallbacks for each field.
+    for row in rows_csv:
+        if not isinstance(row, dict):
+            continue
+        # Skip comment or header rows that start with '#'
+        name_field = row.get("Tool-Name") or row.get("Name") or row.get("Tool") or ""
+        if isinstance(name_field, str) and name_field.strip().startswith("#"):
+            continue
+        # Branch tags may be under "Branche-Slugs", "Tags" or "Branche"
+        tags = (row.get("Branche-Slugs") or row.get("Tags") or row.get("Branche") or "").lower()
+        row_size = (row.get("Unternehmensgröße") or row.get("Unternehmensgroesse") or row.get("Unternehmensgröße (DE)") or "").lower()
+        # Filter by branch if provided
+        if branche:
+            if tags and branche not in tags:
                 continue
-            # Determine the row's industry / branch slugs and size.
-            # Some CSVs use "Branche-Slugs" or "Branche" or "Tags" for industry tags.
-            tags = (row.get("Branche-Slugs") or row.get("Tags") or row.get("Branche") or "").lower()
-            row_size = (row.get("Unternehmensgröße") or row.get("Unternehmensgroesse") or "").lower()
-            # Filter by branche if provided.  Only match when the user's branche slug
-            # appears in the row's tags or if no branche is provided.  This ensures we
-            # prioritise industry‑specific tools.
-            if branche:
-                if tags and branche not in tags:
+        # Filter by company size: include if row_size is empty ("alle") or matches
+        # the user's size or is more general (e.g. "kmu" applies to both team and kmu)
+        if user_size:
+            if row_size and row_size not in ("alle", user_size):
+                # Allow kmu tools for team and solo, and team tools for solo
+                if not ((row_size == "kmu" and user_size in ("team", "kmu")) or (row_size == "team" and user_size == "solo")):
                     continue
-            # Filter by company size: include if row_size is empty ("alle") or matches
-            # the user's size or is more general (e.g. "kmu" applies to both teams and kmus).
-            if user_size:
-                if row_size and row_size not in ("alle", user_size):
-                    # Allow KMU tools for team and solo as a fallback but skip very specific mismatches
-                    if not ((row_size == "kmu" and user_size in ("team", "kmu")) or (row_size == "team" and user_size == "solo")):
-                        continue
-            # Column name fallbacks
-            name = name_field
-            usecase = row.get("Funktion/Zweck") or row.get("Einsatz") or row.get("Usecase") or ""
-            # Cost/effort fields: prefer explicit cost, otherwise effort estimates.  Also
-            # fall back to the German "Kostenkategorie" column when present.  Many
-            # data sets use a descriptive cost category instead of numeric values.
-            cost_raw = (
-                row.get("Kosten")
-                or row.get("Cost")
-                or row.get("Aufwand")
-                or row.get("Beispiel-Aufwand")
-                or row.get("Kostenkategorie")
-                or ""
-            )
-            # Convert numeric cost/effort values into descriptive categories.  Some CSVs encode
-            # cost as integers from 1 to 5 (effort levels).  Map these to human-readable
-            # strings in the current language.  If the value is not numeric, leave as is.
-            def _map_cost(value: str, lang: str) -> str:
-                """
-                Convert numeric or categorical cost/effort values into descriptive
-                categories.  Accepts both numeric effort levels (1–5) and
-                German cost category descriptors ("sehr gering", "gering", "mittel", etc.).
-                For English reports, translate German descriptors to their
-                English equivalents.  Non‑numeric, non‑categorical values are
-                returned unchanged.
-                """
-                if not value:
-                    return ""
-                v = str(value).strip()
-                # Map numeric strings
-                try:
-                    n = int(float(v))
-                except Exception:
-                    n = None
-                # Define mapping for both languages
-                if lang.lower().startswith("de"):
-                    num_map = {1: "sehr gering", 2: "gering", 3: "mittel", 4: "hoch", 5: "sehr hoch"}
-                    cat_map = {
-                        "sehr gering": "sehr gering",
-                        "gering": "gering",
-                        "mittel": "mittel",
-                        "hoch": "hoch",
-                        "sehr hoch": "sehr hoch",
-                    }
-                else:
-                    num_map = {1: "very low", 2: "low", 3: "medium", 4: "high", 5: "very high"}
-                    cat_map = {
-                        "sehr gering": "very low",
-                        "gering": "low",
-                        "mittel": "medium",
-                        "hoch": "high",
-                        "sehr hoch": "very high",
-                    }
-                # If numeric, map directly
-                if n is not None and n in num_map:
-                    return num_map[n]
-                # If descriptor matches known categories, translate accordingly
-                lv = v.lower()
-                for key, translated in cat_map.items():
-                    if lv == key:
-                        return translated
-                return v
-            cost = _map_cost(cost_raw, lang)
-            # Ensure a cost category is always present; if empty after mapping, set to 'n/a'
-            if not cost:
-                cost = "n/a"
-            link = row.get("Link/Website") or row.get("Link") or row.get("Website") or ""
-            # Attempt to extract a data residency / protection hint.  Some CSVs
-            # include a column such as "Datenschutz" or "Datensitz" to indicate
-            # whether the tool is hosted in the EU or abroad.  If not present,
-            # fall back to an empty string.  This value will populate the
-            # "Datensitz" column in the Gold‑Standard report.
-            datenschutz = row.get("Datenschutz") or row.get("Datensitz") or row.get("Datensitz (EU/US)") or ""
-            # Ensure datenschutz always has a value (n/a) when empty
-            if not datenschutz:
-                datenschutz = "n/a"
-            out.append({
-                "name": name,
-                "usecase": usecase,
-                "cost": cost,
-                "link": link,
-                "datenschutz": datenschutz
-            })
-    # If no tools were matched (or only a handful), append a curated set of
-    # widely used tools suitable for all company sizes and industries.  This
-    # ensures that the table is always populated even when the CSV filter
-    # yields few or no entries.  Each entry provides a name, use case,
-    # estimated cost category (language sensitive) and an official link.  The
-    # data protection field hints at EU/US hosting.  These defaults only
-    # apply when fewer than half of the desired max_items were found.
+        # Prepare fields with fallbacks
+        name = name_field
+        usecase = row.get("Funktion/Zweck") or row.get("Einsatz") or row.get("Usecase") or row.get("Funktion") or ""
+        cost_raw = (
+            row.get("Kosten")
+            or row.get("Cost")
+            or row.get("Aufwand")
+            or row.get("Beispiel-Aufwand")
+            or row.get("Kostenkategorie")
+            or ""
+        )
+        # Local helper to map cost codes to descriptive categories
+        def _map_cost(value: str, lang: str) -> str:
+            if not value:
+                return ""
+            v = str(value).strip()
+            try:
+                n = int(float(v))
+            except Exception:
+                n = None
+            if lang.lower().startswith("de"):
+                num_map = {1: "sehr gering", 2: "gering", 3: "mittel", 4: "hoch", 5: "sehr hoch"}
+                cat_map = {
+                    "sehr gering": "sehr gering",
+                    "gering": "gering",
+                    "mittel": "mittel",
+                    "hoch": "hoch",
+                    "sehr hoch": "sehr hoch",
+                }
+            else:
+                num_map = {1: "very low", 2: "low", 3: "medium", 4: "high", 5: "very high"}
+                cat_map = {
+                    "sehr gering": "very low",
+                    "gering": "low",
+                    "mittel": "medium",
+                    "hoch": "high",
+                    "sehr hoch": "very high",
+                }
+            if n is not None and n in num_map:
+                return num_map[n]
+            lv = v.lower()
+            for key, translated in cat_map.items():
+                if lv == key:
+                    return translated
+            return v
+        cost = _map_cost(cost_raw, lang)
+        if not cost:
+            cost = "n/a"
+        link = row.get("Link/Website") or row.get("Link") or row.get("Website") or row.get("URL") or ""
+        datenschutz = row.get("Datenschutz") or row.get("Datensitz") or row.get("Datensitz (EU/US)") or row.get("Datenschutz (EU/US)") or ""
+        if not datenschutz:
+            datenschutz = "n/a"
+        out.append({
+            "name": name,
+            "usecase": usecase,
+            "cost": cost,
+            "link": link,
+            "datenschutz": datenschutz
+        })
+    # If few tools were matched, enrich with defaults.  Maintain at least one
+    # open‑source alternative and fill up to max_items with a curated list.  We
+    # always ensure cost and datenschutz fields are set.
     try:
         min_needed = max(0, max_items - len(out))
-        # Always ensure a few open-source alternatives are present for teams and SMEs.
-        # Insert open-source tools if not already included.
         open_source_names = {"OpenProject", "EspoCRM", "Mattermost"}
         if lang.lower().startswith("de"):
             defaults = [
-                {"name":"Notion","usecase":"Wissensmanagement & Projektplanung","cost":"sehr gering","link":"https://www.notion.so","datenschutz":"USA/EU"},
-                {"name":"Zapier","usecase":"Automatisierung & Integration","cost":"gering","link":"https://zapier.com","datenschutz":"USA/EU"},
-                {"name":"Asana","usecase":"Projekt- und Aufgabenmanagement","cost":"sehr gering","link":"https://asana.com","datenschutz":"USA/EU"},
-                {"name":"Miro","usecase":"Visuelle Zusammenarbeit & Brainstorming","cost":"gering","link":"https://miro.com","datenschutz":"USA/EU"},
-                {"name":"Jasper","usecase":"KI-gestützte Texterstellung","cost":"gering","link":"https://www.jasper.ai","datenschutz":"USA"},
-                {"name":"Slack","usecase":"Teamkommunikation & Kollaboration","cost":"sehr gering","link":"https://slack.com","datenschutz":"USA"},
-                {"name":"n8n","usecase":"No-Code Automatisierung","cost":"gering","link":"https://n8n.io","datenschutz":"EU"},
-                {"name":"OpenProject","usecase":"Projektmanagement & Aufgabenverwaltung","cost":"sehr gering","link":"https://www.openproject.org","datenschutz":"EU"},
-                {"name":"EspoCRM","usecase":"CRM & Vertriebsmanagement","cost":"sehr gering","link":"https://www.espocrm.com","datenschutz":"EU"},
-                {"name":"Mattermost","usecase":"Teamkommunikation & Chat","cost":"sehr gering","link":"https://mattermost.com","datenschutz":"EU"},
+                {"name": "Notion", "usecase": "Wissensmanagement & Projektplanung", "cost": "sehr gering", "link": "https://www.notion.so", "datenschutz": "USA/EU"},
+                {"name": "Zapier", "usecase": "Automatisierung & Integration", "cost": "gering", "link": "https://zapier.com", "datenschutz": "USA/EU"},
+                {"name": "Asana", "usecase": "Projekt- und Aufgabenmanagement", "cost": "sehr gering", "link": "https://asana.com", "datenschutz": "USA/EU"},
+                {"name": "Miro", "usecase": "Visuelle Zusammenarbeit & Brainstorming", "cost": "gering", "link": "https://miro.com", "datenschutz": "USA/EU"},
+                {"name": "Jasper", "usecase": "KI-gestützte Texterstellung", "cost": "gering", "link": "https://www.jasper.ai", "datenschutz": "USA"},
+                {"name": "Slack", "usecase": "Teamkommunikation & Kollaboration", "cost": "sehr gering", "link": "https://slack.com", "datenschutz": "USA"},
+                {"name": "n8n", "usecase": "No-Code Automatisierung", "cost": "gering", "link": "https://n8n.io", "datenschutz": "EU"},
+                {"name": "OpenProject", "usecase": "Projektmanagement & Aufgabenverwaltung", "cost": "sehr gering", "link": "https://www.openproject.org", "datenschutz": "EU"},
+                {"name": "EspoCRM", "usecase": "CRM & Vertriebsmanagement", "cost": "sehr gering", "link": "https://www.espocrm.com", "datenschutz": "EU"},
+                {"name": "Mattermost", "usecase": "Teamkommunikation & Chat", "cost": "sehr gering", "link": "https://mattermost.com", "datenschutz": "EU"},
             ]
         else:
             defaults = [
-                {"name":"Notion","usecase":"Knowledge management & project planning","cost":"very low","link":"https://www.notion.so","datenschutz":"USA/EU"},
-                {"name":"Zapier","usecase":"Automation & integration","cost":"low","link":"https://zapier.com","datenschutz":"USA/EU"},
-                {"name":"Asana","usecase":"Project & task management","cost":"very low","link":"https://asana.com","datenschutz":"USA/EU"},
-                {"name":"Miro","usecase":"Visual collaboration & brainstorming","cost":"low","link":"https://miro.com","datenschutz":"USA/EU"},
-                {"name":"Jasper","usecase":"AI-powered content generation","cost":"low","link":"https://www.jasper.ai","datenschutz":"USA"},
-                {"name":"Slack","usecase":"Team communication & collaboration","cost":"very low","link":"https://slack.com","datenschutz":"USA"},
-                {"name":"n8n","usecase":"No-code automation","cost":"low","link":"https://n8n.io","datenschutz":"EU"},
-                {"name":"OpenProject","usecase":"Project management & task tracking","cost":"very low","link":"https://www.openproject.org","datenschutz":"EU"},
-                {"name":"EspoCRM","usecase":"CRM & sales management","cost":"very low","link":"https://www.espocrm.com","datenschutz":"EU"},
-                {"name":"Mattermost","usecase":"Team communication & chat","cost":"very low","link":"https://mattermost.com","datenschutz":"EU"},
+                {"name": "Notion", "usecase": "Knowledge management & project planning", "cost": "very low", "link": "https://www.notion.so", "datenschutz": "USA/EU"},
+                {"name": "Zapier", "usecase": "Automation & integration", "cost": "low", "link": "https://zapier.com", "datenschutz": "USA/EU"},
+                {"name": "Asana", "usecase": "Project & task management", "cost": "very low", "link": "https://asana.com", "datenschutz": "USA/EU"},
+                {"name": "Miro", "usecase": "Visual collaboration & brainstorming", "cost": "low", "link": "https://miro.com", "datenschutz": "USA/EU"},
+                {"name": "Jasper", "usecase": "AI-powered content generation", "cost": "low", "link": "https://www.jasper.ai", "datenschutz": "USA"},
+                {"name": "Slack", "usecase": "Team communication & collaboration", "cost": "very low", "link": "https://slack.com", "datenschutz": "USA"},
+                {"name": "n8n", "usecase": "No-code automation", "cost": "low", "link": "https://n8n.io", "datenschutz": "EU"},
+                {"name": "OpenProject", "usecase": "Project management & task tracking", "cost": "very low", "link": "https://www.openproject.org", "datenschutz": "EU"},
+                {"name": "EspoCRM", "usecase": "CRM & sales management", "cost": "very low", "link": "https://www.espocrm.com", "datenschutz": "EU"},
+                {"name": "Mattermost", "usecase": "Team communication & chat", "cost": "very low", "link": "https://mattermost.com", "datenschutz": "EU"},
             ]
-        # Always insert open-source tools if they are missing, regardless of current list length.
-        # We'll add them before trimming to max_items so that at least one open-source tool
-        # appears in the final list.  Maintain insertion order as defined in defaults.
+        # Insert open-source tools if not present
         for t in defaults:
             if t["name"] in open_source_names and all((t["name"] != existing.get("name")) for existing in out):
-                # Guarantee datenschutz and cost fields are filled for default tools
                 if not t.get("datenschutz"):
                     t["datenschutz"] = "n/a"
                 if not t.get("cost"):
                     t["cost"] = "n/a"
                 out.append(t)
-        # Append additional defaults only if we have fewer than half of the desired items.
+        # Append further defaults if too few tools were matched
         if len(out) < 4 and min_needed > 0:
             for t in defaults:
                 if len(out) >= max_items:
                     break
                 if any((t["name"] == existing.get("name")) for existing in out):
                     continue
-                # Guarantee datenschutz and cost fields are filled for default tools
                 if not t.get("datenschutz"):
                     t["datenschutz"] = "n/a"
                 if not t.get("cost"):
                     t["cost"] = "n/a"
                 out.append(t)
-        # Guarantee at least one open‑source tool appears for teams and SMEs.
+        # Ensure at least one open-source tool for teams and SMEs
         try:
             size_raw = (data.get("unternehmensgroesse") or data.get("company_size") or "").lower()
         except Exception:
@@ -885,7 +929,6 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
             if not has_os:
                 for t in defaults:
                     if t["name"] in open_source_names and all((t["name"] != existing.get("name")) for existing in out):
-                        # Guarantee datenschutz and cost fields are filled for default tools
                         if not t.get("datenschutz"):
                             t["datenschutz"] = "n/a"
                         if not t.get("cost"):
