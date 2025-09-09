@@ -648,6 +648,9 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 8) -> Lis
     targets_map = {
         "solo": [
             "solo", "solo-", "solo/self", "freelancer", "freiberuflich", "einzel",
+            # Solo-Profiles often fall under "kmu" in the funding database.  Include "kmu"
+            # here so that small one-person businesses also match SME funding programmes.
+            "kmu",
             "startups", "startup", "start-up", "start-up", "gründung", "gründungs",
             "unternehmer", "gründer", "selbstständig", "soloselbstständig", "soloselbststaendig", "freiberufler"
         ],
