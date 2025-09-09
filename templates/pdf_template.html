@@ -314,7 +314,7 @@ risks_html|trim) %}
                 {% endfor %}
                 </tbody>
               </table>
-              <p style="font-size:9px;color:var(--muted);margin-top:.2rem">Kostenkategorien: sehr&nbsp;gering&nbsp;&lt;&nbsp;€100/Monat; gering&nbsp;€100–500/Monat; mittel&nbsp;€500–1.000/Monat; hoch&nbsp;&gt;&nbsp;€1.000/Monat.</p>
+              <p style="font-size:9px;color:var(--muted);margin-top:.2rem">Kostenkategorien:<br>sehr&nbsp;gering&nbsp;&lt;&nbsp;€100/Monat; gering&nbsp;€100–500/Monat;<br>mittel&nbsp;€500–1.000/Monat; hoch&nbsp;&gt;&nbsp;€1.000/Monat.</p>
             {% else %}
               <p><em>Tool-Liste wird dynamisch ergänzt.</em></p>
             {% endif %}
@@ -332,7 +332,12 @@ risks_html|trim) %}
         {% endif %}
 
         {# Innovation & Gamechanger section: shows optional moonshot, forecast and best practices.  Only displayed when gamechanger blocks or an innovation intro is provided. #}
-        {% if branchen_innovations_intro or gamechanger_blocks %}
+        {% if gamechanger_html and gamechanger_html|trim %}
+  <div class="card section">
+    <h2>Innovation &amp; Gamechanger</h2>
+    {{ gamechanger_html|safe }}
+  </div>
+{% elif branchen_innovations_intro or gamechanger_blocks %}
           <div class="card section">
             <h2>Innovation &amp; Gamechanger</h2>
             {% if branchen_innovations_intro %}
