@@ -1,6 +1,6 @@
 # Empfehlungen – Top 5
 
-Erstelle eine HTML‑Liste (`<ol>…</ol>`) mit den fünf wichtigsten Empfehlungen für das Unternehmen. Jede Empfehlung beginnt mit einem fett formatierten Aktionswort und beschreibt in einem Satz das Ziel, den erwarteten Impact und den erforderlichen Aufwand. Am Ende steht das Verhältnis Impact/Aufwand als Kürzel in Klammern (z. B. `(H/M)`, `(M/M)`, `(L/L)`).
+ Erstelle eine HTML‑Liste (`<ol>…</ol>`) mit den fünf wichtigsten Empfehlungen für das Unternehmen. Jede Empfehlung beginnt mit einem fett formatierten Aktionswort und beschreibt in einem Satz das Ziel, den erwarteten **Nutzen** und den erforderlichen Aufwand.  Verwende eine klare, zugängliche Sprache ohne Buzzwords.  Am Ende steht das Verhältnis **Nutzen/Aufwand** als Kürzel in Klammern (z. B. `(H/M)`, `(M/M)`, `(L/L)`).
 
 Berücksichtige Vision, strategische Ziele, größtes Potenzial, Moonshot, branchenspezifische Benchmarks sowie die Chancen und Risiken aus der Executive Summary. Kombiniere strategische Weichenstellungen (Governance, Zusammenarbeit, Datengrundlage, Compliance) mit konkreten nächsten Schritten (Piloten, Prototypen, Trainings). Wiederhole keine Punkte aus Quick Wins oder dem Maßnahmenplan.
 

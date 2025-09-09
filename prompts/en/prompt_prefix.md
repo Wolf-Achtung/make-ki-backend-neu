@@ -37,6 +37,7 @@ Additional form fields — such as annual revenue, IT infrastructure, internal A
   <li>Write in clear, plain English for decision‑makers.  Use a friendly, optimistic and non‑patronising tone.</li>
   <li>Present recommendations as actionable steps (Why?  Benefit?  Next step?) rather than abstract ideas.  Emphasise practical benefits.</li>
   <li>Avoid jargon; if technical terms are necessary, briefly explain them in parentheses or via footnotes.</li>
+  <li>Avoid marketing buzzwords and tech acronyms (e.g. “disruptive”, “LLM”, “impact”); choose accessible terminology instead.  Briefly and kindly explain any unavoidable technical terms.</li>
   <li>Highlight opportunities and realistic implementation paths.</li>
   <li>Use HTML for structured content (tables, lists) to improve readability.</li>
   <li>After completing each chapter, briefly validate your output (1–2 sentences) to ensure coherence and revise if needed.</li>

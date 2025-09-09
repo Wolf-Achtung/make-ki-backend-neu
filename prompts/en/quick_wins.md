@@ -7,7 +7,7 @@ Use the free‑text fields (vision, biggest potential, moonshot, application are
 Guidelines:
 
 - **Data inventory:** If data quality is low or unclear, a structured data inventory or data clean‑up should be the first quick win.
-- **Automation & scripts:** When there is interest in automation or a lack of time, a small automation (e.g. with n8n or Zapier) or a simple script tackling the biggest bottleneck can be a quick win.
+ - **Automation & scripts:** When there is interest in automation or a lack of time, a small automation – for example using general no‑code tools – can be a quick win.  Do not name specific products (like Zapier or n8n); describe the solution in general terms.
 - **Governance light:** For solo businesses or small teams, drafting a one‑page AI policy can be a meaningful quick win.
 - **Pilot & feedback:** If the greatest potential includes GPT‑based services or an AI portal, a lean MVP pilot with initial customers or partners can be a valuable quick win.
 - Choose up to three quick wins; avoid repeating items from the recommendations or the action plan.

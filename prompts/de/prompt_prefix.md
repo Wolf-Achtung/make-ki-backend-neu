@@ -37,6 +37,7 @@ Stil & Sprache:
   <li>Schreiben Sie klar und verständlich in einer freundlichen, motivierenden Sprache, die Entscheider:innen anspricht.</li>
   <li>Stellen Sie Empfehlungen als konkrete Handlungsanweisungen dar („Warum? Nutzen? Nächster Schritt?“) statt als abstrakte Überlegungen.</li>
   <li>Vermeiden Sie Fachjargon; falls nötig, erklären Sie Begriffe kurz in Klammern oder mit Fußnoten.</li>
+  <li>Vermeiden Sie Marketing‑Buzzwords und IT‑Abkürzungen (z.&nbsp;B. „disruptiv“, „LLM“, „Impact“); nutzen Sie stattdessen verständliche Begriffe.  Neue Fachbegriffe, die unvermeidbar sind, erklären Sie freundlich und knapp.</li>
   <li>Betonen Sie Chancen und die praktische Umsetzung.</li>
   <li>Geben Sie strukturierte Inhalte als HTML aus (Tabellen, Listen) für eine bessere Lesbarkeit.</li>
 </ul>

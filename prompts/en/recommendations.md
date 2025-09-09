@@ -1,6 +1,6 @@
 # Recommendations – Top 5
 
-Generate an HTML ordered list (`<ol>…</ol>`) with the five most important recommendations for the company. Each recommendation should start with a bold action verb and, in one sentence, describe the goal, expected impact and required effort. Conclude each sentence with the impact/effort ratio in brackets (e.g. `(H/M)` for high impact and medium effort).
+Generate an HTML ordered list (`<ol>…</ol>`) with the five most important recommendations for the company. Each recommendation should start with a bold action verb and, in one sentence, describe the goal, expected **benefit** and required effort.  Use plain, accessible language and avoid buzzwords.  Conclude each sentence with the **benefit/effort** ratio in brackets (e.g. `(H/M)` for high benefit and medium effort).
 
 Combine strategic initiatives (focusing, strengthening the data foundation, establishing governance, piloting & scaling, empowering & networking) with tangible steps derived from vision, strategic goals, biggest potential, moonshot and benchmarks. Avoid repeating items from the quick wins or the action plan.
 
