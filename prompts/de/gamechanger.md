@@ -13,6 +13,8 @@ KPI-Kacheln & Benchmarks: {{ kpis|tojson }} · {{ benchmarks|tojson }}
 Förder-Badges (optional): {{ funding_badges|default([])|join(', ') }}
 
 Ausgabeformat (hart): Gib ausschließlich valides HTML (kein <html>-Wrapper) mit NUR <h3>, <p>, <ul>, <ol>, <table> zurück.
+  
+  **Wichtig:** Die Ausgabe darf **keine Template‑Syntax** wie `{{ ... }}` enthalten. Schreibe echte Zahlen oder neutrale Standardwerte (z. B. 50 %) anstelle von Platzhaltern.
 
 Längenregeln (hart):
 
