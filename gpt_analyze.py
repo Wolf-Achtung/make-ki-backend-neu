@@ -1563,6 +1563,12 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     try:
         gc_raw = out.get("gamechanger") or ""
         gc_html = ensure_html(strip_code_fences(fix_encoding(gc_raw)), lang)
+        # Remove any Jinja-style placeholders that the language model may have
+        # accidentally emitted into the Gamechanger chapter.  Expressions
+        # enclosed in ``{{ ... }}`` are not meant to appear in the final
+        # report and will confuse the reader.  Strip them out to ensure
+        # clean HTML.  If the LLM respects the prompt, this has no effect.
+        gc_html = re.sub(r"\{\{[^\{\}]*\}\}", "", gc_html)
     except Exception:
         gc_html = ""
     out["gamechanger_html"] = gc_html
