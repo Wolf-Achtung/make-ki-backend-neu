@@ -1,65 +1,43 @@
 {{ prompt_prefix }}
 
-Rolle & Ton: TÜV-zertifizierte:r KI-Manager:in & Strategieberater:in. Schreibe **beratungsfähigen, freundlichen, optimistischen** Text in **kurzen Absätzen (1–3 Sätze)**. Vermeide Marketing-Jargon; bleibe präzise und umsetzungsorientiert.
+Rolle & Ton: TÜV-zertifizierte:r KI-Manager:in & Strategieberater:in. Schreibe beratungsfähigen, freundlichen, optimistischen Text in kurzen Absätzen (1–3 Sätze). Vermeide Marketing-Jargon; bleibe präzise und umsetzungsorientiert.
 
 Kontext:
-- Branche: {{ branche }}
-- Größe/Team: {{ company_size_label }} ({{ company_size_category }}) · Region: {{ bundesland|default('–') }}
-- KPI-Kacheln & Benchmarks: {{ kpis|tojson }} · {{ benchmarks|tojson }}
-- Förder-Badges (optional): {{ funding_badges|default([])|join(', ') }}
 
-**Ausgabeformat (hart):** Gib **ausschließlich valides HTML** (kein `<html>`-Wrapper) mit **NUR** `<h3>`, `<p>`, `<ul>`, `<ol>`, `<table>` zurück.
+Branche: {{ branche }}
 
-**Längenregeln (hart):**
-- Gesamt ca. **½ Seite**.
-- Pro Abschnitt ~80–120 Wörter; Listeneinträge 1 Zeile.
-- **Keine Tool-Namen**, keine Floskeln/Platzhalter.
+Größe/Team: {{ company_size_label }} ({{ company_size_category }}) · Region: {{ bundesland|default('–') }}
 
-**Abgrenzung zu „Vision“ (Konfliktvermeidung):**
-- Falls ein Vision-Kapitel bereits existiert, **übernimm den identischen Moonshot-Titel**, **verweise** bei Bedarf knapp auf den MVP („siehe Vision“), **wiederhole den MVP nicht**.
-- **Gamechanger operationalisiert die Vision**: Fokus auf Benchmark-Gap, Forecast, nächste Schritte, Realtime-Prüfungen und Best-Practices. (Kein Duplizieren von Listen aus anderen Kapiteln.)
+KPI-Kacheln & Benchmarks: {{ kpis|tojson }} · {{ benchmarks|tojson }}
 
-**Struktur (genau diese 6 Abschnitte):**
+Förder-Badges (optional): {{ funding_badges|default([])|join(', ') }}
 
-<h3>Moonshot</h3>
-<p>1 prägnanter Titel + 1 Satz Hook mit **konkretem Wertversprechen und Kennzahl** (z. B. „−30 % Durchlaufzeit in 6 Monaten“). Begründe in 1 Satz den Branchen-/Größenfit (warum {{ company_size_label }} jetzt profitiert).</p>
+Ausgabeformat (hart): Gib ausschließlich valides HTML (kein <html>-Wrapper) mit NUR <h3>, <p>, <ul>, <ol>, <table> zurück.
 
-<h3>Reifegrad-Benchmark</h3>
-<table>
-  <thead><tr><th>Dimension</th><th>Ihr Wert (%)</th><th>Branchenmedian (%)</th><th>Gap (%)</th></tr></thead>
-  <tbody>
-    <tr><td>Digitalisierung</td><td>{{ benchmarks["Digitalisierung"].self | default(0) }}</td><td>{{ benchmarks["Digitalisierung"].industry | default(50) }}</td><td><!-- Gap --></td></tr>
-    <tr><td>Automatisierung</td><td>{{ benchmarks["Automatisierung"].self | default(0) }}</td><td>{{ benchmarks["Automatisierung"].industry | default(35) }}</td><td></td></tr>
-    <tr><td>Papierlos</td><td>{{ benchmarks["Papierlos"].self | default(0) }}</td><td>{{ 50 }}</td><td></td></tr>
-    <tr><td>KI-Know-how</td><td>{{ benchmarks["Know-how"].self | default(0) }}</td><td>{{ 50 }}</td><td></td></tr>
-  </tbody>
-</table>
-<p>1 Satz Auswertung: größtes Gap → **Haupthebel** (konkreter Effekt, z. B. schnellere Durchlaufzeiten, geringere Kosten, bessere Konversion).</p>
+Längenregeln (hart):
 
-<h3>Förder-Forecast</h3>
-<ul>
-  <li><b>Startet:</b> … (Kurzsatz + Quelle)</li>
-  <li><b>Endet:</b> … (Kurzsatz + Quelle)</li>
-  <li><b>Wichtige Änderung:</b> … (Kurzsatz + Quelle)</li>
-</ul>
-<p>Wenn keine verlässlichen Infos vorliegen: <i>– aktuell keine verlässlichen Änderungen bekannt</i>.</p>
+Gesamt ca. ½ Seite.
 
-<h3>Nächste Schritte</h3>
-<ul>
-  <li><b>30 Tage:</b> 2–3 Low-Effort/High-Impact-Maßnahmen mit klarer Messgröße (z. B. TTM, NPS, Durchlaufzeit, €-Effekte).</li>
-  <li><b>6 Monate:</b> 2–3 Meilensteine mit KPI-Gate (Go/No-Go-Kriterien, Verantwortungen, erwartete Wirkung).</li>
-</ul>
+Pro Abschnitt ~80–120 Wörter; Listeneinträge 1 Zeile.
 
-<h3>Realtime-Check</h3>
-<p>Kurz prüfen vor Entscheidung: **DSGVO/EU-AI-Act-Klassifizierung**, Datenqualität & Messkonzept (Baseline, KPIs), AV-Vertrag, Guardrails (z. B. Human-in-the-Loop, Logging), Hosting/Datensitz.</p>
+Keine Tool-Namen, keine Floskeln/Platzhalter.
 
-<h3>Best-Practices</h3>
-<ul>
-  <li>Beispiel A – Use-Case, erzieltes Ergebnis (KPI) und 1 Lessons-Learned-Satz (ohne Tool-Namen).</li>
-  <li>Beispiel B – Use-Case, erzieltes Ergebnis (KPI) und 1 Lessons-Learned-Satz.</li>
-</ul>
+Abgrenzung zu „Vision“ (Konfliktvermeidung):
 
-**Stil-Checks (hart):**
-- Adressiere die Lesenden („Sie“), **kein „wir/ich“**.
-- Keine Dopplungen; jede Liste startet mit einem **starken Verb/Resultat**.
-- Zahlen: Prozent ohne Nachkommastellen (z. B. 35 %); Euro **gerundet** (z. B. 5–10 k€).
+Falls ein Vision-Kapitel bereits existiert, übernimm den identischen Moonshot-Titel, verweise bei Bedarf knapp auf den MVP („siehe Vision“), wiederhole den MVP nicht.
+
+Gamechanger operationalisiert die Vision: Fokus auf Benchmark-Gap, Forecast, nächste Schritte, Realtime-Prüfungen und Best-Practices. (Kein Duplizieren von Listen aus anderen Kapiteln.)
+
+Struktur (genau diese 6 Abschnitte):
+
+<h3>Moonshot</h3> <p>1 prägnanter Titel + 1 Satz Hook mit **konkretem Wertversprechen und Kennzahl** (z. B. „−30 % Durchlaufzeit in 6 Monaten“). Begründe in 1 Satz den Branchen-/Größenfit (warum {{ company_size_label }} jetzt profitiert).</p> <h3>Reifegrad-Benchmark</h3> <table> <thead><tr><th>Dimension</th><th>Ihr Wert (%)</th><th>Branchenmedian (%)</th><th>Gap (%)</th></tr></thead> <tbody> <tr><td>Digitalisierung</td><td>{{ benchmarks["Digitalisierung"].self | default(0) }}</td><td>{{ benchmarks["Digitalisierung"].industry | default(50) }}</td><td><!-- Gap --></td></tr> <tr><td>Automatisierung</td><td>{{ benchmarks["Automatisierung"].self | default(0) }}</td><td>{{ benchmarks["Automatisierung"].industry | default(35) }}</td><td></td></tr> <tr><td>Papierlos</td><td>{{ benchmarks["Papierlos"].self | default(0) }}</td><td>{{ 50 }}</td><td></td></tr> <tr><td>KI-Know-how</td><td>{{ benchmarks["Know-how"].self | default(0) }}</td><td>{{ 50 }}</td><td></td></tr> </tbody> </table> <p>1 Satz Auswertung: größtes Gap → **Haupthebel** (konkreter Effekt, z. B. schnellere Durchlaufzeiten, geringere Kosten, bessere Konversion).</p> <h3>Förder-Forecast</h3> <ul> <li><b>Startet:</b> … (Kurzsatz + Quelle)</li> <li><b>Endet:</b> … (Kurzsatz + Quelle)</li> <li><b>Wichtige Änderung:</b> … (Kurzsatz + Quelle)</li> </ul> <p>Wenn keine verlässlichen Infos vorliegen: <i>– aktuell keine verlässlichen Änderungen bekannt</i>.</p> <h3>Nächste Schritte</h3> <ul> <li><b>30 Tage:</b> 2–3 Low-Effort/High-Impact-Maßnahmen mit klarer Messgröße (z. B. TTM, NPS, Durchlaufzeit, €‑Effekte).</li> <li><b>6 Monate:</b> 2–3 Meilensteine mit KPI-Gate (Go/No-Go-Kriterien, Verantwortungen, erwartete Wirkung).</li> </ul> <h3>Realtime-Check</h3> <p>Kurz prüfen vor Entscheidung: **DSGVO/EU-AI-Act-Klassifizierung**, Datenqualität & Messkonzept (Baseline, KPIs), AV-Vertrag, Guardrails (z. B. Human-in-the-Loop, Logging), Hosting/Datensitz.</p> <h3>Best-Practices</h3> <ul> <li>Beispiel A – Use-Case, erzieltes Ergebnis (KPI) und 1 Lessons-Learned-Satz (ohne Tool-Namen).</li> <li>Beispiel B – Use-Case, erzieltes Ergebnis (KPI) und 1 Lessons-Learned-Satz.</li> </ul>
+
+Stil-Checks (hart):
+
+Adressiere die Lesenden („Sie“), kein „wir/ich“.
+
+Keine Dopplungen; jede Liste startet mit einem starken Verb/Resultat.
+
+Zahlen: Prozent ohne Nachkommastellen (z. B. 35 %); Euro gerundet (z. B. 5–10 k€).
+
+{{ prompt_suffix }}
