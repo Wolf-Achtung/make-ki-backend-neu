@@ -314,7 +314,10 @@ risks_html|trim) %}
                 {% endfor %}
                 </tbody>
               </table>
-              <p style="font-size:9px;color:var(--muted);margin-top:.2rem">Kostenkategorien:<br>sehr&nbsp;gering&nbsp;&lt;&nbsp;€100/Monat; gering&nbsp;€100–500/Monat;<br>mittel&nbsp;€500–1.000/Monat; hoch&nbsp;&gt;&nbsp;€1.000/Monat.</p>
+              <p style="font-size:9px;color:var(--muted);margin-top:.2rem">
+                Kostenkategorien:<br>
+                sehr&nbsp;gering&nbsp;&lt;&nbsp;€100/Monat;&nbsp;gering&nbsp;€100–500/Monat;&nbsp;mittel&nbsp;€500–1.000/Monat;&nbsp;hoch&nbsp;&gt;&nbsp;€1.000/Monat.
+              </p>
             {% else %}
               <p><em>Tool-Liste wird dynamisch ergänzt.</em></p>
             {% endif %}
@@ -331,13 +334,17 @@ risks_html|trim) %}
           </div>
         {% endif %}
 
-        {# Innovation & Gamechanger section: shows optional moonshot, forecast and best practices.  Only displayed when gamechanger blocks or an innovation intro is provided. #}
+        {# Innovation & Gamechanger section.
+           Prefer the LLM-generated gamechanger_html when available.  If
+           gamechanger_html is non-empty, render it directly.  Otherwise
+           fall back to the branch innovation intro and gamechanger blocks.
+        #}
         {% if gamechanger_html and gamechanger_html|trim %}
-  <div class="card section">
-    <h2>Innovation &amp; Gamechanger</h2>
-    {{ gamechanger_html|safe }}
-  </div>
-{% elif branchen_innovations_intro or gamechanger_blocks %}
+          <div class="card section">
+            <h2>Innovation &amp; Gamechanger</h2>
+            {{ gamechanger_html|safe }}
+          </div>
+        {% elif branchen_innovations_intro or gamechanger_blocks %}
           <div class="card section">
             <h2>Innovation &amp; Gamechanger</h2>
             {% if branchen_innovations_intro %}
