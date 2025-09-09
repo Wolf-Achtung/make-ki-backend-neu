@@ -249,8 +249,8 @@ risks_html|trim) %}
           {% endif %}
         </div>
 
-        <!-- Förderprogramme & Tools (mit Fallback) -->
-        <div class="grid cols-2 section">
+        <!-- Förderprogramme (Auswahl) -->
+        <div class="section">
           <div class="card">
             <h2>Förderprogramme (Auswahl)</h2>
             {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
@@ -280,8 +280,7 @@ risks_html|trim) %}
                 {% endfor %}
                 </tbody>
               </table>
-<p class="caption">Stand: {{ funding_stand or datum }}</p>
-
+              <p class="caption">Stand: {{ funding_stand or datum }}</p>
               {% if funding_badges and funding_badges|length>0 %}
               <div class="funding-badges" style="margin-top:.2rem">
                 {% for b in funding_badges %}
@@ -295,20 +294,30 @@ risks_html|trim) %}
               <p><em>Keine Programme in der Datenbasis.</em></p>
             {% endif %}
           </div>
+        </div>
 
-          <div class="card">
+        <!-- KI‑Tools & Software (volle Breite) -->
+        <div class="section">
+          <div class="card" style="page-break-inside: avoid;">
             <h2>KI-Tools &amp; Software</h2>
             {% if tools_table and tools_table|length>0 %}
               <table>
                 <thead>
                   <tr>
-                    <th>Tool</th><th>Einsatzgebiet</th><th>Datensitz</th><th>Kosten</th><th>Link</th>
+                    <th>Tool</th>
+                    <th>Einsatzgebiet</th>
+                    <th>Datensitz</th>
+                    <th>Kosten</th>
+                    <th>Link</th>
                   </tr>
                 </thead>
                 <tbody>
                 {% for t in tools_table %}
                   <tr>
-                    <td>{{ t.name }}</td><td>{{ t.usecase }}</td><td>{{ t.datenschutz or 'n/a' }}</td><td>{{ t.cost or 'n/a' }}</td>
+                    <td>{{ t.name }}</td>
+                    <td>{{ t.usecase }}</td>
+                    <td>{{ t.datenschutz or 'n/a' }}</td>
+                    <td>{{ t.cost or 'n/a' }}</td>
                     <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
                   </tr>
                 {% endfor %}

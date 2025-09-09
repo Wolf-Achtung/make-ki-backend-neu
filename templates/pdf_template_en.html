@@ -227,7 +227,8 @@ risks_html|trim) %}
           {% endif %}
         </div>
 
-        <div class="grid cols-2 section">
+        <!-- Funding programmes (selection) -->
+        <div class="section">
           <div class="card">
             <h2>Funding programmes</h2>
             {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
@@ -257,8 +258,7 @@ risks_html|trim) %}
                 {% endfor %}
                 </tbody>
               </table>
-<p class="caption">As of: {{ funding_stand or today }}</p>
-
+              <p class="caption">As of: {{ funding_stand or today }}</p>
               {% if funding_badges and funding_badges|length>0 %}
               <div class="funding-badges" style="margin-top:.2rem">
                 {% for b in funding_badges %}
@@ -272,8 +272,11 @@ risks_html|trim) %}
               <p><em>No matching items in the local dataset.</em></p>
             {% endif %}
           </div>
+        </div>
 
-          <div class="card">
+        <!-- AI tools (full width) -->
+        <div class="section">
+          <div class="card" style="page-break-inside: avoid;">
             <h2>AI tools</h2>
             {% if tools_table and tools_table|length>0 %}
               <table>
