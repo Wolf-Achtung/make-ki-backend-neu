@@ -888,6 +888,19 @@ def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int
         # Prepare fields with fallbacks
         name = name_field
         usecase = row.get("Funktion/Zweck") or row.get("Einsatz") or row.get("Usecase") or row.get("Funktion") or ""
+        # English use-case labels (friendly wording)
+        if lang and str(lang).lower().startswith("en"):
+            de2en = {
+                "Projektmanagement": "Project management",
+                "Online-Whiteboard & KI-Brainstorming": "Online whiteboard & AI brainstorming",
+                "Automatisierung": "Automation",
+                "KI-Content & Text": "AI content & text",
+                "Consulting-Wissensmanagement": "Consulting knowledge management",
+                "Teamkommunikation & Chat": "Team communication & chat",
+                "CRM & Vertriebsmanagement": "CRM & sales management"
+            }
+            if isinstance(usecase, str):
+                usecase = de2en.get(usecase, usecase)
         cost_raw = (
             row.get("Kosten")
             or row.get("Cost")
@@ -1475,7 +1488,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                 "<h3>Quick&nbsp;Wins</h3>"
                 "<ul>"
                 "<li><b>Dateninventur</b>: Erfassen Sie alle relevanten Kunden‑, Projekt‑ und Marketingdaten an einem Ort und bereinigen Sie sie, um eine solide Datengrundlage aufzubauen.</li>"
-                "<li><b>Mini‑Automatisierung</b>: Automatisieren Sie wiederkehrende Aufgaben mit No‑Code‑Tools wie Zapier oder n8n, um sich Zeit für die Beratung zu verschaffen.</li>"
+                "<li><b>Mini‑Automatisierung</b>: Automatisieren Sie wiederkehrende Aufgaben mit einem einfachen No‑Code‑Workflow, um sich Zeit für die Beratung zu verschaffen.</li>"
                 "<li><b>KI‑Policy Light</b>: Formulieren Sie eine einseitige Richtlinie, die den internen Umgang mit generativer KI und Datenschutz regelt.</li>"
                 "</ul>"
             )
@@ -1484,7 +1497,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                 "<h3>Quick&nbsp;wins</h3>"
                 "<ul>"
                 "<li><b>Data inventory</b>: Consolidate all relevant customer, project and marketing data in one place and clean it to build a solid foundation.</li>"
-                "<li><b>Mini automation</b>: Use no‑code tools such as Zapier or n8n to automate repetitive tasks and free up time for consulting.</li>"
+                "<li><b>Mini automation</b>: Use a simple no‑code workflow to automate repetitive tasks and free up time for consulting.</li>"
                 "<li><b>Lightweight AI policy</b>: Draft a one‑page guideline that defines how to use generative AI responsibly and protect data.</li>"
                 "</ul>"
             )
