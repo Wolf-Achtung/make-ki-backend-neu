@@ -1,4 +1,5 @@
-# main.py — Hardened (SMTP header sanitize, migration wiring, async mail)
+
+# main.py — Hardened (fix: proper triple-quoted SQL, header sanitize, async mail, migration wiring)
 import os
 import sys
 import time
@@ -28,6 +29,7 @@ import asyncio
 import smtplib
 from email.message import EmailMessage
 from email.utils import parseaddr, formataddr
+from pydantic import BaseModel
 
 # ----------------------------
 # SMTP & Migration Settings
@@ -328,8 +330,6 @@ def resolve_recipient(user_claims: Dict[str, Any], body: Dict[str, Any]) -> str:
 # ----------------------------
 # Feedback
 # ----------------------------
-from pydantic import BaseModel
-
 class Feedback(BaseModel):
     email: Optional[str] = None
     variant: Optional[str] = None
@@ -456,6 +456,9 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
         logger.exception("[FEEDBACK] Fehler: %s", e)
         raise HTTPException(status_code=500, detail="feedback failed")
 
+# ----------------------------
+# Feedback Endpoints
+# ----------------------------
 @app.post("/feedback")
 async def feedback_root(payload: Feedback, request: Request, authorization: Optional[str] = None):
     return await _handle_feedback(payload, request, authorization)
