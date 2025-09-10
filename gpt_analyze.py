@@ -7,6 +7,13 @@ import zipfile
 import mimetypes
 from datetime import datetime
 from typing import Dict, Any, Optional, List
+# Optional post-processing: clamp lists, add missing fields (quick wins, roadmap, trade-offs).
+# Attempt to import the helper.  If unavailable, default to None so that
+# report generation still works without post-processing.
+try:
+    from postprocess_report import postprocess_report_dict  # type: ignore[attr-defined]
+except Exception:
+    postprocess_report_dict = None
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from openai import OpenAI
@@ -1458,6 +1465,17 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             out[chap] = ensure_html(strip_code_fences(fix_encoding(sect_html)), lang)
         except Exception as e:
             out[chap] = f"<p>[Fehler in Kapitel {chap}: {e}]</p>"
+    # After generating all chapter HTML, apply the optional post-processing.  This
+    # helper will clamp lengthy lists (e.g. quick wins, risks, recommendations),
+    # enrich roadmap entries with owner/dependencies fields and add trade‑off
+    # descriptions to gamechanger items.  If the helper is not available,
+    # simply skip this step without raising an exception.
+    if postprocess_report_dict:
+        try:
+            locale_code = "de" if (lang or "").lower().startswith("de") else "en"
+            out = postprocess_report_dict(out, locale=locale_code)
+        except Exception:
+            pass
 
     # Präambel
     out["preface"] = generate_preface(lang=lang, score_percent=data.get("score_percent"))
@@ -2319,6 +2337,16 @@ def generate_preface(lang: str = "de", score_percent: Optional[float] = None) ->
 def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dict[str, Any]:
     lang = _norm_lang(lang or payload.get("lang") or payload.get("language") or payload.get("sprache"))
     report = generate_full_report(payload, lang=lang)
+    # Provide a structured roadmap list for templating when available.  When
+    # postprocessing is enabled, the roadmap chapter may be a list rather than
+    # HTML.  Expose it under the key "roadmap_items" for the template to
+    # render a tabular roadmap.  If no structured roadmap exists, the
+    # template will fall back to timeline/swimlane or HTML.
+    try:
+        if isinstance(report.get("roadmap"), list) and not report.get("roadmap_items"):
+            report["roadmap_items"] = report["roadmap"]
+    except Exception:
+        pass
     env, template_name = _jinja_env(), _pick_template(lang)
     if template_name:
         tmpl = env.get_template(template_name)
@@ -2401,6 +2429,9 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             "risks_html": report.get("risks_html",""),
             "recommendations_html": report.get("recommendations_html",""),
             "roadmap_html": report.get("roadmap_html",""),
+            # Structured roadmap items (list of dicts) for table rendering.  When this
+            # list is empty the template falls back to timeline/swimlane or HTML.
+            "roadmap_items": report.get("roadmap_items", []),
             "sections_html": report.get("sections_html",""),
             "vision_html": report.get("vision_html",""),
             "one_pager_html": report.get("one_pager_html",""),
