@@ -211,10 +211,9 @@ risks_html|trim) %}
             <div class="card"><h2>Recommendations (Top 5) </h2><div>{{ 
  recommendations_html|safe }}</div></div>
           {% endif %}
-          {% if roadmap_html and roadmap_html|trim %}
-            <div class="card"><h2>Roadmap</h2>
-              {% if timeline and (timeline.t30 or timeline.t90 or timeline.t365)
-  %}
+          {% if roadmap_html and roadmap_html|trim or (roadmap_items and roadmap_items|length > 0) %}
+            <div class="card"><h2>12‑Month Roadmap</h2>
+              {% if timeline and (timeline.t30 or timeline.t90 or timeline.t365) %}
               <div class="swimlane">
                 <div><h3>30 days</h3><ul>{% for it in timeline.t30 %}<li>{{ it 
  }}</li>{% endfor %}</ul></div>
@@ -223,6 +222,29 @@ risks_html|trim) %}
                 <div><h3>12 months</h3><ul>{% for it in timeline.t365 %}<li>{{ 
  it }}</li>{% endfor %}</ul></div>
               </div>
+              {% elif roadmap_items and roadmap_items|length > 0 %}
+              <table class="roadmap-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Task</th>
+                    <th>Owner</th>
+                    <th>Dependencies</th>
+                    <th>Benefit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in roadmap_items %}
+                  <tr>
+                    <td>{{ item.month or '' }}</td>
+                    <td>{{ item.task or '' }}</td>
+                    <td>{{ item.owner or '' }}</td>
+                    <td>{{ item.dependencies or '' }}</td>
+                    <td>{{ item.benefit or item.outcome or '' }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
               {% else %}
               <div>{{ roadmap_html|safe }}</div>
               {% endif %}
@@ -351,6 +373,11 @@ endif %}"></td>
            gamechanger_html is non-empty, render it directly.  Otherwise
            fall back to the branch innovation intro and gamechanger blocks.
         #}
+        {# Innovation & Gamechanger section.
+           Prefer the LLM-generated gamechanger_html when available.  If
+           gamechanger_html is non-empty, render it directly.  Otherwise
+           fall back to the branch innovation intro and gamechanger blocks.
+        #}
         {% if (gamechanger_html and gamechanger_html|trim) or (gamechanger_blocks and gamechanger_blocks|trim) %}
           <div class="card section">
             <h2>Innovation &amp; Gamechanger</h2>
@@ -363,7 +390,18 @@ endif %}"></td>
               <p>{{ branchen_innovations_intro|safe }}</p>
             {% endif %}
             {% if gamechanger_blocks %}
-              <div>{{ gamechanger_blocks|safe }}</div>
+              {# Render trade-off and description for each block when gamechanger_blocks is a list; otherwise treat as pre-rendered HTML #}
+              {% if gamechanger_blocks is string %}
+                <div>{{ gamechanger_blocks|safe }}</div>
+              {% else %}
+                {% for block in gamechanger_blocks %}
+                  <div class="gamechanger-block">
+                    {% if block.title %}<h3>{{ block.title }}</h3>{% endif %}
+                    {% if block.description %}<p>{{ block.description }}</p>{% endif %}
+                    {% if block.tradeoff %}<p><strong>Risks/Side effects:</strong> {{ block.tradeoff }}</p>{% endif %}
+                  </div>
+                {% endfor %}
+              {% endif %}
             {% endif %}
           </div>
         {% endif %}
