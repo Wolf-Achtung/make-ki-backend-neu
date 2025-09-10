@@ -160,7 +160,7 @@ def current_user(request: Request) -> Dict[str, Any]:
 def strip_code_fences(text: str) -> str:
     if not text:
         return text
-    t = text.replace("\\r", "")
+    t = text.replace("\r", "")
     t = t.replace("```html", "```").replace("```HTML", "```")
     while "```" in t:
         t = t.replace("```", "")
@@ -328,6 +328,8 @@ def resolve_recipient(user_claims: Dict[str, Any], body: Dict[str, Any]) -> str:
 # ----------------------------
 # Feedback
 # ----------------------------
+from pydantic import BaseModel
+
 class Feedback(BaseModel):
     email: Optional[str] = None
     variant: Optional[str] = None
@@ -344,7 +346,7 @@ class Feedback(BaseModel):
 def _clean_header_value(v: Optional[str]) -> Optional[str]:
     if not v:
         return None
-    v = v.replace("\\r", "").replace("\\n", "").strip()
+    v = v.replace("\r", "").replace("\n", "").strip()
     name, addr = parseaddr(v)
     if addr:
         return formataddr((name, addr)) if name else addr
@@ -355,7 +357,7 @@ async def send_feedback_mail_async(payload: Dict[str, Any], user_email_header: O
         logger.info("[MAIL] SMTP not configured – skip")
         return
     subject = f"[KI-Feedback] {payload.get('email') or 'anonym'}"
-    subject = subject.replace("\\r", " ").replace("\\n", " ").strip()
+    subject = subject.replace("\r", " ").replace("\n", " ").strip()
     from_addr = _clean_header_value(SMTP_FROM or SMTP_USER)
     to_addr   = _clean_header_value(FEEDBACK_TO or SMTP_FROM or SMTP_USER)
     reply_to  = _clean_header_value(payload.get("email"))
@@ -373,7 +375,7 @@ async def send_feedback_mail_async(payload: Dict[str, Any], user_email_header: O
 
     lines = [f"{k}: {v}" for k, v in payload.items()]
     extra = [f"client_ip: {ip}", f"user_agent: {ua}", f"user_header_email: {user_email_header or ''}"]
-    msg.set_content("Neues Feedback:\\n\\n" + "\\n".join(lines + [""] + extra))
+    msg.set_content("Neues Feedback:\n\n" + "\n".join(lines + [""] + extra))
 
     def _send():
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
@@ -386,8 +388,6 @@ async def send_feedback_mail_async(payload: Dict[str, Any], user_email_header: O
 
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, _send)
-
-from pydantic import BaseModel  # after class Feedback typing
 
 async def _handle_feedback(payload: Feedback, request: Request, authorization: Optional[str] = None):
     try:
@@ -417,7 +417,7 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
                 try:
                     with conn:
                         with conn.cursor() as cur:
-                            cur.execute(\"\"\"\
+                            cur.execute("""
                                 CREATE TABLE IF NOT EXISTS feedback (
                                     id SERIAL PRIMARY KEY,
                                     email TEXT,
@@ -428,7 +428,7 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
                                     ip TEXT,
                                     created_at TIMESTAMPTZ DEFAULT now()
                                 );
-                            \"\"\")
+                            """)
                             cur.execute(
                                 "INSERT INTO feedback (email, variant, report_version, details, user_agent, ip) VALUES (%s,%s,%s,%s::jsonb,%s,%s)",
                                 (user_email or data.get('email'),
@@ -456,9 +456,6 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
         logger.exception("[FEEDBACK] Fehler: %s", e)
         raise HTTPException(status_code=500, detail="feedback failed")
 
-# ----------------------------
-# Feedback Endpoints
-# ----------------------------
 @app.post("/feedback")
 async def feedback_root(payload: Feedback, request: Request, authorization: Optional[str] = None):
     return await _handle_feedback(payload, request, authorization)
@@ -474,6 +471,8 @@ async def feedback_v1(payload: Feedback, request: Request, authorization: Option
 # ----------------------------
 # Analyze-flow
 # ----------------------------
+TASKS: Dict[str, Dict[str, Any]] = {}
+
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends(current_user)):
     lang = (body.get("lang") or "de").lower()
@@ -550,11 +549,6 @@ def diag_analyze():
     except Exception as e:
         info["error"] = repr(e)
     return JSONResponse(info)
-
-# ----------------------------
-# In-Memory job store
-# ----------------------------
-TASKS: Dict[str, Dict[str, Any]] = {}
 
 # ----------------------------
 # Root page
