@@ -16,6 +16,17 @@ except Exception as _e:
     psycopg2 = None
     SimpleConnectionPool = None  # type: ignore
 
+# SMTP/E-Mail Settings
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASS = os.getenv("SMTP_PASS")
+SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "")
+FEEDBACK_TO = os.getenv("FEEDBACK_TO")  # Feedback recipient email
+
+# Admin-Migration Feature-Flag
+MIGRATION_ENABLED = os.getenv("MIGRATION_ENABLED", "false").lower() == "true"
+
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
@@ -23,6 +34,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from jose import jwt
 from jose.exceptions import JWTError
+import asyncio
+import smtplib
+from email.message import EmailMessage
 import httpx
 from pydantic import BaseModel
 
@@ -65,6 +79,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Admin migration route integration (enabled via MIGRATION_ENABLED env)
+if MIGRATION_ENABLED:
+    try:
+        from app.routes import admin_migration
+        app.include_router(admin_migration.router)
+        logger.info("[MIGRATION] Admin route /admin/migrate-feedback enabled")
+    except Exception as e:
+        logger.exception("[MIGRATION] Router include failed: %s", e)
 
 
 
@@ -130,6 +153,32 @@ class Feedback(BaseModel):
     next: Optional[str] = None
     timestamp: Optional[str] = None
 
+# --- Email helper for feedback (async SMTP) ---
+async def send_feedback_mail_async(payload: Dict[str, Any], user_email_header: Optional[str], ua: str, ip: str):
+    """
+    Sends feedback via email asynchronously if SMTP is configured.
+    """
+    if not (SMTP_HOST and SMTP_USER and SMTP_PASS and (FEEDBACK_TO or SMTP_FROM)):
+        logger.info("[MAIL] SMTP not configured – skipping email send")
+        return
+    msg = EmailMessage()
+    msg["Subject"] = f"[KI-Feedback] {payload.get('email') or 'anonym'}"
+    msg["From"] = SMTP_FROM or SMTP_USER
+    msg["To"] = FEEDBACK_TO or SMTP_FROM
+    lines = [f"{k}: {v}" for k, v in payload.items()]
+    extra = [f"client_ip: {ip}", f"user_agent: {ua}", f"user_header_email: {user_email_header or ''}"]
+    msg.set_content("Neues Feedback:\n\n" + "\n".join(lines + [""] + extra))
+    def _send():
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
+            try:
+                s.starttls()
+            except Exception:
+                pass
+            s.login(SMTP_USER, SMTP_PASS)
+            s.send_message(msg)
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, _send)
+
 
 
 async def _handle_feedback(payload: Feedback, request: Request, authorization: Optional[str] = None):
@@ -192,6 +241,14 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
 
         if not inserted:
             logging.getLogger(__name__).info("[FEEDBACK] (log-only) ip=%s ua=%s data=%s", ip, ua, json.dumps(data, ensure_ascii=False))
+
+        # Mailversand asynchron starten. Fehler im Mailversand sollen den Response nicht blockieren.
+        try:
+            # Dispatch the feedback email in the background. We pass the detected user email from the token
+            # (if available) as well as the user agent and client IP for completeness.
+            asyncio.create_task(send_feedback_mail_async(data, user_email, ua, ip))
+        except Exception as e:
+            logging.getLogger(__name__).warning("[MAIL] dispatch failed: %s", e)
 
         return {"ok": True, "stored": bool(inserted)}
     except Exception as e:
