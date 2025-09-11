@@ -785,6 +785,41 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 8) -> Lis
                             selected.append(candidate)
                         break
 
+    # Perform a simple translation of programme names when generating an
+    # English report.  Many funding programmes have German names; provide
+    # human‑readable English equivalents to improve comprehension.  Only
+    # translate the programme title itself; other fields remain unchanged.
+    if lang != "de":
+        translations = {
+            # Berlin programmes
+            "Gründungsbonus Berlin": "Startup Bonus Berlin",
+            "GründungsBONUS Berlin": "Startup Bonus Berlin",
+            "Coaching BONUS Berlin": "Coaching Bonus Berlin",
+            "Digitalprämie Berlin": "Digital Bonus Berlin",
+            "Digitalpraemie Berlin": "Digital Bonus Berlin",
+            "Digital Jetzt": "Digital Now",
+            "Digital Jetzt – Soforthilfe": "Digital Now – Immediate Assistance",
+            "go-digital": "Go Digital",
+            "INVEST": "INVEST Grant",
+            "INVEST – Wagniskapitalzuschuss": "INVEST – Venture Capital Grant",
+            "Berliner Startup Stipendium": "Berlin Startup Scholarship",
+            "Pro FIT": "Pro FIT (Support for Innovation)",
+            "ERP-Digitalisierungs- und Innovationskredit": "ERP Digitalisation and Innovation Loan",
+            "EXIST-Gründerstipendium": "EXIST Startup Grant",
+            "Zentrales Innovationsprogramm Mittelstand (ZIM)": "Central Innovation Programme for SMEs (ZIM)",
+            "KMU-Innovativ": "SME Innovation",
+            "Mittelstand-Digital": "SME Digital",
+        }
+        for entry in selected:
+            name = entry.get("name", "") or ""
+            # normalise spaces for matching (strip repeated whitespace)
+            name_clean = " ".join(name.split())
+            for de_name, en_name in translations.items():
+                # match ignoring case and extra spaces
+                if name_clean.lower() == de_name.lower():
+                    entry["name"] = en_name
+                    break
+
     # Finally, cap the list to the maximum number of items.  The max_items
     # parameter is raised to 8 in the Gold‑Standard to provide a richer set
     # of programmes while still keeping the table concise.  If the caller
