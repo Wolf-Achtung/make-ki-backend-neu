@@ -20,7 +20,7 @@ Prohibited: Tool names, filler, placeholders.
 
 No conflict with “Vision”:
 
-If a Vision chapter exists, reuse the initiative title and, if needed, add a brief reference to its MVP (“see Vision”) — do not restate MVP details.
+If a Vision chapter exists, reuse the Initiative title and, if needed, add a brief reference to its MVP (“see Vision”) — do not restate MVP details.
 
 Gamechanger operationalises the Vision: focus on benchmark gap, forecast, steps, realtime checks and best practices. Do not duplicate lists from other chapters.
 
@@ -70,7 +70,7 @@ Include 6–8 entries, each with the columns:
 
 ### Gamechanger Chapter
 
-This chapter presents up to three innovative approaches. Besides “Long-term initiative,” “Benchmark,” “Forecast” and “Best Practice,” each block should include a **Trade‑off/Side‑Effect**. Describe in one sentence potential risks or side effects of the idea.
+This chapter presents up to three innovative approaches. Besides “Long-term Initiative,” “Benchmark,” “Forecast” and “Best Practice,” each block should include a **Trade‑off/Side‑Effect**. Describe in one sentence potential risks or side effects of the idea.
 
 ### Funding Logic
 

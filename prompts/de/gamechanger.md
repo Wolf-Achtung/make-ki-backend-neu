@@ -26,7 +26,7 @@ Keine Tool-Namen, keine Floskeln/Platzhalter.
 
 Abgrenzung zu „Vision“ (Konfliktvermeidung):
 
-Falls ein Vision-Kapitel bereits existiert, übernimm den identischen Initiativen‑Titel, verweise bei Bedarf knapp auf den MVP („siehe Vision“), wiederhole den MVP nicht.
+Falls ein Vision-Kapitel bereits existiert, übernimm den identischen Initiativen-Titel, verweise bei Bedarf knapp auf den MVP („siehe Vision“), wiederhole den MVP nicht.
 
 Gamechanger operationalisiert die Vision: Fokus auf Benchmark-Gap, Forecast, nächste Schritte, Realtime-Prüfungen und Best-Practices. (Kein Duplizieren von Listen aus anderen Kapiteln.)
 

@@ -4,7 +4,7 @@ Craft a warm, practical summary for decision makers in the {{ branche }} sector
 
 The summary consists of four clearly structured sections (maximum three points each):
 
-* **KPI overview:** Use only the provided KPI chips and the automatic classification (e.g., “ahead” or “behind”). Do not include any separate paragraph or comparison to peers, and do not reinterpret the values. Do not mention the four KPI categories (digitalisation, automation, paperless processes, AI know‑how) anywhere else in the summary.
+* **KPI overview:** Briefly explain how the company compares to peers in digitalisation, automation, paperless processes and AI know‑how (ahead, on par or behind). These terms are metrics only and must not appear in other sections.
 
 * **Top opportunities:** List up to three sector‑specific opportunities emerging from {{ hauptleistung }} and the strategic goals. Draw on hints such as “biggest potential”, “application area” and “vision”; avoid marketing catchphrases like “moonshot”. If the vision or potential mentions AI‑based services or a lightweight AI portal for SMEs, call this out explicitly as an opportunity. Describe the concrete benefit of each opportunity in one sentence and refrain from marketing or technical jargon.
 
@@ -68,7 +68,6 @@ Ensure the following columns are present: **Tool**, **Use case**, **Data locatio
 
 ### Gold+ Additions
 
-* **KPI chips:** Create three KPI chips (2–5 words) summarizing measurable metrics or goals (e.g., “TTM −20%”, “Lead quality +15%”, “Error rate −30%”). Provide them as a `kpi_chips` list.
 * **ROI tag:** Provide a ROI category for each recommendation (benefit/effort: High, Medium, Low).
 * **Roadmap legend:** Use “Owner/Project lead” as the default assignee and “none” as default dependencies if unspecified.
 * **Trade-off:** Add a one-sentence trade-off or side effect for each gamechanger block.
