@@ -12,7 +12,7 @@ Die Zusammenfassung besteht aus vier klar strukturierten Abschnitten (je maximal
 
 * **Nächste Schritte:** Empfiehl bis zu drei konkrete Maßnahmen für die nächsten Monate. Für jede Maßnahme beschreibe, was zu tun ist, welchen Nutzen sie bringt und in welchem Zeitrahmen sie umgesetzt werden kann. Passe die Schritte an die Unternehmensgröße {{ company_size_label }} und das verfügbare Budget an: Solo‑Unternehmen mit kleinem Zeitbudget erhalten schlanke, leicht skalierbare Maßnahmen; KMU können strukturellere Projekte angehen. Beziehe optional das wöchentliche Zeitbudget, vorhandene Werkzeuge, Hinweise auf regulierte Branchen, Trainingsinteressen und die Vision‑Priorität ein, um die Schritte weiter zu personalisieren – ohne diese Variablennamen wörtlich zu erwähnen.
 
-Optional kannst du am Ende eine kurze ROI‑Schätzung in einem Absatz hinzufügen, wenn sowohl Budget als auch Zeithorizont vorhanden sind. Schätze realistisch und formuliere den Nutzen optimistisch, aber glaubwürdig.
+Optional können Sie am Ende eine kurze ROI‑Schätzung in einem Absatz hinzufügen, wenn sowohl Budget als auch Zeithorizont vorhanden sind. Schätzen Sie realistisch und formulieren Sie den Nutzen optimistisch, aber glaubwürdig.
 
 Vermeide Allgemeinplätze, Wiederholungen oder unnötigen Fachjargon. Erwähne in diesem Abschnitt keine Tools oder Förderprogramme – diese werden in separaten Kapiteln behandelt.
 

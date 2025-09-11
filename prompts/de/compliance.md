@@ -1,6 +1,6 @@
 # Compliance‑Status & Handlungsempfehlungen
 
-Analysiere die aktuelle Compliance‑Situation des Unternehmens anhand der Formulardaten (z. B. Datenschutzbeauftragte:r, technische Schutzmaßnahmen, DSFA, Meldewege, Löschregeln, Kenntnisse zum EU AI Act). Du kannst intern eine kurze Checkliste zur Strukturierung nutzen, aber gib diese nicht im Output aus.
+Analysieren Sie die aktuelle Compliance‑Situation des Unternehmens anhand der Formulardaten (z. B. Datenschutzbeauftragte:r, technische Schutzmaßnahmen, DSFA, Meldewege, Löschregeln, Kenntnisse zum EU AI Act). Sie können intern eine kurze Checkliste zur Strukturierung nutzen, geben Sie diese jedoch nicht im Output aus.
 
 ## 1. Gesetzliche Anforderungen & Richtlinien
 - Listen Sie die zutreffenden Rechtsgrundlagen auf, z. B. DSGVO, ePrivacy, Digital Services Act, Wettbewerbs- und Verbraucherschutzrecht und ggf. branchenspezifische Standards.

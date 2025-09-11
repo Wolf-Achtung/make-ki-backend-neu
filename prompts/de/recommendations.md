@@ -6,7 +6,7 @@ Berücksichtige Vision, strategische Ziele, größtes Potenzial, Moonshot, branc
 
 Passe die Empfehlungen intern an die Unternehmensgröße (Solo, kleines Team, KMU), das verfügbare Zeitbudget, mögliche regulatorische Anforderungen, vorhandene Werkzeuge, Trainingsinteressen und die Vision‑Priorität an – ohne diese Variablennamen wörtlich zu nennen. Kleine Unternehmen benötigen kosteneffiziente und modulare Maßnahmen; größere KMU können komplexere Vorhaben angehen.
 
-Eine mögliche Struktur (die du sinngemäß aufgreifen kannst):
+Eine mögliche Struktur (die Sie sinngemäß aufgreifen können):
 
 1. **Fokussieren:** Vision und Strategie schärfen, Prioritäten festlegen und eine Roadmap formulieren, die das größte Potenzial (z. B. GPT‑Services oder ein KI‑Portal) konkretisiert. *(H/M)*
 2. **Datenbasis stärken:** Dateninventur durchführen, zentrale Datenquellen aufbauen (z. B. CRM/ERP) und die Datenqualität verbessern, um eine solide Grundlage für KI‑Anwendungen zu schaffen. *(M/M)*
