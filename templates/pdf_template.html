@@ -45,13 +45,6 @@ align:left;vertical-align:top}
         .svgbox{background:var(--card);border:1px solid var(--border);border-
 radius:14px;padding:10px}
         .caption{font-size:12px;color:var(--muted);margin-top:.25rem}
-        /* KPI badges */
-        .kpi-badges{margin-top:.35rem;display:flex;flex-wrap:wrap;gap:6px}
-        .kpi-badge{padding:4px 8px;border-radius:8px;font-size:10px;white-space:nowrap;border:1px solid var(--border)}
-        /* Status colours: German and English classes point to the same colours */
-        .kpi-lead,.kpi-vorsprung{background:#E6F4EA;color:#14532d;border-color:#bbdec4}
-        .kpi-on-par,.kpi-gleichauf{background:#EFF6FF;color:#1e3a8a;border-color:#cfe3ff}
-        .kpi-behind,.kpi-rückstand{background:#FEE2E2;color:#7f1d1d;border-color:#f5c2c2}
         @page{size:A4 margin:16mm}
         .onepager{page-break-inside:avoid}
         .section{page-break-inside:auto;page-break-before:always;break-before:page;margin-top:2rem}
@@ -128,6 +121,15 @@ fit,minmax(110px,1fr));gap:12px;margin-top:.6rem}
         .funding-badges{margin-top:.5rem;display:flex;flex-wrap:wrap;gap:6px}
         .funding-badge{padding:4px 8px;border-radius:8px;background:var(--brand-
 blue);color:#fff;font-size:10px;white-space:nowrap}
+        /* KPI badges */
+        .kpi-badges{margin-top:.35rem;display:flex;flex-wrap:wrap;gap:6px}
+        .kpi-badge{padding:4px 8px;border-radius:8px;font-size:10px;white-space:nowrap;border:1px solid var(--border)}
+        /* Status colours: map English and German classes to same colours */
+        .kpi-lead,.kpi-vorsprung{background:#E6F4EA;color:#14532d;border-color:#bbdec4}
+        .kpi-on-par,.kpi-gleichauf{background:#EFF6FF;color:#1e3a8a;border-color:#cfe3ff}
+        .kpi-behind,.kpi-rueckstand,.kpi-ruckstand{background:#FEE2E2;color:#7f1d1d;border-color:#f5c2c2}
+        /* Smaller badges in TOC card */
+        .kpi-badges--toc .kpi-badge{font-size:9px;opacity:.9}
 
     thead { display: table-header-group; }
     tr { page-break-inside: avoid; }
@@ -187,6 +189,11 @@ alt="Badge" style="height:38px">{% endif %}</div>
           <div class="card toc-card">
             <h2>Inhaltsverzeichnis</h2>
             {{ toc_html|safe }}
+    {% if kpi_badges_html and kpi_badges_html|trim %}
+      <div class="kpi-badges kpi-badges--toc">
+        {{ kpi_badges_html|safe }}
+      </div>
+    {% endif %}
           </div>
         {% endif %}
 
@@ -208,7 +215,6 @@ alt="Badge" style="height:38px">{% endif %}</div>
               {% endfor %}
             </div>
             <p class="caption">Benchmarks: Median Ihrer Branche ({{ datum }})</p>
-            {# KPI Badges: Zeige die Delta- und Status-Badges, sofern vorhanden #}
             {% if kpi_badges_html and kpi_badges_html|trim %}
             <div class="kpi-badges">
               {{ kpi_badges_html|safe }}
