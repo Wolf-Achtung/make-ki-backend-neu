@@ -68,6 +68,7 @@ Ensure the following columns are present: **Tool**, **Use case**, **Data locatio
 
 ### Gold+ Additions
 
+* **KPI chips:** Create three KPI chips (2–5 words) summarizing measurable metrics or goals (e.g., “TTM −20%”, “Lead quality +15%”, “Error rate −30%”). Provide them as a `kpi_chips` list.
 * **ROI tag:** Provide a ROI category for each recommendation (benefit/effort: High, Medium, Low).
 * **Roadmap legend:** Use “Owner/Project lead” as the default assignee and “none” as default dependencies if unspecified.
 * **Trade-off:** Add a one-sentence trade-off or side effect for each gamechanger block.
