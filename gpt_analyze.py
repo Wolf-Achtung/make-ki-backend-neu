@@ -394,7 +394,27 @@ def build_context(data: dict, branche: str, lang: str = "de") -> dict:
     # Normalise company_form: if provided, leave as is; else derive from context
     cf = context.get("rechtsform") or context.get("company_form") or context.get("legal_form")
     context["company_form"] = cf or ""
-    context["branche"] = branche
+    # Set the branch name.  For English reports, translate common German branch names to
+    # their English counterparts to prevent untranslated terms like "Beratung" appearing
+    # in the output.  If a branch is unknown, fall back to the original name.
+    if lang != "de":
+        _branch_translations = {
+            "beratung": "consulting",
+            "bau": "construction",
+            "bildung": "education",
+            "finanzen": "finance",
+            "gesundheit": "healthcare",
+            "handel": "trade",
+            "industrie": "industry",
+            "it": "IT",
+            "logistik": "logistics",
+            "marketing": "marketing",
+            "medien": "media",
+            "verwaltung": "public administration"
+        }
+        context["branche"] = _branch_translations.get(branche.lower(), branche)
+    else:
+        context["branche"] = branche
     context.setdefault("copyright_year", datetime.now().year)
     context.setdefault("copyright_owner", "Wolf Hohl")
     context.setdefault("company_size", _as_int(data.get("mitarbeiterzahl") or data.get("employees") or 1) or 1)
