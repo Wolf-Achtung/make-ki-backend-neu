@@ -4,7 +4,7 @@ Erstelle eine herzliche, praxisorientierte Zusammenfassung für die Führungsebe
 
 Die Zusammenfassung besteht aus vier klar strukturierten Abschnitten (je maximal drei Punkte):
 
-* **KPI‑Überblick:** Erläutere kurz, wie das Unternehmen bei Digitalisierung, Automatisierung, Papierlosigkeit und KI‑Know‑how im Branchenvergleich abschneidet (Vorsprung, gleichauf oder Rückstand). Diese vier Begriffe sind ausschließlich Kennzahlen und dürfen in den übrigen Abschnitten nicht auftauchen.
+* **KPI‑Überblick:** Verwenden Sie ausschließlich die bereitgestellten KPI‑Chips und die automatische Klassifizierung (z. B. „Vorsprung“ oder „Rückstand“). Erstellen Sie keinen zusätzlichen Absatz oder Vergleich zu Mitbewerbern und interpretieren Sie die Werte nicht selbst. Nennen Sie die vier Begriffe (Digitalisierung, Automatisierung, Papierlosigkeit, KI‑Know‑how) in keinem anderen Abschnitt.
 
 * **Top‑Chancen:** Führe bis zu drei branchenspezifische Chancen auf, die sich aus {{ hauptleistung }} und den strategischen Zielen ergeben. Nutze Hinweise wie „größtes Potenzial“, „Einsatzbereich“ und „Vision“; verzichte auf werbliche Begriffe wie „Moonshot“. Wenn die Vision oder das Potenzial KI‑gestützte Services oder ein schlankes KI‑Portal für KMU umfasst, benenne dies explizit als Chance. Beschreibe pro Chance den konkreten Nutzen in einem Satz, ohne Marketing‑ oder Technikjargon.
 
