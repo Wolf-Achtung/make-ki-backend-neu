@@ -790,6 +790,60 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 8) -> Lis
     # of programmes while still keeping the table concise.  If the caller
     # specifies a smaller value via the function argument, that override is
     # respected.
+    # Apply simple name translations for English reports.  Programme names are
+    # often specific to German funding schemes.  When generating English
+    # reports we provide a more descriptive translation to aid
+    # understanding.  Only the "name" field is translated so that other
+    # fields (region, target group, etc.) remain accurate.
+    if lang and lang.lower().startswith("en"):
+        name_map = {
+            # Berlin-specific funding
+            "Gründungsbonus Berlin": "Startup Bonus (Berlin)",
+            "Coaching BONUS Berlin": "Coaching Bonus (Berlin)",
+            "Digitalprämie Berlin": "Digital Bonus (Berlin)",
+            # Federal programmes
+            "Digital Jetzt": "Digital Now",
+            "go-digital": "Go Digital",
+            "Go-Digital": "Go Digital",
+            "INVEST – Zuschuss für Wagniskapital": "INVEST – Venture Capital Grant",
+            "ERP-Digitalisierungs- und Innovationskredit": "ERP Digitalisation & Innovation Loan",
+            # BAFA consulting grant
+            "BAFA-Beratungsförderung": "BAFA Consulting Grant",
+            "Zukunftsfonds KI": "AI Future Fund",
+            # Regional programmes
+            "MID NRW": "MID NRW",
+            "NRW.Bank.Digitalisierung und Innovation": "NRW.Bank Digitalisation & Innovation",
+            "Beratungsprogramm Wirtschaft NRW": "Business Coaching Programme (NRW)",
+            "Digitalbonus Bayern": "Digital Bonus Bavaria",
+            "Innovationsgutschein Bayern": "Innovation Voucher Bavaria",
+            "Invest BW": "Invest BW",
+            "Innovationsgutschein Hightech BW": "High-Tech Innovation Voucher (Baden-Württemberg)",
+            "Gründungsfinanzierung BW": "Startup Financing (Baden-Württemberg)",
+            "Innovationsfonds Rheinland-Pfalz": "Innovation Fund Rhineland-Palatinate",
+            # Other federal/European programmes
+            "INVEST – Zuschuss für Wagniskapital": "INVEST – Venture Capital Grant",
+            "Horizon Europe": "Horizon Europe",
+            "EIC Accelerator": "EIC Accelerator",
+            "Digital Europe Programme": "Digital Europe Programme",
+            "Eurostars": "Eurostars",
+            "CERV – Bürger, Gleichstellung, Rechte und Werte": "CERV – Citizens, Equality, Rights and Values",
+        }
+        for entry in selected:
+            n = entry.get("name", "")
+            # Perform a direct lookup.  If no exact match, attempt to match
+            # the lower-case stripped version to provide flexibility (e.g. missing
+            # hyphen or case differences).  If still unmatched, leave the
+            # original name unchanged.
+            if n in name_map:
+                entry["name"] = name_map[n]
+            else:
+                n_key = n.strip()
+                # Attempt to normalise dash variations and spacing
+                n_norm = n_key.replace("–", "-")  # en dash to hyphen
+                for k, v in name_map.items():
+                    if n_norm.lower() == k.replace("–", "-").lower():
+                        entry["name"] = v
+                        break
     return selected[:max_items]
 
 def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int = 8) -> List[Dict[str, str]]:
