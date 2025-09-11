@@ -533,12 +533,18 @@ def gpt_generate_section(data, branche, chapter, lang="de"):
     model_name = os.getenv("EXEC_SUMMARY_MODEL", default_model) if chapter == "executive_summary" else default_model
     section_text = _chat_complete(
         messages=[
-            {"role": "system", "content":
-             ("Du bist TÜV-zertifizierter KI-Manager, KI-Strategieberater, Datenschutz- und Fördermittel-Experte. "
-              "Liefere präzise, umsetzbare, aktuelle, branchenrelevante Inhalte als HTML.")
-             if lang == "de" else
-             ("You are a TÜV-certified AI manager and strategy consultant. "
-              "Deliver precise, actionable, up-to-date, sector-relevant content as HTML.")},
+            {
+                "role": "system",
+                "content": (
+                    "Sie sind TÜV-zertifizierte:r KI-Manager:in, KI-Strategieberater:in sowie Datenschutz- und Fördermittel-Expert:in. "
+                    "Liefern Sie präzise, umsetzbare, aktuelle und branchenrelevante Inhalte als HTML."
+                )
+                if lang == "de"
+                else (
+                    "You are a TÜV-certified AI manager and strategy consultant. "
+                    "Deliver precise, actionable, up-to-date, sector-relevant content as HTML."
+                ),
+            },
             {"role": "user", "content": prompt},
         ],
         model_name=model_name,
@@ -1298,7 +1304,7 @@ def distill_quickwins_risks(source_html: str, lang: str = "de") -> Dict[str, str
     # more than three bullets per list.  This reduces information overload and keeps
     # the report focused on the most important actions and challenges.
     if lang == "de":
-        sys = "Du extrahierst präzise Listen aus HTML."
+        sys = "Sie extrahieren präzise Listen aus HTML."
         # In German: 'maximal 3 Punkte je Liste'.  Only HTML output is allowed.
         usr = f"<h3>Quick Wins</h3><ul>…</ul><h3>Hauptrisiken</h3><ul>…</ul>\n- maximal 3 Punkte je Liste, nur HTML.\n\nHTML:\n{source_html}"
     else:
@@ -1321,11 +1327,17 @@ def distill_quickwins_risks(source_html: str, lang: str = "de") -> Dict[str, str
 def distill_recommendations(source_html: str, lang: str = "de") -> str:
     model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
     if lang == "de":
-        sys = "Du destillierst Maßnahmen aus HTML."
-        usr = "Extrahiere 5 TOP-Empfehlungen als <ol>, jede Zeile 1 Satz, Impact(H/M/L) und Aufwand(H/M/L) in Klammern."
+        sys = "Sie destillieren Maßnahmen aus HTML."
+        usr = (
+            "Extrahieren Sie 5 TOP‑Empfehlungen als <ol>. Jede Zeile besteht aus 1 Satz und enthält "
+            "Impact(H/M/L) und Aufwand(H/M/L) in Klammern."
+        )
     else:
         sys = "You distill actions from HTML."
-        usr = "Extract Top 5 as <ol>, one line each, add Impact(H/M/L) and Effort(H/M/L) in brackets."
+        usr = (
+            "Extract the Top 5 recommendations as an ordered list (<ol>). Each line should be one sentence, "
+            "with Impact (H/M/L) and Effort (H/M/L) in brackets."
+        )
     try:
         out = _chat_complete([{"role":"system","content":sys},{"role":"user","content":source_html}], model_name=model, temperature=0.2)
         return ensure_html(out, lang)
@@ -2040,13 +2052,17 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             return {}
         model = os.getenv("SUMMARY_MODEL_NAME", os.getenv("GPT_MODEL_NAME", "gpt-5"))
         if lang == "de":
-            sys = "Du extrahierst präzise Listen aus HTML."
-            usr = ("<h3>30 Tage</h3><ul>…</ul><h3>3 Monate</h3><ul>…</ul><h3>12 Monate</h3><ul>…</ul>\n"
-                   "- 2–3 Punkte je Liste (Stichworte ohne Erklärungen)\n\nHTML:\n" + source_html)
+            sys = "Sie extrahieren präzise Listen aus HTML."
+            usr = (
+                "<h3>30 Tage</h3><ul>…</ul><h3>3 Monate</h3><ul>…</ul><h3>12 Monate</h3><ul>…</ul>\n"
+                "- 2–3 Punkte je Liste (Stichworte ohne Erklärungen)\n\nHTML:\n" + source_html
+            )
         else:
             sys = "You extract concise lists from HTML."
-            usr = ("<h3>30 days</h3><ul>…</ul><h3>3 months</h3><ul>…</ul><h3>12 months</h3><ul>…</ul>\n"
-                   "- 2–3 bullets per list (short phrases only)\n\nHTML:\n" + source_html)
+            usr = (
+                "<h3>30 days</h3><ul>…</ul><h3>3 months</h3><ul>…</ul><h3>12 months</h3><ul>…</ul>\n"
+                "- 2–3 bullets per list (short phrases only)\n\nHTML:\n" + source_html
+            )
         try:
             out_html = _chat_complete([
                 {"role": "system", "content": sys},
