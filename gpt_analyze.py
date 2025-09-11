@@ -790,60 +790,6 @@ def build_funding_table(data: dict, lang: str = "de", max_items: int = 8) -> Lis
     # of programmes while still keeping the table concise.  If the caller
     # specifies a smaller value via the function argument, that override is
     # respected.
-    # Apply simple name translations for English reports.  Programme names are
-    # often specific to German funding schemes.  When generating English
-    # reports we provide a more descriptive translation to aid
-    # understanding.  Only the "name" field is translated so that other
-    # fields (region, target group, etc.) remain accurate.
-    if lang and lang.lower().startswith("en"):
-        name_map = {
-            # Berlin-specific funding
-            "Gründungsbonus Berlin": "Startup Bonus (Berlin)",
-            "Coaching BONUS Berlin": "Coaching Bonus (Berlin)",
-            "Digitalprämie Berlin": "Digital Bonus (Berlin)",
-            # Federal programmes
-            "Digital Jetzt": "Digital Now",
-            "go-digital": "Go Digital",
-            "Go-Digital": "Go Digital",
-            "INVEST – Zuschuss für Wagniskapital": "INVEST – Venture Capital Grant",
-            "ERP-Digitalisierungs- und Innovationskredit": "ERP Digitalisation & Innovation Loan",
-            # BAFA consulting grant
-            "BAFA-Beratungsförderung": "BAFA Consulting Grant",
-            "Zukunftsfonds KI": "AI Future Fund",
-            # Regional programmes
-            "MID NRW": "MID NRW",
-            "NRW.Bank.Digitalisierung und Innovation": "NRW.Bank Digitalisation & Innovation",
-            "Beratungsprogramm Wirtschaft NRW": "Business Coaching Programme (NRW)",
-            "Digitalbonus Bayern": "Digital Bonus Bavaria",
-            "Innovationsgutschein Bayern": "Innovation Voucher Bavaria",
-            "Invest BW": "Invest BW",
-            "Innovationsgutschein Hightech BW": "High-Tech Innovation Voucher (Baden-Württemberg)",
-            "Gründungsfinanzierung BW": "Startup Financing (Baden-Württemberg)",
-            "Innovationsfonds Rheinland-Pfalz": "Innovation Fund Rhineland-Palatinate",
-            # Other federal/European programmes
-            "INVEST – Zuschuss für Wagniskapital": "INVEST – Venture Capital Grant",
-            "Horizon Europe": "Horizon Europe",
-            "EIC Accelerator": "EIC Accelerator",
-            "Digital Europe Programme": "Digital Europe Programme",
-            "Eurostars": "Eurostars",
-            "CERV – Bürger, Gleichstellung, Rechte und Werte": "CERV – Citizens, Equality, Rights and Values",
-        }
-        for entry in selected:
-            n = entry.get("name", "")
-            # Perform a direct lookup.  If no exact match, attempt to match
-            # the lower-case stripped version to provide flexibility (e.g. missing
-            # hyphen or case differences).  If still unmatched, leave the
-            # original name unchanged.
-            if n in name_map:
-                entry["name"] = name_map[n]
-            else:
-                n_key = n.strip()
-                # Attempt to normalise dash variations and spacing
-                n_norm = n_key.replace("–", "-")  # en dash to hyphen
-                for k, v in name_map.items():
-                    if n_norm.lower() == k.replace("–", "-").lower():
-                        entry["name"] = v
-                        break
     return selected[:max_items]
 
 def build_tools_table(data: dict, branche: str, lang: str = "de", max_items: int = 8) -> List[Dict[str, str]]:
@@ -2019,6 +1965,82 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     }
     out["benchmarks"] = benchmarks
 
+    # -----------------------------
+    # Klassifizierung + Badges
+    # -----------------------------
+    # Ermitteln Sie die Statuswörter (Vorsprung/gleichauf/Rückstand) für jede Dimension
+    # anhand der Differenz zwischen Ihrem Wert und dem Branchen-Benchmark.  Das
+    # Toleranzband kann über die Umgebungsvariable KPI_TOLERANCE gesteuert werden
+    # (Standard: 10 Prozentpunkte).  Für englische Berichte werden die Begriffe
+    # "lead", "on par" und "behind" verwendet.
+    def _tol():
+        try:
+            return int(os.getenv("KPI_TOLERANCE", "10"))
+        except Exception:
+            return 10
+
+    TOL = _tol()
+
+    def _classify(self_v: int, bench_v: int, lang: str):
+        """
+        Bestimmen Sie das Delta (in Prozentpunkten) und geben Sie den
+        entsprechenden Status-String zurück.  Ein positives Delta bedeutet
+        Vorsprung (lead), ein negatives Delta Rückstand (behind).  Wenn
+        die Differenz innerhalb des Toleranzbands liegt, wird "gleichauf"
+        (on par) gewählt.
+        """
+        try:
+            delta = int(self_v) - int(bench_v)
+        except Exception:
+            delta = 0
+        if delta >= TOL:
+            return delta, ("Vorsprung" if lang == "de" else "lead")
+        if delta <= -TOL:
+            return delta, ("Rückstand" if lang == "de" else "behind")
+        return delta, ("gleichauf" if lang == "de" else "on par")
+
+    # Beschriftungen für die vier Dimensionen (DE und EN)
+    labels_de = ["Digitalisierung", "Automatisierung", "Papierlos", "KI-Know-how"]
+    labels_en = ["Digitalisation", "Automation", "Paperless", "AI know-how"]
+    LBL = labels_de if lang == "de" else labels_en
+
+    # Paare aus Label, eigenem Wert und Benchmark zusammenstellen
+    pairs = [
+        (LBL[0], own_digi, dig_bench),
+        (LBL[1], own_auto, aut_bench),
+        (LBL[2], own_paper, paper_bench),
+        (LBL[3], own_know, know_bench),
+    ]
+
+    kpi_status = []
+    for label, self_v, bench_v in pairs:
+        delta, status_word = _classify(self_v, bench_v, lang)
+        kpi_status.append({
+            "label": label,
+            "self": self_v,
+            "bench": bench_v,
+            "delta": delta,
+            "status": status_word,
+        })
+    # Speichere das Status-Array im Ausgabedictionary
+    out["kpi_status"] = kpi_status
+
+    # HTML-Badges generieren: ein kleines Badge pro Dimension, das den
+    # Delta-Wert (mit Vorzeichen) und den Status enthält.  Die Farbe wird
+    # später per CSS definiert (kpi-lead, kpi-on-par, kpi-behind).
+    def _badge(label: str, delta: int, status: str) -> str:
+        # Vorzeichen für Delta bestimmen
+        sign = "+" if delta > 0 else ("" if delta == 0 else "−")
+        delta_txt = f"{sign}{abs(delta)} pp"
+        # CSS-Klasse basiert auf Status (Leerzeichen ersetzen)
+        cls = status.replace(" ", "-").lower()
+        return f'<span class="kpi-badge kpi-{cls}">{label} {delta_txt} ({status})</span>'
+
+    badges_html = "<div class=\"kpi-badges\">" + "".join(
+        _badge(item["label"], item["delta"], item["status"]) for item in kpi_status
+    ) + "</div>"
+    out["kpi_badges_html"] = badges_html
+
     # ------------------------------------------------------------------
     # KPI‑Übersicht: Ergänze eine prägnante Zusammenfassung der vier
     # Dimensionen direkt vor der vom LLM generierten Executive Summary.
@@ -2062,6 +2084,16 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                                 f"der Automatisierungsgrad bei {aut}% ({aut_desc}, Branchenschnitt {aut_bm}%), "
                                 f"die Papierlosigkeit bei {paper}% ({paper_desc}, Benchmark {paper_bm}%) "
                                 f"und das KI‑Know‑how bei {know}% ({know_desc}, Benchmark {know_bm}%).")
+            # Größtes Gap bestimmen: Differenz (Betrag) zwischen Ihrem Wert und Benchmark
+            gaps = [
+                (abs(dig - dig_bm), LBL[0]),
+                (abs(aut - aut_bm), LBL[1]),
+                (abs(paper - paper_bm), LBL[2]),
+                (abs(know - know_bm), LBL[3]),
+            ]
+            gaps.sort(reverse=True)
+            # Füge das größte Gap am Ende des Satzes hinzu
+            summary_sentence += f" Größtes Gap: {gaps[0][1]} ({gaps[0][0]} pp)."
             summary_prefix = "<p><strong>KPI‑Überblick:</strong>" + summary_sentence + "</p>"
         else:
             dig = own_digi
@@ -2091,6 +2123,15 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                                 f"automation is {aut}% ({aut_desc}, sector average {aut_bm}%), "
                                 f"paperless processes reach {paper}% ({paper_desc}, benchmark {paper_bm}%), "
                                 f"and AI know‑how is {know}% ({know_desc}, benchmark {know_bm}%).")
+            # Largest gap
+            gaps = [
+                (abs(dig - dig_bm), LBL[0]),
+                (abs(aut - aut_bm), LBL[1]),
+                (abs(paper - paper_bm), LBL[2]),
+                (abs(know - know_bm), LBL[3]),
+            ]
+            gaps.sort(reverse=True)
+            summary_sentence += f" Largest gap: {gaps[0][1]} ({gaps[0][0]} pp)."
             summary_prefix = "<p><strong>KPI overview:</strong>" + summary_sentence + "</p>"
         # Prepend the summary only if an executive summary exists
         if out.get("exec_summary_html"):
