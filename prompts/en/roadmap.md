@@ -12,9 +12,9 @@ When planning, consider:
 
 Example measures (to be adapted):
 
-- **0–3 months:** Start a data inventory; finalise the questionnaire and test an LLM prototype; launch a mini landing page for lead generation.
+ - **0–3 months:** Start a data inventory; finalise the questionnaire and test an LLM prototype; launch a small web presence for lead generation.
 - **3–6 months:** Develop an MVP portal and onboard first pilot clients; automate the highest‑priority process (e.g. ticketing); submit funding applications and secure partners.
-- **6–12 months:** Scale up a white‑label consulting tool; build governance structures; expand to new markets and grow training offerings.
+ - **6–12 months:** Scale up a customisable consulting tool; build governance structures; expand to new markets and grow training offerings.
 
 Use these as inspiration and tailor them to the main service, company size and resources. Avoid generic advice and repetition. If a measure has been listed in quick wins or recommendations, choose a different focus.
 

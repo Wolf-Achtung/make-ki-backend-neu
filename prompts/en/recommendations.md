@@ -1,8 +1,8 @@
 # Recommendations – Top 5
 
-Generate an HTML ordered list (`<ol>…</ol>`) with the five most important recommendations for the company. Each recommendation should start with a bold action verb and, in one sentence, describe the goal, expected **benefit** and required effort.  Use plain, accessible language and avoid buzzwords.  Conclude each sentence with the **benefit/effort** ratio in brackets (e.g. `(H/M)` for high benefit and medium effort).
+Generate an HTML ordered list (`<ol>…</ol>`) with the five most important recommendations for the company. Each recommendation should start with a bold action verb and, in one sentence, describe the goal, expected **benefit** and required effort.  Use plain, accessible language and avoid jargon or inflated marketing terms.  Conclude each sentence with the **benefit/effort** ratio in brackets (e.g. `(H/M)` for high benefit and medium effort).
 
-Combine strategic initiatives (focusing, strengthening the data foundation, establishing governance, piloting & scaling, empowering & networking) with tangible steps derived from vision, strategic goals, biggest potential, moonshot and benchmarks. Avoid repeating items from the quick wins or the action plan.
+Combine strategic initiatives (focusing, strengthening the data foundation, establishing governance, piloting & scaling, empowering & networking) with tangible steps derived from vision, strategic goals, biggest potential, long‑term aspirations and benchmarks. Avoid repeating items from the quick wins or the action plan.
 
 Tailor the recommendations to company size (solo, small team, SME), time capacity, regulatory requirements, existing tools, training interests and vision priority—without explicitly naming those variables. Solo businesses need cost‑effective, modular measures; larger SMEs can pursue more complex efforts.
 

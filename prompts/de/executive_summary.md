@@ -6,7 +6,7 @@ Die Zusammenfassung besteht aus vier klar strukturierten Abschnitten (je maximal
 
 * **KPI‑Überblick:** Erläutere kurz, wie das Unternehmen bei Digitalisierung, Automatisierung, Papierlosigkeit und KI‑Know‑how im Branchenvergleich abschneidet (Vorsprung, gleichauf oder Rückstand). Diese vier Begriffe sind ausschließlich Kennzahlen und dürfen in den übrigen Abschnitten nicht auftauchen.
 
-* **Top‑Chancen:** Führe bis zu drei branchenspezifische Chancen auf, die sich aus {{ hauptleistung }} und den strategischen Zielen ergeben. Nutze Hinweise wie „größtes Potenzial“, „Einsatzbereich“, „Vision“ und „Moonshot“. Wenn die Vision oder das Potenzial GPT‑basierte Services oder ein KI‑Portal für KMU umfasst, benenne dies explizit als Chance. Beschreibe pro Chance den konkreten Nutzen in einem Satz.
+* **Top‑Chancen:** Führe bis zu drei branchenspezifische Chancen auf, die sich aus {{ hauptleistung }} und den strategischen Zielen ergeben. Nutze Hinweise wie „größtes Potenzial“, „Einsatzbereich“ und „Vision“; verzichte auf werbliche Begriffe wie „Moonshot“. Wenn die Vision oder das Potenzial KI‑gestützte Services oder ein schlankes KI‑Portal für KMU umfasst, benenne dies explizit als Chance. Beschreibe pro Chance den konkreten Nutzen in einem Satz, ohne Marketing‑ oder Technikjargon.
 
 * **Zentrale Risiken:** Liste bis zu drei wesentliche Risiken oder Hürden (z. B. Rechtslage & Compliance, Datenschutz & Datenqualität, Budget‑/Zeitdruck oder Ressourcen‑Engpässe). Erkläre kurz die möglichen Auswirkungen und nenne eine erste Maßnahme zur Risikominderung. Nenne keine der KPI‑Kategorien (Digitalisierung, Automatisierung, Papierlosigkeit, KI‑Know‑how) als Risiko.
 

@@ -6,7 +6,7 @@ The summary consists of four clearly structured sections (maximum three points e
 
 * **KPI overview:** Briefly explain how the company compares to peers in digitalisation, automation, paperless processes and AI know‑how (ahead, on par or behind). These terms are metrics only and must not appear in other sections.
 
-* **Top opportunities:** List up to three sector‑specific opportunities emerging from {{ hauptleistung }} and the strategic goals. Draw on hints such as “biggest potential”, “application area”, “vision” and “moonshot”. If the vision or potential mentions GPT‑based services or a lightweight AI portal for SMEs, call this out explicitly as an opportunity. Describe the concrete benefit of each opportunity in one sentence.
+* **Top opportunities:** List up to three sector‑specific opportunities emerging from {{ hauptleistung }} and the strategic goals. Draw on hints such as “biggest potential”, “application area” and “vision”; avoid marketing catchphrases like “moonshot”. If the vision or potential mentions AI‑based services or a lightweight AI portal for SMEs, call this out explicitly as an opportunity. Describe the concrete benefit of each opportunity in one sentence and refrain from marketing or technical jargon.
 
 * **Key risks:** List up to three major risks or obstacles (e.g. legal & compliance, data protection & data quality, budget/resource constraints or time pressure). Explain the potential impact and suggest a mitigation. Do not mention any of the KPI categories (digitalisation, automation, paperless processes, AI know‑how) as risks.
 

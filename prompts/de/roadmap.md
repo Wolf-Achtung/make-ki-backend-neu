@@ -12,9 +12,9 @@ Berücksichtige bei der Planung:
 
 Beispiele für Maßnahmen (je nach Kontext anzupassen):
 
-- **0–3 Monate:** Dateninventur starten; Fragebogen finalisieren und einen LLM‑Prototyp testen; eine Mini‑Landingpage zur Lead‑Generierung veröffentlichen.
+    - **0–3 Monate:** Dateninventur starten; Fragebogen finalisieren und einen LLM‑Prototyp testen; eine kleine Webpräsenz zur Lead‑Generierung veröffentlichen.
 - **3–6 Monate:** Ein MVP‑Portal entwickeln und erste Pilotkund:innen onboarden; den priorisierten Prozess automatisieren (z. B. Ticketing); Förderanträge stellen und Kooperationspartner gewinnen.
-- **6–12 Monate:** Ein White‑Label‑Beratungstool skalieren; Governance‑Strukturen etablieren; neue Märkte erschließen und Trainingsangebote ausbauen.
+    - **6–12 Monate:** Ein anpassbares Beratungstool skalieren; Governance‑Strukturen etablieren; neue Märkte erschließen und Trainingsangebote ausbauen.
 
 Nutze diese Beispiele als Inspiration und passe die Inhalte individuell an Hauptleistung, Unternehmensgröße und Ressourcen an. Vermeide generische Tipps und Wiederholungen aus anderen Kapiteln. Wenn eine Maßnahme bereits als Quick Win oder Empfehlung genannt wurde, wähle einen anderen Fokus.
 
