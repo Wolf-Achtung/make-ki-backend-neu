@@ -1965,79 +1965,107 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     }
     out["benchmarks"] = benchmarks
 
-    # -----------------------------
-    # Klassifizierung + Badges
-    # -----------------------------
-    # Ermitteln Sie die Statuswörter (Vorsprung/gleichauf/Rückstand) für jede Dimension
-    # anhand der Differenz zwischen Ihrem Wert und dem Branchen-Benchmark.  Das
-    # Toleranzband kann über die Umgebungsvariable KPI_TOLERANCE gesteuert werden
-    # (Standard: 10 Prozentpunkte).  Für englische Berichte werden die Begriffe
-    # "lead", "on par" und "behind" verwendet.
-    def _tol():
+    # ------------------------------------------------------------------
+    # KPI‑Klassifizierung & Badges
+    #
+    # Auf Basis der eigenen Werte und Branchen-Benchmarks wird für jede
+    # Dimension (Digitalisierung, Automatisierung, Papierlos, KI-Know-how)
+    # der relative Vorsprung oder Rückstand berechnet.  Die Toleranz
+    # (Schwellenwert für "gleichauf") wird branchenabhängig festgelegt:
+    # In produktionsnahen Bereichen ist die Automatisierung strenger
+    # (8 pp), in beratungsnahen Branchen großzügiger (12 pp).  Der
+    # Basistoleranzwert kann über die Umgebungsvariable KPI_TOLERANCE
+    # angepasst werden (Standard: 10 pp).  Zusätzlich erzeugen wir für
+    # jede Dimension ein Badge mit einem Icon (↑ für Vorsprung, ↔ für
+    # gleichauf, ↓ für Rückstand), dem Delta und dem Statuswort.
+    # Die generierten HTML‑Snippets werden im Report verwendet, sowohl
+    # im Executive‑Summary‑Kasten als auch im Inhaltsverzeichnis.
+
+    def _tol_base() -> int:
+        """Lies den Basistoleranzwert aus der Umgebungsvariable oder verwende 10."""
         try:
             return int(os.getenv("KPI_TOLERANCE", "10"))
         except Exception:
             return 10
 
-    TOL = _tol()
-
-    def _classify(self_v: int, bench_v: int, lang: str):
+    def _tol_for(label: str, branche: str) -> int:
         """
-        Bestimmen Sie das Delta (in Prozentpunkten) und geben Sie den
-        entsprechenden Status-String zurück.  Ein positives Delta bedeutet
-        Vorsprung (lead), ein negatives Delta Rückstand (behind).  Wenn
-        die Differenz innerhalb des Toleranzbands liegt, wird "gleichauf"
-        (on par) gewählt.
+        Bestimme die Toleranz für eine Dimension anhand der Branche.
+        In der Produktion/Industrie wird die Automatisierung strenger
+        bewertet, während in Beratungs-/Dienstleistungsbranchen eine
+        großzügigere Toleranz gilt.  Für alle anderen Kombinationen
+        wird der Basistoleranzwert verwendet.
+        """
+        base = _tol_base()
+        br = (branche or "").lower()
+        lab = (label or "").lower()
+        # Strenger (kleineres Toleranzband) in Produktion/Industrie für Automatisierung
+        if any(k in br for k in ["industrie", "produktion", "fertigung", "manufactur", "manufacturing"]):
+            if "autom" in lab:
+                return min(base, 8)
+        # Großzügiger (größeres Toleranzband) in Beratung/Dienstleistung für Automatisierung
+        if any(k in br for k in ["beratung", "consult", "dienstleistung", "service"]):
+            if "autom" in lab:
+                return max(base, 12)
+        return base
+
+    def _classify(self_v: int, bench_v: int, lang: str, tol: int):
+        """
+        Vergleiche eigenen Wert (self_v) mit dem Benchmark (bench_v) und
+        liefere das Delta sowie das Statuswort abhängig von der Toleranz.
+        Ist das Delta >= Toleranz → Vorsprung/lead,
+        Delta <= - Toleranz → Rückstand/behind, sonst gleichauf/on par.
         """
         try:
             delta = int(self_v) - int(bench_v)
         except Exception:
             delta = 0
-        if delta >= TOL:
+        if delta >= tol:
             return delta, ("Vorsprung" if lang == "de" else "lead")
-        if delta <= -TOL:
+        if delta <= -tol:
             return delta, ("Rückstand" if lang == "de" else "behind")
         return delta, ("gleichauf" if lang == "de" else "on par")
 
-    # Beschriftungen für die vier Dimensionen (DE und EN)
+    # Label-Liste für DE und EN
     labels_de = ["Digitalisierung", "Automatisierung", "Papierlos", "KI-Know-how"]
     labels_en = ["Digitalisation", "Automation", "Paperless", "AI know-how"]
-    LBL = labels_de if lang == "de" else labels_en
+    _labels = labels_de if lang == "de" else labels_en
 
-    # Paare aus Label, eigenem Wert und Benchmark zusammenstellen
-    pairs = [
-        (LBL[0], own_digi, dig_bench),
-        (LBL[1], own_auto, aut_bench),
-        (LBL[2], own_paper, paper_bench),
-        (LBL[3], own_know, know_bench),
+    # Paarliste aus Label, eigenem Wert und Benchmark
+    _pairs = [
+        (_labels[0], own_digi, dig_bench),
+        (_labels[1], own_auto, aut_bench),
+        (_labels[2], own_paper, paper_bench),
+        (_labels[3], own_know, know_bench),
     ]
 
-    kpi_status = []
-    for label, self_v, bench_v in pairs:
-        delta, status_word = _classify(self_v, bench_v, lang)
+    kpi_status: List[dict] = []
+    for lbl, self_v, bench_v in _pairs:
+        tol = _tol_for(lbl, branche)
+        delta, stat_word = _classify(self_v, bench_v, lang, tol)
         kpi_status.append({
-            "label": label,
+            "label": lbl,
             "self": self_v,
             "bench": bench_v,
             "delta": delta,
-            "status": status_word,
+            "status": stat_word,
         })
-    # Speichere das Status-Array im Ausgabedictionary
     out["kpi_status"] = kpi_status
 
-    # HTML-Badges generieren: ein kleines Badge pro Dimension, das den
-    # Delta-Wert (mit Vorzeichen) und den Status enthält.  Die Farbe wird
-    # später per CSS definiert (kpi-lead, kpi-on-par, kpi-behind).
-    def _badge(label: str, delta: int, status: str) -> str:
-        # Vorzeichen für Delta bestimmen
+    # Badge-HTML generieren: Icon + Label + Delta (pp) + Status.  Für DE/EN
+    # verwenden wir dieselben Icons.  Die CSS-Klassen (z. B. kpi-vorsprung)
+    # werden später in den Templates definiert.
+    def _badge_html(label: str, delta: int, status: str) -> str:
         sign = "+" if delta > 0 else ("" if delta == 0 else "−")
         delta_txt = f"{sign}{abs(delta)} pp"
-        # CSS-Klasse basiert auf Status (Leerzeichen ersetzen)
-        cls = status.replace(" ", "-").lower()
-        return f'<span class="kpi-badge kpi-{cls}">{label} {delta_txt} ({status})</span>'
+        # Icon je Richtung
+        icon = "↑" if delta > 0 else ("↔" if delta == 0 else "↓")
+        # CSS-Klasse: Status in Kleinbuchstaben, Leerzeichen und Sonderzeichen entfernen
+        cls = status.lower().replace(" ", "-").replace("ß", "ss").replace("ü", "u").replace("ö", "o").replace("ä", "a")
+        return f'<span class="kpi-badge kpi-{cls}">{icon}&nbsp;{label} {delta_txt} ({status})</span>'
 
     badges_html = "<div class=\"kpi-badges\">" + "".join(
-        _badge(item["label"], item["delta"], item["status"]) for item in kpi_status
+        _badge_html(item["label"], item["delta"], item["status"]) for item in kpi_status
     ) + "</div>"
     out["kpi_badges_html"] = badges_html
 
@@ -2084,15 +2112,14 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                                 f"der Automatisierungsgrad bei {aut}% ({aut_desc}, Branchenschnitt {aut_bm}%), "
                                 f"die Papierlosigkeit bei {paper}% ({paper_desc}, Benchmark {paper_bm}%) "
                                 f"und das KI‑Know‑how bei {know}% ({know_desc}, Benchmark {know_bm}%).")
-            # Größtes Gap bestimmen: Differenz (Betrag) zwischen Ihrem Wert und Benchmark
+            # Ermitteln Sie das größte Gap (absoluter Differenzwert) aus den vier Dimensionen
             gaps = [
-                (abs(dig - dig_bm), LBL[0]),
-                (abs(aut - aut_bm), LBL[1]),
-                (abs(paper - paper_bm), LBL[2]),
-                (abs(know - know_bm), LBL[3]),
+                (abs(own_digi - dig_bench), _labels[0]),
+                (abs(own_auto - aut_bench), _labels[1]),
+                (abs(own_paper - paper_bench), _labels[2]),
+                (abs(own_know - know_bench), _labels[3]),
             ]
-            gaps.sort(reverse=True)
-            # Füge das größte Gap am Ende des Satzes hinzu
+            gaps.sort(key=lambda x: x[0], reverse=True)
             summary_sentence += f" Größtes Gap: {gaps[0][1]} ({gaps[0][0]} pp)."
             summary_prefix = "<p><strong>KPI‑Überblick:</strong>" + summary_sentence + "</p>"
         else:
@@ -2123,14 +2150,13 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                                 f"automation is {aut}% ({aut_desc}, sector average {aut_bm}%), "
                                 f"paperless processes reach {paper}% ({paper_desc}, benchmark {paper_bm}%), "
                                 f"and AI know‑how is {know}% ({know_desc}, benchmark {know_bm}%).")
-            # Largest gap
             gaps = [
-                (abs(dig - dig_bm), LBL[0]),
-                (abs(aut - aut_bm), LBL[1]),
-                (abs(paper - paper_bm), LBL[2]),
-                (abs(know - know_bm), LBL[3]),
+                (abs(own_digi - dig_bench), _labels[0]),
+                (abs(own_auto - aut_bench), _labels[1]),
+                (abs(own_paper - paper_bench), _labels[2]),
+                (abs(own_know - know_bench), _labels[3]),
             ]
-            gaps.sort(reverse=True)
+            gaps.sort(key=lambda x: x[0], reverse=True)
             summary_sentence += f" Largest gap: {gaps[0][1]} ({gaps[0][0]} pp)."
             summary_prefix = "<p><strong>KPI overview:</strong>" + summary_sentence + "</p>"
         # Prepend the summary only if an executive summary exists
