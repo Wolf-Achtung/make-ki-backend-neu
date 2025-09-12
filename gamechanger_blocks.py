@@ -26,9 +26,13 @@ def build_gamechanger_blocks(data: dict, features: dict) -> str:
         A concatenated HTML string containing all selected blocks.
     """
     blocks: List[str] = []
-    # Moonshot: one headline and a sentence prompting a visionary idea
+    # Long-term initiative (formerly Moonshot): one headline and a sentence prompting
+    # a visionary idea.  Use a neutral heading to avoid marketing jargon and
+    # clarify that the maturity benchmark in this chapter is use-case specific.
     if features.get("moonshot"):
-        blocks.append("<h3>Moonshot</h3><p>Formuliere eine visionäre, branchenspezifische Empfehlung (1 Titel + 1 Satz) für die nächsten 3 Jahre.</p>")
+        blocks.append(
+            "<h3>Langfristige Initiative</h3><p><em>Hinweis: Kapitel-Benchmark (Use-Case-bezogen), nicht die Gesamt-KPI-Kacheln.</em></p><p>Formuliere eine visionäre, branchenspezifische Empfehlung (1 Titel + 1 Satz) für die nächsten 3 Jahre.</p>"
+        )
     # Maturity Benchmark: instructs to provide a table comparing company and industry
     if features.get("maturity_benchmark"):
         blocks.append("<h3>Reifegrad-Benchmark</h3><p>Stelle den KI-Reifegrad vs. Branchen-Median in einer kompakten Tabelle dar (4 Zeilen).</p>")
