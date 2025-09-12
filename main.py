@@ -660,12 +660,19 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
                 html_ready = result.get("html")
                 if isinstance(html_ready, str) and html_ready.strip():
                     # Fertig gerendertes HTML aus gpt_analyze.analyze_briefing verwenden
-                    return strip_code_fences(html_ready)
+                    html_clean = strip_code_fences(html_ready)
+                    # Fail if unresolved Jinja markers remain in the rendered HTML
+                    if ("{{" in html_clean) or ("{%" in html_clean):
+                        raise RuntimeError("Template not fully rendered – unresolved Jinja tags found")
+                    return html_clean
                 # Legacy-Fallback: falls kein 'html' enthalten, unten weiter mit einfachem Renderer
                 report = result
             elif isinstance(result, str):
                 # Ergebnis ist bereits das komplette HTML
-                return strip_code_fences(result)
+                html_clean = strip_code_fences(result)
+                if ("{{" in html_clean) or ("{%" in html_clean):
+                    raise RuntimeError("Template not fully rendered – unresolved Jinja tags found")
+                return html_clean
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
 
@@ -734,19 +741,22 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
                 raise RuntimeError("No recipient (user email) available")
 
             head = html[:400]
+            # If unresolved Jinja markers are detected, abort sending and mark job as error.
             if ("{{" in head) or ("{%" in head):
-                logger.error("[PDF] unresolved template markers detected in head — check call path")
+                logger.error("[PDF] unresolved template markers detected – aborting PDF send")
+                set_job(job_id, status="error", error="Template not fully rendered – unresolved Jinja tags in HTML")
+                return
 
             # 3) An PDF-Service senden
             res = await send_html_to_pdf_service(
                 html, user_email, subject="KI-Readiness Report", lang=lang, request_id=rid
             )
             set_job(job_id,
-                    pdf_sent=bool(res["ok"]),
-                    pdf_status=res["status"],
+                    pdf_sent=bool(res.get("ok")),
+                    pdf_status=res.get("status"),
                     pdf_meta=res.get("data"),
-                    status="done" if res["ok"] else "error",
-                    error=None if res["ok"] else res.get("error"))
+                    status="done" if res.get("ok") else "error",
+                    error=None if res.get("ok") else res.get("error"))
 
         except Exception as e:
             logger.exception("briefing_async job failed: %s", e)

@@ -17,6 +17,13 @@ except Exception:
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from openai import OpenAI
+# Absolute path helpers for templates and assets
+from pathlib import Path
+
+# Base directory of this module
+BASE_DIR = Path(__file__).resolve().parent
+# Templates directory relative to this module
+TEMPLATES_DIR = BASE_DIR / "templates"
 
 client = OpenAI()
 
@@ -1365,27 +1372,46 @@ def distill_recommendations(source_html: str, lang: str = "de") -> str:
         return ""
 
 def _jinja_env():
-    return Environment(loader=FileSystemLoader("templates"),
-                       autoescape=select_autoescape(["html","htm"]),
-                       enable_async=False, trim_blocks=True, lstrip_blocks=True)
+    """
+    Construct a Jinja2 environment that loads templates from the absolute
+    ``TEMPLATES_DIR``.  Using absolute paths prevents failures when the
+    current working directory differs from the location of this file.
+    """
+    return Environment(
+        loader=FileSystemLoader(str(TEMPLATES_DIR)),
+        autoescape=select_autoescape(["html", "htm"]),
+        enable_async=False,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
 
 def _pick_template(lang: str) -> Optional[str]:
-    if lang == "de" and os.path.exists("templates/pdf_template.html"):
+    """
+    Determine which template file to use based on language.  Template files
+    are looked up relative to the ``TEMPLATES_DIR`` defined at module load time.
+    This avoids dependence on the current working directory.
+    """
+    if lang == "de" and (TEMPLATES_DIR / "pdf_template.html").exists():
         return "pdf_template.html"
-    if os.path.exists("templates/pdf_template_en.html"):
+    if (TEMPLATES_DIR / "pdf_template_en.html").exists():
         return "pdf_template_en.html"
     return None
 
 def _data_uri_for(path: str) -> Optional[str]:
-    if not path or path.startswith(("http://","https://","data:")): return path
+    if not path or path.startswith(("http://", "https://", "data:")):
+        return path
+    # Attempt absolute or cwd-relative path first
     if os.path.exists(path):
         mime = mimetypes.guess_type(path)[0] or "application/octet-stream"
-        with open(path,"rb") as f: b64 = base64.b64encode(f.read()).decode("ascii")
+        with open(path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("ascii")
         return f"data:{mime};base64,{b64}"
-    tp = os.path.join("templates", path)
-    if os.path.exists(tp):
-        mime = mimetypes.guess_type(tp)[0] or "application/octet-stream"
-        with open(tp,"rb") as f: b64 = base64.b64encode(f.read()).decode("ascii")
+    # Then attempt to resolve relative to TEMPLATES_DIR
+    candidate = TEMPLATES_DIR / path
+    if candidate.exists():
+        mime = mimetypes.guess_type(str(candidate))[0] or "application/octet-stream"
+        with open(candidate, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("ascii")
         return f"data:{mime};base64,{b64}"
     return None
 
@@ -2783,6 +2809,12 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             **size_info,
         }
         html = tmpl.render(**ctx)
+        # Fail‑fast if unresolved Jinja tokens remain in the rendered HTML.  Incomplete
+        # rendering would otherwise propagate into the PDF and show raw template
+        # markers.  Raising here ensures the caller can handle the error and
+        # avoids generating a broken PDF.
+        if "{{" in html or "{%" in html:
+            raise RuntimeError("Template not fully rendered (unresolved Jinja tags)")
     else:
         # Fallback rendering (rarely used) without Jinja templates.  Use the new
         # report names.  For German we call it KI‑Status‑Report, in English
