@@ -2516,7 +2516,12 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     try:
         # Remove duplicate KPI overview blocks in German and English
         esc = out.get("exec_summary_html") or ""
-        hy = r"[\\s\\u00A0\\u2010-\\u2015-]+"
+        # Define a pattern matching whitespace, non-breaking spaces and hyphen-like characters
+        # between "KPI" and "Überblick".  Use single backslash escapes so that \s and
+        # Unicode sequences are interpreted by the regex engine rather than matching
+        # literal backslashes.  This ensures that phrases like "KPI‑Überblick" or
+        # "KPI Überblick" are correctly detected and removed.
+        hy = r"[\s\u00A0\u2010-\u2015-]+"
         # German version
         esc = re.sub(
             rf"(?is)(?:<h3[^>]*>)?\\s*KPI{hy}Überblick\\s*(?:</h3>)?\\s*.*?(?=(?:<h3[^>]*>)|Top{hy}Chancen|Zentrale{hy}Risiken|Nächste{hy}Schritte|$)",
