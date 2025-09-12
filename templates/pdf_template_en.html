@@ -198,7 +198,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
               {% for key, b in benchmarks.items() %}
               <div class="kpi-item">
                 <div class="kpi-value">{{ b.self }}%</div>
-                {# Omit the KPI label entirely in the Gold‑Standard report to avoid stray labels in the PDF text. #}
+                <div class="kpi-label">{{ key }}</div>
               </div>
               {% endfor %}
             </div>
@@ -297,7 +297,7 @@ risks_html|trim) %}
                     <td>{{ row.foerderhoehe }}</td>
                     <td>{{ row.zweck }}</td>
                     <td>{{ row.deadline }}</td>
-                    <td>{% if row.link %}<a href="{{ row.link }}">Link</a>{% endif %}</td>
+                    <td>{% if row.link %}<a href="{{ row.link }}">{{ row.name }}</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
                 </tbody>
@@ -340,7 +340,7 @@ risks_html|trim) %}
                     <td>{{ t.usecase }}</td>
                     <td>{{ t.datenschutz or 'n/a' }}</td>
                     <td>{{ t.cost or 'n/a' }}</td>
-                    <td>{% if t.link %}<a href="{{ t.link }}">Link</a>{% endif %}</td>
+                    <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
                 </tbody>
