@@ -2182,6 +2182,44 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         # Prepend the summary only if an executive summary exists
         if out.get("exec_summary_html"):
             out["exec_summary_html"] = summary_prefix + "\n" + out["exec_summary_html"]
+    # After adding the KPI summary, remove any KPI overview section that the LLM may have generated.
+    # The language model sometimes includes an additional "KPI‑Überblick"/"KPI overview" section
+    # with its own heading and narrative, which can contradict the computed values.  Remove
+    # any heading containing "KPI" followed by its content up to the next heading.  Also
+    # strip internal guideline sections labelled "Zusätzliche Anweisungen" or
+    # "Additional Instructions" from all HTML sections.  This prevents meta‑instructions
+    # from leaking into the final report.
+    try:
+        # Clean the executive summary of stray KPI overview sections.
+        esc = out.get("exec_summary_html", "")
+        if esc:
+            # Remove any <h2>/<h3>/<h4> containing "KPI" (case-insensitive) and the subsequent content
+            # until the next heading of the same or higher level.  Use a non-greedy match to ensure
+            # only the KPI block is removed.
+            esc = re.sub(
+                r"(?is)<h[23][^>]*>\s*KPI[^<]*</h[23]>.*?(?=<h2|<h3|<h4|$)",
+                "",
+                esc,
+            )
+            out["exec_summary_html"] = esc
+        # Remove guideline sections from any *_html field.
+        for key, val in list(out.items()):
+            if key.endswith("_html") and isinstance(val, str):
+                html_val = val
+                # Remove sections starting with "Zusätzliche Anweisungen" or "Additional Instructions".
+                html_val = re.sub(
+                    r"(?is)<h[23][^>]*>\s*Zusätzliche\s+Anweisungen[^<]*</h[23]>.*?(?=<h2|<h3|<h4|$)",
+                    "",
+                    html_val,
+                )
+                html_val = re.sub(
+                    r"(?is)<h[23][^>]*>\s*Additional\s+Instructions[^<]*</h[23]>.*?(?=<h2|<h3|<h4|$)",
+                    "",
+                    html_val,
+                )
+                out[key] = html_val
+    except Exception:
+        pass
     except Exception:
         # In case of unexpected errors, leave the summary untouched
         pass
