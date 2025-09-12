@@ -134,6 +134,10 @@ def _sanitize_text(value: str) -> str:
         "gpt-ausgewerteten": "LLM-gestützten",
         "gpt-gestützt": "LLM-gestützte"
     }
+    replacements.update({
+        "LLM-gestützteer": "LLM-gestützter",
+        "LLM‑gestützteer": "LLM-gestützter",  # NBSP/Bindestrich Variante
+    })
     for old, new in replacements.items():
         if old in text:
             text = text.replace(old, new)
@@ -1640,22 +1644,23 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         # specific and not the same as the overall KPI tiles.  This
         # replacement works both for DE and EN.  Only perform the change if
         # the heading exists in the generated HTML.
-        if "<h3>Moonshot</h3>" in gc_html:
-            if lang == "de":
+        # Terminologie absichern (falls LLM "Moonshot" ausgibt)
+        if lang == "de":
+            gc_html = gc_html.replace("<h3>Moonshot</h3>", "<h3>Langfristige Initiative</h3>")
+            if "Langfristige Initiative</h3>" in gc_html and "Kapitel-Benchmark" not in gc_html:
                 gc_html = gc_html.replace(
-                    "<h3>Moonshot</h3>",
-                    "<h3>Langfristige Initiative</h3><p><em>Hinweis: Kapitel-Benchmark (Use-Case-bezogen), nicht die Gesamt-KPI-Kacheln.</em></p>"
+                    "</h3>",
+                    "</h3><p><em>Hinweis: Kapitel-Benchmark (Use-Case-bezogen), nicht die Gesamt-KPI-Kacheln.</em></p>",
+                    1
                 )
-            else:
+        else:
+            gc_html = gc_html.replace("<h3>Moonshot</h3>", "<h3>Long-term Initiative</h3>")
+            if "Long-term Initiative</h3>" in gc_html and "chapter-specific benchmark" not in gc_html:
                 gc_html = gc_html.replace(
-                    "<h3>Moonshot</h3>",
-                    "<h3>Long-term Initiative</h3><p><em>Note: chapter benchmarks are use-case specific and differ from the overall KPI tiles.</em></p>"
+                    "</h3>",
+                    "</h3><p><em>Note: chapter-specific benchmark (use-case), not the global KPI tiles.</em></p>",
+                    1
                 )
-    except Exception:
-        gc_html = ""
-    out["gamechanger_html"] = gc_html
-
-    # -------------------------------------------------------------------------
         # Remove stray KPI category lines from the executive summary
         #
         # In some drafts the LLM may insert lines containing only the KPI
@@ -2207,16 +2212,23 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         # another heading) or the next major heading (e.g. Top Chancen, Zentrale
         # Risiken, Nächste Schritte).  This prevents conflicting narratives.
         try:
+            # --- Remove any additional LLM 'KPI overview' narrative (DE/EN) ---
+            import re
             esc = out.get("exec_summary_html") or ""
-            if esc:
-                # Remove DE KPI overview blocks
-                esc = re.sub(r"(?is)<h3>\s*KPI[\s\-]*Überblick\s*</h3>.*?(?=<h3|<p|<ul|<ol|Top\s*-?Chancen|Zentrale\s*-?Risiken|Nächste\s*-?Schritte|$)", "", esc)
-                # Remove EN KPI overview blocks
-                esc = re.sub(r"(?is)<h3>\s*KPI\s*overview\s*</h3>.*?(?=<h3|<p|<ul|<ol|Top\s*opportunities|Key\s*risks|Next\s*steps|$)", "", esc)
-                # Also remove plain text headings that may not be wrapped in <h3>
-                esc = re.sub(r"(?is)KPI[\s\-]*Überblick.*?(?=<h3|<p|<ul|<ol|Top\s*-?Chancen|Zentrale\s*-?Risiken|Nächste\s*-?Schritte|$)", "", esc)
-                esc = re.sub(r"(?is)KPI\s*overview.*?(?=<h3|<p|<ul|<ol|Top\s*opportunities|Key\s*risks|Next\s*steps|$)", "", esc)
-                out["exec_summary_html"] = esc
+
+            # DE: „KPI-Überblick …“ bis zur nächsten H3-Überschrift bzw. Beginn des nächsten Abschnitts
+            esc = re.sub(
+                r"(?is)(?:<h3[^>]*>)?\s*KPI[\s\-]*Überblick\s*(?:</h3>)?\s*.*?(?=(?:<h3[^>]*>)|Top[\s\-]*Chancen|Zentrale[\s\-]*Risiken|Nächste[\s\-]*Schritte|$)",
+                "", esc
+            )
+
+            # EN: analog
+            esc = re.sub(
+                r"(?is)(?:<h3[^>]*>)?\s*KPI\s*overview\s*(?:</h3>)?\s*.*?(?=(?:<h3[^>]*>)|Top\s*opportunities|Key\s*risks|Next\s*steps|$)",
+                "", esc
+            )
+
+            out["exec_summary_html"] = esc
         except Exception:
             # Ignore any errors during removal; keep the current summary
             pass
