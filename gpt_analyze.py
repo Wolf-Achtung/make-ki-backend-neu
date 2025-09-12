@@ -1661,6 +1661,9 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                     "</h3><p><em>Note: chapter-specific benchmark (use-case), not the global KPI tiles.</em></p>",
                     1
                 )
+    except Exception:
+        # If any error occurs while building the gamechanger HTML, fall back to empty
+        gc_html = ""
         # Remove stray KPI category lines from the executive summary
         #
         # In some drafts the LLM may insert lines containing only the KPI
@@ -2618,6 +2621,34 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             report["roadmap_items"] = report["roadmap"]
     except Exception:
         pass
+        # Neutralise accidental Jinja tokens in LLM HTML fields to avoid unrendered tags leaking into the PDF
+    def _neutralize_jinja_tokens(text: str) -> str:
+        if not isinstance(text, str):
+            return text
+        # Replace '{{', '}}', '{%' and '%}' with harmless HTML entities so they render as text if emitted by the LLM
+        return (
+            text.replace('{{', '&#123;&#123;')
+                .replace('}}', '&#125;&#125;')
+                .replace('{%', '&#123;%')
+                .replace('%}', '%&#125;')
+        )
+
+    _html_keys = [k for k in report.keys() if (isinstance(report.get(k), str) and (k.endswith('_html') or k in (
+        'executive_summary','praxisbeispiel','compliance','foerderprogramme','tools','gamechanger','vision'
+    )))]
+    for _k in _html_keys:
+        report[_k] = _neutralize_jinja_tokens(report[_k])
+
+    # Final strip of internal guideline sections (DE/EN) from all HTML-like report fields
+    try:
+        for k, v in list(report.items()):
+            if isinstance(v, str) and (k.endswith('_html') or k in (
+                'executive_summary','praxisbeispiel','compliance','foerderprogramme','tools','gamechanger','vision'
+            )):
+                report[k] = _strip_internal_guidelines(v)
+    except Exception:
+        pass
+
     env, template_name = _jinja_env(), _pick_template(lang)
     if template_name:
         tmpl = env.get_template(template_name)
@@ -2744,6 +2775,15 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             **size_info,
         }
         html = tmpl.render(**ctx)
+        # Double-render safety: if leftover Jinja tags are present (should not happen),
+        # attempt a second render pass on the resulting HTML to resolve any nested templates.
+        if '{{' in html or '{%' in html:
+            try:
+                html = env.from_string(html).render(**ctx)
+            except Exception:
+                # leave as-is if rendering fails; the neutralisation above will avoid leaking control tags
+                pass
+
     else:
         # Fallback rendering (rarely used) without Jinja templates.  Use the new
         # report names.  For German we call it KI‑Status‑Report, in English
