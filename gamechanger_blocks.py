@@ -38,10 +38,10 @@ def build_gamechanger_blocks(data: dict, features: dict) -> str:
         blocks.append("<h3>Reifegrad-Benchmark</h3><p>Stelle den KI-Reifegrad vs. Branchen-Median in einer kompakten Tabelle dar (4 Zeilen).</p>")
     # Förder Forecast: bullet list of programmes starting/ending/changed
     if features.get("foerder_forecast"):
-        blocks.append("<h3>Förder-Forecast</h3><p>Schreibe einen kurzen, narrativen Absatz ohne Aufzählungen: Welche Programme starten, welche enden, welche Änderungen gelten – jeweils 1–2 Schlagworte, optional mit Quelle im Fließtext.</p>")
+        blocks.append("<h3>Förder-Forecast</h3><ul><li>Programme, die starten</li><li>Programme, die enden</li><li>Wesentliche Änderungen (Kurzsatz + Quelle)</li></ul>")
     # Next Steps: bullet list for 30 days and 6 months actions
     if features.get("next_steps"):
-        blocks.append("<h3>Nächste Schritte</h3><p>Formuliere zwei kurze Absätze: <b>30 Tage</b> (2–3 Sätze, ohne Listen) und <b>6 Monate</b> (2–3 Sätze, ohne Listen).</p>")
+        blocks.append("<h3>Nächste Schritte</h3><ul><li>30 Tage: 2–3 Maßnahmen</li><li>6 Monate: 2–3 Meilensteine</li></ul>")
     # Realtime Check: simple paragraph instructing to verify current availability
     if features.get("realtime_check"):
         blocks.append("<h3>Realtime-Check</h3><p>Prüfe für jedes empfohlene Förderprogramm/Tool die Verfügbarkeit zum Stichtag {{ datum }} (kurzer Vermerk).</p>")
@@ -51,5 +51,5 @@ def build_gamechanger_blocks(data: dict, features: dict) -> str:
         intro = INNOVATION_INTRO.get(branche, "")
         # Escape curly braces in intro if any, as it's inserted as raw HTML
         intro_html = intro
-        blocks.append(f"<h3>Best-Practices</h3><p>{intro_html}</p><p>Beschreibe zwei prägnante Beispiele als Fließtext (je 1–2 Sätze) – ohne Zahlen oder Kennzahlen, Fokus auf Ergebnis und Übertragbarkeit.</p>")
+        blocks.append(f"<h3>Best-Practices</h3><p>{intro_html}</p><ul><li>Use-Case A – Ergebnis/Kennzahl</li><li>Use-Case B – Ergebnis/Kennzahl</li></ul>")
     return "\n\n".join(blocks)
