@@ -465,74 +465,119 @@ def render_prompt(template_text: str, context: dict) -> str:
         return ", ".join(str(v) for v in val) if isinstance(val, list) else str(val)
     return re.sub(r"\{\{\s*(\w+)\s*\}\}", replace_simple, template_text)
 
+
 def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
-    search_paths = [
-        f"prompts/{lang}/{chapter}.md",
-        f"prompts_unzip/{lang}/{chapter}.md",
-        f"{lang}/{chapter}.md",
-        f"de_unzip/de/{chapter}.md",
-        f"en_unzip/en/{chapter}.md",
+    """
+    Compose the LLM prompt for a given chapter by concatenating (if present):
+    - prompt_prefix.md
+    - chapter-specific file (e.g., executive_summary.md)
+    - prompt_additions_{lang}.md
+    - prompt_suffix.md
+
+    The loader supports both a zipped prompts bundle and an unpacked folder.
+    It also resolves some aliases (e.g., "foerderprogramme" -> "funding" for EN).
+    """
+    # Resolve aliases (chapter name may be German even for EN)
+    ch = chapter
+    if ch == "foerderprogramme" and lang == "en":
+        # Accept either "en/foerderprogramme.md" or "en/funding.md"
+        alias_names = ["foerderprogramme", "funding"]
+    else:
+        alias_names = [ch]
+
+    # Candidate search paths in priority order
+    roots = [
+        "prompts/{lang}/{name}.md",
+        "prompts_unzip/{lang}/{name}.md",
+        "{lang}/{name}.md",
+        "de_unzip/de/{name}.md" if lang == "de" else "en_unzip/en/{name}.md",
     ]
-    prompt_text = None
-    for p in search_paths:
-        if os.path.exists(p):
-            try:
-                prompt_text = load_text(p); break
-            except Exception:
-                continue
-    if prompt_text is None:
-        prompt_text = f"[NO PROMPT FOUND for {chapter}/{lang}]"
 
-    prompt = render_prompt(prompt_text, context)
-    is_de = (lang == "de")
-    base_rules = (
-        "Gib die Antwort ausschließlich als gültiges HTML ohne <html>-Wrapper zurück. "
-        "Nutze <h3>, <p>, <ul>, <ol>, <table>. Keine Meta-Kommentare. Kurze Sätze."
-        if is_de else
-        "Return VALID HTML only (no <html> wrapper). Use <h3>, <p>, <ul>, <ol>, <table>. No meta talk. Be concise."
+    def load_first(names):
+        for nm in names:
+            for root in roots:
+                path = root.format(lang=lang, name=nm)
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        return f.read()
+                except Exception:
+                    continue
+        return ""
+
+    # Load optional prefix/suffix/additions
+    prefix = load_first(["prompt_prefix"])
+    additions = load_first([f"prompt_additions_{lang}"])
+    suffix = load_first(["prompt_suffix"])
+
+    # Load chapter template (first match wins, with aliasing)
+    tpl = load_first(alias_names)
+    if not tpl:
+        # Minimal fallback wording to avoid empty prompts
+        tpl = f"Write the '{ch}' section in { 'German' if lang=='de' else 'English' } as one or two short paragraphs, no bullet lists, no numbers."
+
+    # Narrative style guardrails (global)
+    style_common = (
+        "\n\n---\nSTYLE RULES (MANDATORY)\n"
+        "- Write natural paragraphs (no <ul>/<ol> lists, no numbered lists).\n"
+        "- No percentages, no currency amounts, no KPI values.\n"
+        "- Warm, optimistic, advisory tone. Avoid buzzwords and marketing speak.\n"
+        "- Keep it concise: max. 4 sentences per subsection.\n"
     )
-    style = "\n\n---\n" + base_rules
 
-    if chapter == "executive_summary":
-        # Gold‑Standard: use a four‑part structure for the executive summary and cap the number of points.
-        # For German reports we instruct the model to produce sections for KPI overview, top opportunities,
-        # central risks and next steps.  Each list must contain at most three items and the first word
-        # of each list item should be bold to aid readability.  Tools or funding should not be mentioned
-        # in this section.
-        style += (
-            "\n- Verwende die folgende Struktur: <h3>KPI‑Überblick</h3><p>…</p><h3>Top‑Chancen</h3><ul>…</ul><h3>Zentrale Risiken</h3><ul>…</ul><h3>Nächste Schritte</h3><ol>…</ol>"
-            "\n- Maximal 3 Punkte pro Liste. Fette jeweils das erste Wort in jedem Punkt."
-            "\n- Keine Erwähnung von Tools oder Förderprogrammen in der Executive Summary."
-            if is_de else
-            "\n- Use this structure: <h3>KPI overview</h3><p>…</p><h3>Top opportunities</h3><ul>…</ul><h3>Key risks</h3><ul>…</ul><h3>Next steps</h3><ol>…</ol>"
-            "\n- Limit each list to a maximum of 3 points. Bold the first word in each point."
-            "\n- Do not mention tools or funding programmes in the executive summary."
-        )
+    # Chapter-specific constraints
+    is_de = (lang == "de")
+    ch_style = ""
+    if ch == "executive_summary":
+        ch_style += ("\n- Struktur: kurzer Überblick, Top-Chancen, Risiken, Nächste Schritte – jeweils als Fließtext."
+                     "\n- Keine Tools, keine Förderprogramme im Executive Summary."
+                     if is_de else
+                     "\n- Structure: brief overview, top opportunities, key risks, next steps — all as prose."
+                     "\n- Do not mention tools or funding in the executive summary.")
+    elif ch == "vision":
+        ch_style += ("\n- Beschreibe eine langfristige Initiative (Titel + 1 Satz) und ihren Nutzen in 3–4 Sätzen."
+                     "\n- Qualitative Wirkung statt Kennzahlen; keine KPIs auflisten."
+                     if is_de else
+                     "\n- Propose a long-term initiative (title + one-liner) and explain its benefits in 3–4 sentences."
+                     "\n- Qualitative impact — do not list KPIs.")
+    elif ch == "quick_wins":
+        ch_style += ("\n- 1–2 kurze Absätze mit sofort umsetzbaren Maßnahmen; konkret formulieren (ohne Markenpräferenz)."
+                     if is_de else
+                     "\n- 1–2 short paragraphs with immediately actionable steps; be specific (no brand endorsements).")
+    elif ch == "risks":
+        ch_style += ("\n- Ein kompakter Absatz zu 2–3 Hauptrisiken mit kurzen Hinweisen zur Minderung (in Klammern)."
+                     if is_de else
+                     "\n- One compact paragraph with 2–3 key risks and brief mitigation hints (in brackets).")
+    elif ch == "roadmap":
+        ch_style += ("\n- Drei kurze Abschnitte: 30 Tage, 3 Monate, 12 Monate — je 2–3 Sätze, keine Listen."
+                     if is_de else
+                     "\n- Three short paragraphs: 30 days, 3 months, 12 months — 2–3 sentences each, no lists.")
+    elif ch == "recommendations":
+        ch_style += ("\n- 4–5 präzise Empfehlungen als Fließtext (Impact/Effort in Klammern: H/M/L)."
+                     if is_de else
+                     "\n- 4–5 precise recommendations as prose (Impact/Effort in brackets: H/M/L).")
+    elif ch == "tools":
+        ch_style += ("\n- Liefere eine Tabelle im HTML-Format nur wenn erforderlich; ansonsten kurzer Absatz, warum bestimmte Toolkategorien sinnvoll sind."
+                     if is_de else
+                     "\n- Provide an HTML table only if necessary; otherwise a short paragraph on useful tool categories.")
+    elif ch in ("foerderprogramme", "funding"):
+        ch_style += ("\n- Fokussiere auf 3–5 relevante Programme; nenne Name/Zielgruppe/Region/Link — keine Beträge."
+                     if is_de else
+                     "\n- Focus on 3–5 relevant programmes; include name/target group/region/link — omit amounts.")
+    elif ch == "compliance":
+        ch_style += ("\n- Erkläre realistisch für KMU die Pflichten aus EU AI Act, DSGVO (DSFA/AVV), ePrivacy, ggf. DSA. "
+                     "Ergänze 'Was heißt das für Sie?'-Sätze."
+                     if is_de else
+                     "\n- Summarise SME-relevant duties from EU AI Act, GDPR (DPIA/DPA), ePrivacy and, if applicable, DSA. "
+                     "Add 'What this means for you' lines.")
+    elif ch == "praxisbeispiel":
+        ch_style += ("\n- Kurzes, glaubwürdiges Fallbeispiel aus der Branche (5–7 Sätze), klarer Nutzen, Lessons Learned."
+                     if is_de else
+                     "\n- Short, credible case study (5–7 sentences), clear benefits and lessons learned.")
 
-    if chapter == "vision":
-        style += ("\n- Form: 1 kühne Idee (Titel + 1 Satz); 1 MVP (2–4 Wochen, grobe Kosten); 3 KPIs in <ul>. "
-                  "Branchen-/Größenbezug, keine Allgemeinplätze."
-                  if is_de else
-                  "\n- Form: 1 bold idea (title + one-liner); 1 MVP (2–4 weeks, rough cost); 3 KPIs in <ul>. "
-                  "Adapt to industry/size, avoid genericities.")
-
-    if chapter == "tools":
-        style += ("\n- <table> mit Spalten: Name | Usecase | Kosten | Link. Max. 7 Zeilen, DSGVO/EU-freundlich."
-                  if is_de else
-                  "\n- <table> columns: Name | Use case | Cost | Link. Max 7 rows. Prefer GDPR/EU-friendly tools.")
-
-    if chapter in ("foerderprogramme", "foerderung", "funding"):
-        style += ("\n- <table>: Name | Zielgruppe | Förderhöhe | Link. Max. 5 Zeilen."
-                  if is_de else
-                  "\n- <table>: Name | Target group | Amount | Link. Max 5 rows.")
-
-    if context.get("is_self_employed"):
-        style += ("\n- Solo-Selbstständig: Empfehlungen skalierbar halten; passende Förderungen priorisieren."
-                  if is_de else
-                  "\n- Solo self-employed: keep recommendations scalable; prioritize suitable funding.")
-
-    return prompt + style
-
+    # Assemble final prompt
+    parts = [prefix.strip(), tpl.strip(), additions.strip(), (style_common + ch_style).strip(), suffix.strip()]
+    prompt_text = "\n\n".join([p for p in parts if p])
+    return prompt_text
 def _chat_complete(messages, model_name: Optional[str], temperature: Optional[float] = None) -> str:
     args = {"model": model_name or os.getenv("GPT_MODEL_NAME", "gpt-5"), "messages": messages}
     if temperature is None:
@@ -2594,47 +2639,41 @@ def build_ueber_mich_section(lang: str = "de") -> str:
         )
 
 
+
 def build_glossary_section(lang: str = "de") -> str:
     """
-    Build a simple glossary of key terms used in the report.  This helps readers
-    unfamiliar with AI or compliance terminology.  Definitions are intentionally
-    kept brief and non‑technical.
-
-    :param lang: language code
-    :return: HTML string with glossary entries
+    Build the glossary section. If a prompt file exists (de/glossar.md or en/glossary.md),
+    use its HTML directly; otherwise, fall back to a small curated default list.
     """
+    # Try loading from prompts
+    try_paths = [
+        f"prompts/{lang}/" + ("glossar.md" if lang=="de" else "glossary.md"),
+        f"prompts_unzip/{lang}/" + ("glossar.md" if lang=="de" else "glossary.md"),
+        ("de_unzip/de/glossar.md" if lang=="de" else "en_unzip/en/glossary.md"),
+    ]
+    for p in try_paths:
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                txt = f.read().strip()
+                if txt:
+                    return ensure_html(strip_code_fences(fix_encoding(txt)), lang)
+        except Exception:
+            pass
+
+    # Default curated list (qualitative, short)
     if lang == "de":
-        entries = {
-            "KI (Künstliche Intelligenz)": "Technologien, die aus Daten lernen und selbstständig Entscheidungen treffen oder Empfehlungen aussprechen.",
-            "DSGVO": "Datenschutz-Grundverordnung der EU; regelt den Umgang mit personenbezogenen Daten.",
-            "DSFA": "Datenschutz-Folgenabschätzung; Analyse der Risiken für Betroffene bei bestimmten Datenverarbeitungen.",
-            "EU AI Act": "Zukünftige EU-Verordnung, die Anforderungen und Risikoklassen für KI-Systeme festlegt.",
-            "Quick Win": "Maßnahme mit geringem Aufwand und schnellem Nutzen.",
-            "MVP": "Minimum Viable Product; erste funktionsfähige Version eines Produkts mit minimalem Funktionsumfang.",
-        }
-        out = ["<p><strong>Glossar</strong></p>"]
-        out.append("<ul>")
-        for term, definition in entries.items():
-            out.append(f"<li><strong>{term}</strong>: {definition}</li>")
-        out.append("</ul>")
-        return "\n".join(out)
+        out = ["<p><strong>Glossar</strong></p>",
+               "<p><b>KI-Governance:</b> Regeln und Rollen für sicheren KI-Einsatz.</p>",
+               "<p><b>Dateninventur:</b> Übersicht, wo welche Daten liegen und wofür sie genutzt werden.</p>",
+               "<p><b>DSFA:</b> Datenschutz-Folgenabschätzung bei höheren Risiken.</p>",
+               "<p><b>Prompt-Richtlinie:</b> Leitplanke für sichere Eingaben (z. B. keine personenbezogenen Daten).</p>"]
     else:
-        entries = {
-            "AI (Artificial Intelligence)": "Technologies that learn from data and can make decisions or generate recommendations on their own.",
-            "GDPR": "General Data Protection Regulation; EU regulation governing personal data processing.",
-            "DPIA": "Data Protection Impact Assessment; analysis of risks to individuals for certain processing operations.",
-            "EU AI Act": "Upcoming EU legislation specifying requirements and risk classes for AI systems.",
-            "Quick Win": "Action with low effort and immediate benefit.",
-            "MVP": "Minimum Viable Product; first working version of a product with core functionality only.",
-        }
-        out = ["<p><strong>Glossary</strong></p>"]
-        out.append("<ul>")
-        for term, definition in entries.items():
-            out.append(f"<li><strong>{term}</strong>: {definition}</li>")
-        out.append("</ul>")
-        return "\n".join(out)
-
-
+        out = ["<p><strong>Glossary</strong></p>",
+               "<p><b>AI governance:</b> Roles and rules for safe AI use.</p>",
+               "<p><b>Data inventory:</b> Map where data lives and why it is used.</p>",
+               "<p><b>DPIA:</b> Data protection impact assessment for higher risks.</p>",
+               "<p><b>Prompt policy:</b> Guardrails for safe inputs (e.g., no personal data).</p>"]
+    return "\n".join(out)
 def generate_qr_code_uri(link: str) -> str:
     """
     Generate a QR code image URI for the given link.  This implementation
