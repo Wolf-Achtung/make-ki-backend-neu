@@ -1940,8 +1940,8 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # KPI tiles: show the four core readiness dimensions instead of a single
     # aggregate score.  Each dimension is displayed with its own value.  The
     # keys for these values are mapped from the questionnaire responses.
-    # We keep computing these values to derive qualitative descriptions,
-    # but the resulting numbers will no longer be displayed in the report.
+    # ----------------------------------------------------------------------
+    # Helper to normalise numeric strings to an integer percentage
     def _dim_value(key: str) -> int:
         return _to_num(data.get(key) or 0)
     own_digi = _dim_value("digitalisierungsgrad") or _dim_value("digitalisierungsgrad (%)") or _dim_value("digitalisierungs_score")
@@ -2026,70 +2026,6 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         ("Know-how" if lang == "de" else "Know‑how"): {"self": own_know, "industry": know_bench},
     }
     out["benchmarks"] = benchmarks
-
-    # ----------------------------------------------------------------------
-    # Qualitative KPI summary
-    #
-    # For the Gold‑Standard we no longer display raw percentage values in
-    # the report.  Instead we derive qualitative descriptions (e.g. "deutlich
-    # über dem Branchenschnitt", "auf Augenhöhe") based on the difference
-    # between the respondent's value and the industry benchmark.  These
-    # descriptions are used in a narrative summary that replaces the
-    # traditional KPI overview.  The kpis and benchmarks remain available
-    # internally but are not rendered in the PDF.
-    def _qualitative_level(val: int, bench: int) -> str:
-        try:
-            delta = int(val) - int(bench)
-        except Exception:
-            delta = 0
-        # Define bands: >= 20 pp above benchmark => deutlich über; >=10 => über;
-        # abs(delta) < 10 => auf Augenhöhe; otherwise unter dem Schnitt.
-        if delta >= 20:
-            return "deutlich über dem Branchenschnitt"
-        if delta >= 10:
-            return "über dem Branchenschnitt"
-        if abs(delta) < 10:
-            return "auf Augenhöhe mit dem Branchenschnitt"
-        return "unter dem Branchenschnitt"
-
-    try:
-        # Build a qualitative sentence using the core dimensions and their benchmarks.
-        desc_digi = _qualitative_level(own_digi, dig_bench)
-        desc_auto = _qualitative_level(own_auto, aut_bench)
-        desc_paper = _qualitative_level(own_paper, paper_bench)
-        desc_know = _qualitative_level(own_know, know_bench)
-        # Determine the largest gap (absolute difference between self and benchmark)
-        gaps = [
-            (abs(own_digi - dig_bench), "Digitalisierung" if lang == "de" else "Digitalisation"),
-            (abs(own_auto - aut_bench), "Automatisierung" if lang == "de" else "Automation"),
-            (abs(own_paper - paper_bench), "Papierlosigkeit" if lang == "de" else "Paperless"),
-            (abs(own_know - know_bench), "KI-Know-how" if lang == "de" else "AI know-how"),
-        ]
-        gaps.sort(key=lambda x: x[0], reverse=True)
-        biggest = gaps[0][1]
-        if lang == "de":
-            summary_sentence = (
-                f"Ihr Digitalisierungsgrad ist {desc_digi}, der Automatisierungsgrad ist {desc_auto}, "
-                f"die Papierlosigkeit ist {desc_paper} und das KI-Know-how ist {desc_know}. "
-                f"Größtes Gap: {biggest}."
-            )
-        else:
-            summary_sentence = (
-                f"Your level of digitalisation is {desc_digi}, automation is {desc_auto}, "
-                f"paperlessness is {desc_paper} and AI know-how is {desc_know}. "
-                f"Largest gap: {biggest}."
-            )
-        summary_prefix = f"<p><strong>{'Ihr KI-Status' if lang=='de' else 'Your AI status'}:</strong> {summary_sentence}</p>"
-        # Prepend the qualitative summary if the executive summary exists
-        if out.get("exec_summary_html"):
-            out["exec_summary_html"] = summary_prefix + "\n" + out["exec_summary_html"]
-    except Exception:
-        # In case of any error, do not insert the narrative
-        pass
-
-    # Clear kpis and benchmarks for output.  The narrative replaces them.
-    out["kpis"] = []
-    out["benchmarks"] = {}
 
     # ------------------------------------------------------------------
     # KPI‑Klassifizierung & Badges
@@ -2576,31 +2512,25 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         out.setdefault("branchen_innovations_intro", "")
         out.setdefault("gamechanger_blocks", "")
 
-        # Final pass: remove any remaining LLM 'KPI overview' narratives and extraneous benchmark sections.
+    # Final pass: remove any remaining LLM 'KPI overview' narratives and extraneous benchmark sections.
     try:
+        # Remove duplicate KPI overview blocks in German and English
         esc = out.get("exec_summary_html") or ""
-        # Pattern for whitespace, NBSP and hyphen characters between words
+        # Define a pattern matching whitespace, non-breaking spaces and hyphen-like characters
+        # between "KPI" and "Überblick".  Use single backslash escapes so that \s and
+        # Unicode sequences are interpreted by the regex engine rather than matching
+        # literal backslashes.  This ensures that phrases like "KPI‑Überblick" or
+        # "KPI Überblick" are correctly detected and removed.
         hy = r"[\s\u00A0\u2010-\u2015-]+"
-        # Remove any paragraphs or headings starting with KPI overview in German
+        # German version
         esc = re.sub(
-            rf"(?is)(?:<h3[^>]*>)?\s*KPI{hy}Überblick\s*(?:</h3>)?\s*.*?(?=(?:<h3[^>]*>)|Top{hy}Chancen|Zentrale{hy}Risiken|Nächste{hy}Schritte|$)",
-            "",
-            esc,
-        )
-        # Remove KPI overview in plain text paragraphs (no heading)
-        esc = re.sub(
-            rf"(?is)KPI{hy}Überblick\s*.*?(?=(?:<h3[^>]*>)|Top{hy}Chancen|Zentrale{hy}Risiken|Nächste{hy}Schritte|$)",
+            rf"(?is)(?:<h3[^>]*>)?\\s*KPI{hy}Überblick\\s*(?:</h3>)?\\s*.*?(?=(?:<h3[^>]*>)|Top{hy}Chancen|Zentrale{hy}Risiken|Nächste{hy}Schritte|$)",
             "",
             esc,
         )
         # English version
         esc = re.sub(
-            rf"(?is)(?:<h3[^>]*>)?\s*KPI{hy}overview\s*(?:</h3>)?\s*.*?(?=(?:<h3[^>]*>)|Top{hy}opportunities|Key{hy}risks|Next{hy}steps|$)",
-            "",
-            esc,
-        )
-        esc = re.sub(
-            rf"(?is)KPI{hy}overview\s*.*?(?=(?:<h3[^>]*>)|Top{hy}opportunities|Key{hy}risks|Next{hy}steps|$)",
+            rf"(?is)(?:<h3[^>]*>)?\\s*KPI{hy}overview\\s*(?:</h3>)?\\s*.*?(?=(?:<h3[^>]*>)|Top{hy}opportunities|Key{hy}risks|Next{hy}steps|$)",
             "",
             esc,
         )
@@ -2729,33 +2659,19 @@ def generate_preface(lang: str = "de", score_percent: Optional[float] = None) ->
     "AI readiness" remains, but no explicit score is included.
     """
     if lang == "de":
-        # Provide a warm, accessible introduction inspired by the user-provided style.  Avoid
-        # technical jargon and emphasise the opportunities of AI for SMEs and
-        # self‑employed professionals.
         preface = (
-            "<p>Wenn heute von „Künstlicher Intelligenz“ die Rede ist, denken viele an komplizierte Technik, "
-            "riesige Konzerne oder Zukunftsvisionen, die mit dem eigenen Alltag wenig zu tun haben. Doch für "
-            "kleine und mittlere Unternehmen, für Freiberufler und Selbstständige, liegt hier eine große Chance: "
-            "KI ist längst nicht mehr nur ein Werkzeug für die „Großen“. Sie kann auch in überschaubaren Strukturen "
-            "helfen, den Arbeitsalltag leichter, klarer und effizienter zu gestalten.</p>"
-            "<p>Dieses Dokument fasst die Ergebnisse Ihres <b>KI‑Status‑Reports</b> zusammen und bietet individuelle "
-            "Empfehlungen für die nächsten Schritte. Es basiert auf Ihren Angaben und berücksichtigt aktuelle "
-            "gesetzliche Vorgaben (DSGVO, EU AI Act) sowie Branchenrichtlinien. Im Fokus steht immer, wie KI Sie "
-            "unterstützen kann – nicht als Selbstzweck, sondern als Werkzeug, das Ihnen mehr Freiheit gibt. So "
-            "können Sie strategische Entscheidungen treffen, kreativ sein oder einfach mehr Ruhe in Ihren Arbeitsalltag bringen.</p>"
+            "<p>Dieses Dokument fasst die Ergebnisse Ihres <b>KI‑Status‑Reports</b> zusammen "
+            "und bietet individuelle Empfehlungen für die nächsten Schritte. Es basiert auf Ihren Angaben und "
+            "berücksichtigt aktuelle gesetzliche Vorgaben, Fördermöglichkeiten und technologische Entwicklungen.</p>"
         )
+        # In the Gold‑Standard version no aggregated score is displayed.  The individual
+        # KPIs for Digitalisierung, Automatisierung, Papierlosigkeit und KI‑Know‑how
+        # are visualised elsewhere in the report.
         return preface
     else:
         preface = (
-            "<p>When people talk about Artificial Intelligence today, many think of complex technology, huge "
-            "corporations or futuristic visions with little connection to daily business. Yet for small and "
-            "midsize enterprises, freelancers and solo entrepreneurs, this is a great opportunity: AI is no longer "
-            "only a tool for the big players. It can make day‑to‑day work easier, clearer and more efficient, even "
-            "in small organisations.</p>"
-            "<p>This document summarises your <b>AI readiness report</b> and provides tailored next steps based on "
-            "your input. It considers current legal requirements (GDPR, EU AI Act) and industry guidelines. The focus "
-            "is always on how AI can support you – not as an end in itself, but as a tool that frees up your time "
-            "for strategic decisions, creativity or simply a calmer working day.</p>"
+            "<p>This document summarises your <b>AI readiness report</b> and provides tailored next steps. "
+            "It is based on your input and considers legal requirements, funding options and current AI developments.</p>"
         )
         return preface
 
