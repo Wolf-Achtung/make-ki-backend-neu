@@ -1,18 +1,26 @@
 # Quick Wins – immediate actions
 
-Generate an HTML unordered list (`<ul>…</ul>`) with up to three quick wins. Each line should begin with a bold keyword (`<b>…</b>`) and describe a specific measure that can realistically be implemented within the next 0–3 months. Keep each line to one sentence and clearly state the benefit.
+## Style note – Warm, approachable language
 
-Use the free‑text fields (vision, biggest potential, moonshot, application area, strategic goals) and industry context to tailor suggestions. Optionally consider weekly time capacity, existing tools, regulated industry status, training interests and vision priority to align quick wins with resources, compliance and learning needs—without naming those variables. The lower the time capacity (e.g. ≤ 5 hours per week) the smaller and quicker the quick win should be; with more time available (e.g. 5–15 hours) the actions may be slightly more involved.
+The quick wins should feel like friendly, practical suggestions rather than terse bullet points. Use a warm, approachable tone and full sentences so that even readers without technical expertise can follow along. Take inspiration from the following example text, which shows how to talk about AI in an accessible and inviting way:
 
-Guidelines:
+> When people talk about “artificial intelligence” today, many think of complicated technology, big corporations or future visions that have little to do with their everyday lives. But for small and medium‑sized enterprises, freelancers and the self‑employed, this is where a huge opportunity lies: AI is no longer just a tool for the “big players”. It can also help make day‑to‑day work lighter, clearer and more efficient in smaller organisations. From decades of experience as a managing director in the media industry, I know that real progress doesn’t come from buzzwords or glossy presentations, but from solutions that work in everyday life. AI can, for example, take over routine tasks, help sort information faster or open up new ways of reaching customers. Often it’s not about turning everything upside down immediately, but about starting in small steps – right where it makes life noticeably easier.
 
-- **Data inventory:** If data quality is low or unclear, a structured data inventory or data clean‑up should be the first quick win.
- - **Automation & scripts:** When there is interest in automation or a lack of time, a small automation – for example using general no‑code tools – can be a quick win.  Do not name specific products (like Zapier or n8n); describe the solution in general terms.
-- **Governance light:** For solo businesses or small teams, drafting a one‑page AI policy can be a meaningful quick win.
-- **Pilot & feedback:** If the greatest potential includes GPT‑based services or an AI portal, a lean MVP pilot with initial customers or partners can be a valuable quick win.
-- Choose up to three quick wins; avoid repeating items from the recommendations or the action plan.
+Use a similar narrative style: each quick win should begin with a bold keyword and then continue in one or two complete sentences describing what should be done, what concrete benefit it brings and how much effort it will require (e.g. “low effort”, “moderate effort”). Avoid fragmentary bullet phrases and technical jargon – write as if you’re explaining to a friend or colleague how they can get started straight away.
 
-If insufficient context is available, list the few quick wins that are possible. If no meaningful suggestions can be derived, output the following list: `<ul><li>No quick wins available. Additional information is needed for specific suggestions.</li></ul>`.
+Generate an HTML unordered list (`<ul>…</ul>`) with up to three quick wins for the company. Each line should start with a bold keyword (`<b>…</b>`) and then in one or two full sentences describe a specific measure that can realistically be implemented within the next 0–3 months. Clearly state the benefit and use qualitative descriptions of the effort required (e.g. “low effort” or “takes a few hours”).
+
+Use the free‑text fields (vision, biggest potential, moonshot, application area, strategic goals) and industry context to tailor suggestions. Optionally take into account weekly time capacity, existing tools, regulated industry status, training interests and vision priority to align quick wins with available resources, compliance needs and learning interests—without naming those variables. The lower the time capacity (e.g. ≤ 5 hours per week), the smaller and quicker the quick win should be; with more time available (e.g. 5–15 hours), the actions may be a little more involved.
+
+Guidelines for possible quick wins:
+
+- **Data inventory:** If data quality is low or unclear, the first step can be a structured data inventory or a data clean‑up. Describe the benefits of having tidy data and suggest an easy way to start.
+- **Automation & scripts:** If there’s interest in automation or little time, a small automation – for example using general no‑code tools – can be a quick win. Don’t name specific products (like Zapier or n8n); instead describe the solution in general terms (e.g. “set up a simple automation to handle repetitive tasks”).
+- **Governance light:** For solo businesses or small teams, drafting a one‑page AI policy (“light governance”) can be a meaningful quick win. Explain how a short policy creates clarity without overwhelming people.
+- **Pilot & feedback:** If the biggest potential includes GPT‑based services or an AI portal, a lean MVP pilot with initial customers or partners can be a valuable quick win. Briefly outline the pilot and why starting small helps.
+- Select up to three quick wins; don’t repeat items from the recommendations or the action plan.
+
+If insufficient context is available, provide only the few quick wins that are possible. If no meaningful suggestions can be derived, output the following list: `<ul><li>No quick wins available. Additional information is needed for specific suggestions.</li></ul>`.
 
 Return only an HTML block containing the unordered list with 1–3 `<li>` elements, or the above error message.
 

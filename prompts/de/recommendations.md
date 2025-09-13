@@ -1,6 +1,14 @@
-# Empfehlungen – Top 5
+# Empfehlungen – Top 5
 
-Erstelle eine HTML‑Liste (`<ol>…</ol>`) mit den fünf wichtigsten Empfehlungen für das Unternehmen. Jede Empfehlung beginnt mit einem fett formatierten Aktionswort und beschreibt in einem Satz das Ziel, den erwarteten **Nutzen** und den erforderlichen Aufwand.  Verwende eine klare, zugängliche Sprache ohne Fachjargon oder übertriebene Marketingbegriffe.  Am Ende steht das Verhältnis **Nutzen/Aufwand** als Kürzel in Klammern (z. B. `(H/M)`, `(M/M)`, `(L/L)`).
+## Stilhinweis
+
+Dieser Abschnitt richtet sich an Gründer:innen, Freiberufler:innen und kleine bis mittlere Unternehmen. Verwenden Sie eine warme, zugängliche Sprache, die keine Fachkenntnisse voraussetzt. Beschreiben Sie komplexe Sachverhalte in ganzen Sätzen und vermitteln Sie Zuversicht, dass auch kleine Strukturen von KI profitieren können. Nehmen Sie sich das folgende Beispiel zum Vorbild:
+
+> Wenn heute von „Künstlicher Intelligenz“ die Rede ist, denken viele an komplizierte Technik, riesige Konzerne oder Zukunftsvisionen, die mit dem eigenen Alltag wenig zu tun haben. Doch für kleine und mittlere Unternehmen, für Freiberufler und Selbstständige, liegt genau hier eine große Chance: KI ist längst nicht mehr nur ein Werkzeug für die „Großen“. Sie kann auch in überschaubaren Strukturen helfen, den Arbeitsalltag leichter, klarer und effizienter zu gestalten.
+
+Formulieren Sie Ihre Empfehlungen als inspirierenden Fließtext: Jede Empfehlung beginnt mit einem fett gedruckten Aktionswort und erläutert in 1–2 Sätzen das Ziel, den erwarteten Nutzen und den geschätzten Aufwand. Verwenden Sie qualitative Beschreibungen wie „geringer Aufwand“ oder „hoher Nutzen“ anstelle von Kürzeln. Halten Sie die Sprache freundschaftlich, konkret und praxisnah – ohne Fachjargon oder übertriebene Versprechungen.
+
+Erstellen Sie ein HTML‑Dokument mit einer geordneten Liste (`<ol>…</ol>`) aus fünf `<li>`‑Elementen. Jedes Element soll eine Empfehlung enthalten, die mit einem fett formatierten Aktionswort beginnt und danach in vollständigen Sätzen das Ziel, den Nutzen und den geschätzten Aufwand erläutert. Nutzen Sie qualitative Worte (z. B. „geringer Aufwand“, „hoher Nutzen“) statt Kürzeln.
 
 Berücksichtige Vision, strategische Ziele, größtes Potenzial, langfristige Ambitionen und branchenspezifische Benchmarks sowie die Chancen und Risiken aus der Executive Summary. Kombiniere strategische Weichenstellungen (Governance, Zusammenarbeit, Datengrundlage, Compliance) mit konkreten nächsten Schritten (Piloten, Prototypen, Trainings). Wiederhole keine Punkte aus Quick Wins oder dem Maßnahmenplan.
 
@@ -14,7 +22,7 @@ Eine mögliche Struktur (die Sie sinngemäß aufgreifen können):
 4. **Pilotieren & skalieren:** Einen priorisierten Use‑Case (z. B. GPT‑basiertes Service‑MVP) prototypisch umsetzen, mit ausgewählten Partnern testen und bei Erfolg skalieren; dabei schnelle Feedback‑Schleifen nutzen. *(M/M)*
 5. **Befähigen & vernetzen:** Team und Stakeholder durch gezielte Schulungen, Workshops oder externe Coachings weiterbilden, Netzwerke und Partnerschaften aufbauen und Trainingsinteressen (z. B. Automatisierung & Skripte) aufgreifen. *(L/L)*
 
-Sortiere deine tatsächlichen Empfehlungen nach strategischer Relevanz und Gesamtnutzen; bei Gleichstand wähle die Maßnahme mit geringerem Aufwand. Die Ausgabe besteht ausschließlich aus einem HTML‑`<ol>` mit fünf `<li>`‑Elementen.
+Sortieren Sie die Empfehlungen nach strategischer Relevanz und Gesamtnutzen; wenn Maßnahmen gleich wichtig erscheinen, priorisieren Sie diejenige mit geringerem Aufwand. Die Ausgabe besteht ausschließlich aus einem HTML‑`<ol>` mit fünf `<li>`‑Elementen, die jeweils den oben beschriebenen Fließtext enthalten.
 
 ## Zusätzliche Anweisungen für den KI‑Status‑Report (DE)
 

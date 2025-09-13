@@ -1,18 +1,22 @@
 # Key Risks – potential challenges
 
-Generate an HTML unordered list (`<ul>…</ul>`) with up to three key risks relevant to the company’s adoption of AI. Each list item must start with a bold keyword (`<b>…</b>`) and briefly describe the risk, optionally adding a first mitigation step.
+## Style note – Clear narrative and mitigation
 
-Draw on areas such as compliance, regulatory hurdles, resource constraints, data protection, bias and transparency, vendor lock‑in, and risk appetite. Use free‑text responses and questionnaire fields to prioritise the most significant obstacles. Optionally incorporate time capacity, existing tools, regulated industry status, training interests and vision priority to identify additional dimensions of risk—without naming these variables.
+This section should highlight the most important challenges facing the company’s adoption of AI – but instead of terse bullet points, present each risk as a short, complete narrative. Use a friendly yet serious tone that explains not just the problem but also a first step towards mitigation. The style should be similar to the narrative example in the Quick Wins prompt: aim for accessibility and clarity.
+
+Generate an HTML unordered list (`<ul>…</ul>`) with up to three key risks relevant to the company’s adoption of AI. Each list item must start with a bold keyword (`<b>…</b>`) and then continue with one or two full sentences that explain the risk and suggest a concrete first step to address it. Avoid technical jargon and write as if advising a colleague.
+
+Draw on areas such as compliance, regulatory hurdles, resource constraints, data protection, bias and transparency, vendor lock‑in and risk appetite. Use free‑text responses and questionnaire fields to prioritise the most significant obstacles. Optionally incorporate time capacity, existing tools, regulated industry status, training interests and vision priority to identify additional dimensions of risk—without naming these variables.
 
 Prioritise risks in this order where relevant:
 
-1. **Legal & compliance:** Uncertain regulatory environment, missing contracts or unclear consent could create legal risks; mitigating actions include a data‑protection audit and aligning with the EU AI Act and GDPR.
-2. **Data protection & data quality:** Poor data quality, lack of deletion concepts or insufficient transparency threaten confidentiality and fairness; fixes include a structured data inventory, clear deletion/access policies and regular bias checks.
-3. **Budget & resource constraints:** Limited budget, scarce time or insufficient expertise could stall progress; countermeasures include lean planning, leveraging external services and targeted upskilling.
+1. **Legal & compliance:** Uncertain regulatory environments, missing contracts or unclear consent could create legal risks. Suggest performing a data‑protection audit and aligning practices with the EU AI Act and GDPR to mitigate them.
+2. **Data protection & data quality:** Poor data quality, lack of deletion concepts or insufficient transparency threaten confidentiality and fairness. Recommend starting with a structured data inventory, clear deletion/access policies and regular bias checks.
+3. **Budget & resource constraints:** Limited budget, scarce time or insufficient expertise could stall progress. Propose lean planning, leveraging external services and targeted upskilling to overcome these limitations.
 
-If one of these categories is not relevant, you may replace it with another risk (e.g. dependency on single vendors). In any case, do not list the KPI categories (digitalisation, automation, paperless processes, AI know‑how) as risks.
+If one of these categories is not relevant, you may replace it with another risk (e.g. dependency on single vendors). Do not mention the KPI categories (digitalisation, automation, paperless processes, AI know‑how) as risks.
 
-Return only an HTML string with the unordered list; no further explanations or comments.
+Return only an HTML string containing the unordered list with 1–3 `<li>` elements; avoid any additional commentary outside the list.
 
 ## Additional Instructions for the AI Status Report (EN)
 

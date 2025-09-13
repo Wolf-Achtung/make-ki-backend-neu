@@ -1,18 +1,28 @@
 # Hauptrisiken – potenzielle Herausforderungen
 
-Erstelle eine HTML‑Liste (`<ul>…</ul>`) mit maximal drei Hauptrisiken, die für den Einsatz von KI im Unternehmen relevant sind. Jede Zeile beginnt mit einem fettgedruckten Schlagwort (`<b>…</b>`) und beschreibt kurz das Risiko sowie – falls sinnvoll – eine erste Maßnahme zur Minimierung.
+## Stilhinweis
+
+Dieser Abschnitt sollte die Leser:innen auf mögliche Stolpersteine aufmerksam machen, ohne zu überfordern. Verwenden Sie einen verständlichen, empathischen Ton und ganze Sätze. Bauen Sie auf dem folgenden Beispieltext auf, um die Sprache zu treffen:
+
+> Wenn heute von „Künstlicher Intelligenz“ die Rede ist, denken viele an komplizierte Technik, riesige Konzerne oder Zukunftsvisionen, die mit dem eigenen Alltag wenig zu tun haben. Doch für kleine und mittlere Unternehmen, für Freiberufler und Selbstständige, liegt genau hier eine große Chance: KI ist längst nicht mehr nur ein Werkzeug für die „Großen“. Sie kann auch in überschaubaren Strukturen helfen, den Arbeitsalltag leichter, klarer und effizienter zu gestalten.
+>
+> Aus jahrzehntelanger Erfahrung als Geschäftsführer in der Medienbranche weiß ich: Wirkliche Fortschritte entstehen nicht durch Schlagworte oder Hochglanzpräsentationen, sondern durch Lösungen, die im Alltag tragen. KI kann zum Beispiel Routinearbeiten abnehmen, dabei unterstützen, Informationen schneller einzuordnen oder neue Wege der Kundenansprache eröffnen. Und oft geht es gar nicht darum, alles sofort umzukrempeln, sondern in kleinen Schritten anzufangen – dort, wo es spürbar entlastet.
+
+Formulieren Sie jedes Risiko als zusammenhängenden Absatz oder Satz: Beginnen Sie mit einem fett formatierten Schlagwort und beschreiben Sie dann in ein bis zwei Sätzen, warum dieses Risiko relevant ist und wie es sich mindern lässt. Seien Sie konkret und praxisnah – etwa: „<b>Rechtslage & Compliance:</b> Das EU‑AI‑Act und die DSGVO stellen neue Anforderungen an den Umgang mit KI; ein Datenschutz‑Audit und die Schulung Ihrer Mitarbeitenden können hier Abhilfe schaffen.“
+
+Erstellen Sie eine HTML‑Liste (`<ul>…</ul>`) mit maximal drei Hauptrisiken, die für den Einsatz von KI im Unternehmen relevant sind. Jede Zeile beginnt mit einem fettgedruckten Schlagwort (`<b>…</b>`) und beschreibt kurz das Risiko sowie – falls sinnvoll – eine erste Maßnahme zur Minimierung.
 
 Nutzen Sie die Angaben aus den Bereichen Compliance, Hemmnisse, Risikofreude und Datenschutz sowie externe Faktoren wie Rechtsunsicherheit, begrenztes Budget, Zeitmangel, unklare Datenqualität, Bias/Transparenz oder Lieferantenabhängigkeit. Ergänzend können Sie Zeitbudget, vorhandene Tools, Hinweise auf regulierte Branchen, Trainingsinteressen und die Priorisierung der Vision berücksichtigen, um zusätzliche Risikodimensionen zu erkennen – ohne diese Variablennamen wörtlich zu nennen.
 
-Priorisiere die Risiken in folgender Reihenfolge, sofern relevant:
+Priorisieren Sie die Risiken in folgender Reihenfolge, sofern relevant:
 
 1. **Rechtslage & Compliance:** Unsichere Rechtslage, fehlende Datenverarbeitungsverträge oder unzureichende Einwilligungen können zu rechtlichen Risiken führen; als Gegenmaßnahme hilft ein Datenschutz‑Audit und die Anpassung an EU‑AI‑Act und DSGVO.
 2. **Datenschutz & Datenqualität:** Mangelhafte Datenqualität, fehlende Löschkonzepte oder unklare Datentransparenz bergen Risiken für Vertraulichkeit und Fairness; Abhilfe schaffen strukturierte Dateninventur, klare Lösch- und Zugriffskonzepte sowie regelmäßige Bias‑Checks.
 3. **Budget‑ & Ressourcen‑Engpässe:** Geringes Budget, begrenztes Zeitbudget oder unzureichende Expertise können den Fortschritt hemmen; Planung schlanker Maßnahmen, Nutzung externer Services und gezielte Weiterbildungen reduzieren dieses Risiko.
 
-Falls eine dieser Kategorien im Kontext nicht zutrifft, können Sie sie durch ein anderes relevantes Risiko ersetzen (z. B. Abhängigkeit von einzelnen Anbietern). In jedem Fall dürfen die KPI‑Kategorien (Digitalisierung, Automatisierung, Papierlosigkeit, KI‑Know‑how) nicht als Risiko genannt werden.
+Falls eine dieser Kategorien im Kontext nicht zutrifft, können Sie sie durch ein anderes relevantes Risiko ersetzen (z. B. Abhängigkeit von einzelnen Anbietern). In jedem Fall dürfen die KPI‑Kategorien (Digitalisierung, Automatisierung, Papierlosigkeit, KI‑Know‑how) nicht als Risiko genannt werden. Berücksichtigen Sie zudem die aktuellen rechtlichen Rahmenbedingungen – insbesondere die Vorgaben des EU‑AI‑Act und der DSGVO – sowie branchenspezifische Standards, um Compliance‑Risiken realistisch einzuschätzen und zu adressieren.
 
-Die Ausgabe erfolgt ausschließlich als HTML‑String mit einer ungeordneten Liste (`<ul>…</ul>`). Keine weiteren Erklärungen oder Kommentare im Output.
+Die Ausgabe erfolgt ausschließlich als HTML‑String mit einer ungeordneten Liste (`<ul>…</ul>`). Keine weiteren Erklärungen oder Kommentare im Output. Jeder Eintrag besteht aus einem fettgedruckten Schlagwort und einem narrativen Satz oder Absatz, der das Risiko und eine mögliche erste Gegenmaßnahme beschreibt.
 
 ## Zusätzliche Anweisungen für den KI‑Status‑Report (DE)
 

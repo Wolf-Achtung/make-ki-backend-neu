@@ -1,10 +1,20 @@
 # Quick Wins – sofort umsetzbare Maßnahmen
 
-Erstelle eine HTML‑Liste (`<ul>…</ul>`) mit höchstens drei Quick Wins für das Unternehmen. Jede Zeile soll ein prägnanter Satz sein, der eine konkrete Sofortmaßnahme beschreibt, die innerhalb der nächsten 0–3 Monate realistisch umsetzbar ist. Beginne jede Zeile mit einem fettgedruckten Schlüsselwort (`<b>…</b>`) und formuliere den Nutzen klar und positiv.
+## Stilhinweis
+
+Die Quick‑Wins sollen wie gut gemeinte Hinweise aus der Praxis wirken. Verwenden Sie einen warmen, verständlichen Ton und ganze Sätze, um auch Leser:innen ohne technisches Vorwissen mitzunehmen. Orientieren Sie sich am folgenden Beispieltext, der zeigt, wie man KI‑Themen greifbar und freundlich formuliert:
+
+> Wenn heute von „Künstlicher Intelligenz“ die Rede ist, denken viele an komplizierte Technik, riesige Konzerne oder Zukunftsvisionen, die mit dem eigenen Alltag wenig zu tun haben. Doch für kleine und mittlere Unternehmen, für Freiberufler und Selbstständige, liegt genau hier eine große Chance: KI ist längst nicht mehr nur ein Werkzeug für die „Großen“. Sie kann auch in überschaubaren Strukturen helfen, den Arbeitsalltag leichter, klarer und effizienter zu gestalten.
+>
+> Aus jahrzehntelanger Erfahrung als Geschäftsführer in der Medienbranche weiß ich: Wirkliche Fortschritte entstehen nicht durch Schlagworte oder Hochglanzpräsentationen, sondern durch Lösungen, die im Alltag tragen. KI kann zum Beispiel Routinearbeiten abnehmen, dabei unterstützen, Informationen schneller einzuordnen oder neue Wege der Kundenansprache eröffnen. Und oft geht es gar nicht darum, alles sofort umzukrempeln, sondern in kleinen Schritten anzufangen – dort, wo es spürbar entlastet.
+
+Verwenden Sie einen ähnlichen Erzählstil: Jede Maßnahme soll mit einem fett formatierten Schlüsselwort beginnen und dann in ein bis zwei vollständigen Sätzen beschreiben, was getan wird, welcher konkrete Nutzen daraus entsteht und wie aufwendig die Maßnahme ist (z. B. „geringer Aufwand“, „mittelgroßer Aufwand“). Verzichten Sie auf Bulletpoints und Fachjargon – schreiben Sie so, als ob Sie einem Freund oder einer Kollegin erklären, wie sie sofort loslegen kann.
+
+Erstellen Sie eine HTML‑Liste (`<ul>…</ul>`) mit höchstens drei Quick Wins für das Unternehmen. Jede Zeile soll ein prägnanter Satz sein, der eine konkrete Sofortmaßnahme beschreibt, die innerhalb der nächsten 0–3 Monate realistisch umsetzbar ist. Beginnen Sie jede Zeile mit einem fettgedruckten Schlüsselwort (`<b>…</b>`) und formulieren Sie den Nutzen klar und positiv.
 
 Nutze die Angaben aus den Freitextfeldern (Vision, größtes Potenzial, Moonshot, Einsatzbereich, strategische Ziele) sowie branchenspezifische Informationen, um maßgeschneiderte Vorschläge zu machen. Berücksichtige optional das wöchentliche Zeitbudget, vorhandene Werkzeuge, Hinweise auf regulierte Branchen, Trainingsinteressen und die Vision‑Priorität, um die Quick Wins weiter an Ressourcen, Compliance‑Rahmen, Lernbedarf und Strategie anzupassen – ohne die Variablennamen wörtlich zu nennen. Je geringer das Zeitbudget (z. B. ≤ 5 Stunden pro Woche), desto kleiner und schneller sollte der Quick Win sein; bei größerem Zeitbudget (z. B. 5–15 Stunden) dürfen die Maßnahmen etwas umfangreicher ausfallen.
 
-Beachte folgende Leitlinien:
+Beachten Sie folgende Leitlinien:
 
 - **Dateninventur:** Wenn die Datenqualität niedrig oder unklar ist, sollte die erste Maßnahme eine strukturierte Dateninventur oder ein Data‑Clearing sein.
  - **Automatisierung & Skripte:** Bei Interesse an Automatisierung oder geringem Zeitbudget kann eine kleine Automatisierung – zum Beispiel mit allgemeinen No‑Code‑Tools – ein Quick Win sein.  Nennen Sie keine spezifischen Produktnamen (wie Zapier oder n8n), sondern beschreiben Sie die Lösung allgemein.
@@ -14,7 +24,7 @@ Beachte folgende Leitlinien:
 
 Sollte zu wenig Kontext vorhanden sein, gib nur die wenigen verfügbaren Quick Wins aus. Sind gar keine sinnvollen Vorschläge ableitbar, gib als Liste den Hinweis aus: `<ul><li>Keine Quick Wins ableitbar. Für konkrete Vorschläge werden mehr Angaben benötigt.</li></ul>`.
 
-Die Ausgabe ist ausschließlich ein HTML‑Block mit einer ungeordneten Liste (`<ul>…</ul>`), der 1–3 `<li>`‑Einträge enthält oder – im Fehlerfall – die oben genannte Fehlermeldung.
+Die Ausgabe ist ausschließlich ein HTML‑Block mit einer ungeordneten Liste (`<ul>…</ul>`), der 1–3 `<li>`‑Einträge enthält. Jeder Eintrag besteht aus einem fett gedruckten Titel und ein bis zwei freundlichen, ganzen Sätzen, die Aufwand, Nutzen und ein mögliches erstes Vorgehen beschreiben. Bei fehlendem Kontext geben Sie statt einer Liste die oben genannte Fehlermeldung aus.
 
 ## Zusätzliche Anweisungen für den KI‑Status‑Report (DE)
 

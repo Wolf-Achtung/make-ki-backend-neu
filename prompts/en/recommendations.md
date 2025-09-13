@@ -1,6 +1,10 @@
 # Recommendations – Top 5
 
-Generate an HTML ordered list (`<ol>…</ol>`) with the five most important recommendations for the company. Each recommendation should start with a bold action verb and, in one sentence, describe the goal, expected **benefit** and required effort.  Use plain, accessible language and avoid jargon or inflated marketing terms.  Conclude each sentence with the **benefit/effort** ratio in brackets (e.g. `(H/M)` for high benefit and medium effort).
+## Style note – Narrative recommendations
+
+The recommendations should guide the reader like a mentor: clear, friendly and actionable. Use the warm, approachable tone introduced in the Quick Wins style note: speak to readers without jargon, explain benefits and efforts in full sentences and inspire them to take the next step.
+
+Generate an HTML ordered list (`<ol>…</ol>`) with the five most important recommendations for the company. Each recommendation should start with a bold action verb and then in one or two complete sentences describe what to do, why it matters and what qualitative effort it will require. Use plain, accessible language and avoid inflated marketing terms. Conclude each item with a qualitative assessment of benefit and effort in brackets (e.g. `(high benefit / medium effort)`).
 
 Combine strategic initiatives (focusing, strengthening the data foundation, establishing governance, piloting & scaling, empowering & networking) with tangible steps derived from vision, strategic goals, biggest potential, long‑term aspirations and benchmarks. Avoid repeating items from the quick wins or the action plan.
 
@@ -8,13 +12,13 @@ Tailor the recommendations to company size (solo, small team, SME), time capacit
 
 Suggested structure (to adapt as needed):
 
-1. **Focus:** Clarify vision and strategy, set priorities and formulate a roadmap that concretises the greatest potential (e.g. GPT‑based services or an AI portal). `(H/M)`
-2. **Strengthen data foundation:** Conduct a data inventory, establish central data sources (CRM/ERP) and improve data quality to build a robust basis for AI applications. `(M/M)`
-3. **Establish governance:** Implement a lean AI‑governance framework, including data‑protection checks, fairness reviews and compliance processes; for solo companies, a brief “AI policy light” may suffice. `(M/M)`
-4. **Pilot & scale:** Prototype a priority use case (e.g. a GPT‑based service MVP), test with selected partners and scale if successful, using quick feedback loops. `(M/M)`
-5. **Enable & connect:** Educate your team and stakeholders through training, workshops or external coaching, build networks and partnerships, and address training interests (e.g. automation & scripts). `(L/L)`
+1. **Focus:** Clarify vision and strategy, set priorities and formulate a roadmap that concretises the greatest potential (e.g. GPT‑based services or an AI portal). Include a narrative on why focusing provides clarity and direction. `(high benefit / medium effort)`
+2. **Strengthen data foundation:** Conduct a data inventory, establish central data sources (CRM/ERP) and improve data quality to build a robust basis for AI applications. Explain how this prepares the groundwork for future AI initiatives. `(medium benefit / medium effort)`
+3. **Establish governance:** Implement a lean AI‑governance framework, including data‑protection checks, fairness reviews and compliance processes; for solo companies, a brief “AI policy light” may suffice. Describe how this ensures trust and compliance. `(medium benefit / medium effort)`
+4. **Pilot & scale:** Prototype a priority use case (e.g. a GPT‑based service MVP), test with selected partners and scale if successful, using quick feedback loops. Highlight the value of learning quickly from pilots. `(medium benefit / medium effort)`
+5. **Enable & connect:** Educate your team and stakeholders through training, workshops or external coaching, build networks and partnerships, and address training interests (e.g. automation & scripts). Emphasise how sharing knowledge empowers everyone. `(low benefit / low effort)`
 
-Order your actual recommendations by strategic relevance and overall benefit; if tied, choose the lower‑effort action first. The output must be a pure HTML `<ol>` with five `<li>` elements.
+Order your actual recommendations by strategic relevance and overall benefit; if tied, choose the lower‑effort action first. The output must be a pure HTML `<ol>` with five `<li>` elements written in full, friendly sentences.
 
 ## Additional Instructions for the AI Status Report (EN)
 

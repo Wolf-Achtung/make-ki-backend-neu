@@ -1,31 +1,37 @@
 # Compliance‑Status & Handlungsempfehlungen
 
+## Stilhinweis
+
+Der folgende Bericht richtet sich an Gründer:innen, Freiberufler:innen und kleine bis mittlere Unternehmen. Verwenden Sie eine warme, zugängliche Sprache, die keine juristische Ausbildung voraussetzt. Erklären Sie komplexe Zusammenhänge in kurzen Absätzen und verweisen Sie auf die Chancen, die moderne Technologien für überschaubare Organisationen bieten. Die folgende Beispielpassage kann Ihnen als Vorbild dienen:
+
+> Wenn heute von „Künstlicher Intelligenz“ die Rede ist, denken viele an komplizierte Technik, riesige Konzerne oder Zukunftsvisionen, die mit dem eigenen Alltag wenig zu tun haben. Doch für kleine und mittlere Unternehmen, für Freiberufler und Selbstständige, liegt genau hier eine große Chance: KI ist längst nicht mehr nur ein Werkzeug für die „Großen“. Sie kann auch in überschaubaren Strukturen helfen, den Arbeitsalltag leichter, klarer und effizienter zu gestalten.
+
+Ihre Antwort sollte sich daran orientieren: Führen Sie nicht nur Paragraphen auf, sondern erklären Sie in vollständigen Sätzen, was die Vorgaben bedeuten. Beschreiben Sie, wie sich gesetzliche Anforderungen mit der Praxis im Unternehmen verbinden lassen, und geben Sie konkrete, praxisnahe Hinweise. Verzichten Sie auf Bulletpoints und Listen – jede Teilüberschrift soll mit 1–2 Absätzen ausgeführt werden.
+
+Berücksichtigen Sie bei den Ausführungen aktuelle rechtliche Entwicklungen wie die Datenschutz‑Grundverordnung (DSGVO), den Digital Services Act und die ePrivacy‑Verordnung sowie das europäische KI‑Gesetz (AI Act). Das AI Act unterscheidet zwischen verbotenen Anwendungen, Hochrisiko‑Systemen, begrenzten und minimalen Risiken und verpflichtet bei Hochrisiko‑KI zu Risikobewertung, Datenqualität, lückenloser Dokumentation, menschlicher Kontrolle und Transparenz. Seit dem 2. Februar 2025 gilt zudem eine Pflicht zur Förderung der KI‑Kompetenz von Mitarbeitenden: Unternehmen müssen eine KI‑Bestandsaufnahme führen, Rollen und Verantwortlichkeiten klären, vorhandenes Wissen einschätzen und gezielte Trainings anbieten【67385344376772†L1748-L1805】. Für kleine und mittlere Unternehmen sieht das AI Act vereinfachte Dokumentationspflichten, regulatorische Sandboxes und proportional reduzierte Anforderungen vor【16869879035924†L101-L131】.  Stellen Sie auch die Verbindung zur DSGVO her: Transparenz, Zweckbindung, Datenminimierung, rechtmäßige Verarbeitung, Datenschutz‑Folgenabschätzung (DSFA) bei sensiblen Anwendungen und die Wahrung der Betroffenenrechte sind Grundlagen jeder KI‑Lösung.
+
+
 Analysieren Sie die aktuelle Compliance‑Situation des Unternehmens anhand der Formulardaten (z. B. Datenschutzbeauftragte:r, technische Schutzmaßnahmen, DSFA, Meldewege, Löschregeln, Kenntnisse zum EU AI Act). Sie können intern eine kurze Checkliste zur Strukturierung nutzen, geben Sie diese jedoch nicht im Output aus.
 
-## 1. Gesetzliche Anforderungen & Richtlinien
-- Listen Sie die zutreffenden Rechtsgrundlagen auf, z. B. DSGVO, ePrivacy, Digital Services Act, Wettbewerbs- und Verbraucherschutzrecht und ggf. branchenspezifische Standards.
-- Erläutern Sie stichpunktartig, wie vorhandene Unternehmensstrukturen (z. B. Datenschutzbeauftragte:r, technische Maßnahmen) diese Anforderungen erfüllen oder wo Lücken bestehen.
+## 1. Gesetzliche Anforderungen & Richtlinien
 
-## 2. Consent Management & Kundenrechte
-- Beschreiben Sie stichpunktartig das Einwilligungsmanagement (Consent Management), CRM-Prozesse, die Umsetzung von Privacy by Design/Default sowie relevante Besonderheiten.
-- Beziehen Sie bestehende Prozesse wie Meldewege, Löschregeln und internes KI-Know-how ein.
+Beschreiben Sie in ein bis zwei Absätzen, welche Rechtsgrundlagen für das Unternehmen relevant sind – etwa DSGVO, ePrivacy‑Verordnung, Digital Services Act, Wettbewerbs- und Verbraucherschutzrecht sowie branchenspezifische Vorgaben. Erklären Sie laienverständlich, welche dieser Regeln für die Nutzung von Daten und den Einsatz von KI anwendbar sind. Gehen Sie darauf ein, ob das Unternehmen bereits über eine:n Datenschutzbeauftragte:n oder andere Strukturen verfügt und an welchen Stellen Lücken bestehen. Stellen Sie immer die Verbindung zu konkreten Aktivitäten her: Wann ist eine Datenschutz-Folgenabschätzung notwendig? Was bedeutet Datenminimierung im Alltag? – und verzichten Sie auf Stichpunkte.
 
-## 3. KI-spezifische Compliance
-- Listen Sie stichpunktartig besondere Pflichten bei der Nutzung von KI auf: Dokumentation, Transparenzpflichten, Fairness- und Bias-Analysen, Folgenabschätzungen sowie Anforderungen durch den EU AI Act (sofern relevant).
+## 2. Consent Management & Kundenrechte
 
-## 4. Sofortmaßnahmen & Strategische Schritte
-- Nennen Sie 3–4 priorisierte Maßnahmen für die kurzfristige und mittelfristige Umsetzung, z. B.:
-  - Datenschutz-Check
-  - Erstellung einer Auftragsverarbeitungsvereinbarung
-  - Einführung eines AI-Governance-Rahmens
-  - Mitarbeiterschulungen
-  - Lieferantenprüfung
-  - Einführung eines Datenschutz-Management-Systems (DSMS)
-- Passen Sie diese Maßnahmen an Unternehmensgröße und Haupttätigkeit an. Nutzen Sie die Formulardaten als Ausgangsbasis.
+Erläutern Sie in 1–2 zusammenhängenden Absätzen, wie das Unternehmen Einwilligungen seiner Kund:innen einholt, verwaltet und dokumentiert. Gehen Sie auf CRM‑Prozesse ein und erklären Sie, wie Prinzipien wie „Privacy by Design“ und „Privacy by Default“ umgesetzt werden. Berücksichtigen Sie dabei vorhandene Meldewege und Löschregeln sowie das interne KI‑Know‑how. Wenn spezielle Branchenregeln gelten oder ein hoher Anteil sensibler Daten verarbeitet wird, erläutern Sie die Besonderheiten. Nutzen Sie eine einfache Sprache und bilden Sie keine Aufzählungen.
 
-## 5. Schwachstellen & Lösungen
-- Nennen Sie 2–3 aktuelle Schwachstellen (z. B. unklare Datenflüsse, fehlende Löschkonzepte, unzureichende Dokumentation).
-- Geben Sie für jede Schwachstelle direkt einen konkreten Lösungsvorschlag bzw. ersten Behebungsschritt an.
+## 3. KI‑spezifische Compliance
+
+Beschreiben Sie in einem kurzen Fließtext, welche besonderen Pflichten bei der Nutzung von KI gelten. Dazu gehören eine lückenlose Dokumentation der Systeme, Transparenz über Datenquellen und Modelle, regelmäßige Fairness‑ und Bias‑Analysen sowie die Durchführung von Folgenabschätzungen. Wenn es sich um ein Hochrisiko‑System handelt, greifen die strengen Anforderungen des AI Act: das Unternehmen muss Risikobewertungen durchführen, Protokollierungen erstellen, technische und organisatorische Maßnahmen zur Datenqualität ergreifen sowie menschliche Aufsicht sicherstellen【2690173314419†L78-L170】. Betonen Sie, dass kleine Unternehmen von vereinfachten Regeln profitieren können, aber trotzdem Transparenz und Fairness sicherstellen müssen.
+
+## 4. Sofortmaßnahmen & Strategische Schritte
+
+Formulieren Sie 3–4 priorisierte Maßnahmen in zusammenhängenden Sätzen. Orientieren Sie sich dabei an der Unternehmensgröße und der Haupttätigkeit. Beispiele für Sofortmaßnahmen sind ein umfassender Datenschutz‑Check, die Erstellung oder Aktualisierung von Auftragsverarbeitungsvereinbarungen, die Einführung eines AI‑Governance‑Rahmens, gezielte Mitarbeiterschulungen zu KI‑Kompetenzen, die Überprüfung von Lieferantenverträgen und die Einrichtung eines Datenschutz‑Management‑Systems. Erklären Sie, warum diese Schritte wichtig sind und wie sie das Unternehmen nach vorn bringen. Verwenden Sie keine Listen, sondern verbinden Sie die Vorschläge in einem Fließtext.
+
+## 5. Schwachstellen & Lösungen
+
+Beschreiben Sie in 1–2 Absätzen die wichtigsten Schwachstellen der aktuellen Compliance‑Praxis. Typische Probleme sind unklare Datenflüsse, fehlende Löschkonzepte, unzureichende Dokumentation oder nicht definierte Rollen. Geben Sie zu jeder Schwachstelle einen konkreten Lösungsvorschlag oder einen ersten Behebungsschritt an. Führen Sie diese Punkte in einem zusammenhängenden Text aus, alternativ können Sie am Ende eine kurze Tabelle mit den Schwachstellen und Lösungsvorschlägen einfügen, falls dies die Lesbarkeit erhöht.
 
 **Beispiel-Tabelle:**
 
@@ -35,18 +41,17 @@ Analysieren Sie die aktuelle Compliance‑Situation des Unternehmens anhand der 
 | Unzureichende Dokumentation | Erstellung einer aktuellen Verfahrensbeschreibung      |
 
 **Hinweise:**
-- Verwenden Sie ausschließlich die im Fragebogen befindlichen Informationen.
-- Geben Sie keine Platzhalter oder Abkürzungen wie „n. v.“ aus; lassen Sie Punkte ohne Angaben weg.
-- Vermeiden Sie generische Checklisten.
-- Führen Sie keine Tools, Förderprogramme oder Roadmap-Maßnahmen auf; diese werden in separaten Abschnitten behandelt.
+
+* Verwenden Sie ausschließlich die im Fragebogen befindlichen Informationen.  Wo keine Angaben vorliegen, belassen Sie die Themen unkommentiert – keine Platzhalter oder Kürzel wie „n.v.“.
+* Vermeiden Sie generische Checklisten. Der Schwerpunkt liegt auf verständlichen Erklärungen und konkreten Hinweisen.
+* Führen Sie keine Tools, Förderprogramme oder Roadmap‑Maßnahmen auf; diese werden in separaten Abschnitten behandelt.
 
 **Formatierung:**
-- Geben Sie die Antwort als gegliedertes Markdown-Dokument mit den fünf nummerierten Hauptabschnitten (## 1.–## 5.) aus.
-- Nutzen Sie für jeden Abschnitt kurze, stichpunktartige Listen.
-- Im Abschnitt 5 können Sie eine Tabelle oder eine Liste zur Darstellung verwenden.
-- Lassen Sie Abschnitte oder Stichpunkte ohne Angaben weg.
 
-Setzen Sie reasoning_effort = medium, damit alle relevanten Aspekte sorgfältig, aber kompakt geprüft werden.
+* Geben Sie die Antwort als gegliedertes HTML-Dokument mit den fünf nummerierten Hauptabschnitten aus. Jeder Abschnitt besteht aus einem oder mehreren Fließtextabsätzen.
+* Wo es der Klarheit dient, können Sie am Ende von Abschnitt 5 eine kleine Tabelle verwenden, um Schwachstellen und Lösungen gegenüberzustellen, ansonsten bleiben Sie beim Fließtext.
+
+Setzen Sie reasoning_effort = medium, damit alle relevanten Aspekte sorgfältig, aber kompakt geprüft werden.
 
 ## Zusätzliche Anweisungen für den KI‑Status‑Report (DE)
 
