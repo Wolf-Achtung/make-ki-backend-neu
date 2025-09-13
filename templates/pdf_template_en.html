@@ -193,22 +193,6 @@ alt="Badge" style="height:38px">{% endif %}</div>
           {% if exec_summary_html and exec_summary_html|trim %}
           <div class="card">
             <h2>Executive summary</h2>
-            {% if benchmarks and benchmarks.items()|length > 0 %}
-            <div class="kpi-grid">
-              {% for key, b in benchmarks.items() %}
-              <div class="kpi-item">
-                <div class="kpi-value">{{ b.self }}%</div>
-                <div class="kpi-label">{{ key }}</div>
-              </div>
-              {% endfor %}
-            </div>
-            <p class="caption">Benchmarks: industry median ({{ datum }})</p>
-            {% if kpi_badges_html and kpi_badges_html|trim %}
-            <div class="kpi-badges">
-              {{ kpi_badges_html|safe }}
-            </div>
-            {% endif %}
-            {% endif %}
             <div class="exec-content" style="margin-top:.6rem">
               {{ exec_summary_html|safe }}
             </div>
@@ -281,9 +265,7 @@ risks_html|trim) %}
                   <tr>
                     <th>Programme</th>
                     <th>Target group</th>
-                    <th>Region</th>
-                    <th>Amount</th>
-                    <th>Purpose</th>
+                    <th>Region</th><th>Purpose</th>
                     <th>Deadline</th>
                     <th>Link</th>
                   </tr>
@@ -293,9 +275,7 @@ risks_html|trim) %}
                   <tr>
                     <td>{{ row.name }}</td>
                     <td>{{ row.zielgruppe }}</td>
-                    <td>{{ row.region }}</td>
-                    <td>{{ row.foerderhoehe }}</td>
-                    <td>{{ row.zweck }}</td>
+                    <td>{{ row.region }}</td><td>{{ row.zweck }}</td>
                     <td>{{ row.deadline }}</td>
                     <td>{% if row.link %}<a href="{{ row.link }}">{{ row.name }}</a>{% endif %}</td>
                   </tr>
