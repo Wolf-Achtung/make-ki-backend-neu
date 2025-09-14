@@ -2545,6 +2545,40 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         out["gamechanger_html"] = gc_sec
     except Exception:
         pass
+    # ----------------------------------------------------------------------
+    # Gold‑Standard sanitisation and clean‑up before returning.  The narrative
+    # sections (quick wins, risks, recommendations and roadmap) should not
+    # contain explicit lists or numeric values.  We define a local helper
+    # function that removes <ul>/<ol>/<li> tags, replaces list items with
+    # sentence separators and strips standalone numbers, percentage signs and
+    # currency symbols.  This helper does not touch legal references (e.g.
+    # DSGVO articles) because sanitisation is applied only to selected keys.
+    def _strip_lists_and_numbers(html: str) -> str:
+        import re as _re  # use local alias to avoid shadowing outer scope
+        if not html or not isinstance(html, str):
+            return html
+        # Remove unordered/ordered list tags
+        html = _re.sub(r"</?(ul|ol)[^>]*>", "", html)
+        # Replace list items with periods and spaces
+        html = html.replace("<li>", "").replace("</li>", ". ")
+        # Remove numeric patterns: stand‑alone digits, optional decimal and optional unit
+        html = _re.sub(r"\b\d+[\.,]?\d*\s*(%|€|EUR|T€|T\\u20AC)?\b", "", html)
+        # Remove phrases like '6 Wochen', '3 Monate', '10 Tage' in DE/EN
+        html = _re.sub(r"\b\d+\s*(Tage|Wochen|Monate|Days|Weeks|Months)\b", "", html, flags=_re.IGNORECASE)
+        # Collapse multiple spaces and punctuation
+        html = _re.sub(r"\s{2,}", " ", html)
+        return html.strip()
+
+    # Apply sanitisation to narrative HTML fields
+    for _key in ["quick_wins_html", "risks_html", "recommendations_html", "roadmap_html"]:
+        if isinstance(out.get(_key), str):
+            out[_key] = _strip_lists_and_numbers(out[_key])
+    # If roadmap is a list of items (post‑processed), sanitise each item
+    if isinstance(out.get("roadmap"), list):
+        out["roadmap"] = [ _strip_lists_and_numbers(str(item)) for item in out["roadmap"] ]
+    # Remove KPI benchmarks and badges entirely
+    out["benchmarks"] = {}
+    out["kpi_badges_html"] = ""
     return out
 
 
