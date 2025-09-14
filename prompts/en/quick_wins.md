@@ -1,1 +1,0 @@
-<p>Write one or two connected paragraphs describing immediately actionable quick wins. Use a warm, encouraging tone and avoid lists, bullet points or percentages. Be specific (e.g. “Schedule a data inventory session”, “Create a simple checklist”) and convey that even small steps can ease the workload. Avoid mentioning brand names or commercial products.</p>
