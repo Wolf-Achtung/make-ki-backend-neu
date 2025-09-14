@@ -2561,21 +2561,54 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         html = _re.sub(r"</?(ul|ol)[^>]*>", "", html)
         # Replace list items with periods and spaces
         html = html.replace("<li>", "").replace("</li>", ". ")
-        # Remove numeric patterns: stand‑alone digits, optional decimal and optional unit
-        html = _re.sub(r"\b\d+[\.,]?\d*\s*(%|€|EUR|T€|T\\u20AC)?\b", "", html)
-        # Remove phrases like '6 Wochen', '3 Monate', '10 Tage' in DE/EN
-        html = _re.sub(r"\b\d+\s*(Tage|Wochen|Monate|Days|Weeks|Months)\b", "", html, flags=_re.IGNORECASE)
-        # Collapse multiple spaces and punctuation
+        # Remove numeric patterns together with leading hyphens and common units.  This
+        # collapses phrases like "15 min", "30 days" or "3 Monate" into nothing,
+        # preventing stray hyphens or units from lingering in the text.  Units are
+        # handled in both English and German.  A preceding hyphen (e.g. "-15") is
+        # removed along with the number and unit.  Currency symbols and percent
+        # signs are also stripped.
+        html = _re.sub(
+            r"\s*[-]?\s*\d+[\.,]?\d*\s*(%|€|EUR|T€|T\\u20AC|Tage|Wochen|Monate|Days|Weeks|Months|Minute|Minutes|Minuten|Stunden|Hours|Hour)\b",
+            "",
+            html,
+            flags=_re.IGNORECASE,
+        )
+        # Remove any remaining standalone numbers (e.g. "30" or "12") that are not
+        # associated with a specific unit.  This prevents bare digits from
+        # appearing after the previous substitution.  Excludes numbers that may
+        # form part of an alphanumeric word (e.g. "ISO27001" remains untouched).
+        html = _re.sub(r"(?<![\w])\d+[\.,]?\d*(?![\w])", "", html)
+        # Remove stray hyphens that might remain at the start of a sentence or
+        # following whitespace after numbers have been removed.
+        html = _re.sub(r"(\s|^)[\-–]\s+", r"\1", html)
+        # Collapse multiple spaces and punctuation into a single space.
         html = _re.sub(r"\s{2,}", " ", html)
         return html.strip()
 
-    # Apply sanitisation to narrative HTML fields
-    for _key in ["quick_wins_html", "risks_html", "recommendations_html", "roadmap_html"]:
+    # Apply sanitisation to narrative HTML fields.  In addition to quick wins,
+    # risks, recommendations and roadmap, we sanitise the vision and gamechanger
+    # sections to remove residual numbers, units and list structures.
+    for _key in [
+        "quick_wins_html",
+        "risks_html",
+        "recommendations_html",
+        "roadmap_html",
+        "vision_html",
+        "gamechanger_html",
+    ]:
         if isinstance(out.get(_key), str):
             out[_key] = _strip_lists_and_numbers(out[_key])
     # If roadmap is a list of items (post‑processed), sanitise each item
     if isinstance(out.get("roadmap"), list):
         out["roadmap"] = [ _strip_lists_and_numbers(str(item)) for item in out["roadmap"] ]
+    # If the timeline contains bullet points extracted from the roadmap, apply
+    # sanitisation to each item in each phase (t30, t90, t365) so that
+    # left‑over numbers, hyphens or units are removed.
+    if isinstance(out.get("timeline"), dict):
+        for _phase in ["t30", "t90", "t365"]:
+            items = out["timeline"].get(_phase)
+            if isinstance(items, list):
+                out["timeline"][_phase] = [ _strip_lists_and_numbers(str(it)) for it in items ]
     # Remove KPI benchmarks and badges entirely
     out["benchmarks"] = {}
     out["kpi_badges_html"] = ""
