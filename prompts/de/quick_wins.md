@@ -1,1 +1,0 @@
-<p>Schreibe 1–2 kurze Absätze mit sofort umsetzbaren Quick Wins. Keine Listen (<ul>/<ol> vermeiden), keine Icons, keine Prozentzahlen. Formuliere konkret („Termin mit…“, „Checkliste anlegen…“, „Workflow in Tool X bauen…“), aber ohne Markenpräferenzen.</p>
