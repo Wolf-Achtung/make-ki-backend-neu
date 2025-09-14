@@ -1,5 +1,5 @@
 <h3>Chancen & Ausgangslage</h3>
-<p>Beginne mit einem warmen, einfühlsamen Absatz (3–5 Sätze), der den aktuellen Stand des Unternehmens beschreibt und die Chancen durch KI für kleine und mittlere Unternehmen betont. Verwende eine motivierende, partnerschaftliche Sprache wie in diesem Beispiel: „Wenn heute von KI die Rede ist, denken viele an komplizierte Technik … doch gerade hier liegt eine große Chance“. Vermeide Zahlen und Prozentwerte und verwende stattdessen qualitative Begriffe wie „hoch“, „mittel“ oder „deutlich über Branchenniveau“.</p>
+<p>Beginne mit einem warmen, einfühlsamen Absatz (3–5 Sätze), der den aktuellen Stand des Unternehmens beschreibt und die Chancen durch KI für kleine und mittlere Unternehmen betont. Verwende eine motivierende, partnerschaftliche Sprache wie in diesem Beispiel: „Wenn heute von KI die Rede ist, denken viele an komplizierte Technik … doch gerade hier liegt eine große Chance“. Vermeide Zahlen und Prozentwerte und verwende stattdessen qualitative Begriffe wie „hoch“, „mittel“ oder „deutlich über Branchenniveau“.</p>
 
 <h3>Wichtigste Potenziale</h3>
 <p>Formuliere 2–3 zentrale Potenziale in einem zusammenhängenden Absatz. Beschreibe, wie diese Chancen den Arbeitsalltag erleichtern können, und nutze eine freundliche, beratende Sprache ohne Aufzählungen oder Aufzählungszeichen.</p>
