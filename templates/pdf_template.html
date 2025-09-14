@@ -18,11 +18,31 @@
         *{box-sizing:border-box}
         html,body{margin:0;padding:0;font:14px/1.55 Inter,system-ui,-apple-
 system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
-        h1,h2,h3{margin:0 0 .5rem 0;font-weight:700}
-        h1{font-size:28px} h2{font-size:20px;border-bottom:2px solid 
-var(--border);padding-bottom:.35rem;margin-top:1.2rem}
-        h3{font-size:16px;margin:.8rem 0 .4rem}
-        p{margin:.35rem 0} small,em{color:var(--muted)}
+        h1,h2,h3{
+          margin:0 0 .6rem 0;
+          font-weight:700;
+        }
+        /* Enlarge headings and add more spacing for improved readability */
+        h1{
+          font-size:32px;
+          margin-bottom:0.8rem;
+        }
+        h2{
+          font-size:24px;
+          border-bottom:2px solid var(--border);
+          padding-bottom:.5rem;
+          margin-top:1.6rem;
+          margin-bottom:.6rem;
+        }
+        h3{
+          font-size:18px;
+          margin:1rem 0 .5rem;
+        }
+        p{
+          margin:.45rem 0;
+          line-height:1.6;
+        }
+        small,em{color:var(--muted)}
         ul,ol{margin:.4rem 0 .6rem 1.2rem} a{color:var(--brand-blue);text-
 decoration:none;border-bottom:1px solid rgba(31,102,255,.35)}
         .container{padding:22px}
@@ -32,8 +52,14 @@ decoration:none;border-bottom:1px solid rgba(31,102,255,.35)}
         .header img{height:38px}
         .badge{margin-left:auto;opacity:.95}
 .meta{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:12px}
-        .card{background:var(--card);border:1px solid var(--border);border-
-radius:14px;padding:16px}
+        .card{
+          background:var(--card);
+          border:1px solid var(--border);
+          border-radius:14px;
+          padding:20px;
+          /* Subtle shadow for depth */
+          box-shadow:0 2px 6px rgba(0,0,0,0.04);
+        }
         .grid{display:grid;gap:14px}
 .grid.cols-2{grid-template-columns:1fr 1fr}
         .footer{margin-top:18px;padding-top:8px;border-top:1px dashed 
@@ -231,7 +257,7 @@ risks_html|trim) %}
           {# Roadmap: show timeline when available; otherwise render a 12-month table if structured entries exist; fallback to raw HTML #}
           {% if roadmap_html and roadmap_html|trim or (roadmap_items and roadmap_items|length > 0) %}
           <div class="card">
-            <h2>Roadmap-GS Test</h2>
+            <h2>Roadmap</h2>
             {% if timeline and (timeline.t30 or timeline.t90 or timeline.t365) %}
             <div class="swimlane">
               <div>
