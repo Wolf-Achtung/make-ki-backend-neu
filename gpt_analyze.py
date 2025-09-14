@@ -2292,7 +2292,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             summary_sentence += f" Größtes Gap: {gaps[0][1]}."
             # Use a generic heading "Statusübersicht" instead of "KPI‑Überblick" to
             # avoid duplication with model-generated sections.
-            summary_prefix = "<p><strong>Statusübersicht:</strong>" + summary_sentence + "</p>"
+            #summary_prefix = "<p><strong>Statusübersicht:</strong>" + summary_sentence + "</p>"
         else:
             dig = own_digi
             aut = own_auto
