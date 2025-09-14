@@ -1,0 +1,1 @@
+<p>Propose a long‑term initiative that could transform the organisation. Use an inspiring, vivid style: give the idea a succinct title and describe in a paragraph how it will improve the day‑to‑day work. Avoid numbers and buzzwords and carefully mention any potential side effects or risks.</p>

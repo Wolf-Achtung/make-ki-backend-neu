@@ -1,0 +1,1 @@
+<p>Schreibe einen kompakten Absatz über 2–3 Hauptrisiken (z.&nbsp;B. Compliance, Datenqualität, Ressourcen), ohne Bullet‑Points oder Prozentzahlen. Nutze eine freundliche, beruhigende Sprache und zeige auf, wie sich diese Risiken durch kluge Planung und Begleitung minimieren lassen. Hinweise zur Minderung können in Klammern eingefügt werden.</p>
