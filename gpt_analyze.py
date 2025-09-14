@@ -2348,13 +2348,19 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         try:
             esc = out.get("exec_summary_html") or ""
             if esc:
-                # Remove DE KPI overview blocks
-                esc = re.sub(r"(?is)<h3>\s*KPI[\s\-]*Überblick\s*</h3>.*?(?=<h3|<p|<ul|<ol|Top\s*-?Chancen|Zentrale\s*-?Risiken|Nächste\s*-?Schritte|$)", "", esc)
-                # Remove EN KPI overview blocks
-                esc = re.sub(r"(?is)<h3>\s*KPI\s*overview\s*</h3>.*?(?=<h3|<p|<ul|<ol|Top\s*opportunities|Key\s*risks|Next\s*steps|$)", "", esc)
-                # Also remove plain text headings that may not be wrapped in <h3>
-                esc = re.sub(r"(?is)KPI[\s\-]*Überblick.*?(?=<h3|<p|<ul|<ol|Top\s*-?Chancen|Zentrale\s*-?Risiken|Nächste\s*-?Schritte|$)", "", esc)
-                esc = re.sub(r"(?is)KPI\s*overview.*?(?=<h3|<p|<ul|<ol|Top\s*opportunities|Key\s*risks|Next\s*steps|$)", "", esc)
+                # Remove DE KPI overview blocks.  Handle headings wrapped in <h3>
+                # as well as plain text paragraphs starting with "KPI-Überblick".
+                esc = re.sub(
+                    r"(?is)(?:<h3[^>]*>\s*)?KPI[\s\-]*Überblick\s*:?\s*</h3>?\s*.*?(?=(<h3|<p|<ul|<ol|Top\s*-?Chancen|Zentrale\s*-?Risiken|Nächste\s*-?Schritte|$))",
+                    "",
+                    esc,
+                )
+                # Remove EN KPI overview blocks.  Catch both heading and plain text forms
+                esc = re.sub(
+                    r"(?is)(?:<h3[^>]*>\s*)?KPI\s*overview\s*:?\s*</h3>?\s*.*?(?=(<h3|<p|<ul|<ol|Top\s*opportunities|Key\s*risks|Next\s*steps|$))",
+                    "",
+                    esc,
+                )
                 out["exec_summary_html"] = esc
         except Exception:
             # Ignore any errors during removal; keep the current summary
@@ -2711,6 +2717,10 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         # appearing after the previous substitution.  Excludes numbers that may
         # form part of an alphanumeric word (e.g. "ISO27001" remains untouched).
         html = _re.sub(r"(?<![\w])\d+[\.,]?\d*(?![\w])", "", html)
+        # Remove leftover percentage signs or plus/minus markers that no longer have
+        # numbers attached (e.g. "+%", "-%", " %").  These often appear after
+        # numerical values have been stripped and can confuse the reader.
+        html = _re.sub(r"[+\-]?\s*%", "", html)
         # Remove stray hyphens that might remain at the start of a sentence or
         # following whitespace after numbers have been removed.
         html = _re.sub(r"(\s|^)[\-–]\s+", r"\1", html)
@@ -2719,9 +2729,14 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         return html.strip()
 
     # Apply sanitisation to narrative HTML fields.  In addition to quick wins,
-    # risks, recommendations and roadmap, we sanitise the vision and gamechanger
-    # sections to remove residual numbers, units and list structures.
+    # risks, recommendations and roadmap, we sanitise the vision, gamechanger
+    # and executive summary sections to remove residual numbers, units and list
+    # structures.  Including the executive summary ensures that stray
+    # percentages or KPI references created by the LLM are removed.  The
+    # "praxisbeispiel" key (which contains fallback case study HTML) is also
+    # sanitised.
     for _key in [
+        "exec_summary_html",
         "quick_wins_html",
         "risks_html",
         "recommendations_html",
