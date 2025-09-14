@@ -189,41 +189,21 @@ alt="Badge" style="height:38px">{% endif %}</div>
           <div class="card toc-card">
             <h2>Inhaltsverzeichnis</h2>
             {{ toc_html|safe }}
-    {% if kpi_badges_html and kpi_badges_html|trim %}
-      <div class="kpi-badges kpi-badges--toc">
-        {{ kpi_badges_html|safe }}
-      </div>
-    {% endif %}
+    {# KPI badges removed in Gold‑Standard #}
           </div>
         {% endif %}
 
         <!-- One-Pager: Executive Summary only -->
         <div class="onepager">
           {# Executive Summary card #}
-          {% if exec_summary_html and exec_summary_html|trim %}
+        {% if exec_summary_html and exec_summary_html|trim %}
           <div class="card">
             <h2>Executive Summary</h2>
-            {% if benchmarks and benchmarks.items()|length > 0 %}
-              <div class="kpi-grid">
-              {% for key, b in benchmarks.items() %}
-              <div class="kpi-item">
-                <div class="kpi-value">{{ b.self }}%</div>
-                <div class="kpi-label">{{ key }}</div>
-              </div>
-              {% endfor %}
-            </div>
-            <p class="caption">Benchmarks: Median Ihrer Branche ({{ datum }})</p>
-            {% if kpi_badges_html and kpi_badges_html|trim %}
-            <div class="kpi-badges">
-              {{ kpi_badges_html|safe }}
-            </div>
-            {% endif %}
-            {% endif %}
             <div class="exec-content" style="margin-top:.6rem">
               {{ exec_summary_html|safe }}
             </div>
           </div>
-          {% endif %}
+        {% endif %}
         </div>
 
         <!-- Quick Wins & Risiken im 2-Spalten-Block -->
@@ -231,11 +211,11 @@ alt="Badge" style="height:38px">{% endif %}</div>
 risks_html|trim) %}
         <div class="grid cols-2 section">
           <div class="card">
-            <h2>⚡ Quick Wins</h2>
+            <h2>Quick Wins</h2>
             <div>{{ (quick_wins_html or '')|safe }}</div>
           </div>
           <div class="card">
-            <h2>⚠️ Hauptrisiken</h2>
+            <h2>Hauptrisiken</h2>
             <div>{{ (risks_html or '')|safe }}</div>
           </div>
         </div>
@@ -244,19 +224,28 @@ risks_html|trim) %}
         <div class="grid cols-2 section">
           {% if recommendations_html and recommendations_html|trim %}
           <div class="card">
-            <h2>Empfehlungen (Top 5) </h2>
+            <h2>Empfehlungen</h2>
             <div>{{ recommendations_html|safe }}</div>
           </div>
           {% endif %}
           {# Roadmap: show timeline when available; otherwise render a 12-month table if structured entries exist; fallback to raw HTML #}
           {% if roadmap_html and roadmap_html|trim or (roadmap_items and roadmap_items|length > 0) %}
           <div class="card">
-            <h2>12‑Monats‑Roadmap</h2>
+            <h2>Roadmap</h2>
             {% if timeline and (timeline.t30 or timeline.t90 or timeline.t365) %}
             <div class="swimlane">
-              <div><h3>30 Tage</h3><ul>{% for it in timeline.t30 %}<li>{{ it }}</li>{% endfor %}</ul></div>
-              <div><h3>3 Monate</h3><ul>{% for it in timeline.t90 %}<li>{{ it }}</li>{% endfor %}</ul></div>
-              <div><h3>12 Monate</h3><ul>{% for it in timeline.t365 %}<li>{{ it }}</li>{% endfor %}</ul></div>
+              <div>
+                <h3>Kurzfristig</h3>
+                {% for it in timeline.t30 %}<p>{{ it }}</p>{% endfor %}
+              </div>
+              <div>
+                <h3>Mittelfristig</h3>
+                {% for it in timeline.t90 %}<p>{{ it }}</p>{% endfor %}
+              </div>
+              <div>
+                <h3>Langfristig</h3>
+                {% for it in timeline.t365 %}<p>{{ it }}</p>{% endfor %}
+              </div>
             </div>
             {% elif roadmap_items and roadmap_items|length > 0 %}
             <table class="roadmap-table">
@@ -299,9 +288,7 @@ risks_html|trim) %}
                     <th>Programm</th>
                     <th>Zielgruppe</th>
                     <th>Region</th>
-                    <th>Förderhöhe</th>
                     <th>Zweck</th>
-                    <th>Deadline</th>
                     <th>Link</th>
                   </tr>
                 </thead>
@@ -311,9 +298,7 @@ risks_html|trim) %}
                     <td>{{ p.name }}</td>
                     <td>{{ p.zielgruppe }}</td>
                     <td>{{ p.region }}</td>
-                    <td>{{ p.foerderhoehe }}</td>
                     <td>{{ p.zweck }}</td>
-                    <td>{{ p.deadline }}</td>
                     <td>{% if p.link %}<a href="{{ p.link }}">{{ p.name }}</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
@@ -346,7 +331,6 @@ risks_html|trim) %}
                     <th>Tool</th>
                     <th>Einsatzgebiet</th>
                     <th>Datensitz</th>
-                    <th>Kosten</th>
                     <th>Link</th>
                   </tr>
                 </thead>
@@ -356,16 +340,11 @@ risks_html|trim) %}
                     <td>{{ t.name }}</td>
                     <td>{{ t.usecase }}</td>
                     <td>{{ t.datenschutz or 'n/a' }}</td>
-                    <td>{{ t.cost or 'n/a' }}</td>
                     <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
                 </tbody>
               </table>
-              <p class="footnote">
-                Kostenkategorien:<br>
-                sehr&nbsp;gering&nbsp;&lt;&nbsp;€100/Monat;&nbsp;gering&nbsp;€100–500/Monat;&nbsp;mittel&nbsp;€500–1.000/Monat;&nbsp;hoch&nbsp;&gt;&nbsp;€1.000/Monat.
-              </p>
             {% else %}
               <p><em>Tool-Liste wird dynamisch ergänzt.</em></p>
             {% endif %}
