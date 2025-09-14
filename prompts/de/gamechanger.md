@@ -1,1 +1,0 @@
-<p>Schlage eine langfristige Initiative vor, die das Unternehmen transformieren kann. Nutze einen inspirierenden, bildhaften Stil: Gib der Idee einen prägnanten Titel und beschreibe in einem Absatz, wie diese Initiative den Arbeitsalltag verbessert. Verzichte auf Zahlen und Marketingjargon und schildere mögliche Nebenwirkungen oder Risiken behutsam.</p>

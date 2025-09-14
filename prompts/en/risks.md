@@ -1,1 +1,0 @@
-<p>Write a compact paragraph about two or three key risks (such as compliance, data quality and resources) without bullet points or percentages. Use a friendly, reassuring tone and indicate how careful planning and guidance can reduce these risks. Mitigation hints may be included in parentheses.</p>

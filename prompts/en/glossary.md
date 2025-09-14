@@ -1,1 +1,0 @@
-<p><strong>Glossary</strong></p><p><b>AI governance:</b> Roles and rules for safe AI use.</p><p><b>Data inventory:</b> Overview of data assets.</p><p><b>DPIA:</b> Data protection impact assessment.</p><p><b>Prompt policy:</b> Guardrails for safe inputs.</p>
