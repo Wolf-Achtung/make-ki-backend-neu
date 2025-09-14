@@ -283,6 +283,109 @@ def fallback_vision(data: dict, lang: str = "de") -> str:
             "</ul>"
         )
         return idea_text + mvp_text + kpis
+
+# -----------------------------------------------------------------------------
+# Fallback practice example loader
+#
+# When the language model returns a case study from an unrelated industry
+# (e.g. Maschinenbau instead of Consulting), we need a deterministic
+# alternative.  This helper reads ``data/praxisbeispiele.md`` and extracts the
+# first case for the specified branch.  It transforms the bullet points
+# (Problem, Lösung, Ergebnis) into a short descriptive paragraph and applies
+# the number/list sanitiser.  If no matching branch is found, it falls back
+# to the "Sonstige" section.  Returns an HTML paragraph.
+def _fallback_praxisbeispiel(branche: str, lang: str = "de") -> str:
+    try:
+        # Normalise branch name for matching
+        br = (branche or "").strip().lower()
+        branch_map = {
+            "beratung": "Beratung & Dienstleistungen",
+            "dienstleistungen": "Beratung & Dienstleistungen",
+            "it": "IT & Software",
+            "it & software": "IT & Software",
+            "marketing": "Marketing & Werbung",
+            "werbung": "Marketing & Werbung",
+            "bau": "Bauwesen",
+            "bausektor": "Bauwesen",
+            "industrie": "Industrie/Produktion",
+            "produktion": "Industrie/Produktion",
+            "finanzen": "Finanzen & Versicherungen",
+            "versicherung": "Finanzen & Versicherungen",
+            "gesundheit": "Gesundheitswesen",
+            "gesundheitswesen": "Gesundheitswesen",
+            "handel": "Handel & E-Commerce",
+            "e-commerce": "Handel & E-Commerce",
+            "bildung": "Bildung",
+            "handwerk": "Handwerk",
+            "sonstige": "Sonstige",
+        }
+        header = branch_map.get(br, None)
+        md_path = Path(__file__).resolve().parent / "data" / "praxisbeispiele.md"
+        if not md_path.exists():
+            return ""
+        content = md_path.read_text(encoding="utf-8")
+        lines = content.splitlines()
+        # Locate the branch section
+        start = None
+        header_pattern = f"## {header}" if header else None
+        if header_pattern:
+            for idx, ln in enumerate(lines):
+                if ln.strip().lower() == header_pattern.lower():
+                    start = idx
+                    break
+        # Fallback to Sonstige if branch not found
+        if start is None:
+            for idx, ln in enumerate(lines):
+                if ln.strip().lower() == "## sonstige":
+                    start = idx
+                    break
+        if start is None:
+            return ""
+        # Extract lines until next section
+        section_lines: List[str] = []
+        for ln in lines[start + 1:]:
+            if ln.startswith("## "):
+                break
+            section_lines.append(ln)
+        # Find first case block after a "Case" marker
+        case_lines: List[str] = []
+        in_case = False
+        for ln in section_lines:
+            if ln.strip().startswith("**Case"):
+                if in_case:
+                    break
+                in_case = True
+                continue
+            if in_case:
+                if not ln.strip():
+                    break
+                case_lines.append(ln)
+        # Combine bullet lines into a descriptive sentence
+        text_parts: List[str] = []
+        for ln in case_lines:
+            stripped = ln.strip().lstrip("- •*").strip()
+            if not stripped:
+                continue
+            # Replace heading prefixes with more narrative phrases
+            lowered = stripped.lower()
+            if lowered.startswith("pain point"):
+                stripped = stripped.split(":", 1)[-1].strip()
+                stripped = "Problem: " + stripped
+            elif lowered.startswith("ki-lösung") or lowered.startswith("ki‑lösung"):
+                stripped = stripped.split(":", 1)[-1].strip()
+                stripped = "Lösung: " + stripped
+            elif lowered.startswith("outcome"):
+                stripped = stripped.split(":", 1)[-1].strip()
+                stripped = "Ergebnis: " + stripped
+            text_parts.append(stripped)
+        description = " ".join(text_parts)
+        # Strip any markdown emphasis
+        description = description.replace("**", "").replace("__", "")
+        # Sanitise numbers and lists
+        description = _strip_lists_and_numbers(description)
+        return f"<p>{description}</p>"
+    except Exception:
+        return ""
     else:
         idea_title = "AI service portal for SMEs"
         idea_text = (
@@ -2170,11 +2273,15 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             aut_desc = _level_de(aut)
             paper_desc = _level_de(paper)
             know_desc = _level_de(know)
-            summary_sentence = (f" Ihr Digitalisierungsgrad liegt bei {dig}% ({digi_desc}, Branchenmedian {dig_bm}%), "
-                                f"der Automatisierungsgrad bei {aut}% ({aut_desc}, Branchenschnitt {aut_bm}%), "
-                                f"die Papierlosigkeit bei {paper}% ({paper_desc}, Benchmark {paper_bm}%) "
-                                f"und das KI‑Know‑how bei {know}% ({know_desc}, Benchmark {know_bm}%).")
-            # Ermitteln Sie das größte Gap (absoluter Differenzwert) aus den vier Dimensionen
+            # Compose a qualitative status overview without explicit percentages or numerical
+            # benchmarks.  Use descriptive levels (hoch, mittel, niedrig) instead of
+            # numbers and state the biggest gap qualitatively.  This avoids
+            # quantitative KPI language in the narrative.
+            summary_sentence = (
+                f" Ihr Digitalisierungsgrad ist {digi_desc}, der Automatisierungsgrad ist {aut_desc}, "
+                f"die Papierlosigkeit ist {paper_desc} und das KI‑Know‑how ist {know_desc}."
+            )
+            # Ermitteln Sie das größte Gap basierend auf der größten absoluten Differenz
             gaps = [
                 (abs(own_digi - dig_bench), _labels[0]),
                 (abs(own_auto - aut_bench), _labels[1]),
@@ -2182,8 +2289,10 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                 (abs(own_know - know_bench), _labels[3]),
             ]
             gaps.sort(key=lambda x: x[0], reverse=True)
-            summary_sentence += f" Größtes Gap: {gaps[0][1]} ({gaps[0][0]} pp)."
-            summary_prefix = "<p><strong>KPI‑Überblick:</strong>" + summary_sentence + "</p>"
+            summary_sentence += f" Größtes Gap: {gaps[0][1]}."
+            # Use a generic heading "Statusübersicht" instead of "KPI‑Überblick" to
+            # avoid duplication with model-generated sections.
+            summary_prefix = "<p><strong>Statusübersicht:</strong>" + summary_sentence + "</p>"
         else:
             dig = own_digi
             aut = own_auto
@@ -2208,10 +2317,13 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             aut_desc = _level_en(aut)
             paper_desc = _level_en(paper)
             know_desc = _level_en(know)
-            summary_sentence = (f" Your digitalisation level is {dig}% ({digi_desc}, sector median {dig_bm}%), "
-                                f"automation is {aut}% ({aut_desc}, sector average {aut_bm}%), "
-                                f"paperless processes reach {paper}% ({paper_desc}, benchmark {paper_bm}%), "
-                                f"and AI know‑how is {know}% ({know_desc}, benchmark {know_bm}%).")
+            # Compose a qualitative status overview for English reports without
+            # explicit percentages.  Use high/medium/low descriptors and state
+            # the largest gap qualitatively.
+            summary_sentence = (
+                f" Your digitalisation level is {digi_desc}, automation is {aut_desc}, "
+                f"paperless processes are {paper_desc}, and AI know‑how is {know_desc}."
+            )
             gaps = [
                 (abs(own_digi - dig_bench), _labels[0]),
                 (abs(own_auto - aut_bench), _labels[1]),
@@ -2219,8 +2331,9 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                 (abs(own_know - know_bench), _labels[3]),
             ]
             gaps.sort(key=lambda x: x[0], reverse=True)
-            summary_sentence += f" Largest gap: {gaps[0][1]} ({gaps[0][0]} pp)."
-            summary_prefix = "<p><strong>KPI overview:</strong>" + summary_sentence + "</p>"
+            summary_sentence += f" Largest gap: {gaps[0][1]}."
+            # Use "Status overview" instead of "KPI overview" to avoid duplication.
+            summary_prefix = "<p><strong>Status overview:</strong>" + summary_sentence + "</p>"
         # Prepend the summary only if an executive summary exists
         if out.get("exec_summary_html"):
             out["exec_summary_html"] = summary_prefix + "\n" + out["exec_summary_html"]
@@ -2325,6 +2438,26 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         dep_lvl = 'niedrig'
     risk_rows.append({"category": "Abhängigkeit Anbieter" if lang == "de" else "Vendor lock-in", "level": dep_lvl})
     out["risk_heatmap"] = risk_rows
+
+    # ---------------------------------------------------------------------
+    # Fallback practice example if the generated case study does not match
+    # the respondent's sector.  Occasionally the language model returns a
+    # Maschinenbau example for consulting or other industries.  When this
+    # happens, replace the case study with a deterministic one from
+    # ``data/praxisbeispiele.md`` based on the branch.  Only trigger if the
+    # text mentions "Maschinenbau" and the branch is not Bau/Industrie/Produktion.
+    try:
+        if branche and isinstance(out.get("praxisbeispiel"), str):
+            pb_lower = out["praxisbeispiel"].lower()
+            # If the case study references Maschinenbau but the client's
+            # branch is different, use the fallback.
+            if "maschinenbau" in pb_lower and not any(b in branche for b in ["bau", "industrie", "produktion"]):
+                fallback_html = _fallback_praxisbeispiel(branche, lang)
+                if fallback_html:
+                    out["praxisbeispiel"] = fallback_html
+    except Exception:
+        # Silently ignore fallback errors
+        pass
 
     # Förder-Badges aus erster Programmeinträgen
     badges = []
@@ -2595,6 +2728,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         "roadmap_html",
         "vision_html",
         "gamechanger_html",
+        "praxisbeispiel",
     ]:
         if isinstance(out.get(_key), str):
             out[_key] = _strip_lists_and_numbers(out[_key])
