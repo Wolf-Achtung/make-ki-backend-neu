@@ -1,0 +1,32 @@
+branche: Health & care
+score_percent: 61
+benchmark: "Digitalisation level: 57 %, automation level: 42 %"
+hauptleistung: "Patient management & diagnostics"
+zielgruppen: ["practices", "clinics", "care providers"]
+wichtigste_chancen: "Telemedicine, AI‑supported diagnostics, automated documentation"
+zentrale_risiken: "Data protection, interface problems, acceptance"
+next_steps: |
+  - Pilot an e-health solution
+  - Train staff on AI‑based documentation
+  - Use funding from the G‑BA or the Innovation Fund
+tools_list:
+  - name: "SORMAS"
+    usecase: "health management"
+    datenschutz: "DE"
+    link: "https://sormas.org"
+  - name: "Infermedica"
+    usecase: "symptom analysis"
+    datenschutz: "EU"
+    link: "https://infermedica.com"
+foerderprogramme_list:
+  - name: "Innovationsfonds"
+    link: "https://www.g-ba.de/innovationsfonds"
+    zielgruppe: "healthcare"
+    foerderquote: "80 %"
+    deadline: "31.12.2025"
+  - name: "KHZG"
+    link: "https://www.bundesgesundheitsministerium.de/khzg"
+    zielgruppe: "clinics"
+    foerderquote: "70 %"
+    deadline: "31.12.2025"
+best_practice: "Practice MNO implemented Infermedica and shortened diagnosis time by 25 %."
