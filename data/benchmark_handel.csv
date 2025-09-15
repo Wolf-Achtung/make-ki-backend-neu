@@ -1,6 +1,0 @@
-cluster,score_ki_readiness,score_datenschutz,score_innovation,score_compliance,benchmarktitel,beispiel_usecase,empfohlene_tools
-Solo/Freiberufler,45,50,42,48,Baseline Einzelhandel,Digitale Kassensysteme,Lexoffice;SumUp;Shopify
-Klein (2–9 MA),55,60,50,55,Fortgeschritten,Webshop,Shopify;Pickware;JTL
-KMU (10–249 MA),68,68,60,65,Benchmark Multi-Channel,Echtzeit-Lagerverwaltung,Plentymarkets;SAP Business One
-Groß,80,80,75,75,Top-Performer,KI-basierte Nachfrageprognose,Tradebyte;SAP S/4HANA
-
