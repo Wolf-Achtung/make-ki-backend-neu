@@ -2627,7 +2627,6 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         "foerderprogramme_html",
         "tools_html",
         "compliance_html",
-        "praxisbeispiel_html",
         "gamechanger_html",
         "sections_html",
     ]:
