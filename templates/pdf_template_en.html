@@ -305,7 +305,8 @@ risks_html|trim) %}
                     <td>{{ row.zielgruppe }}</td>
                     <td>{{ row.region }}</td>
                     <td>{{ row.zweck }}</td>
-                    <td>{% if row.link %}<a href="{{ row.link }}">{{ row.name }}</a>{% endif %}</td>
+                    {# Use a descriptive link label instead of repeating the programme name #}
+                    <td>{% if row.link %}<a href="{{ row.link }}">Programme page</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
                 </tbody>
@@ -346,7 +347,8 @@ risks_html|trim) %}
                     <td>{{ t.name }}</td>
                     <td>{{ t.usecase }}</td>
                     <td>{{ t.datenschutz or 'n/a' }}</td>
-                    <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
+                    {# Use a neutral call‑to‑action for the link cell to avoid repetition #}
+                    <td>{% if t.link %}<a href="{{ t.link }}">Website</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
                 </tbody>

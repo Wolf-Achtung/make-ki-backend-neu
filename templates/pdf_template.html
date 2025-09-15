@@ -331,10 +331,13 @@ alt="Badge" style="height:38px">{% endif %}</div>
                   </tr>
                 </thead>
                 <tbody>
+                {# Display programme names in the first column and use a descriptive link label in the second column.
+                   Using the same name for both columns leads to repetitive text.  The link cell instead contains a
+                   neutral call‑to‑action to visit the programme website. #}
                 {% for p in foerderprogramme_table %}
                   <tr>
                     <td>{{ p.name }}</td>
-                    <td>{% if p.link %}<a href="{{ p.link }}">{{ p.name }}</a>{% endif %}</td>
+                    <td>{% if p.link %}<a href="{{ p.link }}">Zum Programm</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
                 </tbody>
@@ -370,7 +373,8 @@ alt="Badge" style="height:38px">{% endif %}</div>
                 {% for t in tools_table %}
                   <tr>
                     <td>{{ t.name }}</td>
-                    <td>{% if t.link %}<a href="{{ t.link }}">{{ t.name }}</a>{% endif %}</td>
+                    {# Display a neutral link label to avoid repeating the tool name in both cells #}
+                    <td>{% if t.link %}<a href="{{ t.link }}">Zur Website</a>{% endif %}</td>
                   </tr>
                 {% endfor %}
                 </tbody>
