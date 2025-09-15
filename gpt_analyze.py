@@ -251,40 +251,56 @@ def fallback_vision(data: dict, lang: str = "de") -> str:
     """
     Generate a default vision section when the LLM does not provide one.
 
+    In the Gold‑Standard version we avoid lists, tables and numeric values.  The
+    fallback therefore produces 2–3 narrative paragraphs describing a bold
+    innovation concept for small and medium‑sized enterprises (SMEs).  The
+    wording is adapted to the report language (German or English).  This
+    function does not rely on the questionnaire data today but can be
+    extended in the future to personalise the vision.
+
     Parameters
     ----------
     data: dict
-        The questionnaire data.  Currently unused but kept for future
-        personalisation (e.g. using branch or company size).
+        The questionnaire data.  Currently unused.
     lang: str
-        Report language ("de" or "en").  Determines wording and currency.
+        Report language ("de" or "en").
 
     Returns
     -------
     str
-        An HTML fragment with a bold idea, MVP description and a list of KPIs.
+        An HTML fragment with a heading and narrative paragraphs.
     """
     lang = _norm_lang(lang)
-    # The fallback focuses on an AI service portal for SMEs.  If desired, this
-    # could be extended to consider the respondent's sector or vision fields.
     if lang == "de":
-        idea_title = "KI‑Serviceportal für KMU"
-        idea_text = (
-            f"<p><b>Kühne Idee:</b> {idea_title} – ein digitales Portal, das KI‑gestützte Fragebögen, Tools "
-            "und Benchmarks speziell für kleine und mittlere Unternehmen bereitstellt.</p>"
-        )
-        mvp_text = (
-            "<p><b>MVP (2–4 Wochen, 5–10 k€):</b> Erstellen Sie einen minimalen Prototypen mit Fragebogen, "
-            "Ergebnis‑Feedback und Terminbuchung.</p>"
-        )
-        kpis = (
-            "<ul>"
-            "<li><b>Aktive Nutzer</b>: Anzahl registrierter Kunden im Portal</li>"
-            "<li><b>Zeitersparnis</b>: Durchschnittliche Zeitersparnis pro Beratung</li>"
-            "<li><b>Umsatzwachstum</b>: Zusätzlicher Umsatz durch KI‑basierte Services</li>"
-            "</ul>"
-        )
-        return idea_text + mvp_text + kpis
+        paragraphs = [
+            ("<p><b>Kühne Idee:</b> KI‑Serviceportal für KMU – ein digitales Ökosystem, das "
+             "kleinen und mittleren Unternehmen den Zugang zu KI‑gestützten Fragebögen, Tools "
+             "und praxisnahen Benchmarks eröffnet. Durch intuitive Workflows und kuratierte "
+             "Best‑Practice‑Beispiele entsteht ein Raum, in dem Innovationsimpulse wachsen können.</p>"),
+            ("<p>Als erster Schritt könnten Sie einen schlanken Prototypen aufsetzen, der ein "
+             "Fragebogen‑Tool mit unmittelbarem Feedback und einer unkomplizierten Terminvereinbarung "
+             "kombiniert. Dieses Portal dient als Drehscheibe für Ihr KI‑Programm und erleichtert "
+             "Ihren Kundinnen und Kunden den Einstieg.</p>"),
+            ("<p>Langfristig entwickelt sich das Portal zu einem lebendigen Wissenswerk, das "
+             "Erfahrungen aus unterschiedlichen Projekten zusammenführt und Ihnen hilft, neue "
+             "Dienstleistungen zu entwickeln. Es geht nicht um nackte Zahlen, sondern um eine "
+             "gemeinsame Lernreise, bei der Sie sich als Vorreiter im Mittelstand positionieren.</p>")
+        ]
+    else:
+        paragraphs = [
+            ("<p><b>Bold idea:</b> AI service portal for SMEs – a digital ecosystem that opens up "
+             "AI‑powered questionnaires, tools and practical benchmarks to small and midsized "
+             "businesses. By providing intuitive workflows and curated best‑practice examples, "
+             "it creates a space where innovation impulses can flourish.</p>"),
+            ("<p>As an initial step you might build a lean prototype combining a questionnaire "
+             "tool, immediate feedback and an easy appointment system. This portal will be the hub "
+             "for your AI programme, guiding your clients gently into the world of AI.</p>"),
+            ("<p>Over time, the portal evolves into a living knowledge platform that brings together "
+             "experience from diverse projects and helps you develop new services. The focus is not "
+             "on numbers but on a shared learning journey where you position yourself as an "
+             "innovator in your industry.</p>")
+        ]
+    return "".join(paragraphs)
 
 # -----------------------------------------------------------------------------
 # Fallback practice example loader
@@ -388,24 +404,6 @@ def _fallback_praxisbeispiel(branche: str, lang: str = "de") -> str:
         return f"<p>{description}</p>"
     except Exception:
         return ""
-    else:
-        idea_title = "AI service portal for SMEs"
-        idea_text = (
-            f"<p><b>Bold idea:</b> {idea_title} – a digital portal offering AI‑powered questionnaires, tools and "
-            "benchmarks for small and midsized businesses.</p>"
-        )
-        mvp_text = (
-            "<p><b>MVP (2–4 weeks, €5–10k):</b> Build a minimal prototype with a questionnaire, feedback "
-            "dashboard and appointment booking.</p>"
-        )
-        kpis = (
-            "<ul>"
-            "<li><b>Active users</b>: Number of registered clients on the portal</li>"
-            "<li><b>Time saved</b>: Average time saved per consulting engagement</li>"
-            "<li><b>Revenue uplift</b>: Additional revenue generated through AI‑based services</li>"
-            "</ul>"
-        )
-        return idea_text + mvp_text + kpis
 # gpt_analyze.py — Gold-Standard (Teil 2/4)
 
 def is_self_employed(data: dict) -> bool:
