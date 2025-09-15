@@ -1,0 +1,7 @@
+cluster,score_ki_readiness,score_datenschutz,score_innovation,score_compliance,benchmarktitel,beispiel_usecase,empfohlene_tools
+Solo/Freiberufler,30,60,30,70,Einzelne Verwaltung,Digitale Antragsstellung,DATEV SmartIT
+Klein (2–9 MA),42,70,40,80,Digitale Verwaltung,Kostenstellenmanagement,Lexware;d.velop documents
+KMU (10–249 MA),58,78,58,85,Modern Office,Workflow-Automatisierung,DocuWare;Sage HR Suite
+Groß,76,88,68,90,Top-Performer,KI-gestütztes Vorgangsmanagement,Axians Infoma;Fabasoft
+
+
