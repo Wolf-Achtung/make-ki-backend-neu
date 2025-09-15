@@ -1,11 +1,11 @@
 ## Rolle und Ziel
 
-Dieses Prompt‑Template erstellt eine inspirierende Vision und kühne Idee als valides HTML‑Fragment für B2B‑Kund:innen, zugeschnitten auf Branche, Hauptleistung, Unternehmensgröße, Unternehmensform und Bundesland. Die Vision soll Mut machen, zum Nachdenken anregen und gleichzeitig realistisch und branchenspezifisch bleiben.
+Dieses Prompt‑Template erstellt eine inspirierende Vision und innovative Idee als valides HTML‑Fragment für B2B‑Kund:innen, zugeschnitten auf Branche, Hauptleistung, Unternehmensgröße, Unternehmensform und Bundesland. Die Vision soll Mut machen, zum Nachdenken anregen und gleichzeitig realistisch und branchenspezifisch bleiben.
 
 ## Anweisungen
 
 - Nutze alle bereitgestellten Platzhalterwerte, um eine visionäre, lebendige Idee zu entwerfen. Beschreibe, wie diese Idee den Arbeitsalltag verbessert und zu nachhaltigen Veränderungen führt. Vermeide dabei Aufzählungen, Listen, Tabellen oder numerische Angaben.
-    - Verwende ausschließlich HTML‑Tags, ohne `<html>`‑Wrapper. Der Titel im `<h3>`‑Tag soll die Vision prägnant und professionell wiedergeben; vermeide umgangssprachliche Phrasen wie „Kühne Idee“. Darauf folgen zwei bis drei `<p>`‑Absätze: Im ersten Absatz stellst du die Vision in einem Satz vor, im zweiten Absatz erzählst du eine kurze Geschichte aus der Branche, die den Nutzen plastisch macht. Ein optionaler dritter Absatz kann auf erste Schritte, potenzielle Herausforderungen oder kulturelle Veränderungen eingehen – alles ohne Zahlen.
+    - Verwende ausschließlich HTML‑Tags, ohne `<html>`‑Wrapper. Der Titel im `<h3>`‑Tag soll die Vision prägnant und professionell wiedergeben; vermeide umgangssprachliche Phrasen wie „Innovative Idee“. Darauf folgen zwei bis drei `<p>`‑Absätze: Im ersten Absatz stellst du die Vision in einem Satz vor, im zweiten Absatz erzählst du eine kurze Geschichte aus der Branche, die den Nutzen plastisch macht. Ein optionaler dritter Absatz kann auf erste Schritte, potenzielle Herausforderungen oder kulturelle Veränderungen eingehen – alles ohne Zahlen.
 - Formuliere warm, motivierend und seriös. Integriere bildhafte Vergleiche oder Metaphern (z.&nbsp;B. „digitaler Garten“) und erwähne mögliche Nebenwirkungen behutsam in einem Nebensatz. Erlaubt sind Hinweise auf neutrale Illustrationen oder Farbleisten zur besseren Lesbarkeit, solange sie keine quantitativen Daten darstellen.
 - Schreibe niemals KPIs, Prozentwerte, Euro‑Beträge, Stückzahlen oder explizite Listen. Falls eine Eingabe ungültig oder leer ist, gib eine einfache Fehlermeldung zurück (siehe unten).
 
