@@ -1,0 +1,5 @@
+cluster,score_ki_readiness,score_datenschutz,score_innovation,score_compliance,benchmarktitel,beispiel_usecase,empfohlene_tools
+Solo/Freiberufler,35,75,45,70,Digitale Praxis,Digitale Patientenakte,Tomedo;Doctolib
+Klein (2–9 MA),48,82,52,78,Telemedizin Starter,Online-Terminmanagement,Doctena;Jameda
+KMU (10–249 MA),65,87,66,84,Digital Health Innovator,KI-gestützte Diagnose,Infermedica;Caspar Health
+Groß,80,90,78,90,Smart Hospital,KI-basierte Bilderkennung,Siemens Healthineers;Epic Systems
