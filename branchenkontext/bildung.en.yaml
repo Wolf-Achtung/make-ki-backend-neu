@@ -1,0 +1,32 @@
+branche: Education
+score_percent: 56
+benchmark: "Digitalisation level: 45 %, automation level: 28 %"
+hauptleistung: "Education, training, online courses"
+zielgruppen: ["schools", "universities", "continuing education institutions"]
+wichtigste_chancen: "Individualised learning, automated exam administration, adaptive learning platforms"
+zentrale_risiken: "Data protection for student data, lack of infrastructure, skills gaps within the team"
+next_steps: |
+  - Introduce or pilot an LMS
+  - Train staff
+  - Use funding from the DigitalPakt
+tools_list:
+  - name: "Moodle"
+    usecase: "Learning Management System"
+    datenschutz: "DE"
+    link: "https://moodle.org"
+  - name: "Examity"
+    usecase: "Online exam proctoring"
+    datenschutz: "EU"
+    link: "https://examity.com"
+foerderprogramme_list:
+  - name: "DigitalPakt Schule"
+    link: "https://digitalpaktschule.de/"
+    zielgruppe: "schools"
+    foerderquote: "90 %"
+    deadline: "31.12.2025"
+  - name: "Erasmus+"
+    link: "https://www.erasmusplus.de/"
+    zielgruppe: "educational institutions"
+    foerderquote: "up to 100 %"
+    deadline: "31.12.2025"
+best_practice: "School XYZ used Moodle and Examity and increased the pass rate in digital teaching by 25 %."
