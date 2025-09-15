@@ -273,7 +273,7 @@ def fallback_vision(data: dict, lang: str = "de") -> str:
     lang = _norm_lang(lang)
     #
     # In the Gold‑Standard version the vision should be introduced with a
-    # professional label rather than the casual “Kühne Idee”/“Bold idea”.  We
+    # professional label rather than the casual “Innovative Idee”/“Bold idea”.  We
     # therefore prefix the first paragraph with “Vision:” (German) or
     # “Vision:” (English) to set the tone.  The remainder of the content
     # stays narrative and avoids numbers and KPI terminology.  Feel free to
@@ -1989,6 +1989,29 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     except Exception:
         out["vision"] = fallback_vision(data, lang)
     out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>" if out.get("vision") else ""
+
+    # ------------------------------------------------------------------------
+    # Normalise the vision heading
+    # Some legacy prompts or fallbacks may insert phrases like "Innovative Idee:" or
+    # "Bold idea:" at the beginning of the vision.  To maintain a consistent,
+    # professional tone across all reports we replace such phrases with
+    # "Vision".  The replacement is case-insensitive and respects both
+    # German and English spellings.  We perform the substitution on the
+    # inner vision HTML (not the surrounding vision-card wrapper) so that
+    # existing HTML tags remain intact.
+    try:
+        if out.get("vision"):
+            vis = out["vision"]
+            # Replace occurrences of "Innovative Idee" or "Bold idea" followed by optional
+            # punctuation and whitespace with "Vision".  Use a regex to match
+            # variations with or without accents, hyphens or trailing colons.
+            import re as _re
+            vis = _re.sub(r"(?i)(k\u00fchne\s*idee|kuehne\s*idee|bold\s*idea)\s*:?", "Vision", vis)
+            out["vision"] = vis
+            # Rebuild the vision_html with the cleaned vision
+            out["vision_html"] = f"<div class='vision-card'>{vis}</div>"
+    except Exception:
+        pass
 
     # ------------------------------------------------------------------------
     # Narrative output fields for funding programmes, tools and compliance
