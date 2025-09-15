@@ -1,0 +1,32 @@
+branche: Transport & logistics
+score_percent: 66
+benchmark: "Digitalisation level: 63 %, automation level: 52 %"
+hauptleistung: "Fleet management and supply chain optimisation"
+zielgruppen: ["freight forwarding", "fleet operators", "SMEs"]
+wichtigste_chancen: "Route optimisation, real-time tracking, automated dispatching"
+zentrale_risiken: "Data silos, lack of API standards, high integration costs"
+next_steps: |
+  - Launch a pilot project for fleet tracking with AI
+  - Implement cloud integration for real-time data
+  - Review Go-Digital funding
+tools_list:
+  - name: "MotionMiners"
+    usecase: "logistics process optimisation"
+    datenschutz: "GDPR compliant"
+    link: "https://motionminers.com"
+  - name: "Project44"
+    usecase: "supply chain transparency"
+    datenschutz: "EU"
+    link: "https://project44.com"
+foerderprogramme_list:
+  - name: "Go-Digital"
+    link: "https://www.bmwi.de/go-digital"
+    zielgruppe: "SMEs, logistics"
+    foerderquote: "50 %"
+    deadline: "31.12.2025"
+  - name: "BMVI-Förderung"
+    link: "https://www.bmvi.de/"
+    zielgruppe: "transport/logistics"
+    foerderquote: "up to 80 %"
+    deadline: "31.12.2025"
+best_practice: "Freight forwarder ABC saved 15 % in fuel through AI-based route optimisation with Project44."
