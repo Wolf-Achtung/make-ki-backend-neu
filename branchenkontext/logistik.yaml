@@ -1,0 +1,32 @@
+branche: Logistik
+score_percent: 66
+benchmark: "Digitalisierungsgrad: 63 %, Automatisierungsgrad: 52 %"
+hauptleistung: "Flottenmanagement und Lieferkettenoptimierung"
+zielgruppen: ["Spedition", "Flottenbetreiber", "KMU"]
+wichtigste_chancen: "Routenoptimierung, Echtzeit-Tracking, Automatisierte Disposition"
+zentrale_risiken: "Datensilos, fehlende API-Standards, hohe Integrationskosten"
+next_steps: |
+  - Pilotprojekt für Flotten-Tracking mit KI starten
+  - Cloud-Integration für Echtzeitdaten umsetzen
+  - Fördermittel Go-Digital prüfen
+tools_list:
+  - name: "MotionMiners"
+    usecase: "Logistikprozess-Optimierung"
+    datenschutz: "DSGVO"
+    link: "https://motionminers.com"
+  - name: "Project44"
+    usecase: "Lieferketten-Transparenz"
+    datenschutz: "EU"
+    link: "https://project44.com"
+foerderprogramme_list:
+  - name: "Go-Digital"
+    link: "https://www.bmwi.de/go-digital"
+    zielgruppe: "KMU, Logistik"
+    foerderquote: "50 %"
+    deadline: "31.12.2025"
+  - name: "BMVI-Förderung"
+    link: "https://www.bmvi.de/"
+    zielgruppe: "Verkehr/Logistik"
+    foerderquote: "bis zu 80 %"
+    deadline: "31.12.2025"
+best_practice: "Spedition ABC sparte 15 % Treibstoff durch KI-basierte Routenoptimierung mit Project44."
