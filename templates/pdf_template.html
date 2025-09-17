@@ -2,55 +2,71 @@
 <html lang="de">
 <head>
 <meta charset="utf-8" />
-<title>KI-Statusbericht</title>
+<title>KI‑Statusbericht</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
-    --brand-blue-900:#0B3C73;
+    /* Farbwelt – moderne Blautöne */
+    --brand-blue-950:#081E34;
+    --brand-blue-900:#0B2545;
+    --brand-blue-800:#10375C;
     --brand-blue-700:#145DA0;
     --brand-blue-500:#1E88E5;
     --brand-blue-300:#90CAF9;
     --brand-blue-100:#E3F2FD;
-    --ink:#111827;
-    --muted:#6B7280;
+
+    --ink: var(--brand-blue-900);  /* Fließtext in dunklem Blau */
+    --muted:#5B6B7C;
     --bg:#FFFFFF;
-    --card:#FAFCFF;
+    --card:#F9FBFF;
     --border:#D5E3F7;
     --accent:#EEF6FF;
   }
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{
-    margin:0; padding:24px; font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"; 
+    margin:0; padding:28px 28px 20px 28px;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans";
     color:var(--ink); background:var(--bg);
+    font-size:16px; line-height:1.6;
   }
-  h1,h2,h3{ margin:0 0 8px 0; line-height:1.2; color:var(--brand-blue-900); }
-  h1{ font-size:28px; border-left:6px solid var(--brand-blue-500); padding-left:10px; }
-  h2{ font-size:22px; color:var(--brand-blue-700); border-bottom:2px solid var(--brand-blue-300); padding-bottom:4px; }
-  h3{ font-size:17px; color:var(--brand-blue-700); }
-  .subtitle{ color:var(--muted); margin-bottom:16px }
-  .section{ margin:20px 0 }
+  h1,h2,h3{ margin:0 0 10px 0; line-height:1.25; color:var(--brand-blue-800); }
+  h1{ font-size:30px; border-left:8px solid var(--brand-blue-500); padding-left:12px; }
+  h2{ font-size:22px; color:var(--brand-blue-700); border-bottom:2px solid var(--brand-blue-300); padding-bottom:6px; }
+  h3{ font-size:17px; color:var(--brand-blue-700); margin-top:10px }
+  .eyebrow{ text-transform:uppercase; letter-spacing:.06em; font-size:12px; color:var(--brand-blue-700); margin-bottom:6px }
+  .subtitle{ color:var(--muted); margin-bottom:18px }
+  .section{ margin:22px 0 }
   .card{
     background:linear-gradient(180deg, var(--card), #fff);
-    border:1px solid var(--border); border-radius:12px; padding:18px;
-    box-shadow:0 1px 0 rgba(20,93,160,0.04);
+    border:1px solid var(--border); border-radius:14px; padding:20px;
+    box-shadow:0 1px 0 rgba(20,93,160,0.05);
   }
-  .two-col{ display:flex; gap:18px; }
-  .two-col > .col{ flex:1; }
-  p{ margin:8px 0; }
+  .callout{
+    background:var(--brand-blue-100);
+    border:1px solid var(--brand-blue-300);
+    border-radius:12px; padding:14px 16px; margin:10px 0
+  }
+  .live-box{ background:var(--brand-blue-100); border:1px solid var(--brand-blue-300); border-radius:12px; padding:14px 16px }
+  .kicker{ color:var(--brand-blue-700); font-weight:600; margin:8px 0 4px 0 }
+  p{ margin:10px 0 }
+  ul{ margin:10px 0 10px 18px }
   .caption{ color:var(--muted); font-size:12px }
-  .vision-card{ background:var(--accent); border:1px dashed var(--brand-blue-300); border-radius:10px; padding:12px; }
-  .live-box{ background:var(--brand-blue-100); border:1px solid var(--brand-blue-300); border-radius:10px; padding:12px; }
-  .live-box h2{ border:none; padding:0; margin:0 0 6px 0; color:var(--brand-blue-900); }
+  .vision-card{ background:var(--accent); border:1px dashed var(--brand-blue-300); border-radius:12px; padding:14px 16px; }
   a{ color:var(--brand-blue-700); text-decoration:none; border-bottom:1px dotted var(--brand-blue-300) }
   a:hover{ text-decoration:underline }
-  table{ width:100%; border-collapse:collapse; margin-top:8px }
-  th,td{ text-align:left; padding:6px 8px; border-bottom:1px solid var(--border) }
-  .footer{ margin-top:18px; padding-top:12px; border-top:1px solid var(--border); color:var(--muted); font-size:12px }
+  table{ width:100%; border-collapse:collapse; margin-top:10px }
+  th,td{ text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top }
+  th{ color:var(--brand-blue-800) }
+  .footer{ margin-top:22px; padding-top:12px; border-top:1px solid var(--border); color:var(--muted); font-size:12px }
+  /* Großzügige Seitenumbrüche je Hauptkapitel */
+  .pagebreak{ page-break-before: always; }
 </style>
 </head>
 <body>
 
   <div class="section">
+    <div class="eyebrow">Report</div>
     <h1>KI‑Statusbericht</h1>
     {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
   </div>
@@ -65,19 +81,38 @@
   </div>
   {% endif %}
 
+  <!-- Quick Wins & Risiken optional zusammengeführt mit Zwischenüberschriften -->
+  {% if quick_wins_html and quick_wins_html|trim %}
+  <div class="section pagebreak">
+    <div class="card">
+      <h2>Quick Wins</h2>
+      <div>{{ quick_wins_html|safe }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if risks_html and risks_html|trim %}
+  <div class="section">
+    <div class="card">
+      <h2>Hauptrisiken</h2>
+      <div>{{ risks_html|safe }}</div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Empfehlungen & Roadmap -->
   {% if recommendations_html and recommendations_html|trim %}
-  <div class="section">
-    <div class="card" style="page-break-inside: avoid; page-break-after: avoid;">
+  <div class="section pagebreak">
+    <div class="card">
       <h2>Empfehlungen</h2>
       <div>{{ recommendations_html|safe }}</div>
     </div>
   </div>
   {% endif %}
 
-  {% if roadmap_html and roadmap_html|trim or (roadmap_items and roadmap_items|length > 0) %}
+  {% if roadmap_html and roadmap_html|trim or (timeline and (timeline.t30 or timeline.t90 or timeline.t365)) or (roadmap_items and roadmap_items|length>0) %}
   <div class="section">
-    <div class="card" style="page-break-before: always;">
+    <div class="card">
       <h2>Roadmap</h2>
       {% if timeline and (timeline.t30 or timeline.t90 or timeline.t365) %}
         <h3>Kurzfristig</h3>
@@ -88,11 +123,9 @@
         {% for it in timeline.t365 %}<p>{{ it }}</p>{% endfor %}
       {% elif roadmap_items and roadmap_items|length > 0 %}
         <table>
-          <thead>
-            <tr><th>Monat</th><th>Aufgabe</th><th>Verantwortliche</th><th>Abhängigkeiten</th><th>Nutzen</th></tr>
-          </thead>
+          <thead><tr><th>Monat</th><th>Aufgabe</th><th>Verantwortliche</th><th>Abhängigkeiten</th><th>Nutzen</th></tr></thead>
           <tbody>
-          {% for item in roadmap_items %}
+            {% for item in roadmap_items %}
             <tr>
               <td>{{ item.month or '' }}</td>
               <td>{{ item.task or '' }}</td>
@@ -100,7 +133,7 @@
               <td>{{ item.dependencies or '' }}</td>
               <td>{{ item.benefit or item.outcome or '' }}</td>
             </tr>
-          {% endfor %}
+            {% endfor %}
           </tbody>
         </table>
       {% else %}
@@ -110,54 +143,82 @@
   </div>
   {% endif %}
 
-  <!-- Förderprogramme -->
-  <div class="section">
-    <div class="card" style="page-break-before: always;">
+  <!-- Förderprogramme (Narrativ first; Details-Tabelle optional) -->
+  <div class="section pagebreak">
+    <div class="card">
       <h2>Förderprogramme (Auswahl)</h2>
       {% if foerderprogramme_html and foerderprogramme_html|trim %}
         <div>{{ foerderprogramme_html|safe }}</div>
-        <p class="caption">Stand: {{ funding_stand or datum }}</p>
+      {% elif dynamic_funding_html and dynamic_funding_html|trim %}
+        <div>{{ dynamic_funding_html|safe }}</div>
+      {% endif %}
+      {% if funding_details and funding_details|length>0 %}
+        <h3>Details & Eignung</h3>
+        <table>
+          <thead><tr><th>Programm</th><th>Zielgruppe</th><th>Region</th><th>Förderart/Kosten</th><th>Einsatz/Zweck</th><th>Link</th></tr></thead>
+          <tbody>
+            {% for p in funding_details %}
+            <tr>
+              <td>{{ p.name }}</td>
+              <td>{{ p.target }}</td>
+              <td>{{ p.region }}</td>
+              <td>{{ p.cost or p.grant }}</td>
+              <td>{{ p.use_case }}</td>
+              <td>{% if p.link %}<a href="{{ p.link }}">Zum Programm</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       {% elif foerderprogramme_table and foerderprogramme_table|length>0 %}
         <table>
           <thead><tr><th>Programm</th><th>Link</th></tr></thead>
           <tbody>
-          {% for p in foerderprogramme_table %}
+            {% for p in foerderprogramme_table %}
             <tr>
               <td>{{ p.name }}</td>
               <td>{% if p.link %}<a href="{{ p.link }}">Zum Programm</a>{% endif %}</td>
             </tr>
-          {% endfor %}
+            {% endfor %}
           </tbody>
         </table>
-        <p class="caption">Stand: {{ funding_stand or datum }}</p>
-      {% elif dynamic_funding_html and dynamic_funding_html|trim %}
-        {{ dynamic_funding_html|safe }}
-      {% else %}
-        <p><em>Keine Programme in der Datenbasis.</em></p>
       {% endif %}
+      <p class="caption">Stand: {{ funding_stand or datum }}</p>
     </div>
   </div>
 
-  <!-- KI-Tools -->
+  <!-- KI-Tools (Narrativ first; Details-Tabelle optional) -->
   <div class="section">
-    <div class="card" style="page-break-inside: avoid; page-break-after: avoid; page-break-before: always;">
+    <div class="card">
       <h2>KI‑Tools &amp; Software</h2>
       {% if tools_html and tools_html|trim %}
         <div>{{ tools_html|safe }}</div>
+      {% endif %}
+      {% if tools_details and tools_details|length>0 %}
+        <h3>Übersicht & Eignung</h3>
+        <table>
+          <thead><tr><th>Tool</th><th>Kategorie</th><th>Eignung</th><th>Hosting/Datenschutz</th><th>Preis</th><th>Link</th></tr></thead>
+          <tbody>
+            {% for t in tools_details %}
+            <tr>
+              <td>{{ t.name }}</td>
+              <td>{{ t.category }}</td>
+              <td>{{ t.suitable_for }}</td>
+              <td>{{ t.hosting }}</td>
+              <td>{{ t.price }}</td>
+              <td>{% if t.link %}<a href="{{ t.link }}">Zur Website</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       {% elif tools_table and tools_table|length>0 %}
         <table>
           <thead><tr><th>Tool</th><th>Link</th></tr></thead>
           <tbody>
-          {% for t in tools_table %}
-            <tr>
-              <td>{{ t.name }}</td>
-              <td>{% if t.link %}<a href="{{ t.link }}">Zur Website</a>{% endif %}</td>
-            </tr>
-          {% endfor %}
+            {% for t in tools_table %}
+            <tr><td>{{ t.name }}</td><td>{% if t.link %}<a href="{{ t.link }}">Zur Website</a>{% endif %}</td></tr>
+            {% endfor %}
           </tbody>
         </table>
-      {% else %}
-        <p><em>Tool‑Liste wird dynamisch ergänzt.</em></p>
       {% endif %}
     </div>
   </div>
@@ -165,40 +226,44 @@
   <!-- Live-Layer -->
   {% if live_updates_html and live_updates_html|trim %}
   <div class="section">
-    <div class="card live-box" style="page-break-inside: avoid;">
+    <div class="card live-box">
       <h2>{{ live_updates_title }}</h2>
       <div>{{ live_updates_html|safe }}</div>
     </div>
   </div>
   {% endif %}
 
+  <!-- Compliance -->
   {% if compliance_html and compliance_html|trim %}
-  <div class="section">
-    <div class="card" style="page-break-before: always;">
+  <div class="section pagebreak">
+    <div class="card">
       <h2>Compliance</h2>
       <div>{{ compliance_html|safe }}</div>
     </div>
   </div>
   {% endif %}
 
+  <!-- Vision -->
   {% if vision_html %}
   <div class="section">
-    <div class="card" style="page-break-before: always;">
+    <div class="card">
       <h2>Vision</h2>
       <div class="vision-card">{{ vision_html|safe }}</div>
     </div>
   </div>
   {% endif %}
 
+  <!-- Gamechanger -->
   {% if (gamechanger_html and gamechanger_html|trim) or (gamechanger_blocks and gamechanger_blocks|trim) %}
-  <div class="section">
-    <div class="card" style="page-break-before: always;">
+  <div class="section pagebreak">
+    <div class="card">
       <h2>Innovation &amp; Gamechanger</h2>
       {{ gamechanger_html|safe }}
     </div>
   </div>
   {% endif %}
 
+  <!-- Leistung & Nachweis -->
   {% if ueber_mich_html and ueber_mich_html|trim %}
   <div class="section">
     <div class="card">
@@ -208,6 +273,7 @@
   </div>
   {% endif %}
 
+  <!-- Glossar -->
   {% if glossary_html and glossary_html|trim %}
   <div class="section">
     <div class="card">
@@ -217,21 +283,21 @@
   </div>
   {% endif %}
 
+  <!-- Feedback CTA -->
   <div class="section">
-    <div class="card">
-      <div style="margin-top:.2rem;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--brand-blue-100);">
-        <b>Ihre Meinung zählt:</b>
-        <a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html?variant={{ unternehmensgroesse|urlencode }}&version={{ datum|default('0.9') }}">Feedback geben (kurz)</a>
-      </div>
+    <div class="card callout">
+      <b>Ihre Meinung zählt:</b>
+      <a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html?variant={{ unternehmensgroesse|urlencode }}&version={{ datum|default('0.9') }}">Feedback geben (kurz)</a>
     </div>
   </div>
 
+  <!-- Footer -->
   <div class="footer">
-    <div style="display:flex;align-items:center;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       {% if logo_tuev %}<img src="{{ logo_tuev }}" alt="TÜV" style="height:18px">{% endif %}
       {% if logo_euai %}<img src="{{ logo_euai }}" alt="EU AI" style="height:18px">{% endif %}
       {% if logo_dsgvo %}<img src="{{ logo_dsgvo }}" alt="DSGVO" style="height:18px">{% endif %}
-      <span>© 2025 KI‑Sicherheit.jetzt – DSGVO & EU‑AI‑Act‑Ready – Wolf Hohl</span>
+      <span>© {{ now().year }} KI‑Sicherheit.jetzt – DSGVO & EU‑AI‑Act‑Ready – Wolf Hohl</span>
     </div>
     <div style="margin-top:4px">{{ footer_text|safe }}</div>
   </div>
