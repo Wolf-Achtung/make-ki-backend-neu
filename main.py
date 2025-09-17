@@ -7,6 +7,7 @@ import uuid
 import json
 import logging
 import importlib
+import hashlib
 
 # Optional DB imports for feedback persistence
 try:
@@ -36,6 +37,59 @@ SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "")
 FEEDBACK_TO = os.getenv("FEEDBACK_TO")
+
+# --- Idempotency (duplicate prevention) -------------------------------------
+IDEMP_DIR = os.getenv("IDEMP_DIR", "/tmp/ki_idempotency")
+IDEMP_TTL_SECONDS = int(os.getenv("IDEMP_TTL_SECONDS", "1800"))  # 30 minutes
+os.makedirs(IDEMP_DIR, exist_ok=True)
+
+def _idem_path(key: str) -> str:
+    return os.path.join(IDEMP_DIR, f"{key}.json")
+
+def _stable_json(obj: Dict[str, Any]) -> str:
+    try:
+        return json.dumps(obj, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    except Exception:
+        return str(obj)
+
+def make_idempotency_key(user_email: str, payload: Dict[str, Any], html: Optional[str] = None) -> str:
+    """Create a stable key from user+payload (and optional html hash)."""
+    base = {
+        "user": (user_email or "").strip().lower(),
+        "payload": payload,  # must be JSON-serialisable; we assume body already is
+    }
+    if html is not None:
+        base["html_sha256"] = hashlib.sha256((html or "").encode("utf-8")).hexdigest()
+    raw = _stable_json(base)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+def idempotency_get(key: str) -> Optional[Dict[str, Any]]:
+    p = _idem_path(key)
+    if not os.path.exists(p):
+        return None
+    try:
+        with open(p, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        ts = float(data.get("ts", 0))
+        if (time.time() - ts) > IDEMP_TTL_SECONDS:
+            try:
+                os.remove(p)
+            except Exception:
+                pass
+            return None
+        return data
+    except Exception:
+        return None
+
+def idempotency_set(key: str, meta: Dict[str, Any]) -> None:
+    p = _idem_path(key)
+    try:
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump({"ts": time.time(), "meta": meta}, f, ensure_ascii=False)
+    except Exception:
+        pass
+
+
 
 # SMTP Helfer-Imports
 import asyncio
@@ -573,6 +627,8 @@ async def send_html_to_pdf_service(
         raise RuntimeError("PDF_SERVICE_URL is not configured")
 
     rid = request_id or uuid.uuid4().hex
+    # Compute a conservative idempotency key based on user+html
+    idem_key = hashlib.sha256((user_email + '|' + hashlib.sha256((html or '').encode('utf-8')).hexdigest()).encode('utf-8')).hexdigest()
     html = strip_code_fences(html or "")
     timeouts = httpx.Timeout(connect=15.0, read=PDF_TIMEOUT, write=30.0, pool=60.0)
     limits = httpx.Limits(max_keepalive_connections=10, max_connections=20, keepalive_expiry=60.0)
@@ -747,6 +803,23 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
                 set_job(job_id, status="error", error="Template not fully rendered – unresolved Jinja tags in HTML")
                 return
 
+            
+            # Idempotency: prevent duplicate sends for same user+payload+html within TTL
+            try:
+                pre_key = make_idempotency_key(user_email, body, html)
+                prev = idempotency_get(pre_key)
+                if prev:
+                    logger.info("[IDEMP] hit for user=%s, skipping PDF send", user_email)
+                    set_job(job_id,
+                            pdf_sent=True,
+                            pdf_status=prev.get("meta", {}).get("status"),
+                            pdf_meta=prev.get("meta"),
+                            status="done",
+                            error=None)
+                    return
+            except Exception as _e:
+                logger.warning("[IDEMP] check failed: %s", _e)
+
             # 3) An PDF-Service senden
             res = await send_html_to_pdf_service(
                 html, user_email, subject="KI-Readiness Report", lang=lang, request_id=rid
@@ -757,6 +830,14 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
                     pdf_meta=res.get("data"),
                     status="done" if res.get("ok") else "error",
                     error=None if res.get("ok") else res.get("error"))
+
+            # Save idempotency record on success
+            try:
+                if res.get('ok'):
+                    idempotency_set(pre_key, res)
+            except Exception as _e:
+                logger.warning('[IDEMP] save failed: %s', _e)
+
 
         except Exception as e:
             logger.exception("briefing_async job failed: %s", e)
