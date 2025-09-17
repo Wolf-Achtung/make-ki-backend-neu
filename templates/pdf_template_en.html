@@ -191,7 +191,7 @@ alt="Badge" style="height:38px">{% endif %}</div>
 
       <div class="container">
         <!-- Cover: Gauge -->
-        <div class="card" style="page-break-before: always;">
+        <div class="card">
           <h2>Your AI-readiness at a glance</h2>
 
           {% if preface %}<div style="margin-top:.6rem">{{ preface|safe 
@@ -224,31 +224,20 @@ alt="Badge" style="height:38px">{% endif %}</div>
 
         {% if (quick_wins_html and quick_wins_html|trim) or (risks_html and 
 risks_html|trim) %}
-        
-{% if (quick_wins_html and quick_wins_html|trim) or (risks_html and risks_html|trim) %}
-<div class="section">
-  {% if quick_wins_html and quick_wins_html|trim %}
-  <div class="card">
-    <h2>Quick wins</h2>
-    <div>{{ (quick_wins_html or '')|safe }}</div>
-  </div>
-  {% endif %}
-  {% if risks_html and risks_html|trim %}
-  <div class="card" style="margin-top:1.2rem; page-break-before: always;">
-    <h2>Key risks</h2>
-    <div>{{ (risks_html or '')|safe }}</div>
-  </div>
-  {% endif %}
-</div>
-{% endif %}
-
+        <div class="grid cols-2 section">
+          <div class="card"><h2>Quick wins</h2><div>{{ (quick_wins_html or 
+ '')|safe }}</div></div>
+          <div class="card"><h2>Key risks</h2><div>{{ (risks_html or '')|safe
+  }}</div></div>
+        </div>
         {% endif %}
-        <div class="section">
+        <div class="grid cols-2 section">
           {% if recommendations_html and recommendations_html|trim %}
-            <div class="card" style="page-break-before: always;"><h2>Recommendations</h2><div>{{ recommendations_html|safe }}</div></div>
+            <div class="card"><h2>Recommendations</h2><div>{{ 
+ recommendations_html|safe }}</div></div>
           {% endif %}
           {% if roadmap_html and roadmap_html|trim or (roadmap_items and roadmap_items|length > 0) %}
-            <div class="card" style="margin-top:1.2rem; page-break-before: always;"><h2>Roadmap</h2>
+            <div class="card"><h2>Roadmap</h2>
               {% if timeline and (timeline.t30 or timeline.t90 or timeline.t365) %}
               <div class="swimlane">
                 <div>
@@ -296,185 +285,44 @@ risks_html|trim) %}
 
         <!-- Funding programmes (selection) -->
         <div class="section">
-          <div class="card">
+          <div class="card" style="page-break-before: always;">
             <h2>Funding programmes</h2>
             {% if foerderprogramme_html and foerderprogramme_html|trim %}
               <div>{{ foerderprogramme_html|safe }}</div>
-              <p class="caption">As of: {{ funding_stand or today }}</p>
+              <p class="caption">Updated: {{ funding_stand or datum }}</p>
+            {% elif dynamic_funding_html and dynamic_funding_html|trim %}
+              <div>{{ dynamic_funding_html|safe }}</div>
             {% elif foerderprogramme_table and foerderprogramme_table|length>0 %}
               <table>
                 <thead>
                   <tr>
                     <th>Programme</th>
+                    <th>Type</th>
+                    <th>Who</th>
+                    <th>What</th>
+                    <th>Max</th>
+                    <th>Notes</th>
                     <th>Link</th>
                   </tr>
                 </thead>
                 <tbody>
-                {% for row in foerderprogramme_table %}
+                  {% for row in foerderprogramme_table %}
                   <tr>
                     <td>{{ row.name }}</td>
-                    <td>{% if row.link %}<a href="{{ row.link }}">Programme details</a>{% endif %}</td>
+                    <td>{{ row.type }}</td>
+                    <td>{{ row.who }}</td>
+                    <td>{{ row.what }}</td>
+                    <td>{{ row.max }}</td>
+                    <td>{{ row.notes }}</td>
+                    <td><a href="{{ row.link }}">{{ row.link_label or 'Link' }}</a></td>
                   </tr>
-                {% endfor %}
-                </tbody>
-              </table>
-              <p class="caption">As of: {{ funding_stand or today }}</p>
-            {% elif dynamic_funding_html and dynamic_funding_html|trim %}
-              {{ dynamic_funding_html|safe }}
-            {% else %}
-              <p><em>No matching items in the local dataset.</em></p>
-            {% endif %}
-
-          </div>
-        </div>
-
-        <!-- AI tools (full width) -->
-        <div class="section">
-          <div class="card" style="page-break-inside: avoid; page-break-after: avoid;">
-            <h2>AI tools</h2>
-            {% if tools_html and tools_html|trim %}
-              <div>{{ tools_html|safe }}</div>
-            {% elif tools_table and tools_table|length>0 %}
-              <table>
-                <thead>
-                  <tr>
-                    <th>Tool</th>
-                    <th>Link</th>
-                  </tr>
-                </thead>
-                <tbody>
-                {% for t in tools_table %}
-                  <tr>
-                    <td>{{ t.name }}</td>
-                    <td>{% if t.link %}<a href="{{ t.link }}">Website</a>{% endif %}</td>
-                  </tr>
-                {% endfor %}
+                  {% endfor %}
                 </tbody>
               </table>
             {% else %}
-              <p><em>Tool list will be populated dynamically.</em></p>
+              <p>No curated programmes at the moment.</p>
             {% endif %}
-
-          </div>
-        </div>
-
-{% if false and risk_heatmap and risk_heatmap|length>0 %}
-        <div class="card section">
-          <h2>Risk heatmap</h2>
-          <table class="risk-table">
-            <thead>
-              <tr><th></th><th>Low</th><th>Medium</th><th>High</th></tr>
-            </thead>
-            <tbody>
-            {% for row in risk_heatmap %}
-              <tr>
-                <td>{{ row.category }}</td>
-                <td class="{% if row.level in ['niedrig','low'] %}risk-low{% 
-endif %}"></td>
-                <td class="{% if row.level in ['mittel','medium'] %}risk-mid{% 
-endif %}"></td>
-                <td class="{% if row.level in ['hoch','high'] %}risk-high{% 
-endif %}"></td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-          <p class="footnote">Low&nbsp;=&nbsp;minimal risk; Medium&nbsp;=&nbsp;moderate risk; High&nbsp;=&nbsp;significant risk.</p>
-        </div>
-        {% endif %}
-
-        {% if vision_html %}
-          <div class="card section">
-            <h2>Visionary recommendation</h2>
-            <div class="vision-card">{{ vision_html|safe }}</div>
-          </div>
-        {% endif %}
-
-        {# Innovation & Gamechanger section.
-           Prefer the LLM-generated gamechanger_html when available.  If
-           gamechanger_html is non-empty, render it directly.  Otherwise
-           fall back to the branch innovation intro and gamechanger blocks.
-        #}
-        {# Innovation & Gamechanger section.
-           Prefer the LLM-generated gamechanger_html when available.  If
-           gamechanger_html is non-empty, render it directly.  Otherwise
-           fall back to the branch innovation intro and gamechanger blocks.
-        #}
-        {% if (gamechanger_html and gamechanger_html|trim) or (gamechanger_blocks and gamechanger_blocks|trim) %}
-          <div class="card section">
-            <h2>Innovation &amp; Gamechanger</h2>
-            {{ gamechanger_html|safe }}
-          </div>
-        {% elif branchen_innovations_intro or gamechanger_blocks %}
-          <div class="card section">
-            <h2>Innovation &amp; Gamechanger</h2>
-            {% if branchen_innovations_intro %}
-              <p>{{ branchen_innovations_intro|safe }}</p>
-            {% endif %}
-            {% if gamechanger_blocks %}
-              {# Render trade-off and description for each block when gamechanger_blocks is a list; otherwise treat as pre-rendered HTML #}
-              {% if gamechanger_blocks is string %}
-                <div>{{ gamechanger_blocks|safe }}</div>
-              {% else %}
-                {% for block in gamechanger_blocks %}
-                  <div class="gamechanger-block">
-                    {% if block.title %}<h3>{{ block.title }}</h3>{% endif %}
-                    {% if block.description %}<p>{{ block.description }}</p>{% endif %}
-                    {% if block.tradeoff %}<p><strong>Risks/Side effects:</strong> {{ block.tradeoff }}</p>{% endif %}
-                  </div>
-                {% endfor %}
-              {% endif %}
-            {% endif %}
-          </div>
-        {% endif %}
-
-        {% if sections_html %}
-          {# For the current test phase we omit the case study and additional
-             chapters. sections_html typically contains Compliance and the
-             case study; to avoid showing an unrelated case, the block is
-             suppressed entirely. #}
-          {# <div class="card section">
-            <h2>Additional sections</h2>
-            <div>{{ sections_html|safe }}</div>
-          </div> #}
-        {% endif %}
-
-        {% if ueber_mich_html and ueber_mich_html|trim %}
-          <div class="card section">
-            <h2>About me</h2>
-            <div>{{ ueber_mich_html|safe }}</div>
-            {# QR-Code removed in Gold-Standard #}
-          </div>
-        {% endif %}
-
-        {% if glossary_html and glossary_html|trim %}
-          <div class="card section">
-            <h2>Glossary</h2>
-            <div>{{ glossary_html|safe }}</div>
-          </div>
-        {% endif %}
-
-    <div class="card section">
-  <div style="margin-top:.2rem;padding:10px 12px;border:1px solid #D5E3F7;border-radius:10px;background:#F6FAFF;">
-    <b>Your opinion matters:</b>
-    <a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html?variant={{ company_size|default(unternehmensgroesse)|urlencode }}&version={{ today }}">Give feedback (2–3&nbsp;min)</a>
-  </div>
-</div>
-
-    <div class="footer">
-      <div style="display:flex;align-items:center;gap:12px">
-        {% if logo_tuev %}<img src="{{ logo_tuev }}" alt="TÜV" 
-style="height:18px">{% endif %}
-        {% if logo_euai %}<img src="{{ logo_euai }}" alt="EU AI" 
-style="height:18px">{% endif %}
-        {% if logo_dsgvo %}<img src="{{ logo_dsgvo }}" alt="DSGVO" 
-style="height:18px">{% endif %}
-        <span>© 2025 KI-Sicherheit.jetzt – DSGVO & EU-AI-Act-Ready – Wolf 
-Hohl</span>
-      </div>
-      <div style="margin-top:4px; font-size:11px; color:#6b7280">
-        {{ footer_text|safe }}
-      </div>
+    </div>
     </div>
       </div>
 
@@ -506,5 +354,16 @@ fill="#5b6b7a">${L[i]||''}</text>`;}
 fill="rgba(31,102,255,0.18)" stroke="#1f66ff" stroke-width="2"/>${lbl}`;
         })();
       -->
+    
+        <!-- Compliance -->
+        {% if compliance_html and compliance_html|trim %}
+        <div class="section">
+          <div class="card" style="page-break-before: always;">
+            <h2>Compliance</h2>
+            <div>{{ compliance_html|safe }}</div>
+          </div>
+        </div>
+        {% endif %}
+    
     </body>
     </html>
