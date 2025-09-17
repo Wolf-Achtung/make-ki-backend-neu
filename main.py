@@ -63,9 +63,10 @@ if CORS_ALLOW == ["*"]:
     CORS_ALLOW = ["*"]
 
 # Templates
-TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", ".")
+TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", "templates")   # statt "."
 TEMPLATE_DE  = os.getenv("TEMPLATE_DE",  "pdf_template.html")
 TEMPLATE_EN  = os.getenv("TEMPLATE_EN",  "pdf_template_en.html")
+
 
 # SMTP
 SMTP_HOST = os.getenv("SMTP_HOST")
