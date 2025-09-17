@@ -15,6 +15,269 @@ try:
 except Exception:
     postprocess_report_dict = None
 
+
+# --- Injected Best-of-both helpers (Model resolver / Branche / Live / Details) ---
+from typing import Optional, List, Dict, Any
+import datetime as _dt
+
+# Patch A: robust model resolver to avoid OpenAI 400s when invalid model is configured
+def _resolve_model(wanted: Optional[str]) -> str:
+    fallbacks = ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"]
+    w = (wanted or "").strip().lower()
+    if not w or w.startswith("gpt-5"):
+        return fallbacks[0]
+    # known-good set
+    known = set(fallbacks) | {"gpt-4o-audio-preview", "gpt-4.1", "gpt-4.1-mini"}
+    return w if w in known else fallbacks[0]
+
+# Patch B: Branche extractor from questionnaire with robust synonyms
+def _extract_branche(d: Dict[str, Any]) -> str:
+    raw = (str(d.get("branche") or d.get("industry") or d.get("sector") or "")).strip().lower()
+    m = {
+        "beratung":"beratung","consulting":"beratung","dienstleistung":"beratung","services":"beratung",
+        "it":"it","software":"it","information technology":"it","saas":"it","kollaboration":"it",
+        "marketing":"marketing","werbung":"marketing","advertising":"marketing",
+        "bau":"bau","construction":"bau","architecture":"bau",
+        "industrie":"industrie","produktion":"industrie","manufacturing":"industrie",
+        "handel":"handel","retail":"handel","e-commerce":"handel","ecommerce":"handel",
+        "finanzen":"finanzen","finance":"finanzen","insurance":"finanzen",
+        "gesundheit":"gesundheit","health":"gesundheit","healthcare":"gesundheit",
+        "medien":"medien","media":"medien","kreativwirtschaft":"medien",
+        "logistik":"logistik","logistics":"logistik","transport":"logistik",
+        "verwaltung":"verwaltung","public administration":"verwaltung",
+        "bildung":"bildung","education":"bildung"
+    }
+    if raw in m: 
+        return m[raw]
+    for k,v in m.items():
+        if k in raw:
+            return v
+    return "default"
+
+# ---- Live Layer (Tavily -> SerpAPI fallback) ----
+import httpx, json
+
+def _tavily_search(query: str, max_results: int = 5, days: int = None) -> List[Dict[str, Any]]:
+    key = os.getenv("TAVILY_API_KEY", "").strip()
+    if not key:
+        return []
+    payload = {
+        "api_key": key,
+        "query": query,
+        "max_results": max_results,
+        "include_answer": False,
+        "search_depth": os.getenv("SEARCH_DEPTH","basic"),
+    }
+    if days:
+        payload["days"] = days
+    try:
+        with httpx.Client(timeout=12.0) as c:
+            r = c.post("https://api.tavily.com/search", json=payload)
+            r.raise_for_status()
+            data = r.json()
+            res = []
+            for item in data.get("results", [])[:max_results]:
+                res.append({
+                    "title": item.get("title"),
+                    "url": item.get("url"),
+                    "content": item.get("content"),
+                    "published_date": item.get("published_date"),
+                    "score": item.get("score"),
+                })
+            return res
+    except Exception:
+        return []
+
+def _serpapi_search(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
+    key = os.getenv("SERPAPI_KEY", "").strip()
+    if not key:
+        return []
+    try:
+        with httpx.Client(timeout=12.0) as c:
+            # Use SerpAPI Google search
+            r = c.get("https://serpapi.com/search.json", params={"q": query, "num": max_results, "api_key": key})
+            r.raise_for_status()
+            data = r.json()
+            res = []
+            for item in data.get("organic_results", [])[:max_results]:
+                res.append({"title": item.get("title"), "url": item.get("link"), "content": item.get("snippet")})
+            return res
+    except Exception:
+        return []
+
+def build_live_updates_html(data: Dict[str, Any], lang: str = "de", max_results: int = 5) -> (str, str):
+    branche = _extract_branche(data)
+    size = str(data.get("unternehmensgroesse") or data.get("company_size") or "").strip().lower()
+    region = str(data.get("bundesland") or data.get("state") or data.get("ort") or data.get("city") or "").strip()
+    product = str(data.get("hauptleistung") or data.get("hauptprodukt") or data.get("main_product") or "").strip()
+    topic = str(data.get("search_topic") or "").strip()
+    days = int(os.getenv("SEARCH_DAYS", "30"))
+    queries = []
+    base_de = f"Förderprogramm KI {region} {branche} {size}".strip()
+    base_en = f"AI funding {region} {branche} {size}".strip()
+    t_de = f"KI Tool {branche} {product} DSGVO".strip()
+    t_en = f"GDPR-friendly AI tool {branche} {product}".strip()
+    if lang.startswith("de"):
+        queries = [q for q in [base_de, t_de, topic] if q]
+        title = f"Neu seit {_dt.datetime.now().strftime('%B %Y')}"
+    else:
+        queries = [q for q in [base_en, t_en, topic] if q]
+        title = f"New since {_dt.datetime.now().strftime('%B %Y')}"
+    seen = set(); items = []
+    for q in queries:
+        res = _tavily_search(q, max_results=max_results, days=days) or _serpapi_search(q, max_results=max_results)
+        for r in res:
+            url = (r.get("url") or "").strip()
+            if not url or url in seen: 
+                continue
+            seen.add(url)
+            date = r.get("published_date") or ""
+            li = f'<li><a href="{url}">{(r.get("title") or url)[:120]}</a>'
+            if date:
+                li += f' <span style="color:#5B6B7C">({date})</span>'
+            snippet = (r.get("content") or "")[:240].replace("<","&lt;").replace(">","&gt;")
+            if snippet:
+                li += f"<br><span style='color:#5B6B7C;font-size:12px'>{snippet}</span>"
+            li += "</li>"
+            items.append(li)
+    html = "<ul>" + "".join(items[:max_results]) + "</ul>" if items else ""
+    return title, html
+
+# ---- Funding/Tools details + narrative (CSV-driven, size/region aware) ----
+import csv
+
+def _load_csv_candidates(names: List[str]) -> str:
+    # prefer ./data/name, fallback to ./name, then nested ./ki_backend/... paths
+    for n in names:
+        p = os.path.join("data", n)
+        if os.path.exists(p): return p
+    for n in names:
+        if os.path.exists(n): return n
+    nested = os.path.join("ki_backend","make-ki-backend-neu-main","data")
+    for n in names:
+        p = os.path.join(nested, n)
+        if os.path.exists(p): return p
+    return ""
+
+def _read_rows(path: str) -> List[Dict[str,str]]:
+    try:
+        with open(path, newline="", encoding="utf-8") as f:
+            rd = csv.DictReader(f)
+            return [{k.strip(): (v or "").strip() for k,v in r.items()} for r in rd]
+    except Exception:
+        return []
+
+def _norm_size(x: str) -> str:
+    x = (x or "").lower()
+    if x in {"solo","einzel","einzelunternehmer","freelancer","soloselbstständig","soloselbststaendig"}: return "solo"
+    if x in {"team","small"}: return "team"
+    if x in {"kmu","sme","mittelstand"}: return "kmu"
+    return ""
+
+def build_funding_details_struct(data: Dict[str,Any], lang: str="de", max_items: int=8):
+    path = _load_csv_candidates(["foerdermittel.csv","foerderprogramme.csv"])
+    rows = _read_rows(path) if path else []
+    out = []
+    size = _norm_size(data.get("unternehmensgroesse") or data.get("company_size") or "")
+    region = (str(data.get("bundesland") or data.get("state") or "")).lower()
+    if region in {"be"}: region = "berlin"
+    for r in rows:
+        name = r.get("name") or r.get("programm") or r.get("Program") or ""
+        if not name: continue
+        target = (r.get("zielgruppe") or r.get("target") or "").lower()
+        reg = (r.get("region") or r.get("bundesland") or r.get("land") or "").lower()
+        grant = r.get("foerderart") or r.get("grant") or r.get("quote") or r.get("kosten") or ""
+        use_case = r.get("einsatz") or r.get("zweck") or r.get("beschreibung") or r.get("use_case") or ""
+        link = r.get("link") or r.get("url") or ""
+        # size filter (permissive)
+        if size and target:
+            if size not in target and not (target=="kmu" and size in {"team","kmu"}):
+                continue
+        # region bias: prefer region or "bund"
+        score = 0
+        if region and reg == region: score -= 5
+        if reg in {"bund","deutschland","de"}: score -= 1
+        out.append({"name":name, "target":r.get("zielgruppe") or r.get("target") or "",
+                    "region":r.get("region") or r.get("bundesland") or r.get("land") or "",
+                    "grant":grant, "use_case":use_case, "link":link, "_score": score})
+    out = sorted(out, key=lambda x: x.get("_score",0))[:max_items]
+    stand = ""
+    try:
+        ts = os.path.getmtime(path)
+        import datetime as _d
+        stand = _d.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+    except Exception:
+        pass
+    for o in out:
+        o.pop("_score", None)
+    return out, stand
+
+def build_funding_narrative(data: Dict[str,Any], lang: str="de", max_items: int=5) -> str:
+    rows, _ = build_funding_details_struct(data, lang, max_items)
+    if not rows: return ""
+    ps = []
+    if lang.startswith("de"):
+        for r in rows:
+            p = f"<p><b>{r['name']}</b> – geeignet für {r.get('target','KMU')}, Region: {r.get('region','DE')}. " \
+                f"{r.get('use_case','')} <i>{('Förderart/Kosten: ' + r['grant']) if r.get('grant') else ''}</i> "
+            if r.get("link"): p += f'<a href="{r["link"]}">Zum Programm</a>'
+            p += "</p>"
+            ps.append(p)
+    else:
+        for r in rows:
+            p = f"<p><b>{r['name']}</b> – suitable for {r.get('target','SMEs')}, region: {r.get('region','DE')}. " \
+                f"{r.get('use_case','')} <i>{('Grant/Costs: ' + r['grant']) if r.get('grant') else ''}</i> "
+            if r.get("link"): p += f'<a href="{r["link"]}">Open</a>'
+            p += "</p>"
+            ps.append(p)
+    return "\n".join(ps)
+
+def build_tools_details_struct(data: Dict[str,Any], branche: str, lang: str="de", max_items: int=12):
+    path = _load_csv_candidates(["tools.csv","ki_tools.csv"])
+    rows = _read_rows(path) if path else []
+    out = []
+    size = _norm_size(data.get("unternehmensgroesse") or data.get("company_size") or "")
+    for r in rows:
+        name = r.get("name") or r.get("Tool") or r.get("Tool-Name")
+        if not name: continue
+        tags = (r.get("Branche-Slugs") or r.get("Tags") or r.get("Branche") or "").lower()
+        row_size = (r.get("Unternehmensgröße") or r.get("Unternehmensgroesse") or r.get("company_size") or "").lower()
+        if branche and tags and branche not in tags: 
+            continue
+        if size and row_size and row_size not in {"alle", size}:
+            if not ((row_size=="kmu" and size in {"team","kmu"}) or (row_size=="team" and size=="solo")):
+                continue
+        out.append({
+            "name": name,
+            "category": r.get("kategorie") or r.get("category") or "",
+            "suitable_for": r.get("eignung") or r.get("use_case") or r.get("einsatz") or "",
+            "hosting": r.get("hosting") or r.get("datenschutz") or r.get("data") or "",
+            "price": r.get("preis") or r.get("price") or r.get("kosten") or "",
+            "link": r.get("link") or r.get("url") or "",
+        })
+    # keep first N
+    return out[:max_items], ""
+
+def build_tools_narrative(data: Dict[str,Any], branche: str, lang: str="de", max_items: int=6) -> str:
+    rows, _ = build_tools_details_struct(data, branche, lang, max_items)
+    if not rows: return ""
+    ps = []
+    if lang.startswith("de"):
+        for r in rows:
+            p = f"<p><b>{r['name']}</b> ({r.get('category','')}) – geeignet für {r.get('suitable_for','Alltag')}. " \
+                f"Hosting/Datenschutz: {r.get('hosting','n/a')}; Preis: {r.get('price','n/a')}. "
+            if r.get("link"): p += f'<a href="{r["link"]}">Zur Website</a>'
+            p += "</p>"
+            ps.append(p)
+    else:
+        for r in rows:
+            p = f"<p><b>{r['name']}</b> ({r.get('category','')}) – suitable for {r.get('suitable_for','daily work')}. " \
+                f"Hosting/data: {r.get('hosting','n/a')}; price: {r.get('price','n/a')}. "
+            if r.get("link"): p += f'<a href="{r["link"]}">Website</a>'
+            p += "</p>"
+            ps.append(p)
+    return "\n".join(ps)
+# --- End injected helpers ---
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from openai import OpenAI
 # Absolute path helpers for templates and assets
@@ -27,30 +290,8 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 
 client = OpenAI()
 
-# VERSION_MARKER: v-test-2025-09-14
+# VERSION_MARKER: v-gold-2025-09-16
 
-
-# ---------- Branchen-Erkennung (robust) ----------
-def _extract_branche(d: dict) -> str:
-    raw = (str(d.get("branche") or d.get("industry") or d.get("sector") or "")).strip().lower()
-    mapping = {
-        "beratung":"beratung","consulting":"beratung","dienstleistung":"beratung","dienstleistungen":"beratung",
-        "it":"it","software":"it","ict":"it","informationstechnologie":"it","technology":"it",
-        "marketing":"marketing","werbung":"marketing","advertising":"marketing",
-        "bau":"bau","construction":"bau","architektur":"bau","architecture":"bau",
-        "industrie":"industrie","produktion":"industrie","manufacturing":"industrie",
-        "handel":"handel","e-commerce":"handel","retail":"handel","einzelhandel":"handel",
-        "finanzen":"finanzen","finance":"finanzen","insurance":"finanzen","versicherung":"finanzen","banking":"finanzen",
-        "gesundheit":"gesundheit","health":"gesundheit","healthcare":"gesundheit",
-        "bildung":"bildung","education":"bildung","schule":"bildung",
-        "verwaltung":"verwaltung","public administration":"verwaltung","public":"verwaltung",
-        "medien":"medien","media":"medien","kreativwirtschaft":"medien",
-        "logistik":"logistik","logistics":"logistik","transport":"logistik"
-    }
-    if raw in mapping: return mapping[raw]
-    for k,v in mapping.items():
-        if k in raw: return v
-    return "default"
 # ---------- optionale Domain-Bausteine ----------
 try:
     from gamechanger_blocks import build_gamechanger_blocks
@@ -639,33 +880,14 @@ def build_masterprompt(chapter: str, context: dict, lang: str = "de") -> str:
     # fügen hier keine zusätzlichen Anweisungen hinzu.
     return prompt + style
 
-# ---------- OpenAI Model Resolver (robust) ----------
-def _resolve_model(wanted: Optional[str]) -> str:
-    fallbacks = ["gpt-4o-mini","gpt-4o","gpt-3.5-turbo"]
-    w = (wanted or "").strip().lower()
-    if not w or w.startswith("gpt-5"):
-        return fallbacks[0]
-    known = set(fallbacks)
-    return w if w in known else fallbacks[0]
-
-
 def _chat_complete(messages, model_name: Optional[str], temperature: Optional[float] = None) -> str:
-    mdl = _resolve_model(model_name or os.getenv("GPT_MODEL_NAME"))
+    args = {"model": model_name or os.getenv("GPT_MODEL_NAME", "gpt-5"), "messages": messages}
     if temperature is None:
         temperature = float(os.getenv("GPT_TEMPERATURE", "0.3"))
-    args = {"model": mdl, "messages": messages, "temperature": temperature}
-    try:
-        resp = client.chat.completions.create(**args)
-        return resp.choices[0].message.content.strip()
-    except Exception:
-        try:
-            safe = _resolve_model("gpt-4o")
-            if safe != mdl:
-                args["model"] = safe
-                resp = client.chat.completions.create(**args)
-                return resp.choices[0].message.content.strip()
-        except Exception:
-            return ""
+    if not str(args["model"]).startswith("gpt-5"):
+        args["temperature"] = temperature
+    resp = client.chat.completions.create(**args)
+    return resp.choices[0].message.content.strip()
 
 def gpt_generate_section(data, branche, chapter, lang="de"):
     lang = _norm_lang(data.get("lang") or data.get("language") or data.get("sprache") or lang)
@@ -1585,9 +1807,9 @@ def _toc_from_report(report: Dict[str, Any], lang: str) -> str:
             toc_items.append("<li>Quick Wins & Risiken</li>")
         add("recommendations_html", "Empfehlungen")
         add("roadmap_html", "Roadmap")
-        if report.get("foerderprogramme_table"):
+        if report.get("foerderprogramme_html") or report.get("foerderprogramme_table"):
             toc_items.append("<li>Förderprogramme</li>")
-        if report.get("tools_table"):
+        if report.get("tools_html") or report.get("tools_table"):
             toc_items.append("<li>KI-Tools & Software</li>")
         add("sections_html", "Weitere Kapitel")
     else:
@@ -1597,9 +1819,9 @@ def _toc_from_report(report: Dict[str, Any], lang: str) -> str:
             toc_items.append("<li>Quick wins & key risks</li>")
         add("recommendations_html", "Recommendations")
         add("roadmap_html", "Roadmap")
-        if report.get("foerderprogramme_table"):
+        if report.get("foerderprogramme_html") or report.get("foerderprogramme_table"):
             toc_items.append("<li>Funding programmes</li>")
-        if report.get("tools_table"):
+        if report.get("tools_html") or report.get("tools_table"):
             toc_items.append("<li>AI tools</li>")
         add("sections_html", "Additional sections")
 
@@ -1852,6 +2074,31 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         gc_html = ""
     out["gamechanger_html"] = gc_html
 
+    # Narrative-first rendering: provide HTML for funding, tools and compliance
+    # before any table fallbacks. The template will prefer these narrative blocks
+    # when present.
+    try:
+        fp_raw = out.get("foerderprogramme") or ""
+        if fp_raw:
+            out["foerderprogramme_html"] = ensure_html(strip_code_fences(fix_encoding(fp_raw)), lang)
+    except Exception:
+        out["foerderprogramme_html"] = out.get("foerderprogramme_html", "")
+    try:
+        tools_raw = out.get("tools") or ""
+        if tools_raw:
+            out["tools_html"] = ensure_html(strip_code_fences(fix_encoding(tools_raw)), lang)
+    except Exception:
+        out["tools_html"] = out.get("tools_html", "")
+
+    # Ensure compliance HTML is always provided (with fallback text if missing)
+    try:
+        comp_txt_plain = re.sub(r"<[^>]+>", "", out.get("compliance", "") or "").strip()
+    except Exception:
+        comp_txt_plain = ""
+    if not comp_txt_plain:
+        out["compliance"] = _fallback_compliance(lang)
+    out["compliance_html"] = ensure_html(strip_code_fences(fix_encoding(out.get("compliance") or "")), lang)
+
     # -------------------------------------------------------------------------
         # Remove stray KPI category lines from the executive summary
         #
@@ -2014,46 +2261,71 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         out["vision"] = fallback_vision(data, lang)
     out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>" if out.get("vision") else ""
 
-    # Vision-Normalisierung: Ersetze veraltete Überschrift 'Kühne Idee' durch 'Vision'
-    try:
-        if isinstance(out.get("vision"), str):
-            vis = out["vision"]
-            vis = vis.replace("Kühne Idee:", "Vision:").replace("Kühne Idee", "Vision")
-            vis = vis.replace("Bold idea:", "Vision:").replace("Bold idea", "Vision")
-            out["vision"] = vis
-            out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>"
-    except Exception:
-        pass
+# Vision-Normalisierung: Ersetze veraltete Überschrift 'Kühne Idee' durch 'Vision'
+try:
+    if isinstance(out.get("vision"), str):
+        vis = out["vision"]
+        vis = vis.replace("Kühne Idee:", "Vision:").replace("Kühne Idee", "Vision")
+        vis = vis.replace("Bold idea:", "Vision:").replace("Bold idea", "Vision")
+        out["vision"] = vis
+        out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>"
+except Exception:
+    pass
 
-    # sections_html (ohne Vision) — in Gold-Standard, Tools und Förderprogramme werden
-    # nicht mehr als lange Textabschnitte eingebunden, da sie in separaten
-    # Tabellen dargestellt werden.  Behalte nur Compliance und Praxisbeispiel.
+    # sections_html (ohne Vision)
+    # Praxisbeispiel (Compliance wird separat als eigener Abschnitt gerendert)
     parts = []
-    # Compliance section
-    if out.get("compliance"):
-        parts.append("<h2>Compliance</h2>\n" + out["compliance"])
-    # Praxisbeispiel
     if out.get("praxisbeispiel"):
         parts.append(f"<h2>{'Praxisbeispiel' if lang=='de' else 'Case study'}</h2>\n" + out["praxisbeispiel"])
     out["sections_html"] = "\n\n".join(parts)
-    
+
+
     # dynamische Förderliste separat bereitstellen (falls Tabelle leer)
     out["dynamic_funding_html"] = ""
     if wants_funding:
         dyn = build_dynamic_funding(data, lang=lang)
         if dyn: out["dynamic_funding_html"] = dyn
-    
+
     # Diagrammdaten
     out["score_percent"] = data["score_percent"]
     out["chart_data"] = build_chart_payload(data, out["score_percent"], lang=lang)
     out["chart_data_json"] = json.dumps(out["chart_data"], ensure_ascii=False)
-    
+
     # Tabellen (CSV)
     try: out["foerderprogramme_table"] = build_funding_table(data, lang=lang)
     except Exception: out["foerderprogramme_table"] = []
-    try: out["tools_table"] = build_tools_table(data, branche=branche, lang=lang)
+    try: out["tools_table"]
+
+# Narrative-first HTML & structured details
+try:
+    out["foerderprogramme_html"] = build_funding_narrative(data, lang=lang, max_items=5)
+except Exception:
+    out["foerderprogramme_html"] = ""
+try:
+    out["tools_html"] = build_tools_narrative(data, branche=branche, lang=lang, max_items=6)
+except Exception:
+    out["tools_html"] = ""
+
+try:
+    out["funding_details"], out["funding_stand"] = build_funding_details_struct(data, lang=lang, max_items=8)
+except Exception:
+    out["funding_details"], out["funding_stand"] = [], out.get("datum")
+try:
+    out["tools_details"], out["tools_stand"] = build_tools_details_struct(data, branche=branche, lang=lang, max_items=12)
+except Exception:
+    out["tools_details"], out["tools_stand"] = [], out.get("datum")
+
+# Live updates (Tavily -> SerpAPI)
+try:
+    _title, _html = build_live_updates_html(data, lang=lang, max_results=5)
+    out["live_updates_title"] = _title
+    out["live_updates_html"] = _html
+except Exception:
+    out["live_updates_title"] = ""
+    out["live_updates_html"] = ""
+ = build_tools_table(data, branche=branche, lang=lang)
     except Exception: out["tools_table"] = []
-    
+
     # Fallbacks (aus HTML) nur wenn CSV leer blieb
     if wants_funding and not out.get("foerderprogramme_table"):
         teaser = out.get("foerderprogramme") or out.get("sections_html","")
@@ -2062,7 +2334,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             name, amount, link = m.groups()
             rows.append({"name":(name or "").strip(),"zielgruppe":"","foerderhoehe":(amount or "").strip(),"link":link})
         out["foerderprogramme_table"] = rows[:6]
-    
+
     if not out.get("tools_table"):
         html_tools = out.get("tools") or out.get("sections_html","")
         rows = []
@@ -2071,7 +2343,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             if name and link:
                 rows.append({"name":name.strip(),"usecase":"","cost":"","link":link})
         out["tools_table"] = rows[:8]
-    
+
     # --- Zusätzliche Kennzahlen, Benchmarks, Timeline und Risiken ---
     # Hilfsfunktionen zum Parsen von Zahlen und Benchmarks
     def _to_num(v):
@@ -2094,7 +2366,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         except Exception:
             pass
         return 0
-    
+
     def _map_scale_text(value: str, mapping: Dict[str, int]) -> int:
         """
         Map textual responses to a numeric score.  The questionnaire uses verbal
@@ -2117,7 +2389,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             if k and k in key:
                 return mapping[k]
         return 0
-    
+
     # ----------------------------------------------------------------------
     # KPI tiles: show the four core readiness dimensions instead of a single
     # aggregate score.  Each dimension is displayed with its own value.  The
@@ -2151,7 +2423,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     own_auto = _dim_value("automatisierungsgrad") or _dim_value("automatisierungsgrad (%)") or _dim_value("automatisierungs_score") or _map_scale_text(raw_auto, auto_mapping)
     own_paper = _dim_value("prozesse_papierlos") or _dim_value("papierlos") or _dim_value("paperless")
     own_know = _dim_value("ki_knowhow") or _dim_value("knowhow") or _dim_value("ai_knowhow") or _map_scale_text(raw_know, know_mapping)
-    
+
     kpis = []
     kpis.append({
         "label": "Digitalisierung" if lang == "de" else "Digitalisation",
@@ -2170,7 +2442,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         "value": f"{own_know}%"
     })
     out["kpis"] = kpis
-    
+
     # Benchmarks für horizontale Balken (Ihr Wert vs. Branche)
     # Verwendet die zuvor berechneten eigenen Werte (own_digi, own_auto, own_paper, own_know)
     # anstatt sie erneut mit _to_num neu zu bestimmen. Dadurch bleiben Mapping
@@ -2208,7 +2480,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         ("Know-how" if lang == "de" else "Know‑how"): {"self": own_know, "industry": know_bench},
     }
     out["benchmarks"] = benchmarks
-    
+
     # ------------------------------------------------------------------
     # KPI‑Klassifizierung & Badges
     #
@@ -2224,14 +2496,14 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     # gleichauf, ↓ für Rückstand), dem Delta und dem Statuswort.
     # Die generierten HTML‑Snippets werden im Report verwendet, sowohl
     # im Executive‑Summary‑Kasten als auch im Inhaltsverzeichnis.
-    
+
     def _tol_base() -> int:
         """Lies den Basistoleranzwert aus der Umgebungsvariable oder verwende 10."""
         try:
             return int(os.getenv("KPI_TOLERANCE", "10"))
         except Exception:
             return 10
-    
+
     def _tol_for(label: str, branche: str) -> int:
         """
         Bestimme die Toleranz für eine Dimension anhand der Branche.
@@ -2252,7 +2524,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             if "autom" in lab:
                 return max(base, 12)
         return base
-    
+
     def _classify(self_v: int, bench_v: int, lang: str, tol: int):
         """
         Vergleiche eigenen Wert (self_v) mit dem Benchmark (bench_v) und
@@ -2269,12 +2541,12 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         if delta <= -tol:
             return delta, ("Rückstand" if lang == "de" else "behind")
         return delta, ("gleichauf" if lang == "de" else "on par")
-    
+
     # Label-Liste für DE und EN
     labels_de = ["Digitalisierung", "Automatisierung", "Papierlos", "KI-Know-how"]
     labels_en = ["Digitalisation", "Automation", "Paperless", "AI know-how"]
     _labels = labels_de if lang == "de" else labels_en
-    
+
     # Paarliste aus Label, eigenem Wert und Benchmark
     _pairs = [
         (_labels[0], own_digi, dig_bench),
@@ -2282,7 +2554,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         (_labels[2], own_paper, paper_bench),
         (_labels[3], own_know, know_bench),
     ]
-    
+
     kpi_status: List[dict] = []
     for lbl, self_v, bench_v in _pairs:
         tol = _tol_for(lbl, branche)
@@ -2295,7 +2567,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             "status": stat_word,
         })
     out["kpi_status"] = kpi_status
-    
+
     # Badge-HTML generieren: Icon + Label + Delta (pp) + Status.  Für DE/EN
     # verwenden wir dieselben Icons.  Die CSS-Klassen (z. B. kpi-vorsprung)
     # werden später in den Templates definiert.
@@ -2307,12 +2579,12 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         # CSS-Klasse: Status in Kleinbuchstaben, Leerzeichen und Sonderzeichen entfernen
         cls = status.lower().replace(" ", "-").replace("ß", "ss").replace("ü", "u").replace("ö", "o").replace("ä", "a")
         return f'<span class="kpi-badge kpi-{cls}">{icon}&nbsp;{label} {delta_txt} ({status})</span>'
-    
+
     badges_html = "<div class=\"kpi-badges\">" + "".join(
         _badge_html(item["label"], item["delta"], item["status"]) for item in kpi_status
     ) + "</div>"
     out["kpi_badges_html"] = badges_html
-    
+
     # ------------------------------------------------------------------
     # KPI‑Übersicht: Ergänze eine prägnante Zusammenfassung der vier
     # Dimensionen direkt vor der vom LLM generierten Executive Summary.
@@ -2453,7 +2725,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     except Exception:
         # In case of unexpected errors, leave the summary untouched
         pass
-    
+
     # Timeline-Sektion aus der Roadmap extrahieren (30/3M/12M)
     def _distill_timeline_sections(source_html: str, lang: str = "de") -> Dict[str, List[str]]:
         """Extrahiert 2–3 stichpunktartige Maßnahmen für 30 Tage, 3 Monate, 12 Monate."""
@@ -2495,10 +2767,10 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             elif '12' in header:
                 res['t365'] = items[:3]
         return res
-    
+
     timeline_sections = _distill_timeline_sections(out.get("roadmap_html", ""), lang=lang)
     out["timeline"] = timeline_sections
-    
+
     # Risiko-Heatmap heuristisch erstellen
     risk_rows = []
     # Bias/Transparenz – höheres Risiko bei geringem KI-Know-how
@@ -2529,7 +2801,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         dep_lvl = 'niedrig'
     risk_rows.append({"category": "Abhängigkeit Anbieter" if lang == "de" else "Vendor lock-in", "level": dep_lvl})
     out["risk_heatmap"] = risk_rows
-    
+
     # ---------------------------------------------------------------------
     # Fallback practice example if the generated case study does not match
     # the respondent's sector.  Occasionally the language model returns a
@@ -2549,7 +2821,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     except Exception:
         # Silently ignore fallback errors
         pass
-    
+
     # Förder-Badges aus erster Programmeinträgen
     badges = []
     try:
@@ -2611,29 +2883,21 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         if b and b not in seen:
             seen.add(b); unique_badges.append(b)
     out["funding_badges"] = unique_badges
-    
+
     # One-Pager & TOC
     out["one_pager_html"] = ""  # optionaler Block (nicht genutzt)
-    
-    # Live updates
-    try:
-        live_html = build_live_updates_html(data, lang=lang)
-    except Exception:
-        live_html = ""
-    out["live_updates_html"] = live_html
-    out["live_updates_title"] = "Neu seit " + datetime.now().strftime("%B %Y") if lang=="de" else "New since " + datetime.now().strftime("%B %Y")
     out["toc_html"] = _toc_from_report(out, lang)
-    
+
     # Append personal and glossary sections
     out["ueber_mich_html"] = build_ueber_mich_section(lang=lang)
     out["glossary_html"] = build_glossary_section(lang=lang)
-    
+
     # Sanitize all string outputs to remove invisible or problematic unicode characters.
     # This prevents stray characters like "\uFFFE" appearing in the rendered PDF.
     for k, v in list(out.items()):
         if isinstance(v, str):
             out[k] = _sanitize_text(v)
-    
+
     # Strip internal prompt guidelines (e.g. "Zusätzliche Anweisungen" or "Additional Instructions")
     # from all HTML sections.  These guidelines are intended only for the language
     # model and must not appear in the final report.  The removal targets both
@@ -2644,12 +2908,12 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         beginning with headings like "Zusätzliche Anweisungen…" or
         "Additional Instructions…" (in any h2/h3 level) are excised along with
         their content until the next heading or end of the HTML.
-    
+
         Parameters
         ----------
         html : str
             The HTML to clean.
-    
+
         Returns
         -------
         str
@@ -2703,7 +2967,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             return html
         except Exception:
             return html
-    
+
     # Apply guideline stripping to HTML fields
     for _k in [
         "exec_summary_html",
@@ -2719,7 +2983,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     ]:
         if out.get(_k):
             out[_k] = _strip_internal_guidelines(out.get(_k) or "")
-    
+
     # -------------------------------------------------------------------------
     # Add branch innovation introduction and gamechanger blocks to the report
     #
@@ -2742,7 +3006,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         # template errors.
         out.setdefault("branchen_innovations_intro", "")
         out.setdefault("gamechanger_blocks", "")
-    
+
     # Final pass: remove any remaining LLM 'KPI overview' narratives and extraneous benchmark sections.
     try:
         # Remove duplicate KPI overview blocks in German and English
@@ -2830,7 +3094,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         # Collapse multiple spaces and punctuation into a single space.
         html = _re.sub(r"\s{2,}", " ", html)
         return html.strip()
-    
+
     # Apply sanitisation to narrative HTML fields.  In addition to quick wins,
     # risks, recommendations and roadmap, we sanitise the vision, gamechanger
     # and executive summary sections to remove residual numbers, units and list
@@ -2847,6 +3111,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         "vision_html",
         "gamechanger_html",
         "praxisbeispiel",
+            "compliance_html",
     ]:
         if isinstance(out.get(_key), str):
             out[_key] = _strip_lists_and_numbers(out[_key])
@@ -3093,12 +3358,15 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             # list is empty the template falls back to timeline/swimlane or HTML.
             "roadmap_items": report.get("roadmap_items", []),
             "sections_html": report.get("sections_html",""),
+            "compliance_html": report.get("compliance_html",""),
             "vision_html": report.get("vision_html",""),
             "one_pager_html": report.get("one_pager_html",""),
             "toc_html": report.get("toc_html",""),
             "chart_data_json": report.get("chart_data_json","{}"),
             "foerderprogramme_table": report.get("foerderprogramme_table",[]),
+            "foerderprogramme_html": report.get("foerderprogramme_html",""),
             "tools_table": report.get("tools_table",[]),
+            "tools_html": report.get("tools_html",""),
             "dynamic_funding_html": report.get("dynamic_funding_html",""),
             "footer_text": footer_text,
             "logo_main": _data_uri_for("ki-sicherheit-logo.webp") or _data_uri_for("ki-sicherheit-logo.png"),
@@ -3170,50 +3438,3 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
     return {"html": html, "lang": lang, "score_percent": report.get("score_percent", 0),
             "meta": {"chapters":[k for k in ("executive_summary","vision","tools","foerderprogramme","roadmap","compliance","praxisbeispiel") if report.get(k)],
                      "one_pager": True}}
-
-# ---------- Live Updates via Tavily/SerpAPI ----------
-def _tavily_search(query: str, num_results: int = 5) -> List[dict]:
-    key = os.getenv("TAVILY_API_KEY", "").strip()
-    if not key:
-        return []
-    try:
-        import httpx
-        with httpx.Client(timeout=10.0) as c:
-            r = c.post("https://api.tavily.com/search", json={"api_key": key, "query": query, "max_results": num_results})
-            if r.status_code != 200:
-                return []
-            j = r.json()
-            out = []
-            for it in (j.get("results") or [])[:num_results]:
-                out.append({"title": it.get("title",""), "url": it.get("url",""), "date": it.get("published_date") or "", "snippet": it.get("content") or ""})
-            return out
-    except Exception:
-        return []
-
-def build_live_updates_html(data: dict, lang: str = "de", num_results: int = 5) -> str:
-    branche = _extract_branche(data)
-    product = (data.get("hauptleistung") or data.get("hauptprodukt") or data.get("main_product") or "").strip()
-    size = (data.get("unternehmensgroesse") or data.get("company_size") or "").strip()
-    if lang == "de":
-        q = f"KI Tools Förderprogramme {branche} {product} {size} aktuelle Neuigkeiten"
-        title = "Neu seit " + datetime.now().strftime("%B %Y")
-    else:
-        q = f"AI tools funding {branche} {product} {size} latest updates"
-        title = "New since " + datetime.now().strftime("%B %Y")
-    items = _tavily_search(q, num_results=num_results)
-    if not items:
-        try:
-            items = serpapi_search(q, num_results=num_results)
-        except Exception:
-            items = []
-    if not items:
-        return ""
-    lis = []
-    for it in items[:max(3, min(num_results, 5))]:
-        title_i = _sanitize_text(it.get("title",""))
-        url_i = it.get("url","")
-        date_i = it.get("date","")
-        snip = _sanitize_text(it.get("snippet",""))
-        meta = f"{date_i}" if date_i else ""
-        lis.append(f"<li><a href=\"{url_i}\"><b>{title_i}</b></a> – {snip} <span class=\"caption\">({meta})</span></li>")
-    return f"<h3>{title}</h3><ul>" + "\n".join(lis) + "</ul>"
