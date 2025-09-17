@@ -171,15 +171,24 @@ def _norm_industry_slug(raw: str) -> str:
     return "default"
 
 def _extract_branche(d: Dict[str, Any]) -> str:
-    """Liest Branche robust aus Fragebogen (DE/EN) und normalisiert auf Slugs deiner YAMLs."""
-    candidates = [
-        "branche", "Branche", "industry", "industry_sector", "sector", "industry_slug",
-        "branche_slug", "branchenwahl"
-    ]
-    for k in candidates:
-        if d.get(k):
-            return _norm_industry_slug(str(d.get(k)))
-    return "default"
+    raw = (str(d.get("branche") or d.get("industry") or d.get("sector") or "")).strip().lower()
+    m = {
+        "consulting":"beratung","dienstleistung":"beratung","beratung":"beratung",
+        "it":"it","software":"it","information technology":"it",
+        "marketing":"marketing","advertising":"marketing","werbung":"marketing",
+        "construction":"bau","bau":"bau","architecture":"bau",
+        "industry":"industrie","produktion":"industrie","manufacturing":"industrie",
+        "retail":"handel","e-commerce":"handel","handel":"handel",
+        "finance":"finanzen","insurance":"finanzen","finanzen":"finanzen",
+        "health":"gesundheit","healthcare":"gesundheit","gesundheit":"gesundheit",
+        "media":"medien","kreativwirtschaft":"medien","medien":"medien",
+        "logistics":"logistik","transport":"logistik","logistik":"logistik",
+        "public administration":"verwaltung","verwaltung":"verwaltung",
+        "education":"bildung","bildung":"bildung",
+    }
+    # Default nicht mehr "beratung"
+    return m.get(raw, "default")
+
 # —————————————————— Branchenkontext + Firmenkontext
 def build_context(data: Dict[str, Any], lang: str) -> Dict[str, Any]:
     """Lädt branchen- & unternehmensspezifischen Kontext (YAML), mit Default-Fallback."""
@@ -293,24 +302,53 @@ def _build_user_facts(data: Dict[str,Any], ctx: Dict[str,Any], lang: str) -> str
     return (f"Industry: {branche}; Core service: {haupt}; Size: {size}; "
             f"State: {comp.get('bundesland','')}.")
 
+# --- Model resolver (robust against invalid model names) ---
+def _resolve_model(wanted: Optional[str]) -> str:
+    # Order of preference
+    fallbacks = [
+        "gpt-4o-mini",  # fast & günstig
+        "gpt-4o",       # hochwertig
+        "gpt-3.5-turbo"
+    ]
+    w = (wanted or "").strip()
+    # Sanitise common placeholders
+    if not w or w.lower().startswith("gpt-5"):
+        for m in fallbacks:
+            return m
+    # If user provided a known-good string, use it
+    known = { "gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo" }
+    if w in known:
+        return w
+    # Fallback chain
+    return fallbacks[0]
+
 # —————————————————— OpenAI Wrapper
 def _chat_complete(messages: List[Dict[str,str]], lang: str, model: Optional[str] = None,
                    temperature: float = TEMPERATURE, max_tokens: int = 1300) -> str:
-    """Gibt reinen Text zurück (robust, Fallback bei Fehler)."""
-    model = model or PRIMARY_MODEL
+    mdl = _resolve_model(model or os.getenv("GPT_MODEL_NAME"))
     try:
         if not _OPENAI:
             return ""
         resp = _OPENAI.chat.completions.create(
-            model=model,
+            model=mdl,
             temperature=temperature,
             messages=messages,
             max_tokens=max_tokens,
         )
-        txt = (resp.choices[0].message.content or "").strip()
-        return strip_code_fences(txt)
-    except Exception:
+        return strip_code_fences((resp.choices[0].message.content or "").strip())
+    except Exception as e:
+        # One retry with a safer fallback if we hit 400 or invalid_request
+        try:
+            safe = _resolve_model("gpt-4o")
+            if safe != mdl:
+                resp = _OPENAI.chat.completions.create(
+                    model=safe, temperature=temperature, messages=messages, max_tokens=max_tokens
+                )
+                return strip_code_fences((resp.choices[0].message.content or "").strip())
+        except Exception:
+            pass
         return ""
+
 
 def gpt_generate_section(topic: str, data: Dict[str,Any], ctx: Dict[str,Any], lang: str,
                          model: Optional[str] = None, temperature: float = TEMPERATURE,
