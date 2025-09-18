@@ -372,8 +372,8 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
             result = analyze_fn(body, lang=lang)
             html = _render_final_html_from_result(result, lang)
             head = html[:400]
-            if ("{{" in head) or ("{%" in head):
-                raise RuntimeError("Template not fully rendered – unresolved Jinja tags found")
+            if ("{{" in html) or ("{%" in html):
+                raise RuntimeError("Template not fully rendered – unresolved Jinja tags found in output")
             return html
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
