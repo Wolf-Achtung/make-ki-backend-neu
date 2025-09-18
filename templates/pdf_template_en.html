@@ -1,4 +1,3 @@
-<!-- templates/pdf_template_en.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,18 +5,19 @@
   <title>{{ title }}</title>
   <style>
     :root{
-      --ink:#0b2e5b;
-      --h2:#1b4f8a;
-      --h3:#2f6fb1;
-      --line:#cfe0f5;
-      --live:#f0f6ff;
+      --ink:#0b2e5b; --h2:#1b4f8a; --h3:#2f6fb1; --line:#cfe0f5; --live:#f0f6ff;
     }
-    body{font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--ink); line-height:1.55; padding:28px;}
+    html,body{margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);line-height:1.55;padding:28px}
     h1{font-size:26px;margin:0 0 10px 0;color:var(--ink)}
     .hook{color:#244b86;font-weight:600;margin:2px 0 18px 0}
-    h2{font-size:20px;margin:26px 0 8px;color:var(--h2);border-bottom:2px solid var(--line);padding-bottom:6px}
+    h2{font-size:20px;margin:26px 0 8px;color:var(--h2);border-bottom:2px solid var(--line);padding-bottom:6px;page-break-before:always}
+    h2:first-of-type{page-break-before:auto}
     h3{font-size:16px;margin:18px 0 6px;color:var(--h3)}
     p{margin:10px 0}
+    .small{font-size:12px;opacity:.85}
+    .section{margin-bottom:16px}
+    .section + .section{page-break-before:always}
     .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin:10px 0}
     .live-box{background:var(--live);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}
     .live-title{font-weight:700;margin-bottom:6px}
@@ -27,7 +27,6 @@
     table.compact{width:100%;border-collapse:collapse;font-size:12px}
     table.compact th,table.compact td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
     footer{margin-top:24px;background:#eef5ff;padding:12px;border:1px solid var(--line);border-radius:10px}
-    .small{font-size:12px;opacity:.85}
   </style>
 </head>
 <body>
@@ -36,23 +35,69 @@
   <div class="small"><strong>Industry:</strong> {{ industry }} · <strong>Size:</strong> {{ company_size }} · <strong>Location:</strong> {{ location }}</div>
   <div class="hook">{{ industry_hook }}</div>
 
-  <h2>Executive Summary</h2><p>{{ executive_summary }}</p>
-  <h2>Quick Wins</h2><p>{{ quick_wins }}</p>
-  <h2>Risks</h2><p>{{ risks }}</p>
-  <h2>Recommendations</h2><p>{{ recommendations }}</p>
-  <h2>Roadmap</h2><p>{{ roadmap }}</p>
-  <h2>{{ vision_title }}</h2><p>{{ vision }}</p>
-  <h2>{{ game_title }}</h2><p>{{ gamechanger }}</p>
+  <div class="section">
+    <h2>Executive Summary</h2>
+    <p>{{ executive_summary }}</p>
+  </div>
 
-  <h2>Compliance</h2>
-  <div class="card">{{ compliance_html | safe }}</div>
+  {% if live_box_html or live_html %}
+  <div class="section">
+    <h2>New since {{ month_year }}</h2>
+    <div class="live-box">{{ (live_box_html or live_html) | safe }}</div>
+  </div>
+  {% endif %}
 
-  <h2>Funding programs (selection)</h2>
-  <div class="small">As of: {{ stand_datum }}</div>
-  <div class="card">{{ funding_html | safe }}</div>
+  <div class="section">
+    <h2>Quick Wins</h2>
+    <p>{{ quick_wins }}</p>
+  </div>
 
-  <h2>AI tools & software</h2>
-  <div class="card">{{ tools_html | safe }}</div>
+  <div class="section">
+    <h2>Risks</h2>
+    <p>{{ risks }}</p>
+  </div>
+
+  <div class="section">
+    <h2>Recommendations</h2>
+    <p>{{ recommendations }}</p>
+  </div>
+
+  <div class="section">
+    <h2>Roadmap</h2>
+    <p>{{ roadmap }}</p>
+  </div>
+
+  <div class="section">
+    <h2>{{ vision_title }}</h2>
+    <p>{{ vision }}</p>
+  </div>
+
+  <div class="section">
+    <h2>{{ game_title }}</h2>
+    <p>{{ gamechanger }}</p>
+  </div>
+
+  <div class="section">
+    <h2>Compliance</h2>
+    <div class="card">{{ compliance_html | safe }}</div>
+  </div>
+
+  <div class="section">
+    <h2>Funding programs (selection)</h2>
+    <div class="small">As of: {{ stand_datum }}</div>
+    <div class="card">{{ funding_html | safe }}</div>
+    {% if funding_table_html %}
+      <div class="table-wrap">{{ funding_table_html | safe }}</div>
+    {% endif %}
+  </div>
+
+  <div class="section">
+    <h2>AI tools & software</h2>
+    <div class="card">{{ tools_html | safe }}</div>
+    {% if tools_table_html %}
+      <div class="table-wrap">{{ tools_table_html | safe }}</div>
+    {% endif %}
+  </div>
 
   <footer>
     <div class="small">{{ footer_cta }}</div>
