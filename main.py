@@ -288,7 +288,7 @@ async def health_info():
         "pdf_service_url": PDF_SERVICE_URL or None,
         "pdf_post_mode": PDF_POST_MODE,
         "timeout": PDF_TIMEOUT,
-        "version": "2025-09-17",
+        "version": "2025-09-18",
     }
 
 # ---------- PDF-Service ----------
