@@ -1,112 +1,84 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <title>{{ title }}</title>
+  <meta charset="utf-8"/>
+  <title>KI-Statusbericht</title>
   <style>
     :root{
-      --ink:#0b2e5b;          /* Fließtext dunkelblau */
-      --h2:#1b4f8a;           /* H2 */
-      --h3:#2f6fb1;           /* H3 */
-      --line:#cfe0f5;         /* Linien */
-      --chip:#e9f2ff;
-      --live:#f0f6ff;
+      --ink:#102A43;           /* dunkles Blau für Fließtext */
+      --h2:#0A2A66;            /* Headlines */
+      --h3:#103B8C;            /* Subheadlines */
+      --line:#C9D2E3;          /* Schmucklinien */
+      --chip:#E9F0FF;
     }
-    html,body{margin:0;padding:0}
-    body{font-family:system-ui, -apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);line-height:1.55;padding:28px;}
-    h1{font-size:26px;margin:0 0 10px 0;color:var(--ink)}
-    .hook{color:#244b86;font-weight:600;margin:2px 0 18px 0}
-    h2{font-size:20px;margin:26px 0 8px;color:var(--h2);border-bottom:2px solid var(--line);padding-bottom:6px;page-break-before:always}
-    h2:first-of-type{page-break-before:auto}
-    h3{font-size:16px;margin:18px 0 6px;color:var(--h3)}
-    p{margin:10px 0}
-    .small{font-size:12px;opacity:.85}
-    .section{margin-bottom:16px}
-    .section + .section{page-break-before:always}
-    .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin:10px 0}
-    .live-box{background:var(--live);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}
-    .live-title{font-weight:700;margin-bottom:6px}
-    .live-item{margin:8px 0}
-    .live-meta{font-size:12px;opacity:.8}
-    .table-wrap{margin:12px 0}
-    table.compact{width:100%;border-collapse:collapse;font-size:12px}
-    table.compact th, table.compact td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
-    footer{margin-top:24px;background:#eef5ff;padding:12px;border:1px solid var(--line);border-radius:10px}
+    body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:var(--ink); line-height:1.55; }
+    h1,h2,h3{ margin:0 0 .4rem 0; }
+    h1{ font-size:28px; color:var(--h2); }
+    h2{ font-size:22px; color:var(--h2); border-bottom:1px solid var(--line); padding-bottom:.25rem; margin-top:1.2rem; }
+    h3{ font-size:18px; color:var(--h3); margin-top:1rem; }
+    p{ margin:.6rem 0; }
+    .meta{ font-size:12px; opacity:.8 }
+    .chip{ display:inline-block; background:var(--chip); padding:.2rem .5rem; border-radius:999px; margin-right:.4rem; }
+    .live-box{ border:1px solid var(--line); border-radius:10px; padding:.6rem .8rem; margin:.8rem 0 1.2rem; }
+    .live-title{ font-weight:600; color:var(--h3); margin-bottom:.3rem; }
+    .live-list{ margin:.2rem 0 0 .9rem; }
+    .live-list li{ margin:.15rem 0; }
+    .page-break{ page-break-before: always; }
   </style>
 </head>
 <body>
-  <h1>{{ title }}</h1>
-  {% if company %}<div class="small"><strong>Unternehmen:</strong> {{ company }}</div>{% endif %}
-  <div class="small"><strong>Branche:</strong> {{ industry }} · <strong>Größe:</strong> {{ company_size }} · <strong>Standort:</strong> {{ location }}</div>
-  <div class="hook">{{ industry_hook }}</div>
-
-  <div class="section">
-    <h2>Executive Summary</h2>
-    <p>{{ executive_summary }}</p>
+  <h1>KI-Statusbericht</h1>
+  <div class="meta">
+    <span class="chip">Branche: {{ industry or '—' }}</span>
+    <span class="chip">Größe: {{ size or '—' }}</span>
+    <span class="chip">Standort: {{ location or '—' }}</span>
+    {% if primary_product %}<span class="chip">Hauptleistung: {{ primary_product }}</span>{% endif %}
+    <span style="float:right">Stand: {{ month_label }}</span>
   </div>
 
-  {% if live_box_html or live_html %}
-  <div class="section">
-    <h2>Neu seit {{ month_year }}</h2>
-    <div class="live-box">{{ (live_box_html or live_html) | safe }}</div>
-  </div>
-  {% endif %}
+  <p style="margin-top:.6rem"><strong>Hook:</strong> {% if industry %}Für {{ industry }}‑Anbieter im {{ size or 'Mittelstand' }} lohnt sich jetzt ein klarer, menschenzentrierter KI‑Fahrplan—praxisnah, compliant und ohne Zahlensalat.{% else %}Dieser Report setzt auf warmes, narratives Storytelling statt KPIs—praxisnah und DSGVO‑ & EU‑AI‑Act‑ready.{% endif %}</p>
 
-  <div class="section">
-    <h2>Quick Wins</h2>
-    <p>{{ quick_wins }}</p>
-  </div>
+  {{ live_box_html | safe }}
 
-  <div class="section">
-    <h2>Risiken</h2>
-    <p>{{ risks }}</p>
-  </div>
+  <h2>Executive Summary</h2>
+  {{ sections.executive_summary | safe }}
 
-  <div class="section">
-    <h2>Empfehlungen</h2>
-    <p>{{ recommendations }}</p>
-  </div>
+  <div class="page-break"></div>
+  <h2>Quick Wins</h2>
+  {{ sections.quick_wins | safe }}
 
-  <div class="section">
-    <h2>Roadmap</h2>
-    <p>{{ roadmap }}</p>
-  </div>
+  <div class="page-break"></div>
+  <h2>Risiken</h2>
+  {{ sections.risks | safe }}
 
-  <div class="section">
-    <h2>{{ vision_title }}</h2>
-    <p>{{ vision }}</p>
-  </div>
+  <div class="page-break"></div>
+  <h2>Empfehlungen</h2>
+  {{ sections.recommendations | safe }}
 
-  <div class="section">
-    <h2>{{ game_title }}</h2>
-    <p>{{ gamechanger }}</p>
-  </div>
+  <div class="page-break"></div>
+  <h2>Roadmap</h2>
+  {{ sections.roadmap | safe }}
 
-  <div class="section">
-    <h2>Compliance</h2>
-    <div class="card">{{ compliance_html | safe }}</div>
-  </div>
+  <div class="page-break"></div>
+  <h2>Vision</h2>
+  {{ sections.vision | safe }}
 
-  <div class="section">
-    <h2>Förderprogramme (Auswahl)</h2>
-    <div class="small">Stand: {{ stand_datum }}</div>
-    <div class="card">{{ funding_html | safe }}</div>
-    {% if funding_table_html %}
-      <div class="table-wrap">{{ funding_table_html | safe }}</div>
-    {% endif %}
-  </div>
+  <div class="page-break"></div>
+  <h2>Innovation & Gamechanger</h2>
+  {{ sections.gamechanger | safe }}
 
-  <div class="section">
-    <h2>KI‑Tools & Software</h2>
-    <div class="card">{{ tools_html | safe }}</div>
-    {% if tools_table_html %}
-      <div class="table-wrap">{{ tools_table_html | safe }}</div>
-    {% endif %}
-  </div>
+  <div class="page-break"></div>
+  <h2>Compliance</h2>
+  {{ sections.compliance | safe }}
 
-  <footer>
-    <div class="small">{{ footer_cta }}</div>
-    <div class="small">© {{ now().year }} KI‑Sicherheit.jetzt – DSGVO & EU‑AI‑Act‑Ready – Wolf Hohl</div>
-  </footer>
+  <div class="page-break"></div>
+  <h2>Förderprogramme (Auswahl)</h2>
+  {{ sections.foerderprogramme | safe }}
+
+  <div class="page-break"></div>
+  <h2>KI‑Tools & Software</h2>
+  {{ sections.tools | safe }}
+
+  <p class="meta" style="margin-top:1.5rem">© 2025 KI‑Sicherheit.jetzt – DSGVO & EU‑AI‑Act‑Ready – Wolf Hohl</p>
 </body>
 </html>
