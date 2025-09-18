@@ -22,21 +22,55 @@ OPENAI_API_KEY  = (os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_KEY") or "")
 OPENAI_ENDPOINT = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/") + "/chat/completions"
 
 # bevorzugte Modelle (werden im Code alias-bereinigt)
-MODEL_NAME        = os.getenv("GPT_MODEL_NAME", "gpt-4o-mini").strip()
-EXEC_SUMMARY_MODEL= os.getenv("EXEC_SUMMARY_MODEL", MODEL_NAME).strip()
-SUMMARY_MODEL_NAME= os.getenv("SUMMARY_MODEL_NAME", MODEL_NAME).strip()
+MODEL_NAME         = os.getenv("GPT_MODEL_NAME", "gpt-4o-mini").strip()
+EXEC_SUMMARY_MODEL = os.getenv("EXEC_SUMMARY_MODEL", MODEL_NAME).strip()
+SUMMARY_MODEL_NAME = os.getenv("SUMMARY_MODEL_NAME", MODEL_NAME).strip()
 
 TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", "0.3"))
 MAX_TOKENS  = int(os.getenv("GPT_MAX_TOKENS", "1400"))
-DEFAULT_LANG= (os.getenv("DEFAULT_LANG","de") or "de").lower()
+DEFAULT_LANG = (os.getenv("DEFAULT_LANG", "de") or "de").lower()
 
-# Web-Suche (Tavily-first Wrapper)
-from websearch_utils import search_links, live_query_for, render_live_box_html
+# ====== Websuche-Import MIT GUARD ============================================
+# Robust gegen ältere/beschädigte websearch_utils.py-Versionen.
+# Falls einzelne Funktionen fehlen, stellen wir Minimal-Fallbacks bereit,
+# damit das Modul IMMER importierbar bleibt (keine "Analysemodul nicht geladen"-PDFs).
+try:
+    from websearch_utils import search_links, live_query_for, render_live_box_html
+except Exception as e:
+    log.warning("websearch_utils import failed (%s) – using in-process fallbacks", e)
+    # search_links versuchen wir separat zu importieren; wenn auch das fehlschlägt → No-Op.
+    try:
+        from websearch_utils import search_links  # type: ignore
+    except Exception:
+        def search_links(query: str, **kwargs) -> List[Dict[str, Any]]:  # type: ignore
+            return []
 
+    def live_query_for(industry: str, size: str, product: str, lang: str = "de") -> str:  # type: ignore
+        ind = (industry or "").strip()
+        siz = (size or "").strip()
+        prod = (product or "").strip()
+        if (lang or "de").lower().startswith("de"):
+            # site:de hält Treffer nahe D/A/CH
+            return f'{ind} {prod} Mittelstand {siz} (Förderung KI OR Zuschuss KI OR Programm KI OR Tool KI OR Software KI) site:de'
+        return f'{ind} {prod} SME {siz} (AI grant OR subsidy OR program OR funding OR AI tool OR software)'
+
+    def render_live_box_html(items: List[Dict[str, Any]], lang: str = "de") -> str:  # type: ignore
+        # Minimaler Platzhalter (kein Layout), falls echte Funktion nicht verfügbar ist.
+        if not items:
+            return ""
+        month = dt.datetime.now().strftime("%B %Y")
+        title = f"Neu seit {month}" if (lang or "de").lower().startswith("de") else f"New since {month}"
+        lis = "".join(
+            f'<li><a href="{it.get("url","")}" target="_blank" rel="noopener">{it.get("title") or it.get("domain") or it.get("url")}</a></li>'
+            for it in items
+        )
+        return f'<div class="live-box"><strong>{title}</strong><ul>{lis}</ul></div>'
+
+# ====== Monatsbeschriftung & kleine Helfer ===================================
 MONTHS_DE = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"]
 MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
-def _month_year(lang: str="de") -> str:
+def _month_year(lang: str = "de") -> str:
     now = dt.date.today()
     if (lang or "de").lower().startswith("de"):
         return f"{MONTHS_DE[now.month-1]} {now.year}"
@@ -59,7 +93,7 @@ def _lang(body: Dict[str, Any], explicit: Optional[str]) -> str:
     return "de" if v.startswith("de") else "en"
 
 # ====== Prompt-Loader =========================================================
-_PROMPT_CACHE: Dict[Tuple[str,str], str] = {}
+_PROMPT_CACHE: Dict[Tuple[str, str], str] = {}
 
 def _pfile(lang: str, name: str) -> Path:
     # bevorzugt: prompts/<lang>/<name>.md
@@ -67,9 +101,10 @@ def _pfile(lang: str, name: str) -> Path:
 
 def _pfile_fallbacks(lang: str, name: str) -> List[Path]:
     # Fallbacks (selten benötigt): <name>_<lang>.md, <name>.md
-    cands = [PROMPTS_DIR.joinpath(f"{name}_{lang}.md"),
-             PROMPTS_DIR.joinpath(f"{name}.md")]
-    return cands
+    return [
+        PROMPTS_DIR.joinpath(f"{name}_{lang}.md"),
+        PROMPTS_DIR.joinpath(f"{name}.md"),
+    ]
 
 def load_prompt(name: str, lang: str, default: str = "") -> str:
     key = (lang, name)
@@ -97,6 +132,7 @@ def load_prompt(name: str, lang: str, default: str = "") -> str:
         log.warning("[PROMPT] %s not found – using default", name)
     _PROMPT_CACHE[key] = default
     return default
+
 # === Teil 2/6 ===
 
 def _extract_briefing(body: Dict[str, Any]) -> Dict[str,str]:
