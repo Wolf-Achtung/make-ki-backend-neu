@@ -1,0 +1,11 @@
+name,region,what,target,amount,info_url,industry,company_size,last_checked
+go-digital (BMWK),Deutschland,Beratung & Umsetzung KMU,KMU bis 100 MA,"bis 50% Förderung",https://www.bmwi-go-digital.de,*,*,2025-09-17
+go-inno (BMWK),Deutschland,Innovationsgutscheine,KMU,"bis 50% Beratung",https://www.innovation-beratung-foerderung.de,*,*,2025-09-17
+DIGITAL.JETZT,Deutschland,Investitionen & Qualifizierung,KMU,"bis 70% abhängig Region",https://www.bmwi.de,*,*,2025-09-17
+Mittelstand-Digital,Deutschland,Wissens- & Transferangebote,KMU,Kostenfrei,https://www.mittelstand-digital.de,*,*,2025-09-17
+INVEST BW,Baden-Württemberg,FuE & KI‑Projekte,Unternehmen in BW,"je nach Projekt",https://www.invest-bw.de,*,*,2025-09-17
+PROFIT,Brandenburg,FuE/KMU/Startups,Unternehmen in BB,"variabel",https://www.ilb.de,*,*,2025-09-17
+EFRE NRW,NRW,Digitale Transformation,NRW KMU,"variabel",https://www.efre.nrw,*,*,2025-09-17
+Horizon Europe,EU,FuE‑Verbundprojekte,Unternehmen/Hochschulen EU,"variabel",https://research-and-innovation.ec.europa.eu,*,*,2025-09-17
+EIC Accelerator,EU,Skalierung DeepTech,Startups/SME,"bis 2,5 Mio. + Equity",https://eic.ec.europa.eu,*,*,2025-09-17
+Innovationskredit (KfW),Deutschland,Invest & Betrieb,KMU,"zinsgünstig",https://www.kfw.de,*,*,2025-09-17

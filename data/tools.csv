@@ -1,13 +1,13 @@
-name,kategorie,eignung,hosting,preis,link,Branche-Slugs,Unternehmensgröße
-Rasa,Conversational AI,"Service/Helpdesk, interne Assistenten",on‑prem / EU‑Cloud,kostengünstig (Open Source + Enterprise),https://rasa.com,"beratung,handel,verwaltung,gesundheit,finanzen",alle
-Aleph Alpha,GenAI / RAG,"Dokumentanalyse, Ideation, souveräne LLMs",EU‑Cloud / on‑prem,premium,https://www.aleph-alpha.com,"beratung,industrie,gesundheit,finanzen,verwaltung","team,kmu"
-DeepL,Übersetzen/Schreiben,"Marketing, Legal, Support – hochwertige Texte",EU‑Rechenzentren,moderat (Abo),https://www.deepl.com,"beratung,handel,medien,verwaltung,bildung",alle
-Nextcloud Assistant,Produktivität,"Mail‑/Notiz‑Entwürfe, Zusammenfassungen in eigener Cloud",on‑prem / EU‑Cloud,günstig (Add‑on),https://nextcloud.com/ai,"beratung,verwaltung,gesundheit,bildung","team,kmu"
-OpenProject (AI),Projektmanagement,"Projekt‑Doku, Aufgaben‑Entwürfe, Reports",EU‑Cloud / on‑prem,moderat,https://www.openproject.org,"industrie,beratung,bau,verwaltung","team,kmu"
-EspoCRM (+AI),CRM,"Vertrieb, Service, E‑Mail‑Zusammenfassung",self‑host / EU‑Cloud,günstig,https://www.espocrm.com,"handel,beratung,industrie",alle
-Mattermost,Collaboration,Team‑Chat mit Bot‑Integrationen,self‑host / EU‑Cloud,günstig bis moderat,https://mattermost.com,"beratung,verwaltung,industrie",alle
-Haystack (deepset),RAG‑Framework,Suche/RAG auf eigenen Dokumenten,on‑prem / EU‑Cloud,Open Source,https://haystack.deepset.ai,"beratung,industrie,gesundheit,finanzen,verwaltung","team,kmu"
-Langfuse,LLM‑Observability,"Prompt‑Versionierung, Telemetrie, Auswertung",self‑host / EU‑Cloud,Open Source (Core) + SaaS,https://langfuse.com,"it,beratung","team,kmu"
-Qdrant,Vektor‑Datenbank,Ähnlichkeitssuche/RAG‑Index,on‑prem / EU‑Cloud,Open Source + SaaS,https://qdrant.tech,"it,beratung,industrie","team,kmu"
-OpenWebUI,Lokale LLM‑UI,"Lokale Experimente, Datenschutz‑sensitiv",on‑prem,Open Source,https://github.com/open-webui/open-webui,"it,beratung,verwaltung,gesundheit","solo,team"
-DeepEval,LLM‑Evaluation,Qualitätsmetriken für LLM‑Ausgaben,on‑prem / EU‑Cloud,Open Source,https://github.com/confident-ai/deepeval,"it,beratung,industrie","team,kmu"
+name,industry,target,use_case,cost_tier,one_liner,homepage_url,region,company_size,last_checked
+ChatGPT Enterprise,*,Wissensarbeit,Assistent & Recherche,€€€,"Sichere Unternehmens‑Assistenz mit Admin‑Kontrollen",https://openai.com/enterprise,*,*,2025-09-17
+Microsoft Copilot,*,Wissensarbeit,Office‑Automatisierung,€€,"KI in M365 integriert (Mail, Doku, Präsentation)",https://copilot.microsoft.com,*,*,2025-09-17
+Claude for Teams,*,Wissensarbeit,Schreiben & Auswerten,€€,"Starke Langtexte, sensible Daten per Team‑Kontrollen",https://www.anthropic.com,*,*,2025-09-17
+Perplexity Enterprise,*,Wissensarbeit,Antworten mit Quellen,€€,"Schnelle Antworten mit Zitaten",https://www.perplexity.ai,*,*,2025-09-17
+Mistral Codestral,*,Tech,Code‑Assistenz,€,"Leichte Code‑Hilfen on‑prem/self‑host",https://mistral.ai,*,*,2025-09-17
+Elastic Search+RAG,*,Wissensarbeit,RAG‑Suche,€€,"Eigene Wissensbasis mit Abruf‑Generierung",https://www.elastic.co,*,*,2025-09-17
+LangChain Server,*,Tech,Orchestrierung,€,"Pipelines & Evaluierung",https://www.langchain.com,*,*,2025-09-17
+Pinecone,*,Tech,Vektor‑DB,€€,"Embeddings & Ähnlichkeitssuche",https://www.pinecone.io,*,*,2025-09-17
+Weaviate,*,Tech,Vektor‑DB,€,"Open‑Source Vektor‑DB",https://weaviate.io,*,*,2025-09-17
+ElevenLabs,*,Marketing,Sprachsynthese,€€,"Hochwertige Stimmen für Audio/Video",https://elevenlabs.io,*,*,2025-09-17
+Stability SDXL,*,Kreativ,Bildgenerierung,€,"Bildideen & Visuals",https://stability.ai,*,*,2025-09-17
+Notion AI,*,KMU,Doku‑Assistent,€,"Notes, Wiki & Aufgaben mit KI",https://www.notion.so,*,*,2025-09-17
