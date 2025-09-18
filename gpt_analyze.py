@@ -1,494 +1,431 @@
-# gpt_analyze.py — Block 1/5
-"""
-KI-Statusbericht (Gold-Standard) – Prompt-first + Live-Layer
-- lädt Prompts aus ./prompts/de|en
-- ruft OpenAI-LLM an (Prompts-first) und erzeugt narrative Abschnitte
-- ergänzt Live-Kasten "Neu seit {Monat}" (Tavily/SerpAPI) gefiltert auf
-  Branche × Unternehmensgröße × Hauptleistung × Standort
-- optional: CSV-Seeds aus ./data/tools.csv und ./data/foerderprogramme.csv
-- liefert ein Kontext-Dict für die Jinja-Templates (pdf_template*.html)
-"""
-
+# gpt_analyze.py  —  Gold-Standard (2025-09-18)
+# Lädt Prompts aus ./prompts/<lang>/..., generiert narrative Abschnitte,
+# baut Live-Kasten via Tavily (Fallback: SerpAPI), liefert Kontext für Jinja.
 from __future__ import annotations
-import os, re, json, csv, time, logging, datetime as dt
-from typing import Any, Dict, List, Optional, Tuple
+import os, json, time, logging, hashlib, httpx, datetime as dt
+from typing import Dict, Any, List, Optional, Tuple
+from pathlib import Path
 
+# --- Logging ------------------------------------------------------------------
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=LOG_LEVEL, format="%(levelname)s %(asctime)s [analyze] %(message)s")
 log = logging.getLogger("analyze")
 
-# --- Pfade/Dateien ---
-ROOT = os.getcwd()
-PROMPT_DIR = os.getenv("PROMPT_DIR", os.path.join(ROOT, "prompts"))
-DATA_DIR   = os.path.join(ROOT, "data")
-TOOLS_CSV  = os.path.join(DATA_DIR, "tools.csv")
-FUNDING_CSV= os.path.join(DATA_DIR, "foerderprogramme.csv")
+# --- ENV ----------------------------------------------------------------------
+OPENAI_API_KEY       = os.getenv("OPENAI_API_KEY", "").strip()
+MODEL_NAME           = os.getenv("GPT_MODEL_NAME", "gpt-4.1").strip()
+EXEC_SUMMARY_MODEL   = os.getenv("EXEC_SUMMARY_MODEL", MODEL_NAME).strip()
+SUMMARY_MODEL_NAME   = os.getenv("SUMMARY_MODEL_NAME", MODEL_NAME).strip()
+TEMPERATURE          = float(os.getenv("GPT_TEMPERATURE", "0"))
+MAX_TOKENS           = int(os.getenv("GPT_MAX_TOKENS", "1100"))
 
-# --- OpenAI (LLM) ---
-OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_KEY")
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-MODEL_NAME      = (os.getenv("SUMMARY_MODEL_NAME")
-                   or os.getenv("GPT_MODEL_NAME")
-                   or os.getenv("EXEC_SUMMARY_MODEL")
-                   or "gpt-4o-mini")
-TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", "0.6"))
-MAX_TOKENS  = int(os.getenv("GPT_MAX_TOKENS", "1600"))
+PROMPTS_DIR          = Path(os.getenv("PROMPTS_DIR", "prompts"))
+DEFAULT_LANG         = os.getenv("DEFAULT_LANG", "de").lower()
+COMBINE_MODE         = os.getenv("GPT_COMBINE_MODE", "single").strip()  # "single" | "multi"
+TAVILY_FIRST         = True  # explizit Tavily-first
 
-# --- Live-Layer (via websearch_utils) ---
-try:
-    import websearch_utils as ws
-except Exception:
-    ws = None
-    log.warning("websearch_utils not importable – Live-Kasten wird ggf. leer.")
+# Suche (für Live-Kasten)
+from websearch_utils import search_links, live_query_for, render_live_box_html
 
-# --- Monatsnamen für Stand/Hook ---
-MONTHS_DE = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"]
-MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+# --- OpenAI: schlanke Wrapper + Fallbackkette --------------------------------
+_OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions"
+_FALLBACK_MODELS = [m for m in [
+    MODEL_NAME,
+    EXEC_SUMMARY_MODEL,
+    SUMMARY_MODEL_NAME,
+    "gpt-4.1",
+    "gpt-4o-mini",
+] if m]
 
-def _month_year(lang: str = "de") -> str:
-    today = dt.date.today()
-    if (lang or "de").lower().startswith("de"):
-        return f"{MONTHS_DE[today.month-1]} {today.year}"
-    return f"{MONTHS_EN[today.month-1]} {today.year}"
+def _headers():
+    return {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
 
-# ----------------- kleine Utils -----------------
-def _norm(s: Optional[str]) -> str:
-    return (s or "").strip()
-
-def _lower(s: Optional[str]) -> str:
-    return (s or "").strip().lower()
-
-def _get_nested(body: Dict[str, Any], *keys: str, default: str = "") -> str:
-    """
-    Robust: sucht im body und in body['answers']/body['form'] (versch. Key-Varianten).
-    """
-    for k in keys:
-        v = body.get(k)
-        if isinstance(v, str) and _norm(v):
-            return _norm(v)
-    for container_key in ("answers","form","payload","data"):
-        cont = body.get(container_key)
-        if isinstance(cont, dict):
-            for k in keys:
-                for var in (k, k.lower(), k.upper(), k.capitalize()):
-                    v = cont.get(var)
-                    if isinstance(v, str) and _norm(v):
-                        return _norm(v)
-    return default
-
-def _read_csv(path: str) -> List[Dict[str,str]]:
-    out: List[Dict[str,str]] = []
-    try:
-        if os.path.exists(path):
-            with open(path, newline="", encoding="utf-8") as f:
-                r = csv.DictReader(f)
-                for row in r:
-                    out.append({k:(v or "").strip() for k,v in row.items()})
-    except Exception as e:
-        log.warning("CSV read failed %s: %s", path, e)
-    return out
-
-def _filter_by_context(items: List[Dict[str,str]], industry: str, size: str, location: str) -> List[Dict[str,str]]:
-    if not items: return []
-    i, s, l = _lower(industry), _lower(size), _lower(location)
-    out = []
-    for it in items:
-        ind = _lower(it.get("industry") or it.get("branch") or "*")
-        siz = _lower(it.get("company_size") or "*")
-        reg = _lower(it.get("region") or "*")
-        ok = True
-        if ind != "*" and ind not in i: ok = False
-        if ok and siz != "*" and siz not in s: ok = False
-        if ok and reg != "*" and reg not in l: ok = False
-        if ok: out.append(it)
-    return out
-
-def _html_table(rows: List[Dict[str,str]], cols: List[Tuple[str,str]]) -> str:
-    if not rows: return ""
-    th = "".join(f"<th>{title}</th>" for _, title in cols)
-    trs = []
-    for r in rows:
-        tds = []
-        for key, _title in cols:
-            val = (r.get(key) or "").strip()
-            if key.endswith("_url") and val:
-                val = f'<a href="{val}" target="_blank" rel="noopener">{val}</a>'
-            tds.append(f"<td>{val}</td>")
-        trs.append("<tr>" + "".join(tds) + "</tr>")
-    return f"""
-    <div class="table-wrap">
-      <table class="compact">
-        <thead><tr>{th}</tr></thead>
-        <tbody>{''.join(trs)}</tbody>
-      </table>
-    </div>
-    """
-# gpt_analyze.py — Block 2/5
-# ----------------- Prompt-Loader -----------------
-PROMPT_CACHE: Dict[Tuple[str,str], str] = {}
-
-def _prompt_path_candidates(name: str, lang: str) -> List[str]:
-    """
-    Bevorzugt Deine Struktur:
-      prompts/{lang}/{name}.md
-      prompts/{lang}/{name}.txt
-    Fallbacks:
-      prompts/{name}_{lang}.md|.txt
-      prompts/{name}.md|.txt
-    """
-    lang = (lang or "de").lower()
-    cands = [
-        os.path.join(PROMPT_DIR, lang, f"{name}.md"),
-        os.path.join(PROMPT_DIR, lang, f"{name}.txt"),
-        os.path.join(PROMPT_DIR, f"{name}_{lang}.md"),
-        os.path.join(PROMPT_DIR, f"{name}_{lang}.txt"),
-        os.path.join(PROMPT_DIR, f"{name}.md"),
-        os.path.join(PROMPT_DIR, f"{name}.txt"),
-    ]
-    return cands
-
-def load_prompt(name: str, lang: str, default: str = "") -> str:
-    key = (name, lang)
-    if key in PROMPT_CACHE:
-        return PROMPT_CACHE[key]
-    for p in _prompt_path_candidates(name, lang):
-        try:
-            if os.path.exists(p):
-                with open(p, "r", encoding="utf-8") as f:
-                    txt = f.read().strip()
-                log.info("[PROMPT] %s <- %s", name, p)
-                PROMPT_CACHE[key] = txt
-                return txt
-        except Exception as e:
-            log.warning("[PROMPT] read failed %s: %s", p, e)
-    if default:
-        log.warning("[PROMPT] %s not found – using default", name)
-    PROMPT_CACHE[key] = default
-    return default
-
-# ----------------- OpenAI Chat Helper -----------------
-def _call_openai(messages: List[Dict[str, str]],
-                 model: str = MODEL_NAME,
-                 temperature: float = TEMPERATURE,
-                 max_tokens: int = MAX_TOKENS) -> str:
+def _call_openai(messages: List[Dict[str, Any]], model: str = MODEL_NAME,
+                 temperature: float = TEMPERATURE, max_tokens: int = MAX_TOKENS) -> str:
     if not OPENAI_API_KEY:
-        raise RuntimeError("OPENAI_API_KEY missing")
-    import httpx  # lokale Abhängigkeit vorhanden
-    headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
-    payload = {"model": model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
-    t0 = time.time()
-    r = httpx.post(f"{OPENAI_BASE_URL}/chat/completions", headers=headers, json=payload, timeout=120)
-    r.raise_for_status()
-    js = r.json()
-    txt = (js.get("choices") or [{}])[0].get("message", {}).get("content", "") or ""
-    log.info("[LLM] model=%s, %.2fs", model, time.time()-t0)
-    return txt.strip()
+        raise RuntimeError("OPENAI_API_KEY not configured")
 
-def _json_from_text(raw: str) -> Dict[str, Any]:
-    # tolerant JSON"‑Picker": versucht den äußersten {...}-Block zu extrahieren
-    if not raw:
-        return {}
-    s, e = raw.find("{"), raw.rfind("}")
-    if s >= 0 and e > s:
-        chunk = raw[s:e+1]
-        try:
-            return json.loads(chunk)
-        except Exception:
-            pass
-    # als Fallback: naive Heuristik → simple Felder herausholen
-    return {}
-
-# ----------------- Live-Layer (Tavily/SerpAPI via websearch_utils) -----------------
-def _query_for(topic: str, lang: str, industry: str, size: str, main_offer: str, location: str) -> str:
-    """
-    Baut suchmaschinen‑taugliche Queries (Branche × Größe × Hauptleistung × Standort)
-    topic: 'funding' | 'tools'
-    """
-    L = (lang or "de").lower()
-    loc_en = {"deutschland":"germany","österreich":"austria","schweiz":"switzerland"}
-    loc_key = location.lower()
-    country = loc_en.get(loc_key, location)
-
-    if topic == "funding":
-        return (f"{industry} {main_offer} {size} "
-                f"{'Förderung Zuschuss Programm' if L.startswith('de') else 'AI funding grant program'} "
-                f"{country} 2025")
-    # tools
-    return (f"{industry} {main_offer} {size} "
-            f"{'KI Werkzeuge Praxis' if L.startswith('de') else 'AI tools best practice'} "
-            f"{country} 2025")
-
-def _live_box(items: List[Dict[str,str]], lang: str) -> str:
-    if not items:
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    to = httpx.Timeout(connect=20.0, read=60.0, write=30.0, pool=60.0)
+    with httpx.Client(http2=True, timeout=to) as c:
+        r = c.post(_OPENAI_ENDPOINT, headers=_headers(), json=payload)
+        if r.status_code == 400:
+            # häufig: Modellname ungültig → Fallback
+            raise httpx.HTTPStatusError("400", request=r.request, response=r)
+        r.raise_for_status()
+        data = r.json()
+    try:
+        return data["choices"][0]["message"]["content"].strip()
+    except Exception:
         return ""
-    month = _month_year(lang)
-    title = f"Neu seit {month}" if (lang or "de").lower().startswith("de") else f"New since {month}"
-    lis = []
-    for it in items[:5]:
-        t = (it.get("title") or "").strip()
-        u = (it.get("url") or "").strip()
-        s = (it.get("snippet") or "").strip()
-        if not (t and u):
+
+def _compose_and_call_llm(system_prompt: str, user_prompt: str,
+                          prefer_model: Optional[str] = None,
+                          temperature: float = TEMPERATURE,
+                          max_tokens: int = MAX_TOKENS) -> str:
+    messages = [
+        {"role": "system", "content": system_prompt.strip()},
+        {"role": "user", "content": user_prompt.strip()},
+    ]
+    models = [prefer_model] + _FALLBACK_MODELS if prefer_model else list(_FALLBACK_MODELS)
+    seen = set()
+    for m in models:
+        if not m or m in seen:
             continue
-        lis.append(f'<div class="live-item"><div class="live-meta"></div><a href="{u}" target="_blank" rel="noopener"><strong>{t}</strong></a><div>{s}</div></div>')
-    return f'<section class="live-box"><div class="live-title">{title}</div>{"".join(lis)}</section>'
+        seen.add(m)
+        try:
+            return _call_openai(messages, model=m, temperature=temperature, max_tokens=max_tokens)
+        except httpx.HTTPStatusError as e:
+            log.info("LLM %s failed: %s", m, e)
+            continue
+        except Exception as e:
+            log.warning("LLM %s unexpected: %s", m, e)
+            continue
+    # letzter Fallback: kurzer Platzhalter
+    return ""
 
-def _search_links(query: str, n: int = 5) -> List[Dict[str,str]]:
-    if ws is None:
-        return []
+# --- Prompt-Loader ------------------------------------------------------------
+def _pfile(lang: str, name: str) -> Path:
+    return PROMPTS_DIR / lang / f"{name}.md"
+
+def _read_prompt(lang: str, name: str) -> str:
+    fp = _pfile(lang, name)
     try:
-        return ws.search_links(query=query, num_results=n)
-    except Exception as e:
-        log.warning("search_links failed: %s", e)
-        return []
-# gpt_analyze.py — Block 3/5
-# ----------------- Narrative Defaults (Fallback, niemals leer) -----------------
-def _fallback_paragraphs(lang: str) -> Dict[str, str]:
-    if (lang or "de").lower().startswith("de"):
-        return {
-            "exec": ("Unternehmen erzielen schnelle, sichtbare Erfolge, wenn sichere Datenbasen, "
-                     "vertrauenswürdige Automatisierung und fokussierte Pilotfälle zusammenspielen. "
-                     "Die folgenden Seiten übersetzen das in eine machbare Abfolge."),
-            "risks": ("Vermeiden Sie Tool‑Wildwuchs und Schatten‑Automatisierung. Einwilligung, Herkunft "
-                      "und Nachvollziehbarkeit müssen sichtbar bleiben – besonders bei externen Daten."),
-            "recs": ("Benennen Sie eine verantwortliche Person, definieren Sie zulässige Nutzung und "
-                     "Rollout‑Meilensteine, und stellen Sie eine sichere interne Spielwiese bereit."),
-            "road": ("90 Tage: Datenhygiene & ein geführter Pilot • 180 Tage: 2–3 Piloten skalieren, Governance live • "
-                     "12 Monate: Plattform‑Entscheidungen, Integration, Training auf Breite."),
-            "vision": ("Eine Praxis, in der Assistenten die repetitiven 20 % übernehmen, Teams sich auf Empathie und "
-                       "Handwerk konzentrieren – und Kund:innen den Unterschied sofort spüren."),
-            "game": ("Wissensgestützte Assistenten (RAG) mit eigenem Wissen, geschlossene Feedback‑Schleifen und "
-                     "Echtzeitsignale steuern die Prioritäten."),
-            "compliance": ("<p><strong>Compliance zuerst.</strong> Alle Empfehlungen orientieren sich an DSGVO, "
-                           "ePrivacy‑Richtlinie, Digital Services Act und EU‑AI‑Act. Datenminimierung, Zweckbindung, "
-                           "Transparenz und menschliche Aufsicht sind gesetzt.</p>")
-        }
+        text = fp.read_text("utf-8")
+        log.info("[PROMPT] %s <- %s", name, fp)
+        return text
+    except Exception:
+        log.warning("[PROMPT] missing: %s", fp)
+        return ""
+
+def _lang(body: Dict[str, Any], lang: Optional[str]) -> str:
+    if lang:
+        return "de" if lang.lower().startswith("de") else "en"
+    v = (body.get("lang") or DEFAULT_LANG or "de").lower()
+    return "de" if v.startswith("de") else "en"
+
+# --- Briefing-Parsing ---------------------------------------------------------
+def _first_nonempty(*vals) -> str:
+    for v in vals:
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    return ""
+
+def _extract_briefing(body: Dict[str, Any]) -> Dict[str, str]:
+    # tolerante Feldnamen, wie in deinen Fragebögen
+    industry = _first_nonempty(body.get("branche"), body.get("industry"), body.get("sector"))
+    size     = _first_nonempty(body.get("groesse"), body.get("company_size"), body.get("size"))
+    product  = _first_nonempty(body.get("hauptleistung"), body.get("hauptprodukt"),
+                               body.get("main_product"), body.get("main_service"))
+    country  = _first_nonempty(body.get("land"), body.get("country"))
+    region   = _first_nonempty(body.get("bundesland"), body.get("region"), body.get("state"))
+
+    return {
+        "industry": industry or "Beratung",
+        "size": size or "KMU",
+        "product": product or "Dienstleistung",
+        "country": country or "Deutschland",
+        "region": region or "",
+    }
+
+# --- kleine Utils -------------------------------------------------------------
+def _month_year_label() -> str:
+    return dt.datetime.now().strftime("%B %Y")
+
+def _mk_hook(industry: str, lang: str) -> str:
+    if lang == "de":
+        return f"{industry}: Wo KI heute pragmatisch Nutzen stiftet – und wo Vorsicht geboten ist."
+    return f"{industry}: Where AI creates practical value today—and where caution pays off."
+
+def _mk_system_prompt(lang: str) -> str:
+    if lang == "de":
+        return (
+            "Du bist Redakteur:in für warmherzige, verständliche KI-Statusberichte. "
+            "Schreibe stets in Absätzen, ohne Listenpunkte oder Prozentzahlen. "
+            "Nenne qualitative Formulierungen (z. B. ‚deutlich über Branchenniveau‘). "
+            "Beziehe DSGVO, ePrivacy, DSA und EU‑AI‑Act ein. Ton: freundlich, professionell, optimistisch."
+        )
     else:
-        return {
-            "exec": ("You get fast, visible wins when secure data foundations, trustworthy automation and focused pilots "
-                     "work together. The next pages turn this into a practical sequence."),
-            "risks": ("Avoid tool sprawl and shadow automation. Keep consent, provenance and auditability visible—"
-                      "especially when external data enters client‑facing outputs."),
-            "recs": ("Name one responsible owner, define acceptable use and rollout gates, and provide a safe internal sandbox."),
-            "road": ("90 days: data hygiene & one guided pilot • 180 days: scale 2–3 pilots, governance live • "
-                     "12 months: platform choices, integration, training at scale."),
-            "vision": ("A practice where assistants handle the repetitive 20%, teams focus on empathy and craft—"
-                       "and clients feel the difference from day one."),
-            "game": ("Retrieval‑augmented assistants connected to your knowledge, closed feedback loops and "
-                     "real‑time signals guide prioritisation."),
-            "compliance": ("<p><strong>Compliance first.</strong> We align with GDPR, ePrivacy Directive, the DSA and the EU AI Act. "
-                           "Data minimisation, purpose limitation, transparency and human oversight are non‑negotiable.</p>")
-        }
+        return (
+            "You are an editor for warm, human AI status reports. "
+            "Write in paragraphs (no bullets, no numeric KPIs). "
+            "Use qualitative wording. Always reference GDPR, ePrivacy, DSA and the EU AI Act. "
+            "Tone: friendly, professional, optimistic."
+        )
+# === PART 2/5 ===
 
-def _hook(industry: str, lang: str) -> str:
-    if (lang or "de").lower().startswith("de"):
-        return f"Kontext: {industry} – maßgeschneiderte Hinweise auf einen Blick."
-    return f"Context: {industry} – tailored insights at a glance."
-
-def _titles(lang: str) -> Tuple[str, str, str]:
-    if (lang or "de").lower().startswith("de"):
-        return "KI‑Statusbericht", "Strategische Vision", "Innovation & Gamechanger"
-    return "AI Readiness Report", "Strategic Vision", "Innovation & Gamechanger"
-
-def _cta(lang: str) -> str:
-    return "Ihre Meinung zählt: Feedback geben (kurz)" if (lang or "de").lower().startswith("de") else "Your opinion matters: Give feedback (short)"
-
-# --------------- Tools/Funding: Narrative + optional Tabelle + Live ---------------
-def _narrative_from_csv_tools(tools: List[Dict[str,str]], lang: str) -> str:
-    if not tools: return ""
-    parts = []
-    for t in tools[:6]:
-        name = t.get("name","").strip()
-        use  = t.get("use_case","").strip()
-        who  = t.get("target","").strip()
-        cost = t.get("cost_tier","").strip()
-        one  = t.get("one_liner","").strip()
-        sent = (f"<p><strong>{name}</strong> – {one or use}. "
-                f"{'Geeignet für' if lang.startswith('de') else 'Suitable for'} {who}. "
-                f"{'Kosten' if lang.startswith('de') else 'Cost'}: {cost}.</p>")
-        parts.append(sent)
-    return "\n".join(parts)
-
-def _narrative_from_csv_funding(funds: List[Dict[str,str]], lang: str) -> str:
-    if not funds: return ""
-    parts = []
-    for f in funds[:6]:
-        name = f.get("name","").strip()
-        what = f.get("what","").strip()
-        who  = f.get("target","").strip()
-        reg  = f.get("region","").strip()
-        amt  = f.get("amount","").strip()
-        url  = f.get("info_url","").strip()
-        s = (f"<p><strong>{name}</strong> – {what}. "
-             f"{'Zielgruppe' if lang.startswith('de') else 'Target'}: {who}. "
-             f"{'Region' if lang.startswith('de') else 'Region'}: {reg}. "
-             f"{'Förderhöhe' if lang.startswith('de') else 'Amount'}: {amt}. ")
-        if url: s += f'<a href="{url}" target="_blank" rel="noopener">Details</a>.'
-        s += "</p>"
-        parts.append(s)
-    return "\n".join(parts)
-
-def _tables_from_seeds(industry: str, size: str, location: str, lang: str) -> Tuple[str, str]:
-    tools = _filter_by_context(_read_csv(TOOLS_CSV), industry, size, location)
-    funds = _filter_by_context(_read_csv(FUNDING_CSV), industry, size, location)
-
-    table_tools = _html_table(tools[:10], [
-        ("name","Tool"), ("use_case","Anwendung" if lang.startswith("de") else "Use case"),
-        ("target","Zielgruppe" if lang.startswith("de") else "Target"),
-        ("cost_tier","Kosten" if lang.startswith("de") else "Cost"), ("homepage_url","URL"),
-    ])
-    table_funds = _html_table(funds[:10], [
-        ("name","Programm"), ("what","Förderinhalt" if lang.startswith("de") else "Scope"),
-        ("target","Zielgruppe" if lang.startswith("de") else "Target"),
-        ("amount","Förderhöhe" if lang.startswith("de") else "Amount"), ("info_url","Info"),
-    ])
-    return table_tools, table_funds
-# gpt_analyze.py — Block 4/5
-# ----------------- LLM-Orchestrierung (Prompts-first) -----------------
-def _compose_and_call_llm(lang: str,
-                          industry: str, size: str, main_offer: str, location: str) -> Dict[str, Any]:
+# --- Abschnitt-Generatoren ----------------------------------------------------
+def _section_from_prompt(section: str, briefing: Dict[str, str], lang: str,
+                         extra_inputs: Optional[Dict[str, Any]] = None,
+                         prefer_model: Optional[str] = None,
+                         temperature: float = TEMPERATURE,
+                         max_tokens: int = MAX_TOKENS) -> str:
     """
-    Verknüpft Deine Prompts: prompt_prefix + (kapitelspezifisch) + prompt_additions + prompt_suffix
-    und verlangt JSON: executive_summary, quick_wins, risks, recommendations, roadmap,
-    vision, gamechanger, compliance, tools_html, funding_html
+    Liest z. B. 'executive_summary.md' und erzeugt narrativen Abschnitt.
     """
-    L = (lang or "de").lower()
-    # Pflichtprompts (Kapitel)
-    P = lambda n: load_prompt(n, L, "")
-    prefix = P("prompt_prefix")
-    suffix = P("prompt_suffix")
-    add    = P("prompt_additions_de" if L.startswith("de") else "prompt_additions_en")
+    sys = _mk_system_prompt(lang)
+    prefix = _read_prompt(lang, "prompt_prefix")
+    suffix = _read_prompt(lang, "prompt_suffix")
+    additions = _read_prompt(lang, f"prompt_additions_{'de' if lang=='de' else 'en'}")
 
-    # Kapitelprompts (genau Deine Dateien)
-    p_exec  = P("executive_summary")
-    p_qw    = P("quick_wins")
-    p_risks = P("risks")
-    p_recs  = P("recommendations")
-    p_road  = P("roadmap")
-    p_vision= P("vision")
-    p_game  = P("gamechanger")
-    p_comp  = P("compliance")
-    p_tools = P("tools")
-    # in beiden Sprachordnern heißt es 'foerderprogramme.md'
-    p_fund  = P("foerderprogramme") or P("funding")
-
-    # Kontextblock für das Modell
-    brief = (
-        f"Branche/Industry: {industry}\n"
-        f"Unternehmensgröße/Company size: {size}\n"
-        f"Hauptleistung/Hauptprodukt/Main offer: {main_offer}\n"
-        f"Standort/Location: {location}\n"
-        f"Schreibe warm, empathisch, ohne Listen und ohne Zahlenwerte. "
-        f"Beziehe DSGVO, ePrivacy, DSA und EU‑AI‑Act narrativ ein."
+    core = _read_prompt(lang, section)
+    bi = briefing
+    extras = extra_inputs or {}
+    user = (
+        f"{prefix}\n\n"
+        f"{core}\n\n"
+        f"Briefing:\n"
+        f"- Branche/Industry: {bi['industry']}\n"
+        f"- Unternehmensgröße/Size: {bi['size']}\n"
+        f"- Hauptleistung/Produkt: {bi['product']}\n"
+        f"- Standort/Country-Region: {bi['country']} {bi['region']}\n"
     )
+    if extras:
+        user += "\nKontext:\n" + json.dumps(extras, ensure_ascii=False)
+    user += f"\n\n{additions}\n\n{suffix}"
 
-    sys_msg = ("Du bist eine professionelle Texter:in für KI-Statusberichte. "
-               "Du lieferst klare, warme Absätze ohne Aufzählungen und ohne Zahlen.")
+    out = _compose_and_call_llm(sys, user, prefer_model=prefer_model, temperature=temperature, max_tokens=max_tokens)
+    return out or ""
 
-    messages = [{"role":"system","content": (prefix + "\n\n" + sys_msg if prefix else sys_msg)},
-                {"role":"user","content": p_exec + "\n\n" + brief + ("\n\n" + add if add else "")},
-                {"role":"user","content": p_qw},
-                {"role":"user","content": p_risks},
-                {"role":"user","content": p_recs},
-                {"role":"user","content": p_road},
-                {"role":"user","content": p_vision},
-                {"role":"user","content": p_game},
-                {"role":"user","content": p_comp},
-                {"role":"user","content": p_tools},
-                {"role":"user","content": p_fund},
-                {"role":"user","content":
-                    ("Antworte als JSON mit diesen Schlüsseln: "
-                     "executive_summary, quick_wins, risks, recommendations, roadmap, "
-                     "vision, gamechanger, compliance, tools_html, funding_html. "
-                     "Kein Markdown, kein Codeblock.") + ("\n\n" + suffix if suffix else "")
-                }]
+def _make_live_items(briefing: Dict[str, str], lang: str, n: int = 5) -> List[Dict[str, Any]]:
+    q = live_query_for(briefing["industry"], briefing["size"], briefing["product"], lang=lang)
+    items = search_links(q, days=int(os.getenv("SEARCH_DAYS", "14")),
+                         max_results=n, prefer="tavily")
+    return items
 
+def _render_tools_or_programs_narrative(kind: str, briefing: Dict[str, str], lang: str,
+                                        live_items: List[Dict[str, Any]]) -> str:
+    """
+    Übergibt Live-Snippets in die Tools-/Förderprogramme-Prompts, damit
+    der Text frisch & branchenbezogen ist. Erzwingt Absätze statt Liste.
+    """
+    sys = _mk_system_prompt(lang)
+    section = "tools" if kind == "tools" else "foerderprogramme"
+    prompt = _read_prompt(lang, section)
+    hint = (
+        "Formatiere als kurze, dichte Absätze (keine Listen). "
+        "Erläutere Zielgruppe, typische Eignung und grobe Kostenordnung (nicht numerisch). "
+        "Beziehe dich nur auf die relevanten Snippets; keine Halluzinationen."
+    ) if lang == "de" else (
+        "Write compact paragraphs (no lists). Mention audience, typical suitability and rough cost ranges "
+        "(qualitative only). Use only facts reflected in the snippets; avoid hallucinations."
+    )
+    user = (
+        f"{prompt}\n\n"
+        f"Briefing: {json.dumps(briefing, ensure_ascii=False)}\n\n"
+        f"{hint}\n\n"
+        f"Snippets:\n" + json.dumps(live_items, ensure_ascii=False)
+    )
+    return _compose_and_call_llm(sys, user, prefer_model=MODEL_NAME)
+
+def _compliance_block(lang: str) -> str:
+    return _section_from_prompt("compliance", {"industry":"","size":"","product":"","country":"", "region":""}, lang)
+
+# --- Kontext → Template -------------------------------------------------------
+def _context_for_template(body: Dict[str, Any], lang: str) -> Dict[str, Any]:
+    lang = _lang(body, lang)
+    brief = _extract_briefing(body)
+    # Hook über der Executive Summary
+    hook = _mk_hook(brief["industry"], lang)
+
+    # Live-Kasten
+    live_items = []
+    live_html  = ""
     try:
-        raw = _call_openai(messages, model=MODEL_NAME, temperature=TEMPERATURE, max_tokens=MAX_TOKENS)
-        data = _json_from_text(raw)
-        if not isinstance(data, dict):
-            data = {}
-        return data
+        live_items = _make_live_items(brief, lang, n=5)
+        live_html  = render_live_box_html(live_items, lang=lang)
     except Exception as e:
-        log.exception("LLM call failed: %s", e)
-        return {}
-# gpt_analyze.py — Block 5/5
-def analyze_briefing(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
-    """
-    Gibt ein Kontext-Dict zurück – keine Jinja-Tags im Text.
-    """
-    L = (lang or "de").lower()
-    # Kontext aus Fragebogen
-    industry    = _get_nested(body, "branche","industry","sector","Branche", default="Beratung")
-    main_offer  = _get_nested(body, "hauptleistung","hauptprodukt","main_product","main_service","Hauptleistung/Hauptprodukt", default="Beratung & Projekte")
-    size        = _get_nested(body, "unternehmensgroesse","unternehmensgröße","company_size","Mitarbeitende","size", default="KMU")
-    location    = _get_nested(body, "standort","ort","plz","location","country","Country","Ort", default="Deutschland")
-    company     = _get_nested(body, "company","firma","Unternehmen","Company", default="")
+        log.warning("Live box failed: %s", e)
+        live_items = []
+        live_html  = ""
 
-    # 1) Prompts-first → LLM
-    data = _compose_and_call_llm(L, industry, size, main_offer, location)
+    # Abschnitte
+    exec_sum = _section_from_prompt("executive_summary", brief, lang, prefer_model=EXEC_SUMMARY_MODEL)
+    quick    = _section_from_prompt("quick_wins", brief, lang)
+    risks    = _section_from_prompt("risks", brief, lang)
+    recs     = _section_from_prompt("recommendations", brief, lang)
+    roadmap  = _section_from_prompt("roadmap", brief, lang)
+    vision   = _section_from_prompt("vision", brief, lang)
+    gamech   = _section_from_prompt("gamechanger", brief, lang)
 
-    # 2) Live-Layer (gefiltert auf Branche × Größe × Hauptleistung × Standort)
-    live_html_funding = ""
-    live_html_tools   = ""
-    if ws is not None:
-        q_f = _query_for("funding", L, industry, size, main_offer, location)
-        q_t = _query_for("tools",   L, industry, size, main_offer, location)
-        links_f = _search_links(q_f, n=int(os.getenv("SEARCH_MAX_RESULTS","5") or 5))
-        links_t = _search_links(q_t, n=int(os.getenv("SEARCH_MAX_RESULTS","5") or 5))
-        live_html_funding = _live_box(links_f, L)
-        live_html_tools   = _live_box(links_t, L)
+    # Tools & Förderprogramme → narrativ, angereichert mit Live-Snippets
+    tools_html  = _render_tools_or_programs_narrative("tools", brief, lang, live_items)
+    foerd_html  = _render_tools_or_programs_narrative("foerder", brief, lang, live_items)
+    comp_html   = _compliance_block(lang)
 
-    # 3) Seeds als optionale Tabellen (wenn vorhanden)
-    table_tools, table_funds = _tables_from_seeds(industry, size, location, L)
+    title = "KI‑Statusbericht" if lang == "de" else "AI Readiness Report"
 
-    # 4) Fallbacks, falls LLM leer liefert (niemals „nackt“)
-    fb = _fallback_paragraphs(L)
-    exec_summary = data.get("executive_summary") or fb["exec"]
-    quick_wins   = data.get("quick_wins") or (fb["exec"] if L.startswith("en") else "Beginnen Sie mit einer sauberen Datenstrecke und einem ersten Pilotfall.")
-    risks        = data.get("risks") or fb["risks"]
-    recs         = data.get("recommendations") or fb["recs"]
-    roadmap      = data.get("roadmap") or fb["road"]
-    vision       = data.get("vision") or fb["vision"]
-    gamechanger  = data.get("gamechanger") or fb["game"]
-    compliance   = data.get("compliance") or fb["compliance"]
-
-    # 5) Tools/Funding-HTML zusammensetzen
-    tools_html   = (data.get("tools_html") or "") + live_html_tools + (table_tools or "")
-    funding_html = (data.get("funding_html") or "") + live_html_funding + (table_funds or "")
-
-    title, vision_title, game_title = _titles(L)
-
-    ctx = {
+    ctx: Dict[str, Any] = {
         "title": title,
-        "lang": L,
-        "company": company,
-        "industry": industry,
-        "main_offer": main_offer,
-        "company_size": size,
-        "location": location,
-        "industry_hook": _hook(industry, L),  # 1‑Satz‑Hook über Executive Summary
-        "executive_summary": exec_summary,
-        "quick_wins": quick_wins,
+        "lang": lang,
+        "hook": hook,
+        "month_year": _month_year_label(),
+        "industry": brief["industry"],
+        "company_size": brief["size"],
+        "main_product": brief["product"],
+        "country": brief["country"],
+        "region": brief["region"],
+
+        "executive_summary": exec_sum,
+        "quick_wins": quick,
         "risks": risks,
         "recommendations": recs,
         "roadmap": roadmap,
-        "vision_title": vision_title,
         "vision": vision,
-        "game_title": game_title,
-        "gamechanger": gamechanger,
-        "compliance_html": compliance,
-        "funding_html": funding_html,
+        "gamechanger": gamech,
+
+        "live_box_html": live_html,
+        "foerderprogramme_html": foerd_html,
         "tools_html": tools_html,
-        "stand_datum": _month_year(L),
-        "footer_cta": _cta(L),
-        "report_version": "gold-std-prompts-first-2025-09-18",
-        # Debug Light (nur im Dict, nicht im PDF sichtbar)
-        "model_used": MODEL_NAME,
-        "prompt_dir": PROMPT_DIR
+        "compliance_html": comp_html,
+
+        # Footer-CTA (entschärft)
+        "cta_text": "Ihre Meinung zählt: Feedback geben (kurz)" if lang == "de" else "Your opinion matters: Give feedback (short)",
+        "stand_label": _month_year_label(),
     }
     return ctx
+# === PART 3/5 ===
 
-# Manuelle CLI-Probe (lokal)
-if __name__ == "__main__":
-    sample = {"branche":"Beratung","hauptleistung":"KI‑Automatisierung","unternehmensgroesse":"10‑49","standort":"Deutschland","company":"Beispiel GmbH","lang":"de"}
-    out = analyze_briefing(sample, "de")
-    print(json.dumps({k: (v[:100]+"…" if isinstance(v,str) and len(v)>100 else v) for k,v in out.items()}, ensure_ascii=False, indent=2))
+# --- Kompakt-Fallbacks (falls LLM nicht erreichbar) --------------------------
+def _fallback_paragraph(lang: str, name: str, brief: Dict[str, str]) -> str:
+    if lang == "de":
+        return (f"{name}: Auf Basis der vorliegenden Angaben ({brief['industry']}, {brief['size']}, "
+                f"{brief['product']}) werden kurzfristig pragmatische, datenschutzkonforme Schritte empfohlen, "
+                "die Risiko- und Nutzenabwägungen sichtbar machen. Wo Details fehlen, bleiben Aussagen bewusst vorsichtig.")
+    else:
+        return (f"{name}: Based on the provided inputs ({brief['industry']}, {brief['size']}, "
+                f"{brief['product']}), we recommend pragmatic, privacy‑compliant steps, "
+                "with explicit risk‑benefit considerations. Where data is missing, phrasing remains cautious.")
+
+def _ensure_min_text(txt: str, lang: str, name: str, brief: Dict[str, str]) -> str:
+    t = (txt or "").strip()
+    if len(t) < 120:
+        return _fallback_paragraph(lang, name, brief)
+    return t
+
+# --- Public API ---------------------------------------------------------------
+def analyze_briefing(body: Dict[str, Any], lang: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Haupteinstieg – synchron (wird von main.py aufgerufen).
+    Gibt ein Kontext-Dict zurück; Rendering übernimmt Jinja (pdf_template*.html).
+    """
+    try:
+        lang = _lang(body, lang)
+        ctx = _context_for_template(body, lang)
+
+        # Sicherheit: Mindestlänge der Kernabschnitte
+        brief = {
+            "industry": ctx.get("industry") or "",
+            "size": ctx.get("company_size") or "",
+            "product": ctx.get("main_product") or "",
+        }
+        for key, label in [
+            ("executive_summary", "Executive Summary"),
+            ("quick_wins", "Quick Wins"),
+            ("risks", "Risiken"),
+            ("recommendations", "Empfehlungen"),
+            ("roadmap", "Roadmap"),
+            ("vision", "Vision"),
+            ("gamechanger", "Innovation & Gamechanger"),
+        ]:
+            ctx[key] = _ensure_min_text(ctx.get(key, ""), lang, label, brief)
+
+        # HTML-Felder (Tools, Förder, Compliance) notfalls absichern
+        for hk in ["foerderprogramme_html", "tools_html", "compliance_html", "live_box_html"]:
+            if not isinstance(ctx.get(hk), str):
+                ctx[hk] = ""
+
+        return ctx
+    except Exception as e:
+        log.exception("analyze_briefing failed: %s", e)
+        # Minimal-Kontext, damit das Template nicht leer ist
+        lang = _lang(body or {}, lang)
+        brief = _extract_briefing(body or {})
+        return {
+            "title": "KI‑Statusbericht" if lang == "de" else "AI Readiness Report",
+            "lang": lang,
+            "hook": _mk_hook(brief["industry"], lang),
+            "month_year": _month_year_label(),
+            "industry": brief["industry"],
+            "company_size": brief["size"],
+            "main_product": brief["product"],
+            "country": brief["country"],
+            "region": brief["region"],
+            "executive_summary": _fallback_paragraph(lang, "Executive Summary", brief),
+            "quick_wins": _fallback_paragraph(lang, "Quick Wins", brief),
+            "risks": _fallback_paragraph(lang, "Risiken", brief),
+            "recommendations": _fallback_paragraph(lang, "Empfehlungen", brief),
+            "roadmap": _fallback_paragraph(lang, "Roadmap", brief),
+            "vision": _fallback_paragraph(lang, "Vision", brief),
+            "gamechanger": _fallback_paragraph(lang, "Innovation & Gamechanger", brief),
+            "foerderprogramme_html": "",
+            "tools_html": "",
+            "compliance_html": _fallback_paragraph(lang, "Compliance", brief),
+            "live_box_html": "",
+            "cta_text": "Ihre Meinung zählt: Feedback geben (kurz)" if lang == "de" else "Your opinion matters: Give feedback (short)",
+            "stand_label": _month_year_label(),
+        }
+# === PART 4/5 ===
+
+# --- Diagnose / Selbsttest ----------------------------------------------------
+def _selftest() -> Dict[str, Any]:
+    """
+    Kleiner Selbsttest für /diag/analyze (wird von main.py nicht direkt gebraucht,
+    aber nützlich beim lokalen Testen).
+    """
+    try:
+        ok_prompts = []
+        for lang in ["de", "en"]:
+            for name in [
+                "prompt_prefix","prompt_suffix",f"prompt_additions_{'de' if lang=='de' else 'en'}",
+                "executive_summary","quick_wins","risks","recommendations","roadmap",
+                "vision","gamechanger","compliance","tools","foerderprogramme"
+            ]:
+                fp = _pfile(lang, name)
+                ok_prompts.append(fp.exists())
+        return {"ok": all(ok_prompts), "prompts_ok": sum(1 for x in ok_prompts if x)}
+    except Exception as e:
+        return {"ok": False, "error": repr(e)}
+
+# --- optionale Direkt-HTML-Erzeugung (wenn Template-Rendering extern nicht greift)
+def render_minimal_html(ctx: Dict[str, Any]) -> str:
+    """
+    Wird normalerweise nicht gebraucht (Jinja rendert in main.py).
+    Ist aber praktisch für Debugging.
+    """
+    def _h2(t): return f'<h2 style="margin-top:24px">{t}</h2>'
+    def _box(title, inner): 
+        return f'<div style="border:1px solid #cfe3ff;border-radius:10px;padding:14px;margin:8px 0 16px">{_h2(title)}{inner}</div>'
+
+    html = [
+        "<!doctype html><meta charset='utf-8'><style>body{font-family:system-ui;line-height:1.5;}</style>",
+        f"<h1>{ctx.get('title','')}</h1>",
+        f"<p><em>{ctx.get('hook','')}</em></p>",
+        _box("Executive Summary" if ctx["lang"]!="de" else "Zusammenfassung", f"<p>{ctx.get('executive_summary','')}</p>"),
+        _box("Quick Wins", f"<p>{ctx.get('quick_wins','')}</p>"),
+        _box("Risks" if ctx['lang']!='de' else 'Risiken', f"<p>{ctx.get('risks','')}</p>"),
+        _box("Recommendations" if ctx['lang']!='de' else 'Empfehlungen', f"<p>{ctx.get('recommendations','')}</p>"),
+        _box("Roadmap", f"<p>{ctx.get('roadmap','')}</p>"),
+        _box("Vision", f"<p>{ctx.get('vision','')}</p>"),
+        _box("Innovation & Gamechanger", f"<p>{ctx.get('gamechanger','')}</p>"),
+        _box("Compliance", ctx.get('compliance_html','')),
+        _box("Förderprogramme (Auswahl)" if ctx['lang']=='de' else "Funding (Selection)", ctx.get('foerderprogramme_html','')),
+        _box("KI-Tools & Software" if ctx['lang']=='de' else "AI Tools & Software", ctx.get('tools_html','')),
+        ctx.get("live_box_html",""),
+        f"<p><strong>{ctx.get('cta_text','')}</strong></p>",
+        "</body>"
+    ]
+    return "".join(html)
+# === PART 5/5 ===
+
+# --- Modul-Metadaten ----------------------------------------------------------
+__all__ = [
+    "analyze_briefing",
+    "render_minimal_html",
+    "_selftest",
+]
