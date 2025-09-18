@@ -1,273 +1,62 @@
-<!DOCTYPE html>
+<!-- templates/pdf_template_en.html -->
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>AI Status Report</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root{
-    --brand-blue-950:#081E34;
-    --brand-blue-900:#0B2545;
-    --brand-blue-800:#10375C;
-    --brand-blue-700:#145DA0;
-    --brand-blue-500:#1E88E5;
-    --brand-blue-300:#90CAF9;
-    --brand-blue-100:#E3F2FD;
-
-    --ink: var(--brand-blue-900);
-    --muted:#5B6B7C; --bg:#FFFFFF; --card:#F9FBFF; --border:#D5E3F7; --accent:#EEF6FF;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; padding:28px 28px 20px 28px;
-    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
-    color:var(--ink); background:var(--bg);
-    font-size:16px; line-height:1.6;
-  }
-  h1,h2,h3{ margin:0 0 10px 0; line-height:1.25; color:var(--brand-blue-800) }
-  h1{ font-size:30px; border-left:8px solid var(--brand-blue-500); padding-left:12px }
-  h2{ font-size:22px; color:var(--brand-blue-700); border-bottom:2px solid var(--brand-blue-300); padding-bottom:6px }
-  h3{ font-size:17px; color:var(--brand-blue-700) }
-  .subtitle{ color:var(--muted); margin-bottom:18px }
-  .section{ margin:22px 0 }
-  .card{ background:linear-gradient(180deg, var(--card), #fff); border:1px solid var(--border); border-radius:14px; padding:20px; box-shadow:0 1px 0 rgba(20,93,160,0.05) }
-  .callout{ background:var(--brand-blue-100); border:1px solid var(--brand-blue-300); border-radius:12px; padding:14px 16px; margin:10px 0 }
-  .live-box{ background:var(--brand-blue-100); border:1px solid var(--brand-blue-300); border-radius:12px; padding:14px 16px }
-  p{ margin:10px 0 }
-  ul{ margin:10px 0 10px 18px }
-  .caption{ color:var(--muted); font-size:12px }
-  .vision-card{ background:var(--accent); border:1px dashed var(--brand-blue-300); border-radius:12px; padding:14px 16px }
-  a{ color:var(--brand-blue-700); text-decoration:none; border-bottom:1px dotted var(--brand-blue-300) }
-  a:hover{ text-decoration:underline }
-  table{ width:100%; border-collapse:collapse; margin-top:10px }
-  th,td{ text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top }
-  th{ color:var(--brand-blue-800) }
-  .pagebreak{ page-break-before: always; }
-</style>
+  <meta charset="utf-8">
+  <title>{{ title }}</title>
+  <style>
+    :root{
+      --ink:#0b2e5b;
+      --h2:#1b4f8a;
+      --h3:#2f6fb1;
+      --line:#cfe0f5;
+      --live:#f0f6ff;
+    }
+    body{font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--ink); line-height:1.55; padding:28px;}
+    h1{font-size:26px;margin:0 0 10px 0;color:var(--ink)}
+    .hook{color:#244b86;font-weight:600;margin:2px 0 18px 0}
+    h2{font-size:20px;margin:26px 0 8px;color:var(--h2);border-bottom:2px solid var(--line);padding-bottom:6px}
+    h3{font-size:16px;margin:18px 0 6px;color:var(--h3)}
+    p{margin:10px 0}
+    .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin:10px 0}
+    .live-box{background:var(--live);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}
+    .live-title{font-weight:700;margin-bottom:6px}
+    .live-item{margin:8px 0}
+    .live-meta{font-size:12px;opacity:.8}
+    .table-wrap{margin:12px 0}
+    table.compact{width:100%;border-collapse:collapse;font-size:12px}
+    table.compact th,table.compact td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
+    footer{margin-top:24px;background:#eef5ff;padding:12px;border:1px solid var(--line);border-radius:10px}
+    .small{font-size:12px;opacity:.85}
+  </style>
 </head>
 <body>
+  <h1>{{ title }}</h1>
+  {% if company %}<div class="small"><strong>Company:</strong> {{ company }}</div>{% endif %}
+  <div class="small"><strong>Industry:</strong> {{ industry }} · <strong>Size:</strong> {{ company_size }} · <strong>Location:</strong> {{ location }}</div>
+  <div class="hook">{{ industry_hook }}</div>
 
-  <div class="section">
-    <h1>AI Status Report</h1>
-    {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
-  </div>
+  <h2>Executive Summary</h2><p>{{ executive_summary }}</p>
+  <h2>Quick Wins</h2><p>{{ quick_wins }}</p>
+  <h2>Risks</h2><p>{{ risks }}</p>
+  <h2>Recommendations</h2><p>{{ recommendations }}</p>
+  <h2>Roadmap</h2><p>{{ roadmap }}</p>
+  <h2>{{ vision_title }}</h2><p>{{ vision }}</p>
+  <h2>{{ game_title }}</h2><p>{{ gamechanger }}</p>
 
-  {% if exec_summary_html and exec_summary_html|trim %}
-  <div class="section">
-    <div class="card">
-      <h2>Executive summary</h2>
-      <div>{{ exec_summary_html|safe }}</div>
-    </div>
-  </div>
-  {% endif %}
+  <h2>Compliance</h2>
+  <div class="card">{{ compliance_html | safe }}</div>
 
-  {% if quick_wins_html and quick_wins_html|trim %}
-  <div class="section pagebreak">
-    <div class="card">
-      <h2>Quick wins</h2>
-      <div>{{ quick_wins_html|safe }}</div>
-    </div>
-  </div>
-  {% endif %}
+  <h2>Funding programs (selection)</h2>
+  <div class="small">As of: {{ stand_datum }}</div>
+  <div class="card">{{ funding_html | safe }}</div>
 
-  {% if risks_html and risks_html|trim %}
-  <div class="section">
-    <div class="card">
-      <h2>Key risks</h2>
-      <div>{{ risks_html|safe }}</div>
-    </div>
-  </div>
-  {% endif %}
+  <h2>AI tools & software</h2>
+  <div class="card">{{ tools_html | safe }}</div>
 
-  {% if recommendations_html and recommendations_html|trim %}
-  <div class="section pagebreak">
-    <div class="card">
-      <h2>Recommendations</h2>
-      <div>{{ recommendations_html|safe }}</div>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if roadmap_html and roadmap_html|trim or (timeline and (timeline.t30 or timeline.t90 or timeline.t365)) or (roadmap_items and roadmap_items|length>0) %}
-  <div class="section">
-    <div class="card">
-      <h2>Roadmap</h2>
-      {% if timeline and (timeline.t30 or timeline.t90 or timeline.t365) %}
-        <h3>Short term</h3>
-        {% for it in timeline.t30 %}<p>{{ it }}</p>{% endfor %}
-        <h3>Mid term</h3>
-        {% for it in timeline.t90 %}<p>{{ it }}</p>{% endfor %}
-        <h3>Long term</h3>
-        {% for it in timeline.t365 %}<p>{{ it }}</p>{% endfor %}
-      {% elif roadmap_items and roadmap_items|length > 0 %}
-        <table>
-          <thead><tr><th>Month</th><th>Task</th><th>Owner</th><th>Dependencies</th><th>Benefit</th></tr></thead>
-          <tbody>
-            {% for item in roadmap_items %}
-            <tr>
-              <td>{{ item.month or '' }}</td>
-              <td>{{ item.task or '' }}</td>
-              <td>{{ item.owner or '' }}</td>
-              <td>{{ item.dependencies or '' }}</td>
-              <td>{{ item.benefit or item.outcome or '' }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <div>{{ roadmap_html|safe }}</div>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Funding -->
-  <div class="section pagebreak">
-    <div class="card">
-      <h2>Funding (selection)</h2>
-      {% if foerderprogramme_html and foerderprogramme_html|trim %}
-        <div>{{ foerderprogramme_html|safe }}</div>
-      {% elif dynamic_funding_html and dynamic_funding_html|trim %}
-        <div>{{ dynamic_funding_html|safe }}</div>
-      {% endif %}
-      {% if funding_details and funding_details|length>0 %}
-        <h3>Details & suitability</h3>
-        <table>
-          <thead><tr><th>Programme</th><th>Target</th><th>Region</th><th>Grant/Costs</th><th>Use case</th><th>Link</th></tr></thead>
-          <tbody>
-            {% for p in funding_details %}
-            <tr>
-              <td>{{ p.name }}</td>
-              <td>{{ p.target }}</td>
-              <td>{{ p.region }}</td>
-              <td>{{ p.cost or p.grant }}</td>
-              <td>{{ p.use_case }}</td>
-              <td>{% if p.link %}<a href="{{ p.link }}">Open</a>{% endif %}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% elif foerderprogramme_table and foerderprogramme_table|length>0 %}
-        <table>
-          <thead><tr><th>Programme</th><th>Link</th></tr></thead>
-          <tbody>
-            {% for p in foerderprogramme_table %}
-            <tr><td>{{ p.name }}</td><td>{% if p.link %}<a href="{{ p.link }}">Open</a>{% endif %}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
-      <p class="caption">As of: {{ funding_stand or datum }}</p>
-    </div>
-  </div>
-
-  <!-- Tools -->
-  <div class="section">
-    <div class="card">
-      <h2>AI tools &amp; software</h2>
-      {% if tools_html and tools_html|trim %}
-        <div>{{ tools_html|safe }}</div>
-      {% endif %}
-      {% if tools_details and tools_details|length>0 %}
-        <h3>Overview & suitability</h3>
-        <table>
-          <thead><tr><th>Tool</th><th>Category</th><th>Suitable for</th><th>Hosting/Data</th><th>Price</th><th>Link</th></tr></thead>
-          <tbody>
-            {% for t in tools_details %}
-            <tr>
-              <td>{{ t.name }}</td>
-              <td>{{ t.category }}</td>
-              <td>{{ t.suitable_for }}</td>
-              <td>{{ t.hosting }}</td>
-              <td>{{ t.price }}</td>
-              <td>{% if t.link %}<a href="{{ t.link }}">Website</a>{% endif %}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% elif tools_table and tools_table|length>0 %}
-        <table>
-          <thead><tr><th>Tool</th><th>Link</th></tr></thead>
-          <tbody>
-            {% for t in tools_table %}
-            <tr><td>{{ t.name }}</td><td>{% if t.link %}<a href="{{ t.link }}">Website</a>{% endif %}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
-    </div>
-  </div>
-
-  {% if live_updates_html and live_updates_html|trim %}
-  <div class="section">
-    <div class="card live-box">
-      <h2>{{ live_updates_title }}</h2>
-      <div>{{ live_updates_html|safe }}</div>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if compliance_html and compliance_html|trim %}
-  <div class="section pagebreak">
-    <div class="card">
-      <h2>Compliance</h2>
-      <div>{{ compliance_html|safe }}</div>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if vision_html %}
-  <div class="section">
-    <div class="card">
-      <h2>Vision</h2>
-      <div class="vision-card">{{ vision_html|safe }}</div>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if (gamechanger_html and gamechanger_html|trim) or (gamechanger_blocks and gamechanger_blocks|trim) %}
-  <div class="section pagebreak">
-    <div class="card">
-      <h2>Innovation &amp; gamechanger</h2>
-      {{ gamechanger_html|safe }}
-    </div>
-  </div>
-  {% endif %}
-
-  {% if ueber_mich_html and ueber_mich_html|trim %}
-  <div class="section">
-    <div class="card">
-      <h2>Service & proof</h2>
-      <div>{{ ueber_mich_html|safe }}</div>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if glossary_html and glossary_html|trim %}
-  <div class="section">
-    <div class="card">
-      <h2>Glossary</h2>
-      <div>{{ glossary_html|safe }}</div>
-    </div>
-  </div>
-  {% endif %}
-
-  <div class="section">
-    <div class="card callout">
-      <b>Your opinion matters:</b>
-      <a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html?variant={{ unternehmensgroesse|urlencode }}&version={{ datum|default('0.9') }}">Give feedback (short)</a>
-    </div>
-  </div>
-
-  <div class="footer">
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      {% if logo_tuev %}<img src="{{ logo_tuev }}" alt="TÜV" style="height:18px">{% endif %}
-      {% if logo_euai %}<img src="{{ logo_euai }}" alt="EU AI" style="height:18px">{% endif %}
-      {% if logo_dsgvo %}<img src="{{ logo_dsgvo }}" alt="DSGVO" style="height:18px">{% endif %}
-      <span>© {{ now().year }} KI‑Sicherheit.jetzt – GDPR & EU AI Act‑ready – Wolf Hohl</span>
-    </div>
-    <div style="margin-top:4px">{{ footer_text|safe }}</div>
-  </div>
-
+  <footer>
+    <div class="small">{{ footer_cta }}</div>
+    <div class="small">© {{ now().year }} KI‑Sicherheit.jetzt – GDPR & EU‑AI‑Act‑Ready – Wolf Hohl</div>
+  </footer>
 </body>
 </html>
