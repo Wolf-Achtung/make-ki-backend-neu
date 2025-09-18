@@ -1,3 +1,4 @@
+# main.py — Block 1/2
 import os
 import sys
 import time
@@ -66,7 +67,6 @@ if CORS_ALLOW == ["*"]:
 TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", "templates")   # statt "."
 TEMPLATE_DE  = os.getenv("TEMPLATE_DE",  "pdf_template.html")
 TEMPLATE_EN  = os.getenv("TEMPLATE_EN",  "pdf_template_en.html")
-
 
 # SMTP
 SMTP_HOST = os.getenv("SMTP_HOST")
@@ -154,10 +154,12 @@ def _close_db_pool():
             logger.info("[DB] Pool geschlossen")
     except Exception as e:
         logger.exception("[DB] Pool-Close fehlgeschlagen: %s", e)
-
+# main.py — Block 2/2
 # ----------------------------
 # Jinja-Environment
 # ----------------------------
+from jinja2 import TemplateNotFound
+
 def _build_jinja_env() -> Environment:
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
@@ -171,12 +173,16 @@ _JINJA = _build_jinja_env()
 
 def _render_template_file(lang: str, ctx: dict) -> str:
     name = TEMPLATE_DE if (lang or "de").lower().startswith("de") else TEMPLATE_EN
-    tpl = _JINJA.get_template(name)
+    try:
+        tpl = _JINJA.get_template(name)
+    except TemplateNotFound as e:
+        raise RuntimeError(f"'{name}' not found in search path: '{TEMPLATE_DIR}'") from e
     return tpl.render(**ctx, now=dt.datetime.now)
 
 def _render_template_string(tpl_str: str, ctx: dict) -> str:
     tpl = _JINJA.from_string(tpl_str)
     return tpl.render(**ctx, now=dt.datetime.now)
+
 def _clean_header_value(v: Optional[str]) -> Optional[str]:
     if not v: return None
     v = v.replace("\r", "").replace("\n", "").strip()
@@ -284,6 +290,7 @@ async def health_info():
         "timeout": PDF_TIMEOUT,
         "version": "2025-09-17",
     }
+
 # ---------- PDF-Service ----------
 async def warmup_pdf_service(request_id: str, base_url: str, timeout: float = 10.0):
     if not base_url: return
@@ -342,29 +349,20 @@ async def send_html_to_pdf_service(
 
 # ---------- Analyze → HTML ----------
 def _render_final_html_from_result(result: Any, lang: str) -> str:
-    """
-    Akzeptiert dict oder str:
-      - dict mit 'html': ggf. Jinja-String → rendern
-      - dict ohne 'html': Datei-Template rendern (alle Keys im Kontext)
-      - str: fertiges HTML; wenn noch Jinja-Tags enthalten → rendern
-    """
     ctx = result if isinstance(result, dict) else {}
     html = ""
     if isinstance(result, dict):
         html = (result.get("html") or "").strip()
         if html:
-            # enthält Jinja-Tags?
             if ("{{" in html) or ("{%" in html):
                 return _render_template_string(html, ctx)
             return strip_code_fences(html)
-        # kein 'html': Dateitemplate mit Kontext rendern
         return _render_template_file(lang, ctx)
     elif isinstance(result, str):
         s = strip_code_fences(result)
         if ("{{" in s) or ("{%" in s):
             return _render_template_string(s, ctx)
         return s
-    # Fallback
     return _render_template_file(lang, ctx)
 
 async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
@@ -373,14 +371,12 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
         try:
             result = analyze_fn(body, lang=lang)
             html = _render_final_html_from_result(result, lang)
-            # Sicherheitsnetz: keine ungelösten Jinja-Marker in den ersten Bytes
             head = html[:400]
             if ("{{" in head) or ("{%" in head):
                 raise RuntimeError("Template not fully rendered – unresolved Jinja tags found")
             return html
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
-    # Minimaler Fallback
     fallback = {"title": "KI-Readiness Report" if lang.startswith("de") else "AI Readiness Report",
                 "executive_summary": "Analysemodul nicht geladen – Fallback.", "score_percent": 0}
     return _render_template_file(lang, fallback)
@@ -469,7 +465,8 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
     except Exception as e:
         logger.exception("[FEEDBACK] Fehler: %s", e)
         raise HTTPException(status_code=500, detail="feedback failed")
-# ---------- Lifespan statt on_event (keine Deprecation-Warnungen) ----------
+
+# ---------- Lifespan statt on_event ----------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:

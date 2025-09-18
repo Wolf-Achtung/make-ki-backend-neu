@@ -1,212 +1,72 @@
+# websearch_utils.py
+import os
+import httpx
+from typing import List, Dict, Optional
 
-"""
-websearch_utils.py — unified web search helper for KI-Status-Report (Railway)
------------------------------------------------------------------------------
-- Primary provider: Tavily (https://docs.tavily.com) via tavily-python
-- Optional fallback: SerpAPI (if SERPAPI_API_KEY is set)
-- Graceful no-op when neither API key is available
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
-Env vars (recommended defaults shown):
-  TAVILY_API_KEY=tvly-...
-  SEARCH_PROVIDER=tavily               # tavily | serpapi | auto
-  SEARCH_TOPIC=news                    # news | general | finance
-  SEARCH_DAYS=14                       # only used for topic=news
-  SEARCH_MAX_RESULTS=5
-  SEARCH_DEPTH=basic                   # basic (1 credit) | advanced (2 credits)
-  SEARCH_COUNTRY=germany               # only used for topic=general (Tavily)
-  SEARCH_INCLUDE_DOMAINS=             # comma-separated allow list
-  SEARCH_EXCLUDE_DOMAINS=             # comma-separated block list
-
-Returned shape:
-  List[{"title": str, "url": str, "snippet": str}]
-"""
-from __future__ import annotations
-import os, time, json, logging
-from typing import List, Dict, Any, Optional, Tuple
-
-log = logging.getLogger("websearch")
-
-# ------------------------------- tiny TTL cache -------------------------------
-_CACHE: Dict[Tuple, Tuple[float, Any]] = {}
-def _cache_get(key: Tuple, ttl_s: int) -> Optional[Any]:
-    now = time.time()
-    item = _CACHE.get(key)
-    if not item:
-        return None
-    ts, val = item
-    if now - ts > ttl_s:
-        _CACHE.pop(key, None)
-        return None
-    return val
-
-def _cache_set(key: Tuple, val: Any) -> None:
-    _CACHE[key] = (time.time(), val)
-
-def _csv_env(name: str) -> Optional[List[str]]:
-    raw = os.getenv(name, "").strip()
-    if not raw:
-        return None
-    return [tok.strip() for tok in raw.split(",") if tok.strip()]
-
-# ------------------------------- providers ------------------------------------
-def _tavily_available() -> bool:
-    return bool(os.getenv("TAVILY_API_KEY"))
-
-def _serpapi_available() -> bool:
-    return bool(os.getenv("SERPAPI_API_KEY"))
-
-def _tavily_search(query: str,
-                   topic: Optional[str] = None,
-                   days: Optional[int] = None,
-                   max_results: int = 5,
-                   depth: str = "basic",
-                   country: Optional[str] = None,
-                   include_domains: Optional[List[str]] = None,
-                   exclude_domains: Optional[List[str]] = None) -> List[Dict[str, str]]:
-    try:
-        from tavily import TavilyClient  # type: ignore
-    except Exception as e:
-        log.warning("tavily-python not installed: %s", e)
+def tavily_search(query: str, days: int = 90, max_results: int = 5,
+                  include_domains: Optional[list] = None, exclude_domains: Optional[list] = None,
+                  depth: str = "basic") -> List[Dict]:
+    if not TAVILY_API_KEY:
         return []
-    client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
-    payload: Dict[str, Any] = {
+    payload = {
+        "api_key": TAVILY_API_KEY,
         "query": query,
-        "search_depth": depth if depth in ("basic", "advanced") else "basic",
-        "max_results": int(max_results or 5),
-        "include_answer": False,
-        "include_raw_content": False,
-        "include_images": False,
-        "include_favicon": False,
-        "auto_parameters": False,
-    }
-    tpc = (topic or os.getenv("SEARCH_TOPIC", "news")).lower()
-    if tpc in {"news", "general", "finance"}:
-        payload["topic"] = tpc
-    # Tavily: days only for topic=news
-    if tpc == "news":
-        try:
-            payload["days"] = int(days or int(os.getenv("SEARCH_DAYS", "14")))
-        except Exception:
-            payload["days"] = 14
-    # country only works for topic=general
-    if tpc == "general" and country:
-        payload["country"] = country
-    if include_domains:
-        payload["include_domains"] = include_domains
-    if exclude_domains:
-        payload["exclude_domains"] = exclude_domains
-    try:
-        res = client.search(**payload)  # returns dict
-    except Exception as e:
-        log.warning("Tavily error: %s", e)
-        return []
-    results = []
-    for item in res.get("results", []):
-        title = item.get("title") or ""
-        url = item.get("url") or ""
-        snippet = item.get("content") or item.get("raw_content") or ""
-        if title and url:
-            results.append({"title": title.strip(), "url": url.strip(), "snippet": (snippet or "").strip()})
-    return results
-
-def _serpapi_search(query: str,
-                    max_results: int = 5,
-                    include_domains: Optional[List[str]] = None,
-                    exclude_domains: Optional[List[str]] = None) -> List[Dict[str, str]]:
-    # Lightweight SerpAPI wrapper (web search). Requires SERPAPI_API_KEY.
-    # We keep it intentionally minimal; filter by include/exclude domains post-hoc.
-    try:
-        import httpx  # type: ignore
-    except Exception as e:
-        log.warning("httpx not available for SerpAPI: %s", e)
-        return []
-    key = os.getenv("SERPAPI_API_KEY")
-    if not key:
-        return []
-    params = {
-        "engine": "google",
-        "q": query,
-        "api_key": key,
-        "num": int(max_results or 5)
+        "search_depth": depth,     # "basic" | "advanced"
+        "max_results": max_results,
+        "days": days,
+        "include_domains": [d for d in (include_domains or []) if d],
+        "exclude_domains": [d for d in (exclude_domains or []) if d],
     }
     try:
-        r = httpx.get("https://serpapi.com/search", params=params, timeout=20)
-        data = r.json()
-    except Exception as e:
-        log.warning("SerpAPI error: %s", e)
-        return []
-    out: List[Dict[str, str]] = []
-    for item in (data.get("organic_results") or []):
-        title = item.get("title") or ""
-        url = item.get("link") or ""
-        snippet = item.get("snippet") or ""
-        if title and url:
-            out.append({"title": title, "url": url, "snippet": snippet})
-    # Domain filters
-    def _host(u: str) -> str:
-        try:
-            from urllib.parse import urlparse
-            return urlparse(u).netloc.lower()
-        except Exception:
-            return ""
-    inc = set((d.lower() for d in (include_domains or [])))
-    exc = set((d.lower() for d in (exclude_domains or [])))
-    if inc:
-        out = [it for it in out if any(h in _host(it["url"]) for h in inc)]
-    if exc:
-        out = [it for it in out if not any(h in _host(it["url"]) for h in exc)]
-    return out[:max_results]
-
-# ------------------------------ public facade ---------------------------------
-def search_links(query: str,
-                 num_results: int = 5,
-                 topic: Optional[str] = None,
-                 days: Optional[int] = None,
-                 depth: Optional[str] = None) -> List[Dict[str, str]]:
-    """
-    Unified entry point.
-    - Chooses provider based on SEARCH_PROVIDER (tavily|serpapi|auto)
-    - Applies lightweight TTL cache (60s) to avoid duplicate queries during one report run
-    - Applies include/exclude domain filters from env
-    """
-    provider = (os.getenv("SEARCH_PROVIDER", "auto") or "auto").lower()
-    topic = (topic or os.getenv("SEARCH_TOPIC", "news")).lower()
-    depth = (depth or os.getenv("SEARCH_DEPTH", "basic")).lower()
-    country = os.getenv("SEARCH_COUNTRY", "germany")
-    include_domains = _csv_env("SEARCH_INCLUDE_DOMAINS")
-    exclude_domains = _csv_env("SEARCH_EXCLUDE_DOMAINS")
-    try:
-        n = int(num_results or int(os.getenv("SEARCH_MAX_RESULTS", "5")))
-    except Exception:
-        n = 5
-    try:
-        d = int(days or int(os.getenv("SEARCH_DAYS", "14")))
-    except Exception:
-        d = 14
-    key = ("v1", provider, query.strip(), topic, d, n, depth, tuple(include_domains or []), tuple(exclude_domains or []))
-    cached = _cache_get(key, ttl_s=60)
-    if cached is not None:
-        return cached
-    # Provider selection
-    if provider == "tavily" or (provider == "auto" and _tavily_available()):
-        out = _tavily_search(query=query,
-                             topic=topic,
-                             days=d,
-                             max_results=n,
-                             depth=depth,
-                             country=country,
-                             include_domains=include_domains,
-                             exclude_domains=exclude_domains)
-    elif provider == "serpapi" or (provider == "auto" and _serpapi_available()):
-        out = _serpapi_search(query=query,
-                              max_results=n,
-                              include_domains=include_domains,
-                              exclude_domains=exclude_domains)
-    else:
-        # No provider available → no-op
+        with httpx.Client(timeout=20.0) as c:
+            r = c.post("https://api.tavily.com/search", json=payload)
+            r.raise_for_status()
+            data = r.json()
         out = []
-    _cache_set(key, out)
-    return out
+        for it in data.get("results", []):
+            out.append({
+                "title": it.get("title"),
+                "url": it.get("url"),
+                "snippet": it.get("content") or it.get("snippet") or "",
+                "source": it.get("source") or "",
+                "date": it.get("published_date") or it.get("date") or "",
+            })
+        return out
+    except Exception:
+        return []
 
-# Backwards-compat alias for legacy imports
-serpapi_search = search_links
+def serpapi_search(query: str, max_results: int = 5) -> List[Dict]:
+    if not SERPAPI_KEY:
+        return []
+    try:
+        params = {"engine":"google","q":query,"num":max_results,"api_key":SERPAPI_KEY}
+        with httpx.Client(timeout=20.0) as c:
+            r = c.get("https://serpapi.com/search.json", params=params)
+            r.raise_for_status()
+            data = r.json()
+        out = []
+        for n in (data.get("news_results") or []):
+            out.append({"title": n.get("title"), "url": n.get("link"), "snippet": n.get("snippet"),
+                        "source": n.get("source"), "date": n.get("date")})
+        if not out:
+            for o in (data.get("organic_results") or [])[:max_results]:
+                out.append({"title": o.get("title"), "url": o.get("link"), "snippet": o.get("snippet"),
+                            "source": "Google", "date": ""})
+        return out
+    except Exception:
+        return []
+
+def live_snippets(query: str, days: int = 90, max_results: int = 5,
+                  include_domains: Optional[list] = None, exclude_domains: Optional[list] = None,
+                  depth: str = "basic") -> List[Dict]:
+    # Tavily zuerst
+    t = tavily_search(query, days=days, max_results=max_results,
+                      include_domains=include_domains, exclude_domains=exclude_domains, depth=depth)
+    if t:
+        return t[:max_results]
+    # Fallback SerpAPI
+    s = serpapi_search(query, max_results=max_results)
+    return s[:max_results]
