@@ -1,30 +1,14 @@
 #!/usr/bin/env python3
-"""
-Initialisiert Test-User in der Datenbank.
-
-Hinweis: Diese Datei enthielt zuvor fragmentierten Code (Syntaxfehler).
-Diese Version ist lauffähig und idempotent. Sie erwartet eine Postgres-URL
-in der Umgebungsvariable DATABASE_URL (oder POSTGRES_URL). Passwörter sind
-hier im Klartext hinterlegt – bitte für Produktion entfernen!
-"""
+# -*- coding: utf-8 -*-
 import os
 import sys
-try:
-    import psycopg2  # type: ignore
-except Exception as e:
-    print("psycopg2 nicht verfügbar:", e, file=sys.stderr)
+import psycopg2
+
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or os.getenv("POSTGRESQL_URL")
+if not DATABASE_URL:
+    print("DATABASE_URL/POSTGRES_URL not set", file=sys.stderr)
     sys.exit(1)
 
-DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
-if not DATABASE_URL:
-    print("DATABASE_URL/POSTGRES_URL nicht gesetzt – Skript beendet sich ohne Aktion.")
-    sys.exit(0)
-
-conn = psycopg2.connect(DATABASE_URL)
-cur = conn.cursor()
-cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
-
-# Test-User mit individuellen Passwörtern (nur für Entwicklung!)
 users = [
     ("j.hohl@freenet.de", "passjhohl!", "user"),
     ("kerstin.geffert@gmail.com", "passkerstin!", "user"),
@@ -39,20 +23,26 @@ users = [
     ("alexander.luckow@icloud.com", "passbirg!", "user"),
     ("frank.beer@kabelmail.de", "passfrab!", "user"),
     ("patrick@silk-relations.com", "passpat!", "user"),
+    ("marc@trailerhaus-onair.de", "passmarct!", "user"),
+    ("norbert@trailerhaus.de", "passgis2r!", "user"),
+    ("sonia-souto@mac.com", "pass-son!", "user"),
+    ("christian.ulitzka@ulitzka-partner.de", "pass2rigz!", "user"),
+    ("srack@gmx.net", "pass2rack!", "user"),
+    ("buss@maria-hilft.de", "pass2mar!", "user"),
+    ("bewertung@ki-sicherheit.jetzt", "passadmin1!", "admin")
 ]
 
+conn = psycopg2.connect(DATABASE_URL)
+cur = conn.cursor()
+cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
 for email, password, role in users:
-    print(f"Verarbeite: {email}")
-    cur.execute(
-        """
+    print("Verarbeite:", email)
+    cur.execute("""
         INSERT INTO users (email, password_hash, role)
         VALUES (%s, crypt(%s, gen_salt('bf')), %s)
         ON CONFLICT (email)
         DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role
-        """,
-        (email, password, role),
-    )
-
+    """, (email, password, role))
 conn.commit()
 cur.close()
 conn.close()

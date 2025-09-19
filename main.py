@@ -382,33 +382,29 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
             logger.exception("analyze_briefing failed: %s", e)
     # Minimaler Fallback
     fallback = {
-    "meta": {
-        "title": ("KI-Statusbericht" if lang.startswith("de") else "AI Readiness Report"),
-        "report_title": ("KI-Statusbericht" if lang.startswith("de") else "AI Readiness Report"),
-        "subtitle": "",
-        "month_year": dt.datetime.now().strftime("%m/%Y"),
-        "industry": "",
-        "company_size": "",
-        "location": "",
-        "hook": "",
-        "feedback_url": "",
-        "brand": ""
-    },
-    "sections": {
-        "executive_summary": ("Analysemodul nicht geladen – Fallback." if lang.startswith("de") else "Analysis module not loaded – fallback."),
-        "quick_wins": "",
-        "risks": "",
-        "recommendations": "",
-        "roadmap": "",
-        "funding": "",
-        "tools": "",
-        "compliance": "",
-        "vision": ""
-    },
-    "score_percent": 0,
-    "live_box_html": ""
-}
-return _render_template_file(lang, fallback)
+        "meta": {
+            "title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
+            "report_title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
+            "language": lang,
+            "month_year": "",
+            "company": "",
+        },
+        "sections": {
+            "executive_summary": "Analysemodul nicht geladen – Fallback.",
+            "quick_wins": "",
+            "risks": "",
+            "recommendations": "",
+            "roadmap": "",
+            "compliance": "",
+            "funding_programs": "",
+            "tools": "",
+            "vision": "",
+            "gamechanger": "",
+        },
+        "score_percent": 0,
+        "live_box_html": ""
+    }
+    return _render_template_file(lang, fallback)
 
 # ---------- Feedback-Model & Handler ----------
 class Feedback(BaseModel):

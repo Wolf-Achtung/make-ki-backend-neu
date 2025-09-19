@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>{{ (meta.title if meta is defined and meta.title is defined else 'AI Readiness Report') }}</title>
+  <title>{{ meta.title|default('AI Readiness Report', true) }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{

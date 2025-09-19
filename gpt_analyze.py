@@ -2262,15 +2262,15 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>" if out.get("vision") else ""
 
 # Vision-Normalisierung: Ersetze veraltete Überschrift 'Kühne Idee' durch 'Vision'
-    try:
-        if isinstance(out.get("vision"), str):
-            vis = out["vision"]
-            vis = vis.replace("Kühne Idee:", "Vision:").replace("Kühne Idee", "Vision")
-            vis = vis.replace("Bold idea:", "Vision:").replace("Bold idea", "Vision")
-            out["vision"] = vis
-            out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>"
-    except Exception:
-        pass
+try:
+    if isinstance(out.get("vision"), str):
+        vis = out["vision"]
+        vis = vis.replace("Kühne Idee:", "Vision:").replace("Kühne Idee", "Vision")
+        vis = vis.replace("Bold idea:", "Vision:").replace("Bold idea", "Vision")
+        out["vision"] = vis
+        out["vision_html"] = f"<div class='vision-card'>{out['vision']}</div>"
+except Exception:
+    pass
 
     # sections_html (ohne Vision)
     # Praxisbeispiel (Compliance wird separat als eigener Abschnitt gerendert)
@@ -2291,13 +2291,13 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
     out["chart_data"] = build_chart_payload(data, out["score_percent"], lang=lang)
     out["chart_data_json"] = json.dumps(out["chart_data"], ensure_ascii=False)
 
-        # Tabellen (CSV)
+    # Tabellen (CSV)
     try:
         out["foerderprogramme_table"] = build_funding_table(data, lang=lang)
     except Exception:
         out["foerderprogramme_table"] = []
     try:
-        out["tools_table"] = build_tools_table(data, branche=branche, lang=lang, max_items=12)
+        out["tools_table"] = build_tools_table(data, branche=branche, lang=lang)
     except Exception:
         out["tools_table"] = []
 
@@ -2315,7 +2315,7 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         _title, _html = build_live_updates_html(data, lang=lang, max_results=5)
         out["live_updates_title"] = _title
         out["live_updates_html"]  = _html
-
+        out["live_box_html"]      = _html
     except Exception:
         # Defensive Defaults – verhindern Import-/Render-Abbruch
         out["foerderprogramme_html"] = out.get("foerderprogramme_html","")
@@ -2326,14 +2326,14 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         out["tools_stand"]           = out.get("tools_stand") or out.get("datum")
         out["live_updates_title"]    = out.get("live_updates_title","")
         out["live_updates_html"]     = out.get("live_updates_html","")
-
+        out["live_box_html"]         = out.get("live_box_html","")
 
     # Fallbacks (aus HTML) nur wenn CSV leer blieb
     if wants_funding and not out.get("foerderprogramme_table"):
         teaser = out.get("foerderprogramme") or out.get("sections_html","")
         rows = []
-        for m in re.finditer(r'(?:<b>)?([^<]+?)(?:</b>)?.*?(?:Förderhöhe|Funding amount)[:\s]*([^<]+).*?<a[^>]*href="([^"]+)"', teaser, re.I|re.S):
-            name, amount, link = m.groups()
+        for m in re.finditer(r'(?:<b>)?([^<]+?)(?:</b>)?\s*(?:Fö(r|e)derh(ö|o)he|Fördersumme|amount)[:\s]*([^<]+).*?<a[^>]*href="([^"]+)"', teaser, re.I|re.S):
+            name, _, _, amount, link = m.groups()
             rows.append({"name":(name or "").strip(),"zielgruppe":"","foerderhoehe":(amount or "").strip(),"link":link})
         out["foerderprogramme_table"] = rows[:6]
 
@@ -2345,7 +2345,6 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
             if name and link:
                 rows.append({"name":name.strip(),"usecase":"","cost":"","link":link})
         out["tools_table"] = rows[:8]
-
     # --- Zusätzliche Kennzahlen, Benchmarks, Timeline und Risiken ---
     # Hilfsfunktionen zum Parsen von Zahlen und Benchmarks
     def _to_num(v):

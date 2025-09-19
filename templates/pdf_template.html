@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <title>{{ (meta.title if meta is defined and meta.title is defined else 'KI-Statusbericht') }}</title>
+  <title>{{ meta.title|default('KI-Statusbericht', true) }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
