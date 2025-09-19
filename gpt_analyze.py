@@ -2684,7 +2684,12 @@ def analyze_briefing(payload: Dict[str, Any], lang: Optional[str] = None) -> Dic
             # company size info for feedback links and prompt context
             **size_info,
         }
-        html = tmpl.render(**ctx)
+
+     if "meta" not in ctx or ctx["meta"] is None:
+         ctx["meta"] = {}
+     html = tmpl.render(**ctx)
+     html = _inline_local_images(html)
+     return html
         # Fail‑fast if unresolved Jinja tokens remain in the rendered HTML.  Incomplete
         # rendering would otherwise propagate into the PDF and show raw template
         # markers.  Raising here ensures the caller can handle the error and
