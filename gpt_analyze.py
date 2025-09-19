@@ -2273,7 +2273,6 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
         pass
 
     # sections_html (ohne Vision)
-    # Praxisbeispiel (Compliance wird separat als eigener Abschnitt gerendert)
     parts = []
     if out.get("praxisbeispiel"):
         parts.append(f"<h2>{'Praxisbeispiel' if lang=='de' else 'Case study'}</h2>\n" + out["praxisbeispiel"])
@@ -2303,21 +2302,15 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
 
     # --- Narrative + Details + Live-Layer (robust) ---
     try:
-        # Narrative-first HTML (erzählerisch)
         out["foerderprogramme_html"] = build_funding_narrative(data, lang=lang, max_items=5)
         out["tools_html"]            = build_tools_narrative(data, branche=branche, lang=lang, max_items=6)
-
-        # Detail-Tabellen (CSV-gestützt; optional)
         out["funding_details"], out["funding_stand"] = build_funding_details_struct(data, lang=lang, max_items=8)
         out["tools_details"],   out["tools_stand"]   = build_tools_details_struct(data, branche=branche, lang=lang, max_items=12)
-
-        # Live-Updates (optional)
         _title, _html = build_live_updates_html(data, lang=lang, max_results=5)
         out["live_updates_title"] = _title
         out["live_updates_html"]  = _html
         out["live_box_html"]      = _html
     except Exception:
-        # Defensive Defaults – verhindern Import-/Render-Abbruch
         out["foerderprogramme_html"] = out.get("foerderprogramme_html","")
         out["tools_html"]            = out.get("tools_html","")
         out["funding_details"]       = out.get("funding_details", [])
@@ -2346,88 +2339,26 @@ def generate_full_report(data: dict, lang: str = "de") -> dict:
                 rows.append({"name":name.strip(),"usecase":"","cost":"","link":link})
         out["tools_table"] = rows[:8]
 
-    # --- Sanitisierung erzählerischer HTML-Felder ---
-    # Apply sanitisation to narrative HTML fields including exec summary,
-    # quick wins, risks, recommendations, roadmap, vision, gamechanger and
-    # the compliance section.  Also sanitise the 'praxisbeispiel' which
-    # contains fallback case study HTML.
-    for _key in [
-        "exec_summary_html",
-        "quick_wins_html",
-        "risks_html",
-        "recommendations_html",
-        "roadmap_html",
-        "vision_html",
-        "gamechanger_html",
-        "praxisbeispiel",
-        "compliance_html",
-    ]:
+    # Finaler HTML‑Sanitizer
+    for _key in ["exec_summary_html","quick_wins_html","risks_html","recommendations_html","roadmap_html","vision_html","gamechanger_html","praxisbeispiel","compliance_html"]:
         if isinstance(out.get(_key), str):
             out[_key] = _strip_lists_and_numbers(out[_key])
-    # If roadmap is a list of items (post‑processed), sanitise each item
-    if isinstance(out.get("roadmap"), list):
-        out["roadmap"] = [_strip_lists_and_numbers(str(item)) for item in out["roadmap"]]
-    # If the timeline contains bullet points extracted from the roadmap,
-    # sanitise each item in each phase (t30, t90, t365) so that left‑over
-    # numbers, hyphens or units are removed.
-    if isinstance(out.get("timeline"), dict):
-        for _phase in ["t30", "t90", "t365"]:
-            items = out["timeline"].get(_phase)
-            if isinstance(items, list):
-                out["timeline"][_phase] = [ _strip_lists_and_numbers(str(it)) for it in items ]
-    # Remove KPI benchmarks and badges entirely
-    out["benchmarks"] = {}
-    out["kpi_badges_html"] = ""
-    return out
-        # remain after numeric stripping.  Handle both German and English
-        # variants and ignore case.
-        html = _re.sub(
-            r"\s*[\-\u2010-\u2015]\s*(min|minute|minuten|stunden|hour|hours|wochen|weeks|monate|months|pager|projektbeschreibung|poc|pocs|wochen-pocs)\b",
-            "",
-            html,
-            flags=_re.IGNORECASE,
-        )
-        # Collapse multiple spaces and punctuation into a single space.
-        html = _re.sub(r"\s{2,}", " ", html)
-        return html.strip()
 
-    # Apply sanitisation to narrative HTML fields.  In addition to quick wins,
-    # risks, recommendations and roadmap, we sanitise the vision, gamechanger
-    # and executive summary sections to remove residual numbers, units and list
-    # structures.  Including the executive summary ensures that stray
-    # percentages or KPI references created by the LLM are removed.  The
-    # "praxisbeispiel" key (which contains fallback case study HTML) is also
-    # sanitised.
-    for _key in [
-        "exec_summary_html",
-        "quick_wins_html",
-        "risks_html",
-        "recommendations_html",
-        "roadmap_html",
-        "vision_html",
-        "gamechanger_html",
-        "praxisbeispiel",
-            "compliance_html",
-    ]:
-        if isinstance(out.get(_key), str):
-            out[_key] = _strip_lists_and_numbers(out[_key])
-    # If roadmap is a list of items (post‑processed), sanitise each item
     if isinstance(out.get("roadmap"), list):
         out["roadmap"] = [_strip_lists_and_numbers(str(item)) for item in out["roadmap"]]
 
-    # If the timeline contains bullet points extracted from the roadmap, apply
-    # sanitisation to each item in each phase (t30, t90, t365) so that
-    # left‑over numbers, hyphens or units are removed.
     if isinstance(out.get("timeline"), dict):
-        for _phase in ["t30", "t90", "t365"]:
+        for _phase in ["t30","t90","t365"]:
             items = out["timeline"].get(_phase)
             if isinstance(items, list):
                 out["timeline"][_phase] = [_strip_lists_and_numbers(str(it)) for it in items]
 
-    # Remove KPI benchmarks and badges entirely
+    # KPI‑Reste entfernen
     out["benchmarks"] = {}
     out["kpi_badges_html"] = ""
+
     return out
+
 
 
 def build_ueber_mich_section(lang: str = "de") -> str:
