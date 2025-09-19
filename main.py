@@ -637,3 +637,51 @@ def root():
     <li><code>POST /feedback</code> · <code>/api/feedback</code> · <code>/v1/feedback</code></li>
   </ul>
 </body></html>""")
+
+
+# --- PDF Send Helper ---------------------------------------------------------
+# nutzt PDF_SERVICE_URL, PDF_TIMEOUT, PDF_POST_MODE (html|json)
+# Rückgabe: dict mit ok/bool und optionalen Metadaten; wirf NICHT, nur loggen
+async def send_html_to_pdf_service(
+    html: str,
+    user_email: str,
+    subject: str,
+    lang: str,
+    request_id: str,
+    file_name: str | None = None,
+) -> dict:
+    """
+    Schickt den gerenderten HTML-Report an den externen PDF-Service.
+    Unterstützt zwei Modi:
+      - PDF_POST_MODE == "html": sendet JSON mit {"html": "..."} (standard)
+    Bricht den Flow nicht ab – gibt bei Fehlern {"ok": False, "error": "..."} zurück.
+    """
+    if not PDF_SERVICE_URL:
+        logger.warning("[PDF] rid=%s no PDF_SERVICE_URL configured", request_id)
+        return {"ok": False, "error": "PDF_SERVICE_URL not set"}
+
+    url = PDF_SERVICE_URL.rstrip("/") + "/generate-pdf"
+    payload = {
+        "html": html,
+        "email": user_email or "",
+        "subject": subject or ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
+        "lang": lang,
+        "request_id": request_id,
+        "file_name": file_name or (f"KI-Statusbericht-{request_id}.pdf" if lang.startswith("de") else f"AI-Status-Report-{request_id}.pdf"),
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=PDF_TIMEOUT) as client:
+            resp = await client.post(url, json=payload)
+            status = resp.status_code
+            try:
+                data = resp.json()
+            except Exception:
+                data = {"text": resp.text}
+
+        logger.info("[PDF] rid=%s attempt status=%s", request_id, status)
+        ok = 200 <= status < 300
+        return {"ok": ok, "status": status, "data": data}
+    except Exception as e:
+        logger.warning("[PDF] rid=%s send failed: %s", request_id, e)
+        return {"ok": False, "error": str(e)}
