@@ -364,6 +364,18 @@ def _render_final_html_from_result(result: Any, lang: str) -> str:
             return _render_template_string(s, ctx)
         return s
     return _render_template_file(lang, ctx)
+def _neutralize_jinja_tokens(html: str) -> str:
+    """
+    Entfernt harmloses '{{ … }}' und '{% … %}' aus LLM-Fließtexten,
+    ohne echte Template-Slots (sections./meta.) anzutasten.
+    """
+    if not html:
+        return html
+    return (html
+            .replace("{{", "&#123;&#123;")
+            .replace("}}", "&#125;&#125;")
+            .replace("{%", "")
+            .replace("%}", ""))
 
 async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
     analyze_fn, _mod = load_analyze_module()
@@ -371,9 +383,16 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
         try:
             result = analyze_fn(body, lang=lang)
             html = _render_final_html_from_result(result, lang)
-            head = html[:400]
-            if ("{{" in html) or ("{%" in html):
-                raise RuntimeError("Template not fully rendered – unresolved Jinja tags found in output")
+            # Nur dann abbrechen, wenn echte Template-Slots (sections./meta.) übrig sind.
+if ("{{ sections." in html) or ("{{ meta." in html):
+    raise RuntimeError("Template not fully rendered – unresolved template slots")
+
+# LLM-Fließtexte können harmlose '{{ … }}' enthalten → entschärfen
+if ("{{" in html) or ("{%" in html):
+    html = _neutralize_jinja_tokens(html)
+
+return html
+
             return html
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
