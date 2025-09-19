@@ -71,13 +71,17 @@ def _sanitize_html(s: str) -> str:
 
 def _build_live_box(ctx: dict, lang: str) -> str:
     try:
+        # Query aus Kontext generieren (Branche × Größe × Leistung)
         q = live_query_for(ctx, lang=lang)
-        links = search_links(q, lang=lang)  # akzeptiert jetzt lang
-        title = "Neu seit " + _month_year(lang) if lang.startswith("de") else "New since " + _month_year(lang)
-        return render_live_box_html(title, links, lang=lang)  # keyword-only => keine Doppelbelegung
+        # Tavily first, dann SerpAPI
+        links = search_links(q, num=5, lang=lang, country=("de" if lang.startswith("de") else "uk"))
+        # HTML sauber rendern (Signatur tolerant; kein multiple-values Fehler mehr)
+        title = "New since" if lang.startswith("en") else "Neu seit"
+        return render_live_box_html(title, links, lang=lang)
     except Exception as e:
         log.warning("live box search failed: %s", e)
         return ""
+
 
 def _finalize_ctx(body: Dict[str, Any], out: Dict[str, Any], lang: str) -> Dict[str, Any]:
     # Metadaten (Branche/Größe/Standort) aus Ergebnis ODER Eingabe
