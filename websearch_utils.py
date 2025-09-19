@@ -1,139 +1,144 @@
-# websearch_utils.py  — Tavily-first (SerpAPI fallback) + TTL cache
+# websearch_utils.py — HF-FINAL 2025-09-19
 from __future__ import annotations
-import os, time, logging, httpx, urllib.parse
-from typing import List, Dict, Optional, Tuple
+import os, time, logging
+from typing import List, Dict, Any, Optional, Tuple
+from urllib.parse import urlencode
+import httpx
 
 log = logging.getLogger("websearch")
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-if not log.handlers:
-    logging.basicConfig(level=LOG_LEVEL, format="%(levelname)s %(asctime)s [websearch] %(message)s")
+TAVILY_KEY = (os.getenv("TAVILY_API_KEY") or "").strip()
+SERPAPI_KEY = (os.getenv("SERPAPI_KEY") or "").strip()
 
-TAVILY_API_KEY = (os.getenv("TAVILY_API_KEY") or "").strip()
-SERPAPI_KEY    = (os.getenv("SERPAPI_KEY") or "").strip()
+# Simple TTL cache
+_CACHE: Dict[Tuple, Tuple[float, List[Dict[str, Any]]]] = {}
+_TTL = int(os.getenv("WEBSEARCH_TTL", "3600"))
 
-SEARCH_DAYS        = int(os.getenv("SEARCH_DAYS", "30"))
-SEARCH_MAX_RESULTS = int(os.getenv("SEARCH_MAX_RESULTS", "5"))
-SEARCH_DEPTH       = os.getenv("SEARCH_DEPTH", "basic")  # basic|advanced
-SEARCH_TOPIC       = os.getenv("SEARCH_TOPIC", "") or None
-INCLUDE_DOMAINS    = [d.strip() for d in (os.getenv("SEARCH_INCLUDE_DOMAINS", "") or "").split(",") if d.strip()]
-EXCLUDE_DOMAINS    = [d.strip() for d in (os.getenv("SEARCH_EXCLUDE_DOMAINS", "") or "").split(",") if d.strip()]
+def _cache_get(key: Tuple) -> Optional[List[Dict[str, Any]]]:
+    now = time.time()
+    item = _CACHE.get(key)
+    if not item:
+        return None
+    ts, val = item
+    if now - ts > _TTL:
+        _CACHE.pop(key, None)
+        return None
+    return val
 
-CACHE_TTL = int(os.getenv("REPORT_CACHE_TTL_SECONDS", "600"))
-_CACHE: Dict[Tuple, Tuple[float, list]] = {}
+def _cache_set(key: Tuple, val: List[Dict[str, Any]]):
+    _CACHE[key] = (time.time(), val)
 
-def _cache_get(key: Tuple) -> Optional[list]:
-    hit = _CACHE.get(key)
-    if not hit: return None
-    ts, data = hit
-    if time.time() - ts < CACHE_TTL:
-        return data
-    _CACHE.pop(key, None)
-    return None
-
-def _cache_put(key: Tuple, data: list) -> None:
-    _CACHE[key] = (time.time(), data)
-
-def _norm_links(items: list) -> list:
+def _normalize_links(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     out = []
     for it in items or []:
-        title   = it.get("title") or it.get("name") or it.get("source") or ""
-        url     = it.get("url") or it.get("link") or ""
-        snippet = it.get("content") or it.get("snippet") or ""
-        date    = it.get("published_date") or it.get("date") or ""
-        if url and title:
-            out.append({"title": title.strip(), "url": url.strip(), "snippet": (snippet or "").strip(), "date": (date or "").strip()})
-    return out[:SEARCH_MAX_RESULTS]
+        out.append({
+            "title": it.get("title") or it.get("name") or "",
+            "url": it.get("url") or it.get("link") or "",
+            "snippet": it.get("snippet") or it.get("content") or it.get("description") or "",
+            "date": it.get("published_date") or it.get("date") or "",
+            "source": it.get("source") or it.get("domain") or "",
+        })
+    # dedupe by url
+    seen = set()
+    uniq = []
+    for x in out:
+        u = x["url"]
+        if not u or u in seen:
+            continue
+        seen.add(u)
+        uniq.append(x)
+    return uniq
 
-def _tavily(query: str, *, days: int, max_results: int, depth: str, topic: Optional[str],
-            include_domains: Optional[list], exclude_domains: Optional[list]) -> list:
-    if not TAVILY_API_KEY:
-        raise RuntimeError("Tavily key missing")
+def _tavily_search(query: str, lang: str, num: int, recency_days: int) -> List[Dict[str, Any]]:
+    if not TAVILY_KEY:
+        raise RuntimeError("TAVILY_API_KEY missing")
     payload = {
-        "api_key": TAVILY_API_KEY,
         "query": query,
-        "max_results": max_results,
-        "search_depth": depth if depth in ("basic","advanced") else "basic",
-        "include_domains": include_domains or None,
-        "exclude_domains": exclude_domains or None,
-        "topic": topic,
-        "days": days
+        "search_depth": "advanced",
+        "include_answer": False,
+        "include_domains": None,
+        "max_results": num,
+        "days": recency_days
     }
-    with httpx.Client(timeout=30) as cx:
-        r = cx.post("https://api.tavily.com/search", json=payload)
-        r.raise_for_status()
-        data = r.json()
-    return _norm_links(data.get("results", []))
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {TAVILY_KEY}"}
+    r = httpx.post("https://api.tavily.com/search", json=payload, headers=headers, timeout=30)
+    r.raise_for_status()
+    data = r.json()
+    return _normalize_links(data.get("results", []))
 
-def _serpapi(query: str, *, days: int, max_results: int, lang: str) -> list:
+def _serpapi_search(query: str, lang: str, num: int, recency_days: int) -> List[Dict[str, Any]]:
     if not SERPAPI_KEY:
         return []
-    # Zeitfilter (z. B. letzte 30 Tage): qdr:m (Monat) – wir bleiben konservativ
-    tbs = "qdr:m" if days and days <= 31 else ""
     params = {
         "engine": "google",
         "q": query,
-        "api_key": SERPAPI_KEY,
-        "num": max_results,
+        "num": num,
         "hl": "de" if lang.startswith("de") else "en",
         "gl": "de" if lang.startswith("de") else "us",
-        "tbs": tbs
+        "tbs": "qdr:m",  # last month
+        "api_key": SERPAPI_KEY,
     }
-    url = "https://serpapi.com/search.json?" + urllib.parse.urlencode(params)
-    with httpx.Client(timeout=30) as cx:
-        r = cx.get(url)
-        r.raise_for_status()
-        data = r.json()
-    items = data.get("organic_results", []) or []
-    return _norm_links(items)
+    url = f"https://serpapi.com/search.json?{urlencode(params)}"
+    r = httpx.get(url, timeout=30)
+    r.raise_for_status()
+    data = r.json()
+    items = []
+    for it in (data.get("organic_results") or []):
+        items.append({
+            "title": it.get("title"),
+            "url": it.get("link"),
+            "snippet": it.get("snippet"),
+            "date": it.get("date"),
+            "source": it.get("source"),
+        })
+    return _normalize_links(items)
 
-def search_links(query: str, *, lang: str="de", days: int=SEARCH_DAYS, max_results: int=SEARCH_MAX_RESULTS,
-                 depth: str=SEARCH_DEPTH, topic: Optional[str]=SEARCH_TOPIC,
-                 include_domains: Optional[list]=INCLUDE_DOMAINS, exclude_domains: Optional[list]=EXCLUDE_DOMAINS,
-                 **kwargs) -> list:
-    """
-    Tavily-first; SerpAPI fallback. Accepts extra kwargs defensively.
-    Returns: list of {title, url, snippet, date}
-    """
-    key = ("links", query, lang, days, max_results, depth, topic, tuple(include_domains or []), tuple(exclude_domains or []))
+def search_links(query: str, lang: str = "de", num: int = 5, recency_days: int = 31) -> List[Dict[str, Any]]:
+    """Tavily-first, SerpAPI fallback. Stable signature used by gpt_analyze."""
+    key = ("v2", query.strip(), lang[:2], num, recency_days)
     cached = _cache_get(key)
     if cached is not None:
         return cached
     try:
-        links = _tavily(query, days=days, max_results=max_results, depth=depth, topic=topic,
-                        include_domains=include_domains, exclude_domains=exclude_domains)
+        items = _tavily_search(query, lang, num, recency_days)
     except Exception as e:
         log.warning("tavily failed: %s", e)
-        links = _serpapi(query, days=days, max_results=max_results, lang=lang)
-    _cache_put(key, links)
-    return links
+        try:
+            items = _serpapi_search(query, lang, num, recency_days)
+        except Exception as e2:
+            log.error("serpapi fallback failed: %s", e2)
+            items = []
+    items = items[:num]
+    _cache_set(key, items)
+    return items
 
-def live_query_for(ctx: dict, *, lang: str="de") -> str:
-    branche = (ctx.get("branche") or ctx.get("industry") or "").strip()
-    size    = (ctx.get("groesse") or ctx.get("company_size") or "").strip()
-    offer   = (ctx.get("hauptleistung") or ctx.get("hauptprodukt") or ctx.get("main_offer") or "").strip()
+def live_query_for(ctx: Dict[str, Any], lang: str = "de") -> str:
+    meta = (ctx or {}).get("meta", {})
+    industry = meta.get("industry") or meta.get("branche") or ""
+    size = (meta.get("company_size") or meta.get("unternehmensgroesse") or "").lower()
+    product = meta.get("main_product") or meta.get("hauptleistung") or ""
+    country = meta.get("hq_country") or "de" if lang.startswith("de") else "us"
+
+    # kompakte Query für Tools & Förderung, gefiltert nach Branche × Größe × Hauptleistung
     if lang.startswith("de"):
-        base = f"{branche} {offer} Mittelstand {size}".strip()
-        suffix = "(Förderung KI OR Zuschuss KI OR Programm KI OR Tool KI OR Software KI)"
-        return " ".join(x for x in [base, suffix] if x)
+        return f"""{industry} {product} Mittelstand {size} 
+(„KI Förderung“ OR „Zuschuss KI“ OR „Förderprogramm KI“ OR „KI Tool“ OR „KI Software“)
+site:.de"""
     else:
-        base = f"{branche} {offer} SME {size}".strip()
-        suffix = "(grant AI OR subsidy AI OR program AI OR AI tool OR AI software)"
-        return " ".join(x for x in [base, suffix] if x)
+        return f"""{industry} {product} SME {size} 
+("AI grant" OR "AI subsidy" OR "AI program" OR "AI tool" OR "AI software")"""
 
-def render_live_box_html(title: str, links: List[Dict[str,str]], *, lang: str="de", accent: Optional[str]=None) -> str:
+def render_live_box_html(title: str, links: List[Dict[str, Any]], lang: str = "de") -> str:
     if not links:
         return ""
-    accent = accent or ("#0b5ed7" if lang.startswith("de") else "#0b5ed7")
-    items = "\n".join(
-        f'<li><a href="{l["url"]}" target="_blank">{l["title"]}</a>'
-        + (f' <span style="opacity:.7">({l["date"]})</span>' if l.get("date") else "")
-        + (f'<br><span style="opacity:.9">{l["snippet"]}</span>' if l.get("snippet") else "")
-        + "</li>"
-        for l in links
-    )
-    return f"""
-    <div style="border:1px solid {accent}; border-left:6px solid {accent}; padding:12px 14px; margin:10px 0 18px 0; border-radius:6px;">
-      <div style="font-weight:700; color:{accent}; margin-bottom:6px;">{title}</div>
-      <ul style="margin:0; padding-left:18px;">{items}</ul>
-    </div>
-    """
+    lab = "Neu seit" if lang.startswith("de") else "New since"
+    html = [f'<section class="live-box"><h3>{lab} {title.split()[-2]} {title.split()[-1]}</h3><ul>']
+    for it in links:
+        t = (it.get("title") or "").strip()
+        u = (it.get("url") or "").strip()
+        s = (it.get("snippet") or "").strip()
+        d = (it.get("date") or "").strip()
+        src = (it.get("source") or "").strip()
+        meta = " · ".join([x for x in (d, src) if x])
+        html.append(f'<li><a href="{u}">{t}</a><div class="meta">{meta}</div><p>{s}</p></li>')
+    html.append("</ul></section>")
+    return "\n".join(html)
