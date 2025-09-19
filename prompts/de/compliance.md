@@ -1,1 +1,0 @@
-<p>Fasse die relevanten Pflichten aus EU‑AI‑Act, DSGVO (inkl. DSFA, AVV), ePrivacy und ggf. DSA zusammen – realistisch für KMU, ohne Juristendeutsch. Baue konkrete „Was heißt das für Sie?“-Sätze ein.</p>
