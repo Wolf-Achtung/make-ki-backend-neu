@@ -1,4 +1,5 @@
-# main.py — Block 1/2
+# main.py — KI-Readiness Backend (2025-09-19, patched Jinja-check)
+
 import os
 import sys
 import time
@@ -29,6 +30,7 @@ from contextlib import asynccontextmanager
 
 # Jinja für HTML-Rendering
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import TemplateNotFound
 from urllib.parse import quote_plus
 import datetime as dt
 
@@ -38,6 +40,7 @@ import smtplib
 from email.message import EmailMessage
 from email.utils import parseaddr, formataddr
 
+
 # ----------------------------
 # Basis-Config & Logger
 # ----------------------------
@@ -45,6 +48,7 @@ APP_NAME = "KI-Readiness Backend"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, format="%(levelname)s %(asctime)s [%(name)s] %(message)s")
 logger = logging.getLogger("backend")
+
 
 # ----------------------------
 # ENV/Settings
@@ -64,7 +68,7 @@ if CORS_ALLOW == ["*"]:
     CORS_ALLOW = ["*"]
 
 # Templates
-TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", "templates")   # statt "."
+TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", "templates")
 TEMPLATE_DE  = os.getenv("TEMPLATE_DE",  "pdf_template.html")
 TEMPLATE_EN  = os.getenv("TEMPLATE_EN",  "pdf_template_en.html")
 
@@ -81,8 +85,10 @@ IDEMP_DIR = os.getenv("IDEMP_DIR", "/tmp/ki_idempotency")
 IDEMP_TTL_SECONDS = int(os.getenv("IDEMP_TTL_SECONDS", "1800"))  # 30 min
 os.makedirs(IDEMP_DIR, exist_ok=True)
 
+
 def _idem_path(key: str) -> str:
     return os.path.join(IDEMP_DIR, f"{key}.json")
+
 
 def _stable_json(obj: Dict[str, Any]) -> str:
     try:
@@ -90,11 +96,13 @@ def _stable_json(obj: Dict[str, Any]) -> str:
     except Exception:
         return str(obj)
 
+
 def make_idempotency_key(user_email: str, payload: Dict[str, Any], html: Optional[str] = None) -> str:
     base = {"user": (user_email or "").strip().lower(), "payload": payload}
     if html is not None:
         base["html_sha256"] = hashlib.sha256((html or "").encode("utf-8")).hexdigest()
     return hashlib.sha256(_stable_json(base).encode("utf-8")).hexdigest()
+
 
 def idempotency_get(key: str) -> Optional[Dict[str, Any]]:
     p = _idem_path(key)
@@ -105,12 +113,15 @@ def idempotency_get(key: str) -> Optional[Dict[str, Any]]:
             data = json.load(f)
         ts = float(data.get("ts", 0))
         if (time.time() - ts) > IDEMP_TTL_SECONDS:
-            try: os.remove(p)
-            except Exception: pass
+            try:
+                os.remove(p)
+            except Exception:
+                pass
             return None
         return data
     except Exception:
         return None
+
 
 def idempotency_set(key: str, meta: Dict[str, Any]) -> None:
     p = _idem_path(key)
@@ -120,10 +131,12 @@ def idempotency_set(key: str, meta: Dict[str, Any]) -> None:
     except Exception:
         pass
 
+
 # ----------------------------
 # DB-Pool (optional)
 # ----------------------------
 DB_POOL = None
+
 
 def _init_db_pool():
     global DB_POOL
@@ -145,6 +158,7 @@ def _init_db_pool():
         logger.exception("[DB] Pool-Init fehlgeschlagen: %s", e)
         DB_POOL = None
 
+
 def _close_db_pool():
     global DB_POOL
     try:
@@ -154,12 +168,11 @@ def _close_db_pool():
             logger.info("[DB] Pool geschlossen")
     except Exception as e:
         logger.exception("[DB] Pool-Close fehlgeschlagen: %s", e)
-# main.py — Block 2/2
+
+
 # ----------------------------
 # Jinja-Environment
 # ----------------------------
-from jinja2 import TemplateNotFound
-
 def _build_jinja_env() -> Environment:
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
@@ -169,7 +182,9 @@ def _build_jinja_env() -> Environment:
     env.filters["urlencode"] = lambda s: quote_plus(str(s or ""))
     return env
 
+
 _JINJA = _build_jinja_env()
+
 
 def _render_template_file(lang: str, ctx: dict) -> str:
     name = TEMPLATE_DE if (lang or "de").lower().startswith("de") else TEMPLATE_EN
@@ -179,18 +194,23 @@ def _render_template_file(lang: str, ctx: dict) -> str:
         raise RuntimeError(f"'{name}' not found in search path: '{TEMPLATE_DIR}'") from e
     return tpl.render(**ctx, now=dt.datetime.now)
 
+
 def _render_template_string(tpl_str: str, ctx: dict) -> str:
     tpl = _JINJA.from_string(tpl_str)
     return tpl.render(**ctx, now=dt.datetime.now)
 
+
 def _clean_header_value(v: Optional[str]) -> Optional[str]:
-    if not v: return None
+    if not v:
+        return None
     v = v.replace("\r", "").replace("\n", "").strip()
-    if not v: return None
+    if not v:
+        return None
     name, addr = parseaddr(v)
     if addr:
         return formataddr((name, addr)) if name else addr
     return v
+
 
 async def send_feedback_mail_async(data: Dict[str, Any], user_email_hdr: Optional[str], ua: str, ip: str) -> None:
     if not (SMTP_HOST and SMTP_USER and SMTP_PASS and (FEEDBACK_TO or SMTP_FROM)):
@@ -209,17 +229,22 @@ async def send_feedback_mail_async(data: Dict[str, Any], user_email_hdr: Optiona
     msg["Subject"] = subject
     msg["From"] = from_addr
     msg["To"] = to_addr
-    if reply_to: msg["Reply-To"] = reply_to
+    if reply_to:
+        msg["Reply-To"] = reply_to
 
-    order = ["email","variant","report_version","hilfe","verstaendlich_analyse","verstaendlich_empfehlung","vertrauen","dauer",
-             "serio","textstellen","unsicher","features","freitext","tipp_name","tipp_firma","tipp_email","timestamp"]
-    seen = set(); fields = []
+    order = ["email", "variant", "report_version", "hilfe", "verstaendlich_analyse", "verstaendlich_empfehlung",
+             "vertrauen", "dauer", "serio", "textstellen", "unsicher", "features", "freitext",
+             "tipp_name", "tipp_firma", "tipp_email", "timestamp"]
+    seen = set()
+    fields = []
     for k in order:
         v = data.get(k)
         if v is not None and str(v).strip() != "":
-            seen.add(k); fields.append(f"{k}: {v}")
+            seen.add(k)
+            fields.append(f"{k}: {v}")
     for k in sorted(data.keys()):
-        if k in seen: continue
+        if k in seen:
+            continue
         v = data[k]
         if v is not None and str(v).strip() != "":
             fields.append(f"{k}: {v}")
@@ -229,30 +254,52 @@ async def send_feedback_mail_async(data: Dict[str, Any], user_email_hdr: Optiona
 
     def _send():
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as s:
-            try: s.starttls()
-            except Exception: pass
+            try:
+                s.starttls()
+            except Exception:
+                pass
             s.login(SMTP_USER, SMTP_PASS)
             s.send_message(msg)
 
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, _send)
 
+
 # ---------- kleine Helpers ----------
 def strip_code_fences(text: str) -> str:
-    if not text: return text
+    if not text:
+        return text
     t = text.replace("\r", "")
-    t = t.replace("```html","```").replace("```HTML","```")
+    t = t.replace("```html", "```").replace("```HTML", "```")
     while "```" in t:
-        t = t.replace("```","")
+        t = t.replace("```", "")
     return t
+
+
+def _neutralize_jinja_tokens(html: str) -> str:
+    """
+    Entfernt harmlose '{{ … }}' / '{% … %}'-Fragmente aus LLM-Fließtexten,
+    ohne echte Template-Slots (sections./meta.) anzutasten.
+    """
+    if not html:
+        return html
+    return (html
+            .replace("{{", "&#123;&#123;")
+            .replace("}}", "&#125;&#125;")
+            .replace("{%", "")
+            .replace("%}", ""))
+
 
 # ---------- JWT ----------
 def create_access_token(data: Dict[str, Any], expires_in: int = JWT_EXP_SECONDS) -> str:
-    payload = data.copy(); payload["exp"] = int(time.time()) + expires_in
+    payload = data.copy()
+    payload["exp"] = int(time.time()) + expires_in
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
+
 
 def decode_token(token: str) -> Dict[str, Any]:
     return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
+
 
 def current_user(request: Request) -> Dict[str, Any]:
     auth = request.headers.get("Authorization", "")
@@ -263,6 +310,7 @@ def current_user(request: Request) -> Dict[str, Any]:
         return decode_token(token)
     except JWTError as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+
 
 # ---------- Diagnose ----------
 def load_analyze_module():
@@ -280,6 +328,7 @@ def load_analyze_module():
         logger.exception("gpt_analyze Importfehler: %s", e)
         return None, None
 
+
 # ---------- Health/Diag ----------
 async def health_info():
     return {
@@ -288,12 +337,14 @@ async def health_info():
         "pdf_service_url": PDF_SERVICE_URL or None,
         "pdf_post_mode": PDF_POST_MODE,
         "timeout": PDF_TIMEOUT,
-        "version": "2025-09-18",
+        "version": "2025-09-19",
     }
+
 
 # ---------- PDF-Service ----------
 async def warmup_pdf_service(request_id: str, base_url: str, timeout: float = 10.0):
-    if not base_url: return
+    if not base_url:
+        return
     try:
         to = httpx.Timeout(connect=timeout, read=timeout, write=timeout, pool=timeout)
         async with httpx.AsyncClient(http2=True, timeout=to) as c:
@@ -301,6 +352,7 @@ async def warmup_pdf_service(request_id: str, base_url: str, timeout: float = 10
             logger.info("[PDF] rid=%s warmup %s", request_id, r.status_code)
     except Exception as e:
         logger.warning("[PDF] rid=%s warmup failed: %s", request_id, repr(e))
+
 
 async def send_html_to_pdf_service(
     html: str, user_email: str, subject: str = "KI-Readiness Report", lang: str = "de", request_id: Optional[str] = None
@@ -318,23 +370,33 @@ async def send_html_to_pdf_service(
         for attempt in range(1, 4):
             try:
                 if PDF_POST_MODE == "json":
-                    payload = {"html": html, "to": user_email or "", "adminEmail": ADMIN_EMAIL or "", "subject": subject, "lang": lang, "rid": rid}
+                    payload = {"html": html, "to": user_email or "", "adminEmail": ADMIN_EMAIL or "",
+                               "subject": subject, "lang": lang, "rid": rid}
                     resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", json=payload)
                 else:
                     headers = {
-                        "X-Request-ID": rid, "X-User-Email": user_email or "", "X-Subject": subject, "X-Lang": lang,
-                        "Accept": "application/pdf", "Content-Type": "text/html; charset=utf-8",
+                        "X-Request-ID": rid,
+                        "X-User-Email": user_email or "",
+                        "X-Subject": subject,
+                        "X-Lang": lang,
+                        "Accept": "application/pdf",
+                        "Content-Type": "text/html; charset=utf-8",
                     }
-                    resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", headers=headers, content=html.encode("utf-8"))
+                    resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf",
+                                             headers=headers, content=html.encode("utf-8"))
 
                 ok = 200 <= resp.status_code < 300
                 data = {}
-                try: data = resp.json()
-                except Exception: pass
+                try:
+                    data = resp.json()
+                except Exception:
+                    pass
 
                 logger.info("[PDF] rid=%s attempt=%s status=%s", rid, attempt, resp.status_code)
-                return {"ok": ok, "status": resp.status_code, "data": data if data else {"headers": dict(resp.headers)},
-                        "error": None if ok else f"HTTP {resp.status_code}", "user": user_email, "admin": ADMIN_EMAIL}
+                return {"ok": ok, "status": resp.status_code,
+                        "data": data if data else {"headers": dict(resp.headers)},
+                        "error": None if ok else f"HTTP {resp.status_code}",
+                        "user": user_email, "admin": ADMIN_EMAIL}
             except (httpx.ReadTimeout, httpx.ConnectTimeout) as e:
                 last_exc = e
                 wait = 1.8 ** attempt
@@ -347,58 +409,64 @@ async def send_html_to_pdf_service(
 
     raise httpx.ReadTimeout(f"PDF service timed out after retries ({PDF_TIMEOUT}s).") from last_exc
 
+
 # ---------- Analyze → HTML ----------
 def _render_final_html_from_result(result: Any, lang: str) -> str:
+    """
+    result: dict (Template-Context oder {'html': ...}) oder str (fertiges HTML).
+    """
     ctx = result if isinstance(result, dict) else {}
     html = ""
     if isinstance(result, dict):
         html = (result.get("html") or "").strip()
         if html:
+            # evtl. Inline-Jinja-String des Analysemoduls
             if ("{{" in html) or ("{%" in html):
                 return _render_template_string(html, ctx)
             return strip_code_fences(html)
+        # kein 'html' — Dateitemplate mit Context
         return _render_template_file(lang, ctx)
     elif isinstance(result, str):
         s = strip_code_fences(result)
         if ("{{" in s) or ("{%" in s):
             return _render_template_string(s, ctx)
         return s
+    # Fallback: Dateitemplate
     return _render_template_file(lang, ctx)
-def _neutralize_jinja_tokens(html: str) -> str:
-    """
-    Entfernt harmloses '{{ … }}' und '{% … %}' aus LLM-Fließtexten,
-    ohne echte Template-Slots (sections./meta.) anzutasten.
-    """
-    if not html:
-        return html
-    return (html
-            .replace("{{", "&#123;&#123;")
-            .replace("}}", "&#125;&#125;")
-            .replace("{%", "")
-            .replace("%}", ""))
+
 
 async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
+    """
+    Ruft analyze_briefing aus gpt_analyze auf, rendert HTML und neutralisiert harmlose
+    Jinja-Fragmente in LLM-Fließtexten, ohne echte Template-Slots zu verschlucken.
+    """
     analyze_fn, _mod = load_analyze_module()
     if analyze_fn:
         try:
             result = analyze_fn(body, lang=lang)
             html = _render_final_html_from_result(result, lang)
-            # Nur dann abbrechen, wenn echte Template-Slots (sections./meta.) übrig sind.
-if ("{{ sections." in html) or ("{{ meta." in html):
-    raise RuntimeError("Template not fully rendered – unresolved template slots")
 
-# LLM-Fließtexte können harmlose '{{ … }}' enthalten → entschärfen
-if ("{{" in html) or ("{%" in html):
-    html = _neutralize_jinja_tokens(html)
+            # --- PATCHED JINJA CHECK ---
+            # Nur abbrechen, wenn echte Template-Slots übrig sind
+            if ("{{ sections." in html) or ("{{ meta." in html):
+                raise RuntimeError("Template not fully rendered – unresolved template slots")
 
-return html
+            # Harmloses '{{ ... }}' aus LLM-Fließtexten entschärfen
+            if ("{{" in html) or ("{%" in html):
+                html = _neutralize_jinja_tokens(html)
 
             return html
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
-    fallback = {"title": "KI-Readiness Report" if lang.startswith("de") else "AI Readiness Report",
-                "executive_summary": "Analysemodul nicht geladen – Fallback.", "score_percent": 0}
+
+    # Minimaler Fallback (sollte nur bei harten Fehlern greifen)
+    fallback = {
+        "title": "KI-Readiness Report" if lang.startswith("de") else "AI Readiness Report",
+        "executive_summary": "Analysemodul nicht geladen – Fallback.",
+        "score_percent": 0
+    }
     return _render_template_file(lang, fallback)
+
 
 # ---------- Feedback-Model & Handler ----------
 class Feedback(BaseModel):
@@ -421,8 +489,10 @@ class Feedback(BaseModel):
     timestamp: Optional[str] = None
     best: Optional[str] = None
     next: Optional[str] = None
+
     class Config:
         extra = "allow"
+
 
 async def _handle_feedback(payload: Feedback, request: Request, authorization: Optional[str] = None):
     try:
@@ -436,12 +506,14 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
                 user_email = claims.get("email") or claims.get("sub")
             except Exception as e:
                 logger.info("[FEEDBACK] Token nicht validiert: %s", repr(e))
+
         try:
             raw_json = await request.json()
             if not isinstance(raw_json, dict):
                 raw_json = {}
         except Exception:
             raw_json = {}
+
         data = {**payload.dict(exclude_none=True), **{k: v for k, v in raw_json.items() if v is not None}}
         if not data.get("timestamp"):
             data["timestamp"] = dt.datetime.utcnow().isoformat()
@@ -449,6 +521,7 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
         ua = request.headers.get("user-agent", "")
         ip = request.client.host if request.client else ""
         inserted = False
+
         if 'DB_POOL' in globals() and DB_POOL:
             try:
                 conn = DB_POOL.getconn()
@@ -474,18 +547,22 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
                     DB_POOL.putconn(conn)
             except Exception as e:
                 logger.exception("[FEEDBACK] DB insert failed: %s", e)
+
         if not inserted:
             logger.info("[FEEDBACK] (log-only) ip=%s ua=%s data=%s", ip, ua, json.dumps(data, ensure_ascii=False))
+
         try:
             asyncio.create_task(send_feedback_mail_async(data, user_email, ua, ip))
         except Exception as e:
             logger.warning("[MAIL] dispatch failed: %s", e)
+
         return {"ok": True, "stored": bool(inserted)}
     except Exception as e:
         logger.exception("[FEEDBACK] Fehler: %s", e)
         raise HTTPException(status_code=500, detail="feedback failed")
 
-# ---------- Lifespan statt on_event ----------
+
+# ---------- Lifespan ----------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
@@ -498,6 +575,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.exception("[DB] Shutdown-Close fehlgeschlagen: %s", e)
 
+
 # ---------- App ----------
 app = FastAPI(title=APP_NAME, lifespan=lifespan)
 app.add_middleware(
@@ -508,10 +586,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # ---------- Endpunkte ----------
 @app.get("/health")
 async def health():
     return JSONResponse(await health_info())
+
 
 @app.get("/diag/analyze")
 def diag_analyze():
@@ -530,6 +610,7 @@ def diag_analyze():
         info["error"] = repr(e)
     return JSONResponse(info)
 
+
 @app.post("/api/login")
 def api_login(body: Dict[str, Any]):
     email = (body.get("email") or "").strip().lower()
@@ -539,16 +620,25 @@ def api_login(body: Dict[str, Any]):
     token = create_access_token({"sub": email, "email": email, "role": "user"})
     return {"access_token": token, "token_type": "bearer"}
 
+
 # In-Memory Job Store
 TASKS: Dict[str, Dict[str, Any]] = {}
-def new_job() -> str: return uuid.uuid4().hex
+
+
+def new_job() -> str:
+    return uuid.uuid4().hex
+
+
 def set_job(job_id: str, **kwargs):
-    TASKS.setdefault(job_id, {}); TASKS[job_id].update(kwargs)
+    TASKS.setdefault(job_id, {})
+    TASKS[job_id].update(kwargs)
+
 
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends(current_user)):
     lang = (body.get("lang") or "de").lower()
-    job_id = new_job(); rid = job_id
+    job_id = new_job()
+    rid = job_id
     set_job(job_id, status="running", created=int(time.time()), lang=lang, email_admin=ADMIN_EMAIL)
 
     async def run():
@@ -561,12 +651,7 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
             if not user_email:
                 raise RuntimeError("No recipient (user email) available")
 
-            head = html[:400]
-            if ("{{" in head) or ("{%" in head):
-                logger.error("[PDF] unresolved template markers detected – aborting PDF send")
-                set_job(job_id, status="error", error="Template not fully rendered – unresolved Jinja tags in HTML")
-                return
-
+            # Idempotency-Check
             try:
                 pre_key = make_idempotency_key(user_email, body, html)
                 prev = idempotency_get(pre_key)
@@ -578,9 +663,12 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
             except Exception as _e:
                 logger.warning("[IDEMP] check failed: %s", _e)
 
-            res = await send_html_to_pdf_service(html, user_email, subject="KI-Readiness Report", lang=lang, request_id=rid)
-            set_job(job_id, pdf_sent=bool(res.get("ok")), pdf_status=res.get("status"), pdf_meta=res.get("data"),
-                    status="done" if res.get("ok") else "error", error=None if res.get("ok") else res.get("error"))
+            res = await send_html_to_pdf_service(html, user_email,
+                                                 subject="KI-Readiness Report",
+                                                 lang=lang, request_id=rid)
+            set_job(job_id, pdf_sent=bool(res.get("ok")), pdf_status=res.get("status"),
+                    pdf_meta=res.get("data"), status="done" if res.get("ok") else "error",
+                    error=None if res.get("ok") else res.get("error"))
 
             try:
                 if res.get('ok'):
@@ -595,12 +683,14 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
     bg.add_task(run)
     return {"job_id": job_id, "status": "queued"}
 
+
 @app.get("/briefing_status/{job_id}")
 async def briefing_status(job_id: str, user=Depends(current_user)):
     st = TASKS.get(job_id)
     if not st:
         raise HTTPException(status_code=404, detail="unknown job_id")
     return JSONResponse(st)
+
 
 @app.post("/pdf_test")
 async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
@@ -611,17 +701,21 @@ async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
     res = await send_html_to_pdf_service(html, to, subject="KI-Readiness Report (Test)", lang=lang, request_id="pdf_test")
     return res
 
+
 @app.post("/feedback")
 async def feedback_root(payload: Feedback, request: Request, authorization: Optional[str] = None):
     return await _handle_feedback(payload, request, authorization)
+
 
 @app.post("/api/feedback")
 async def feedback_api(payload: Feedback, request: Request, authorization: Optional[str] = None):
     return await _handle_feedback(payload, request, authorization)
 
+
 @app.post("/v1/feedback")
 async def feedback_v1(payload: Feedback, request: Request, authorization: Optional[str] = None):
     return await _handle_feedback(payload, request, authorization)
+
 
 @app.get("/")
 def root():
