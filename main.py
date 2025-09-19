@@ -262,21 +262,16 @@ def current_user(request: Request) -> Dict[str, Any]:
 def load_analyze_module():
     """
     Load gpt_analyze.analyze_briefing with preference for the file next to this main.py.
-    Falls back to normal import if the direct load fails.
-    Also logs the resolved path to help spot shadow copies in the container.
+    Falls back to normal import if the direct load fails. Logs the path to spot shadow copies.
     """
     import os, sys, importlib, importlib.util, logging
     logger = logging.getLogger("backend")
-
-    # Caches invalidieren & evtl. geladenes Modul entfernen
     try:
         importlib.invalidate_caches()
         if "gpt_analyze" in sys.modules:
             del sys.modules["gpt_analyze"]
     except Exception:
         pass
-
-    # 1) Direktlader: gpt_analyze.py neben main.py bevorzugen
     here = os.path.dirname(os.path.abspath(__file__))
     candidate = os.path.join(here, "gpt_analyze.py")
     if os.path.exists(candidate):
@@ -295,8 +290,6 @@ def load_analyze_module():
             logger.error("gpt_analyze SyntaxError (direct at %s): %s", candidate, e)
         except Exception as e:
             logger.exception("gpt_analyze direct load failed: %s", e)
-
-    # 2) Fallback: normaler Import über sys.path (kann Shadow-Kopien treffen)
     try:
         ga = importlib.import_module("gpt_analyze")
         fn = getattr(ga, "analyze_briefing", None)
@@ -309,75 +302,6 @@ def load_analyze_module():
     except Exception as e:
         logger.exception("gpt_analyze Importfehler: %s", e)
     return None, None
-
-
-# ---------- Health/Diag ----------
-async def health_info():
-    return {
-        "ok": True,
-        "time": int(time.time()),
-        "pdf_service_url": PDF_SERVICE_URL or None,
-        "pdf_post_mode": PDF_POST_MODE,
-        "timeout": PDF_TIMEOUT,
-        "version": "2025-09-17",
-    }
-# ---------- PDF-Service ----------
-async def warmup_pdf_service(request_id: str, base_url: str, timeout: float = 10.0):
-    if not base_url: return
-    try:
-        to = httpx.Timeout(connect=timeout, read=timeout, write=timeout, pool=timeout)
-        async with httpx.AsyncClient(http2=True, timeout=to) as c:
-            r = await c.get(f"{base_url}/health")
-            logger.info("[PDF] rid=%s warmup %s", request_id, r.status_code)
-    except Exception as e:
-        logger.warning("[PDF] rid=%s warmup failed: %s", request_id, repr(e))
-
-async def send_html_to_pdf_service(
-    html: str, user_email: str, subject: str = "KI-Readiness Report", lang: str = "de", request_id: Optional[str] = None
-) -> Dict[str, Any]:
-    if not PDF_SERVICE_URL:
-        raise RuntimeError("PDF_SERVICE_URL is not configured")
-
-    rid = request_id or uuid.uuid4().hex
-    html = strip_code_fences(html or "")
-    timeouts = httpx.Timeout(connect=15.0, read=PDF_TIMEOUT, write=30.0, pool=60.0)
-    limits = httpx.Limits(max_keepalive_connections=10, max_connections=20, keepalive_expiry=60.0)
-
-    async with httpx.AsyncClient(http2=True, timeout=timeouts, limits=limits) as client:
-        last_exc = None
-        for attempt in range(1, 4):
-            try:
-                if PDF_POST_MODE == "json":
-                    payload = {"html": html, "to": user_email or "", "adminEmail": ADMIN_EMAIL or "", "subject": subject, "lang": lang, "rid": rid}
-                    resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", json=payload)
-                else:
-                    headers = {
-                        "X-Request-ID": rid, "X-User-Email": user_email or "", "X-Subject": subject, "X-Lang": lang,
-                        "Accept": "application/pdf", "Content-Type": "text/html; charset=utf-8",
-                    }
-                    resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", headers=headers, content=html.encode("utf-8"))
-
-                ok = 200 <= resp.status_code < 300
-                data = {}
-                try: data = resp.json()
-                except Exception: pass
-
-                logger.info("[PDF] rid=%s attempt=%s status=%s", rid, attempt, resp.status_code)
-                return {"ok": ok, "status": resp.status_code, "data": data if data else {"headers": dict(resp.headers)},
-                        "error": None if ok else f"HTTP {resp.status_code}", "user": user_email, "admin": ADMIN_EMAIL}
-            except (httpx.ReadTimeout, httpx.ConnectTimeout) as e:
-                last_exc = e
-                wait = 1.8 ** attempt
-                logger.warning("[PDF] rid=%s timeout attempt %s/3 → retry in %.2fs", rid, attempt, wait)
-                await asyncio.sleep(wait)
-            except Exception as e:
-                last_exc = e
-                logger.warning("[PDF] rid=%s unexpected on attempt %s: %s", rid, attempt, repr(e))
-                await asyncio.sleep(1.0)
-
-    raise httpx.ReadTimeout(f"PDF service timed out after retries ({PDF_TIMEOUT}s).") from last_exc
-
-# ---------- Analyze → HTML ----------
 def _render_final_html_from_result(result: Any, lang: str) -> str:
     """
     Akzeptiert dict oder str:
@@ -417,30 +341,9 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
             return html
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
-        # Minimaler Fallback
-    fallback = {
-        "meta": {
-            "title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
-            "report_title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
-            "language": lang,
-            "month_year": "",
-            "company": ""
-        },
-        "sections": {
-            "executive_summary": "Analysemodul nicht geladen – Fallback.",
-            "quick_wins": "",
-            "risks": "",
-            "recommendations": "",
-            "roadmap": "",
-            "compliance": "",
-            "funding_programs": "",
-            "tools": "",
-            "vision": "",
-            "gamechanger": ""
-        },
-        "score_percent": 0,
-        "live_box_html": ""
-    }
+    # Minimaler Fallback
+    fallback = {"title": "KI-Readiness Report" if lang.startswith("de") else "AI Readiness Report",
+                "executive_summary": "Analysemodul nicht geladen – Fallback.", "score_percent": 0}
     return _render_template_file(lang, fallback)
 
 # ---------- Feedback-Model & Handler ----------
