@@ -328,44 +328,53 @@ def _render_final_html_from_result(result: Any, lang: str) -> str:
     # Fallback
     return _render_template_file(lang, ctx)
 
+# ---------- Analyze → HTML (robust) ----------
 async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
+    """
+    Führt analyze_briefing(body, lang) aus, rendert das Ergebnis zu HTML
+    und fällt bei Fehlern auf ein sicheres Template mit vollständigem
+    Kontext (meta + sections) zurück.
+    """
     analyze_fn, _mod = load_analyze_module()
+
     if analyze_fn:
         try:
             result = analyze_fn(body, lang=lang)
             html = _render_final_html_from_result(result, lang)
-            # Sicherheitsnetz: keine ungelösten Jinja-Marker in den ersten Bytes
+
+            # Sicherheitsnetz: keine ungelösten Jinja-Marker
             head = html[:400]
             if ("{{" in head) or ("{%" in head):
                 raise RuntimeError("Template not fully rendered – unresolved Jinja tags found")
             return html
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
-# Minimaler Fallback (meta/sections enthalten, damit Templates nie crashen)
-fallback = {
-    "meta": {
-        "title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
-        "report_title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
-        "language": lang,
-        "month_year": "",
-        "company": ""
-    },
-    "sections": {
-        "executive_summary": "Analysemodul nicht geladen – Fallback.",
-        "quick_wins": "",
-        "risks": "",
-        "recommendations": "",
-        "roadmap": "",
-        "compliance": "",
-        "funding_programs": "",
-        "tools": "",
-        "vision": "",
-        "gamechanger": ""
-    },
-    "score_percent": 0,
-    "live_box_html": ""
-}
-return _render_template_file(lang, fallback)
+
+    # ---------- Minimaler Fallback (immer gültiger Kontext) ----------
+    fallback = {
+        "meta": {
+            "title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
+            "report_title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
+            "language": lang,
+            "month_year": "",
+            "company": ""
+        },
+        "sections": {
+            "executive_summary": "Analysemodul nicht geladen – Fallback.",
+            "quick_wins": "",
+            "risks": "",
+            "recommendations": "",
+            "roadmap": "",
+            "compliance": "",
+            "funding_programs": "",
+            "tools": "",
+            "vision": "",
+            "gamechanger": ""
+        },
+        "score_percent": 0,
+        "live_box_html": ""
+    }
+    return _render_template_file(lang, fallback)
 
 
 # ---------- Feedback-Model & Handler ----------
