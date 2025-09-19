@@ -452,6 +452,61 @@ def ensure_html(text: str, lang: str = "de") -> str:
     if in_ul:
         html.append("</ul>")
     return "\n".join(html)
+def _strip_lists_and_numbers(text: str) -> str:
+    """
+    Macht aus Aufzählungen narrative Absätze und entfernt numerischen Ballast.
+    - <ul>/<ol>/<li> -> <p>…</p>
+    - entfernt führende Bullets ( "-", "•", "*" ) und Nummerierungen ("1.", "1)", "(1)")
+    - entfernt nackte Zahlen/Prozente innerhalb der Zeile
+    Achtung: Wir löschen keine normalen Wörter; nur Nummern/Prozentangaben.
+    """
+    if text is None:
+        return ""
+    s = str(text)
+
+    # 1) Wenn es <li> gibt: li-Items einsammeln und jeweils zu <p> machen
+    items = re.findall(r"<li[^>]*>(.*?)</li>", s, flags=re.I | re.S)
+    if items:
+        paras = []
+        for it in items:
+            t = re.sub(r"<[^>]+>", "", it)                       # HTML-Tags im Item entfernen
+            t = re.sub(r"^\s*[-*•]+\s*", "", t)                  # Bullet-Präfixe
+            t = re.sub(r"^\s*\(?\d+\)?[.)]\s*", "", t)           # 1. / 1) / (1)
+            t = re.sub(r"\b\d+([.,]\d+)?\s*%?\b", "", t)         # nackte Zahlen / Prozent
+            t = re.sub(r"\s{2,}", " ", t).strip(" ,;:-")         # Whitespace glätten
+            if t:
+                paras.append(f"<p>{t}</p>")
+        if paras:
+            return "".join(paras)
+
+    # 2) Kein <li>: <ul>/<ol> weg, Zeilen/Brs in Absätze überführen
+    s_no_lists = re.sub(r"</?(ul|ol)>", "", s, flags=re.I)
+    s_no_lists = s_no_lists.replace("<br>", "\n").replace("<br/>", "\n").replace("<br />", "\n")
+
+    # Falls kaum HTML drin ist: auf Textzeilen arbeiten
+    plain_lines = re.split(r"[\r\n]+", re.sub(r"<[^>]+>", "", s_no_lists))
+    plain_lines = [ln for ln in (ln.strip() for ln in plain_lines) if ln]
+
+    if plain_lines:
+        paras = []
+        for ln in plain_lines:
+            ln = re.sub(r"^\s*[-*•]+\s*", "", ln)                # Bullets am Zeilenanfang
+            ln = re.sub(r"^\s*\(?\d+\)?[.)]\s*", "", ln)         # Nummerierungen
+            ln = re.sub(r"\b\d+([.,]\d+)?\s*%?\b", "", ln)       # nackte Zahlen / %
+            ln = re.sub(r"\s{2,}", " ", ln).strip(" ,;:-")
+            if ln:
+                paras.append(f"<p>{ln}</p>")
+        if paras:
+            return "\n".join(paras)
+
+    # Fallback: originalen HTML/Text zurück (ggf. in <p> einfassen)
+    if "<" in s and ">" in s:
+        return s
+    return f"<p>{s.strip()}</p>"
+
+# Backwards-Compat: alter Name ohne Unterstrich? -> Alias setzen
+strip_lists_and_numbers = _strip_lists_and_numbers
+
 
 def _read_md_table(path: str) -> List[dict]:
     """
