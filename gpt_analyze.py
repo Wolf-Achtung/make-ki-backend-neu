@@ -2315,13 +2315,23 @@ except Exception:
 
     try:
 
+        # Narrative-first HTML (erzählerisch)
+
         out["foerderprogramme_html"] = build_funding_narrative(data, lang=lang, max_items=5)
 
         out["tools_html"]            = build_tools_narrative(data, branche=branche, lang=lang, max_items=6)
 
+    
+
+        # Detail-Tabellen (CSV-gestützt; optional)
+
         out["funding_details"], out["funding_stand"] = build_funding_details_struct(data, lang=lang, max_items=8)
 
         out["tools_details"],   out["tools_stand"]   = build_tools_details_struct(data, branche=branche, lang=lang, max_items=12)
+
+    
+
+        # Live-Updates (optional)
 
         _title, _html = build_live_updates_html(data, lang=lang, max_results=5)
 
@@ -2332,6 +2342,8 @@ except Exception:
         out["live_box_html"]      = _html
 
     except Exception:
+
+        # Defensive Defaults – verhindern Import-/Render-Abbruch
 
         out["foerderprogramme_html"] = out.get("foerderprogramme_html","")
 
