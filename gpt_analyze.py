@@ -58,6 +58,53 @@ def _lang(body: Dict[str, Any], explicit: Optional[str]) -> str:
         return "de" if explicit.lower().startswith("de") else "en"
     v = (body.get("lang") or body.get("language") or DEFAULT_LANG or "de").lower()
     return "de" if v.startswith("de") else "en"
+# --- sanitize + helpers (ADD THIS BLOCK) ------------------------------
+BAD_PREFIXES = ("I'm sorry", "I can't assist", "I cannot help", "As an AI")
+def _sanitize_html(s: str) -> str:
+    s = (s or "").strip()
+    for bad in BAD_PREFIXES:
+        if bad in s:
+            s = s.replace(bad, "")
+    # entschärft versehentliche Jinja-Tokens aus LLM
+    s = s.replace("{{", "&#123;&#123;").replace("}}", "&#125;&#125;")
+    return s.strip()
+
+def _build_live_box(ctx: dict, lang: str) -> str:
+    try:
+        q = live_query_for(ctx, lang=lang)
+        links = search_links(q, lang=lang)  # akzeptiert jetzt lang
+        title = "Neu seit " + _month_year(lang) if lang.startswith("de") else "New since " + _month_year(lang)
+        return render_live_box_html(title, links, lang=lang)  # keyword-only => keine Doppelbelegung
+    except Exception as e:
+        log.warning("live box search failed: %s", e)
+        return ""
+
+def _finalize_ctx(body: Dict[str, Any], out: Dict[str, Any], lang: str) -> Dict[str, Any]:
+    # Metadaten (Branche/Größe/Standort) aus Ergebnis ODER Eingabe
+    meta = {
+        "lang": lang,
+        "branche": _first(out.get("branche"), body.get("branche"), body.get("industry")),
+        "company_size": _first(out.get("groesse"), out.get("company_size"), body.get("groesse"), body.get("company_size")),
+        "location": _first(out.get("standort"), body.get("standort"), body.get("location")),
+        "month_label": _month_year(lang)
+    }
+    sections = {
+        "executive_summary": _sanitize_html(out.get("executive_summary", "")),
+        "quick_wins":        _sanitize_html(out.get("quick_wins", "")),
+        "risks":             _sanitize_html(out.get("risks", "")),
+        "recommendations":   _sanitize_html(out.get("recommendations", "")),
+        "roadmap":           _sanitize_html(out.get("roadmap", "")),
+        "vision":            _sanitize_html(out.get("vision", "")),
+        "gamechanger":       _sanitize_html(out.get("gamechanger", "")),
+        "compliance":        _sanitize_html(out.get("compliance", "")),
+        "tools":             _sanitize_html(out.get("tools", "")),
+        "foerderprogramme":  _sanitize_html(out.get("foerderprogramme", "")),
+    }
+    ctx = {"meta": meta, "sections": sections}
+    # Live-Kasten anhängen (optional im Template einbinden)
+    ctx["live_box_html"] = _build_live_box({**body, **meta}, lang)
+    return ctx
+# ----------------------------------------------------------------------
 
 # ====== Prompt-Loader ======================================================
 _PROMPT_CACHE: Dict[Tuple[str,str], str] = {}
@@ -215,4 +262,5 @@ def analyze_briefing(body: Dict[str,Any], lang: Optional[str] = None) -> Dict[st
         "tools_html": sections.get("tools",""),
         "foerderprogramme_html": sections.get("foerderprogramme",""),
     }
-    return out
+    # statt: return out
+    return _finalize_ctx(body, out, lng)
