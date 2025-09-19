@@ -530,7 +530,8 @@ def build_funding_narrative(data: Dict[str, Any], lang: str = "de", max_items: i
             p = (f"<p><b>{r['name']}</b> – geeignet für {r.get('target','KMU')}, Region: {r.get('region','DE')}. "
                  f"{r.get('use_case','')} "
                  f"{('<i>Förderart/Kosten: ' + r['grant'] + '</i> ') if r.get('grant') else ''}"
-                 f"{(f'<a href=\"{r['link']}\">Zum Programm</a>') if r.get('link') else ''}"
+                 f"{('<a href=\"{}\">Zum Programm</a>'.format(r['link'])) if r.get('link') else ''}"
+
                  f"</p>")
             ps.append(p)
     else:
