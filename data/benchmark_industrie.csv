@@ -1,0 +1,5 @@
+cluster,score_ki_readiness,score_datenschutz,score_innovation,score_compliance,benchmarktitel,beispiel_usecase,empfohlene_tools
+Solo/Freiberufler,45,55,50,55,Ingenieur-Dienstleistung,Digitales Auftragsmanagement,Plancraft;Fastbill
+Klein (2–9 MA),55,60,57,62,Fertigung digital,Kleine MES-Systeme,proAlpha Smart;Katana MRP
+KMU (10–249 MA),70,65,72,76,Industry 4.0,KI-gestützte Qualitätskontrolle,Weidmüller Industrial AI;Senseye
+Groß,85,74,86,85,Smart Factory,Autonome Fertigung,SAP Digital Manufacturing;Siemens MindSphere
