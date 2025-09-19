@@ -2293,106 +2293,58 @@ except Exception:
 
 
     # Tabellen (CSV)
-
     try:
-
         out["foerderprogramme_table"] = build_funding_table(data, lang=lang)
-
     except Exception:
-
         out["foerderprogramme_table"] = []
-
     try:
-
         out["tools_table"] = build_tools_table(data, branche=branche, lang=lang)
-
     except Exception:
-
         out["tools_table"] = []
 
-
     # --- Narrative + Details + Live-Layer (robust) ---
-
     try:
-
         # Narrative-first HTML (erzählerisch)
-
         out["foerderprogramme_html"] = build_funding_narrative(data, lang=lang, max_items=5)
-
         out["tools_html"]            = build_tools_narrative(data, branche=branche, lang=lang, max_items=6)
 
-
         # Detail-Tabellen (CSV-gestützt; optional)
-
         out["funding_details"], out["funding_stand"] = build_funding_details_struct(data, lang=lang, max_items=8)
-
         out["tools_details"],   out["tools_stand"]   = build_tools_details_struct(data, branche=branche, lang=lang, max_items=12)
 
-
-        # Live-Updates (Tavily → SerpAPI), optionaler Kasten
-
+        # Live-Updates (optional)
         _title, _html = build_live_updates_html(data, lang=lang, max_results=5)
-
         out["live_updates_title"] = _title
-
         out["live_updates_html"]  = _html
-
         out["live_box_html"]      = _html
-
     except Exception:
-
         # Defensive Defaults – verhindern Import-/Render-Abbruch
-
         out["foerderprogramme_html"] = out.get("foerderprogramme_html","")
-
         out["tools_html"]            = out.get("tools_html","")
-
         out["funding_details"]       = out.get("funding_details", [])
-
         out["tools_details"]         = out.get("tools_details", [])
-
         out["funding_stand"]         = out.get("funding_stand") or out.get("datum")
-
         out["tools_stand"]           = out.get("tools_stand") or out.get("datum")
-
         out["live_updates_title"]    = out.get("live_updates_title","")
-
         out["live_updates_html"]     = out.get("live_updates_html","")
-
         out["live_box_html"]         = out.get("live_box_html","")
 
-
     # Fallbacks (aus HTML) nur wenn CSV leer blieb
-
     if wants_funding and not out.get("foerderprogramme_table"):
-
         teaser = out.get("foerderprogramme") or out.get("sections_html","")
-
         rows = []
-
         for m in re.finditer(r'(?:<b>)?([^<]+?)(?:</b>)?\s*(?:Fö(r|e)derh(ö|o)he|Fördersumme|amount)[:\s]*([^<]+).*?<a[^>]*href="([^"]+)"', teaser, re.I|re.S):
-
             name, _, _, amount, link = m.groups()
-
             rows.append({"name":(name or "").strip(),"zielgruppe":"","foerderhoehe":(amount or "").strip(),"link":link})
-
         out["foerderprogramme_table"] = rows[:6]
 
-
     if not out.get("tools_table"):
-
         html_tools = out.get("tools") or out.get("sections_html","")
-
         rows = []
-
         for m in re.finditer(r'<a[^>]*href="([^"]+)"[^>]*>([^<]+)</a>', html_tools, re.I):
-
             link, name = m.group(1), m.group(2)
-
             if name and link:
-
                 rows.append({"name":name.strip(),"usecase":"","cost":"","link":link})
-
         out["tools_table"] = rows[:8]
 
 

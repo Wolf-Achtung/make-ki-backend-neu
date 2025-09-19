@@ -260,19 +260,56 @@ def current_user(request: Request) -> Dict[str, Any]:
 
 # ---------- Diagnose ----------
 def load_analyze_module():
+    """
+    Load gpt_analyze.analyze_briefing with preference for the file next to this main.py.
+    Falls back to normal import if the direct load fails.
+    Also logs the resolved path to help spot shadow copies in the container.
+    """
+    import os, sys, importlib, importlib.util, logging
+    logger = logging.getLogger("backend")
+
+    # Caches invalidieren & evtl. geladenes Modul entfernen
     try:
-        if "" not in sys.path:
-            sys.path.insert(0, "")
+        importlib.invalidate_caches()
+        if "gpt_analyze" in sys.modules:
+            del sys.modules["gpt_analyze"]
+    except Exception:
+        pass
+
+    # 1) Direktlader: gpt_analyze.py neben main.py bevorzugen
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidate = os.path.join(here, "gpt_analyze.py")
+    if os.path.exists(candidate):
+        try:
+            spec = importlib.util.spec_from_file_location("gpt_analyze", candidate)
+            if spec and spec.loader:
+                ga = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(ga)
+                fn = getattr(ga, "analyze_briefing", None)
+                if callable(fn):
+                    logger.info("gpt_analyze loaded (direct): %s", getattr(ga, "__file__", "n/a"))
+                    return fn, ga
+                else:
+                    logger.error("gpt_analyze loaded direct but analyze_briefing missing")
+        except SyntaxError as e:
+            logger.error("gpt_analyze SyntaxError (direct at %s): %s", candidate, e)
+        except Exception as e:
+            logger.exception("gpt_analyze direct load failed: %s", e)
+
+    # 2) Fallback: normaler Import über sys.path (kann Shadow-Kopien treffen)
+    try:
         ga = importlib.import_module("gpt_analyze")
         fn = getattr(ga, "analyze_briefing", None)
-        if fn is None:
-            logger.error("gpt_analyze geladen, aber analyze_briefing nicht gefunden.")
-            return None, ga
-        logger.info("gpt_analyze geladen: %s", getattr(ga, "__file__", "n/a"))
-        return fn, ga
+        if callable(fn):
+            logger.info("gpt_analyze loaded (import): %s", getattr(ga, "__file__", "n/a"))
+            return fn, ga
+        logger.error("gpt_analyze loaded via import, but analyze_briefing not found.")
+    except SyntaxError as e:
+        logger.error("gpt_analyze SyntaxError (import): %s", e)
     except Exception as e:
         logger.exception("gpt_analyze Importfehler: %s", e)
-        return None, None
+    return None, None
+
 
 # ---------- Health/Diag ----------
 async def health_info():
