@@ -380,14 +380,14 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
             return html
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
-    # Minimaler Fallback
+        # Minimaler Fallback
     fallback = {
         "meta": {
             "title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
             "report_title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
             "language": lang,
             "month_year": "",
-            "company": "",
+            "company": ""
         },
         "sections": {
             "executive_summary": "Analysemodul nicht geladen – Fallback.",
@@ -399,7 +399,7 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
             "funding_programs": "",
             "tools": "",
             "vision": "",
-            "gamechanger": "",
+            "gamechanger": ""
         },
         "score_percent": 0,
         "live_box_html": ""
