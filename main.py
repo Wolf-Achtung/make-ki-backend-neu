@@ -341,10 +341,32 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
             return html
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
-    # Minimaler Fallback
-    fallback = {"title": "KI-Readiness Report" if lang.startswith("de") else "AI Readiness Report",
-                "executive_summary": "Analysemodul nicht geladen – Fallback.", "score_percent": 0}
-    return _render_template_file(lang, fallback)
+# Minimaler Fallback (meta/sections enthalten, damit Templates nie crashen)
+fallback = {
+    "meta": {
+        "title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
+        "report_title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
+        "language": lang,
+        "month_year": "",
+        "company": ""
+    },
+    "sections": {
+        "executive_summary": "Analysemodul nicht geladen – Fallback.",
+        "quick_wins": "",
+        "risks": "",
+        "recommendations": "",
+        "roadmap": "",
+        "compliance": "",
+        "funding_programs": "",
+        "tools": "",
+        "vision": "",
+        "gamechanger": ""
+    },
+    "score_percent": 0,
+    "live_box_html": ""
+}
+return _render_template_file(lang, fallback)
+
 
 # ---------- Feedback-Model & Handler ----------
 class Feedback(BaseModel):
@@ -489,6 +511,26 @@ TASKS: Dict[str, Dict[str, Any]] = {}
 def new_job() -> str: return uuid.uuid4().hex
 def set_job(job_id: str, **kwargs):
     TASKS.setdefault(job_id, {}); TASKS[job_id].update(kwargs)
+
+# --- PDF Warmup Helper -------------------------------------------------------
+# (httpx ist in deiner Datei bereits importiert)
+async def warmup_pdf_service(rid: str, base_url: str, timeout: float = 8.0) -> None:
+    """
+    Ping the PDF service's /health endpoint so the first /generate-pdf call
+    avoids cold-start latency. Never raises; only logs.
+    """
+    if not base_url:
+        return
+    url = base_url.rstrip("/") + "/health"
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            resp = await client.get(url)
+            status = getattr(resp, "status_code", "n/a")
+        logger.info("[PDF] rid=%s warmup %s", rid, status)
+    except Exception as e:
+        # bewusst nur warnen – den Report-Flow nicht abbrechen
+        logger.warning("[PDF] rid=%s warmup failed: %s", rid, e)
+
 
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends(current_user)):
