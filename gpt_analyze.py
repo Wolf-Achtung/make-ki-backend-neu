@@ -28,24 +28,23 @@ def fix_time_labels(text: str) -> str:
     text = re.sub(r"\b(bis|Heute bis)\s+Tage\b", "bis 30 Tage", text)
     return text
 
-import re as _re
-_CODEFENCE_RE = _re.compile(r"```.*?```", _re.S)
-_BULLET_RE = _re.compile(r"(?m)^\s*[-•\*]\s+")
-_URL_RE = _re.compile(r"https?://\S+")
+_CODEFENCE_RE = re.compile(r"```.*?```", re.S)
+_BULLET_RE = re.compile(r"(?m)^\s*[-•\*]\s+")
+_URL_RE = re.compile(r"https?://\S+")
 
 def sanitize_narrative(text: str) -> str:
     if not text:
         return text
     text = _CODEFENCE_RE.sub("", text)
     text = _BULLET_RE.sub("", text)
-    text = _re.sub(r"\s{2,}", " ", text).strip()
+    text = re.sub(r"\s{2,}", " ", text).strip()
     return text
 
 def curate_live_item(txt: str) -> str:
     if not txt:
         return ""
     txt = _URL_RE.sub("", txt)
-    txt = _re.sub(r"\s{2,}", " ", txt)
+    txt = re.sub(r"\s{2,}", " ", txt)
     return txt.strip()
 
 def curate_live_updates(items: list[str], max_items: int = 3) -> str:
