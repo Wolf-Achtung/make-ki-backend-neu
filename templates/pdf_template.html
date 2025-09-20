@@ -17,83 +17,92 @@
       --chip: #E9F0FB;         /* Pastellblau für Chips */
     }
     @page{ size:A4; margin:22mm 18mm; }
-    html,body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    html,body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
                color:var(--ink); background:var(--bg); line-height:1.45; }
-    h1,h2,h3{ color:var(--ink-2); margin:0 0 .2rem 0; page-break-after:avoid; }
+    h1,h2,h3{ color:var(--ink-2); margin:0 0 .4rem 0; page-break-after:avoid; }
     h1{ font-size:26px; letter-spacing:.2px; }
     h2{ font-size:20px; border-bottom:2px solid var(--rule); padding-bottom:6px; margin-top:18px; }
-    h3{ font-size:16px; margin-top:8px; }
-    p{ margin:.45rem 0; }
-    a{ color:var(--accent); text-decoration:none; }
-    a:hover{ text-decoration:underline; }
+    h3{ font-size:16px; margin-top:12px; }
+    p{ margin:.6rem 0; }
     .muted{ color:var(--muted); }
-    .cover{ border:2px solid var(--rule); padding:18px; border-radius:10px; background:linear-gradient(180deg,#F7FAFF 0,#fff 100%); }
-    .meta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; color:var(--muted); }
-    .chip{ background:var(--chip); color:var(--ink-2); border:1px solid var(--rule); padding:2px 8px; border-radius:999px; font-size:12px; }
-    .chapter{ page-break-before:always; }
-    .chapter:first-of-type{ page-break-before:auto; }
-    .section{ margin-top:6px; }
-    .rule{ height:1px; background:var(--rule); border:0; margin:10px 0 14px; }
-    /* Live-Updates Liste */
-    .live ul{ margin:.6rem 0 .2rem 1.1rem; padding:0; }
-    .live li{ margin:.25rem 0; }
-    /* Mini-Fußzeile */
-    footer{ position:fixed; bottom:16px; left:18mm; right:18mm; font-size:11px; color:var(--muted); }
-    .watermark{ float:right; }
+    .rule{ border-top:1px solid var(--rule); margin:10px 0 16px 0; }
+    .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .chip{ background:var(--chip); border:1px solid var(--rule); color:var(--ink-2); padding:3px 8px; border-radius:8px; font-size:12px; }
+    .meta{ font-size:12px; color:var(--muted); margin-top:4px; }
+    .section{ page-break-before:always; }
+    .box{ border:1px solid var(--rule); background:#fff; padding:14px; border-radius:8px; margin:12px 0; }
+    .box-safe{ border:1px solid var(--rule); background:var(--chip); }
+    .footer{ font-size:11px; color:var(--muted); border-top:1px solid var(--rule); padding-top:8px; margin-top:18px; }
   </style>
 </head>
 <body>
-
-  <!-- Titelseite / Kopf -->
-  <section class="cover">
+  <header>
     <h1>{{ (meta|default({})).title|default('KI‑Statusbericht', true) }}</h1>
-    <p class="muted">
-      Narrativer Report – DSGVO‑ & EU‑AI‑Act‑ready. 
-      {% if now %}{{ now().strftime('%d.%m.%Y') }} · {% endif %}
-      Branche: {{ branche|default('—', true) }} ·
-      Größe: {{ company_size_label|default(unternehmensgroesse|default('—', true), true) }} ·
-      Standort: {{ ort|default(stadt|default(city|default('—', true), true), true) }}
-    </p>
     <div class="meta">
-      {% if (meta|default({})).author %}<span class="chip">Autor: {{ meta.author }}</span>{% endif %}
-      {% if (meta|default({})).version %}<span class="chip">Version: {{ meta.version }}</span>{% endif %}
-      <span class="chip">Sprache: DE</span>
+      {{ (meta|default({})).date|default('') }}
+      · Sprache: {{ (meta|default({})).sprache|default('de') }}
+    </div>
+    <div class="chips">
+      {% set chips = [] %}
+      {% if (meta|default({})).branche and meta.branche != 'n. v.' %}<span class="chip">Branche: {{ meta.branche }}</span>{% endif %}
+      {% if (meta|default({})).groesse and meta.groesse != 'n. v.' %}<span class="chip">Größe: {{ meta.groesse }}</span>{% endif %}
+      {% if (meta|default({})).standort and meta.standort != 'n. v.' %}<span class="chip">Standort: {{ meta.standort }}</span>{% endif %}
+    </div>
+    <div class="rule"></div>
+  </header>
+
+  {% if executive_summary %}
+  <section id="executive-summary">
+    <h2>Executive Summary</h2>
+    <p>{{ executive_summary }}</p>
+  </section>
+  {% endif %}
+
+  <section id="quick-wins">
+    <h2>Sichere Sofortschritte</h2>
+    <div class="box box-safe">
+      <p>{{ quick_wins|default('') }}</p>
     </div>
   </section>
 
-  <hr class="rule"/>
+  <section id="risks" class="section">
+    <h2>Risiken</h2>
+    <p>{{ risks|default('') }}</p>
+  </section>
 
-  {% macro section(title, html) -%}
-    {% if html %}
-      <section class="chapter section">
-        <h2>{{ title }}</h2>
-        {{ html|safe }}
-      </section>
-    {% endif %}
-  {%- endmacro %}
+  <section id="recommendations" class="section">
+    <h2>Empfehlungen</h2>
+    <p>{{ recommendations|default('') }}</p>
+  </section>
 
-  {{ section('Executive Summary',     exec_summary_html|default('', true)) }}
-  {{ section('Schnelle Hebel',        quick_wins_html|default('', true)) }}
-  {{ section('Risiken',               risks_html|default('', true)) }}
-  {{ section('Empfehlungen',          recommendations_html|default('', true)) }}
-  {{ section('Roadmap',               roadmap_html|default('', true)) }}
-  {{ section('Vision & Gamechanger',  (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
-  {{ section('Compliance',            compliance_html|default('', true)) }}
-  {{ section('Förderprogramme (Auswahl)', funding_html|default('', true)) }}
-  {{ section('KI‑Tools & Software',   tools_html|default('', true)) }}
+  <section id="roadmap" class="section">
+    <h2>Roadmap</h2>
+    <p>{{ roadmap|default('') }}</p>
+  </section>
 
-  {# Live‑Updates – erscheint nur, wenn live_html gesetzt ist #}
-  {% if live_html %}
-    <section class="chapter section live">
-      <h2>{{ live_title|default('Neu & relevant', true) }}</h2>
-      {{ live_html|safe }}
-      <p class="muted">Kuratiert über vertrauenswürdige Indizes. Einzelne Quellen bitte im Team fachlich gegenprüfen.</p>
-    </section>
-  {% endif %}
+  <section id="vision" class="section">
+    <h2>Vision &amp; Gamechanger</h2>
+    <p>{{ vision|default('') }}</p>
+  </section>
 
-  <footer>
-    © {{ copyright_year|default(now().year if now else '2025', true) }} {{ copyright_owner|default('Wolf Hohl', true) }}
-    <span class="watermark">KI‑Sicherheit · DSGVO & EU‑AI‑Act‑ready</span>
+  <section id="compliance" class="section">
+    <h2>Compliance</h2>
+    <p>{{ compliance|default('') }}</p>
+  </section>
+
+  <section id="foerderprogramme" class="section">
+    <h2>Förderprogramme (Auswahl)</h2>
+    <p>{{ foerderprogramme|default('') }}</p>
+  </section>
+
+  <section id="live-updates" class="section">
+    <h2>Neu seit {{ (meta|default({})).date|default('') }}</h2>
+    <p>{{ live_updates|default('') }}</p>
+    <p class="muted">Kuratiert. Einzelne Quellen bitte im Team gegenprüfen.</p>
+  </section>
+
+  <footer class="footer">
+    © {{ (meta|default({})).date[-4:] if (meta|default({})).date else '2025' }} Wolf Hohl KI‑Sicherheit · DSGVO &amp; EU‑AI‑Act‑ready
   </footer>
 </body>
 </html>
