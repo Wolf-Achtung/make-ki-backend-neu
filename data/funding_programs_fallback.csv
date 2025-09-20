@@ -1,0 +1,5 @@
+id,title,region_level,region_code,target,focus,funding_type,rate_min_pct,rate_max_pct,cap_eur,application_window,notes,source_hint
+coaching_bonus_berlin,Coaching BONUS Berlin,land,be,"solo,team,kmu","innovation,digitalisierung,ki-einfuehrung,coaching",zuschuss,,,,,Fallback-Datensatz aus Report; konkrete Prozentsätze/Deckel live nachladen,Report-PDF (Kapitel: Förderprogramme)
+gruendungsbonus_berlin,GründungsBONUS Berlin,land,be,"gruendung,solo,team","wachstum,innovation,digitalisierung",zuschuss,,,,,Fallback-Datensatz aus Report; Details live vervollständigen,Report-PDF (Kapitel: Förderprogramme)
+bafa_beratungsfoerderung,BAFA – Beratungsförderung,bund,bund,"kmu,solo","strategie,prozesse,digitalisierung,ki,orgentwicklung",zuschuss,,,,,Fallback-Datensatz aus Report; Prozentsätze regional unterschiedlich,Report-PDF (Kapitel: Förderprogramme)
+kompass_weiterbildung,KOMPASS – Förderung für Solo‑Selbstständige (Weiterbildung),bund,bund,"solo,freiberufler","qualifizierung,weiterbildung,ki-kurse",zuschuss,,,,,Im Report genannt; genaue Prozentsätze/Deckel variieren – live verifizieren,Report-PDF (Live‑Updates‑Kapitel)
