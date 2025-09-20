@@ -8,23 +8,6 @@ import importlib
 import hashlib
 from typing import Any, Dict, Optional
 
-# Gold-Standard Services (drop-in)
-try:
-    from services.main_startup import load_analyzer as gs_load_analyzer
-    from services.normalize_briefing import normalize_briefing as gs_normalize_briefing
-    from services.context_guards import build_context as gs_build_context
-    from services.sanitize_html import sanitize as gs_sanitize
-    from services.pdf_gate import render_or_fallback as gs_render_or_fallback
-    # Live-Layer ist optional; falls Paket fehlt, wird nur geloggt
-    try:
-        from services.live_layer import fetch_live_updates as gs_fetch_live
-    except Exception:  # pragma: no cover
-        gs_fetch_live = None  # type: ignore
-except Exception:
-    # Services-Paket nicht vorhanden – wir degradieren später sauber
-    gs_load_analyzer = gs_normalize_briefing = gs_build_context = gs_sanitize = gs_render_or_fallback = None  # type: ignore
-    gs_fetch_live = None  # type: ignore
-
 # Optional DB (Feedback-Persistenz)
 try:
     import psycopg2  # type: ignore
@@ -83,10 +66,6 @@ if CORS_ALLOW == ["*"]:
 TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", "templates")   # statt "."
 TEMPLATE_DE  = os.getenv("TEMPLATE_DE",  "pdf_template.html")
 TEMPLATE_EN  = os.getenv("TEMPLATE_EN",  "pdf_template_en.html")
-
-# Fallback-Minimal-Templates (nur als Airbag, keine Full-Replacements)
-TEMPLATE_MIN_DE = os.getenv("TEMPLATE_MIN_DE", "pdf_template.min.html")
-TEMPLATE_MIN_EN = os.getenv("TEMPLATE_MIN_EN", "pdf_template.min_en.html")
 
 
 # SMTP
@@ -198,18 +177,6 @@ def _render_template_file(lang: str, ctx: dict) -> str:
 def _render_template_string(tpl_str: str, ctx: dict) -> str:
     tpl = _JINJA.from_string(tpl_str)
     return tpl.render(**ctx, now=dt.datetime.now)
-
-def _render_template_min_file(lang: str, ctx: dict) -> str:
-    """Rendert ein kleines, robustes Fallback-Template (Airbag).
-    Fällt auf die Full-Templates zurück, wenn die Mini-Varianten fehlen.
-    """
-    name = TEMPLATE_MIN_DE if (lang or "de").lower().startswith("de") else TEMPLATE_MIN_EN
-    try:
-        tpl = _JINJA.get_template(name)
-        return tpl.render(**ctx, now=dt.datetime.now)
-    except Exception:
-        # Wenn Mini-Templates fehlen, Full-Template verwenden
-        return _render_template_file(lang, ctx)
 def _clean_header_value(v: Optional[str]) -> Optional[str]:
     if not v: return None
     v = v.replace("\r", "").replace("\n", "").strip()
@@ -362,101 +329,53 @@ def _render_final_html_from_result(result: Any, lang: str) -> str:
     return _render_template_file(lang, ctx)
 
 # ---------- Analyze → HTML (robust) ----------
-
 async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
     """
-    Führt Analyse aus, rendert HTML, sanitiert es (nur narrativ) und nutzt ein PDF‑Gate.
-    Fällt bei Problemen sauber auf ein kleines, druckfähiges Fallback‑Template zurück.
+    Führt analyze_briefing(body, lang) aus, rendert das Ergebnis zu HTML
+    und fällt bei Fehlern auf ein sicheres Template mit vollständigem
+    Kontext (meta + sections) zurück.
     """
-    # 1) Briefing harmonisieren (DE/EN Key‑Canon)
-    briefing = body or {}
-    try:
-        if gs_normalize_briefing:
-            briefing = gs_normalize_briefing(briefing)
-    except Exception as e:
-        logger.warning("[ANALYZE] normalize failed: %s", e)
-
-    # 2) Bevorzugt das bestehende analyze_briefing laden (Kompatibilitaet wahren)
     analyze_fn, _mod = load_analyze_module()
-    result = None
-    html = ""
 
     if analyze_fn:
         try:
-            result = analyze_fn(briefing, lang=lang)
-            if isinstance(result, dict) and "meta" not in result and gs_build_context:
-                # result enthaelt vermutlich nur Sections -> Meta/Defaults ergaenzen
-                try:
-                    sections = result.get("sections", result)  # sections oder roher dict
-                    ctx = gs_build_context(briefing, sections if isinstance(sections, dict) else {}, lang=lang)
-                except Exception:
-                    ctx = result
-                html = _render_template_file(lang, ctx)
-            else:
-                html = _render_final_html_from_result(result, lang)
+            result = analyze_fn(body, lang=lang)
+            html = _render_final_html_from_result(result, lang)
+
+            # Sicherheitsnetz: keine ungelösten Jinja-Marker
+            head = html[:400]
+            if ("{{" in head) or ("{%" in head):
+                raise RuntimeError("Template not fully rendered – unresolved Jinja tags found")
+            return html
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
-            analyze_fn = None  # weiter unten Services-Fallback versuchen
 
-            logger.exception("analyze_briefing failed: %s", e)
-            analyze_fn = None  # weiter unten Services-Fallback versuchen
+    # ---------- Minimaler Fallback (immer gültiger Kontext) ----------
+    fallback = {
+        "meta": {
+            "title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
+            "report_title": ("KI-Statusbericht" if lang.startswith("de") else "AI Status Report"),
+            "language": lang,
+            "month_year": "",
+            "company": ""
+        },
+        "sections": {
+            "executive_summary": "Analysemodul nicht geladen – Fallback.",
+            "quick_wins": "",
+            "risks": "",
+            "recommendations": "",
+            "roadmap": "",
+            "compliance": "",
+            "funding_programs": "",
+            "tools": "",
+            "vision": "",
+            "gamechanger": ""
+        },
+        "score_percent": 0,
+        "live_box_html": ""
+    }
+    return _render_template_file(lang, fallback)
 
-    if not analyze_fn:
-        # 3) Gold‑Standard Services‑Analyzer (mit Notfall‑Inhalt)
-        try:
-            if gs_load_analyzer:
-                gs_analyze = gs_load_analyzer()
-            else:
-                gs_analyze = None
-        except Exception as e:
-            logger.warning("[ANALYZE] gs_load_analyzer failed: %s", e)
-            gs_analyze = None
-
-        sections = {}
-        if gs_analyze:
-            try:
-                sections = gs_analyze(briefing, lang=lang) or {}
-            except Exception as e:
-                logger.exception("[ANALYZE] gs_analyze failed: %s", e)
-                sections = {}
-
-        try:
-            ctx = gs_build_context(briefing, sections, lang=lang) if gs_build_context else {"meta": {"title": "KI-Statusbericht" if lang.startswith("de") else "AI Status Report"} , "sections": sections}
-        except Exception:
-            ctx = {"meta": {"title": "KI-Statusbericht" if lang.startswith("de") else "AI Status Report"} , "sections": sections}
-
-        html = _render_template_file(lang, ctx)
-
-    # 4) Unaufgeloeste Jinja‑Marker abfangen
-    try:
-        head = (html or "")[:600]
-        if ("{{" in head) or ("{%" in head):
-            raise RuntimeError("Template not fully rendered – unresolved Jinja tags found")
-    except Exception as e:
-        logger.warning("[HTML] unresolved template markers: %s", e)
-        # bauen minimalen Kontext fuer Fallback
-        try:
-            ctx = gs_build_context(briefing, {}, lang=lang) if gs_build_context else {"meta": {"title": "KI-Statusbericht" if lang.startswith("de") else "AI Status Report"} , "sections": {}}
-        except Exception:
-            ctx = {"meta": {"title": "KI-Statusbericht" if lang.startswith("de") else "AI Status Report"} , "sections": {}}
-        html = _render_template_min_file(lang, ctx)
-
-    # 5) Sanitisieren (nur Fließtext; Listen/Tables/Code raus)
-    try:
-        html_sanit = gs_sanitize(html) if gs_sanitize else html
-    except Exception as e:
-        logger.warning("[HTML] sanitize failed: %s", e)
-        html_sanit = html
-
-    # 6) PDF‑Gate (Länge + Pflicht‑Tokens), sonst Mini‑Template
-    try:
-        ctx_fallback = gs_build_context(briefing, {}, lang=lang) if gs_build_context else {"meta": {"title": "KI-Statusbericht" if lang.startswith("de") else "AI Status Report"} , "sections": {}}
-        final_html = gs_render_or_fallback(lambda: html_sanit, lambda: _render_template_min_file(lang, ctx_fallback)) if gs_render_or_fallback else html_sanit
-    except Exception as e:
-        logger.warning("[PDF] gate failed: %s", e)
-        final_html = html_sanit
-
-    return final_html
 
 # ---------- Feedback-Model & Handler ----------
 class Feedback(BaseModel):
@@ -566,22 +485,6 @@ app.add_middleware(
 )
 
 # ---------- Endpunkte ----------
-
-# ---------- Health Helper ----------
-async def health_info():
-    return {
-        "ok": True,
-        "time": dt.datetime.utcnow().isoformat() + "Z",
-        "templates": {
-            "dir": TEMPLATE_DIR,
-            "de": TEMPLATE_DE,
-            "en": TEMPLATE_EN,
-            "min_de": TEMPLATE_MIN_DE,
-            "min_en": TEMPLATE_MIN_EN,
-        },
-        "pdf_service": bool(PDF_SERVICE_URL),
-        "version": "gold-std-wiring-2025-09-20"
-    }
 @app.get("/health")
 async def health():
     return JSONResponse(await health_info())
