@@ -125,3 +125,39 @@ def render_html(context: Dict[str, Any], lang: str = "de") -> str:
     tpl_name = "pdf_template_en.html" if lang == "en" else "pdf_template.html"
     tpl = env.get_template(tpl_name)
     return tpl.render(context)
+
+
+# ---------------- Backward-compatibility shims ----------------
+def analyze_briefing(briefing, lang: str = "de", *args, **kwargs):
+    """
+    Legacy entrypoint expected by older main.py / routes.
+    Returns a dict with "meta", "sections", "html".
+    """
+    try:
+        _lang = (lang or "de").lower()
+    except Exception:
+        _lang = "de"
+    if _lang not in ("de", "en", "both"):
+        _lang = "de"
+    ctx = build_context(briefing or {}, _lang if _lang != "both" else "de")
+    # sections: keep explicit keys for older templates
+    sections = {
+        "executive_summary": ctx.get("executive_summary",""),
+        "quick_wins": ctx.get("quick_wins",""),
+        "risks": ctx.get("risks",""),
+        "recommendations": ctx.get("recommendations",""),
+        "roadmap": ctx.get("roadmap",""),
+        "vision": ctx.get("vision",""),
+        "compliance": ctx.get("compliance",""),
+        "foerderprogramme": ctx.get("foerderprogramme",""),
+        "live_updates": ctx.get("live_updates",""),
+    }
+    try:
+        html = render_html(ctx, _lang if _lang in ("de","en") else "de")
+    except Exception:
+        html = ""
+    return {"meta": ctx.get("meta", {}), "sections": sections, "html": html}
+
+# alias commonly used legacy names
+def analyze(*args, **kwargs):
+    return analyze_briefing(*args, **kwargs)
