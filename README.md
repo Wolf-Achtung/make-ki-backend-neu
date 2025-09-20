@@ -31,3 +31,10 @@ Optimiert für kleine Unternehmen & Berater, DSGVO-konform, minimal aufgebaut.
 ```bash
 docker build -t ki-briefing .
 docker run -p 8000:8000 ki-briefing
+
+
+## PDF Service
+
+Setzen Sie `PDF_SERVICE_URL` (z. B. `http://localhost:8080`). Optional: `PDF_POST_MODE=html|json`, `PDF_TIMEOUT`.
+Kopfzeilen: `X-User-Email` wird aus dem Briefing übernommen (`email|kontakt_email|user_email`).
+Endpoint im Service: `POST /generate-pdf` (Content-Type `text/html` **oder** JSON `{html,to,subject,lang}`)

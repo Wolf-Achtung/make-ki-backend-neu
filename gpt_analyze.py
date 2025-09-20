@@ -6,16 +6,13 @@ from pathlib import Path
 from datetime import datetime as _dt
 from typing import Dict, Any
 
-# Optional: Jinja2 for HTML rendering (used by main.py too)
 try:
     from jinja2 import Environment, FileSystemLoader, select_autoescape
-except Exception:  # keep import-time safe
+except Exception:
     Environment = None  # type: ignore
 
 ROOT = Path(__file__).resolve().parent
 TEMPLATES = Path(os.getenv("TEMPLATE_DIR", ROOT / "templates"))
-
-# ---------------- Helpers ----------------
 
 def _norm(value: str) -> str:
     s = (value or "").strip() if isinstance(value, str) else ""
@@ -28,31 +25,27 @@ def fix_time_labels(text: str) -> str:
         return text
     for k, v in TOKENS.items():
         text = text.replace(k, v)
-    # häufiges Artefakt: „bis Tage“ ohne Zahl
     text = re.sub(r"\b(bis|Heute bis)\s+Tage\b", "bis 30 Tage", text)
     return text
 
-_CODEFENCE_RE = re.compile(r"```.*?```", re.S)
-_BULLET_RE = re.compile(r"(?m)^\s*[-•\*]\s+")
+import re as _re
+_CODEFENCE_RE = _re.compile(r"```.*?```", _re.S)
+_BULLET_RE = _re.compile(r"(?m)^\s*[-•\*]\s+")
+_URL_RE = _re.compile(r"https?://\S+")
 
 def sanitize_narrative(text: str) -> str:
     if not text:
         return text
-    # remove code fences
     text = _CODEFENCE_RE.sub("", text)
-    # try to turn bullets into flowing sentences
     text = _BULLET_RE.sub("", text)
-    # collapse spaces
-    text = re.sub(r"\s{2,}", " ", text).strip()
+    text = _re.sub(r"\s{2,}", " ", text).strip()
     return text
-
-_URL_RE = re.compile(r"https?://\S+")
 
 def curate_live_item(txt: str) -> str:
     if not txt:
         return ""
-    txt = _URL_RE.sub("", txt)          # URLs raus
-    txt = re.sub(r"\s{2,}", " ", txt)
+    txt = _URL_RE.sub("", txt)
+    txt = _re.sub(r"\s{2,}", " ", txt)
     return txt.strip()
 
 def curate_live_updates(items: list[str], max_items: int = 3) -> str:
@@ -63,14 +56,7 @@ def curate_live_updates(items: list[str], max_items: int = 3) -> str:
             curated.append(it)
     return " ".join(curated)
 
-# ---------------- Core ----------------
-
 def build_context(briefing: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
-    """
-    Build a robust rendering context from a (possibly sparse) briefing.
-    This function is deliberately conservative: it never returns empty meta,
-    it normalizes language and replaces fragile time tokens.
-    """
     lang = (lang or "de").lower()
     if lang not in ("de", "en", "both"):
         lang = "de"
@@ -84,14 +70,12 @@ def build_context(briefing: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
         "date": _dt.now().strftime("%d.%m.%Y"),
     }
 
-    # Pull pre-generated narrative (if the pipeline created it), else minimal defaults.
     def get(k: str, default: str) -> str:
         v = briefing.get(k) or briefing.get(f"{k}_{lang}") or ""
         v = sanitize_narrative(str(v))
         v = fix_time_labels(v)
         return v or default
 
-    # Minimal warm defaults (never empty HTML)
     defaults_de = {
         "executive_summary": "Kurzfassung: Dieser Report bietet eine narrative, umsetzungsorientierte Bestandsaufnahme inklusive Roadmap.",
         "quick_wins": "Starten Sie mit EU‑freundlichen Werkzeugen (z. B. CRM, Schreibassistenz, einfache Automatisierung) und einer klaren menschlichen Freigabe.",
@@ -132,10 +116,6 @@ def build_context(briefing: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     return ctx
 
 def render_html(context: Dict[str, Any], lang: str = "de") -> str:
-    """
-    Render HTML via Jinja2; caller ensures templates exist.
-    Supports lang in {"de","en"}.
-    """
     if Environment is None:
         raise RuntimeError("Jinja2 not available")
     env = Environment(
@@ -146,4 +126,3 @@ def render_html(context: Dict[str, Any], lang: str = "de") -> str:
     tpl_name = "pdf_template_en.html" if lang == "en" else "pdf_template.html"
     tpl = env.get_template(tpl_name)
     return tpl.render(context)
-

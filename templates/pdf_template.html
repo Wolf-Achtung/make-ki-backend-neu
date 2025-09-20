@@ -5,33 +5,23 @@
   <title>{{ (meta|default({})).title|default('KI‑Statusbericht', true) }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    /* ====== Farbwelt: seriöses Dunkelblau ====== */
     :root{
-      --ink: #0B1F3B;          /* Grundtext */
-      --ink-2: #123B70;        /* Überschriften */
-      --ink-3: #1C4F91;        /* Akzent dunkel */
-      --accent: #2B6CB0;       /* Links/Buttons */
-      --muted: #5B6B7C;        /* Meta-/Hinweise */
-      --bg: #ffffff;           /* Weiß */
-      --rule: #D4DDED;         /* Linien */
-      --chip: #E9F0FB;         /* Pastellblau für Chips */
+      --ink: #0B1F3B; --ink-2: #123B70; --ink-3:#1C4F91; --accent:#2B6CB0;
+      --muted:#5B6B7C; --bg:#ffffff; --rule:#D4DDED; --chip:#E9F0FB;
     }
     @page{ size:A4; margin:22mm 18mm; }
     html,body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
                color:var(--ink); background:var(--bg); line-height:1.45; }
     h1,h2,h3{ color:var(--ink-2); margin:0 0 .4rem 0; page-break-after:avoid; }
-    h1{ font-size:26px; letter-spacing:.2px; }
-    h2{ font-size:20px; border-bottom:2px solid var(--rule); padding-bottom:6px; margin-top:18px; }
-    h3{ font-size:16px; margin-top:12px; }
+    h1{ font-size:26px; } h2{ font-size:20px; border-bottom:2px solid var(--rule); padding-bottom:6px; margin-top:18px; } h3{ font-size:16px; }
     p{ margin:.6rem 0; }
-    .muted{ color:var(--muted); }
-    .rule{ border-top:1px solid var(--rule); margin:10px 0 16px 0; }
+    .muted{ color:var(--muted); } .rule{ border-top:1px solid var(--rule); margin:10px 0 16px 0; }
     .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
     .chip{ background:var(--chip); border:1px solid var(--rule); color:var(--ink-2); padding:3px 8px; border-radius:8px; font-size:12px; }
     .meta{ font-size:12px; color:var(--muted); margin-top:4px; }
     .section{ page-break-before:always; }
     .box{ border:1px solid var(--rule); background:#fff; padding:14px; border-radius:8px; margin:12px 0; }
-    .box-safe{ border:1px solid var(--rule); background:var(--chip); }
+    .box-safe{ background:var(--chip); }
     .footer{ font-size:11px; color:var(--muted); border-top:1px solid var(--rule); padding-top:8px; margin-top:18px; }
   </style>
 </head>
@@ -39,11 +29,9 @@
   <header>
     <h1>{{ (meta|default({})).title|default('KI‑Statusbericht', true) }}</h1>
     <div class="meta">
-      {{ (meta|default({})).date|default('') }}
-      · Sprache: {{ (meta|default({})).sprache|default('de') }}
+      {{ (meta|default({})).date|default('') }} · Sprache: {{ (meta|default({})).sprache|default('de') }}
     </div>
     <div class="chips">
-      {% set chips = [] %}
       {% if (meta|default({})).branche and meta.branche != 'n. v.' %}<span class="chip">Branche: {{ meta.branche }}</span>{% endif %}
       {% if (meta|default({})).groesse and meta.groesse != 'n. v.' %}<span class="chip">Größe: {{ meta.groesse }}</span>{% endif %}
       {% if (meta|default({})).standort and meta.standort != 'n. v.' %}<span class="chip">Standort: {{ meta.standort }}</span>{% endif %}
@@ -60,41 +48,15 @@
 
   <section id="quick-wins">
     <h2>Sichere Sofortschritte</h2>
-    <div class="box box-safe">
-      <p>{{ quick_wins|default('') }}</p>
-    </div>
+    <div class="box box-safe"><p>{{ quick_wins|default('') }}</p></div>
   </section>
 
-  <section id="risks" class="section">
-    <h2>Risiken</h2>
-    <p>{{ risks|default('') }}</p>
-  </section>
-
-  <section id="recommendations" class="section">
-    <h2>Empfehlungen</h2>
-    <p>{{ recommendations|default('') }}</p>
-  </section>
-
-  <section id="roadmap" class="section">
-    <h2>Roadmap</h2>
-    <p>{{ roadmap|default('') }}</p>
-  </section>
-
-  <section id="vision" class="section">
-    <h2>Vision &amp; Gamechanger</h2>
-    <p>{{ vision|default('') }}</p>
-  </section>
-
-  <section id="compliance" class="section">
-    <h2>Compliance</h2>
-    <p>{{ compliance|default('') }}</p>
-  </section>
-
-  <section id="foerderprogramme" class="section">
-    <h2>Förderprogramme (Auswahl)</h2>
-    <p>{{ foerderprogramme|default('') }}</p>
-  </section>
-
+  <section id="risks" class="section"><h2>Risiken</h2><p>{{ risks|default('') }}</p></section>
+  <section id="recommendations" class="section"><h2>Empfehlungen</h2><p>{{ recommendations|default('') }}</p></section>
+  <section id="roadmap" class="section"><h2>Roadmap</h2><p>{{ roadmap|default('') }}</p></section>
+  <section id="vision" class="section"><h2>Vision &amp; Gamechanger</h2><p>{{ vision|default('') }}</p></section>
+  <section id="compliance" class="section"><h2>Compliance</h2><p>{{ compliance|default('') }}</p></section>
+  <section id="foerderprogramme" class="section"><h2>Förderprogramme (Auswahl)</h2><p>{{ foerderprogramme|default('') }}</p></section>
   <section id="live-updates" class="section">
     <h2>Neu seit {{ (meta|default({})).date|default('') }}</h2>
     <p>{{ live_updates|default('') }}</p>

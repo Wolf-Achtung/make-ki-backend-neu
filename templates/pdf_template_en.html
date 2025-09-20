@@ -5,27 +5,17 @@
   <title>{{ (meta|default({})).title|default('AI Status Report', true) }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root{
-      --ink: #0B1F3B;
-      --ink-2: #123B70;
-      --accent: #2B6CB0;
-      --muted: #5B6B7C;
-      --bg: #ffffff;
-      --rule: #D4DDED;
-      --chip: #E9F0FB;
-    }
+    :root{ --ink:#0B1F3B; --ink-2:#123B70; --accent:#2B6CB0; --muted:#5B6B7C; --bg:#fff; --rule:#D4DDED; --chip:#E9F0FB; }
     @page{ size:A4; margin:22mm 18mm; }
     html,body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
                color:var(--ink); background:var(--bg); line-height:1.45; }
     h1,h2,h3{ color:var(--ink-2); margin:0 0 .4rem 0; page-break-after:avoid; }
-    h1{ font-size:26px; letter-spacing:.2px; }
-    h2{ font-size:20px; border-bottom:2px solid var(--rule); padding-bottom:6px; margin-top:18px; }
+    h1{ font-size:26px; } h2{ font-size:20px; border-bottom:2px solid var(--rule); padding-bottom:6px; margin-top:18px; }
     p{ margin:.6rem 0; }
-    .muted{ color:var(--muted); }
     .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
     .chip{ background:var(--chip); border:1px solid var(--rule); color:var(--ink-2); padding:3px 8px; border-radius:8px; font-size:12px; }
     .box{ border:1px solid var(--rule); background:#fff; padding:14px; border-radius:8px; margin:12px 0; }
-    .box-safe{ border:1px solid var(--rule); background:var(--chip); }
+    .box-safe{ background:var(--chip); }
     .footer{ font-size:11px; color:var(--muted); border-top:1px solid var(--rule); padding-top:8px; margin-top:18px; }
   </style>
 </head>
@@ -40,54 +30,17 @@
   </header>
 
   {% if executive_summary %}
-  <section id="executive-summary">
-    <h2>Executive summary</h2>
-    <p>{{ executive_summary }}</p>
-  </section>
+  <section id="executive-summary"><h2>Executive summary</h2><p>{{ executive_summary }}</p></section>
   {% endif %}
 
-  <section id="quick-wins">
-    <h2>Secure quick steps</h2>
-    <div class="box box-safe">
-      <p>{{ quick_wins|default('') }}</p>
-    </div>
-  </section>
-
-  <section id="risks">
-    <h2>Risks</h2>
-    <p>{{ risks|default('') }}</p>
-  </section>
-
-  <section id="recommendations">
-    <h2>Recommendations</h2>
-    <p>{{ recommendations|default('') }}</p>
-  </section>
-
-  <section id="roadmap">
-    <h2>Roadmap</h2>
-    <p>{{ roadmap|default('') }}</p>
-  </section>
-
-  <section id="vision">
-    <h2>Vision &amp; gamechanger</h2>
-    <p>{{ vision|default('') }}</p>
-  </section>
-
-  <section id="compliance">
-    <h2>Compliance</h2>
-    <p>{{ compliance|default('') }}</p>
-  </section>
-
-  <section id="grants">
-    <h2>Grants (selection)</h2>
-    <p>{{ foerderprogramme|default('') }}</p>
-  </section>
-
-  <section id="live-updates">
-    <h2>New since {{ (meta|default({})).date|default('') }}</h2>
-    <p>{{ live_updates|default('') }}</p>
-    <p class="muted">Curated. Verify sources in team if relevant.</p>
-  </section>
+  <section id="quick-wins"><h2>Secure quick steps</h2><div class="box box-safe"><p>{{ quick_wins|default('') }}</p></div></section>
+  <section id="risks"><h2>Risks</h2><p>{{ risks|default('') }}</p></section>
+  <section id="recommendations"><h2>Recommendations</h2><p>{{ recommendations|default('') }}</p></section>
+  <section id="roadmap"><h2>Roadmap</h2><p>{{ roadmap|default('') }}</p></section>
+  <section id="vision"><h2>Vision &amp; gamechanger</h2><p>{{ vision|default('') }}</p></section>
+  <section id="compliance"><h2>Compliance</h2><p>{{ compliance|default('') }}</p></section>
+  <section id="grants"><h2>Grants (selection)</h2><p>{{ foerderprogramme|default('') }}</p></section>
+  <section id="live-updates"><h2>New since {{ (meta|default({})).date|default('') }}</h2><p>{{ live_updates|default('') }}</p><p class="muted">Curated. Verify sources in team if relevant.</p></section>
 
   <footer class="footer">
     © {{ (meta|default({})).date[-4:] if (meta|default({})).date else '2025' }} Wolf Hohl AI Security · GDPR &amp; EU‑AI‑Act‑ready

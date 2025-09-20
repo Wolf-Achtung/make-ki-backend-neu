@@ -1,16 +1,11 @@
-# main.py — minimal robust FastAPI app for rendering the report
-import os, json, logging
+# main.py — robust FastAPI app for rendering HTML and posting to PDF service
+import os, json, logging, importlib, urllib.request, urllib.error
 from typing import Any, Dict
 from pathlib import Path
-from datetime import datetime as dt
-
 from fastapi import FastAPI, Body
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, HTMLResponse, Response
 
-import importlib
-
-# Local analyze module
 import gpt_analyze
 
 LOG = logging.getLogger("app")
@@ -22,7 +17,6 @@ TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", "templates")
 
 app = FastAPI(title="KI-Status-Report Backend", version=getattr(gpt_analyze, "__VERSION__", "dev"))
 
-# CORS (allow all by default)
 origins = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")]
 if origins == ["*"]:
     origins = ["*"]
@@ -38,17 +32,45 @@ def _safe_len_html(html: str) -> int:
     return len((html or "").strip())
 
 def _fallback_html(reason: str) -> str:
-    # simple, printable fallback in case templates or context fail
     return f"<html><body><h1>KI‑Statusbericht</h1><p>Fallback aktiv: {reason}</p></body></html>"
 
 def load_analyze_module():
     try:
         importlib.reload(gpt_analyze)
-        LOG.info("Analyze module loaded OK: %s", getattr(gpt_analyze, "__VERSION__", "?"))
+        LOG.info("Analyze module loaded: %s", getattr(gpt_analyze, "__VERSION__", "?"))
         return True, ""
     except Exception as e:
         LOG.exception("Analyze module failed to load: %s", e)
         return False, str(e)
+
+def _post_pdfservice(url: str, html: str, lang: str = "de", to_email: str | None = None, subject: str | None = None, mode: str = "html", timeout: float = 120.0):
+    req_url = url.rstrip("/") + "/generate-pdf"
+    headers = {
+        "X-Request-ID": os.getenv("REQUEST_ID", ""),
+        "X-Lang": lang or "de",
+    }
+    if to_email:
+        headers["X-User-Email"] = to_email
+    if subject:
+        headers["X-Subject"] = subject
+
+    if mode == "json":
+        payload = json.dumps({"html": html, "lang": lang, "to": to_email, "subject": subject or ""}, ensure_ascii=False).encode("utf-8")
+        headers["Content-Type"] = "application/json; charset=utf-8"
+        data = payload
+    else:
+        data = (html or "").encode("utf-8")
+        headers["Content-Type"] = "text/html; charset=utf-8"
+
+    req = urllib.request.Request(req_url, data=data, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.getcode(), resp.read(), dict(resp.getheaders())
+    except urllib.error.HTTPError as e:
+        return e.code, e.read() if e.fp else b"", dict(e.headers or {})
+    except Exception as e:
+        LOG.exception("PDF service call failed: %s", e)
+        return 0, b"", {}
 
 @app.get("/health")
 def health():
@@ -62,10 +84,6 @@ def render(
     lang: str = Body("de"),
     mode: str = Body("html"),
 ):
-    """
-    Render the report as HTML (default). If mode='pdf' and a PDF service is configured,
-    you can forward the HTML there (implementation stub).
-    """
     ok, err = load_analyze_module()
     if not ok:
         html = _fallback_html("Analyze-Modul konnte nicht geladen werden")
@@ -93,9 +111,22 @@ def render(
 
         if mode == "html":
             return HTMLResponse(html)
+        elif mode == "pdf":
+            to_email = (briefing.get("email") or briefing.get("kontakt_email") or briefing.get("user_email") or "") if isinstance(briefing, dict) else ""
+            subject = os.getenv("PDF_SUBJECT", "Ihr KI‑Status‑Report")
+            post_mode = os.getenv("PDF_POST_MODE", "html").lower()
+            if not PDF_SERVICE_URL:
+                LOG.warning("PDF_SERVICE_URL not set; returning HTML instead")
+                return HTMLResponse(html)
+            status, body_bytes, headers = _post_pdfservice(PDF_SERVICE_URL, html, lang=(lang if lang in ("de","en") else "de"), to_email=to_email, subject=subject, mode=post_mode, timeout=PDF_TIMEOUT)
+            ctype = (headers.get("Content-Type") or headers.get("content-type") or "").lower()
+            if status == 200 and ctype.startswith("application/pdf"):
+                return Response(content=body_bytes, media_type="application/pdf", headers={k:v for k,v in headers.items() if k.lower().startswith("x-")})
+            else:
+                LOG.error("PDF service error: status=%s, content-type=%s", status, ctype)
+                return HTMLResponse(html)
         else:
-            # Optional: forward to PDF service (not implemented here)
-            return HTMLResponse(html)  # keep behaviour consistent
+            return HTMLResponse(html)
     except Exception as e:
         LOG.exception("Render failed: %s", e)
         return HTMLResponse(_fallback_html("Render-Fehler: "+str(e)))
