@@ -1,35 +1,27 @@
 
-# gpt_analyze.py — Gold Standard bundle (2025-09-21)
+# gpt_analyze.py — Gold Standard + Live Layer (2025-09-21)
+# - Narrative chapters (DE/EN), subheads allowed, tables only for Tools/Funding.
+# - Uses Tavily live search when TAVILY_API_KEY is set to fetch current EU-hosted tools & funding hints.
+# - Falls back to curated CSVs in ./data/*.csv if live layer is unavailable.
 from __future__ import annotations
 
-import os, re, json, datetime as dt
+import os, re, csv, json, math, asyncio, datetime as dt
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
+import httpx
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 BASE_DIR = Path(__file__).resolve().parent
-PROMPTS_DIR = BASE_DIR / "prompts"
 TEMPLATES_DIR = BASE_DIR / "templates"
-LANGS = {"de","en"}
+DATA_DIR = BASE_DIR / "data"
 DEFAULT_LANG = "de"
+LANGS = {"de","en"}
 MIN_HTML_LEN = int(os.getenv("MIN_HTML_LEN","1000"))
+TAVILY_KEY = os.getenv("TAVILY_API_KEY","").strip()
+SEARCH_DAYS = int(os.getenv("SEARCH_DAYS","365"))
 
-CHAPTERS: List[str] = [
-    "exec_summary",
-    "quick_wins",
-    "risks",
-    "recommendations",
-    "roadmap",
-    "vision",
-    "gamechanger",
-    "compliance",
-    "tools",
-    "funding",
-    "live",
-    "trusted_check",
-]
-
-NUM_OK = {"roadmap_html","funding_html","tools_html","live_html"}
+# ----------------- Utilities & Sanitizers -----------------
 
 _CODEFENCE_RE = re.compile(r"```.*?```", flags=re.S)
 _TAG_RE = re.compile(r"</?(script|style)[^>]*>", flags=re.I)
@@ -65,6 +57,8 @@ def _sanitize_text(html: str) -> str:
     html = _strip_code_fences(html)
     return html.replace("&nbsp;"," ")
 
+# ----------------- Region normalization -----------------
+
 REGION_MAP = {
     "be":"berlin","bb":"brandenburg","bw":"baden-württemberg","by":"bayern",
     "hb":"bremen","hh":"hamburg","he":"hessen","mv":"mecklenburg-vorpommern",
@@ -77,175 +71,353 @@ def normalize_region(value: Optional[str]) -> str:
     v = str(value).strip().lower()
     return REGION_MAP.get(v, v)
 
-def _must_exist(p: Path) -> Path:
-    if not p.exists():
-        raise FileNotFoundError(f"Prompt fehlt: {p}")
-    return p
-
-def _load_text(p: Path) -> str:
-    return _must_exist(p).read_text(encoding="utf-8")
-
-def _read_prompt(chapter: str, lang: str) -> str:
-    lang = lang if lang in LANGS else DEFAULT_LANG
-    return _load_text(PROMPTS_DIR/lang/f"{chapter}.md")
-
-def _read_optional_context(lang: str) -> str:
-    parts: List[str] = []
-    for name in ("persona.md","praxisbeispiel.md"):
-        p = PROMPTS_DIR/lang/name
-        if p.exists():
-            parts.append(_load_text(p))
-    return "\n\n".join(parts)
+# ----------------- LLM -----------------
 
 def _llm_complete(prompt: str, model: Optional[str]=None, temperature: float=0.35) -> str:
     provider = os.getenv("LLM_PROVIDER","openai").lower()
     if provider == "none":
         raise RuntimeError("LLM disabled")
     try:
+        # OpenAI-compatible call
         from openai import OpenAI
         client = OpenAI()
         mdl = model or os.getenv("OPENAI_MODEL","gpt-4o-mini")
         r = client.chat.completions.create(
-            model=mdl,
-            temperature=temperature,
+            model=mdl, temperature=temperature,
             messages=[
-                {"role":"system","content":"You write warm, compliant HTML paragraphs. Use <h3 class='sub'> for subheads. For tools/funding you may include a compact <table class='mini'>."},
-                {"role":"user","content":prompt},
+                {"role":"system","content":"You output warm, compliant HTML paragraphs. Use <h3 class='sub'> subheads. Only use <table class='mini'> for tools and funding. Avoid bullet lists elsewhere."},
+                {"role":"user","content": prompt},
             ],
         )
         return (r.choices[0].message.content or "").strip()
     except Exception as e:
         raise RuntimeError(f"LLM call failed: {e}")
 
-def build_masterprompt(chapter: str, ctx: Dict[str,Any], lang: str) -> str:
-    base = _read_prompt(chapter, lang)
-    extra_ctx = _read_optional_context(lang)
-    rules_de = ("Narrative Absätze, per Sie, freundlich, optimistisch, keine Listen/Tabellen (außer Tools/Förderung). "
-                "EU‑Hosting bevorzugen, konkrete Alltagstauglichkeit. Keine Prozentangaben.")
-    rules_en = ("Narrative paragraphs, polite, optimistic, no lists/tables (except Tools/Funding). "
-                "Prefer EU hosting, concrete everyday usefulness. No percentages.")
+# ----------------- Prompts -----------------
+
+def _load_prompt(lang: str, chapter: str) -> str:
+    # Prompts are optional here; if not present, we build minimal directives.
+    p = BASE_DIR / "prompts" / lang / f"{chapter}.md"
+    if p.exists():
+        return p.read_text(encoding="utf-8")
+    # minimal defaults
+    if lang=="en":
+        defaults = {
+            "exec_summary":"Write an executive narrative that anchors on the company's main product/service, size and region. Be concrete about next steps and benefits/risks. Human approval before sending.",
+            "quick_wins":"Describe 3–4 safe, reversible first moves as paragraphs.",
+            "risks":"Explain practical risks and how to mitigate them (data spill, hallucinations, lock-in, over-automation).",
+            "recommendations":"Give 3–4 pragmatic recommendations tailored to the profile.",
+            "roadmap":"Plan with time anchors without digits: “immediately”, “in the coming weeks”, “within a year”.",
+            "vision":"Describe a useful, credible vision.",
+            "gamechanger":"Name a realistic game-changer and side effects.",
+            "compliance":"Address GDPR, ePrivacy, DSA and EU AI Act plainly.",
+            "tools":"Comment on the tool table and how to choose among EU options.",
+            "funding":"Comment on the funding table and a mini-path to apply.",
+            "live":"Summarize notable news/tools discovered recently (if any).",
+            "trusted_check":"Explain how to use the Trusted AI check one-pager."
+        }
+    else:
+        defaults = {
+            "exec_summary":"Schreiben Sie eine Executive Summary, die auf dem wichtigsten Produkt/der Hauptleistung, der Unternehmensgröße und dem Standort aufsetzt. Seien Sie konkret zu nächsten Schritten sowie Nutzen/Risiken. Menschliche Freigabe vor Versand.",
+            "quick_wins":"Beschreiben Sie 3–4 sichere, reversible erste Schritte als Absätze.",
+            "risks":"Erklären Sie pragmatische Risiken und Gegenmaßnahmen (Datenabfluss, Halluzinationen, Lock-in, Überautomatisierung).",
+            "recommendations":"Formulieren Sie 3–4 umsetzbare Empfehlungen, zugeschnitten auf das Profil.",
+            "roadmap":"Planen Sie mit Zeitankern ohne Ziffern: „sofort“, „in den nächsten Wochen“, „innerhalb eines Jahres“.",
+            "vision":"Skizzieren Sie eine hilfreiche, glaubwürdige Vision.",
+            "gamechanger":"Nennen Sie einen realistischen Gamechanger und Nebenwirkungen.",
+            "compliance":"Adressieren Sie DSGVO, ePrivacy, DSA und EU‑AI‑Act verständlich.",
+            "tools":"Kommentieren Sie die Tool‑Tabelle und die Auswahlkriterien (EU‑Optionen).",
+            "funding":"Kommentieren Sie die Förder‑Tabelle und einen Mini‑Pfad zur Antragstellung.",
+            "live":"Fassen Sie auffällige News/Tools der letzten Zeit (falls vorhanden) zusammen.",
+            "trusted_check":"Erklären Sie kurz, wie die Trusted‑KI‑Check‑Seite genutzt wird."
+        }
+    return defaults.get(chapter,"")
+
+def _build_prompt(lang: str, chapter: str, ctx: Dict[str,Any]) -> str:
+    rules_de = ("Narrative Absätze, per Sie, freundlich, optimistisch; keine Listen (außer Tools/Förderung als <table class='mini'>). "
+                "EU‑Hosting bevorzugen, Alltagstauglichkeit. Keine Prozentzahlen. "
+                "Verankern Sie die Empfehlungen hart am Profil: hauptleistung (wichtigstes Produkt/Dienstleistung), unternehmensgroesse, bundesland.")
+    rules_en = ("Narrative paragraphs, polite and optimistic; no lists (except Tools/Funding as <table class='mini'>). "
+                "Prefer EU hosting, everyday usefulness. No percentages. "
+                "Anchor advice on: main product/service, company size, region/state.")
     rules = rules_de if lang=="de" else rules_en
-    roadmap_rule = (" Verwenden Sie Zeitanker ohne Ziffern: „sofort“, „in den nächsten Wochen“, „innerhalb eines Jahres“.")
-    roadmap_rule_en = (" Use time anchors without digits: “immediately”, “in the coming weeks”, “within a year”.")
-    extras = roadmap_rule if (lang=="de" and chapter=="roadmap") else (roadmap_rule_en if (lang=="en" and chapter=="roadmap") else "")
+    if chapter=="roadmap":
+        rules += " Zeitanker ohne Ziffern (sofort / in den nächsten Wochen / innerhalb eines Jahres)." if lang=="de" else " Use time anchors without digits (immediately / in the coming weeks / within a year)."
+    prompt = _load_prompt(lang, chapter)
     ctx_json = json.dumps(ctx, ensure_ascii=False)
-    return "\n".join([base, "\n---\nKontext:\n", ctx_json, "\n---\nRegeln:\n", rules, extras, "\n---\nZusätzliche Hinweise:\n", extra_ctx])
+    return f"{prompt}\n\n---\nKontext/Context:\n{ctx_json}\n\n---\nRegeln/Rules:\n{rules}\n"
+
+# ----------------- Live Layer (Tavily) -----------------
+
+async def _tavily_search(query: str, max_results: int=5, timeout_s: int=10) -> List[Dict[str,Any]]:
+    if not TAVILY_KEY:
+        return []
+    url = "https://api.tavily.com/search"
+    payload = {
+        "api_key": TAVILY_KEY,
+        "query": query,
+        "search_depth": "advanced",
+        "include_answer": False,
+        "max_results": max_results,
+        "days": SEARCH_DAYS,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=timeout_s) as client:
+            r = await client.post(url, json=payload)
+            r.raise_for_status()
+            data = r.json()
+            return data.get("results",[]) or []
+    except Exception:
+        return []
+
+def _read_csv(path: Path) -> List[Dict[str,str]]:
+    if not path.exists(): return []
+    with path.open("r", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+def _curated_tools() -> List[Dict[str,str]]:
+    return _read_csv(DATA_DIR / "tools_catalog.csv")
+
+def _curated_funding() -> List[Dict[str,str]]:
+    return _read_csv(DATA_DIR / "funding_catalog.csv")
+
+def _rank_tools_for_profile(tools: List[Dict[str,str]], profile: Dict[str,str]) -> List[Dict[str,str]]:
+    # naive ranking by category relevance and EU flag
+    main = (profile.get("hauptleistung") or "").lower()
+    branche = (profile.get("branche") or "").lower()
+    size = (profile.get("unternehmensgroesse") or "")
+    want_crm = any(x in main for x in ("kunden","vertrieb","crm","angebote","service"))
+    want_content = any(x in main for x in ("text","content","inhalt","social","kampagne","video","präsentation"))
+    want_prod = any(x in main for x in ("produktion","fertigung","sensor","maschine","logistik"))
+    scored = []
+    for row in tools:
+        score = 0
+        if row.get("eu_hosted","").lower() in ("yes","true","1","eu"): score += 3
+        cat = row.get("category","").lower()
+        if want_crm and "crm" in cat: score += 3
+        if want_content and ("writing" in cat or "research" in cat): score += 2
+        if want_prod and ("automation" in cat or "erp" in cat): score += 2
+        if "automation" in cat: score += 1
+        if branche in (row.get("industry_hint","") or "").lower(): score += 1
+        scored.append((score,row))
+    scored.sort(key=lambda x: (-x[0], x[1].get("name","")))
+    return [r for _,r in scored[:6]]
+
+def _rank_funding_for_region(funds: List[Dict[str,str]], region: str, size: str) -> List[Dict[str,str]]:
+    region = normalize_region(region)
+    out = []
+    for row in funds:
+        scope = (row.get("region_scope","") or "").lower()
+        if scope in ("eu","de") or region in (row.get("region","") or "").lower().split("|"):
+            if size in (row.get("size_fit","") or "") or row.get("size_fit","")=="all":
+                out.append(row)
+    # limit
+    return out[:6]
+
+def _render_tools_table(rows: List[Dict[str,str]], lang: str) -> str:
+    if not rows:
+        return ""
+    if lang=="en":
+        head = "<tr><th>Tool</th><th>What for</th><th>EU notes</th></tr>"
+    else:
+        head = "<tr><th>Tool</th><th>Wozu</th><th>EU‑Hinweise</th></tr>"
+    body = []
+    for r in rows:
+        name = r.get("name","").strip()
+        what = r.get("what","").strip()
+        eu = r.get("eu_note","").strip()
+        body.append(f"<tr><td>{name}</td><td>{what}</td><td>{eu}</td></tr>")
+    return f"<table class='mini'><thead>{head}</thead><tbody>{''.join(body)}</tbody></table>"
+
+def _render_funding_table(rows: List[Dict[str,str]], lang: str) -> str:
+    if not rows: return ""
+    if lang=="en":
+        head = "<tr><th>Programme</th><th>Good fit when…</th><th>Notes</th></tr>"
+    else:
+        head = "<tr><th>Programm</th><th>Geeignet wenn…</th><th>Hinweise</th></tr>"
+    body = []
+    for r in rows:
+        name = r.get("name","").strip()
+        fit = r.get("fit","").strip()
+        note = r.get("note","").strip()
+        body.append(f"<tr><td>{name}</td><td>{fit}</td><td>{note}</td></tr>")
+    return f"<table class='mini'><thead>{head}</thead><tbody>{''.join(body)}</tbody></table>"
+
+async def _live_tools(profile: Dict[str,str], lang: str) -> List[Dict[str,str]]:
+    if not TAVILY_KEY: return []
+    region = normalize_region(profile.get("bundesland") or "")
+    main = profile.get("hauptleistung") or ""
+    queries = []
+    if lang=="de":
+        queries = [
+            f"EU gehostetes CRM KMU {region} 2025 Beispiele",
+            "EU Schreibassistent Datenschutz konform 2025 Beispiele",
+            "Open source Automatisierung EU self host 2025 n8n Alternativen",
+        ]
+    else:
+        queries = [
+            f"EU hosted CRM SME {region} 2025 examples",
+            "EU writing assistant privacy friendly 2025 examples",
+            "open source automation EU self host 2025 n8n alternatives",
+        ]
+    # Merge top results heuristically (name extraction is fuzzy; we keep short titles)
+    results: List[Dict[str,str]] = []
+    for q in queries:
+        hits = await _tavily_search(q, max_results=4)
+        for h in hits:
+            title = (h.get("title") or "").strip()
+            if not title: continue
+            # keep brand-like first token
+            brand = title.split("—")[0].split("|")[0].split(" - ")[0].strip()
+            if len(brand)>60: brand = brand[:60]
+            # naive category guess
+            cat = "crm" if "crm" in q.lower() else ("writing" if "write" in q.lower() or "schreib" in q.lower() else "automation")
+            results.append({
+                "name": brand,
+                "category": cat,
+                "what": "Kundenfäden bündeln" if cat=="crm" and lang=="de" else ("Customer threads & notes" if cat=="crm" else ("Texte & Recherche" if lang=="de" else "Writing & research")),
+                "eu_hosted": "unknown",
+                "eu_note": "EU‑Region/ADV prüfen" if lang=="de" else "Check EU region/DPA",
+                "industry_hint": "",
+            })
+    # de-duplicate by name
+    seen=set(); dedup=[]
+    for r in results:
+        if r["name"].lower() in seen: continue
+        seen.add(r["name"].lower()); dedup.append(r)
+    return dedup[:6]
+
+async def _live_funding(profile: Dict[str,str], lang: str) -> List[Dict[str,str]]:
+    if not TAVILY_KEY: return []
+    region = normalize_region(profile.get("bundesland") or "")
+    size = profile.get("unternehmensgroesse") or ""
+    if lang=="de":
+        q = f"{region} Förderung Digitalisierung KMU 2025 Programm Antrag Fristen"
+    else:
+        q = f"{region} funding digitalisation SME 2025 programme apply deadline"
+    hits = await _tavily_search(q, max_results=8)
+    out = []
+    for h in hits:
+        title = (h.get("title") or "").strip()
+        if not title: continue
+        name = title.split("—")[0].split("|")[0].split(" - ")[0].strip()
+        if len(name)>80: name = name[:80]
+        out.append({
+            "name": name,
+            "fit": "KMU / Pilot / Qualifizierung" if lang=="de" else "SME / pilot / upskilling",
+            "note": "Details & Fristen prüfen" if lang=="de" else "Check details & deadlines",
+            "region_scope":"regional",
+            "region": region,
+            "size_fit": size or "all"
+        })
+    # de-duplicate
+    seen=set(); dedup=[]
+    for r in out:
+        if r["name"].lower() in seen: continue
+        seen.add(r["name"].lower()); dedup.append(r)
+    return dedup[:6]
+
+# ----------------- Chapter generation -----------------
+
+CHAPTERS = [
+    "exec_summary","quick_wins","risks","recommendations","roadmap",
+    "vision","gamechanger","compliance","tools","funding","live","trusted_check"
+]
+
+def _env() -> Environment:
+    return Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=select_autoescape(enabled_extensions=("html",)))
+
+def _tpl_name(lang: str) -> str: return "pdf_template_en.html" if lang=="en" else "pdf_template.html"
 
 def _chapter_key(ch: str) -> str: return f"{ch}_html"
 
-def _generate(ch: str, ctx: Dict[str,Any], lang: str, temperature: float=0.35) -> str:
-    prompt = build_masterprompt(ch, ctx, lang)
-    return _llm_complete(prompt, model=os.getenv("ANALYZE_MODEL"), temperature=temperature)
+def _profile_from_data(data: Dict[str,Any]) -> Dict[str,str]:
+    return {
+        "branche": str(data.get("branche","")),
+        "unternehmensgroesse": str(data.get("unternehmensgroesse","")),
+        "bundesland": normalize_region(data.get("bundesland","")),
+        "hauptleistung": str(data.get("hauptleistung","")),
+        "zielgruppen": ", ".join(data.get("zielgruppen") or []),
+    }
 
 def _postprocess(outputs: Dict[str,str]) -> Dict[str,str]:
     out: Dict[str,str] = {}
     for k, v in outputs.items():
         if not k.endswith("_html"):
             out[k]=v; continue
-        out[k] = _sanitize_text(v) if k in NUM_OK else _strip_lists_and_numbers(v)
+        out[k] = _sanitize_text(v) if k in {"roadmap_html","funding_html","tools_html","live_html"} else _strip_lists_and_numbers(v)
     return out
 
-def _env() -> Environment:
-    return Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=select_autoescape(enabled_extensions=("html",)))
-
-def _tpl_name(lang: str) -> str:
-    return "pdf_template_en.html" if lang=="en" else "pdf_template.html"
-
-# ---- Fallback builders (chapter enforcement) ----
-def _fallback_exec(lang: str, meta: Dict[str,Any]) -> str:
-    if lang=="en":
-        return ("<p>You can start with three safe, reversible steps, then move to a staged roadmap. "
-                "Compliance is a way of working: roles, approvals, documentation and deletion with logs. "
-                "Prefer EU‑hosted tools and keep human approval before sending.</p>")
-    return ("<p>Sie starten mit drei sicheren, reversiblen Schritten und entwickeln daraus eine gestufte Roadmap. "
-            "Compliance ist Arbeitsweise: Rollen, Freigaben, Dokumentation und Löschung mit Logs. "
-            "Bevorzugen Sie EU‑gehostete Werkzeuge und behalten Sie die menschliche Freigabe vor dem Versand bei.</p>")
-
-def _fallback_tools(lang: str) -> str:
-    if lang=="en":
-        return ("""<table class="mini"><thead><tr><th>Building block</th><th>Purpose</th><th>EU notes</th></tr></thead>
-<tbody>
-<tr><td>CRM / Contact hub</td><td>Unify customer threads, quotes & notes</td><td>EU region, export, roles & logs (e.g., weclapp, CentralStationCRM, Pipedrive EU)</td></tr>
-<tr><td>Writing / research assistant</td><td>Drafts, summaries, ideation</td><td>EU options, data‑sparse mode, human approval (e.g., DeepL Write, Mistral, Aleph Alpha)</td></tr>
-<tr><td>Small automation layer</td><td>Confirmations, file routing, templates</td><td>Rollback, pilot, logging (e.g., n8n self‑host EU, Make EU)</td></tr>
-</tbody></table>
-<p>Choose by principles rather than brand: EU region, exportability, roles/logs and reversibility.</p>""")
-    return ("""<table class="mini"><thead><tr><th>Baustein</th><th>Wozu</th><th>EU‑Hinweise</th></tr></thead>
-<tbody>
-<tr><td>CRM / Kontakt‑Hub</td><td>Kundenfäden bündeln, Angebote & Notizen</td><td>EU‑Datenregion, Export, Rollen & Logs (z. B. weclapp, CentralStationCRM, Pipedrive EU)</td></tr>
-<tr><td>Schreib‑/Recherche‑Assistent</td><td>Entwürfe, Zusammenfassungen, Ideation</td><td>EU‑Optionen, Datensparmodus, menschliche Freigabe (z. B. DeepL Write, Mistral, Aleph Alpha)</td></tr>
-<tr><td>Kleine Automationsschicht</td><td>Bestätigungen, Datei‑Routing, Vorlagen</td><td>Rollback, Probelauf, Logging (z. B. n8n self‑host EU, Make EU)</td></tr>
-</tbody></table>
-<p>Entscheiden Sie nach Prinzipien statt Marke: EU‑Datenregion, Exportfähigkeit, Rollen/Logs, Rückbau.</p>""")
-
-def _fallback_funding(lang: str) -> str:
-    if lang=="en":
-        return ("""<table class="mini"><thead><tr><th>Path</th><th>Suitable when</th><th>Notes</th></tr></thead>
-<tbody>
-<tr><td>Data groundwork</td><td>Put order into data/processes</td><td>EU hosting, light documentation, small pilot</td></tr>
-<tr><td>Small pilots</td><td>Test 1–2 use cases</td><td>Pilot, logs, human approval</td></tr>
-<tr><td>Upskilling</td><td>Make the team fit</td><td>Short modules, practice share, export of results</td></tr>
-</tbody></table>
-<p>Start with a funding‑ready mini‑path: goal → small steps → observable effect (no percentages).</p>""")
-    return ("""<table class="mini"><thead><tr><th>Pfad</th><th>Geeignet wenn</th><th>Hinweise</th></tr></thead>
-<tbody>
-<tr><td>Daten‑Grundlagen</td><td>Stammdaten/Prozesse ordnen</td><td>EU‑Hosting, schlanke Doku, kleiner Pilot</td></tr>
-<tr><td>Kleine Piloten</td><td>1–2 Use‑Cases testen</td><td>Probelauf, Logs, menschliche Freigabe</td></tr>
-<tr><td>Qualifizierung</td><td>Team fit machen</td><td>Kurzmodule, Praxisanteil, Export der Ergebnisse</td></tr>
-</tbody></table>
-<p>Starten Sie mit einem förder‑tauglichen Mini‑Pfad: Ziel → kleine Schritte → sichtbare Wirkung (ohne Prozente).</p>""")
-
-def _fallback_trusted(lang: str) -> str:
-    if lang=="en":
-        return ("""<p>The Trusted AI Check ensures privacy, traceability and reversibility.</p>
-<table class="mini"><thead><tr><th>Criterion</th><th>How to recognise</th><th>Next step</th></tr></thead>
-<tbody>
-<tr><td>Purpose & benefit</td><td>Clear, limited goal</td><td>Write 2–3 sentences</td></tr>
-<tr><td>Data & roles</td><td>Inputs known, roles assigned</td><td>Name owner & reviewer</td></tr>
-<tr><td>Human approval</td><td>Four‑eyes before sending</td><td>Checklist + sign‑off</td></tr>
-<tr><td>Logging & export</td><td>Events recorded, export possible</td><td>Enable logs, test export</td></tr>
-<tr><td>Deletion</td><td>Retention set & enforced</td><td>Define & test deletion</td></tr>
-<tr><td>Risk & mitigation</td><td>False outputs, data spill</td><td>Pilot, rollback, data minimisation</td></tr>
-</tbody></table>
-<p>This one‑page check builds trust and reduces adoption friction.</p>""")
-    return ("""<p>Der Trusted KI‑Check stellt Datenschutz, Nachvollziehbarkeit und Rückbaubarkeit sicher.</p>
-<table class="mini"><thead><tr><th>Kriterium</th><th>Woran erkennbar</th><th>Nächster Schritt</th></tr></thead>
-<tbody>
-<tr><td>Zweck & Nutzen</td><td>Klares, begrenztes Ziel</td><td>2–3 Sätze formulieren</td></tr>
-<tr><td>Daten & Rollen</td><td>Eingaben bekannt, Rollen vergeben</td><td>Owner & Reviewer benennen</td></tr>
-<tr><td>Menschliche Freigabe</td><td>Vier‑Augen vor Versand</td><td>Checkliste + Sign‑off</td></tr>
-<tr><td>Logging & Export</td><td>Ereignisse protokolliert, Export möglich</td><td>Logs aktivieren, Export testen</td></tr>
-<tr><td>Löschung</td><td>Aufbewahrung festgelegt & durchgesetzt</td><td>Löschkonzept definieren & testen</td></tr>
-<tr><td>Risiko & Mitigation</td><td>Fehlausgaben, Datenabfluss</td><td>Probelauf, Rückbau, Datensparsamkeit</td></tr>
-</tbody></table>
-<p>Die Kurzprüfung schafft Vertrauen und senkt Einführungsbarrieren.</p>""")
-
-def analyze(data: Dict[str,Any], lang: str=DEFAULT_LANG, temperature: float=0.35) -> Dict[str,str]:
+async def analyze_async(data: Dict[str,Any], lang: str=DEFAULT_LANG, temperature: float=0.35) -> Dict[str,str]:
     lang = lang if lang in LANGS else DEFAULT_LANG
-    d = dict(data or {})
-    # Region wird im Formular verlangt; Normalisierung nur falls vorhanden
-    if "bundesland" in d: d["bundesland"] = normalize_region(d.get("bundesland"))
+    profile = _profile_from_data(data)
+    # Build global context
+    ctx = dict(data)
+    ctx["profile"] = profile
+    ctx["now"] = dt.date.today().isoformat()
+    # Generate chapters (LLM)
     outputs: Dict[str,str] = {}
     for ch in CHAPTERS:
         try:
-            outputs[_chapter_key(ch)] = _generate(ch, d, lang, temperature=temperature)
+            prompt = _build_prompt(lang, ch, ctx)
+            outputs[_chapter_key(ch)] = _llm_complete(prompt, model=os.getenv("ANALYZE_MODEL"), temperature=temperature)
         except Exception:
             outputs[_chapter_key(ch)] = ""
     out = _postprocess(outputs)
-    # Kapitel-Erzwingung / Fallbacks
-    meta = {
-        "title": (d.get("meta",{}) or {}).get("title") or ("KI‑Statusbericht" if lang=="de" else "AI Status Report"),
-        "date": dt.date.today().strftime("%d.%m.%Y") if lang=="de" else dt.date.today().isoformat(),
-        "lang": lang,
-        "branche": d.get("branche") or "",
-        "groesse": d.get("unternehmensgroesse") or d.get("size") or "",
-        "standort": d.get("standort") or d.get("region") or d.get("bundesland") or "",
-    }
-    if not out.get("exec_summary_html"): out["exec_summary_html"] = _fallback_exec(lang, meta)
-    if not out.get("tools_html"): out["tools_html"] = _fallback_tools(lang)
-    if not out.get("funding_html"): out["funding_html"] = _fallback_funding(lang)
-    if not out.get("trusted_check_html"): out["trusted_check_html"] = _fallback_trusted(lang)
+
+    # Tools + Funding tables (live or curated)
+    tools_rows: List[Dict[str,str]] = []
+    funding_rows: List[Dict[str,str]] = []
+
+    try:
+        tools_rows = await _live_tools(profile, lang)
+    except Exception:
+        tools_rows = []
+    if not tools_rows:
+        tools_rows = _rank_tools_for_profile(_curated_tools(), profile)
+
+    try:
+        funding_rows = await _live_funding(profile, lang)
+    except Exception:
+        funding_rows = []
+    if not funding_rows:
+        funding_rows = _rank_funding_for_region(_curated_funding(), profile.get("bundesland",""), profile.get("unternehmensgroesse",""))
+
+    # Inject tables in front of LLM text
+    tools_table = _render_tools_table(tools_rows, lang)
+    funding_table = _render_funding_table(funding_rows, lang)
+    out["tools_html"] = f"{tools_table}\n{out.get('tools_html','')}".strip()
+    out["funding_html"] = f"{funding_table}\n{out.get('funding_html','')}".strip()
+
+    # Trusted check fallback if empty
+    if not out.get("trusted_check_html"):
+        if lang=="en":
+            out["trusted_check_html"] = (
+              "<p>The Trusted AI Check ensures privacy, traceability and reversibility.</p>"
+              "<table class='mini'><thead><tr><th>Criterion</th><th>How to recognise</th><th>Next step</th></tr></thead>"
+              "<tbody><tr><td>Purpose & benefit</td><td>Clear, limited goal</td><td>Write 2–3 sentences</td></tr>"
+              "<tr><td>Data & roles</td><td>Inputs known, roles assigned</td><td>Name owner & reviewer</td></tr>"
+              "<tr><td>Human approval</td><td>Four‑eyes before sending</td><td>Checklist + sign‑off</td></tr>"
+              "<tr><td>Logging & export</td><td>Events recorded, export possible</td><td>Enable logs, test export</td></tr>"
+              "<tr><td>Deletion</td><td>Retention set & enforced</td><td>Define & test deletion</td></tr>"
+              "<tr><td>Risk & mitigation</td><td>False outputs, data spill</td><td>Pilot, rollback, data minimisation</td></tr></tbody></table>"
+            )
+        else:
+            out["trusted_check_html"] = (
+              "<p>Der Trusted KI‑Check stellt Datenschutz, Nachvollziehbarkeit und Rückbaubarkeit sicher.</p>"
+              "<table class='mini'><thead><tr><th>Kriterium</th><th>Woran erkennbar</th><th>Nächster Schritt</th></tr></thead>"
+              "<tbody><tr><td>Zweck & Nutzen</td><td>Klares, begrenztes Ziel</td><td>2–3 Sätze formulieren</td></tr>"
+              "<tr><td>Daten & Rollen</td><td>Eingaben bekannt, Rollen vergeben</td><td>Owner & Reviewer benennen</td></tr>"
+              "<tr><td>Menschliche Freigabe</td><td>Vier‑Augen vor Versand</td><td>Checkliste + Sign‑off</td></tr>"
+              "<tr><td>Logging & Export</td><td>Ereignisse protokolliert, Export möglich</td><td>Logs aktivieren, Export testen</td></tr>"
+              "<tr><td>Löschung</td><td>Aufbewahrung festgelegt & durchgesetzt</td><td>Löschkonzept definieren & testen</td></tr>"
+              "<tr><td>Risiko & Mitigation</td><td>Fehlausgaben, Datenabfluss</td><td>Probelauf, Rückbau, Datensparsamkeit</td></tr></tbody></table>"
+            )
+
     return out
+
+def analyze(data: Dict[str,Any], lang: str=DEFAULT_LANG, temperature: float=0.35) -> Dict[str,str]:
+    return asyncio.get_event_loop().run_until_complete(analyze_async(data, lang, temperature))
 
 def analyze_briefing(data: Dict[str,Any], lang: str=DEFAULT_LANG, temperature: float=0.35) -> Dict[str,Any]:
     sections = analyze(data, lang=lang, temperature=temperature)
@@ -273,8 +445,7 @@ def analyze_to_html(data: Dict[str,Any], lang: str=DEFAULT_LANG, temperature: fl
         "groesse": data.get("unternehmensgroesse") or data.get("size") or "",
         "standort": data.get("standort") or data.get("region") or data.get("bundesland") or "",
     }
-    html = tpl.render(meta=meta, **sections)
+    html = tpl.render(meta=meta, **sections, now=dt.datetime.now)
     if not html or len(html) < MIN_HTML_LEN or "<h2" not in html:
-        # Minimaler Fallback: render erneut nur mit vorhandenen Sektionen
-        html = tpl.render(meta=meta, **sections)
+        html = tpl.render(meta=meta, **sections, now=dt.datetime.now)
     return html
