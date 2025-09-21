@@ -1,0 +1,32 @@
+branche: Marketing
+score_percent: 69
+benchmark: "Digitalisierungsgrad: 64 %, Automatisierungsgrad: 53 %"
+hauptleistung: "Kampagnen, Content, Beratung"
+zielgruppen: ["Agenturen", "Marketingabteilungen", "KMU"]
+wichtigste_chancen: "KI-basierte Content-Erstellung, Automatisierte Kampagnenauswertung, Zielgruppen-Segmentierung"
+zentrale_risiken: "Bias bei KI-Content, Datenschutz bei Tracking, fehlende Systemintegration"
+next_steps: |
+  - KI-Text/Bildtools pilotieren
+  - Personalisierung von Newslettern einführen
+  - Förderprogramme für Marketing-Digitalisierung prüfen
+tools_list:
+  - name: "Persado"
+    usecase: "KI-Content-Erstellung"
+    datenschutz: "EU"
+    link: "https://persado.com"
+  - name: "HubSpot AI"
+    usecase: "Kampagnen-Automatisierung"
+    datenschutz: "EU"
+    link: "https://hubspot.com"
+foerderprogramme_list:
+  - name: "Digital Jetzt"
+    link: "https://www.bmwi.de/Digital-Jetzt"
+    zielgruppe: "Marketing, KMU"
+    foerderquote: "bis zu 70 %"
+    deadline: "31.12.2025"
+  - name: "Go-Digital"
+    link: "https://www.bmwi.de/go-digital"
+    zielgruppe: "Agenturen, KMU"
+    foerderquote: "50 %"
+    deadline: "31.12.2025"
+best_practice: "Agentur ZYX steigerte mit Persado die Kampagnen-Conversions um 18 % und halbierte die Texterstellungszeit."

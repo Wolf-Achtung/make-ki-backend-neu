@@ -1,0 +1,7 @@
+cluster,score_ki_readiness,score_datenschutz,score_innovation,score_compliance,benchmarktitel,beispiel_usecase,empfohlene_tools
+Solo/Freiberufler,38,65,40,55,Freie Bildung,Online-Kursplattform,Udemy;MoodleCloud
+Klein (2–9 MA),48,70,50,60,Digitale Schule,Lern-Apps-Integration,Antolin;Kahoot!
+KMU (10–249 MA),62,78,63,72,EdTech Innovator,KI-basierte Lernstandanalyse,Itslearning;Examity
+Groß,78,85,75,85,Top-Performer,Adaptive Learning Plattform,Cornelsen Scook;Squirrel AI
+
+

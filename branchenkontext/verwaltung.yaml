@@ -1,0 +1,32 @@
+branche: Verwaltung
+score_percent: 58
+benchmark: "Digitalisierungsgrad: 48 %, Automatisierungsgrad: 30 %"
+hauptleistung: "Bürgerdienste, öffentliche Verwaltung"
+zielgruppen: ["Kommunen", "Landesbehörden", "Schulträger"]
+wichtigste_chancen: "Digitale Aktenführung, Automatisiertes Bürgerportal, KI-gestützte Terminvergabe"
+zentrale_risiken: "Datenschutz, Schnittstellenprobleme, Budgetrestriktionen"
+next_steps: |
+  - Pilotprojekt E-Government-Portal starten
+  - Dokumentenmanagement digitalisieren
+  - Fördermittel (z. B. aus Onlinezugangsgesetz) beantragen
+tools_list:
+  - name: "Ceyoniq nscale"
+    usecase: "Dokumentenmanagement in Behörden"
+    datenschutz: "DE"
+    link: "https://ceyoniq.com"
+  - name: "OpenR@thaus"
+    usecase: "Bürgerportal"
+    datenschutz: "DE"
+    link: "https://openrathaus.de"
+foerderprogramme_list:
+  - name: "Onlinezugangsgesetz-Förderung"
+    link: "https://www.bmi.bund.de/"
+    zielgruppe: "Kommunen, Behörden"
+    foerderquote: "bis zu 90 %"
+    deadline: "31.12.2025"
+  - name: "DigitalPakt Verwaltung"
+    link: "https://www.bmi.bund.de/digitalpakt"
+    zielgruppe: "Verwaltung"
+    foerderquote: "je nach Programm"
+    deadline: "31.12.2025"
+best_practice: "Kommune XYZ digitalisierte mit OpenR@thaus das Meldewesen und halbierte die Bearbeitungszeit für Bürgeranfragen."

@@ -1,0 +1,32 @@
+branche: Gesundheit & Pflege
+score_percent: 61
+benchmark: "Digitalisierungsgrad: 57 %, Automatisierungsgrad: 42 %"
+hauptleistung: "Patientenmanagement & Diagnostik"
+zielgruppen: ["Praxen", "Kliniken", "Pflege"]
+wichtigste_chancen: "Telemedizin, KI-gestützte Diagnostik, Automatisierte Dokumentation"
+zentrale_risiken: "Datenschutz, Schnittstellenprobleme, Akzeptanz"
+next_steps: |
+  - E-Health-Lösung pilotieren
+  - Mitarbeitende zu KI-Dokumentation schulen
+  - Fördermittel von G-BA oder Innovationsfonds nutzen
+tools_list:
+  - name: "SORMAS"
+    usecase: "Gesundheitsmanagement"
+    datenschutz: "DE"
+    link: "https://sormas.org"
+  - name: "Infermedica"
+    usecase: "Symptomanalyse"
+    datenschutz: "EU"
+    link: "https://infermedica.com"
+foerderprogramme_list:
+  - name: "Innovationsfonds"
+    link: "https://www.g-ba.de/innovationsfonds"
+    zielgruppe: "Gesundheit"
+    foerderquote: "80 %"
+    deadline: "31.12.2025"
+  - name: "KHZG"
+    link: "https://www.bundesgesundheitsministerium.de/khzg"
+    zielgruppe: "Kliniken"
+    foerderquote: "70 %"
+    deadline: "31.12.2025"
+best_practice: "Praxis MNO implementierte Infermedica und verkürzte die Diagnostikzeit um 25 %."
