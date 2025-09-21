@@ -1,162 +1,292 @@
-
 <!doctype html>
-<html lang="de">
+<html lang="{{ (meta.lang or 'de') }}">
 <head>
   <meta charset="utf-8">
-  <title>{{ meta.title }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ (meta.title or 'KI‑Statusbericht') }}</title>
+
   <style>
-    :root{
-      --ink:#0b1a30;           /* dunkles Blau für Copy */
-      --muted:#274060;         /* subheads */
-      --rule:#c8d4e3;          /* Linien */
-      --page:#f7faff;          /* sehr helles Blau als Paper */
-      --chip:#e9f0fb;          /* Chips/Boxen */
-      --accent:#1f4fbf;        /* Links */
-    }
-    *{box-sizing:border-box;}
-    html,body{margin:0;padding:0;background:#fff;}
-    body{color:var(--ink); font:14px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial;}
-    header,section{padding:28px 36px;}
-    header{
-      background: linear-gradient(180deg, #ecf2ff 0%, #ffffff 80%);
-      border-bottom: 1px solid var(--rule);
-    }
-    h1{ font-size:22px; margin:6px 0 4px 0; letter-spacing:0.2px;}
-    h2{ font-size:17px; margin:18px 0 12px 0; color:var(--muted); text-transform: none; }
-    h3.sub{ font-size:13px; margin:14px 0 6px 0; color:var(--muted); font-weight:600; letter-spacing:0.15px; }
-    p{ margin: 10px 0; }
-    a{ color: var(--accent); text-decoration:none; }
-    .meta{ color:#4a5b76; font-size:12px; }
-    .chapter{ page-break-before: always; background:#fff; }
-    .section{ max-width: 760px; margin: 0 auto; background:#fff; }
-    .toc { background: var(--page); border:1px solid var(--rule); border-radius:12px; }
-    .toc a{ text-decoration:none; }
-    .rule{ height:1px; background:var(--rule); margin:10px 0 0 0; }
-    .quick-box{ border:1px solid var(--rule); background:var(--chip); border-radius:12px; padding:12px 14px; margin-top:6px; }
-    table.mini{ width:100%; border-collapse:collapse; margin:8px 0 12px; font-size:13px; }
-    table.mini th, table.mini td{ border:1px solid var(--rule); padding:6px 8px; vertical-align:top; }
-    table.mini thead th{ background:#f1f5fb; text-align:left; }
-    table.mini tbody tr:nth-child(even){ background:#fbfdff; }
-    .footer{ margin-top: 18px; font-size: 11px; color:#5c6c88; }
-    .small{ font-size: 12px; color:#556; }
-    .badge{ display:inline-block; padding:2px 6px; border-radius:6px; background:#edf3ff; border:1px solid var(--rule); font-size:11px; margin-left:6px;}
+  /* ==========================================================================
+     KI‑Statusbericht – Report Styles (dunkle Blau‑Palette)
+     Version: 2025‑09‑21
+     ========================================================================== */
+  :root{
+    /* Farbpalette – Blau, seriös */
+    --blue-950: #0a1220;
+    --blue-900: #0b1f3b;
+    --blue-850: #123056;
+    --blue-800: #153a6b;
+    --blue-700: #1f4d8f;
+    --blue-600: #2a66b2;
+    --blue-500: #3a7bd5;
+    --blue-200: #dbe8fb;
+    --blue-150: #e8f0ff;
+    --blue-100: #f2f6ff;
+
+    --ink:        var(--blue-900);
+    --ink-weak:   #3f5575;
+    --muted:      #5c6d84;
+    --border:     #d6e0ef;
+    --bg:         #ffffff;
+    --soft-bg:    #f6f9ff;
+
+    --success: #19724f;
+    --warning: #b45309;
+    --danger:  #b91c1c;
+
+    --base-size: 11.5pt;
+    --line:      1.60;
+    --h1:        26pt;
+    --h2:        18pt;
+    --h3:        14pt;
+    --space-1:   6pt;
+    --space-2:   10pt;
+    --space-3:   16pt;
+    --space-4:   22pt;
+    --radius:    6px;
+    --shadow:    0 1px 0 rgba(10,16,32,.04), 0 0 0 1px rgba(10,16,32,.04);
+  }
+
+  html, body{
+    background: var(--bg);
+    color: var(--ink);
+    font: normal var(--base-size)/var(--line) "Inter","SF Pro Text","Segoe UI",
+          Roboto,"Helvetica Neue",Arial,system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    margin: 0;
+  }
+
+  .page{ page-break-after: always; }
+  .page:last-child{ page-break-after: auto; }
+
+  .wrapper{
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24pt 28pt 28pt;
+  }
+
+  h1, h2, h3{
+    color: var(--ink);
+    margin: 0 0 var(--space-2);
+    line-height: 1.25;
+    letter-spacing: .1px;
+  }
+  h1{ font-size: var(--h1); font-weight: 700; color: var(--blue-900); }
+  h2{ font-size: var(--h2); font-weight: 700; }
+  h3{ font-size: var(--h3); font-weight: 700; color: var(--blue-850); }
+
+  p{ margin: 0 0 var(--space-2); widows: 2; orphans: 2; }
+  small, .muted{ color: var(--muted); }
+
+  a{ color: var(--blue-700); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+
+  .section-title{
+    display: flex; align-items: center;
+    gap: 10pt; margin: var(--space-4) 0 var(--space-2);
+  }
+  .section-title .dot{
+    width: 22px; height: 22px; border-radius: 6px;
+    background: linear-gradient(180deg, var(--blue-700), var(--blue-500));
+    box-shadow: 0 2px 6px rgba(21,58,107,.20);
+  }
+  .section-title h2{ margin: 0; }
+
+  .hr{ height: 1px; background: var(--border); margin: var(--space-3) 0 var(--space-2); }
+
+  .cover{ padding: 48pt 0 10pt; }
+  .kicker{ text-transform: uppercase; letter-spacing: .6px; color: var(--ink-weak); font-weight: 700; }
+  .lead{ font-size: 13.5pt; color: var(--ink); }
+
+  .meta{
+    display: grid; grid-template-columns: auto 1fr;
+    gap: 6pt 12pt; margin: var(--space-2) 0 var(--space-3);
+    color: var(--ink-weak);
+  }
+  .meta b{ color: var(--ink); }
+
+  .toc{
+    background: var(--blue-100);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14pt 16pt;
+    margin: var(--space-3) 0;
+  }
+  .toc h3{ margin-top: 0; }
+  .toc ol{ margin: 0; padding-left: 18pt; }
+  .toc li{ margin: 4pt 0; }
+
+  .callout{
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--blue-700);
+    border-radius: var(--radius);
+    background: var(--blue-100);
+    padding: 12pt 14pt;
+    box-shadow: var(--shadow);
+    margin: var(--space-2) 0 var(--space-3);
+  }
+  .callout.safe{ border-left-color: var(--success); background: #eef9f4; }
+  .callout.risk{ border-left-color: var(--warning); background: #fff6ea; }
+  .callout h3{ margin-top: 0; }
+
+  .table{
+    width: 100%; border-collapse: collapse; margin: var(--space-2) 0 var(--space-3);
+    font-size: 10.5pt;
+  }
+  .table thead th{
+    background: var(--blue-800); color: #fff; font-weight: 700;
+    text-align: left; padding: 9pt 10pt; border: 1px solid var(--blue-800);
+  }
+  .table tbody td{
+    padding: 8pt 10pt; border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .table tbody tr:nth-child(even){ background: var(--blue-150); }
+  .table caption{
+    text-align: left; font-weight: 700; color: var(--blue-850);
+    margin: 0 0 6pt;
+  }
+  .table.tools   caption::before{ content: "🔧 "; }
+  .table.funding caption::before{ content: "💶 "; }
+
+  ul, ol{ margin: 0 0 var(--space-2) 16pt; }
+  li{ margin: 3pt 0; }
+
+  .footer{
+    margin-top: var(--space-4);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10pt;
+    display: flex; justify-content: space-between; gap: 10pt; flex-wrap: wrap;
+  }
+
+  .page-break{ page-break-before: always; }
+
+  @media print{
+    a{ text-decoration: none; }
+    .toc, .callout, .table{ break-inside: avoid; }
+  }
   </style>
 </head>
 <body>
-  <header class="section">
-    <div class="meta">
-      Narrativer Report – DSGVO‑ &amp; EU‑AI‑Act‑ready. {{ meta.date|default(now().strftime('%d.%m.%Y')) }}
-      · Branche: {{ meta.branche }} · Größe: {{ meta.groesse }} · Standort: {{ meta.standort }} · Sprache: DE
-      <span class="badge">EU‑Hosting bevorzugt</span> <span class="badge">menschliche Freigabe</span>
+  {% set _today = (meta.date or now().date().isoformat()) %}
+  <div class="page">
+    <div class="wrapper">
+      <div class="cover">
+        <div class="kicker">
+          Narrativer Report – DSGVO‑ &amp; EU‑AI‑Act‑ready. {{ _today }}
+          · Branche: {{ meta.industry or '—' }} · Größe: {{ meta.size or '—' }} · Standort: {{ meta.region or '—' }}
+          · Sprache: {{ (meta.lang or 'DE')|upper }}
+        </div>
+        <h1>KI‑Statusbericht</h1>
+        <p class="lead">Erstellt mit kuratierten Prompts und einem optionalen Live‑Layer für Tools &amp; Fördermittel.
+          <a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback geben</a>.
+        </p>
+
+        <div class="meta">
+          <div><b>Titel</b></div><div>{{ meta.title or 'KI‑Statusbericht' }}</div>
+          <div><b>Datum</b></div><div>{{ _today }}</div>
+          <div><b>Kontakt</b></div><div>{{ meta.contact or '—' }}</div>
+          <div><b>Hosting‑Präferenz</b></div><div>{{ meta.hosting or 'EU‑Optionen bevorzugt' }}</div>
+        </div>
+
+        <div class="toc">
+          <h3>Inhaltsverzeichnis</h3>
+          <ol>
+            {# Falls Abschnitte vorhanden, dynamisch anzeigen #}
+            {% for s in sections or [] %}
+              <li>{{ s.title }}</li>
+            {% endfor %}
+            {% if (tables and tables.tools) %}<li>Tools (EU‑Optionen)</li>{% endif %}
+            {% if (tables and tables.funding) %}<li>Förderprogramme (Auswahl)</li>{% endif %}
+          </ol>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>© {{ now().year }} Wolf Hohl · KI‑Sicherheit · DSGVO &amp; EU‑AI‑Act‑ready</div>
+        <div><a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback</a> ·
+             „Wie wurde dieser Report erstellt?“ – kuratierte Prompts, Live‑Layer (optional), EU‑Optionen, menschliche Freigabe.</div>
+      </div>
     </div>
-    <h1>{{ meta.title }}</h1>
-    <p class="small">Erstellt mit kuratierten Prompts und einem optionalen Live‑Layer für Tools &amp; Fördermittel. 
-      <a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback geben</a>.</p>
-  </header>
+  </div>
 
-  <section class="chapter section">
-    <h2 id="toc">Inhaltsverzeichnis</h2>
-    <div class="toc" style="padding:12px 16px;">
-      <p><a href="#exec">Executive Summary</a></p>
-      {% if quick_wins_html %}<p><a href="#quick">Sichere Sofortschritte</a></p>{% endif %}
-      {% if risks_html %}<p><a href="#risks">Risiken</a></p>{% endif %}
-      {% if recommendations_html %}<p><a href="#reco">Empfehlungen</a></p>{% endif %}
-      {% if roadmap_html %}<p><a href="#roadmap">Roadmap</a></p>{% endif %}
-      {% if vision_html or gamechanger_html %}<p><a href="#vision">Vision &amp; Gamechanger</a></p>{% endif %}
-      {% if compliance_html %}<p><a href="#comp">Compliance</a></p>{% endif %}
-      {% if tools_html %}<p><a href="#tools">Tools (EU‑Optionen)</a></p>{% endif %}
-      {% if funding_html %}<p><a href="#funding">Förderprogramme (Auswahl)</a></p>{% endif %}
-      {% if live_html %}<p><a href="#live">Neu seit {{ (meta.date|default(now().strftime('%Y')))[-4:] }}</a></p>{% endif %}
-      {% if trusted_check_html %}<p><a href="#trusted">Trusted KI‑Check (Beilage)</a></p>{% endif %}
+  {# ---------- Hilfs‑Makro für Tabellen ---------- #}
+  {% macro render_table(t, cls) -%}
+    {% if t and t.headers and t.rows %}
+      <table class="table {{ cls }}">
+        {% if t.caption %}<caption>{{ t.caption }}</caption>{% endif %}
+        <thead><tr>
+          {% for h in t.headers %}<th>{{ h }}</th>{% endfor %}
+        </tr></thead>
+        <tbody>
+          {% for row in t.rows %}
+            <tr>
+              {% for cell in row %}
+                <td>{{ cell | safe }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  {%- endmacro %}
+
+  {# ---------- Abschnitte rendern ---------- #}
+  {% for s in sections or [] %}
+    <div class="page">
+      <div class="wrapper">
+        <div class="section-title">
+          <div class="dot"></div>
+          <h2>{{ s.title }}</h2>
+        </div>
+        <div class="hr"></div>
+        <div class="section-body">
+          {{ s.html | safe }}
+        </div>
+
+        {% if loop.last and (tables and (tables.tools or tables.funding)) %}
+          <div class="section-title">
+            <div class="dot"></div>
+            <h2>Tabellen &amp; Übersichten</h2>
+          </div>
+          <div class="hr"></div>
+          {{ render_table(tables.tools, 'tools') }}
+          {{ render_table(tables.funding, 'funding') }}
+        {% endif %}
+
+        <div class="footer">
+          <div>© {{ now().year }} Wolf Hohl · KI‑Sicherheit · DSGVO &amp; EU‑AI‑Act‑ready</div>
+          <div><a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback</a> ·
+               „Wie wurde dieser Report erstellt?“ – kuratierte Prompts, Live‑Layer (optional), EU‑Optionen, menschliche Freigabe.</div>
+        </div>
+      </div>
     </div>
-  </section>
+  {% endfor %}
 
-  <section class="chapter section">
-    <h2 id="exec">Executive Summary</h2>
-    {{ exec_summary_html | safe }}
-  </section>
+  {# Falls keine Abschnitte geliefert wurden, minimaler Fallback #}
+  {% if not sections or sections|length == 0 %}
+    <div class="page">
+      <div class="wrapper">
+        <div class="section-title">
+          <div class="dot"></div>
+          <h2>Executive Summary</h2>
+        </div>
+        <div class="hr"></div>
+        <p>Dieser Report konnte nicht vollständig generiert werden. Es wurde ein narrativer Fallback aktiviert,
+           damit Sie dennoch ein belastbares Ergebnis erhalten. Bitte prüfen Sie die Eingaben im Formular
+           (insbesondere Branche, Unternehmensgröße, Standort) und versuchen Sie es erneut.</p>
 
-  {% if quick_wins_html %}
-  <section class="chapter section">
-    <h2 id="quick">Sichere Sofortschritte</h2>
-    <div class="quick-box">{{ quick_wins_html | safe }}</div>
-  </section>
-  {% endif %}
-
-  {% if risks_html %}
-  <section class="chapter section">
-    <h2 id="risks">Risiken</h2>
-    {{ risks_html | safe }}
-  </section>
-  {% endif %}
-
-  {% if recommendations_html %}
-  <section class="chapter section">
-    <h2 id="reco">Empfehlungen</h2>
-    {{ recommendations_html | safe }}
-  </section>
-  {% endif %}
-
-  {% if roadmap_html %}
-  <section class="chapter section">
-    <h2 id="roadmap">Roadmap</h2>
-    {{ roadmap_html | safe }}
-  </section>
-  {% endif %}
-
-  {% if vision_html or gamechanger_html %}
-  <section class="chapter section">
-    <h2 id="vision">Vision &amp; Gamechanger</h2>
-    {{ vision_html | safe }}
-    {{ gamechanger_html | safe }}
-  </section>
-  {% endif %}
-
-  {% if compliance_html %}
-  <section class="chapter section">
-    <h2 id="comp">Compliance</h2>
-    {{ compliance_html | safe }}
-  </section>
-  {% endif %}
-
-  {% if tools_html %}
-  <section class="chapter section">
-    <h2 id="tools">Tools (EU‑Optionen)</h2>
-    {{ tools_html | safe }}
-    <p class="small">Hinweis: EU‑Region &amp; Auftragsverarbeitung bitte im jeweiligen DPA prüfen. Beispiele sind keine Werbung.</p>
-  </section>
-  {% endif %}
-
-  {% if funding_html %}
-  <section class="chapter section">
-    <h2 id="funding">Förderprogramme (Auswahl)</h2>
-    {{ funding_html | safe }}
-    <p class="small">Bitte Fristen, Richtlinien und Förderquoten tagesaktuell prüfen; Programme ändern sich laufend.</p>
-  </section>
-  {% endif %}
-
-  {% if live_html %}
-  <section class="chapter section">
-    <h2 id="live">Neu seit {{ (meta.date|default(now().strftime('%Y')))[-4:] }}</h2>
-    {{ live_html | safe }}
-  </section>
-  {% endif %}
-
-  {% if trusted_check_html %}
-  <section class="chapter section">
-    <h2 id="trusted">Trusted KI‑Check (Beilage)</h2>
-    {{ trusted_check_html | safe }}
-  </section>
-  {% endif %}
-
-  <section class="section">
-    <div class="rule"></div>
-    <div class="footer">
-      © {{ (meta.date|default(now().strftime('%Y')))[-4:] }} Wolf Hohl · KI‑Sicherheit · DSGVO &amp; EU‑AI‑Act‑ready ·
-      <a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback</a> ·
-      <span class="small">„Wie wurde dieser Report erstellt?“ – kuratierte Prompts, Live‑Layer (optional), EU‑Optionen, menschliche Freigabe.</span>
+        <div class="footer">
+          <div>© {{ now().year }} Wolf Hohl · KI‑Sicherheit · DSGVO &amp; EU‑AI‑Act‑ready</div>
+          <div><a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback</a> ·
+               „Wie wurde dieser Report erstellt?“ – kuratierte Prompts, Live‑Layer (optional), EU‑Optionen, menschliche Freigabe.</div>
+        </div>
+      </div>
     </div>
-  </section>
+  {% endif %}
+
 </body>
 </html>
