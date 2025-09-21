@@ -713,7 +713,7 @@ def analyze_briefing(body: Dict[str,Any], lang: str="de") -> str:
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=select_autoescape(["html","xml"])
     )
-    tpl_name = "pdf_template.html" if lang=="de" else "pdf_template_en.html"
+    tpl_name = "report_template_de.html" if lang=="de" else "report_template_en.html"
     tpl = env.get_template(tpl_name)
 
     ctx = {**report, "now": _dt.now, "lang": lang}
