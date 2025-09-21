@@ -1,286 +1,163 @@
 <!doctype html>
-<html lang="{{ (meta.lang or 'en') }}">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ (meta.title or 'AI Status Report') }}</title>
-
+  <meta charset="utf-8" />
+  <title>{{ meta.title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-  /* ==========================================================================
-     AI Status Report – Dark Blue Palette
-     Version: 2025‑09‑21
-     ========================================================================== */
-  :root{
-    --blue-950: #0a1220;
-    --blue-900: #0b1f3b;
-    --blue-850: #123056;
-    --blue-800: #153a6b;
-    --blue-700: #1f4d8f;
-    --blue-600: #2a66b2;
-    --blue-500: #3a7bd5;
-    --blue-200: #dbe8fb;
-    --blue-150: #e8f0ff;
-    --blue-100: #f2f6ff;
+    :root{
+      --bg:#0B1F3B; --bg-2:#10294D; --ink:#0A1A33; --ink-2:#1F365F;
+      --acc:#2E6FD3; --acc-2:#9ABAF2; --paper:#ffffff; --muted:#6C7A96;
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color:var(--ink); background:var(--paper) }
+    .page{ page-break-after: always; padding: 38px 46px }
+    h1,h2,h3{ color:var(--ink); margin:0 0 10px }
+    h2{ font-size:20px; border-bottom:2px solid var(--acc); padding-bottom:6px }
+    p{ line-height:1.55; margin:0 0 10px }
+    a{ color:var(--acc) }
+    .cover{ background:linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%); color:#fff }
+    .cover .inner{ padding:64px 52px 52px 52px }
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:600 }
+    .brand .dot{ width:26px; height:26px; background:#fff; color:var(--bg); border-radius:50%; display:inline-grid; place-items:center; font-size:14px; font-weight:800 }
+    .title{ margin-top:18px; font-size:34px; font-weight:700 }
+    .meta-wrap{ margin-top:24px; display:grid; grid-template-columns: 1fr 1fr; gap:10px 24px; font-size:14px }
+    .footer{ font-size:12px; color:#C5D5FF; margin-top:34px }
+    .toc{ background:#F7F9FD; padding:20px 24px; border-left:4px solid var(--acc); border-radius:8px; margin-top:24px }
 
-    --ink:        var(--blue-900);
-    --ink-weak:   #3f5575;
-    --muted:      #5c6d84;
-    --border:     #d6e0ef;
-    --bg:         #ffffff;
-    --soft-bg:    #f6f9ff;
-
-    --success: #19724f;
-    --warning: #b45309;
-    --danger:  #b91c1c;
-
-    --base-size: 11.5pt;
-    --line:      1.60;
-    --h1:        26pt;
-    --h2:        18pt;
-    --h3:        14pt;
-    --space-1:   6pt;
-    --space-2:   10pt;
-    --space-3:   16pt;
-    --space-4:   22pt;
-    --radius:    6px;
-    --shadow:    0 1px 0 rgba(10,16,32,.04), 0 0 0 1px rgba(10,16,32,.04);
-  }
-
-  html, body{
-    background: var(--bg);
-    color: var(--ink);
-    font: normal var(--base-size)/var(--line) "Inter","SF Pro Text","Segoe UI",
-          Roboto,"Helvetica Neue",Arial,system-ui,-apple-system,sans-serif;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-    margin: 0;
-  }
-
-  .page{ page-break-after: always; }
-  .page:last-child{ page-break-after: auto; }
-
-  .wrapper{
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 24pt 28pt 28pt;
-  }
-
-  h1, h2, h3{
-    color: var(--ink);
-    margin: 0 0 var(--space-2);
-    line-height: 1.25;
-    letter-spacing: .1px;
-  }
-  h1{ font-size: var(--h1); font-weight: 700; color: var(--blue-900); }
-  h2{ font-size: var(--h2); font-weight: 700; }
-  h3{ font-size: var(--h3); font-weight: 700; color: var(--blue-850); }
-
-  p{ margin: 0 0 var(--space-2); widows: 2; orphans: 2; }
-  small, .muted{ color: var(--muted); }
-
-  a{ color: var(--blue-700); text-decoration: none; }
-  a:hover{ text-decoration: underline; }
-
-  .section-title{
-    display: flex; align-items: center;
-    gap: 10pt; margin: var(--space-4) 0 var(--space-2);
-  }
-  .section-title .dot{
-    width: 22px; height: 22px; border-radius: 6px;
-    background: linear-gradient(180deg, var(--blue-700), var(--blue-500));
-    box-shadow: 0 2px 6px rgba(21,58,107,.20);
-  }
-  .section-title h2{ margin: 0; }
-
-  .hr{ height: 1px; background: var(--border); margin: var(--space-3) 0 var(--space-2); }
-
-  .cover{ padding: 48pt 0 10pt; }
-  .kicker{ text-transform: uppercase; letter-spacing: .6px; color: var(--ink-weak); font-weight: 700; }
-  .lead{ font-size: 13.5pt; color: var(--ink); }
-
-  .meta{
-    display: grid; grid-template-columns: auto 1fr;
-    gap: 6pt 12pt; margin: var(--space-2) 0 var(--space-3);
-    color: var(--ink-weak);
-  }
-  .meta b{ color: var(--ink); }
-
-  .toc{
-    background: var(--blue-100);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14pt 16pt;
-    margin: var(--space-3) 0;
-  }
-  .toc h3{ margin-top: 0; }
-  .toc ol{ margin: 0; padding-left: 18pt; }
-  .toc li{ margin: 4pt 0; }
-
-  .callout{
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--blue-700);
-    border-radius: var(--radius);
-    background: var(--blue-100);
-    padding: 12pt 14pt;
-    box-shadow: var(--shadow);
-    margin: var(--space-2) 0 var(--space-3);
-  }
-  .callout.safe{ border-left-color: var(--success); background: #eef9f4; }
-  .callout.risk{ border-left-color: var(--warning); background: #fff6ea; }
-  .callout h3{ margin-top: 0; }
-
-  .table{
-    width: 100%; border-collapse: collapse; margin: var(--space-2) 0 var(--space-3);
-    font-size: 10.5pt;
-  }
-  .table thead th{
-    background: var(--blue-800); color: #fff; font-weight: 700;
-    text-align: left; padding: 9pt 10pt; border: 1px solid var(--blue-800);
-  }
-  .table tbody td{
-    padding: 8pt 10pt; border: 1px solid var(--border);
-    vertical-align: top;
-  }
-  .table tbody tr:nth-child(even){ background: var(--blue-150); }
-  .table caption{
-    text-align: left; font-weight: 700; color: var(--blue-850);
-    margin: 0 0 6pt;
-  }
-  .table.tools   caption::before{ content: "🔧 "; }
-  .table.funding caption::before{ content: "💶 "; }
-
-  ul, ol{ margin: 0 0 var(--space-2) 16pt; }
-  li{ margin: 3pt 0; }
-
-  .footer{
-    margin-top: var(--space-4);
-    padding-top: var(--space-2);
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 10pt;
-    display: flex; justify-content: space-between; gap: 10pt; flex-wrap: wrap;
-  }
-
-  .page-break{ page-break-before: always; }
-
-  @media print{
-    a{ text-decoration: none; }
-    .toc, .callout, .table{ break-inside: avoid; }
-  }
+    .callout{ background:#EFF4FF; border:1px solid var(--acc-2); border-left:5px solid var(--acc); padding:14px 16px; border-radius:8px; margin: 10px 0 14px }
+    table{ border-collapse: collapse; width:100%; margin:8px 0 14px; font-size:14px }
+    th, td{ text-align:left; vertical-align:top; padding:9px 10px; border-bottom:1px solid #E6ECF7 }
+    th{ background:#F2F6FF; color:var(--ink) }
+    .muted{ color:#6C7A96 }
   </style>
 </head>
 <body>
-  {% set _today = (meta.date or now().date().isoformat()) %}
-  <div class="page">
-    <div class="wrapper">
-      <div class="cover">
-        <div class="kicker">
-          Narrative report – GDPR &amp; EU AI Act ready. {{ _today }}
-          · Industry: {{ meta.industry or '—' }} · Size: {{ meta.size or '—' }} · Location: {{ meta.region or '—' }}
-          · Language: {{ (meta.lang or 'EN')|upper }}
-        </div>
-        <h1>AI Status Report</h1>
-        <p class="lead">Created with curated prompts and an optional live layer for tools &amp; funding.
-          <a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Give feedback</a>.
-        </p>
 
-        <div class="meta">
-          <div><b>Title</b></div><div>{{ meta.title or 'AI Status Report' }}</div>
-          <div><b>Date</b></div><div>{{ _today }}</div>
-          <div><b>Contact</b></div><div>{{ meta.contact or '—' }}</div>
-          <div><b>Hosting preference</b></div><div>{{ meta.hosting or 'EU options preferred' }}</div>
-        </div>
+  <section class="page cover">
+    <div class="inner">
+      <div class="brand"><span class="dot">AI</span> Safety · Report</div>
+      <div class="title">{{ meta.title }}</div>
+      <div> Narrative report – GDPR & EU‑AI‑Act ready </div>
 
-        <div class="toc">
-          <h3>Table of contents</h3>
-          <ol>
-            {% for s in sections or [] %}
-              <li>{{ s.title }}</li>
-            {% endfor %}
-            {% if (tables and tables.tools) %}<li>Tools (EU options)</li>{% endif %}
-            {% if (tables and tables.funding) %}<li>Funding programmes (selection)</li>{% endif %}
-          </ol>
-        </div>
+      <div class="meta-wrap">
+        <div><b>Date</b><br>{{ meta.date }}</div>
+        <div><b>Contact</b><br>{{ meta.contact_email }}</div>
+        <div><b>Industry</b><br>{{ meta.industry }}</div>
+        <div><b>Size</b><br>{{ meta.size }}</div>
+        <div><b>Region</b><br>{{ meta.region }}</div>
+        <div><b>Language</b><br>{{ meta.lang|upper }}</div>
+        <div style="grid-column:1/-1"><b>Main product / service</b><br>{{ meta.main_product }}</div>
       </div>
 
-      <div class="footer">
-        <div>© {{ now().year }} Wolf Hohl · KI‑Sicherheit · GDPR &amp; EU AI Act ready</div>
-        <div><a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback</a> ·
-             “How was this report created?” – curated prompts, live layer (optional), EU options, human review.</div>
+      <div class="toc">
+        <h3>Contents</h3>
+        <ul>
+          <li>Executive Summary</li>
+          <li>Safe immediate steps</li>
+          <li>Risks · Recommendations · Roadmap</li>
+          <li>Gamechanger · Compliance</li>
+          <li>Tools (EU options) · Funding</li>
+          <li>New since {{ now().year }} · Trusted AI Check</li>
+        </ul>
+      </div>
+
+      <div class="footer">© {{ meta.date[-4:] }} Wolf Hohl · KI‑Sicherheit · GDPR & EU‑AI‑Act ready ·
+        <a style="color:#C5D5FF" href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback</a>
       </div>
     </div>
-  </div>
+  </section>
 
-  {% macro render_table(t, cls) -%}
-    {% if t and t.headers and t.rows %}
-      <table class="table {{ cls }}">
-        {% if t.caption %}<caption>{{ t.caption }}</caption>{% endif %}
-        <thead><tr>
-          {% for h in t.headers %}<th>{{ h }}</th>{% endfor %}
-        </tr></thead>
+  <section class="page">
+    <h2>Executive Summary</h2>
+    {% for s in sections if s.id in ["exec","summary"] %} {{ s.html | safe }} {% endfor %}
+  </section>
+
+  <section class="page">
+    <h2>Safe immediate steps</h2>
+    <div class="callout">
+      {% for s in sections if s.id in ["quickwins","sofort","safe_steps"] %} {{ s.html | safe }} {% endfor %}
+      {% if not (sections | selectattr('id','in',['quickwins','sofort','safe_steps']) | list) %}
+        <p>Start with an EU‑hosted CRM, a small automation layer (e.g., n8n) and a writing assistant. Keep all steps reversible, logged and with human sign‑off.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="page">
+    <h2>Risks</h2>
+    {% for s in sections if s.id in ["risks","risiken"] %} {{ s.html | safe }} {% endfor %}
+    <h2>Recommendations</h2>
+    {% for s in sections if s.id in ["reco","empfehlungen","recommendations"] %} {{ s.html | safe }} {% endfor %}
+  </section>
+
+  <section class="page">
+    <h2>Roadmap</h2>
+    {% for s in sections if s.id in ["roadmap","plan"] %} {{ s.html | safe }} {% endfor %}
+  </section>
+
+  <section class="page">
+    <h2>Vision & Gamechanger</h2>
+    {% for s in sections if s.id in ["vision","gamechanger"] %} {{ s.html | safe }} {% endfor %}
+  </section>
+
+  <section class="page">
+    <h2>Compliance</h2>
+    {% for s in sections if s.id in ["compliance","policy"] %} {{ s.html | safe }} {% endfor %}
+  </section>
+
+  <section class="page">
+    <h2>Tools (EU options)</h2>
+    {% set tools = (tables.tools if tables and tables.tools else []) %}
+    {% if tools %}
+      <table>
+        <thead><tr><th>Tool/Stack</th><th>Purpose</th><th>EU note</th><th>Link</th></tr></thead>
         <tbody>
-          {% for row in t.rows %}
-            <tr>
-              {% for cell in row %}
-                <td>{{ cell | safe }}</td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
+        {% for t in tools %}
+          <tr>
+            <td><b>{{ t.name }}</b></td>
+            <td>{{ t.what }}</td>
+            <td class="muted">{{ t.eu_note }}</td>
+            <td class="muted"><a href="{{ t.link }}">{{ t.link }}</a></td>
+          </tr>
+        {% endfor %}
         </tbody>
       </table>
+    {% else %}
+      <p class="muted">No tools found (live layer disabled?).</p>
     {% endif %}
-  {%- endmacro %}
+  </section>
 
-  {% for s in sections or [] %}
-    <div class="page">
-      <div class="wrapper">
-        <div class="section-title">
-          <div class="dot"></div>
-          <h2>{{ s.title }}</h2>
-        </div>
-        <div class="hr"></div>
-        <div class="section-body">
-          {{ s.html | safe }}
-        </div>
+  <section class="page">
+    <h2>Funding (selection)</h2>
+    {% set fp = (tables.funding if tables and tables.funding else []) %}
+    {% if fp %}
+      <table>
+        <thead><tr><th>Programme</th><th>Eligibility</th><th>Notes</th><th>Apply</th></tr></thead>
+        <tbody>
+        {% for f in fp %}
+          <tr>
+            <td><b>{{ f.program }}</b></td>
+            <td>{{ f.who }}</td>
+            <td>{{ f.note }}</td>
+            <td class="muted"><a href="{{ f.link }}">{{ f.link }}</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No funding programmes found.</p>
+    {% endif %}
+  </section>
 
-        {% if loop.last and (tables and (tables.tools or tables.funding)) %}
-          <div class="section-title">
-            <div class="dot"></div>
-            <h2>Tables &amp; overviews</h2>
-          </div>
-          <div class="hr"></div>
-          {{ render_table(tables.tools, 'tools') }}
-          {{ render_table(tables.funding, 'funding') }}
-        {% endif %}
+  <section class="page">
+    <h2>New since {{ now().year }}</h2>
+    {% for s in sections if s.id in ["news","updates"] %} {{ s.html | safe }} {% endfor %}
+  </section>
 
-        <div class="footer">
-          <div>© {{ now().year }} Wolf Hohl · KI‑Sicherheit · GDPR &amp; EU AI Act ready</div>
-          <div><a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback</a> ·
-               “How was this report created?” – curated prompts, live layer (optional), EU options, human review.</div>
-        </div>
-      </div>
-    </div>
-  {% endfor %}
+  <section class="page">
+    <h2>Trusted AI Check (appendix)</h2>
+    {% for s in sections if s.id in ["trusted","annex","appendix"] %} {{ s.html | safe }} {% endfor %}
+  </section>
 
-  {% if not sections or sections|length == 0 %}
-    <div class="page">
-      <div class="wrapper">
-        <div class="section-title">
-          <div class="dot"></div>
-          <h2>Executive summary</h2>
-        </div>
-        <div class="hr"></div>
-        <p>This report could not be generated completely. A narrative fallback was activated
-           so you still receive a usable result. Please recheck the questionnaire inputs
-           (especially industry, size, and location) and try again.</p>
-
-        <div class="footer">
-          <div>© {{ now().year }} Wolf Hohl · KI‑Sicherheit · GDPR &amp; EU AI Act ready</div>
-          <div><a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback</a> ·
-               “How was this report created?” – curated prompts, live layer (optional), EU options, human review.</div>
-        </div>
-      </div>
-    </div>
-  {% endif %}
 </body>
 </html>
