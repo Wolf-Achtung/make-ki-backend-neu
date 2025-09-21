@@ -1,1 +1,0 @@
-Zweck: Eine glaubwürdige, nützliche Vision für 12–24 Monate. 2 Absätze: (1) Wie sieht gute, sichtbare KI im Alltag des Kunden aus? (2) Welche Leitplanken halten das vertrauenswürdig (Transparenz, Freigaben, Export, Löschung)?

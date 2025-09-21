@@ -1,1 +1,0 @@
-Zweck: Kompakte Live‑Updates (falls vorhanden) zu neuen Tools/Programmen. 1–2 Absätze. Wenn keine belastbaren Änderungen: schreiben Sie kurz, dass seit dem letzten Check nichts Wesentliches aufgetaucht ist – und verweisen Sie auf den Feedback‑Link im Report.

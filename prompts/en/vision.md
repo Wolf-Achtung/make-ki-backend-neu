@@ -1,1 +1,0 @@
-Purpose: A credible, useful 12–24‑month vision. Two paragraphs: (1) What “good, visible AI” looks like in daily work; (2) Guardrails that keep it trustworthy (transparency, approvals, export, deletion).
