@@ -2,40 +2,37 @@
 <html lang="de">
 <head>
   <meta charset="utf-8"/>
-  <title>KI‑Statusbericht – {company.name}</title>
+  <title>KI‑Statusbericht – {{ company.name or '—' }}</title>
   <style>
-/* Print-friendly base */
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif; color: #111; }
-.page { page-break-after: always; padding: 28mm 22mm 26mm 22mm; }
-h1, h2, h3 { margin: 0 0 8px; line-height: 1.25; }
-h1 { font-size: 28px; }
-h2 { font-size: 20px; margin-top: 12px; }
-h3 { font-size: 16px; margin-top: 10px; }
-p, li { font-size: 12.2px; line-height: 1.55; }
-.small { font-size: 11px; color: #4a4a4a; }
-.kpi { display: inline-block; border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; margin: 3px 6px 3px 0; }
-.section { margin: 14px 0 10px; padding-top: 2px; }
-hr.sep { border: 0; height: 1px; background: #e8e8e8; margin: 14px 0; }
-.badge { display: inline-block; font-size: 11px; padding: 2px 6px; border-radius: 4px; border: 1px solid #ddd; margin-left: 6px; }
-.note { background: #f9fbff; border: 1px solid #e7efff; padding: 8px 10px; border-radius: 6px; }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-.list-tick li { margin: 6px 0; }
-.footer { position: running(footer); }
-@page {
-  size: A4;
-  margin: 18mm 14mm 20mm 14mm;
-  @bottom-center { content: element(footer) }
+:root{
+  --accent:#0b5fff; --ink:#111; --muted:#666; --bg:#fff; --hint:#f5f8ff; --expert:#eef5ff;
 }
-.header-line { height: 3px; background: #0b5fff; margin: 12px 0 16px; }
-.section-title { display:flex; align-items:center; gap:10px; }
-.section-title .stripe { width:8px; height:20px; background:#0b5fff; border-radius:2px; display:inline-block; }
-.table { width: 100%; border-collapse: collapse; }
-.table th, .table td { font-size: 11.5px; border: 1px solid #eee; padding: 6px 8px; vertical-align: top; }
-.muted { color:#666; }
-ul.compact { margin:6px 0 2px 20px; padding:0; }
-code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 11px; background:#f7f7f7; padding:1px 4px; border-radius:4px; }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans','Liberation Sans',sans-serif;color:var(--ink)}
+.page{page-break-after:always;padding:26mm 22mm 24mm 22mm}
+h1{font-size:28px;margin:0 0 8px}
+h2{font-size:20px;margin:14px 0 6px;display:flex;align-items:center;gap:10px}
+h2::before{content:"Kapitel";font-size:11px;color:#fff;background:var(--accent);border-radius:3px;padding:2px 6px}
+h3{font-size:16px;margin:10px 0 6px}
+p,li{font-size:12.3px;line-height:1.55}
+hr.sep{border:0;height:1px;background:#e9eef9;margin:12px 0}
+.section{margin:12px 0 10px}
+.small{font-size:11px;color:var(--muted)}
+.badge{display:inline-block;border:1px solid #dfe7fb;border-radius:4px;padding:2px 6px;font-size:11px;margin-left:6px}
+.header-line{height:3px;background:var(--accent);margin:12px 0 16px}
+.footer{position:running(footer)}
+@page{size:A4;margin:18mm 14mm 20mm 14mm;@bottom-center{content:element(footer)}}
+
+/* Callouts */
+.callout{border-left:3px solid var(--accent);background:var(--hint);padding:10px 12px;border-radius:6px;margin:8px 0}
+.callout .label{font-weight:600;font-size:11.5px;letter-spacing:.2px;text-transform:uppercase;margin-right:6px}
+.callout.expert{background:var(--expert)}
+
+/* Tables */
+.table{width:100%;border-collapse:collapse;margin:4px 0 8px}
+.table th,.table td{font-size:11.5px;border:1px solid #edf1fa;padding:6px 8px;vertical-align:top}
+.muted{color:var(--muted)}
+ul.compact{margin:6px 0 2px 20px;padding:0}
 </style>
 </head>
 <body>
@@ -43,115 +40,70 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Libe
     <div class="header-line"></div>
     <h1>KI‑Statusbericht <span class="badge">DSGVO & EU‑AI‑Act‑ready</span></h1>
     <p class="small">
-      Datum: {meta.date or '2025-09-21'} · Branche: {company.industry} · Größe: {company.size} · Standort: {company.location} · Sprache: DE
+      Datum: {{ meta.date or '2025-09-21' }} · Branche: {{ company.industry or '—' }} · Größe: {{ company.size or '—' }} · Standort: {{ company.location or '—' }} · Sprache: DE
     </p>
     <hr class="sep"/>
 
     <div class="section">
-      <div class="section-title"><span class="stripe"></span><h2>Executive Summary</h2></div>
+      <h2>Executive Summary</h2>
+      <div class="callout"><span class="label">Hinweis</span> Fakten statt Anekdoten. Alle Empfehlungen sind umsetzbar und messbar.</div>
       <div class="grid">
         <div>
-          <h3>Top‑Chancen (3)</h3>
+          <h3>Top‑Chancen</h3>
           <ul class="list-tick">
-            {#summary.opportunities}
-              <li>{.}</li>
-            {/summary.opportunities}
+            {% for it in (summary.opportunities or []) %}<li>{{ it }}</li>{% endfor %}
           </ul>
         </div>
         <div>
-          <h3>Top‑Risiken (3)</h3>
+          <h3>Top‑Risiken</h3>
           <ul class="list-tick">
-            {#summary.risks}
-              <li>{.}</li>
-            {/summary.risks}
+            {% for it in (summary.risks or []) %}<li>{{ it }}</li>{% endfor %}
           </ul>
         </div>
       </div>
-      <div class="note small">Hinweis: Diese Zusammenfassung ist faktenbasiert. Keine Anekdoten oder generischen Fülltexte.</div>
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="stripe"></span><h2>Schnelle Hebel (30–60 Min./Woche)</h2></div>
-      {> quick_wins_de }
+      <h2>Schnelle Hebel (30–60 Min./Woche)</h2>
+      {{ quick_wins_html | safe }}
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="stripe"></span><h2>Tool‑Shortlist (datenschutzbewusst)</h2></div>
-      <table class="table">
-        <thead><tr><th>Kategorie</th><th>Option</th><th>Datenschutz/Deployment</th><th>Hinweise</th></tr></thead>
-        <tbody>
-          {#tools}
-          <tr>
-            <td>{category}</td>
-            <td>{name} <span class="badge">{pricing_tier}</span> {#sovereign}<span class="badge">souverän</span>{/sovereign}</td>
-            <td>{data_residency}</td>
-            <td class="muted">{notes}</td>
-          </tr>
-          {/tools}
-        </tbody>
-      </table>
-      <p class="small muted">Quelle/Stand je Tool im Anhang. Auswahl erfolgt über Whitelist, keine Freitexte.</p>
+      <h2>Tool‑Shortlist (datenschutzbewusst)</h2>
+      {{ tools_html | safe }}
+      <p class="small muted">Quelle/Stand je Tool im Anhang. Whitelist‑Only, keine Freitexte.</p>
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="stripe"></span><h2>Roadmap 90/180/365 Tage</h2></div>
+      <h2>Roadmap 90/180/365 Tage</h2>
       <div class="grid-3">
-        <div>
-          <h3>0–90 Tage</h3>
-          <ul class="compact">
-            {#roadmap.q90}<li>{.}</li>{/roadmap.q90}
-          </ul>
-        </div>
-        <div>
-          <h3>91–180 Tage</h3>
-          <ul class="compact">
-            {#roadmap.q180}<li>{.}</li>{/roadmap.q180}
-          </ul>
-        </div>
-        <div>
-          <h3>181–365 Tage</h3>
-          <ul class="compact">
-            {#roadmap.q365}<li>{.}</li>{/roadmap.q365}
-          </ul>
-        </div>
+        <div><h3>0–90</h3><ul class="compact">{% for i in (roadmap.q90 or []) %}<li>{{ i }}</li>{% endfor %}</ul></div>
+        <div><h3>91–180</h3><ul class="compact">{% for i in (roadmap.q180 or []) %}<li>{{ i }}</li>{% endfor %}</ul></div>
+        <div><h3>181–365</h3><ul class="compact">{% for i in (roadmap.q365 or []) %}<li>{{ i }}</li>{% endfor %}</ul></div>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="stripe"></span><h2>Compliance – EU‑AI‑Act & DSGVO</h2></div>
-      {> eu_ai_act_de }
+      <h2>Compliance – EU‑AI‑Act & DSGVO</h2>
+      {{ eu_ai_act_html | safe }}
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="stripe"></span><h2>Förderprogramme – passende Auswahl</h2></div>
-      <table class="table">
-        <thead><tr><th>Programm</th><th>Jurisdiktion</th><th>Zielgruppe</th><th>Förderung</th><th>Status</th></tr></thead>
-        <tbody>
-          {#funding}
-          <tr>
-            <td>{name}</td>
-            <td>{region}</td>
-            <td>{target}</td>
-            <td>{benefit}</td>
-            <td>{status}</td>
-          </tr>
-          {/funding}
-        </tbody>
-      </table>
-      <p class="small muted">Alle Programme stammen aus einer kuratierten Datenbasis mit „Stand“-Datum; keine generativen Ergänzungen.</p>
+      <h2>Förderprogramme – passende Auswahl</h2>
+      {{ funding_html | safe }}
+      <div class="callout"><span class="label">Tipp</span> Immer mit „Stand“ und Quelle arbeiten; Programme sind kontingent-/haushaltsabhängig.</div>
     </div>
 
+    {% if vision_html %}
     <div class="section">
-      <div class="section-title"><span class="stripe"></span><h2>Vision & Gamechanger (12–24 Monate)</h2></div>
-      <p><b>{vision.headline}</b></p>
-      <ul class="compact">
-        {#vision.actions}<li>{.}</li>{/vision.actions}
-      </ul>
-      <div class="note small">Nur ausgegeben, wenn alle Pflichtdaten vorhanden sind (Strict‑Mode). Keine Platzhaltertexte.</div>
+      <h2>Vision & Gamechanger (12–24 Monate)</h2>
+      {{ vision_html | safe }}
+      <div class="callout expert"><span class="label">Expertentipp</span> Vision nur mit klaren Metriken, Ownern und Risikobewertung.</div>
     </div>
+    {% endif %}
 
     <div class="footer small">
-      © {meta.year or '2025'} {meta.owner or 'Wolf Hohl'} · KI‑Sicherheit · DSGVO & EU‑AI‑Act‑ready · Stand: {meta.stand or '2025-09-21'}
+      © {{ meta.year or '2025' }} {{ meta.owner or 'Wolf Hohl' }} · KI‑Sicherheit · DSGVO & EU‑AI‑Act‑ready · Stand: {{ meta.stand or '2025-09-21' }}
     </div>
   </div>
 </body>
