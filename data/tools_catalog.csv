@@ -1,0 +1,11 @@
+category,name,what,eu_hosted,eu_note,industry_hint
+crm,CentralStationCRM,Kontaktmanagement & Angebote,yes,DE-Anbieter,services
+crm,weclapp,ERP/CRM für KMU,yes,DE/EU-Hosting,industry
+crm,Pipedrive (EU region),Vertriebspipeline & Deals,eu,EU-Region wählbar,services
+writing,DeepL Write,Texte feinschleifen,eu,DE-Anbieter,all
+writing,Mistral (EU),Schreiben/Chat via EU-Modelle,eu,EU-Modelle,all
+writing,Aleph Alpha (EU),Recherche/Analyse (API),eu,EU-Modelle/DE,regulated
+automation,n8n (self-host),Workflows & Routing,selfhost,EU-Hosting möglich,all
+automation,Make (EU),No‑Code‑Automation,eu,EU‑Optionen prüfen,all
+project,OpenProject (EU),Projekte & Roadmaps,eu,DE/EU-Hosting,all
+security,Proton Pass/Drive (EU),Passwörter/Dateien,eu,CH/EU,all
