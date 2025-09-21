@@ -1,451 +1,255 @@
+# gpt_analyze.py
+# Gold‑Standard Analyze-Modul (async): erzeugt strukturierte Sections aus Formdaten,
+# nutzt Prompts aus prompts/{lang}/..., optional Live-Layer (Tavily) und sanitizes HTML.
 
-# gpt_analyze.py — Gold Standard + Live Layer (2025-09-21)
-# - Narrative chapters (DE/EN), subheads allowed, tables only for Tools/Funding.
-# - Uses Tavily live search when TAVILY_API_KEY is set to fetch current EU-hosted tools & funding hints.
-# - Falls back to curated CSVs in ./data/*.csv if live layer is unavailable.
 from __future__ import annotations
-
-import os, re, csv, json, math, asyncio, datetime as dt
+import os, asyncio, datetime as dt, re, html
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 
 import httpx
-from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-BASE_DIR = Path(__file__).resolve().parent
-TEMPLATES_DIR = BASE_DIR / "templates"
-DATA_DIR = BASE_DIR / "data"
-DEFAULT_LANG = "de"
-LANGS = {"de","en"}
-MIN_HTML_LEN = int(os.getenv("MIN_HTML_LEN","1000"))
-TAVILY_KEY = os.getenv("TAVILY_API_KEY","").strip()
-SEARCH_DAYS = int(os.getenv("SEARCH_DAYS","365"))
+# -------- Konfiguration --------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # kompatibel zur /v1/chat/completions
+EXEC_SUMMARY_MODEL = os.getenv("EXEC_SUMMARY_MODEL", OPENAI_MODEL)
+TEMPERATURE_DEFAULT = float(os.getenv("TEMPERATURE", "0.4"))
 
-# ----------------- Utilities & Sanitizers -----------------
+# Live-Layer (optional)
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+SEARCH_DAYS = int(os.getenv("SEARCH_DAYS", "30"))
+SEARCH_DEPTH = os.getenv("SEARCH_DEPTH", "basic")  # "basic" oder "advanced"
 
-_CODEFENCE_RE = re.compile(r"```.*?```", flags=re.S)
-_TAG_RE = re.compile(r"</?(script|style)[^>]*>", flags=re.I)
-_LEADING_ENUM_RE = re.compile(r"(?m)^\s*(?:\d+[\.\)]|[-–•])\s+")
-_LI_RE = re.compile(r"</?li[^>]*>", flags=re.I)
-_OL_UL_RE = re.compile(r"</?(?:ol|ul)[^>]*>", flags=re.I)
+BASE_DIR = Path(__file__).parent
+PROMPTS_DIR = BASE_DIR / "prompts"
 
-def _strip_code_fences(text: str) -> str:
-    if not text: return text
-    text = _CODEFENCE_RE.sub("", text)
-    return text.replace("```","")
-
-def _strip_scripts_styles(text: str) -> str:
-    return _TAG_RE.sub("", text or "")
-
-def _normalize_lists_to_paragraphs(html: str) -> str:
-    if not html: return html
-    html = _LI_RE.sub("\n", html)
-    html = _OL_UL_RE.sub("\n", html)
-    html = _LEADING_ENUM_RE.sub("", html)
-    html = re.sub(r"\n{3,}","\n\n", html)
-    return html
-
-def _strip_lists_and_numbers(html: str) -> str:
-    if not html: return html
-    html = _strip_code_fences(_strip_scripts_styles(html))
-    html = _normalize_lists_to_paragraphs(html)
-    return html
-
-def _sanitize_text(html: str) -> str:
-    if not html: return html
-    html = _strip_scripts_styles(html)
-    html = _strip_code_fences(html)
-    return html.replace("&nbsp;"," ")
-
-# ----------------- Region normalization -----------------
-
-REGION_MAP = {
-    "be":"berlin","bb":"brandenburg","bw":"baden-württemberg","by":"bayern",
-    "hb":"bremen","hh":"hamburg","he":"hessen","mv":"mecklenburg-vorpommern",
-    "ni":"niedersachsen","nw":"nordrhein-westfalen","nrw":"nordrhein-westfalen",
-    "rp":"rheinland-pfalz","sl":"saarland","sn":"sachsen","st":"sachsen-anhalt",
-    "sh":"schleswig-holstein","th":"thüringen",
-}
-def normalize_region(value: Optional[str]) -> str:
-    if not value: return ""
-    v = str(value).strip().lower()
-    return REGION_MAP.get(v, v)
-
-# ----------------- LLM -----------------
-
-def _llm_complete(prompt: str, model: Optional[str]=None, temperature: float=0.35) -> str:
-    provider = os.getenv("LLM_PROVIDER","openai").lower()
-    if provider == "none":
-        raise RuntimeError("LLM disabled")
-    try:
-        # OpenAI-compatible call
-        from openai import OpenAI
-        client = OpenAI()
-        mdl = model or os.getenv("OPENAI_MODEL","gpt-4o-mini")
-        r = client.chat.completions.create(
-            model=mdl, temperature=temperature,
-            messages=[
-                {"role":"system","content":"You output warm, compliant HTML paragraphs. Use <h3 class='sub'> subheads. Only use <table class='mini'> for tools and funding. Avoid bullet lists elsewhere."},
-                {"role":"user","content": prompt},
-            ],
-        )
-        return (r.choices[0].message.content or "").strip()
-    except Exception as e:
-        raise RuntimeError(f"LLM call failed: {e}")
-
-# ----------------- Prompts -----------------
-
-def _load_prompt(lang: str, chapter: str) -> str:
-    # Prompts are optional here; if not present, we build minimal directives.
-    p = BASE_DIR / "prompts" / lang / f"{chapter}.md"
-    if p.exists():
-        return p.read_text(encoding="utf-8")
-    # minimal defaults
-    if lang=="en":
-        defaults = {
-            "exec_summary":"Write an executive narrative that anchors on the company's main product/service, size and region. Be concrete about next steps and benefits/risks. Human approval before sending.",
-            "quick_wins":"Describe 3–4 safe, reversible first moves as paragraphs.",
-            "risks":"Explain practical risks and how to mitigate them (data spill, hallucinations, lock-in, over-automation).",
-            "recommendations":"Give 3–4 pragmatic recommendations tailored to the profile.",
-            "roadmap":"Plan with time anchors without digits: “immediately”, “in the coming weeks”, “within a year”.",
-            "vision":"Describe a useful, credible vision.",
-            "gamechanger":"Name a realistic game-changer and side effects.",
-            "compliance":"Address GDPR, ePrivacy, DSA and EU AI Act plainly.",
-            "tools":"Comment on the tool table and how to choose among EU options.",
-            "funding":"Comment on the funding table and a mini-path to apply.",
-            "live":"Summarize notable news/tools discovered recently (if any).",
-            "trusted_check":"Explain how to use the Trusted AI check one-pager."
-        }
-    else:
-        defaults = {
-            "exec_summary":"Schreiben Sie eine Executive Summary, die auf dem wichtigsten Produkt/der Hauptleistung, der Unternehmensgröße und dem Standort aufsetzt. Seien Sie konkret zu nächsten Schritten sowie Nutzen/Risiken. Menschliche Freigabe vor Versand.",
-            "quick_wins":"Beschreiben Sie 3–4 sichere, reversible erste Schritte als Absätze.",
-            "risks":"Erklären Sie pragmatische Risiken und Gegenmaßnahmen (Datenabfluss, Halluzinationen, Lock-in, Überautomatisierung).",
-            "recommendations":"Formulieren Sie 3–4 umsetzbare Empfehlungen, zugeschnitten auf das Profil.",
-            "roadmap":"Planen Sie mit Zeitankern ohne Ziffern: „sofort“, „in den nächsten Wochen“, „innerhalb eines Jahres“.",
-            "vision":"Skizzieren Sie eine hilfreiche, glaubwürdige Vision.",
-            "gamechanger":"Nennen Sie einen realistischen Gamechanger und Nebenwirkungen.",
-            "compliance":"Adressieren Sie DSGVO, ePrivacy, DSA und EU‑AI‑Act verständlich.",
-            "tools":"Kommentieren Sie die Tool‑Tabelle und die Auswahlkriterien (EU‑Optionen).",
-            "funding":"Kommentieren Sie die Förder‑Tabelle und einen Mini‑Pfad zur Antragstellung.",
-            "live":"Fassen Sie auffällige News/Tools der letzten Zeit (falls vorhanden) zusammen.",
-            "trusted_check":"Erklären Sie kurz, wie die Trusted‑KI‑Check‑Seite genutzt wird."
-        }
-    return defaults.get(chapter,"")
-
-def _build_prompt(lang: str, chapter: str, ctx: Dict[str,Any]) -> str:
-    rules_de = ("Narrative Absätze, per Sie, freundlich, optimistisch; keine Listen (außer Tools/Förderung als <table class='mini'>). "
-                "EU‑Hosting bevorzugen, Alltagstauglichkeit. Keine Prozentzahlen. "
-                "Verankern Sie die Empfehlungen hart am Profil: hauptleistung (wichtigstes Produkt/Dienstleistung), unternehmensgroesse, bundesland.")
-    rules_en = ("Narrative paragraphs, polite and optimistic; no lists (except Tools/Funding as <table class='mini'>). "
-                "Prefer EU hosting, everyday usefulness. No percentages. "
-                "Anchor advice on: main product/service, company size, region/state.")
-    rules = rules_de if lang=="de" else rules_en
-    if chapter=="roadmap":
-        rules += " Zeitanker ohne Ziffern (sofort / in den nächsten Wochen / innerhalb eines Jahres)." if lang=="de" else " Use time anchors without digits (immediately / in the coming weeks / within a year)."
-    prompt = _load_prompt(lang, chapter)
-    ctx_json = json.dumps(ctx, ensure_ascii=False)
-    return f"{prompt}\n\n---\nKontext/Context:\n{ctx_json}\n\n---\nRegeln/Rules:\n{rules}\n"
-
-# ----------------- Live Layer (Tavily) -----------------
-
-async def _tavily_search(query: str, max_results: int=5, timeout_s: int=10) -> List[Dict[str,Any]]:
-    if not TAVILY_KEY:
-        return []
-    url = "https://api.tavily.com/search"
-    payload = {
-        "api_key": TAVILY_KEY,
-        "query": query,
-        "search_depth": "advanced",
-        "include_answer": False,
-        "max_results": max_results,
-        "days": SEARCH_DAYS,
-    }
-    try:
-        async with httpx.AsyncClient(timeout=timeout_s) as client:
-            r = await client.post(url, json=payload)
-            r.raise_for_status()
-            data = r.json()
-            return data.get("results",[]) or []
-    except Exception:
-        return []
-
-def _read_csv(path: Path) -> List[Dict[str,str]]:
-    if not path.exists(): return []
-    with path.open("r", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
-
-def _curated_tools() -> List[Dict[str,str]]:
-    return _read_csv(DATA_DIR / "tools_catalog.csv")
-
-def _curated_funding() -> List[Dict[str,str]]:
-    return _read_csv(DATA_DIR / "funding_catalog.csv")
-
-def _rank_tools_for_profile(tools: List[Dict[str,str]], profile: Dict[str,str]) -> List[Dict[str,str]]:
-    # naive ranking by category relevance and EU flag
-    main = (profile.get("hauptleistung") or "").lower()
-    branche = (profile.get("branche") or "").lower()
-    size = (profile.get("unternehmensgroesse") or "")
-    want_crm = any(x in main for x in ("kunden","vertrieb","crm","angebote","service"))
-    want_content = any(x in main for x in ("text","content","inhalt","social","kampagne","video","präsentation"))
-    want_prod = any(x in main for x in ("produktion","fertigung","sensor","maschine","logistik"))
-    scored = []
-    for row in tools:
-        score = 0
-        if row.get("eu_hosted","").lower() in ("yes","true","1","eu"): score += 3
-        cat = row.get("category","").lower()
-        if want_crm and "crm" in cat: score += 3
-        if want_content and ("writing" in cat or "research" in cat): score += 2
-        if want_prod and ("automation" in cat or "erp" in cat): score += 2
-        if "automation" in cat: score += 1
-        if branche in (row.get("industry_hint","") or "").lower(): score += 1
-        scored.append((score,row))
-    scored.sort(key=lambda x: (-x[0], x[1].get("name","")))
-    return [r for _,r in scored[:6]]
-
-def _rank_funding_for_region(funds: List[Dict[str,str]], region: str, size: str) -> List[Dict[str,str]]:
-    region = normalize_region(region)
-    out = []
-    for row in funds:
-        scope = (row.get("region_scope","") or "").lower()
-        if scope in ("eu","de") or region in (row.get("region","") or "").lower().split("|"):
-            if size in (row.get("size_fit","") or "") or row.get("size_fit","")=="all":
-                out.append(row)
-    # limit
-    return out[:6]
-
-def _render_tools_table(rows: List[Dict[str,str]], lang: str) -> str:
-    if not rows:
+# -------- Utilities --------
+ALLOWED_TAGS = {"p","em","strong","b","i","u","a","br","h3","span","small","sub","sup"}
+def sanitize_html(text: str) -> str:
+    """Sehr konservativ: entfernt Code-Fences/Backticks, reduziert auf Absätze + erlaubte Inline-Tags."""
+    if not text:
         return ""
-    if lang=="en":
-        head = "<tr><th>Tool</th><th>What for</th><th>EU notes</th></tr>"
-    else:
-        head = "<tr><th>Tool</th><th>Wozu</th><th>EU‑Hinweise</th></tr>"
-    body = []
-    for r in rows:
-        name = r.get("name","").strip()
-        what = r.get("what","").strip()
-        eu = r.get("eu_note","").strip()
-        body.append(f"<tr><td>{name}</td><td>{what}</td><td>{eu}</td></tr>")
-    return f"<table class='mini'><thead>{head}</thead><tbody>{''.join(body)}</tbody></table>"
+    t = text.replace("```", " ").replace("`", " ")
+    # Entferne Markdown-Listen-Start, falls LLM sie trotzdem baut
+    t = re.sub(r"^\s*[-*]\s+", "", t, flags=re.MULTILINE)
+    # Wrap plain text in <p> falls keine Tags vorhanden
+    if "<p" not in t and "<h3" not in t:
+        # Splitting in Absätze
+        paras = [f"<p>{html.escape(line.strip())}</p>" for line in re.split(r"\n{2,}", t.strip()) if line.strip()]
+        t = "\n".join(paras)
+    # primitiver Tag-Filter: strippt alles, was nicht in ALLOWED_TAGS ist
+    t = re.sub(r"</?([a-zA-Z0-9]+)(\s[^>]*)?>", lambda m: m.group(0) if m.group(1).lower() in ALLOWED_TAGS else "", t)
+    # Normiere <h3 class='sub'>
+    t = re.sub(r"<h3([^>]*)>", lambda m: "<h3 class='sub'>" if "class=" not in m.group(1) else f"<h3{m.group(1)}>", t)
+    return t
 
-def _render_funding_table(rows: List[Dict[str,str]], lang: str) -> str:
-    if not rows: return ""
-    if lang=="en":
-        head = "<tr><th>Programme</th><th>Good fit when…</th><th>Notes</th></tr>"
-    else:
-        head = "<tr><th>Programm</th><th>Geeignet wenn…</th><th>Hinweise</th></tr>"
-    body = []
-    for r in rows:
-        name = r.get("name","").strip()
-        fit = r.get("fit","").strip()
-        note = r.get("note","").strip()
-        body.append(f"<tr><td>{name}</td><td>{fit}</td><td>{note}</td></tr>")
-    return f"<table class='mini'><thead>{head}</thead><tbody>{''.join(body)}</tbody></table>"
+def load_prompt(lang: str, name: str) -> str:
+    p = PROMPTS_DIR / lang / f"{name}.md"
+    if not p.exists():
+        # Fallback: EN
+        p = PROMPTS_DIR / "en" / f"{name}.md"
+    return p.read_text(encoding="utf-8")
 
-async def _live_tools(profile: Dict[str,str], lang: str) -> List[Dict[str,str]]:
-    if not TAVILY_KEY: return []
-    region = normalize_region(profile.get("bundesland") or "")
-    main = profile.get("hauptleistung") or ""
-    queries = []
-    if lang=="de":
-        queries = [
-            f"EU gehostetes CRM KMU {region} 2025 Beispiele",
-            "EU Schreibassistent Datenschutz konform 2025 Beispiele",
-            "Open source Automatisierung EU self host 2025 n8n Alternativen",
-        ]
-    else:
-        queries = [
-            f"EU hosted CRM SME {region} 2025 examples",
-            "EU writing assistant privacy friendly 2025 examples",
-            "open source automation EU self host 2025 n8n alternatives",
-        ]
-    # Merge top results heuristically (name extraction is fuzzy; we keep short titles)
-    results: List[Dict[str,str]] = []
-    for q in queries:
-        hits = await _tavily_search(q, max_results=4)
-        for h in hits:
-            title = (h.get("title") or "").strip()
-            if not title: continue
-            # keep brand-like first token
-            brand = title.split("—")[0].split("|")[0].split(" - ")[0].strip()
-            if len(brand)>60: brand = brand[:60]
-            # naive category guess
-            cat = "crm" if "crm" in q.lower() else ("writing" if "write" in q.lower() or "schreib" in q.lower() else "automation")
-            results.append({
-                "name": brand,
-                "category": cat,
-                "what": "Kundenfäden bündeln" if cat=="crm" and lang=="de" else ("Customer threads & notes" if cat=="crm" else ("Texte & Recherche" if lang=="de" else "Writing & research")),
-                "eu_hosted": "unknown",
-                "eu_note": "EU‑Region/ADV prüfen" if lang=="de" else "Check EU region/DPA",
-                "industry_hint": "",
-            })
-    # de-duplicate by name
-    seen=set(); dedup=[]
-    for r in results:
-        if r["name"].lower() in seen: continue
-        seen.add(r["name"].lower()); dedup.append(r)
-    return dedup[:6]
-
-async def _live_funding(profile: Dict[str,str], lang: str) -> List[Dict[str,str]]:
-    if not TAVILY_KEY: return []
-    region = normalize_region(profile.get("bundesland") or "")
-    size = profile.get("unternehmensgroesse") or ""
-    if lang=="de":
-        q = f"{region} Förderung Digitalisierung KMU 2025 Programm Antrag Fristen"
-    else:
-        q = f"{region} funding digitalisation SME 2025 programme apply deadline"
-    hits = await _tavily_search(q, max_results=8)
-    out = []
-    for h in hits:
-        title = (h.get("title") or "").strip()
-        if not title: continue
-        name = title.split("—")[0].split("|")[0].split(" - ")[0].strip()
-        if len(name)>80: name = name[:80]
-        out.append({
-            "name": name,
-            "fit": "KMU / Pilot / Qualifizierung" if lang=="de" else "SME / pilot / upskilling",
-            "note": "Details & Fristen prüfen" if lang=="de" else "Check details & deadlines",
-            "region_scope":"regional",
-            "region": region,
-            "size_fit": size or "all"
-        })
-    # de-duplicate
-    seen=set(); dedup=[]
-    for r in out:
-        if r["name"].lower() in seen: continue
-        seen.add(r["name"].lower()); dedup.append(r)
-    return dedup[:6]
-
-# ----------------- Chapter generation -----------------
-
-CHAPTERS = [
-    "exec_summary","quick_wins","risks","recommendations","roadmap",
-    "vision","gamechanger","compliance","tools","funding","live","trusted_check"
-]
-
-def _env() -> Environment:
-    return Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=select_autoescape(enabled_extensions=("html",)))
-
-def _tpl_name(lang: str) -> str: return "pdf_template_en.html" if lang=="en" else "pdf_template.html"
-
-def _chapter_key(ch: str) -> str: return f"{ch}_html"
-
-def _profile_from_data(data: Dict[str,Any]) -> Dict[str,str]:
+def _profile_anchors(data: Dict[str, Any]) -> Dict[str, str]:
     return {
-        "branche": str(data.get("branche","")),
-        "unternehmensgroesse": str(data.get("unternehmensgroesse","")),
-        "bundesland": normalize_region(data.get("bundesland","")),
-        "hauptleistung": str(data.get("hauptleistung","")),
-        "zielgruppen": ", ".join(data.get("zielgruppen") or []),
+        "branche": data.get("branche") or "—",
+        "groesse": data.get("unternehmensgroesse") or data.get("company_size") or "—",
+        "standort": data.get("bundesland") or data.get("state") or "—",
+        "hauptleistung": data.get("hauptleistung") or data.get("main_product") or "—",
+        "lang": data.get("lang") or "de",
     }
 
-def _postprocess(outputs: Dict[str,str]) -> Dict[str,str]:
-    out: Dict[str,str] = {}
-    for k, v in outputs.items():
-        if not k.endswith("_html"):
-            out[k]=v; continue
-        out[k] = _sanitize_text(v) if k in {"roadmap_html","funding_html","tools_html","live_html"} else _strip_lists_and_numbers(v)
+async def _openai_chat(messages: List[Dict[str,str]], model: str, temperature: float) -> str:
+    if not OPENAI_API_KEY:
+        return ""
+    async with httpx.AsyncClient(timeout=httpx.Timeout(60, connect=15)) as client:
+        r = await client.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+            json={"model": model, "messages": messages, "temperature": temperature},
+        )
+        r.raise_for_status()
+        j = r.json()
+        return j["choices"][0]["message"]["content"]
+
+async def _tavily_search(query: str, **kw) -> Dict[str, Any]:
+    if not TAVILY_API_KEY:
+        return {}
+    payload = {
+        "api_key": TAVILY_API_KEY,
+        "query": query,
+        "search_depth": kw.get("search_depth", SEARCH_DEPTH),
+        "days": kw.get("days", SEARCH_DAYS),
+        "max_results": kw.get("max_results", 5),
+        "include_answer": True,
+    }
+    async with httpx.AsyncClient(timeout=httpx.Timeout(50, connect=10)) as client:
+        r = await client.post("https://api.tavily.com/search", json=payload)
+        if r.status_code == 200:
+            return r.json()
+        return {}
+
+def _tools_table_from_live(live_tools: List[Dict[str, str]]) -> str:
+    """Erzeugt kleine HTML-Tabelle (CRM/Schreiben/Automation/Project/Security) falls live_tools vorhanden; sonst generisch."""
+    if not live_tools:
+        # Minimaler generischer Fallback
+        return (
+            "<table class='tbl tools'><thead><tr>"
+            "<th>Baustein</th><th>Wozu</th><th>EU‑Hinweise</th></tr></thead>"
+            "<tbody>"
+            "<tr><td>CRM / Kontakt‑Hub</td><td>Kundenfäden bündeln</td><td>EU‑Datenregion, Export, Rollen/Logs</td></tr>"
+            "<tr><td>Schreib‑/Recherche‑Assistent</td><td>Texte, Recherche</td><td>EU‑Region, Datensparmodus</td></tr>"
+            "<tr><td>Automationsschicht</td><td>Workflows</td><td>Self‑Hosting EU (z. B. n8n), Rollback</td></tr>"
+            "</tbody></table>"
+        )
+    rows = []
+    for t in live_tools[:8]:
+        name = html.escape(t.get("name","Tool"))
+        what = html.escape(t.get("what","—"))
+        eu = html.escape(t.get("eu","EU‑Datenregion/DPA prüfen"))
+        rows.append(f"<tr><td>{name}</td><td>{what}</td><td>{eu}</td></tr>")
+    return "<table class='tbl tools'><thead><tr><th>Tool</th><th>Einsatz</th><th>EU‑Hinweis</th></tr></thead><tbody>" + "".join(rows) + "</tbody></table>"
+
+def _funding_table_from_live(live_funding: List[Dict[str,str]]) -> str:
+    if not live_funding:
+        return (
+            "<table class='tbl funding'><thead><tr>"
+            "<th>Pfad</th><th>Geeignet wenn</th><th>Hinweise</th></tr></thead>"
+            "<tbody>"
+            "<tr><td>Daten‑Grundlagen</td><td>Datenqualität verbessern</td><td>Erster Schritt für KI; DSFA prüfen</td></tr>"
+            "<tr><td>Kleine Piloten</td><td>Ideen testen</td><td>KMU‑förderfreundlich; Export/Logs</td></tr>"
+            "<tr><td>Qualifizierung</td><td>Team schulen</td><td>Kammern/IHK; EU‑Programme</td></tr>"
+            "</tbody></table>"
+        )
+    rows = []
+    for f in live_funding[:8]:
+        path = html.escape(f.get("path","Programm"))
+        when = html.escape(f.get("when","—"))
+        note = html.escape(f.get("note","Fristen & Richtlinien beachten"))
+        rows.append(f"<tr><td>{path}</td><td>{when}</td><td>{note}</td></tr>")
+    return "<table class='tbl funding'><thead><tr><th>Pfad</th><th>Geeignet wenn</th><th>Hinweise</th></tr></thead><tbody>" + "".join(rows) + "</tbody></table>"
+
+# -------- Hauptanalyse --------
+
+async def _live_layer(data: Dict[str,Any], lang: str) -> Dict[str, Any]:
+    """Sammelt Tools/Förderungen/News (wenn Key vorhanden), mappt minimal für die Tabellen."""
+    out: Dict[str,Any] = {"tools": [], "funding": [], "news": []}
+    if not TAVILY_API_KEY:
+        return out
+
+    branche = data.get("branche","")
+    region = data.get("bundesland","")
+    queries = [
+        f"{branche} EU-hosted CRM SME DPA export",
+        f"{branche} open-source automation n8n EU hosting",
+        f"{region} KMU Förderung Digitalisierung KI Programm offizielle Stelle",
+    ]
+    tasks = [ _tavily_search(q, max_results=5) for q in queries ]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    # sehr einfache Heuristik
+    tools: List[Dict[str,str]] = []
+    funding: List[Dict[str,str]] = []
+    news: List[Dict[str,str]] = []
+
+    for r in results:
+        if isinstance(r, Exception) or not isinstance(r, dict):
+            continue
+        for item in r.get("results", []):
+            url = item.get("url","")
+            title = item.get("title","")
+            snippet = item.get("content","") or item.get("snippet","")
+            if any(k in url for k in ["crm", "hubspot", "salesforce", "centralstation", "weclapp", "odoo", "n8n", "make.com"]):
+                tools.append({"name": title[:60], "what": snippet[:120], "eu":"EU‑Region/DPA prüfen"})
+            if any(k in url for k in ["foerder", "förder", "bmwk", "ibb", "eif", "europa.eu", "funding", "tenders"]):
+                funding.append({"path": title[:60], "when":"KMU / Digitalisierung", "note":"Offizielles Portal; Fristen beachten"})
+            if r.get("answer"):
+                news.append({"title": r["answer"][:140]})
+
+    out["tools"] = tools
+    out["funding"] = funding
+    out["news"] = news
     return out
 
-async def analyze_async(data: Dict[str,Any], lang: str=DEFAULT_LANG, temperature: float=0.35) -> Dict[str,str]:
-    lang = lang if lang in LANGS else DEFAULT_LANG
-    profile = _profile_from_data(data)
-    # Build global context
-    ctx = dict(data)
-    ctx["profile"] = profile
-    ctx["now"] = dt.date.today().isoformat()
-    # Generate chapters (LLM)
-    outputs: Dict[str,str] = {}
-    for ch in CHAPTERS:
-        try:
-            prompt = _build_prompt(lang, ch, ctx)
-            outputs[_chapter_key(ch)] = _llm_complete(prompt, model=os.getenv("ANALYZE_MODEL"), temperature=temperature)
-        except Exception:
-            outputs[_chapter_key(ch)] = ""
-    out = _postprocess(outputs)
-
-    # Tools + Funding tables (live or curated)
-    tools_rows: List[Dict[str,str]] = []
-    funding_rows: List[Dict[str,str]] = []
-
-    try:
-        tools_rows = await _live_tools(profile, lang)
-    except Exception:
-        tools_rows = []
-    if not tools_rows:
-        tools_rows = _rank_tools_for_profile(_curated_tools(), profile)
-
-    try:
-        funding_rows = await _live_funding(profile, lang)
-    except Exception:
-        funding_rows = []
-    if not funding_rows:
-        funding_rows = _rank_funding_for_region(_curated_funding(), profile.get("bundesland",""), profile.get("unternehmensgroesse",""))
-
-    # Inject tables in front of LLM text
-    tools_table = _render_tools_table(tools_rows, lang)
-    funding_table = _render_funding_table(funding_rows, lang)
-    out["tools_html"] = f"{tools_table}\n{out.get('tools_html','')}".strip()
-    out["funding_html"] = f"{funding_table}\n{out.get('funding_html','')}".strip()
-
-    # Trusted check fallback if empty
-    if not out.get("trusted_check_html"):
-        if lang=="en":
-            out["trusted_check_html"] = (
-              "<p>The Trusted AI Check ensures privacy, traceability and reversibility.</p>"
-              "<table class='mini'><thead><tr><th>Criterion</th><th>How to recognise</th><th>Next step</th></tr></thead>"
-              "<tbody><tr><td>Purpose & benefit</td><td>Clear, limited goal</td><td>Write 2–3 sentences</td></tr>"
-              "<tr><td>Data & roles</td><td>Inputs known, roles assigned</td><td>Name owner & reviewer</td></tr>"
-              "<tr><td>Human approval</td><td>Four‑eyes before sending</td><td>Checklist + sign‑off</td></tr>"
-              "<tr><td>Logging & export</td><td>Events recorded, export possible</td><td>Enable logs, test export</td></tr>"
-              "<tr><td>Deletion</td><td>Retention set & enforced</td><td>Define & test deletion</td></tr>"
-              "<tr><td>Risk & mitigation</td><td>False outputs, data spill</td><td>Pilot, rollback, data minimisation</td></tr></tbody></table>"
-            )
-        else:
-            out["trusted_check_html"] = (
-              "<p>Der Trusted KI‑Check stellt Datenschutz, Nachvollziehbarkeit und Rückbaubarkeit sicher.</p>"
-              "<table class='mini'><thead><tr><th>Kriterium</th><th>Woran erkennbar</th><th>Nächster Schritt</th></tr></thead>"
-              "<tbody><tr><td>Zweck & Nutzen</td><td>Klares, begrenztes Ziel</td><td>2–3 Sätze formulieren</td></tr>"
-              "<tr><td>Daten & Rollen</td><td>Eingaben bekannt, Rollen vergeben</td><td>Owner & Reviewer benennen</td></tr>"
-              "<tr><td>Menschliche Freigabe</td><td>Vier‑Augen vor Versand</td><td>Checkliste + Sign‑off</td></tr>"
-              "<tr><td>Logging & Export</td><td>Ereignisse protokolliert, Export möglich</td><td>Logs aktivieren, Export testen</td></tr>"
-              "<tr><td>Löschung</td><td>Aufbewahrung festgelegt & durchgesetzt</td><td>Löschkonzept definieren & testen</td></tr>"
-              "<tr><td>Risiko & Mitigation</td><td>Fehlausgaben, Datenabfluss</td><td>Probelauf, Rückbau, Datensparsamkeit</td></tr></tbody></table>"
-            )
-
-    return out
-
-def analyze(data: Dict[str,Any], lang: str=DEFAULT_LANG, temperature: float=0.35) -> Dict[str,str]:
-    return asyncio.get_event_loop().run_until_complete(analyze_async(data, lang, temperature))
-
-def analyze_briefing(data: Dict[str,Any], lang: str=DEFAULT_LANG, temperature: float=0.35) -> Dict[str,Any]:
-    sections = analyze(data, lang=lang, temperature=temperature)
-    meta = {
-        "title": (data.get("meta",{}) or {}).get("title") or ("KI‑Statusbericht" if lang=="de" else "AI Status Report"),
-        "date": dt.date.today().strftime("%d.%m.%Y") if lang=="de" else dt.date.today().isoformat(),
+async def _gen_section(lang: str, name: str, profile: Dict[str,str], data: Dict[str,Any], temperature: float, model: Optional[str]=None, live: Optional[Dict[str,Any]]=None) -> str:
+    sys_prompt = load_prompt(lang, name)
+    # Kontext in den Nutzerdaten
+    user_ctx = {
+        "profile": profile,
+        "data_quality": data.get("datenqualitaet") or data.get("data_quality"),
+        "existing_tools": data.get("vorhandene_tools") or data.get("existing_tools"),
+        "it_infrastruktur": data.get("it_infrastruktur"),
+        "datenquellen": data.get("datenquellen"),
+        "time_capacity": data.get("zeitbudget") or data.get("time_capacity"),
+        "governance": data.get("governance") or data.get("ai_governance"),
         "lang": lang,
-        "branche": data.get("branche") or "",
-        "groesse": data.get("unternehmensgroesse") or data.get("size") or "",
-        "standort": data.get("standort") or data.get("region") or data.get("bundesland") or "",
     }
-    ctx = {"meta": meta}
-    ctx.update(sections)
-    return ctx
+    if live:
+        user_ctx["live_tools"] = live.get("tools",[])
+        user_ctx["live_funding"] = live.get("funding",[])
+        user_ctx["live_news"] = live.get("news",[])
 
-def analyze_to_html(data: Dict[str,Any], lang: str=DEFAULT_LANG, temperature: float=0.35) -> str:
-    sections = analyze(data, lang=lang, temperature=temperature)
-    env = _env()
-    tpl = env.get_template(_tpl_name(lang))
-    meta = {
-        "title": (data.get("meta",{}) or {}).get("title") or ("KI‑Statusbericht" if lang=="de" else "AI Status Report"),
-        "date": dt.date.today().strftime("%d.%m.%Y") if lang=="de" else dt.date.today().isoformat(),
-        "lang": lang,
-        "branche": data.get("branche") or "",
-        "groesse": data.get("unternehmensgroesse") or data.get("size") or "",
-        "standort": data.get("standort") or data.get("region") or data.get("bundesland") or "",
+    messages = [
+        {"role": "system", "content": sys_prompt},
+        {"role": "user", "content": f"Kontext:\n{user_ctx}\n\nBitte liefern Sie reinen HTML‑Fließtext gemäß Vorgaben." if lang=="de" else f"Context:\n{user_ctx}\n\nPlease deliver clean HTML prose as per the prompt."}
+    ]
+    content = await _openai_chat(messages, model or OPENAI_MODEL, temperature)
+    return sanitize_html(content)
+
+async def analyze_briefing(data: Dict[str, Any], lang: str = "de", temperature: float = TEMPERATURE_DEFAULT) -> Dict[str, Any]:
+    """Haupt‑Entry (async). Liefert {meta, sections, tables}."""
+    profile = _profile_anchors(data)
+    live = await _live_layer(data, lang)
+
+    # Tabellen (system-generated, danach kommentieren die Kapitel sie)
+    tools_table = _tools_table_from_live(live.get("tools", []))
+    funding_table = _funding_table_from_live(live.get("funding", []))
+
+    # Abschnitte parallel erzeugen
+    # (exec_summary ggf. eigenes Modell, rest Standard)
+    tasks = {
+        "exec_summary": _gen_section(lang, "exec_summary", profile, data, temperature, model=EXEC_SUMMARY_MODEL, live=live),
+        "quick_wins": _gen_section(lang, "quick_wins", profile, data, temperature, live=live),
+        "risks": _gen_section(lang, "risks", profile, data, temperature, live=live),
+        "recommendations": _gen_section(lang, "recommendations", profile, data, temperature, live=live),
+        "roadmap": _gen_section(lang, "roadmap", profile, data, temperature, live=live),
+        "vision": _gen_section(lang, "vision", profile, data, temperature, live=live),
+        "gamechanger": _gen_section(lang, "gamechanger", profile, data, temperature, live=live),
+        "compliance": _gen_section(lang, "compliance", profile, data, temperature, live=live),
+        "tools": _gen_section(lang, "tools", profile, data, temperature, live=live),
+        "funding": _gen_section(lang, "funding", profile, data, temperature, live=live),
+        "live": _gen_section(lang, "live", profile, data, temperature, live=live),
+        "trusted_check": _gen_section(lang, "trusted_check", profile, data, temperature, live=live),
     }
-    html = tpl.render(meta=meta, **sections, now=dt.datetime.now)
-    if not html or len(html) < MIN_HTML_LEN or "<h2" not in html:
-        html = tpl.render(meta=meta, **sections, now=dt.datetime.now)
-    return html
+    results = await asyncio.gather(*tasks.values())
+
+    # map zurück
+    sections = []
+    for key, html_blob in zip(tasks.keys(), results):
+        title_map_de = {
+            "exec_summary":"Executive Summary","quick_wins":"Sichere Sofortschritte","risks":"Risiken",
+            "recommendations":"Empfehlungen","roadmap":"Roadmap","vision":"Vision",
+            "gamechanger":"Gamechanger","compliance":"Compliance","tools":"Tools (EU‑Optionen)",
+            "funding":"Förderprogramme (Auswahl)","live":"Neu seit 2025","trusted_check":"Trusted KI‑Check (Beilage)"
+        }
+        title_map_en = {
+            "exec_summary":"Executive Summary","quick_wins":"Safe immediate steps","risks":"Risks",
+            "recommendations":"Recommendations","roadmap":"Roadmap","vision":"Vision",
+            "gamechanger":"Game‑changer","compliance":"Compliance","tools":"Tools (EU options)",
+            "funding":"Funding (selected)","live":"Live updates","trusted_check":"Trusted AI check (appendix)"
+        }
+        title = (title_map_de if lang=="de" else title_map_en).get(key, key)
+        sections.append({"id": key, "title": title, "html": html_blob})
+
+    meta = {
+        "title": "KI‑Statusbericht",
+        "date": dt.date.today().isoformat(),
+        "lang": lang,
+        "branche": profile["branche"],
+        "groesse": profile["groesse"],
+        "standort": profile["standort"],
+    }
+
+    # Tabellen separat (für Templates, die sie voranstellen)
+    tables = {"tools": tools_table, "funding": funding_table}
+    return {"meta": meta, "sections": sections, "tables": tables}
