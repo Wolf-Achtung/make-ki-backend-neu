@@ -117,6 +117,6 @@
     "pricing_tier": "low‑medium",
     "sovereign": false,
     "data_residency": "Config‑dependent; self‑host possible",
-    "notes": "Model hub & inference; watch licenses"
+    "notes": "Model hub & inference; check licenses"
   }
 ]

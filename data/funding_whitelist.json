@@ -3,39 +3,31 @@
     "name": "BAFA – Förderung von Unternehmensberatung",
     "region": "Bund",
     "target": "KMU/Solo",
-    "benefit": "Zuschuss (regionabhängig, bis ~80 %)",
-    "status": "aktiv – Frist z. Z. bis 2026‑12‑31",
+    "benefit": "Zuschuss (regionabhängig)",
+    "status": "aktiv",
     "source": "foerderdatenbank.de"
   },
   {
     "name": "KOMPASS – Kompakte Hilfe für Solo‑Selbstständige",
     "region": "Bund",
     "target": "Solo‑Selbstständige",
-    "benefit": "bis 90 %, max. 4.500 € Qualifizierung",
-    "status": "aktiv – Qualifizierungsschecks bis 2028‑02‑29",
+    "benefit": "Zuschuss Qualifizierung (as‑of p.a.)",
+    "status": "aktiv",
     "source": "kompass-deutschland.org"
   },
   {
     "name": "GründungsBONUS Plus (Berlin)",
     "region": "Berlin",
     "target": "Start‑ups/Gründungen",
-    "benefit": "bis 50 %, max. 50.000 €",
+    "benefit": "Investitionszuschuss",
     "status": "aktiv",
     "source": "ibb.de"
-  },
-  {
-    "name": "Coaching BONUS Berlin",
-    "region": "Berlin",
-    "target": "Solo/KMU",
-    "benefit": "Zuschuss Coaching",
-    "status": "beendet – keine Neuanträge seit 2024‑11‑20",
-    "source": "ibb-business-team.de"
   },
   {
     "name": "KMU‑innovativ (BMBF)",
     "region": "Bund",
     "target": "forschungsintensive KMU",
-    "benefit": "thematische Linien, projektbezogene F&E",
+    "benefit": "F&E‑Projektförderung",
     "status": "laufend",
     "source": "bmbf.de"
   },
@@ -44,7 +36,7 @@
     "region": "Bund",
     "target": "KMU",
     "benefit": "Investitionszuschuss Digitalisierung",
-    "status": "aktiv (kontingentabhängig)",
+    "status": "kontingentabhängig",
     "source": "bmwk.de"
   }
 ]
