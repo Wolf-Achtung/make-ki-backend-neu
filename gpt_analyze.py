@@ -23,8 +23,6 @@ client = OpenAI()
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
-TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
-TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
 
 # Optionales Post-Processing (wenn vorhanden)
 try:
@@ -624,124 +622,6 @@ def _fallback_praxisbeispiel(branche: str, lang: str = "de") -> str:
         return f"<p>{_strip_lists_and_numbers(desc)}</p>"
     except Exception:
         return ""
-
-# --- Strict Mode / Whitelist-Only (kein Fallback im PDF) ---------------------
-def _looks_like_placeholder(s: str) -> bool:
-    if not s:
-        return True
-    t = str(s).strip().lower()
-    if "mehr erfahren" in t or "lorem ipsum" in t:
-        return True
-    if "fehler: ungültige oder fehlende eingabedaten" in t:
-        return True
-    if "% / €" in t:
-        return True
-    if re.search(r"\bunternehmens[- ]?ozean\b", t) is not None:
-        return True
-    return False
-
-def _load_json_list_safe(path: Path):
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return []
-
-def _find_data_json(filename: str) -> Path | None:
-    # Prüfreihenfolge: BASE_DIR/data, BASE_DIR, kompatibler nested Pfad
-    cand = BASE_DIR / "data" / filename
-    if cand.exists():
-        return cand
-    cand = BASE_DIR / filename
-    if cand.exists():
-        return cand
-    cand = BASE_DIR / "ki_backend" / "make-ki-backend-neu-main" / "data" / filename
-    if cand.exists():
-        return cand
-    return None
-
-def _render_tools_table(tools: list[dict]) -> str:
-    if not tools:
-        return ""
-    rows = []
-    for t in tools:
-        sov = " <span style=\"border:1px solid #ddd;border-radius:4px;padding:0 4px;\">souverän</span>" if t.get("sovereign") else ""
-        rows.append(
-            "<tr>"
-            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{t.get('category','')}</td>"
-            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'><b>{t.get('name','')}</b>{sov}</td>"
-            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{t.get('data_residency','')}</td>"
-            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'><span style='color:#666'>{t.get('notes','')}</span></td>"
-            "</tr>"
-        )
-    return (
-        "<table style='width:100%;border-collapse:collapse'>"
-        "<thead><tr>"
-        "<th style='text-align:left;border-bottom:1px solid #eee'>Kategorie</th>"
-        "<th style='text-align:left;border-bottom:1px solid #eee'>Option</th>"
-        "<th style='text-align:left;border-bottom:1px solid #eee'>Daten/Deployment</th>"
-        "<th style='text-align:left;border-bottom:1px solid #eee'>Hinweise</th>"
-        "</tr></thead><tbody>"
-        + "".join(rows) + "</tbody></table>"
-    )
-
-def _render_funding_table(items: list[dict]) -> str:
-    if not items:
-        return ""
-    rows = []
-    for f in items:
-        rows.append(
-            "<tr>"
-            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'><b>{f.get('name','')}</b></td>"
-            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{f.get('region','')}</td>"
-            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{f.get('target','')}</td>"
-            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{f.get('benefit','')}</td>"
-            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{f.get('status','')}</td>"
-            "</tr>"
-        )
-    return (
-        "<table style='width:100%;border-collapse:collapse'>"
-        "<thead><tr>"
-        "<th style='text-align:left;border-bottom:1px solid #eee'>Programm</th>"
-        "<th style='text-align:left;border-bottom:1px solid #eee'>Jurisdiktion</th>"
-        "<th style='text-align:left;border-bottom:1px solid #eee'>Zielgruppe</th>"
-        "<th style='text-align:left;border-bottom:1px solid #eee'>Förderung</th>"
-        "<th style='text-align:left;border-bottom:1px solid #eee'>Status</th>"
-        "</tr></thead><tbody>"
-        + "".join(rows) + "</tbody></table>"
-    )
-
-def apply_strict_mode_to_report(report: dict, data: dict, lang: str="de") -> dict:
-    # 1) Platzhalter/Fehlermeldungs-Muster aus *_html bereinigen
-    for k, v in list(report.items()):
-        if k.endswith("_html") and _looks_like_placeholder(v):
-            report[k] = ""
-
-    # 2) Vision nur wenn sinnvoll
-    if _looks_like_placeholder(report.get("vision_html") or ""):
-        report["vision_html"] = ""
-
-    # 3) Whitelists laden
-    tools_fp = _find_data_json("tool_whitelist.json")
-    fund_fp  = _find_data_json("funding_whitelist.json")
-    tools = _load_json_list_safe(tools_fp) if tools_fp else []
-    funds = _load_json_list_safe(fund_fp)  if fund_fp  else []
-
-    # Einfache Region-Filterung
-    bundesland = str(data.get("bundesland") or data.get("state") or "").lower()
-    def _fund_ok(f: dict) -> bool:
-        r = (f.get("region") or "").lower()
-        if not bundesland:
-            return True
-        return r in {bundesland, "de", "deutschland", "bund"}
-
-    tools_safe = tools[:12]
-    funds_safe = [f for f in funds if _fund_ok(f)][:10]
-
-    # 4) Tabellen setzen (überschreiben generativen Text)
-    report["tools_html"]   = _render_tools_table(tools_safe)
-    report["funding_html"] = _render_funding_table(funds_safe)
-    return report
-
 # --- Report-Bau & Rendering ---
 def generate_full_report(data: Dict[str,Any], lang: str="de") -> Dict[str,Any]:
     lang = ("de" if str(lang).lower().startswith("de") else "en")
@@ -760,12 +640,13 @@ def generate_full_report(data: Dict[str,Any], lang: str="de") -> Dict[str,Any]:
         except Exception:
             out[ch+"_html"] = ""
 
-    # Fallbacks standardmäßig AUS – nur wenn ALLOW_FALLBACK=1|true|yes
-    if os.getenv("ALLOW_FALLBACK", "0").lower() in {"1","true","yes"}:
-        if not out.get("vision_html"):
-            out["vision_html"] = fallback_vision(data, lang)
-        if not out.get("praxisbeispiel_html"):
-            out["praxisbeispiel_html"] = _fallback_praxisbeispiel(branche, lang)
+    # Vision-Fallback
+    if not out.get("vision_html"):
+        out["vision_html"] = fallback_vision(data, lang)
+
+    # Praxisbeispiel-Fallback, falls leer
+    if not out.get("praxisbeispiel_html"):
+        out["praxisbeispiel_html"] = _fallback_praxisbeispiel(branche, lang)
 
     # Narrative Förderprogramme/Tools
     try:
@@ -827,18 +708,12 @@ def analyze_briefing(body: Dict[str,Any], lang: str="de") -> str:
 
     report = generate_full_report(body or {}, lang=lang)
 
-    # Strict-Mode anwenden (Whitelist-only, keine Platzhalter/Fülltexte)
-    try:
-        report = apply_strict_mode_to_report(report, body or {}, lang=lang)
-    except Exception:
-        pass
-
     # Jinja2-Rendering
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=select_autoescape(["html","xml"])
     )
-    tpl_name = TEMPLATE_DE if lang=="de" else TEMPLATE_EN
+    tpl_name = "pdf_template.html" if lang=="de" else "pdf_template_en.html"
     tpl = env.get_template(tpl_name)
 
     ctx = {**report, "now": _dt.now, "lang": lang}
