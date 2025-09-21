@@ -625,55 +625,53 @@ def _fallback_praxisbeispiel(branche: str, lang: str = "de") -> str:
     except Exception:
         return ""
 
-# --- Strict Mode / Whitelists (kein Fallback im PDF) -------------------------
+# --- Strict Mode / Whitelist-Only (kein Fallback im PDF) ---------------------
 def _looks_like_placeholder(s: str) -> bool:
     if not s:
         return True
     t = str(s).strip().lower()
-    return (
-        "mehr erfahren" in t
-        or "lorem ipsum" in t
-        or "fehler: ungültige oder fehlende eingabedaten" in t
-        or ("% / €" in t)
-        or re.search(r"\bunternehmens[- ]?ozean\b", t or "") is not None
-    )
+    if "mehr erfahren" in t or "lorem ipsum" in t:
+        return True
+    if "fehler: ungültige oder fehlende eingabedaten" in t:
+        return True
+    if "% / €" in t:
+        return True
+    if re.search(r"\bunternehmens[- ]?ozean\b", t) is not None:
+        return True
+    return False
 
-def _find_json_file(candidates):
-    # sucht Whitelists in /data, /, und kompatiblen Unterordnern
-    for n in candidates:
-        p = BASE_DIR / "data" / n
-        if p.exists():
-            return p
-    for n in candidates:
-        p = BASE_DIR / n
-        if p.exists():
-            return p
-    nested = BASE_DIR / "ki_backend" / "make-ki-backend-neu-main" / "data"
-    for n in candidates:
-        p = nested / n
-        if p.exists():
-            return p
-    return None
-
-def _load_json_list(path: Path):
+def _load_json_list_safe(path: Path):
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return []
 
-def _render_tools_table_from_whitelist(tools):
+def _find_data_json(filename: str) -> Path | None:
+    # Prüfreihenfolge: BASE_DIR/data, BASE_DIR, kompatibler nested Pfad
+    cand = BASE_DIR / "data" / filename
+    if cand.exists():
+        return cand
+    cand = BASE_DIR / filename
+    if cand.exists():
+        return cand
+    cand = BASE_DIR / "ki_backend" / "make-ki-backend-neu-main" / "data" / filename
+    if cand.exists():
+        return cand
+    return None
+
+def _render_tools_table(tools: list[dict]) -> str:
     if not tools:
         return ""
     rows = []
     for t in tools:
-        sovereign = " <span style='border:1px solid #ddd;border-radius:4px;padding:0 4px;'>souverän</span>" if t.get("sovereign") else ""
+        sov = " <span style=\"border:1px solid #ddd;border-radius:4px;padding:0 4px;\">souverän</span>" if t.get("sovereign") else ""
         rows.append(
-            f"<tr>"
+            "<tr>"
             f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{t.get('category','')}</td>"
-            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'><b>{t.get('name','')}</b>{sovereign}</td>"
+            f"<td style='padding:6px 8px;border-bottom:1px solid #eee'><b>{t.get('name','')}</b>{sov}</td>"
             f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{t.get('data_residency','')}</td>"
             f"<td style='padding:6px 8px;border-bottom:1px solid #eee'><span style='color:#666'>{t.get('notes','')}</span></td>"
-            f"</tr>"
+            "</tr>"
         )
     return (
         "<table style='width:100%;border-collapse:collapse'>"
@@ -686,19 +684,19 @@ def _render_tools_table_from_whitelist(tools):
         + "".join(rows) + "</tbody></table>"
     )
 
-def _render_funding_table_from_whitelist(items):
+def _render_funding_table(items: list[dict]) -> str:
     if not items:
         return ""
     rows = []
     for f in items:
         rows.append(
-            f"<tr>"
+            "<tr>"
             f"<td style='padding:6px 8px;border-bottom:1px solid #eee'><b>{f.get('name','')}</b></td>"
             f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{f.get('region','')}</td>"
             f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{f.get('target','')}</td>"
             f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{f.get('benefit','')}</td>"
             f"<td style='padding:6px 8px;border-bottom:1px solid #eee'>{f.get('status','')}</td>"
-            f"</tr>"
+            "</tr>"
         )
     return (
         "<table style='width:100%;border-collapse:collapse'>"
@@ -712,41 +710,36 @@ def _render_funding_table_from_whitelist(items):
         + "".join(rows) + "</tbody></table>"
     )
 
-def apply_strict_mode_to_report(report: dict, data: dict, lang: str = "de") -> dict:
-    \"\"\"Whitelist-only für Tools/Förderungen, keine Platzhalter, kein Fallback im PDF.\"\"\"
-    # 1) Platzhalter/Fehlermeldungen aus *_html Feldern entfernen
+def apply_strict_mode_to_report(report: dict, data: dict, lang: str="de") -> dict:
+    # 1) Platzhalter/Fehlermeldungs-Muster aus *_html bereinigen
     for k, v in list(report.items()):
         if k.endswith("_html") and _looks_like_placeholder(v):
             report[k] = ""
 
-    # 2) Vision hart säubern – nur zeigen, wenn sinnvoller Text
-    v = report.get("vision_html") or ""
-    if _looks_like_placeholder(v):
+    # 2) Vision nur wenn sinnvoll
+    if _looks_like_placeholder(report.get("vision_html") or ""):
         report["vision_html"] = ""
 
     # 3) Whitelists laden
-    tools_path = _find_json_file(["tool_whitelist.json"])
-    fund_path  = _find_json_file(["funding_whitelist.json"])
-    tools_wl = _load_json_list(tools_path) if tools_path else []
-    fund_wl  = _load_json_list(fund_path)  if fund_path  else []
+    tools_fp = _find_data_json("tool_whitelist.json")
+    fund_fp  = _find_data_json("funding_whitelist.json")
+    tools = _load_json_list_safe(tools_fp) if tools_fp else []
+    funds = _load_json_list_safe(fund_fp)  if fund_fp  else []
 
-    # 4) Evtl. einfache Filter (Region/Größe/Branche)
-    branche = _extract_branche(data)
+    # Einfache Region-Filterung
     bundesland = str(data.get("bundesland") or data.get("state") or "").lower()
-
-    def _fund_ok(f):
+    def _fund_ok(f: dict) -> bool:
         r = (f.get("region") or "").lower()
         if not bundesland:
             return True
-        return (r in {bundesland, "de", "deutschland", "bund"})
-    safe_funding = [f for f in fund_wl if _fund_ok(f)][:10]
+        return r in {bundesland, "de", "deutschland", "bund"}
 
-    safe_tools = tools_wl[:12]  # ggf. nach Branche/Kategorie filtern
+    tools_safe = tools[:12]
+    funds_safe = [f for f in funds if _fund_ok(f)][:10]
 
-    # 5) Narrative Tools/Förderungen überschreiben
-    report["tools_html"] = _render_tools_table_from_whitelist(safe_tools)
-    report["funding_html"] = _render_funding_table_from_whitelist(safe_funding)
-
+    # 4) Tabellen setzen (überschreiben generativen Text)
+    report["tools_html"]   = _render_tools_table(tools_safe)
+    report["funding_html"] = _render_funding_table(funds_safe)
     return report
 
 # --- Report-Bau & Rendering ---
@@ -767,7 +760,7 @@ def generate_full_report(data: Dict[str,Any], lang: str="de") -> Dict[str,Any]:
         except Exception:
             out[ch+"_html"] = ""
 
-    # Vision/Praxisbeispiel-Fallbacks optional (standard: AUS)
+    # Fallbacks standardmäßig AUS – nur wenn ALLOW_FALLBACK=1|true|yes
     if os.getenv("ALLOW_FALLBACK", "0").lower() in {"1","true","yes"}:
         if not out.get("vision_html"):
             out["vision_html"] = fallback_vision(data, lang)
@@ -837,7 +830,7 @@ def analyze_briefing(body: Dict[str,Any], lang: str="de") -> str:
     # Strict-Mode anwenden (Whitelist-only, keine Platzhalter/Fülltexte)
     try:
         report = apply_strict_mode_to_report(report, body or {}, lang=lang)
-    except Exception as _e:
+    except Exception:
         pass
 
     # Jinja2-Rendering
