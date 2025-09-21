@@ -2,37 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>AI Status Report – {{ company.name or '—' }}</title>
+  <title>AI Status Report – { '{' } company.name or '—' { '}' }</title>
   <style>
 :root{
-  --accent:#0b5fff; --ink:#111; --muted:#666; --bg:#fff; --hint:#f5f8ff; --expert:#eef5ff;
+  --ink:#0B2A5F;            /* dark blue for copy */
+  --blue-900:#081A3A;       /* headings / strongest */
+  --blue-800:#0B2A5F;       /* body copy / deep */
+  --blue-700:#1747A6;       /* accent (chapter stripe, links) */
+  --blue-600:#2A62CC;       /* secondary accent */
+  --blue-300:#E6EEFF;       /* soft backgrounds */
+  --muted:#38527F;          /* muted text */
+  --hint:#F5F8FF;           /* callout background */
+  --expert:#EEF4FF;         /* expert callout background */
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans','Liberation Sans',sans-serif;color:var(--ink)}
 .page{page-break-after:always;padding:26mm 22mm 24mm 22mm}
-h1{font-size:28px;margin:0 0 8px}
-h2{font-size:20px;margin:14px 0 6px;display:flex;align-items:center;gap:10px}
-h2::before{content:"Kapitel";font-size:11px;color:#fff;background:var(--accent);border-radius:3px;padding:2px 6px}
-h3{font-size:16px;margin:10px 0 6px}
-p,li{font-size:12.3px;line-height:1.55}
-hr.sep{border:0;height:1px;background:#e9eef9;margin:12px 0}
+h1{font-size:28px;margin:0 0 8px;color:var(--blue-900)}
+h2{font-size:20px;margin:14px 0 6px;display:flex;align-items:center;gap:10px;color:var(--blue-900)}
+h2::before{content:"Kapitel";font-size:11px;color:#fff;background:var(--blue-700);border-radius:3px;padding:2px 6px}
+h3{font-size:16px;margin:10px 0 6px;color:var(--blue-900)}
+p,li{font-size:12.3px;line-height:1.55;color:var(--ink)}
+hr.sep{border:0;height:1px;background:#dfe7fb;margin:12px 0}
 .section{margin:12px 0 10px}
 .small{font-size:11px;color:var(--muted)}
-.badge{display:inline-block;border:1px solid #dfe7fb;border-radius:4px;padding:2px 6px;font-size:11px;margin-left:6px}
-.header-line{height:3px;background:var(--accent);margin:12px 0 16px}
+.badge{display:inline-block;border:1px solid #dfe7fb;border-radius:4px;padding:2px 6px;font-size:11px;margin-left:6px;color:var(--blue-900)}
+.header-line{height:3px;background:var(--blue-700);margin:12px 0 16px}
 .footer{position:running(footer)}
 @page{size:A4;margin:18mm 14mm 20mm 14mm;@bottom-center{content:element(footer)}}
 
+/* Layout helpers */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+ul.compact{margin:6px 0 2px 20px;padding:0}
+.list-tick li{margin:4px 0}
+
 /* Callouts */
-.callout{border-left:3px solid var(--accent);background:var(--hint);padding:10px 12px;border-radius:6px;margin:8px 0}
-.callout .label{font-weight:600;font-size:11.5px;letter-spacing:.2px;text-transform:uppercase;margin-right:6px}
-.callout.expert{background:var(--expert)}
+.callout{border-left:3px solid var(--blue-700);background:var(--hint);padding:10px 12px;border-radius:6px;margin:8px 0;color:var(--ink);break-inside:avoid}
+.callout .label{font-weight:600;font-size:11.5px;letter-spacing:.2px;text-transform:uppercase;margin-right:6px;color:var(--blue-900)}
+.callout.expert{background:var(--expert);border-left-color:var(--blue-600)}
 
 /* Tables */
 .table{width:100%;border-collapse:collapse;margin:4px 0 8px}
-.table th,.table td{font-size:11.5px;border:1px solid #edf1fa;padding:6px 8px;vertical-align:top}
+.table th,.table td{font-size:11.5px;border:1px solid #e4ebff;padding:6px 8px;vertical-align:top;color:var(--ink)}
+.table th{background:var(--blue-300);color:var(--blue-900)}
 .muted{color:var(--muted)}
-ul.compact{margin:6px 0 2px 20px;padding:0}
+a{color:var(--blue-700);text-decoration:none}
 </style>
 </head>
 <body>
@@ -40,7 +55,7 @@ ul.compact{margin:6px 0 2px 20px;padding:0}
     <div class="header-line"></div>
     <h1>AI Status Report <span class="badge">GDPR & EU‑AI‑Act‑ready</span></h1>
     <p class="small">
-      Date: {{ meta.date or '2025-09-21' }} · Industry: {{ company.industry or '—' }} · Size: {{ company.size or '—' }} · Location: {{ company.location or '—' }} · Language: EN
+      Date: { '{' } meta.date or '2025-09-21' { '}' } · Industry: { '{' } company.industry or '—' { '}' } · Size: { '{' } company.size or '—' { '}' } · Location: { '{' } company.location or '—' { '}' } · Language: EN
     </p>
     <hr class="sep"/>
 
@@ -51,59 +66,59 @@ ul.compact{margin:6px 0 2px 20px;padding:0}
         <div>
           <h3>Top Opportunities</h3>
           <ul class="list-tick">
-            {% for it in (summary.opportunities or []) %}<li>{{ it }}</li>{% endfor %}
+            { '% for it in (summary.opportunities or []) %' }<li>{ '{' } it { '}' }</li>{ '% endfor %' }
           </ul>
         </div>
         <div>
           <h3>Top Risks</h3>
           <ul class="list-tick">
-            {% for it in (summary.risks or []) %}<li>{{ it }}</li>{% endfor %}
+            { '% for it in (summary.risks or []) %' }<li>{ '{' } it { '}' }</li>{ '% endfor %' }
           </ul>
         </div>
       </div>
     </div>
 
     <div class="section">
-      <h2>Quick Wins (30–60 min/week)</h2>
-      {{ quick_wins_html | safe }}
+      <h2>Quick Wins (30–60 min/week)</h2>
+      { '{' } quick_wins_html | safe { '}' }
     </div>
 
     <div class="section">
       <h2>Tool Shortlist (privacy‑aware)</h2>
-      {{ tools_html | safe }}
+      { '{' } tools_html | safe { '}' }
       <p class="small muted">Source & date per tool in the appendix. Whitelist‑only; no free text.</p>
     </div>
 
     <div class="section">
       <h2>Roadmap 90/180/365 days</h2>
       <div class="grid-3">
-        <div><h3>0–90</h3><ul class="compact">{% for i in (roadmap.q90 or []) %}<li>{{ i }}</li>{% endfor %}</ul></div>
-        <div><h3>91–180</h3><ul class="compact">{% for i in (roadmap.q180 or []) %}<li>{{ i }}</li>{% endfor %}</ul></div>
-        <div><h3>181–365</h3><ul class="compact">{% for i in (roadmap.q365 or []) %}<li>{{ i }}</li>{% endfor %}</ul></div>
+        <div><h3>0–90</h3><ul class="compact">{ '% for i in (roadmap.q90 or []) %' }<li>{ '{' } i { '}' }</li>{ '% endfor %' }</ul></div>
+        <div><h3>91–180</h3><ul class="compact">{ '% for i in (roadmap.q180 or []) %' }<li>{ '{' } i { '}' }</li>{ '% endfor %' }</ul></div>
+        <div><h3>181–365</h3><ul class="compact">{ '% for i in (roadmap.q365 or []) %' }<li>{ '{' } i { '}' }</li>{ '% endfor %' }</ul></div>
       </div>
     </div>
 
     <div class="section">
       <h2>Compliance – EU‑AI‑Act & GDPR</h2>
-      {{ eu_ai_act_html | safe }}
+      { '{' } eu_ai_act_html | safe { '}' }
     </div>
 
     <div class="section">
       <h2>Funding – matched selection</h2>
-      {{ funding_html | safe }}
+      { '{' } funding_html | safe { '}' }
       <div class="callout"><span class="label">Tip</span> Always provide “as‑of” date & source; many schemes are quota/appropriation‑bound.</div>
     </div>
 
-    {% if vision_html %}
+    { '% if vision_html %' }
     <div class="section">
-      <h2>Vision & Gamechanger (12–24 months)</h2>
-      {{ vision_html | safe }}
+      <h2>Vision & Gamechanger (12–24 months)</h2>
+      { '{' } vision_html | safe { '}' }
       <div class="callout expert"><span class="label">Pro tip</span> Vision should include metrics, owners and a risk review.</div>
     </div>
-    {% endif %}
+    { '% endif %' }
 
     <div class="footer small">
-      © {{ meta.year or '2025' }} {{ meta.owner or 'Wolf Hohl' }} · AI Security · GDPR & EU‑AI‑Act‑ready · As‑of: {{ meta.stand or '2025-09-21' }}
+      © { '{' } meta.year or '2025' { '}' } { '{' } meta.owner or 'Wolf Hohl' { '}' } · AI Security · GDPR & EU‑AI‑Act‑ready · As‑of: { '{' } meta.stand or '2025-09-21' { '}' }
     </div>
   </div>
 </body>
