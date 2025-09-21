@@ -1,125 +1,106 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"/>
-  <title>KI‑Statusbericht – { '{' } company.name or '—' { '}' }</title>
-  <style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KI‑Statusbericht – {{ company.name or '—' }}</title>
+<style>
 :root{
-  --ink:#0B2A5F;            /* dark blue for copy */
-  --blue-900:#081A3A;       /* headings / strongest */
-  --blue-800:#0B2A5F;       /* body copy / deep */
-  --blue-700:#1747A6;       /* accent (chapter stripe, links) */
-  --blue-600:#2A62CC;       /* secondary accent */
-  --blue-300:#E6EEFF;       /* soft backgrounds */
-  --muted:#38527F;          /* muted text */
-  --hint:#F5F8FF;           /* callout background */
-  --expert:#EEF4FF;         /* expert callout background */
+  --ink:#0B2A5F;          /* Copy (dunkelblau) */
+  --blue-900:#081A3A;     /* Headlines */
+  --blue-700:#1747A6;     /* Akzente */
+  --blue-300:#E6EEFF;     /* Flächen/Tabellen */
+  --muted:#38527F;        /* dezente Hinweise */
+  --hint:#F5F8FF;         /* Tipp-Box */
+  --expert:#EEF4FF;       /* Expertentipp-Box */
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans','Liberation Sans',sans-serif;color:var(--ink)}
-.page{page-break-after:always;padding:26mm 22mm 24mm 22mm}
-h1{font-size:28px;margin:0 0 8px;color:var(--blue-900)}
-h2{font-size:20px;margin:14px 0 6px;display:flex;align-items:center;gap:10px;color:var(--blue-900)}
-h2::before{content:"Kapitel";font-size:11px;color:#fff;background:var(--blue-700);border-radius:3px;padding:2px 6px}
-h3{font-size:16px;margin:10px 0 6px;color:var(--blue-900)}
-p,li{font-size:12.3px;line-height:1.55;color:var(--ink)}
-hr.sep{border:0;height:1px;background:#dfe7fb;margin:12px 0}
-.section{margin:12px 0 10px}
-.small{font-size:11px;color:var(--muted)}
-.badge{display:inline-block;border:1px solid #dfe7fb;border-radius:4px;padding:2px 6px;font-size:11px;margin-left:6px;color:var(--blue-900)}
-.header-line{height:3px;background:var(--blue-700);margin:12px 0 16px}
-.footer{position:running(footer)}
-@page{size:A4;margin:18mm 14mm 20mm 14mm;@bottom-center{content:element(footer)}}
-
-/* Layout helpers */
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-ul.compact{margin:6px 0 2px 20px;padding:0}
-.list-tick li{margin:4px 0}
-
-/* Callouts */
-.callout{border-left:3px solid var(--blue-700);background:var(--hint);padding:10px 12px;border-radius:6px;margin:8px 0;color:var(--ink);break-inside:avoid}
-.callout .label{font-weight:600;font-size:11.5px;letter-spacing:.2px;text-transform:uppercase;margin-right:6px;color:var(--blue-900)}
-.callout.expert{background:var(--expert);border-left-color:var(--blue-600)}
-
-/* Tables */
-.table{width:100%;border-collapse:collapse;margin:4px 0 8px}
-.table th,.table td{font-size:11.5px;border:1px solid #e4ebff;padding:6px 8px;vertical-align:top;color:var(--ink)}
-.table th{background:var(--blue-300);color:var(--blue-900)}
-.muted{color:var(--muted)}
-a{color:var(--blue-700);text-decoration:none}
+html,body{margin:0;padding:0}
+body{
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial,'Noto Sans',sans-serif;
+  color:var(--ink);
+  line-height:1.45;
+  font-size:12.3pt;
+  -webkit-font-smoothing:antialiased;
+  padding:32px;
+}
+h1,h2,h3{color:var(--blue-900); margin:0 0 8px 0}
+h1{font-size:28pt; letter-spacing:0.2px}
+h2{font-size:20pt; margin-top:24px}
+h3{font-size:16pt; margin-top:16px}
+p{margin:8px 0}
+.small{font-size:10.8pt;color:var(--muted)}
+.hr{height:1px;background:linear-gradient(90deg,var(--blue-300),transparent);margin:16px 0}
+.kv{display:flex;gap:18px;flex-wrap:wrap;margin:4px 0 12px 0}
+.kv .item{background:var(--hint);border:1px solid #d8e4ff;border-radius:8px;padding:6px 10px}
+.table{width:100%;border-collapse:collapse;margin:8px 0 2px 0}
+.table th{background:var(--blue-300);text-align:left;padding:6px;border:1px solid #d6def0}
+.table td{padding:6px;border:1px solid #e7ecf7;vertical-align:top}
+.badge{display:inline-block;padding:.1em .45em;border-radius:.4em;background:var(--blue-300);color:var(--blue-900);font-size:.85em;margin-left:.25em}
+.callout{border-left:3px solid var(--blue-700);background:var(--hint);padding:10px 12px;border-radius:8px;margin:8px 0}
+footer{margin-top:28px;padding-top:12px;border-top:1px solid #e7ecf7;color:var(--muted);font-size:11pt}
+@media print{body{padding:24px}}
 </style>
 </head>
 <body>
-  <div class="page">
-    <div class="header-line"></div>
-    <h1>KI‑Statusbericht <span class="badge">DSGVO & EU‑AI‑Act‑ready</span></h1>
-    <p class="small">
-      Datum: { '{' } meta.date or '2025-09-21' { '}' } · Branche: { '{' } company.industry or '—' { '}' } · Größe: { '{' } company.size or '—' { '}' } · Standort: { '{' } company.location or '—' { '}' } · Sprache: DE
-    </p>
-    <hr class="sep"/>
-
-    <div class="section">
-      <h2>Executive Summary</h2>
-      <div class="callout"><span class="label">Hinweis</span> Fakten statt Anekdoten. Alle Empfehlungen sind umsetzbar und messbar.</div>
-      <div class="grid">
-        <div>
-          <h3>Top‑Chancen</h3>
-          <ul class="list-tick">
-            { '% for it in (summary.opportunities or []) %' }<li>{ '{' } it { '}' }</li>{ '% endfor %' }
-          </ul>
-        </div>
-        <div>
-          <h3>Top‑Risiken</h3>
-          <ul class="list-tick">
-            { '% for it in (summary.risks or []) %' }<li>{ '{' } it { '}' }</li>{ '% endfor %' }
-          </ul>
-        </div>
-      </div>
+  <header>
+    <h1>KI‑Statusbericht</h1>
+    <div class="kv">
+      <div class="item"><b>Unternehmen:</b> {{ company.name or '—' }}</div>
+      <div class="item"><b>Branche:</b> {{ company.industry or '—' }}</div>
+      <div class="item"><b>Größe:</b> {{ company.size or '—' }}</div>
+      <div class="item"><b>Standort:</b> {{ company.location or '—' }}</div>
+      <div class="item"><b>Stand:</b> {{ meta.stand }}</div>
     </div>
+    <div class="hr"></div>
+  </header>
 
-    <div class="section">
-      <h2>Schnelle Hebel (30–60 Min./Woche)</h2>
-      { '{' } quick_wins_html | safe { '}' }
-    </div>
+  {% if executive_summary_html %}
+  <section>
+    <h2>Executive Summary</h2>
+    {{ executive_summary_html|safe }}
+  </section>
+  {% endif %}
 
-    <div class="section">
-      <h2>Tool‑Shortlist (datenschutzbewusst)</h2>
-      { '{' } tools_html | safe { '}' }
-      <p class="small muted">Quelle/Stand je Tool im Anhang. Whitelist‑Only; keine Freitexte.</p>
+  <section>
+    <h2>Schnelle Hebel</h2>
+    <div class="callout">
+      {{ quick_wins_html|safe }}
     </div>
+  </section>
 
-    <div class="section">
-      <h2>Roadmap 90/180/365 Tage</h2>
-      <div class="grid-3">
-        <div><h3>0–90</h3><ul class="compact">{ '% for i in (roadmap.q90 or []) %' }<li>{ '{' } i { '}' }</li>{ '% endfor %' }</ul></div>
-        <div><h3>91–180</h3><ul class="compact">{ '% for i in (roadmap.q180 or []) %' }<li>{ '{' } i { '}' }</li>{ '% endfor %' }</ul></div>
-        <div><h3>181–365</h3><ul class="compact">{ '% for i in (roadmap.q365 or []) %' }<li>{ '{' } i { '}' }</li>{ '% endfor %' }</ul></div>
-      </div>
-    </div>
+  <section>
+    <h2>Datenschutzfreundliche/ souveräne Tools (Whitelist)</h2>
+    {{ tools_html|safe }}
+    <p class="small">Hinweis: Nur kuratierte Optionen. Keine generative Ergänzung.</p>
+  </section>
 
-    <div class="section">
-      <h2>Compliance – EU‑AI‑Act & DSGVO</h2>
-      { '{' } eu_ai_act_html | safe { '}' }
-    </div>
+  {% if roadmap_html %}
+  <section>
+    <h2>Roadmap</h2>
+    {{ roadmap_html|safe }}
+  </section>
+  {% endif %}
 
-    <div class="section">
-      <h2>Förderprogramme – passende Auswahl</h2>
-      { '{' } funding_html | safe { '}' }
-      <div class="callout"><span class="label">Tipp</span> Immer mit „Stand“ und Quelle arbeiten; Programme sind kontingent-/haushaltsabhängig.</div>
-    </div>
+  <section>
+    <h2>EU‑AI‑Act – kompakte Checkliste</h2>
+    {{ eu_ai_act_html|safe }}
+  </section>
 
-    { '% if vision_html %' }
-    <div class="section">
-      <h2>Vision & Gamechanger (12–24 Monate)</h2>
-      { '{' } vision_html | safe { '}' }
-      <div class="callout expert"><span class="label">Expertentipp</span> Vision nur mit klaren Metriken, Ownern und Risikobewertung.</div>
-    </div>
-    { '% endif %' }
+  <section>
+    <h2>Förderprogramme (Whitelist)</h2>
+    {{ funding_html|safe }}
+  </section>
 
-    <div class="footer small">
-      © { '{' } meta.year or '2025' { '}' } { '{' } meta.owner or 'Wolf Hohl' { '}' } · KI‑Sicherheit · DSGVO & EU‑AI‑Act‑ready · Stand: { '{' } meta.stand or '2025-09-21' { '}' }
-    </div>
-  </div>
+  {% if vision_html %}
+  <section>
+    <h2>Vision &amp; Gamechanger</h2>
+    {{ vision_html|safe }}
+  </section>
+  {% endif %}
+
+  <footer>
+    © {{ meta.year }} {{ meta.owner }} · Dieser Report wurde aus Formularangaben generiert; Abschnitte ohne valide Daten werden ausgelassen.
+  </footer>
 </body>
 </html>
