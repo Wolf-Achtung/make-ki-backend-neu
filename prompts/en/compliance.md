@@ -1,0 +1,1 @@
+<p>Summarise relevant duties from the EU AI Act, GDPR (incl. DPIA, DPA), ePrivacy and, if applicable, DSA — realistic for SMEs and written in plain language. Add “What this means for you” sentences.</p>
