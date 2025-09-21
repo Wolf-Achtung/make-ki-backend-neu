@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>AI Status Report – {% raw %}{{ company.name }}{% endraw %}</title>
+  <style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif; color: #111; }
+.page { page-break-after: always; padding: 28mm 22mm 26mm 22mm; }
+h1, h2, h3 { margin: 0 0 8px; line-height: 1.25; }
+h1 { font-size: 28px; }
+h2 { font-size: 20px; margin-top: 12px; }
+h3 { font-size: 16px; margin-top: 10px; }
+p, li { font-size: 12.2px; line-height: 1.55; }
+.small { font-size: 11px; color: #4a4a4a; }
+.kpi { display: inline-block; border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; margin: 3px 6px 3px 0; }
+.section { margin: 14px 0 10px; padding-top: 2px; }
+hr.sep { border: 0; height: 1px; background: #e8e8e8; margin: 14px 0; }
+.badge { display: inline-block; font-size: 11px; padding: 2px 6px; border-radius: 4px; border: 1px solid #ddd; margin-left: 6px; }
+.note { background: #f9fbff; border: 1px solid #e7efff; padding: 8px 10px; border-radius: 6px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.list-tick li { margin: 6px 0; }
+.footer { position: running(footer); }
+@page {
+  size: A4;
+  margin: 18mm 14mm 20mm 14mm;
+  @bottom-center { content: element(footer) }
+}
+.header-line { height: 3px; background: #0b5fff; margin: 12px 0 16px; }
+.section-title { display:flex; align-items:center; gap:10px; }
+.section-title .stripe { width:8px; height:20px; background:#0b5fff; border-radius:2px; display:inline-block; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { font-size: 11.5px; border: 1px solid #eee; padding: 6px 8px; vertical-align: top; }
+.muted { color:#666; }
+ul.compact { margin:6px 0 2px 20px; padding:0; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 11px; background:#f7f7f7; padding:1px 4px; border-radius:4px; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="header-line"></div>
+    <h1>AI Status Report <span class="badge">GDPR & EU‑AI‑Act‑ready</span></h1>
+    <p class="small">
+      Date: {% raw %}{{ meta.date or '2025-09-21' }}{% endraw %} · Industry: {% raw %}{{ company.industry }}{% endraw %} · Size: {% raw %}{{ company.size }}{% endraw %} · Location: {% raw %}{{ company.location }}{% endraw %}
+    </p>
+    <hr class="sep"/>
+
+    <div class="section">
+      <div class="section-title"><span class="stripe"></span><h2>Executive Summary</h2></div>
+      <div class="grid">
+        <div>
+          <h3>Top Opportunities (3)</h3>
+          <ul class="list-tick">
+            {% if summary and summary.opportunities %}
+              {% for item in summary.opportunities %}<li>{% raw %}{{ item }}{% endraw %}</li>{% endfor %}
+            {% endif %}
+          </ul>
+        </div>
+        <div>
+          <h3>Top Risks (3)</h3>
+          <ul class="list-tick">
+            {% if summary and summary.risks %}
+              {% for item in summary.risks %}<li>{% raw %}{{ item }}{% endraw %}</li>{% endfor %}
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+      <div class="note small">Facts only – no anecdotes or filler.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="stripe"></span><h2>Quick Wins (30–60 min/week)</h2></div>
+      {% if quick_wins_html %}{% raw %}{{ quick_wins_html | safe }}{% endraw %}{% endif %}
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="stripe"></span><h2>Tool Shortlist (privacy‑aware)</h2></div>
+      {% if tools_html %}{% raw %}{{ tools_html | safe }}{% endraw %}{% endif %}
+      <p class="small muted">Source & date per tool in the appendix. Whitelist‑only; no free text.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="stripe"></span><h2>Roadmap 90/180/365 days</h2></div>
+      <div class="grid-3">
+        <div>
+          <h3>0–90</h3>
+          <ul class="compact">
+            {% if roadmap and roadmap.q90 %}{% for i in roadmap.q90 %}<li>{% raw %}{{ i }}{% endraw %}</li>{% endfor %}{% endif %}
+          </ul>
+        </div>
+        <div>
+          <h3>91–180</h3>
+          <ul class="compact">
+            {% if roadmap and roadmap.q180 %}{% for i in roadmap.q180 %}<li>{% raw %}{{ i }}{% endraw %}</li>{% endfor %}{% endif %}
+          </ul>
+        </div>
+        <div>
+          <h3>181–365</h3>
+          <ul class="compact">
+            {% if roadmap and roadmap.q365 %}{% for i in roadmap.q365 %}<li>{% raw %}{{ i }}{% endraw %}</li>{% endfor %}{% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="stripe"></span><h2>Compliance – EU‑AI‑Act & GDPR</h2></div>
+      {% if eu_ai_act_html %}{% raw %}{{ eu_ai_act_html | safe }}{% endraw %}{% endif %}
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="stripe"></span><h2>Funding – matched selection</h2></div>
+      {% if funding_html %}{% raw %}{{ funding_html | safe }}{% endraw %}{% endif %}
+      <p class="small muted">Programmes are sourced from a curated database with „as‑of“ dates; no generative additions.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="stripe"></span><h2>Vision & Gamechanger (12–24 months)</h2></div>
+      {% if vision_html %}{% raw %}{{ vision_html | safe }}{% endraw %}{% endif %}
+      <div class="note small">Rendered only if all required inputs are present (strict mode). No placeholders.</div>
+    </div>
+
+    <div class="footer small">
+      © { meta.year or '2025' } { meta.owner or 'Wolf Hohl' } · AI Security · GDPR & EU‑AI‑Act‑ready · As‑of: { meta.stand or '2025-09-21' }
+    </div>
+  </div>
+</body>
+</html>
