@@ -3,48 +3,48 @@
     "name": "BAFA – Förderung von Unternehmensberatung",
     "region": "Bund",
     "target": "KMU/Solo",
-    "benefit": "Zuschuss (bis ~80% je Region)",
-    "status": "aktiv – Frist aktuell bis 2026‑12‑31",
-    "source": "https://www.foerderdatenbank.de"
+    "benefit": "Zuschuss (regionabhängig, bis ~80 %)",
+    "status": "aktiv – Frist z. Z. bis 2026‑12‑31",
+    "source": "foerderdatenbank.de"
   },
   {
     "name": "KOMPASS – Kompakte Hilfe für Solo‑Selbstständige",
     "region": "Bund",
     "target": "Solo‑Selbstständige",
-    "benefit": "bis 90 % | max. 4.500 € Qualifizierungskosten",
-    "status": "aktiv – verlängert bis 2028‑02‑29 (Qualifizierungsschecks)",
-    "source": "https://www.kompass‑deutschland.org"
+    "benefit": "bis 90 %, max. 4.500 € Qualifizierung",
+    "status": "aktiv – Qualifizierungsschecks bis 2028‑02‑29",
+    "source": "kompass-deutschland.org"
   },
   {
     "name": "GründungsBONUS Plus (Berlin)",
     "region": "Berlin",
     "target": "Start‑ups/Gründungen",
-    "benefit": "bis 50 % | max. 50.000 €",
+    "benefit": "bis 50 %, max. 50.000 €",
     "status": "aktiv",
-    "source": "https://www.ibb.de"
+    "source": "ibb.de"
   },
   {
     "name": "Coaching BONUS Berlin",
     "region": "Berlin",
     "target": "Solo/KMU",
-    "benefit": "Zuschuss für Coaching",
-    "status": "beendet – seit 2024‑11‑20 keine Neuanträge",
-    "source": "https://www.ibb‑business‑team.de"
+    "benefit": "Zuschuss Coaching",
+    "status": "beendet – keine Neuanträge seit 2024‑11‑20",
+    "source": "ibb-business-team.de"
   },
   {
     "name": "KMU‑innovativ (BMBF)",
     "region": "Bund",
     "target": "forschungsintensive KMU",
-    "benefit": "Themenlinien, projektbezogene F&E",
+    "benefit": "thematische Linien, projektbezogene F&E",
     "status": "laufend",
-    "source": "https://www.bmbf.de"
+    "source": "bmbf.de"
   },
   {
     "name": "Digital Jetzt (BMWK)",
     "region": "Bund",
     "target": "KMU",
-    "benefit": "17–50 Tsd € Zuschuss",
-    "status": "aktiv (Kontingentabhängig)",
-    "source": "https://www.bmwk.de"
+    "benefit": "Investitionszuschuss Digitalisierung",
+    "status": "aktiv (kontingentabhängig)",
+    "source": "bmwk.de"
   }
 ]
