@@ -304,11 +304,10 @@ def load_analyze_module():
     return None, None
 def _render_final_html_from_result(result: Any, lang: str) -> str:
     """
-    Enforce **Template-Only** rendering.
-    - dict  -> always render the file template with the dict as context (ignore any 'html' key)
-    - str   -> IGNORE legacy pre-rendered HTML; build a minimal safe context and render the file template
+    Enforce Template-Only rendering.
+    - dict  -> render file template with dict as context (ignore any 'html' keys)
+    - str   -> ignore legacy pre-rendered HTML and render file template with a minimal safe context
     """
-    # Build safe minimal ctx in case we get a string
     minimal_ctx = {
         "company": {"name":"—","industry":"—","size":"—","location":"—"},
         "meta": {"date":"", "stand":"", "year":"", "owner":""},
@@ -320,27 +319,17 @@ def _render_final_html_from_result(result: Any, lang: str) -> str:
     }
 
     if isinstance(result, dict):
-        ctx = result.copy()
-        # Never accept pre-rendered HTML strings from the analyzer
-        if "html" in ctx:
-            try: del ctx["html"]
-            except Exception: pass
+        ctx = dict(result)
+        # never accept pre-rendered HTML
+        ctx.pop("html", None)
         return _render_template_file(lang, ctx)
 
-    # Legacy analyzer returned an HTML string -> ignore it and use template with minimal context
+    # Legacy analyzer returned string HTML -> ignore and use template with minimal context
     try:
         logger.warning("[TEMPLATE-GUARD] Analyzer returned string HTML – ignoring and rendering file template")
     except Exception:
         pass
     return _render_template_file(lang, minimal_ctx)
-    elif isinstance(result, str):
-        s = strip_code_fences(result)
-        if ("{{" in s) or ("{%" in s):
-            return _render_template_string(s, ctx)
-        return s
-    # Fallback
-    return _render_template_file(lang, ctx)
-
 # ---------- Analyze → HTML (robust) ----------
 async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
     """
