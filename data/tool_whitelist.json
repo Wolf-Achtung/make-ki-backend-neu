@@ -1,122 +1,86 @@
 [
   {
-    "name": "Mistral Platform / Le Chat Enterprise",
-    "category": "LLM/Assistant",
-    "pricing_tier": "medium",
+    "name": "Mistral (Codestral/Small)",
+    "category": "LLM/Assistant (on‑prem/sovereign)",
     "sovereign": true,
-    "data_residency": "EU regions / private cloud / on‑prem options",
-    "notes": "EU provider; review sub‑processors & enterprise terms"
+    "data_residency": "EU/self‑host",
+    "notes": "Open‑source Modelle; on‑prem möglich"
   },
   {
-    "name": "Aleph Alpha (PhariaAI Suite)",
-    "category": "LLM/Assistant",
-    "pricing_tier": "high",
+    "name": "Aleph Alpha",
+    "category": "LLM/Assistant (EU)",
     "sovereign": true,
-    "data_residency": "On‑prem / sovereign cloud",
-    "notes": "Explainability options; German/EU sovereignty focus"
+    "data_residency": "EU (DE)",
+    "notes": "Governance/Evals; EU‑AI‑Act ready"
   },
   {
-    "name": "Azure OpenAI (EU regions)",
-    "category": "LLM API",
-    "pricing_tier": "medium",
-    "sovereign": false,
-    "data_residency": "EU resource location configurable",
-    "notes": "Use Microsoft DPA; choose EU regions"
+    "name": "Hugging Face",
+    "category": "Model Hub/Inference",
+    "sovereign": true,
+    "data_residency": "EU options/self‑host",
+    "notes": "Open‑Models; control plane EU möglich"
   },
   {
-    "name": "OpenAI API / Enterprise",
-    "category": "LLM API",
-    "pricing_tier": "medium",
-    "sovereign": false,
-    "data_residency": "Region‑dependent; no training on customer data (API/Enterprise)",
-    "notes": "Enterprise retention & controls"
-  },
-  {
-    "name": "Nextcloud + ONLYOFFICE/Collabora",
+    "name": "Nextcloud + Collabora",
     "category": "Collaboration/Files",
-    "pricing_tier": "low‑medium",
     "sovereign": true,
-    "data_residency": "Self‑hosted / EU hosting",
-    "notes": "Strong control & data residency"
+    "data_residency": "self‑host/EU",
+    "notes": "Dokumente; Alternativen zu O365/Google"
   },
   {
     "name": "CryptPad",
-    "category": "Collaboration/Files",
-    "pricing_tier": "low",
+    "category": "Docs/Notes",
     "sovereign": true,
-    "data_residency": "E2EE; EU hosting or self‑host",
-    "notes": "Zero‑knowledge collaboration"
+    "data_residency": "EU",
+    "notes": "E2E‑verschlüsselt"
   },
   {
-    "name": "Matrix / Element",
+    "name": "Matrix (Element)",
     "category": "Messaging",
-    "pricing_tier": "low‑medium",
     "sovereign": true,
-    "data_residency": "Self‑host/EU",
-    "notes": "E2EE messaging"
+    "data_residency": "self‑host/EU",
+    "notes": "E2E; Federation"
   },
   {
     "name": "Wire",
     "category": "Messaging",
-    "pricing_tier": "medium",
     "sovereign": true,
-    "data_residency": "EU hosting options",
-    "notes": "Business messenger with E2EE"
+    "data_residency": "EU",
+    "notes": "E2E; EU hosting"
   },
   {
-    "name": "Trello",
-    "category": "Project Management",
-    "pricing_tier": "low",
+    "name": "Slack Enterprise Grid",
+    "category": "Messaging/Integrations",
     "sovereign": false,
-    "data_residency": "Vendor program; EU options",
-    "notes": "Boards & automations"
+    "data_residency": "US/EU options",
+    "notes": "Controls/SCIM/DLP möglich"
   },
   {
-    "name": "Miro",
-    "category": "Whiteboard & Ideation",
-    "pricing_tier": "medium",
+    "name": "Trello Enterprise",
+    "category": "Project Mgmt",
     "sovereign": false,
-    "data_residency": "Vendor‑managed; EU options",
-    "notes": "Ideation & workshops"
+    "data_residency": "US/EU options",
+    "notes": "Board/Automations"
   },
   {
-    "name": "Slack",
-    "category": "Team Communication",
-    "pricing_tier": "medium",
+    "name": "Miro Enterprise",
+    "category": "Whiteboard",
     "sovereign": false,
-    "data_residency": "Data residency program; EU regions",
-    "notes": "Rich integrations; AI options"
+    "data_residency": "EU options",
+    "notes": "Workshops/Ideation"
   },
   {
     "name": "KNIME",
-    "category": "Analytics",
-    "pricing_tier": "low",
+    "category": "Analytics/ML (open)",
     "sovereign": true,
-    "data_residency": "Self‑host options",
-    "notes": "Open platform analytics"
-  },
-  {
-    "name": "Dataiku",
-    "category": "Data/ML Platform",
-    "pricing_tier": "high",
-    "sovereign": false,
-    "data_residency": "Config‑dependent",
-    "notes": "Collaborative DS/ML"
+    "data_residency": "self‑host/EU",
+    "notes": "No‑code pipelines"
   },
   {
     "name": "H2O.ai",
-    "category": "ML Platform",
-    "pricing_tier": "high",
+    "category": "AutoML",
     "sovereign": false,
-    "data_residency": "Self‑host options",
-    "notes": "AutoML, enterprise ML"
-  },
-  {
-    "name": "Hugging Face (inference/transformers)",
-    "category": "Models/Hub",
-    "pricing_tier": "low‑medium",
-    "sovereign": false,
-    "data_residency": "Config‑dependent; self‑host possible",
-    "notes": "Model hub & inference; check licenses"
+    "data_residency": "US/EU options",
+    "notes": "Open‑source + enterprise"
   }
 ]

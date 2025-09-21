@@ -1,42 +1,42 @@
 [
   {
-    "name": "BAFA – Förderung von Unternehmensberatung",
+    "name": "BAFA – Beratungsförderung",
     "region": "Bund",
-    "target": "KMU/Solo",
-    "benefit": "Zuschuss (regionabhängig)",
-    "status": "aktiv",
-    "source": "foerderdatenbank.de"
-  },
-  {
-    "name": "KOMPASS – Kompakte Hilfe für Solo‑Selbstständige",
-    "region": "Bund",
-    "target": "Solo‑Selbstständige",
-    "benefit": "Zuschuss Qualifizierung (as‑of p.a.)",
-    "status": "aktiv",
-    "source": "kompass-deutschland.org"
-  },
-  {
-    "name": "GründungsBONUS Plus (Berlin)",
-    "region": "Berlin",
-    "target": "Start‑ups/Gründungen",
-    "benefit": "Investitionszuschuss",
-    "status": "aktiv",
-    "source": "ibb.de"
-  },
-  {
-    "name": "KMU‑innovativ (BMBF)",
-    "region": "Bund",
-    "target": "forschungsintensive KMU",
-    "benefit": "F&E‑Projektförderung",
-    "status": "laufend",
-    "source": "bmbf.de"
+    "target": "KMU, Solo",
+    "benefit": "Zuschuss für Beratung (Strategie, Digitalisierung, KI)",
+    "status": "laufend (as‑of 2025‑09)",
+    "source": "bafa.de"
   },
   {
     "name": "Digital Jetzt (BMWK)",
     "region": "Bund",
     "target": "KMU",
-    "benefit": "Investitionszuschuss Digitalisierung",
-    "status": "kontingentabhängig",
+    "benefit": "Investitionen & Qualifizierung",
+    "status": "laufend (as‑of 2025‑09)",
     "source": "bmwk.de"
+  },
+  {
+    "name": "KOMPASS (BMAS)",
+    "region": "Bund",
+    "target": "Solo‑Selbstständige",
+    "benefit": "Zuschuss Weiterbildung",
+    "status": "aktive Programmphase prüfen (as‑of 2025‑09)",
+    "source": "bmas.de"
+  },
+  {
+    "name": "KMU‑innovativ",
+    "region": "Bund",
+    "target": "KMU/F&E",
+    "benefit": "Zuschüsse FuE inkl. KI",
+    "status": "laufend",
+    "source": "bmbf.de"
+  },
+  {
+    "name": "GründungsBONUS",
+    "region": "Berlin",
+    "target": "Gründung, Solo, Team",
+    "benefit": "Zuschuss",
+    "status": "programmstatus prüfen (as‑of 2025‑09)",
+    "source": "ibb.de"
   }
 ]
