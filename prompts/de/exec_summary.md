@@ -1,2 +1,1 @@
-<kontext>Unternehmen: {{company.name}} (Branche: {{company.industry}}, Größe: {{company.size}}, Standort: {{company.location}})</kontext>
-<aufgabe>2 kurze Absätze: (1) Lage & Chancen; (2) nächste Schritte (Governance, 90‑Tage‑Quick‑Wins). Kein Marketing-Sprech; per Sie; keine Tools/Förderprogramme nennen.</aufgabe>
+ 

@@ -1,1 +1,1 @@
-<p>Write several connected paragraphs containing actionable recommendations. Each recommendation should be described in a full sentence, briefly explaining the rationale and expected benefit. Integrate small stories or examples illustrating how other organisations have successfully followed similar advice. Use a friendly, consultative tone without bullet points or lists. Avoid numbers and percentages; instead use qualitative terms like “high benefit”, “medium effort” or “after a short time”.</p>
+ 

@@ -1,0 +1,1 @@
+<p><strong>Where to start?</strong> Inventory, policy, prompt library, one pilot. <strong>Tools?</strong> See whitelist table. <strong>How to measure?</strong> before/after time & quality.</p>
