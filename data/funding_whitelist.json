@@ -34,14 +34,5 @@
     "status": "laufend",
     "source": "bmbf.de",
     "as_of": "2025-09"
-  },
-  {
-    "name": "GründungsBONUS",
-    "region": "Berlin",
-    "target": "Gründung, Solo, Team",
-    "benefit": "Zuschuss",
-    "status": "programmstatus prüfen",
-    "source": "ibb.de",
-    "as_of": "2025-09"
   }
 ]

@@ -1,0 +1,146 @@
+[
+  {
+    "name": "Berlin – GründungsBONUS",
+    "region": "Berlin",
+    "target": "Gründung, Solo, Team",
+    "benefit": "Zuschuss (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "ibb.de (zu prüfen)",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "NRW – Mittelstand Innovativ & Digital (MID)",
+    "region": "Nordrhein-Westfalen",
+    "target": "KMU",
+    "benefit": "Zuschuss Digitalisierung/Innovation (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "wirtschaft.nrw (zu prüfen)",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Bayern – Digitalbonus (Freistaat)",
+    "region": "Bayern",
+    "target": "KMU",
+    "benefit": "Zuschuss Digitalisierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "bayern.de (zu prüfen)",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Baden‑Württemberg – Digitalisierungsprämie Plus (L‑Bank)",
+    "region": "Baden-Württemberg",
+    "target": "KMU",
+    "benefit": "Zuschuss/Darlehen Digitalisierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "l-bank.de (zu prüfen)",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Hamburg – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Hamburg",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Hessen – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Hessen",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Brandenburg – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Brandenburg",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Mecklenburg-Vorpommern – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Mecklenburg-Vorpommern",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Niedersachsen – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Niedersachsen",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Rheinland-Pfalz – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Rheinland-Pfalz",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Saarland – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Saarland",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Sachsen – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Sachsen",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Sachsen-Anhalt – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Sachsen-Anhalt",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Schleswig-Holstein – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Schleswig-Holstein",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Thüringen – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Thüringen",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  },
+  {
+    "name": "Bremen – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
+    "region": "Bremen",
+    "target": "KMU/Gründung (je nach Programm)",
+    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
+    "status": "programmstatus prüfen",
+    "source": "Landesportal / Förderbank – Link prüfen",
+    "as_of": "2025-09"
+  }
+]
