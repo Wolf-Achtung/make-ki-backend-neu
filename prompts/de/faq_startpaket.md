@@ -1,1 +1,1 @@
-<p><strong>Wie fangen wir an?</strong> Inventur, Policy, Prompt‑Bibliothek, 1 Pilot. <strong>Welche Tools?</strong> Siehe Whitelist‑Tabelle. <strong>Wie messen?</strong> Zeit/Qualität vor/nachher.</p>
+<p><strong>Start:</strong> Inventur, Policy, Prompt‑Bibliothek, 1 Pilot. <strong>Tools?</strong> Siehe Whitelist‑Tabelle. <strong>Messung:</strong> vorher/nachher Zeit & Qualität.</p>
