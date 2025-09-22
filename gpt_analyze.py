@@ -1,55 +1,86 @@
 
 """
-gpt_analyze.py — Gold-Standard Analyzer v4
-Neu in v4:
-- Tavily-Caching (Datei-Cache mit TTL; ENV: TAVILY_CACHE_TTL, TAVILY_CACHE_DIR)
-- Regulatory-Watch (EU-AI-Act / DSGVO / branchenspez. Aufsicht) als Callout
-- Funding-Deadline-Radar (Einreichungsfenster/Fristen) als Callout
-- Gestärktes Vendor-Release-Signal (Pricing/EU-Hosting/Security Advisories)
-- Fortführung: Realtime-Förder-Statushinweise, Tools-News, Gamechanger-Fallbacks
+gpt_analyze.py — Gold-Standard Analyzer v5
+--------------------------------------------------
+Scope (deterministisch + optional LLM, per ENV):
+- Template-Only Rendering downstream (Analyzer liefert NUR Daten-Dicts)
+- Story-Killer (Regex) + Sprach-Wächter (DE-Default)
+- Whitelist-Only: Tools & Förderungen aus /data
+- Bundesland-Filter (16 Länder, Synonyme)
+- Branchen-Fallbacks (Innovation & Gamechanger, deterministisch) für 9 Sektoren
+- Realtime-Hinweisboxen (Tavily, gecacht): Regulatory-Watch, Deadline-Radar, Vendor-Release-Signal, Funding-Status, Branchen-News
+- Appendix via prompts/manifest.json oder Fallback-Blöcke (DE/EN)
+- Hard-Limit: MAX_CHARS (=1000) pro Kapitel
+- LLM nur für Executive Summary + Gamechanger (LLM_MODE=hybrid), sonst deterministisch
+
+ENV (wichtige):
+  DEFAULT_LANG=de
+  LLM_MODE=hybrid|off
+  EXEC_SUMMARY_MODEL / SUMMARY_MODEL_NAME / GPT_MODEL_NAME
+  GPT_TEMPERATURE=0.2
+  APPENDIX_STRICT=1
+  MAX_CHARS=1000
+  ALLOW_TAVILY=1
+  TAVILY_API_KEY=... | TAVILY_CACHE_TTL=3600 | TAVILY_CACHE_DIR=.cache
+  TEMPLATE_DIR=templates | TEMPLATE_DE=pdf_template.html | TEMPLATE_EN=pdf_template_en.html
 """
 import os, json, re, datetime, html, hashlib
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# --- Paths ------------------------------------------------------------------
 ROOT = Path(os.getcwd())
 PROMPTS_DIR = ROOT / "prompts"
 DATA_DIR = ROOT / "data"
 CACHE_DIR = Path(os.getenv("TAVILY_CACHE_DIR", ".cache"))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
-TAVILY_CACHE_TTL = int(os.getenv("TAVILY_CACHE_TTL", "3600"))  # Sekunden
 
-# ---- ENV / Modelle ----------------------------------------------------------
+# --- ENV / Modelle ----------------------------------------------------------
+DEFAULT_LANG = (os.getenv("DEFAULT_LANG") or "de").lower()
 LLM_MODE = os.getenv("LLM_MODE") or ("hybrid" if os.getenv("ENABLE_LLM_SECTIONS","1") in ("1","true","True") else "off")
 GPT_MODEL_NAME = os.getenv("EXEC_SUMMARY_MODEL") or os.getenv("SUMMARY_MODEL_NAME") or os.getenv("GPT_MODEL_NAME") or "gpt-4o-mini"
 GPT_TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", "0.2"))
 APPENDIX_STRICT = os.getenv("APPENDIX_STRICT", "1") == "1"
 MAX_CHARS = int(os.getenv("MAX_CHARS", "1000"))
-ALLOW_TAVILY = os.getenv("ALLOW_TAVILY", "0") == "1"
+ALLOW_TAVILY = os.getenv("ALLOW_TAVILY", "0") in ("1","true","True")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
+TAVILY_CACHE_TTL = int(os.getenv("TAVILY_CACHE_TTL", "3600"))
 
-# ---- Utilities --------------------------------------------------------------
-def _load_json_any(fname: str) -> Any:
-    for p in [DATA_DIR / fname, ROOT / fname]:
-        if p.is_file():
-            try: return json.loads(p.read_text(encoding="utf-8"))
-            except Exception: pass
+# --- Guards -----------------------------------------------------------------
+# Sprachwächter (DE-Default): blockt englische Standardformulierungen
+def _reject_if_english(text: str, lang: str) -> bool:
+    if lang.startswith("de"):
+        return bool(re.search(r"\b(the|and|of|for example|consider|imagine|organisation|organization|once|in the|a company)\b", text or "", re.I))
+    return False
+
+# Story-Killer: blockt Anekdoten, „Mehr erfahren“ etc.
+STORY_BLOCK = re.compile(r"\b(Ein Unternehmen|Stellen Sie sich vor|Imagine|For instance|Consider a|Once upon|Mehr erfahren|Case study|Fallbeispiel)\b", re.I)
+
+# --- Utils ------------------------------------------------------------------
+def _load_json(*names: str) -> Any:
+    for name in names:
+        for p in [DATA_DIR / name, ROOT / name]:
+            if p.is_file():
+                try: return json.loads(p.read_text(encoding="utf-8"))
+                except Exception: pass
     return None
 
-def _load_text(path: Path) -> str:
-    try: return path.read_text(encoding="utf-8")
+def _load_text(p: Path) -> str:
+    try: return p.read_text(encoding="utf-8")
     except Exception: return ""
 
-def _sanitize_p(text: str) -> str:
+def _sanitize_inline(text: str) -> str:
     if text is None: return ""
-    t = str(text).replace("```html","```").replace("```HTML","```")
+    t = str(text)
+    # Entferne Codefences/Markdown, um PDF-Layout zu stabilisieren
+    t = t.replace("```html","```").replace("```HTML","```")
     while "```" in t: t = t.replace("```","")
     return t
 
-def _plain_text(html_text: str) -> str:
+def _plain(html_text: str) -> str:
     return re.sub(r"<[^>]+>", " ", html_text or "")
 
-def _clamp_text(s: str, max_chars: int = MAX_CHARS) -> str:
+def _clamp(s: str, max_chars: int = MAX_CHARS) -> str:
     if not s: return s
     if len(s) <= max_chars: return s
     cut = s[:max_chars]
@@ -57,42 +88,15 @@ def _clamp_text(s: str, max_chars: int = MAX_CHARS) -> str:
     if m: cut = cut[:m.end()]
     return cut.rstrip() + " …"
 
-def _reject_if_english(text: str, lang: str) -> bool:
-    if lang.startswith("de"):
-        return bool(re.search(r"\b(the|and|of|in the|for example|organisation|organization)\b", text or "", re.I))
-    return False
-
-STORY_BLOCK = re.compile(r"\b(Ein Unternehmen|In the\s|Consider a|Imagine a|For instance, a|Once\s)\b", re.I)
-
-# ---- LLM (optional) ---------------------------------------------------------
-def llm_generate(prompt: str, system: str = "", max_tokens: int = 600) -> str:
-    if LLM_MODE == "off": return ""
-    try:
-        import openai  # type: ignore
-        client = openai.OpenAI()
-        msgs = []
-        if system: msgs.append({"role":"system","content":system})
-        msgs.append({"role":"user","content":prompt})
-        resp = client.chat.completions.create(
-            model=GPT_MODEL_NAME,
-            messages=msgs,
-            temperature=GPT_TEMPERATURE,
-            max_tokens=max_tokens
-        )
-        return resp.choices[0].message.content or ""
-    except Exception:
-        return ""
-
-# ---- Tavily (cached) --------------------------------------------------------
-def _cache_key(query: str) -> Path:
-    h = hashlib.sha1((query or "").encode("utf-8")).hexdigest()
+# --- Tavily (cached) --------------------------------------------------------
+def _cache_key(query: str, k: int) -> Path:
+    h = hashlib.sha1(f"{query}|{k}".encode("utf-8")).hexdigest()
     return CACHE_DIR / f"tavily_{h}.json"
 
 def tavily_search(query: str, max_results: int = 3) -> List[Dict[str, Any]]:
-    """Raw Tavily call (no cache)"""
     if not (ALLOW_TAVILY and TAVILY_API_KEY): return []
     try:
-        import httpx
+        import httpx  # type: ignore
         headers = {"Content-Type":"application/json","X-Tavily-API-Key":TAVILY_API_KEY}
         payload = {"query": query, "max_results": max_results}
         with httpx.Client(timeout=15.0) as c:
@@ -104,12 +108,12 @@ def tavily_search(query: str, max_results: int = 3) -> List[Dict[str, Any]]:
         return []
     return []
 
-def tavily_cached_search(query: str, max_results: int = 3, ttl_seconds: int = TAVILY_CACHE_TTL) -> List[Dict[str, Any]]:
-    p = _cache_key(query + f"|{max_results}")
+def tavily_cached(query: str, max_results: int = 3, ttl: int = TAVILY_CACHE_TTL) -> List[Dict[str, Any]]:
+    p = _cache_key(query, max_results)
     try:
         if p.is_file():
             age = datetime.datetime.now().timestamp() - p.stat().st_mtime
-            if age < ttl_seconds:
+            if age < ttl:
                 return json.loads(p.read_text(encoding="utf-8"))
     except Exception:
         pass
@@ -128,7 +132,26 @@ def _domain(url: str) -> str:
     except Exception:
         return ""
 
-# ---- Whitelists / Bundesländer ---------------------------------------------
+# --- LLM (nur Exec Summary / Gamechanger) -----------------------------------
+def llm_generate(user_prompt: str, system_prompt: str = "", max_tokens: int = 600) -> str:
+    if LLM_MODE == "off": return ""
+    try:
+        import openai  # type: ignore
+        client = openai.OpenAI()
+        msgs = []
+        if system_prompt: msgs.append({"role":"system", "content":system_prompt})
+        msgs.append({"role":"user", "content":user_prompt})
+        resp = client.chat.completions.create(
+            model=GPT_MODEL_NAME,
+            messages=msgs,
+            temperature=GPT_TEMPERATURE,
+            max_tokens=max_tokens
+        )
+        return resp.choices[0].message.content or ""
+    except Exception:
+        return ""
+
+# --- Whitelists / Bundesländer ----------------------------------------------
 BUNDESLAND_MAP = {
     "be":"Berlin","berlin":"Berlin",
     "by":"Bayern","bayern":"Bayern",
@@ -148,27 +171,44 @@ BUNDESLAND_MAP = {
     "hb":"Bremen","bremen":"Bremen"
 }
 
-def _tools_rows() -> List[Dict[str,Any]]:
-    return _load_json_any("tool_whitelist.json") or []
+def _tool_rows() -> List[Dict[str,Any]]:
+    return _load_json("tool_whitelist.json") or []
 
 def _funding_rows() -> List[Dict[str,Any]]:
-    # merges 'funding_whitelist.json' and optional 'funding_states.json'
-    base = _load_json_any("funding_whitelist.json") or []
-    states = _load_json_any("funding_states.json") or []
-    return base + states
+    # Merge base whitelist + full states list (either filename)
+    base = _load_json("funding_whitelist.json") or []
+    full = _load_json("funding_states_full.json") or _load_json("funding_states.json") or []
+    # Full may be either list-of-dicts or dict-of-lists. Normalize to list.
+    merged: List[Dict[str,Any]] = []
+    if isinstance(full, dict):
+        for st, items in full.items():
+            for it in items:
+                merged.append({
+                    "name": it.get("program") or it.get("name") or "—",
+                    "region": st,
+                    "target": it.get("target","—"),
+                    "benefit": it.get("benefit","—"),
+                    "status": it.get("status",""),
+                    "source": it.get("source","—"),
+                    "as_of": it.get("as_of") or datetime.date.today().strftime("%Y-%m")
+                } | ({"sector_hints": it.get("sector_hints")} if it.get("sector_hints") else {}))
+    elif isinstance(full, list):
+        merged = full
+    return base + merged
 
-def render_tools_from_whitelist(max_items: int = 18) -> str:
-    rows = _tools_rows()
+# --- Renderers ---------------------------------------------------------------
+def render_tools_table(max_items: int = 18) -> str:
+    rows = _tool_rows()
     if not rows: return "<p>— (keine kuratierten Einträge)</p>"
     head = "<tr><th>Kategorie</th><th>Option</th><th>Badge</th><th>Daten/Deployment</th><th>Hinweise</th></tr>"
     body = []
     for r in rows[:max_items]:
-        badge = f"<span class='badge souveraen'>souverän</span>" if r.get("sovereign") else ""
+        badge = "<span class='badge souveraen'>souverän</span>" if r.get("sovereign") else ""
         cols = [r.get("category","—"), r.get("name","—"), badge, r.get("hosting","—"), r.get("note","—")]
         body.append("<tr>" + "".join(f"<td>{c}</td>" for c in cols) + "</tr>")
     return f"<table class='table'><thead>{head}</thead><tbody>{''.join(body)}</tbody></table>"
 
-def render_funding_from_whitelist(max_items: int = 20, bundesland: str = "") -> str:
+def render_funding_table(max_items: int = 24, bundesland: str = "") -> str:
     rows = _funding_rows()
     if not rows: return "<p>— (keine kuratierten Einträge)</p>"
     bl_norm = (bundesland or "").strip().lower()
@@ -180,61 +220,58 @@ def render_funding_from_whitelist(max_items: int = 20, bundesland: str = "") -> 
         return bl_norm.lower() in reg
     filtered = [r for r in rows if _keep(r)]
     if not filtered: filtered = rows
-    head_cols = ["Programm","Region","Zielgruppe","Leistung/Status","Quelle"]
-    if any("as_of" in r for r in filtered): head_cols.append("Stand")
+    head_cols = ["Programm","Region","Zielgruppe","Leistung/Status","Quelle","Stand"]
     head = "<tr>" + "".join(f"<th>{h}</th>" for h in head_cols) + "</tr>"
     body=[]
     for r in filtered[:max_items]:
         perf = r.get("benefit","—")
         status = r.get("status","")
-        if status: perf = f"{perf} ({status})"
-        cols=[r.get("name","—"), r.get("region","—"), r.get("target","—"), perf, r.get("source","—")]
-        if "as_of" in r: cols.append(r.get("as_of",""))
+        hints = r.get("sector_hints")
+        if hints: perf = f"{perf} <span class='muted'>(Branchen‑Fit: {', '.join(hints)})</span>"
+        if status: perf = f"{perf} ({html.escape(status)})"
+        cols=[r.get("name","—"), r.get("region","—"), r.get("target","—"), perf, r.get("source","—"), r.get("as_of","")]
         body.append("<tr>"+ "".join(f"<td>{c}</td>" for c in cols) + "</tr>")
     return f"<table class='table'><thead>{head}</thead><tbody>{''.join(body)}</tbody></table>"
 
-# ---- Realtime-Callouts ------------------------------------------------------
-FUNDING_STATUS_KEYWORDS = [
+# --- Realtime-Callouts -------------------------------------------------------
+FUNDING_STATUS_KEYS = [
     "Antragstopp","ausgesetzt","geschlossen","Stopp","Einstellung",
     "Kontingent erschöpft","wieder geöffnet","Frist verlängert","verlängert","läuft wieder",
     "Programmende","Deadline","Einreichung","Antragsfrist","Bewilligung gestoppt"
 ]
 DEADLINE_PAT = re.compile(r"\b(?:(?:bis|deadline|frist)\s*[:\-]?\s*)(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)", re.I)
 
-def _funding_realtime_callout(bundesland: str, lang: str) -> str:
+def _callout_funding_status(bundesland: str, lang: str) -> str:
     if not (ALLOW_TAVILY and TAVILY_API_KEY): return ""
     rows = _funding_rows()
-    if not rows: return ""
     bl_norm = (bundesland or "").strip().lower()
     bl_norm = BUNDESLAND_MAP.get(bl_norm, bl_norm)
     cand = [r for r in rows if r.get("region","").lower() in ("bund","de","deutschland","eu") or bl_norm.lower() in (r.get("region","") or "").lower()]
     hints = []
-    for r in cand[:8]:
+    for r in cand[:10]:
         q = f'{r.get("name","")} Förderprogramm Status {bl_norm or ""} Antragstopp Frist verlängert'
-        results = tavily_cached_search(q, max_results=3)
-        for res in results:
+        for res in tavily_cached(q, max_results=3):
             title = res.get("title","") or ""
             snippet = (res.get("content","") or "")[:180]
             url = res.get("url","")
-            if any(k.lower() in (title + " " + snippet).lower() for k in FUNDING_STATUS_KEYWORDS):
+            if any(k.lower() in (title + " " + snippet).lower() for k in FUNDING_STATUS_KEYS):
                 dom = _domain(url)
                 hints.append(f"<li><strong>{html.escape(r.get('name',''))}</strong>: mögliche Statusänderung – {html.escape(title)} <span class='muted'>({html.escape(dom)})</span></li>")
                 break
     if not hints: return ""
     head = "<strong>Realtime‑Hinweise Förderprogramme:</strong>" if lang.startswith("de") else "<strong>Realtime funding hints:</strong>"
-    note = "<em>Hinweis: automatische Websuche; bitte Quelle prüfen.</em>" if lang.startswith("de") else "<em>Note: automated web search; please verify sources.</em>"
+    note = "<em>Hinweis: automatische Websuche; bitte Quelle prüfen.</em>" if lang.startswith("de") else "<em>Note: automated web search; please verify.</em>"
     return f"<div class='callout'>{head}<ul>{''.join(hints)}</ul>{note}</div>"
 
-def _funding_deadline_radar_callout(bundesland: str, lang: str) -> str:
+def _callout_funding_deadlines(bundesland: str, lang: str) -> str:
     if not (ALLOW_TAVILY and TAVILY_API_KEY): return ""
     rows = _funding_rows()
-    if not rows: return ""
     bl_norm = (bundesland or "").strip().lower()
     bl_norm = BUNDESLAND_MAP.get(bl_norm, bl_norm)
     notes = []
-    for r in rows[:10]:
+    for r in rows[:12]:
         q = f"{r.get('name','')} Einreichungsfrist Deadline {bl_norm} endet bis"
-        for res in tavily_cached_search(q, max_results=3):
+        for res in tavily_cached(q, max_results=3):
             text = (res.get("title","") or "") + " " + (res.get("content","") or "")
             m = DEADLINE_PAT.search(text)
             if m:
@@ -243,17 +280,17 @@ def _funding_deadline_radar_callout(bundesland: str, lang: str) -> str:
                 break
     if not notes: return ""
     head = "<strong>Deadline‑Radar:</strong> " if lang.startswith("de") else "<strong>Deadline radar:</strong> "
-    note = "<em>Hinweis: bitte Quelle prüfen; nur Vorab‑Signal.</em>" if lang.startswith("de") else "<em>Note: preliminary signal; verify sources.</em>"
+    note = "<em>Hinweis: bitte Quelle prüfen; nur Vorab‑Signal.</em>" if lang.startswith("de") else "<em>Preliminary signal; verify sources.</em>"
     return f"<div class='callout'>{head}<ul>{''.join(notes)}</ul>{note}</div>"
 
-def _tools_news_callout(lang: str) -> str:
+def _callout_tools_news(lang: str) -> str:
     if not (ALLOW_TAVILY and TAVILY_API_KEY): return ""
-    rows = _tools_rows()[:6]
+    rows = _tool_rows()[:6]
     hints = []
     for r in rows:
         name = r.get("name","")
         q = f"{name} pricing change EU data residency security advisory CVE outage breach update"
-        for res in tavily_cached_search(q, max_results=2):
+        for res in tavily_cached(q, max_results=2):
             title = res.get("title","") or ""
             url = res.get("url","")
             dom = _domain(url)
@@ -265,18 +302,16 @@ def _tools_news_callout(lang: str) -> str:
     note = "<em>Hinweis: Info‑Box; überschreibt nicht die Whitelist.</em>" if lang.startswith("de") else "<em>Informational only; does not override whitelist.</em>"
     return f"<div class='callout'>{head}<ul>{''.join(hints)}</ul>{note}</div>"
 
-def _regulatory_watch_callout(company: Dict[str,Any], lang: str) -> str:
+def _callout_regulatory(company: Dict[str,Any], lang: str) -> str:
     if not (ALLOW_TAVILY and TAVILY_API_KEY): return ""
     branche = (company.get("branche") or company.get("industry") or "").lower()
-    loc = company.get("location") or company.get("standort") or ""
     topics = [
         "EU AI Act implementing acts harmonised standards news Germany",
         "GDPR fine Germany supervisory authority news",
         "Datenschutzbehörde Deutschland Hinweise KI DSGVO"
     ]
-    # branchenspezifische Aufsicht (leichtgewichtiges Mapping)
     if any(k in branche for k in ["bank","finanz","insurance","versicherung"]):
-        topics.append("BaFin KI Rundschreiben Hinweis artificial intelligence")
+        topics.append("BaFin KI Rundschreiben Hinweise")
     elif any(k in branche for k in ["gesund","health","medizin"]):
         topics.append("BfArM KI Leitfaden Medizinprodukte")
     elif any(k in branche for k in ["verwaltung","public","behörde"]):
@@ -285,7 +320,7 @@ def _regulatory_watch_callout(company: Dict[str,Any], lang: str) -> str:
         topics.append("Landesmedienanstalten KI Leitfäden")
     items = []
     for t in topics:
-        for r in tavily_cached_search(t, max_results=2):
+        for r in tavily_cached(t, max_results=2):
             title = html.escape(r.get("title","") or "")
             dom = html.escape(_domain(r.get("url","")))
             if title:
@@ -293,29 +328,44 @@ def _regulatory_watch_callout(company: Dict[str,Any], lang: str) -> str:
             if len(items) >= 3: break
         if len(items) >= 3: break
     if not items: return ""
-    head = "<strong>Regulatory‑Watch:</strong>" if lang.startswith("de") else "<strong>Regulatory watch:</strong>"
+    head = "<strong>Regulatory‑Watch:</strong>"
+    if not lang.startswith("de"): head = "<strong>Regulatory watch:</strong>"
     return f"<div class='callout'>{head}<ul>{''.join(items[:3])}</ul></div>"
 
-# ---- Appendix / Gamechanger-Fallbacks --------------------------------------
+def _callout_news(company: Dict[str,Any], lang: str) -> str:
+    if not (ALLOW_TAVILY and TAVILY_API_KEY): return ""
+    branche = company.get("branche") or company.get("industry") or ""
+    loc = company.get("standort") or company.get("location") or ""
+    q = f"aktuelle Nachrichten KI Einführung {branche} Unternehmen Deutschland {loc}".strip()
+    res = tavily_cached(q, max_results=3)
+    if not res: return ""
+    items = []
+    for r in res:
+        title = html.escape(r.get("title",""))
+        source = html.escape(r.get("source","") or _domain(r.get("url","")))
+        if title: items.append(f"<li>{title} <span class='muted'>({source})</span></li>")
+    head = "<strong>Realtime‑Hinweise (News):</strong>" if lang.startswith("de") else "<strong>Realtime notes (news):</strong>"
+    return "<div class='callout'>"+head+"<ul>"+ "".join(items[:3]) + "</ul></div>"
+
+# --- Appendix / Manifest ----------------------------------------------------
 def _manifest(lang: str) -> Dict[str, Any]:
-    path = PROMPTS_DIR / "manifest.json"
-    if path.is_file():
-        try: return json.loads(path.read_text(encoding="utf-8"))
+    p = PROMPTS_DIR / "manifest.json"
+    if p.is_file():
+        try: return json.loads(p.read_text(encoding="utf-8"))
         except Exception: return {}
     return {}
 
-def _appendix_blocks(lang: str):
+def _appendix(lang: str):
     m = _manifest(lang)
     blocks = []
     if APPENDIX_STRICT and m:
-        items = m.get("appendix", [])
         base = PROMPTS_DIR / ("de" if lang.startswith("de") else "en")
-        for it in items:
+        for it in m.get("appendix", []):
             file = it.get("file") if isinstance(it, dict) else str(it)
             title = (it.get("title") if isinstance(it, dict) else "") or ""
             p = base / file
             if p.is_file():
-                txt = _sanitize_p(_load_text(p))
+                txt = _sanitize_inline(_load_text(p))
                 blocks.append({"title": title or p.stem.replace("_"," ").title(), "html": f"<div class='section'>{txt}</div>"})
         return blocks
     # Fallback-Appendix (5 Standardblöcke)
@@ -324,9 +374,26 @@ def _appendix_blocks(lang: str):
     for name in defaults:
         p = base / name
         if p.is_file():
-            txt = _sanitize_p(_load_text(p))
+            txt = _sanitize_inline(_load_text(p))
             blocks.append({"title": p.stem.replace("_"," ").title(), "html": f"<div class='section'>{txt}</div>"})
     return blocks
+
+# --- Deterministische Texte --------------------------------------------------
+def _det_texts(lang: str) -> Dict[str,str]:
+    if lang.startswith("de"):
+        return {
+            "quickwins": "Start mit Dateninventur (10 Quellen), Policy‑Mini‑Seite (Zwecke/No‑Gos/Freigaben), Prompt‑Bibliothek (10 Aufgaben). Eine Schleife automatisieren (4‑Augen‑Check).",
+            "risks": "Risiken: Datenqualität, Compliance, Schatten‑IT. Absicherung: Data Owner, AVV/Standorte, Logging/Evaluations, klare Freigaben.",
+            "recs": "Automatisieren Sie wiederkehrende Arbeiten, starten Sie eine leichtgewichtige Governance und qualifizieren Sie Schlüsselrollen.",
+            "roadmap": "0–3 M: Inventur/Policy/Quick‑Wins. 3–6 M: 2 Piloten + Evaluation. 6–12 M: Skalierung, Schulungen, KPIs.",
+        }
+    else:
+        return {
+            "quickwins": "Light data inventory, one‑page policy, prompt library. Automate one loop with a four‑eyes check.",
+            "risks": "Risks: data quality, compliance, shadow IT. Mitigation: data owners, DPAs/locations, logging/evaluations.",
+            "recs": "Automate repetitive work, start lightweight governance, upskill key roles.",
+            "roadmap": "0–3 m: inventory/policy/quick wins. 3–6 m: two pilots + evaluation. 6–12 m: scale, training, KPIs.",
+        }
 
 def _gc_block(title: str, bullets: List[str]) -> str:
     lis = "".join(f"<li>{html.escape(b)}</li>" for b in bullets if b)
@@ -348,15 +415,15 @@ def _gamechanger_deterministic(company: Dict[str,Any], lang: str) -> str:
     key = sector_map.get(raw, raw) or "consulting"
     GC = {
         "consulting": { "title":"Beratung: KI‑Beschleuniger im Angebots‑ und Delivery‑Prozess",
-            "bullets":[ "Standardisierte Angebots‑Prompts (Diagnose, Nutzen, Aufwand) + Vorlagenbibliothek",
-                        "Reusable Case‑Kits (Reports, Spreadsheets, Slides) mit RAG auf eigene Referenzen",
-                        "Delivery‑Co‑Pilot: Qualitätssicherung mit Checklisten, Glossar, Quellenprüfung" ]},
+            "bullets":[ "Angebots‑Prompts + Vorlagenbibliothek (Diagnose/Nutzen/Aufwand)",
+                        "Reusable Case‑Kits (Reports, Tabellen, Slides) mit RAG auf Referenzen",
+                        "Delivery‑Co‑Pilot: QS mit Checklisten, Glossar, Quellenprüfung" ]},
         "finance": { "title":"Finanzen & Versicherungen: Kontrollierte Automatisierung",
             "bullets":[ "Dokument‑Extraktion (Rechnungen/Police) mit Vier‑Augen‑Gate",
                         "Explainable‑AI‑Checks für Scorings; Audit‑Trails, Schwellen & Alerts",
-                        "Self‑Service‑Wissen (RAG) für Richtlinien, Produkte, Compliance‑FAQs" ]},
-        "construction": { "title":"Bauwesen & Architektur: Angebots‑ und Planungs‑Taktung",
-            "bullets":[ "LV‑Analyse & Massen‑Ableitung halbautomatisieren, Versionen tracken",
+                        "Self‑Service‑Wissen (RAG) für Richtlinien/Produkte/Compliance‑FAQs" ]},
+        "construction": { "title":"Bauwesen & Architektur: Angebots‑ & Planungs‑Taktung",
+            "bullets":[ "LV‑Analyse & Massen‑Ableitung, Versionen tracken",
                         "Baustellen‑Berichte sprachgesteuert erfassen; Foto‑Belege anhängen",
                         "Nachtrags‑Assistent: Claims dokumentieren, Beweise strukturieren" ]},
         "it": { "title":"IT & Software: Dev‑Produktivität sicher skalieren",
@@ -364,51 +431,37 @@ def _gamechanger_deterministic(company: Dict[str,Any], lang: str) -> str:
                         "Backlog‑Mining: Tickets clustern, Duplikate schließen, Akzeptanzkriterien generieren",
                         "Runbook‑Assistent für On‑Call; Postmortems halbautomatisieren" ]},
         "marketing": { "title":"Marketing & Werbung: Content‑Engine mit Governance",
-            "bullets":[ "Kampagnen‑Briefings → strukturierte Prompts; Varianten A/B automatisch",
+            "bullets":[ "Kampagnen‑Briefings → strukturierte Prompts; Varianten A/B",
                         "Asset‑RAG (Claims, Produktdaten, CI) + Fact‑Check vor Freigabe",
                         "Repurpose‑Pipelines (Blog → Social/Newsletter/Slides) mit Sperrlisten" ]},
         "education": { "title":"Bildung: Curricula & Betreuung entlasten",
-            "bullets":[ "Material‑RAG (Skripte, Aufgaben, Lösungen) inkl. Quellen & Lizenzhinweisen",
-                        "Tutor‑Co‑Pilot: FAQs, Übungsfeedback, Rubrics – Protokollierung aktiv",
-                        "Barrierefreiheit: Zusammenfassungen, Audio‑Versionen, einfache Sprache" ]},
+            "bullets":[ "Material‑RAG (Skripte/Aufgaben/Lösungen) inkl. Quellen/Lizenzen",
+                        "Tutor‑Co‑Pilot: FAQs, Übungsfeedback, Rubrics – Protokollierung",
+                        "Barrierefreiheit: Zusammenfassungen, Audio, einfache Sprache" ]},
         "public": { "title":"Verwaltung: Vorgangsbearbeitung beschleunigen",
             "bullets":[ "Posteingang klassifizieren, fehlende Angaben anfordern (Vorlagen)",
-                        "Bescheid‑Entwürfe aus Regelwerken generieren, Fachprüfung behalten",
+                        "Bescheid‑Entwürfe aus Regelwerken, Fachprüfung behalten",
                         "Wissens‑RAG zu Leistungen/Paragraphen, Änderungen monitoren" ]},
         "media": { "title":"Medien & Kreativwirtschaft: Rechtekonforme Produktion",
             "bullets":[ "Asset‑Management mit Lizenz‑Metadaten; Nutzungssperren automatisieren",
-                        "Schnitt/Transkript/Untertitel‑Pipelines; QC‑Checklisten standardisieren",
-                        "Ideen‑Boards mit Referenzen statt Text‑Anekdoten; Versionierung" ]},
+                        "Schnitt/Transkript/Untertitel‑Pipelines; QC‑Checklisten",
+                        "Ideen‑Boards mit Referenzen statt Anekdoten; Versionierung" ]},
         "commerce": { "title":"Handel & E‑Commerce: Katalog‑ und Service‑Ops",
-            "bullets":[ "Produktdaten normalisieren, Lücken füllen; Übersetzungen mit Glossar",
-                        "FAQ‑RAG + Assistent für Retouren/Anfragen; Eskalationsrouten klar",
-                        "Merch‑Texte/Bilder variieren, Preise/Bestände strikt aus Quelle" ]},
+            "bullets":[ "Produktdaten normalisieren; Lücken füllen; Übersetzungen mit Glossar",
+                        "FAQ‑RAG + Assistent für Retouren/Anfragen; Eskalationsrouten",
+                        "Merch‑Texte/Bilder variieren; Preise/Bestände strikt aus Quelle" ]},
     }
     cfg = GC.get(key, GC["consulting"])
-    return _clamp_text(_gc_block(cfg["title"], cfg["bullets"]), MAX_CHARS)
+    return _clamp(_gc_block(cfg["title"], cfg["bullets"]))
 
-# ---- News Callouts ----------------------------------------------------------
-def _news_callout(company: Dict[str,Any], lang: str) -> str:
-    if not (ALLOW_TAVILY and TAVILY_API_KEY): return ""
-    branche = company.get("branche") or company.get("industry") or ""
-    loc = company.get("location") or company.get("standort") or ""
-    q = f"aktuelle Nachrichten KI Einführung {branche} Unternehmen Deutschland {loc}".strip()
-    results = tavily_cached_search(q, max_results=3)
-    if not results: return ""
-    items = []
-    for r in results:
-        title = html.escape(r.get("title",""))
-        source = html.escape(r.get("source","") or _domain(r.get("url","")))
-        items.append(f"<li>{title} <span class='muted'>({source})</span></li>")
-    head = "<strong>Realtime‑Hinweise (News):</strong>" if lang.startswith("de") else "<strong>Realtime notes (news):</strong>"
-    return "<div class='callout'>"+head+"<ul>"+ "".join(items[:3]) + "</ul></div>"
-
-# ---- Hauptfunktion ----------------------------------------------------------
-def analyze_briefing(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
-    lang = (lang or "de").lower()
+# --- Hauptfunktion -----------------------------------------------------------
+def analyze_briefing(body: Dict[str, Any], lang: str = DEFAULT_LANG) -> Dict[str, Any]:
+    """Gibt ein reines Daten-Dict für das Template-Rendering zurück (kein HTML-Wrapper)."""
+    lang = (lang or DEFAULT_LANG).lower()
     company = body.get("company") if isinstance(body.get("company"), dict) else body
     loc_raw = (company.get("standort") or company.get("location") or "").strip().lower()
     company["location"] = BUNDESLAND_MAP.get(loc_raw, company.get("location") or loc_raw or "")
+
     meta = {
         "company_name": company.get("unternehmen") or company.get("company") or "—",
         "branche": company.get("branche") or company.get("industry") or "—",
@@ -418,72 +471,62 @@ def analyze_briefing(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
         "as_of": datetime.date.today().isoformat(),
     }
 
-    # Deterministische Kurztexte
-    def det_short(section: str) -> str:
-        if lang.startswith("de"):
-            presets = {
-                "quickwins": "Start mit Dateninventur (10 Quellen), Policy‑Mini‑Seite (Zwecke/No‑Gos/Freigaben), Prompt‑Bibliothek (10 Aufgaben). Eine Schleife automatisieren (4‑Augen‑Check).",
-                "risks": "Risiken: Datenqualität, Compliance, Schatten‑IT. Absicherung: Data Owner, AVV/Standorte, Logging & Evaluations, klare Freigaben.",
-                "recs": "Automatisieren, Governance leichtgewichtig starten (Rollen, Policy, Logging), Schlüsselrollen qualifizieren.",
-                "roadmap": "0–3 M: Inventur/Policy/Quick‑Wins. 3–6 M: 2 Piloten + Evaluation. 6–12 M: Skalierung, Schulungen, KPIs.",
-            }
-        else:
-            presets = {
-                "quickwins": "Light data inventory, one‑page policy, prompt library. Automate one loop with a four‑eyes check.",
-                "risks": "Risks: data quality, compliance, shadow IT. Mitigation: data owners, DPAs/locations, logging & evaluations.",
-                "recs": "Automate repetitive work, lightweight governance, upskill key roles.",
-                "roadmap": "0–3 m: inventory/policy/quick wins. 3–6 m: two pilots + evaluation. 6–12 m: scale, training, KPIs.",
-            }
-        return presets.get(section, "")
+    # Deterministische Basis
+    d = _det_texts(lang)
+    quickwins = d["quickwins"]
+    risks = d["risks"]
+    recs = d["recs"]
+    roadmap = d["roadmap"]
 
-    # Exec Summary (LLM optional)
+    # Executive Summary (LLM optional)
     exec_sum = ""
     if LLM_MODE != "off":
-        sys = "Sie sind präzise, sachlich, per Sie. Max. 900 Zeichen. Keine Anekdoten."
+        sys = "Sie sind präzise, sachlich, per Sie. Max. 900 Zeichen. Keine Anekdoten, keine Platzhalter."
         if lang.startswith("en"): sys = "You are precise and succinct. Formal 'you'. Max 900 characters. No anecdotes."
-        prompt = f"Erstellen Sie eine Executive Summary (3–5 Sätze) für Branche={meta['branche']}, Größe={meta['groesse']}, Standort={meta['standort']}."
-        exec_sum = llm_generate(prompt, system=sys, max_tokens=450)
-        exec_sum = _sanitize_p(exec_sum)
-        if STORY_BLOCK.search(exec_sum) or _reject_if_english(_plain_text(exec_sum), lang):
+        prompt = f"Erstellen Sie eine Executive Summary (3–5 Sätze) auf Deutsch, per Sie. Branche={meta['branche']}, Größe={meta['groesse']}, Standort={meta['standort']}."
+        exec_sum = llm_generate(prompt, system_prompt=sys, max_tokens=450)
+        exec_sum = _sanitize_inline(exec_sum)
+        if STORY_BLOCK.search(exec_sum) or _reject_if_english(_plain(exec_sum), lang):
             exec_sum = ""
-    if not exec_sum: exec_sum = det_short("recs")
+    if not exec_sum:
+        exec_sum = recs
 
-    risks = det_short("risks")
-    recs = det_short("recs")
-    roadmap = det_short("roadmap")
-    quickwins = det_short("quickwins")
+    tools_html = render_tools_table()
+    funding_html = render_funding_table(bundesland=meta["standort"])
 
-    tools_html = render_tools_from_whitelist()
-    funding_html = render_funding_from_whitelist(bundesland=meta["standort"])
-
-    # Gamechanger
+    # Gamechanger (LLM optional, sonst deterministisch)
     gamechanger_html = ""
     if LLM_MODE != "off":
-        gc_try = _sanitize_p(llm_generate(f"""
-Bitte verfassen Sie einen kurzen 'Innovation & Gamechanger'-Baustein (DE, per Sie) für:
-Branche: {meta['branche']}, Unternehmensgröße: {meta['groesse']}, Standort: {meta['standort']}.
-Format: <h3>…</h3><ul><li>…</li>…</ul> ; max. 900 Zeichen; keine Anekdoten; keine Platzhalter.
-""".strip(), system="Sie sind präzise, sachlich, ohne Storytelling.", max_tokens=500))
-        if gc_try and not STORY_BLOCK.search(gc_try) and not _reject_if_english(_plain_text(gc_try), lang):
-            gamechanger_html = _clamp_text(gc_try, MAX_CHARS)
+        gc_try = _sanitize_inline(llm_generate(
+            f"Bitte verfassen Sie einen kurzen 'Innovation & Gamechanger'-Baustein (DE, per Sie) für Branche={meta['branche']}, Größe={meta['groesse']}, Standort={meta['standort']}. "
+            "Format: <h3>…</h3><ul><li>…</li>…</ul>; max. 900 Zeichen; keine Anekdoten; keine Platzhalter.",
+            system_prompt="Sie sind präzise, sachlich, ohne Storytelling.", max_tokens=500))
+        if gc_try and not STORY_BLOCK.search(gc_try) and not _reject_if_english(_plain(gc_try), lang):
+            gamechanger_html = _clamp(gc_try)
     if not gamechanger_html:
         gamechanger_html = _gamechanger_deterministic(company, lang)
 
-    # Realtime-Boxen
-    regwatch_html = _regulatory_watch_callout(company, lang)
-    news_html = _news_callout(company, lang)
-    funding_rt_html = _funding_realtime_callout(meta["standort"], lang)
-    funding_deadlines_html = _funding_deadline_radar_callout(meta["standort"], lang)
-    tools_news_html = _tools_news_callout(lang)
+    # Realtime-Boxen (Hinweise, überschreiben nichts)
+    regwatch_html = _callout_regulatory(company, lang)
+    funding_rt_html = _callout_funding_status(meta["standort"], lang)
+    funding_deadlines_html = _callout_funding_deadlines(meta["standort"], lang)
+    tools_news_html = _callout_tools_news(lang)
+    news_html = _callout_news(company, lang)
 
-    # Kürzen & Sprache
-    exec_sum = _clamp_text(exec_sum)
-    for v in [risks, recs, roadmap, quickwins]:
-        _ = _clamp_text(v)
-    if _reject_if_english(" ".join([_plain_text(x) for x in [exec_sum, risks, recs, roadmap, quickwins, gamechanger_html]]), lang):
-        exec_sum = det_short("recs"); risks = det_short("risks"); recs = det_short("recs"); roadmap = det_short("roadmap"); quickwins = det_short("quickwins"); gamechanger_html = _gamechanger_deterministic(company, lang)
+    # Sprach-/Längenwächter
+    exec_sum = _clamp(exec_sum)
+    quickwins = _clamp(quickwins)
+    risks = _clamp(risks)
+    recs = _clamp(recs)
+    roadmap = _clamp(roadmap)
+    gamechanger_html = _clamp(gamechanger_html)
+    if _reject_if_english(" ".join([_plain(x) for x in [exec_sum, quickwins, risks, recs, roadmap, gamechanger_html]]), lang):
+        d = _det_texts(lang)
+        exec_sum, quickwins, risks, recs, roadmap = d["recs"], d["quickwins"], d["risks"], d["recs"], d["roadmap"]
+        gamechanger_html = _gamechanger_deterministic(company, lang)
 
-    appendix_blocks = _appendix_blocks(lang)
+    # Appendix
+    appendix_blocks = _appendix(lang)
     appendix_html = "".join(f"<h3>{html.escape(b['title'])}</h3>{b['html']}" for b in appendix_blocks)
 
     return {
@@ -499,6 +542,6 @@ Format: <h3>…</h3><ul><li>…</li>…</ul> ; max. 900 Zeichen; keine Anekdoten
         "funding_deadlines": funding_deadlines_html,
         "tools_news": tools_news_html,
         "regwatch": regwatch_html,
-        "gamechanger": (gamechanger_html + news_html),
+        "gamechanger": (gamechanger_html + (news_html or "")),
         "appendix": appendix_html,
     }
