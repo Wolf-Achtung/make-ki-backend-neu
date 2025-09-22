@@ -63,9 +63,11 @@ footer.pagenum{ position: fixed; bottom: 8mm; left:0; right:0; text-align:center
 
   <h2>Curated Tool Set (Whitelist‑Only)</h2>
   <div class="section">{{ tools_table }}</div>
+  {% if tools_news %}<div class="section">{{ tools_news }}</div>{% endif %}
 
   <h2>Current Funding (Whitelist‑Only)</h2>
   <div class="section">{{ funding_table }}</div>
+  {% if funding_realtime %}<div class="section">{{ funding_realtime }}</div>{% endif %}
 
   {% if gamechanger %}
   <h2>Innovation &amp; Gamechanger</h2>
