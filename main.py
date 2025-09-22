@@ -12,6 +12,8 @@ import json
 import logging
 import importlib
 import hashlib
+import asyncio
+import smtplib
 
 # Optional DB imports for feedback persistence
 try:
@@ -30,6 +32,7 @@ from jose import jwt
 from jose.exceptions import JWTError
 import httpx
 from pydantic import BaseModel
+from pathlib import Path
 
 # ---- Jinja für Template-Only Rendering -------------------------------------
 from jinja2 import Environment, FileSystemLoader, select_autoescape
