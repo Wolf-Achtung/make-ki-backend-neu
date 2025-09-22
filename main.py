@@ -1,8 +1,11 @@
-# main.py — Vollversion (Weg A, auf Basis der „großen“ Datei)
-# Beibehalten: /api/login, /briefing_async, /briefing_status, /pdf_test, /health, /diag/analyze,
-#              Feedback-Endpoints, DB-/SMTP-/PDF-Logik, Idempotency.
-# Neu/Geändert: Template-Only Rendering via Jinja (ENV: TEMPLATE_DIR/DE/EN) und
-#               analyze_to_html() ignoriert Analyzer-Full-HTML.
+
+# main.py — Vollversion (Weg A, Gold-Standard Template-Only)
+# Beibehalten/Erweitert:
+# - FastAPI Backend mit /api/login, /render_html, /briefing_async, /briefing_status, /pdf_test, /health, /diag/analyze, Feedback
+# - Template-Only Rendering (Jinja), 1000-Zeichen-Limits in Analyzer
+# - Vollständiger Token-Check (keine {{...}} oder {%...%} im finalen HTML)
+# - Idempotency + optionaler PDF-Service
+# - Kompatibel zu bestehendem Flow
 
 import os
 import sys
@@ -12,8 +15,8 @@ import json
 import logging
 import importlib
 import hashlib
-import asyncio
-import smtplib
+import re
+from pathlib import Path
 
 # Optional DB imports for feedback persistence
 try:
@@ -32,22 +35,43 @@ from jose import jwt
 from jose.exceptions import JWTError
 import httpx
 from pydantic import BaseModel
-from pathlib import Path
 
-# ---- Jinja für Template-Only Rendering -------------------------------------
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-# --- SMTP/E-Mail Settings ---------------------------------------------------
-SMTP_HOST = os.getenv("SMTP_HOST")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASS = os.getenv("SMTP_PASS")
-SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "")
-FEEDBACK_TO = os.getenv("FEEDBACK_TO")
+# ---- Settings ---------------------------------------------------------------
+APP_NAME = "KI-Readiness Backend"
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=LOG_LEVEL, format="%(levelname)s %(asctime)s [%(name)s] %(message)s")
+logger = logging.getLogger("backend")
 
-# --- Idempotency (duplicate prevention) -------------------------------------
+JWT_SECRET = os.getenv("JWT_SECRET", "change-me-now")
+JWT_ALG = os.getenv("JWT_ALG", "HS256")
+JWT_EXP_SECONDS = int(os.getenv("JWT_EXP_SECONDS", "86400"))
+
+PDF_SERVICE_URL = os.getenv("PDF_SERVICE_URL", "").rstrip("/")
+PDF_TIMEOUT = float(os.getenv("PDF_TIMEOUT", "120"))
+PDF_POST_MODE = os.getenv("PDF_POST_MODE", "html").lower()
+
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
+CORS_ALLOW = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")]
+if CORS_ALLOW == ["*"]:
+    CORS_ALLOW = ["*"]
+
+# ---- Template-ENV (Jinja) --------------------------------------------------
+TEMPLATE_DIR = Path(os.getenv("TEMPLATE_DIR", "templates"))
+TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
+TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
+_jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)), autoescape=select_autoescape(["html","xml"]))
+
+def _render_template_only(lang: str, context: Dict[str, Any]) -> str:
+    """Erzwingt Datei-Template-Rendering; Analyzer-HTML wird nicht verwendet."""
+    tpl_name = TEMPLATE_DE if str(lang).lower().startswith("de") else TEMPLATE_EN
+    tpl = _jinja_env.get_template(tpl_name)
+    return tpl.render(**context)
+
+# ---- Idempotency ------------------------------------------------------------
 IDEMP_DIR = os.getenv("IDEMP_DIR", "/tmp/ki_idempotency")
-IDEMP_TTL_SECONDS = int(os.getenv("IDEMP_TTL_SECONDS", "1800"))  # 30 minutes
+IDEMP_TTL_SECONDS = int(os.getenv("IDEMP_TTL_SECONDS", "1800"))
 os.makedirs(IDEMP_DIR, exist_ok=True)
 
 def _idem_path(key: str) -> str:
@@ -75,10 +99,8 @@ def idempotency_get(key: str) -> Optional[Dict[str, Any]]:
             data = json.load(f)
         ts = float(data.get("ts", 0))
         if (time.time() - ts) > IDEMP_TTL_SECONDS:
-            try:
-                os.remove(p)
-            except Exception:
-                pass
+            try: os.remove(p)
+            except Exception: pass
             return None
         return data
     except Exception:
@@ -92,42 +114,41 @@ def idempotency_set(key: str, meta: Dict[str, Any]) -> None:
     except Exception:
         pass
 
-# SMTP Helfer-Imports
+# ---- SMTP/Feedback ----------------------------------------------------------
 import asyncio
 import smtplib
 from email.message import EmailMessage
 from email.utils import parseaddr, formataddr
 
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASS = os.getenv("SMTP_PASS")
+SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "")
+FEEDBACK_TO = os.getenv("FEEDBACK_TO")
+
 def _clean_header_value(v: Optional[str]) -> Optional[str]:
-    if not v:
-        return None
+    if not v: return None
     v = v.replace("\r", "").replace("\n", "").strip()
-    if not v:
-        return None
+    if not v: return None
     name, addr = parseaddr(v)
-    if addr:
-        return formataddr((name, addr)) if name else addr
+    if addr: return formataddr((name, addr)) if name else addr
     return v
 
 async def send_feedback_mail_async(data: Dict[str, Any], user_email_hdr: Optional[str], ua: str, ip: str) -> None:
     if not (SMTP_HOST and SMTP_USER and SMTP_PASS and (FEEDBACK_TO or SMTP_FROM)):
-        logger.info("[MAIL] SMTP not configured – skip")
-        return
+        logger.info("[MAIL] SMTP not configured – skip"); return
     subject = f"[KI-Feedback] {data.get('email') or 'anonym'}".replace("\r", " ").replace("\n", " ").strip()
     from_addr = _clean_header_value(SMTP_FROM or SMTP_USER)
     to_addr = _clean_header_value(FEEDBACK_TO or SMTP_FROM or SMTP_USER)
     reply_to = _clean_header_value(user_email_hdr or data.get('email'))
     if not from_addr or not to_addr:
-        logger.info("[MAIL] Missing from/to after sanitize – skip")
-        return
+        logger.info("[MAIL] Missing from/to after sanitize – skip"); return
     msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = from_addr
-    msg["To"] = to_addr
-    if reply_to:
-        msg["Reply-To"] = reply_to
+    msg["Subject"] = subject; msg["From"] = from_addr; msg["To"] = to_addr
+    if reply_to: msg["Reply-To"] = reply_to
     order = ["email","variant","report_version","hilfe","verstaendlich_analyse","verstaendlich_empfehlung","vertrauen","dauer","serio","textstellen","unsicher","features","freitext","tipp_name","tipp_firma","tipp_email","timestamp"]
-    seen:set[str]=set(); fields=[]
+    seen=set(); fields=[]
     for k in order:
         v = data.get(k)
         if v is not None and str(v).strip() != "": seen.add(k); fields.append(f"{k}: {v}")
@@ -146,56 +167,19 @@ async def send_feedback_mail_async(data: Dict[str, Any], user_email_hdr: Optiona
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, _send)
 
-# Basis-Config & Logger
-APP_NAME = "KI-Readiness Backend"
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=LOG_LEVEL, format="%(levelname)s %(asctime)s [%(name)s] %(message)s")
-logger = logging.getLogger("backend")
-
-# ENV/Settings
-JWT_SECRET = os.getenv("JWT_SECRET", "change-me-now")
-JWT_ALG = os.getenv("JWT_ALG", "HS256")
-JWT_EXP_SECONDS = int(os.getenv("JWT_EXP_SECONDS", "86400"))
-
-PDF_SERVICE_URL = os.getenv("PDF_SERVICE_URL", "").rstrip("/")
-PDF_TIMEOUT = float(os.getenv("PDF_TIMEOUT", "120"))
-PDF_POST_MODE = os.getenv("PDF_POST_MODE", "html").lower()
-
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
-CORS_ALLOW = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")]
-if CORS_ALLOW == ["*"]:
-    CORS_ALLOW = ["*"]
-
-# ---- Template-ENV (Jinja) --------------------------------------------------
-TEMPLATE_DIR = Path(os.getenv("TEMPLATE_DIR", "templates"))
-TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
-TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
-_jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)), autoescape=select_autoescape(["html","xml"]))
-
-def _render_template_only(lang: str, context: Dict[str, Any]) -> str:
-    """Erzwingt Datei-Template-Rendering; Analyzer-HTML wird nicht verwendet."""
-    tpl_name = TEMPLATE_DE if str(lang).lower().startswith("de") else TEMPLATE_EN
-    try:
-        tpl = _jinja_env.get_template(tpl_name)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"File template missing: {tpl_name} ({e})")
-    return tpl.render(**context)
-
-# App & CORS
+# ---- App & CORS -------------------------------------------------------------
 app = FastAPI(title=APP_NAME)
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ALLOW, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-# DB-Pool (optional, idempotent)
+# ---- DB Pool (optional) -----------------------------------------------------
 DB_POOL = None
 def _init_db_pool():
     global DB_POOL
     dsn = os.getenv("DATABASE_URL")
     if not dsn:
-        logging.getLogger(__name__).warning("[DB] DATABASE_URL fehlt – Feedback wird nur geloggt.")
-        return
+        logging.getLogger(__name__).warning("[DB] DATABASE_URL fehlt – Feedback wird nur geloggt."); return
     if SimpleConnectionPool is None:
-        logging.getLogger(__name__).warning("[DB] psycopg2 nicht installiert – Feedback wird nur geloggt.")
-        return
+        logging.getLogger(__name__).warning("[DB] psycopg2 nicht installiert – Feedback wird nur geloggt."); return
     try:
         DB_POOL = SimpleConnectionPool(1, 5, dsn, connect_timeout=5, keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=5)
         logging.getLogger(__name__).info("[DB] Pool initialisiert")
@@ -215,7 +199,7 @@ async def _on_shutdown_db_pool():
     except Exception as e:
         logging.getLogger(__name__).exception("[DB] Shutdown-Close fehlgeschlagen: %s", e)
 
-# Feedback-Model & Handler
+# ---- Feedback Model & Endpoints --------------------------------------------
 class Feedback(BaseModel):
     email: Optional[str] = None; variant: Optional[str] = None; report_version: Optional[str] = None
     hilfe: Optional[str] = None; verstaendlich_analyse: Optional[str] = None; verstaendlich_empfehlung: Optional[str] = None; vertrauen: Optional[str] = None; dauer: Optional[str] = None
@@ -267,7 +251,6 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
     except Exception as e:
         logging.getLogger(__name__).exception("[FEEDBACK] Fehler: %s", e); raise HTTPException(status_code=500, detail="feedback failed")
 
-# Feedback-Endpunkte (Mehrzeiler!)
 @app.post("/feedback")
 async def feedback_root(
     payload: Feedback,
@@ -291,12 +274,12 @@ async def feedback_v1(
     authorization: Optional[str] = None,
 ):
     return await _handle_feedback(payload, request, authorization)
-# In-Memory Job Store
+
+# ---- Jobs & Auth ------------------------------------------------------------
 TASKS: Dict[str, Dict[str, Any]] = {}
 def new_job() -> str: return uuid.uuid4().hex
 def set_job(job_id: str, **kwargs): TASKS.setdefault(job_id, {}); TASKS[job_id].update(kwargs)
 
-# JWT-Auth
 def create_access_token(data: Dict[str, Any], expires_in: int = JWT_EXP_SECONDS) -> str:
     payload = data.copy(); payload["exp"] = int(time.time()) + expires_in
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
@@ -314,22 +297,23 @@ def current_user(request: Request) -> Dict[str, Any]:
     except JWTError as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
-# Health & Diagnose (Mehrzeiler!)
-# /health (Mehrzeiler!)
+# ---- Health/Diag ------------------------------------------------------------
 @app.get("/health")
 async def health():
-    return {
-        "status": "ok"
-    }
+    return JSONResponse({
+        "ok": True,
+        "time": int(time.time()),
+        "pdf_service_url": PDF_SERVICE_URL or None,
+        "pdf_post_mode": PDF_POST_MODE,
+        "timeout": PDF_TIMEOUT,
+        "version": "2025-09-22"
+    })
 
-# /diag/analyze (Mehrzeiler!)
 @app.get("/diag/analyze")
 def diag_analyze():
     info = {"loaded": False, "has_analyze_briefing": False, "error": None}
     try:
-        import importlib, sys
-        if "" not in sys.path:
-            sys.path.insert(0, "")
+        if "" not in sys.path: sys.path.insert(0, "")
         ga = importlib.import_module("gpt_analyze")
         info["loaded"] = True
         info["module"] = getattr(ga, "__file__", "n/a")
@@ -338,10 +322,9 @@ def diag_analyze():
             info["analyze_briefing_doc"] = getattr(getattr(ga, "analyze_briefing"), "__doc__", "")
     except Exception as e:
         info["error"] = repr(e)
-    return info
+    return JSONResponse(info)
 
-
-# Helpers: Sanitizer & Templates (Fallback)
+# ---- Render Helpers ---------------------------------------------------------
 def strip_code_fences(text: str) -> str:
     if not text: return text
     t = text.replace("\r", "")
@@ -376,84 +359,30 @@ def render_html_from_report(report: Dict[str, Any], lang: str) -> str:
         out = out.replace(token, str(v) if v is not None else "")
     return strip_code_fences(out)
 
-# Analyze-Loader
-def load_analyze_module():
-    try:
-        if "" not in sys.path: sys.path.insert(0, "")
-        ga = importlib.import_module("gpt_analyze")
-        fn = getattr(ga, "analyze_briefing", None)
-        if fn is None:
-            logger.error("gpt_analyze geladen, aber analyze_briefing nicht gefunden.")
-            return None, ga
-        logger.info("gpt_analyze geladen: %s", getattr(ga, "__file__", "n/a"))
-        return fn, ga
-    except Exception as e:
-        logger.exception("gpt_analyze Importfehler: %s", e)
-        return None, None
+# ---- Analyze Flow (Template-Only Guard) ------------------------------------
+def _has_unresolved_tokens(html: str) -> bool:
+    # Finde Jinja/Double-brace Tokens irgendwo im HTML
+    return bool(re.search(r"({{[^}{]+}}|{%-?|-%}|{%|%})", html))
 
-# PDF-Service Anbindung
-async def warmup_pdf_service(request_id: str, base_url: str, timeout: float = 10.0):
-    if not base_url: return
-    try:
-        to = httpx.Timeout(connect=timeout, read=timeout, write=timeout, pool=timeout)
-        async with httpx.AsyncClient(http2=True, timeout=to) as c:
-            r = await c.get(f"{base_url}/health")
-            logger.info("[PDF] rid=%s warmup %s", request_id, r.status_code)
-    except Exception as e:
-        logger.warning("[PDF] rid=%s warmup failed: %s", request_id, repr(e))
-
-async def send_html_to_pdf_service(html: str, user_email: str, subject: str = "KI-Readiness Report", lang: str = "de", request_id: Optional[str] = None) -> Dict[str, Any]:
-    if not PDF_SERVICE_URL:
-        raise RuntimeError("PDF_SERVICE_URL is not configured")
-    rid = request_id or uuid.uuid4().hex
-    idem_key = hashlib.sha256((user_email + '|' + hashlib.sha256((html or '').encode('utf-8')).hexdigest()).encode('utf-8')).hexdigest()
-    html = strip_code_fences(html or "")
-    timeouts = httpx.Timeout(connect=15.0, read=PDF_TIMEOUT, write=30.0, pool=60.0)
-    limits = httpx.Limits(max_keepalive_connections=10, max_connections=20, keepalive_expiry=60.0)
-    async with httpx.AsyncClient(http2=True, timeout=timeouts, limits=limits) as client:
-        last_exc = None
-        for attempt in range(1, 3+1):
-            try:
-                if PDF_POST_MODE == "json":
-                    payload = {"html": html, "to": user_email or "", "adminEmail": ADMIN_EMAIL or "", "subject": subject, "lang": lang, "rid": rid}
-                    resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", json=payload)
-                else:
-                    headers = {"X-Request-ID": rid, "X-User-Email": user_email or "", "X-Subject": subject, "X-Lang": lang, "Accept": "application/pdf", "Content-Type": "text/html; charset=utf-8"}
-                    resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", headers=headers, content=html.encode("utf-8"))
-                ok = 200 <= resp.status_code < 300
-                data = {}
-                try: data = resp.json()
-                except Exception: pass
-                logger.info("[PDF] rid=%s attempt=%s status=%s", rid, attempt, resp.status_code)
-                return {"ok": ok, "status": resp.status_code, "data": data if data else {"headers": dict(resp.headers)}, "error": None if ok else f"HTTP {resp.status_code}", "user": user_email, "admin": ADMIN_EMAIL}
-            except (httpx.ReadTimeout, httpx.ConnectTimeout) as e:
-                last_exc = e; wait = 1.8 ** attempt
-                logger.warning("[PDF] rid=%s timeout attempt %s/3 → retry in %.2fs", rid, attempt, wait)
-                await asyncio_sleep(wait)
-            except Exception as e:
-                last_exc = e; logger.warning("[PDF] rid=%s unexpected on attempt %s: %s", rid, attempt, repr(e))
-                await asyncio_sleep(1.0)
-    raise httpx.ReadTimeout(f"PDF service timed out after retries ({PDF_TIMEOUT}s read timeout).") from last_exc
-
-async def asyncio_sleep(sec: float):
-    import asyncio; await asyncio.sleep(sec)
-# Analyze Flow (Template-Only Guard)
 async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
     """
     Ruft gpt_analyze.analyze_briefing(body, lang) auf und rendert
-    **immer** das Datei-Template (Jinja). Analyzer-Full-HTML wird
-    absichtlich ignoriert (Gold-Standard: Template-Only).
+    **immer** das Datei-Template (Jinja). Analyzer-Full-HTML wird ignoriert.
     """
-    analyze_fn, _mod = load_analyze_module()
-    report: Dict[str, Any] = {}
+    try:
+        if "" not in sys.path: sys.path.insert(0, "")
+        ga = importlib.import_module("gpt_analyze")
+        analyze_fn = getattr(ga, "analyze_briefing", None)
+    except Exception as e:
+        logger.exception("gpt_analyze Importfehler: %s", e); analyze_fn = None
 
+    report: Dict[str, Any] = {}
     if analyze_fn:
         try:
             result = analyze_fn(body, lang=lang)
             if isinstance(result, dict):
                 report = result
             elif isinstance(result, str):
-                # Legacy: Analyzer gibt schon HTML zurück → NICHT verwenden.
                 logger.warning("Analyzer returned raw HTML – ignored (Template-Only enforced).")
                 report = {}
         except Exception as e:
@@ -465,19 +394,17 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
 
     try:
         html = _render_template_only(lang, report)
-        head = html[:400]
-        if ("{{" in head) or ("{%" in head):
-            raise RuntimeError("Template not fully rendered – unresolved Jinja tags found")
+        if _has_unresolved_tokens(html):
+            raise RuntimeError("Unresolved template tokens detected in final HTML")
         return strip_code_fences(html)
     except Exception as e:
         logger.error("Jinja render failed (%s) – falling back to simple replacer", repr(e))
-        # Fallback auf minimalen Token-Replacer, falls Jinja-Templates fehlen
         return render_html_from_report(report, lang)
 
 def resolve_recipient(user_claims: Dict[str, Any], body: Dict[str, Any]) -> str:
     return body.get("to") or user_claims.get("email") or user_claims.get("sub") or ADMIN_EMAIL
 
-# Auth: /api/login
+# ---- Routes ----------------------------------------------------------------
 @app.post("/api/login")
 def api_login(body: Dict[str, Any]):
     email = (body.get("email") or "").strip().lower()
@@ -487,14 +414,12 @@ def api_login(body: Dict[str, Any]):
     token = create_access_token({"sub": email, "email": email, "role": "user"})
     return {"access_token": token, "token_type": "bearer"}
 
-# Synchrone HTML-Rückgabe (praktisch für Debug/Preview)
 @app.post("/render_html")
 async def render_html_endpoint(body: Dict[str, Any], user=Depends(current_user)):
     lang = (body.get("lang") or "de").lower()
     html = await analyze_to_html(body, lang)
     return {"ok": True, "lang": lang, "html": html}
 
-# /briefing_async
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends(current_user)):
     lang = (body.get("lang") or "de").lower()
@@ -506,51 +431,40 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
             await warmup_pdf_service(rid, PDF_SERVICE_URL)
             html = await analyze_to_html(body, lang)
             set_job(job_id, html_len=len(html))
-
             user_email = resolve_recipient(user, body)
             if not user_email: raise RuntimeError("No recipient (user email) available")
-
             head = html[:400]
             if ("{{" in head) or ("{%" in head):
                 logger.error("[PDF] unresolved template markers detected – aborting PDF send")
                 set_job(job_id, status="error", error="Template not fully rendered – unresolved Jinja tags in HTML")
                 return
-
             try:
                 pre_key = make_idempotency_key(user_email, body, html)
                 prev = idempotency_get(pre_key)
                 if prev:
                     logger.info("[IDEMP] hit for user=%s, skipping PDF send", user_email)
-                    set_job(job_id, pdf_sent=True, pdf_status=prev.get("meta", {}).get("status"), pdf_meta=prev.get("meta"),
-                            status="done", error=None)
+                    set_job(job_id, pdf_sent=True, pdf_status=prev.get("meta", {}).get("status"), pdf_meta=prev.get("meta"), status="done", error=None)
                     return
             except Exception as _e:
                 logger.warning("[IDEMP] check failed: %s", _e)
-
             res = await send_html_to_pdf_service(html, user_email, subject="KI-Readiness Report", lang=lang, request_id=rid)
             set_job(job_id, pdf_sent=bool(res.get("ok")), pdf_status=res.get("status"), pdf_meta=res.get("data"),
                     status="done" if res.get("ok") else "error", error=None if res.get("ok") else res.get("error"))
-
             try:
                 if res.get('ok'): idempotency_set(pre_key, res)
-            except Exception as _e:
-                logger.warning('[IDEMP] save failed: %s', _e)
-
+            except Exception as _e: logger.warning('[IDEMP] save failed: %s', _e)
         except Exception as e:
-            logger.exception("briefing_async job failed: %s", e)
-            set_job(job_id, status="error", error=str(e))
+            logger.exception("briefing_async job failed: %s", e); set_job(job_id, status="error", error=str(e))
 
     bg.add_task(run)
     return {"job_id": job_id, "status": "queued"}
 
-# /briefing_status/<job_id>
 @app.get("/briefing_status/{job_id}")
 async def briefing_status(job_id: str, user=Depends(current_user)):
     st = TASKS.get(job_id)
     if not st: raise HTTPException(status_code=404, detail="unknown job_id")
     return JSONResponse(st)
 
-# /pdf_test
 @app.post("/pdf_test")
 async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
     lang = (body.get("lang") or "de").lower()
@@ -560,7 +474,6 @@ async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
     res = await send_html_to_pdf_service(html, to, subject="KI-Readiness Report (Test)", lang=lang, request_id="pdf_test")
     return res
 
-# Root
 @app.get("/")
 def root():
     return HTMLResponse(f"""<!doctype html>
@@ -581,3 +494,46 @@ def root():
     <li><code>POST /feedback</code>, <code>/api/feedback</code>, <code>/v1/feedback</code></li>
   </ul>
 </body></html>""")
+
+# ---- PDF-Service ------------------------------------------------------------
+async def warmup_pdf_service(request_id: str, base_url: str, timeout: float = 10.0):
+    if not base_url: return
+    try:
+        to = httpx.Timeout(connect=timeout, read=timeout, write=timeout, pool=timeout)
+        async with httpx.AsyncClient(http2=True, timeout=to) as c:
+            r = await c.get(f"{base_url}/health")
+            logger.info("[PDF] rid=%s warmup %s", request_id, r.status_code)
+    except Exception as e:
+        logger.warning("[PDF] rid=%s warmup failed: %s", request_id, repr(e))
+
+async def send_html_to_pdf_service(html: str, user_email: str, subject: str = "KI-Readiness Report", lang: str = "de", request_id: Optional[str] = None) -> Dict[str, Any]:
+    if not PDF_SERVICE_URL:
+        raise RuntimeError("PDF_SERVICE_URL is not configured")
+    rid = request_id or uuid.uuid4().hex
+    html = strip_code_fences(html or "")
+    timeouts = httpx.Timeout(connect=15.0, read=PDF_TIMEOUT, write=30.0, pool=60.0)
+    limits = httpx.Limits(max_keepalive_connections=10, max_connections=20, keepalive_expiry=60.0)
+    async with httpx.AsyncClient(http2=True, timeout=timeouts, limits=limits) as client:
+        last_exc = None
+        for attempt in range(1, 4):
+            try:
+                if PDF_POST_MODE == "json":
+                    payload = {"html": html, "to": user_email or "", "adminEmail": ADMIN_EMAIL or "", "subject": subject, "lang": lang, "rid": rid}
+                    resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", json=payload)
+                else:
+                    headers = {"X-Request-ID": rid, "X-User-Email": user_email or "", "X-Subject": subject, "X-Lang": lang, "Accept": "application/pdf", "Content-Type": "text/html; charset=utf-8"}
+                    resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", headers=headers, content=html.encode("utf-8"))
+                ok = 200 <= resp.status_code < 300
+                data = {}
+                try: data = resp.json()
+                except Exception: pass
+                logger.info("[PDF] rid=%s attempt=%s status=%s", rid, attempt, resp.status_code)
+                return {"ok": ok, "status": resp.status_code, "data": data if data else {"headers": dict(resp.headers)}, "error": None if ok else f"HTTP {resp.status_code}", "user": user_email, "admin": ADMIN_EMAIL}
+            except (httpx.ReadTimeout, httpx.ConnectTimeout) as e:
+                last_exc = e; wait = 1.8 ** attempt
+                logger.warning("[PDF] rid=%s timeout attempt %s/3 → retry in %.2fs", rid, attempt, wait)
+                await asyncio.sleep(wait)
+            except Exception as e:
+                last_exc = e; logger.warning("[PDF] rid=%s unexpected on attempt %s: %s", rid, attempt, repr(e))
+                await asyncio.sleep(1.0)
+    raise httpx.ReadTimeout(f"PDF service timed out after retries ({PDF_TIMEOUT}s read timeout).") from last_exc

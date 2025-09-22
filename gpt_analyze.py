@@ -1,231 +1,330 @@
-# gpt_analyze.py — Gold‑Standard (language folders de/en; order preserved; all prompts)
-from __future__ import annotations
-import os, re, json, zipfile, csv
+
+"""
+gpt_analyze.py — Gold-Standard Analyzer (deterministische Basis + optionale LLM-Blöcke)
+- Template-Only friendly: liefert ausschließlich ein Daten-Dict
+- Story-Killer + Sprachwächter (DE default)
+- Whitelist-Only Tabellen (Tools/Förderung), Förder-Filter nach Bundesland (inkl. Kürzel-Mapping)
+- Appendix STRICT: nur manifest.json
+- Optionale LLM: Executive Summary + Gamechanger (hart begrenzt, 1000 Zeichen, keine Stories)
+- Optionale Tavily-News (Callout), wenn TAVILY_API_KEY und ALLOW_TAVILY=1
+"""
+import os, json, re, datetime, html
 from pathlib import Path
-from datetime import datetime as _dt
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
-try:
-    from openai import OpenAI
-    _OPENAI = OpenAI()
-except Exception:
-    _OPENAI = None
+# ---------- Config / ENV ----------
+ROOT = Path(os.getcwd())
+PROMPTS_DIR = ROOT / "prompts"
+DATA_DIR = ROOT / "data"
 
-BASE_DIR = Path(__file__).resolve().parent
-PARTIAL_DIRS = [BASE_DIR / "templates" / "partials", BASE_DIR / "partials"]
-PROMPTS_DIR = BASE_DIR / "prompts"
-PROMPTS_DE = PROMPTS_DIR / "de"
-PROMPTS_EN = PROMPTS_DIR / "en"
-DATA_DIRS = [BASE_DIR / "data", BASE_DIR]
+LLM_MODE = os.getenv("LLM_MODE", "hybrid")  # 'off'|'hybrid'
+GPT_MODEL_NAME = os.getenv("GPT_MODEL_NAME", "gpt-4o-mini")
+GPT_TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", "0.2"))
+APPENDIX_STRICT = os.getenv("APPENDIX_STRICT", "1") == "1"
+MAX_CHARS = int(os.getenv("MAX_CHARS", "1000"))
 
-_STORY_PATTERNS = [r"\bIn\s+einem\s+kleinen\s+Familienunternehmen\b", r"\bStellen\s+Sie\s+sich\b",
-                   r"\bPraxisbeispiel\b", r"\bEs\s+war\s+einmal\b", r"\bMehr\s+erfahren\b"]
-_FANTASY_TOOL_PATTERNS = [r"\bIdeation\s+Assistant\b", r"\bProject\s+Harmony\b", r"\bComms\s+Connect\b",
-                          r"\bPrivacyGuard\s+AI\b", r"\bSecureChat\s+AI\b", r"\bDataSafe\s+AI\b"]
+ALLOW_TAVILY = os.getenv("ALLOW_TAVILY", "0") == "1"
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 
-def _kill_story(html: str) -> str:
-    if not html: return ""
-    t = re.sub(r"<[^>]+>", " ", html or "")
-    for pat in _STORY_PATTERNS + _FANTASY_TOOL_PATTERNS:
-        if re.search(pat, t, flags=re.IGNORECASE): return ""
-    if re.search(r"%(?!\d)|€(?!\d)", t): return ""
-    html = re.sub(r"</?(ul|ol|li|table|thead|tbody|tr|th|td|code|pre|blockquote)[^>]*>", "", html, flags=re.I)
-    return html.strip()
-
-def _read_text(p: Path) -> str:
-    try: return p.read_text(encoding="utf-8")
-    except Exception: return ""
-
-def _load_partial(name: str, fallback="") -> str:
-    for d in PARTIAL_DIRS:
-        p = d / name
-        if p.exists(): return _read_text(p)
-    return fallback
-
-def _list_files(dirpath: Path) -> List[Path]:
-    if dirpath.exists() and dirpath.is_dir():
-        return sorted([p for p in dirpath.glob("*.md") if not p.name.startswith("._")], key=lambda x: x.name)
-    return []
-
-def _load_prompt(name: str, lang: str) -> str:
-    # explicit language folder preferred
-    p = (PROMPTS_DE if lang=="de" else PROMPTS_EN) / name
-    if p.exists(): return _read_text(p)
-    # try other language
-    alt = (PROMPTS_EN if lang=="de" else PROMPTS_DE) / name
-    if alt.exists(): return _read_text(alt)
-    # try root (legacy) or zip (legacy)
-    p_legacy = PROMPTS_DIR / name
-    if p_legacy.exists(): return _read_text(p_legacy)
-    zf = BASE_DIR / "prompts.zip"
-    if zf.exists():
-        try:
-            with zipfile.ZipFile(zf, "r") as z:
-                if name in z.namelist():
-                    with z.open(name) as f:
-                        return f.read().decode("utf-8")
-        except Exception:
-            return ""
-    return ""
-
-def _list_appendix(lang: str) -> List[str]:
-    # collect ordered names from language folder
-    items = [p.name for p in _list_files(PROMPTS_DE if lang=="de" else PROMPTS_EN)]
-    # remove known core names; keep order
-    core = {"system.md","exec_summary.md","risks.md","recommendations.md","roadmap.md","vision.md"}
-    return [n for n in items if n not in core]
-
-def _load_json_any(name: str) -> List[Dict[str,Any]]:
-    # try json files
-    for d in DATA_DIRS:
-        p = d / name
-        if p.exists():
+# ---------- Utilities ----------
+def _load_json_any(fname: str) -> Any:
+    for p in [DATA_DIR / fname, ROOT / fname]:
+        if p.is_file():
             try:
-                data = json.loads(_read_text(p))
-                if isinstance(data, list): return data
+                return json.loads(p.read_text(encoding="utf-8"))
             except Exception:
                 pass
-    # csv fallback by stem
-    stem = os.path.splitext(name)[0]
-    for d in DATA_DIRS:
-        p = d / f"{stem}.csv"
-        if p.exists():
-            with p.open("r", encoding="utf-8", errors="ignore") as f:
-                return [ { (k or '').strip().lower().replace(' ','_').replace('-','_') : (v or '').strip() for k,v in row.items() if k } for row in csv.DictReader(f) ]
-    # zip legacy
-    zf = BASE_DIR / "data.zip"
-    if zf.exists():
-        try:
-            with zipfile.ZipFile(zf,"r") as z:
-                if name in z.namelist():
-                    with z.open(name) as f:
-                        data = json.loads(f.read().decode("utf-8"))
-                        if isinstance(data, list): return data
-                cand = f"{stem}.csv"
-                for n in z.namelist():
-                    if n.endswith(cand):
-                        with z.open(n) as f:
-                            txt = f.read().decode("utf-8","ignore").splitlines()
-                        return [ { (k or '').strip().lower().replace(' ','_').replace('-','_') : (v or '').strip() for k,v in row.items() if k } for row in csv.DictReader(txt) ]
-        except Exception:
-            return []
+    return None
+
+def _load_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception:
+        return ""
+
+def _clamp_text(s: str, max_chars: int = MAX_CHARS) -> str:
+    if not s: return s
+    if len(s) <= max_chars: return s
+    cut = s[:max_chars]
+    # bis zum letzten Satzende
+    m = re.search(r"[.!?)](?=[^.!?)]*$)", cut)
+    if m: cut = cut[:m.end()]
+    return cut.rstrip() + " …"
+
+def _sanitize_p(text: str) -> str:
+    # Entferne Codefences & Markdown-Triple-Backticks
+    t = text.replace("```html","```").replace("```HTML","```")
+    while "```" in t: t = t.replace("```","")
+    return t
+
+def _plain_text(html_text: str) -> str:
+    return re.sub(r"<[^>]+>", " ", html_text)
+
+def _reject_if_english(text: str, lang: str) -> bool:
+    if lang.startswith("de"):
+        return bool(re.search(r"\b(the|and|of|in the|for example|organisation)\b", text, re.I))
+    if lang.startswith("en"):
+        return False
+    return False
+
+STORY_BLOCK = re.compile(r"\b(Ein Unternehmen|In the\s|Consider a|Imagine a|For instance, a|Once\s)\b", re.I)
+
+# ---------- LLM (optional) ----------
+def llm_generate(prompt: str, system: str = "", max_tokens: int = 600) -> str:
+    if LLM_MODE == "off": return ""
+    try:
+        import openai  # type: ignore
+        client = openai.OpenAI()
+        msgs = []
+        if system: msgs.append({"role":"system","content":system})
+        msgs.append({"role":"user","content":prompt})
+        resp = client.chat.completions.create(
+            model=GPT_MODEL_NAME,
+            messages=msgs,
+            temperature=GPT_TEMPERATURE,
+            max_tokens=max_tokens
+        )
+        text = resp.choices[0].message.content or ""
+        return text
+    except Exception as e:
+        return ""
+
+# ---------- Tavily (optional) ----------
+def tavily_search(query: str, max_results: int = 3) -> List[Dict[str, Any]]:
+    if not (ALLOW_TAVILY and TAVILY_API_KEY): return []
+    try:
+        import httpx
+        headers = {"Content-Type":"application/json","X-Tavily-API-Key":TAVILY_API_KEY}
+        payload = {"query":query, "max_results":max_results}
+        with httpx.Client(timeout=15.0) as c:
+            r = c.post("https://api.tavily.com/search", headers=headers, json=payload)
+            if 200 <= r.status_code < 300:
+                j = r.json()
+                return j.get("results", [])
+    except Exception:
+        return []
     return []
 
-def render_tools_from_whitelist(max_items: int = 16) -> str:
-    rows = _load_json_any("tool_whitelist.json")
-    if not rows: return "<p>— (keine kuratierten Eintr\u00E4ge)</p>"
-    head_cols = ["Kategorie","Option","Daten/Deployment","Hinweise"]
-    if any("as_of" in r for r in rows): head_cols.append("Stand")
-    head = "<tr>" + "".join(f"<th>{h}</th>" for h in head_cols) + "</tr>"
+# ---------- Whitelist-Tabellen ----------
+def render_tools_from_whitelist(max_items: int = 14) -> str:
+    rows = _load_json_any("tool_whitelist.json") or []
+    if not rows: return "<p>— (keine kuratierten Einträge)</p>"
+    head = "<tr><th>Kategorie</th><th>Option</th><th>Badge</th><th>Daten/Deployment</th><th>Hinweise</th></tr>"
     body = []
     for r in rows[:max_items]:
-        name = r.get("name","—")
-        if str(r.get("sovereign","")).lower() in ("1","true","yes","x","ja","wahr"): 
-            name += " <span class='badge'>souver\u00E4n</span>"
-        cols = [r.get('category','—'), name, r.get('data_residency','—') or r.get('hosting','—'), r.get('notes','')]
-        if "as_of" in r: cols.append(r.get('as_of',''))
+        badge = f"<span class='badge souveraen'>souverän</span>" if r.get("sovereign") else ""
+        cols = [r.get("category","—"), r.get("name","—"), badge, r.get("hosting","—"), r.get("note","—")]
         body.append("<tr>" + "".join(f"<td>{c}</td>" for c in cols) + "</tr>")
     return f"<table class='table'><thead>{head}</thead><tbody>{''.join(body)}</tbody></table>"
 
+BUNDESLAND_MAP = {"be":"Berlin","by":"Bayern","bw":"Baden-Württemberg","hh":"Hamburg","he":"Hessen","bb":"Brandenburg","mv":"Mecklenburg-Vorpommern","ni":"Niedersachsen","nw":"Nordrhein-Westfalen","rp":"Rheinland-Pfalz","sl":"Saarland","sn":"Sachsen","st":"Sachsen-Anhalt","sh":"Schleswig-Holstein","th":"Thüringen","hb":"Bremen"}
+
 def render_funding_from_whitelist(max_items: int = 12, bundesland: str = "") -> str:
-    rows = _load_json_any("funding_whitelist.json")
-    if not rows: return "<p>— (keine kuratierten Eintr\u00E4ge)</p>"
-    bundesland_norm = (bundesland or "").strip().lower()
+    rows = _load_json_any("funding_whitelist.json") or []
+    if not rows: return "<p>— (keine kuratierten Einträge)</p>"
+    bl_norm = (bundesland or "").strip().lower()
+    bl_norm = BUNDESLAND_MAP.get(bl_norm, bl_norm)
     def _keep(r):
         reg = (r.get("region","") or "").strip().lower()
-        if not bundesland_norm:
-            return True
-        if reg in ("bund","de","deutschland","eu","europe","europa"):
-            return True
-        return bundesland_norm in reg
+        if not bl_norm: return True
+        if reg in ("bund","de","deutschland","eu","europe","europa"): return True
+        return bl_norm.lower() in reg
     filtered = [r for r in rows if _keep(r)]
+    if not filtered: filtered = rows  # zur Not bundesweite
     head_cols = ["Programm","Region","Zielgruppe","Leistung/Status","Quelle"]
     if any("as_of" in r for r in filtered): head_cols.append("Stand")
     head = "<tr>" + "".join(f"<th>{h}</th>" for h in head_cols) + "</tr>"
-    body = []
+    body=[]
     for r in filtered[:max_items]:
         perf = r.get("benefit","—")
         status = r.get("status","")
         if status and status not in ("aktiv","laufend","kontingentabhängig"):
             perf = f"{perf} ({status})"
-        cols = [r.get('name','—'), r.get('region','—'), r.get('target','—'), perf, r.get('source','—')]
-        if "as_of" in r: cols.append(r.get('as_of',''))
-        body.append("<tr>" + "".join(f"<td>{c}</td>" for c in cols) + "</tr>")
-    return f"<table class='table'><thead>{head}</thead><tbody>{''.join(body)}</tbody></table>"
+        cols=[r.get("name","—"), r.get("region","—"), r.get("target","—"), perf, r.get("source","—")]
+        if "as_of" in r: cols.append(r.get("as_of",""))
+        body.append("<tr>"+ "".join(f"<td>{c}</td>" for c in cols) + "</tr>")
+    html_table = f"<table class='table'><thead>{head}</thead><tbody>{''.join(body)}</tbody></table>"
+    return html_table
 
-def _llm_html(prompt_name: str, ctx: Dict[str,Any], lang: str) -> str:
-    if _OPENAI is None: return ""
-    system_prompt = _load_prompt("system.md", lang) or ("Sie sind TÜV‑zertifizierte:r KI‑Manager:in. VALID HTML, 1–2 Absätze, per Sie." if lang=="de" else "You are a TÜV‑certified AI manager. VALID HTML, 1–2 paragraphs.")
-    user_prompt = _load_prompt(prompt_name, lang)
-    if not user_prompt: return ""
-    repl = user_prompt
-    for k,v in (("{{company.name}}", ctx.get("company",{}).get("name","—")),
-               ("{{company.industry}}", ctx.get("company",{}).get("industry","—")),
-               ("{{company.size}}", ctx.get("company",{}).get("size","—")),
-               ("{{company.location}}", ctx.get("company",{}).get("location","—"))):
-        repl = repl.replace(k, v)
-    try:
-        client = OpenAI()
-        r = client.chat.completions.create(
-            model=os.getenv("GPT_MODEL_NAME","gpt-4o-mini"),
-            temperature=float(os.getenv("GPT_TEMPERATURE","0.2")),
-            messages=[{"role":"system","content":system_prompt},
-                      {"role":"user","content":repl}]
-        )
-        return _kill_story((r.choices[0].message.content or "").strip())
-    except Exception:
-        return ""
+# ---------- Appendix Strict / Manifest ----------
+def _manifest(lang: str) -> Dict[str, Any]:
+    path = PROMPTS_DIR / "manifest.json"
+    if path.is_file():
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
 
-def _company(body: Dict[str,Any]) -> Dict[str,Any]:
-    return {"name": str(body.get("company") or body.get("unternehmen") or body.get("firma") or "—"),
-            "industry": str(body.get("branche") or body.get("industry") or "—"),
-            "size": str(body.get("unternehmensgroesse") or body.get("company_size") or "—"),
-            "location": str(body.get("bundesland") or body.get("ort") or body.get("city") or body.get("location") or "—")}
+def _appendix_blocks(lang: str) -> List[Dict[str,str]]:
+    m = _manifest(lang)
+    blocks: List[Dict[str,str]] = []
+    if APPENDIX_STRICT and m:
+        items = m.get("appendix", [])
+        base = PROMPTS_DIR / ("de" if lang.startswith("de") else "en")
+        for it in items:
+            if isinstance(it, dict):
+                file = it.get("file"); title = it.get("title","")
+            else:
+                file = str(it); title = ""
+            p = base / file
+            if p.is_file():
+                txt = _sanitize_p(_load_text(p))
+                blocks.append({"title": title or p.stem.replace("_"," ").title(), "html": f"<div class='section'>{txt}</div>"})
+        return blocks
 
-def analyze_briefing(body: Dict[str,Any], lang: str="de") -> Dict[str,Any]:
-    if not isinstance(body, dict):
-        try: body = json.loads(str(body))
-        except Exception: body = {}
-    lang = "de" if str(lang).lower().startswith("de") else "en"
+    # Default (falls kein manifest.json): konkrete 4–5 Blöcke
+    base = PROMPTS_DIR / ("de" if lang.startswith("de") else "en")
+    defaults = ["prompt_policy.md","best_practices.md","compliance_checklist.md","faq_startpaket.md","glossar_kurz.md"]
+    for name in defaults:
+        p = base / name
+        if p.is_file():
+            txt = _sanitize_p(_load_text(p))
+            blocks.append({"title": p.stem.replace("_"," ").title(), "html": f"<div class='section'>{txt}</div>"})
+    return blocks
 
-    company = _company(body)
-    meta = {"date": _dt.now().strftime("%d.%m.%Y") if lang=="de" else _dt.now().strftime("%Y-%m-%d"),
-            "stand": _dt.now().strftime("%Y-%m-%d"), "year": _dt.now().year, "owner": "Wolf Hohl"}
+# ---------- Gamechanger (LLM, hart begrenzt) ----------
+def _gamechanger_llm(company: Dict[str,Any], lang: str) -> str:
+    branche = company.get("branche") or company.get("industry") or ""
+    groesse = company.get("unternehmensgroesse") or company.get("size") or ""
+    leistung = company.get("hauptleistung") or company.get("main_service") or ""
+    sys = "Sie sind ein nüchterner, präziser Unternehmensberater. Per Sie. Keine Anekdoten. Max. 900 Zeichen. Kein Marketing-Sprech."
+    if lang.startswith("en"):
+        sys = "You are a precise management consultant. Formal 'you'. No anecdotes. Max 900 characters. No hype."
+    prompt = f"""
+Erarbeiten Sie einen kompakten 'Innovation & Gamechanger'-Vorschlag
+für Branche: {branche}, Hauptleistung: {leistung}, Unternehmensgröße: {groesse}.
+Vorgaben:
+- 1 Leitidee mit klarem Nutzen (operativ + finanziell), 3 stichpunktartige Next Steps.
+- Keine Anekdoten, keine Story-Wendungen, keine 'Imagine/Consider'.
+- Keine Platzhalter ('{{','}}').
+- Sprache: {'Deutsch' if lang.startswith('de') else 'English'}, per Sie, sachlich.
+Ausgabeformat (HTML):
+<h3>Innovation & Gamechanger</h3>
+<p>[Leitidee, 3-4 Sätze]</p>
+<ul><li>[Next Step 1]</li><li>[Next Step 2]</li><li>[Next Step 3]</li></ul>
+"""
+    txt = llm_generate(prompt.strip(), system=sys, max_tokens=500) or ""
+    txt = _sanitize_p(txt)
+    if STORY_BLOCK.search(txt) or _reject_if_english(_plain_text(txt), lang):
+        return ""  # verwerfen
+    return _clamp_text(txt, MAX_CHARS)
 
-    quick_wins_html = _load_partial("quick_wins_de.html" if lang=="de" else "quick_wins_en.html", "<p>—</p>")
-    eu_ai_act_html  = _load_partial("eu_ai_act_de.html"  if lang=="de" else "eu_ai_act_en.html",  "<p>—</p>")
-    tools_html      = render_tools_from_whitelist()
-    funding_html    = render_funding_from_whitelist(bundesland=company.get("location",""))
+# ---------- News Callout (Tavily) ----------
+def _news_callout(company: Dict[str,Any], lang: str) -> str:
+    if not (ALLOW_TAVILY and TAVILY_API_KEY): return ""
+    branche = company.get("branche") or company.get("industry") or ""
+    loc = company.get("location") or company.get("standort") or ""
+    q = f"aktuelle Nachrichten KI Einführung {branche} Unternehmen Deutschland {loc}".strip()
+    results = tavily_search(q, max_results=3)
+    if not results: return ""
+    items = []
+    for r in results:
+        title = html.escape(r.get("title",""))
+        source = html.escape(r.get("source",""))
+        items.append(f"<li>{title} <span class='muted'>({source})</span></li>")
+    return "<div class='callout'><strong>Realtime‑Hinweise (News):</strong><ul>"+ "".join(items) + "</ul></div>"
 
-    ctx = {"company": company, "inputs": body}
-    # Core prompts by canonical names in language folders
-    core = {
-        "executive_summary_html": "exec_summary.md",
-        "risks_html": "risks.md",
-        "recommendations_html": "recommendations.md",
-        "roadmap_html": "roadmap.md",
-        "vision_html": "vision.md"
+# ---------- Hauptfunktion ----------------------------------------------------
+def analyze_briefing(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
+    """
+    Liefert ein Daten-Dict für die Jinja-Templates.
+    """
+    lang = (lang or "de").lower()
+    company = body.get("company") if isinstance(body.get("company"), dict) else body
+    # Normalisiere Standort
+    loc = (company.get("standort") or company.get("location") or "").strip().lower()
+    company["location"] = BUNDESLAND_MAP.get(loc, company.get("location") or loc or "")
+    # Meta
+    meta = {
+        "company_name": company.get("unternehmen") or company.get("company") or "—",
+        "branche": company.get("branche") or company.get("industry") or "—",
+        "groesse": company.get("unternehmensgroesse") or company.get("size") or "—",
+        "standort": company.get("location") or "—",
+        "date": datetime.date.today().strftime("%d.%m.%Y"),
+        "as_of": datetime.date.today().isoformat(),
     }
-    out = {}
-    for key, fname in core.items():
-        out[key] = _llm_html(fname, ctx, lang)
 
-    # Appendix: every *.md in language folder except core/system, in filename order
-    appendix_names = _list_appendix(lang)
-    extras = []
-    for name in appendix_names:
-        html = _llm_html(name, ctx, lang)
-        if html:
-            title = os.path.splitext(name)[0].replace("_"," ").title()
-            extras.append(f"<h3>{title}</h3>\n{html}")
-    extras_html = _kill_story("\n".join(extras)) if extras else ""
+    # ---- Deterministische Basistexte (kurz, DE/EN) ----
+    def det_short(section: str) -> str:
+        if lang.startswith("de"):
+            presets = {
+                "quickwins": "Start mit Dateninventur (10 Quellen), Policy‑Mini‑Seite (Zwecke/No‑Gos/Freigaben), Prompt‑Bibliothek (10 Aufgaben). Eine Schleife automatisieren (4‑Augen‑Check).",
+                "risks": "Risiken: Datenqualität, Compliance, Schatten‑IT. Absicherung: Datenverantwortliche benennen, AVV/Standorte prüfen, Logging & Evaluations festlegen, klare Freigaben.",
+                "recs": "Empfehlung: Wiederkehrendes automatisieren, Governance leichtgewichtig starten (Rollen, Policy, Logging), Qualifizierung in Schlüsselrollen.",
+                "roadmap": "0–3 M: Inventur/Policy/Quick‑Wins. 3–6 M: 2 Piloten + Evaluationskriterien. 6–12 M: Skalierung, Schulungen, Controlling‑KPIs.",
+            }
+        else:
+            presets = {
+                "quickwins": "Start with a light data inventory, a one‑page policy, and a prompt library (10 tasks). Automate one loop with four‑eyes check.",
+                "risks": "Risks: data quality, compliance, shadow IT. Mitigation: assign data owners, check DPAs/locations, set logging & evaluations.",
+                "recs": "Recommendation: automate repetitive work, lightweight governance (roles, policy, logging), upskill key roles.",
+                "roadmap": "0–3 m: inventory/policy/quick wins. 3–6 m: 2 pilots + evaluation gates. 6–12 m: scale, training, KPIs.",
+            }
+        return presets.get(section, "")
 
-    return {"company": company, "meta": meta,
-            "quick_wins_html": quick_wins_html, "eu_ai_act_html": eu_ai_act_html,
-            "tools_html": tools_html, "funding_html": funding_html,
-            "executive_summary_html": out.get("executive_summary_html",""),
-            "risks_html": out.get("risks_html",""),
-            "recommendations_html": out.get("recommendations_html",""),
-            "roadmap_html": out.get("roadmap_html",""),
-            "vision_html": out.get("vision_html",""),
-            "extras_html": extras_html}
+    # ---- LLM: Executive Summary (optional) ----
+    exec_sum = ""
+    if LLM_MODE != "off":
+        sys = "Sie sind präzise, sachlich, per Sie. Max. 900 Zeichen. Keine Anekdoten."
+        if lang.startswith("en"):
+            sys = "You are precise and succinct. Formal 'you'. Max 900 characters. No anecdotes."
+        prompt = f"Erstellen Sie eine Executive Summary (3–5 Sätze) für Branche={meta['branche']}, Größe={meta['groesse']}, Standort={meta['standort']}."
+        exec_sum = llm_generate(prompt, system=sys, max_tokens=450)
+        exec_sum = _sanitize_p(exec_sum)
+        if STORY_BLOCK.search(exec_sum) or _reject_if_english(_plain_text(exec_sum), lang):
+            exec_sum = ""
+
+    if not exec_sum:
+        # deterministische Kurzfassung
+        exec_sum = det_short("recs")
+
+    # ---- Weitere Kernsektionen deterministisch (LLM aus) ----
+    risks = det_short("risks")
+    recs = det_short("recs")
+    roadmap = det_short("roadmap")
+    quickwins = det_short("quickwins")
+
+    # ---- Whitelist-Tabellen ----
+    tools_html = render_tools_from_whitelist()
+    funding_html = render_funding_from_whitelist(bundesland=meta["standort"])
+
+    # ---- Gamechanger (optional LLM) ----
+    gamechanger_html = _gamechanger_llm(company, lang) if LLM_MODE != "off" else ""
+    news_html = _news_callout(company, lang)
+
+    # ---- Appendix (strict) ----
+    appendix_blocks = _appendix_blocks(lang)
+    appendix_html = "".join(f"<h3>{html.escape(b['title'])}</h3>{b['html']}" for b in appendix_blocks)
+
+    # ---- Kürzen & Sprache prüfen ----
+    exec_sum = _clamp_text(exec_sum)
+    risks = _clamp_text(risks)
+    recs = _clamp_text(recs)
+    roadmap = _clamp_text(roadmap)
+    quickwins = _clamp_text(quickwins)
+
+    for k in [exec_sum, risks, recs, roadmap, quickwins, gamechanger_html, appendix_html]:
+        if _reject_if_english(_plain_text(k or ""), lang) and lang.startswith("de"):
+            # hartes Fallback auf deterministische Texte
+            exec_sum = det_short("recs")
+            risks = det_short("risks")
+            recs = det_short("recs")
+            roadmap = det_short("roadmap")
+            quickwins = det_short("quickwins")
+            gamechanger_html = ""
+
+    # ---- Ergebnisdict ----
+    result = {
+        "meta": meta,
+        "executive_summary": exec_sum,
+        "quick_wins": quickwins,
+        "risks": risks,
+        "recommendations": recs,
+        "roadmap": roadmap,
+        "tools_table": tools_html,
+        "funding_table": funding_html,
+        "gamechanger": gamechanger_html + news_html,
+        "appendix": appendix_html,
+    }
+    return result
