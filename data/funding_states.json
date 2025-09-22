@@ -1,146 +1,94 @@
-[
-  {
-    "name": "Berlin – GründungsBONUS",
-    "region": "Berlin",
-    "target": "Gründung, Solo, Team",
-    "benefit": "Zuschuss (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "ibb.de (zu prüfen)",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "NRW – Mittelstand Innovativ & Digital (MID)",
-    "region": "Nordrhein-Westfalen",
-    "target": "KMU",
-    "benefit": "Zuschuss Digitalisierung/Innovation (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "wirtschaft.nrw (zu prüfen)",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Bayern – Digitalbonus (Freistaat)",
-    "region": "Bayern",
-    "target": "KMU",
-    "benefit": "Zuschuss Digitalisierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "bayern.de (zu prüfen)",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Baden‑Württemberg – Digitalisierungsprämie Plus (L‑Bank)",
-    "region": "Baden-Württemberg",
-    "target": "KMU",
-    "benefit": "Zuschuss/Darlehen Digitalisierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "l-bank.de (zu prüfen)",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Hamburg – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Hamburg",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Hessen – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Hessen",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Brandenburg – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Brandenburg",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Mecklenburg-Vorpommern – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Mecklenburg-Vorpommern",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Niedersachsen – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Niedersachsen",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Rheinland-Pfalz – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Rheinland-Pfalz",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Saarland – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Saarland",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Sachsen – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Sachsen",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Sachsen-Anhalt – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Sachsen-Anhalt",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Schleswig-Holstein – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Schleswig-Holstein",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Thüringen – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Thüringen",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  },
-  {
-    "name": "Bremen – Digitalisierung/Innovation (Landesprogramm – Titel prüfen)",
-    "region": "Bremen",
-    "target": "KMU/Gründung (je nach Programm)",
-    "benefit": "Investitions-/Beratungszuschuss, Qualifizierung (Details prüfen)",
-    "status": "programmstatus prüfen",
-    "source": "Landesportal / Förderbank – Link prüfen",
-    "as_of": "2025-09"
-  }
-]
+{
+  "Berlin": [
+    {
+      "program": "GründungsBONUS Plus",
+      "target": "Innovative Gründer:innen und Start-ups (bis 18 Monate nach Gründung)",
+      "benefit": "Zuschuss bis 50 % der förderfähigen Ausgaben, max. 50.000 € (u. a. Miete, Personal, IT, Patente).",
+      "status": "laufend (as_of 2025-09-22)",
+      "source": "https://www.ibb.de/en/foerderprogramme/gruendungsbonus-plus.html"
+    },
+    {
+      "program": "Transfer BONUS",
+      "target": "KMU in Berlin; Kooperationen mit Hochschulen/Forschungseinrichtungen",
+      "benefit": "Nicht rückzahlbarer Zuschuss für Technologie- und Wissenstransferprojekte.",
+      "status": "laufend (as_of 2025-09-22)",
+      "source": "https://www.ibb.de/en/foerderprogramme/transfer-bonus.html"
+    },
+    {
+      "program": "Berliner InvestitionsBONUS",
+      "target": "Berliner KMU, Freiberufler:innen, Solo-Selbstständige",
+      "benefit": "Investitionszuschuss (Basis 30 %) zur Stärkung der Wettbewerbsfähigkeit.",
+      "status": "laufend (as_of 2025-09-22)",
+      "source": "https://www.ibb-business-team.de/en/berliner-investitionsbonus/"
+    }
+  ],
+  "Nordrhein-Westfalen": [
+    {
+      "program": "MID-Gutscheine – Digitalisierung",
+      "target": "KMU in NRW (EU-KMU-Definition)",
+      "benefit": "Zuschuss bis 50 % der förderfähigen Kosten, i. d. R. bis 40.000 €; Beratungs-, Entwicklungs- und Umsetzungsleistungen.",
+      "status": "laufend; Loszahl 16 Anträge/Monat (as_of 2025-09-22)",
+      "source": "https://www.mittelstand-innovativ-digital.nrw/ | https://www.nrwbank.de/de/foerderung/foerderprodukte/15212/mittelstand-innovativ--digital-mid---gutscheine.html"
+    },
+    {
+      "program": "MID – Digitale Sicherheit",
+      "target": "KMU in NRW",
+      "benefit": "Zuschuss bis 50 % / max. 15.000 € für Analysen, Schulungen, Software zur IT-Sicherheitssteigerung.",
+      "status": "laufend; Loszahl 16 Anträge/Monat (as_of 2025-09-22)",
+      "source": "https://www.mittelstand-innovativ-digital.nrw/faq/mid-digitale-sicherheit | https://www.nrwbank.de/de/foerderung/foerderprodukte/60148/mittelstand-innovativ--digital-mid---digitale-sicherheit.html"
+    },
+    {
+      "program": "MID-Assistent/in",
+      "target": "Kleinst- und kleine Unternehmen (<50 MA) in NRW",
+      "benefit": "Zuschuss für die Neueinstellung von Hochschulabsolvent:innen (bis zu 48.000 € bzw. 33.000 € für 24 Monate, abhängig von Akademikerquote).",
+      "status": "Wartesaal vorübergehend geschlossen; bestehende Anträge werden bearbeitet (as_of 2025-09-22)",
+      "source": "https://www.mittelstand-innovativ-digital.nrw/mid-assistentin | https://www.mittelstand-innovativ-digital.nrw/"
+    }
+  ],
+  "Bayern": [
+    {
+      "program": "Digitalbonus.Bayern",
+      "target": "Kleine Unternehmen der gewerblichen Wirtschaft in Bayern",
+      "benefit": "Zuschüsse zur Digitalisierung & IT-Sicherheit; Programm bis 31.12.2027 (ELSTER-Unternehmenskonto erforderlich).",
+      "status": "laufend (as_of 2025-09-22)",
+      "source": "https://www.digitalbonus.bayern/ | https://www.stmwi.bayern.de/foerderungen/digitalbonus-bayern/"
+    },
+    {
+      "program": "Innovationsgutschein Bayern",
+      "target": "KMU/Handwerksbetriebe",
+      "benefit": "Zuschuss für externe Entwicklungsleistungen und wissenschaftliche Beratung.",
+      "status": "laufend (as_of 2025-09-22)",
+      "source": "https://www.bayern-innovativ.de/leistungen/projekttraeger/projekttraeger-bayern/innovationsgutschein-bayern/ | https://www.stmwi.bayern.de/foerderungen/innovationsgutscheine/"
+    },
+    {
+      "program": "LfA Digitalisierungskredit",
+      "target": "Unternehmen in Bayern (bis 500 Mio. € Umsatz; Basisdigitalisierung nur KMU)",
+      "benefit": "Darlehen bis 15 Mio. €; 1 % Tilgungszuschuss für Basisdigitalisierung (Stufe 1).",
+      "status": "laufend (as_of 2025-09-22)",
+      "source": "https://www.lfa.de/website/de/foerderangebote/transformation/innovation/Digitalisierungskredit/index.php"
+    }
+  ],
+  "Baden-Württemberg": [
+    {
+      "program": "Digitalisierungsprämie Plus (Zuschuss)",
+      "target": "Mittelständische Unternehmen in BW",
+      "benefit": "Zuschussvariante bis 3.000 €; alternativ Darlehensvariante mit Tilgungszuschuss (Invest 25.000–250.000 €).",
+      "status": "laufend (as_of 2025-09-22)",
+      "source": "https://www.l-bank.de/produkte/finanzhilfen/digiplus-zuschuss.html | https://wm.baden-wuerttemberg.de/de/service/foerderprogramme-und-aufrufe/liste-foerderprogramme/digitalisierungspraemie"
+    },
+    {
+      "program": "Innovationsgutschein Hightech BW / Start-up BW",
+      "target": "KMU sowie Start-ups bis 5 Jahre nach Gründung",
+      "benefit": "Zuschuss bis 20.000 € (Förderquote bis 50 %) für wissenschaftliche Vorleistungen und umsetzungsorientierte F&E.",
+      "status": "laufend (as_of 2025-09-22)",
+      "source": "https://wm.baden-wuerttemberg.de/de/innovation/innovationsgutscheine | https://www.l-bank.de/produkte/finanzhilfen/innovationsgutschein.html"
+    },
+    {
+      "program": "Invest BW – Innovationsförderung",
+      "target": "Unternehmen in BW (Einzel- und Verbundvorhaben)",
+      "benefit": "Projektzuschüsse; thematische Förderaufrufe (z. B. 20.08.2025 mit Deadline 10.10.2025).",
+      "status": "Förderaufruf offen (as_of 2025-09-22)",
+      "source": "https://invest-bw.de/ | https://wm.baden-wuerttemberg.de/de/service/foerderprogramme-und-aufrufe/liste-foerderprogramme/invest-bw-innovationsfoerderung"
+    }
+  ]
+}
