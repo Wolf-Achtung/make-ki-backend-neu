@@ -264,10 +264,33 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
     except Exception as e:
         logging.getLogger(__name__).exception("[FEEDBACK] Fehler: %s", e); raise HTTPException(status_code=500, detail="feedback failed")
 
-# Feedback-Endpunkte (unverändert)
-@app.post("/feedback")      async def feedback_root(payload: Feedback, request: Request, authorization: Optional[str] = None): return await _handle_feedback(payload, request, authorization)
-@app.post("/api/feedback")  async def feedback_api(payload: Feedback, request: Request, authorization: Optional[str] = None): return await _handle_feedback(payload, request, authorization)
-@app.post("/v1/feedback")   async def feedback_v1(payload: Feedback, request: Request, authorization: Optional[str] = None): return await _handle_feedback(payload, request, authorization)
+# Feedback-Endpunkte (mehrzeilig, gültige Python-Syntax)
+@app.post("/feedback")
+async def feedback_root(
+    payload: Feedback,
+    request: Request,
+    authorization: Optional[str] = None,
+):
+    return await _handle_feedback(payload, request, authorization)
+
+
+@app.post("/api/feedback")
+async def feedback_api(
+    payload: Feedback,
+    request: Request,
+    authorization: Optional[str] = None,
+):
+    return await _handle_feedback(payload, request, authorization)
+
+
+@app.post("/v1/feedback")
+async def feedback_v1(
+    payload: Feedback,
+    request: Request,
+    authorization: Optional[str] = None,
+):
+    return await _handle_feedback(payload, request, authorization)
+
 
 # In-Memory Job Store (unverändert)
 TASKS: Dict[str, Dict[str, Any]] = {}
