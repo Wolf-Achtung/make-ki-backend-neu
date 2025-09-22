@@ -312,22 +312,21 @@ def current_user(request: Request) -> Dict[str, Any]:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
 # Health & Diagnose (Mehrzeiler!)
+# /health (Mehrzeiler!)
 @app.get("/health")
 async def health():
-    return JSONResponse({
-        "ok": True,
-        "time": int(time.time()),
-        "pdf_service_url": PDF_SERVICE_URL or None,
-        "pdf_post_mode": PDF_POST_MODE,
-        "timeout": PDF_TIMEOUT,
-        "version": "2025-09-22"
-    })
+    return {
+        "status": "ok"
+    }
 
+# /diag/analyze (Mehrzeiler!)
 @app.get("/diag/analyze")
 def diag_analyze():
     info = {"loaded": False, "has_analyze_briefing": False, "error": None}
     try:
-        if "" not in sys.path: sys.path.insert(0, "")
+        import importlib, sys
+        if "" not in sys.path:
+            sys.path.insert(0, "")
         ga = importlib.import_module("gpt_analyze")
         info["loaded"] = True
         info["module"] = getattr(ga, "__file__", "n/a")
@@ -336,7 +335,8 @@ def diag_analyze():
             info["analyze_briefing_doc"] = getattr(getattr(ga, "analyze_briefing"), "__doc__", "")
     except Exception as e:
         info["error"] = repr(e)
-    return JSONResponse(info)
+    return info
+
 
 # Helpers: Sanitizer & Templates (Fallback)
 def strip_code_fences(text: str) -> str:
