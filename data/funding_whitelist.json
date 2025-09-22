@@ -3,40 +3,45 @@
     "name": "BAFA – Beratungsförderung",
     "region": "Bund",
     "target": "KMU, Solo",
-    "benefit": "Zuschuss für Beratung (Strategie, Digitalisierung, KI)",
-    "status": "laufend (as‑of 2025‑09)",
-    "source": "bafa.de"
+    "benefit": "Zuschuss Beratung (Strategie, Digitalisierung, KI)",
+    "status": "laufend",
+    "source": "bafa.de",
+    "as_of": "2025-09"
   },
   {
     "name": "Digital Jetzt (BMWK)",
     "region": "Bund",
     "target": "KMU",
     "benefit": "Investitionen & Qualifizierung",
-    "status": "laufend (as‑of 2025‑09)",
-    "source": "bmwk.de"
+    "status": "laufend",
+    "source": "bmwk.de",
+    "as_of": "2025-09"
   },
   {
     "name": "KOMPASS (BMAS)",
     "region": "Bund",
     "target": "Solo‑Selbstständige",
     "benefit": "Zuschuss Weiterbildung",
-    "status": "aktive Programmphase prüfen (as‑of 2025‑09)",
-    "source": "bmas.de"
+    "status": "kontingentabhängig",
+    "source": "bmas.de",
+    "as_of": "2025-09"
   },
   {
-    "name": "KMU‑innovativ",
+    "name": "KMU‑innovativ (BMBF)",
     "region": "Bund",
     "target": "KMU/F&E",
     "benefit": "Zuschüsse FuE inkl. KI",
     "status": "laufend",
-    "source": "bmbf.de"
+    "source": "bmbf.de",
+    "as_of": "2025-09"
   },
   {
     "name": "GründungsBONUS",
     "region": "Berlin",
     "target": "Gründung, Solo, Team",
     "benefit": "Zuschuss",
-    "status": "programmstatus prüfen (as‑of 2025‑09)",
-    "source": "ibb.de"
+    "status": "programmstatus prüfen",
+    "source": "ibb.de",
+    "as_of": "2025-09"
   }
 ]

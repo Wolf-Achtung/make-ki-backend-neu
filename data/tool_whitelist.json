@@ -1,86 +1,30 @@
 [
   {
-    "name": "Mistral (Codestral/Small)",
-    "category": "LLM/Assistant (on‑prem/sovereign)",
+    "category": "LLM/Assistant (on‑prem/EU)",
+    "name": "Mistral (Small/Codestral)",
     "sovereign": true,
-    "data_residency": "EU/self‑host",
-    "notes": "Open‑source Modelle; on‑prem möglich"
+    "hosting": "EU/self‑host",
+    "note": "Open‑source Modelle; on‑prem möglich"
   },
   {
-    "name": "Aleph Alpha",
     "category": "LLM/Assistant (EU)",
+    "name": "Aleph Alpha",
     "sovereign": true,
-    "data_residency": "EU (DE)",
-    "notes": "Governance/Evals; EU‑AI‑Act ready"
+    "hosting": "EU (DE)",
+    "note": "Governance/Evals; EU‑AI‑Act ready"
   },
   {
-    "name": "Hugging Face",
     "category": "Model Hub/Inference",
+    "name": "Hugging Face",
     "sovereign": true,
-    "data_residency": "EU options/self‑host",
-    "notes": "Open‑Models; control plane EU möglich"
+    "hosting": "EU‑Optionen/self‑host",
+    "note": "Open‑Models; control plane EU möglich"
   },
   {
-    "name": "Nextcloud + Collabora",
     "category": "Collaboration/Files",
+    "name": "Nextcloud + Collabora",
     "sovereign": true,
-    "data_residency": "self‑host/EU",
-    "notes": "Dokumente; Alternativen zu O365/Google"
-  },
-  {
-    "name": "CryptPad",
-    "category": "Docs/Notes",
-    "sovereign": true,
-    "data_residency": "EU",
-    "notes": "E2E‑verschlüsselt"
-  },
-  {
-    "name": "Matrix (Element)",
-    "category": "Messaging",
-    "sovereign": true,
-    "data_residency": "self‑host/EU",
-    "notes": "E2E; Federation"
-  },
-  {
-    "name": "Wire",
-    "category": "Messaging",
-    "sovereign": true,
-    "data_residency": "EU",
-    "notes": "E2E; EU hosting"
-  },
-  {
-    "name": "Slack Enterprise Grid",
-    "category": "Messaging/Integrations",
-    "sovereign": false,
-    "data_residency": "US/EU options",
-    "notes": "Controls/SCIM/DLP möglich"
-  },
-  {
-    "name": "Trello Enterprise",
-    "category": "Project Mgmt",
-    "sovereign": false,
-    "data_residency": "US/EU options",
-    "notes": "Board/Automations"
-  },
-  {
-    "name": "Miro Enterprise",
-    "category": "Whiteboard",
-    "sovereign": false,
-    "data_residency": "EU options",
-    "notes": "Workshops/Ideation"
-  },
-  {
-    "name": "KNIME",
-    "category": "Analytics/ML (open)",
-    "sovereign": true,
-    "data_residency": "self‑host/EU",
-    "notes": "No‑code pipelines"
-  },
-  {
-    "name": "H2O.ai",
-    "category": "AutoML",
-    "sovereign": false,
-    "data_residency": "US/EU options",
-    "notes": "Open‑source + enterprise"
+    "hosting": "self‑host/EU",
+    "note": "Dokumente; Alternative zu O365/Google"
   }
 ]
