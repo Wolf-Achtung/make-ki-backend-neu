@@ -546,13 +546,12 @@ async def send_html_to_pdf_service(html: str, user_email: str, subject: str = "K
                 body_snip = None
                 try:
                     ct = resp.headers.get("content-type","")
-                    if "application/json" in ct:
-                        body_snip = json.dumps(resp.json(), ensure_ascii=False)[:1024]
-                    else:
-                        body_snip = (resp.text or "")[:1024]
+                    snippet = (resp.text or "")[:1024] if "application/json" not in ct else json.dumps(resp.json(), ensure_ascii=False)[:1024]
                 except Exception:
-                    body_snip = None
-
+                    snippet = None
+                    if not (200 <= resp.status_code < 300):           
+                        logger.error("[PDF] rid=%s attempt=%s mode=%s status=%s body_snip=%r",
+                 rid, attempt, mode, resp.status_code, snippet)
                 logger.info("[PDF] rid=%s attempt=%s mode=%s status=%s", rid, attempt, mode, resp.status_code)
                 if ok:
                     data = {}
