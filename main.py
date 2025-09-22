@@ -1,6 +1,6 @@
 # main.py — Vollversion (Weg A, auf Basis der „großen“ Datei)
-# Unverändert beibehalten: /api/login, /briefing_async, /briefing_status, /pdf_test, /health, /diag/analyze,
-#                          Feedback-Endpoints, DB-/SMTP-/PDF-Logik, Idempotency.
+# Beibehalten: /api/login, /briefing_async, /briefing_status, /pdf_test, /health, /diag/analyze,
+#              Feedback-Endpoints, DB-/SMTP-/PDF-Logik, Idempotency.
 # Neu/Geändert: Template-Only Rendering via Jinja (ENV: TEMPLATE_DIR/DE/EN) und
 #               analyze_to_html() ignoriert Analyzer-Full-HTML.
 
@@ -31,7 +31,7 @@ from jose.exceptions import JWTError
 import httpx
 from pydantic import BaseModel
 
-# ---- NEU: Jinja für Template-Only Rendering --------------------------------
+# ---- Jinja für Template-Only Rendering -------------------------------------
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 # --- SMTP/E-Mail Settings ---------------------------------------------------
@@ -163,7 +163,7 @@ CORS_ALLOW = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")
 if CORS_ALLOW == ["*"]:
     CORS_ALLOW = ["*"]
 
-# ---- NEU: Template-ENV (Jinja) --------------------------------------------
+# ---- Template-ENV (Jinja) --------------------------------------------------
 TEMPLATE_DIR = Path(os.getenv("TEMPLATE_DIR", "templates"))
 TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
 TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
@@ -212,7 +212,7 @@ async def _on_shutdown_db_pool():
     except Exception as e:
         logging.getLogger(__name__).exception("[DB] Shutdown-Close fehlgeschlagen: %s", e)
 
-# Feedback-Model & Handler (unverändert)
+# Feedback-Model & Handler
 class Feedback(BaseModel):
     email: Optional[str] = None; variant: Optional[str] = None; report_version: Optional[str] = None
     hilfe: Optional[str] = None; verstaendlich_analyse: Optional[str] = None; verstaendlich_empfehlung: Optional[str] = None; vertrauen: Optional[str] = None; dauer: Optional[str] = None
@@ -264,7 +264,7 @@ async def _handle_feedback(payload: Feedback, request: Request, authorization: O
     except Exception as e:
         logging.getLogger(__name__).exception("[FEEDBACK] Fehler: %s", e); raise HTTPException(status_code=500, detail="feedback failed")
 
-# Feedback-Endpunkte (mehrzeilig, gültige Python-Syntax)
+# Feedback-Endpunkte (Mehrzeiler!)
 @app.post("/feedback")
 async def feedback_root(
     payload: Feedback,
@@ -272,7 +272,6 @@ async def feedback_root(
     authorization: Optional[str] = None,
 ):
     return await _handle_feedback(payload, request, authorization)
-
 
 @app.post("/api/feedback")
 async def feedback_api(
@@ -282,7 +281,6 @@ async def feedback_api(
 ):
     return await _handle_feedback(payload, request, authorization)
 
-
 @app.post("/v1/feedback")
 async def feedback_v1(
     payload: Feedback,
@@ -290,18 +288,19 @@ async def feedback_v1(
     authorization: Optional[str] = None,
 ):
     return await _handle_feedback(payload, request, authorization)
-
-
-# In-Memory Job Store (unverändert)
+# In-Memory Job Store
 TASKS: Dict[str, Dict[str, Any]] = {}
 def new_job() -> str: return uuid.uuid4().hex
 def set_job(job_id: str, **kwargs): TASKS.setdefault(job_id, {}); TASKS[job_id].update(kwargs)
 
-# JWT-Auth (unverändert)
+# JWT-Auth
 def create_access_token(data: Dict[str, Any], expires_in: int = JWT_EXP_SECONDS) -> str:
     payload = data.copy(); payload["exp"] = int(time.time()) + expires_in
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
-def decode_token(token: str) -> Dict[str, Any]: return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
+
+def decode_token(token: str) -> Dict[str, Any]:
+    return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
+
 def current_user(request: Request) -> Dict[str, Any]:
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
@@ -312,23 +311,34 @@ def current_user(request: Request) -> Dict[str, Any]:
     except JWTError as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
-# Health & Diagnose (unverändert)
-@app.get("/health") async def health():
-    return JSONResponse({"ok": True, "time": int(time.time()), "pdf_service_url": PDF_SERVICE_URL or None, "pdf_post_mode": PDF_POST_MODE, "timeout": PDF_TIMEOUT, "version": "2025-09-22"})
-@app.get("/diag/analyze") def diag_analyze():
+# Health & Diagnose (Mehrzeiler!)
+@app.get("/health")
+async def health():
+    return JSONResponse({
+        "ok": True,
+        "time": int(time.time()),
+        "pdf_service_url": PDF_SERVICE_URL or None,
+        "pdf_post_mode": PDF_POST_MODE,
+        "timeout": PDF_TIMEOUT,
+        "version": "2025-09-22"
+    })
+
+@app.get("/diag/analyze")
+def diag_analyze():
     info = {"loaded": False, "has_analyze_briefing": False, "error": None}
     try:
         if "" not in sys.path: sys.path.insert(0, "")
         ga = importlib.import_module("gpt_analyze")
-        info["loaded"] = True; info["module"] = getattr(ga, "__file__", "n/a")
+        info["loaded"] = True
+        info["module"] = getattr(ga, "__file__", "n/a")
         info["has_analyze_briefing"] = hasattr(ga, "analyze_briefing")
-        if info["has_analyze_briefing"]: info["analyze_briefing_doc"] = getattr(getattr(ga,"analyze_briefing"),"__doc__","")
+        if info["has_analyze_briefing"]:
+            info["analyze_briefing_doc"] = getattr(getattr(ga, "analyze_briefing"), "__doc__", "")
     except Exception as e:
         info["error"] = repr(e)
     return JSONResponse(info)
-# ----------------------------
-# Helpers: Sanitizer & Templates (Fallback-Funktionen bleiben erhalten)
-# ----------------------------
+
+# Helpers: Sanitizer & Templates (Fallback)
 def strip_code_fences(text: str) -> str:
     if not text: return text
     t = text.replace("\r", "")
@@ -363,9 +373,7 @@ def render_html_from_report(report: Dict[str, Any], lang: str) -> str:
         out = out.replace(token, str(v) if v is not None else "")
     return strip_code_fences(out)
 
-# ----------------------------
 # Analyze-Loader
-# ----------------------------
 def load_analyze_module():
     try:
         if "" not in sys.path: sys.path.insert(0, "")
@@ -380,9 +388,7 @@ def load_analyze_module():
         logger.exception("gpt_analyze Importfehler: %s", e)
         return None, None
 
-# ----------------------------
 # PDF-Service Anbindung
-# ----------------------------
 async def warmup_pdf_service(request_id: str, base_url: str, timeout: float = 10.0):
     if not base_url: return
     try:
@@ -403,7 +409,7 @@ async def send_html_to_pdf_service(html: str, user_email: str, subject: str = "K
     limits = httpx.Limits(max_keepalive_connections=10, max_connections=20, keepalive_expiry=60.0)
     async with httpx.AsyncClient(http2=True, timeout=timeouts, limits=limits) as client:
         last_exc = None
-        for attempt in range(1, 4):
+        for attempt in range(1, 3+1):
             try:
                 if PDF_POST_MODE == "json":
                     payload = {"html": html, "to": user_email or "", "adminEmail": ADMIN_EMAIL or "", "subject": subject, "lang": lang, "rid": rid}
@@ -428,9 +434,7 @@ async def send_html_to_pdf_service(html: str, user_email: str, subject: str = "K
 
 async def asyncio_sleep(sec: float):
     import asyncio; await asyncio.sleep(sec)
-# ----------------------------
 # Analyze Flow (Template-Only Guard)
-# ----------------------------
 async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
     """
     Ruft gpt_analyze.analyze_briefing(body, lang) auf und rendert
@@ -470,9 +474,7 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
 def resolve_recipient(user_claims: Dict[str, Any], body: Dict[str, Any]) -> str:
     return body.get("to") or user_claims.get("email") or user_claims.get("sub") or ADMIN_EMAIL
 
-# ----------------------------
-# Auth: /api/login (unverändert)
-# ----------------------------
+# Auth: /api/login
 @app.post("/api/login")
 def api_login(body: Dict[str, Any]):
     email = (body.get("email") or "").strip().lower()
@@ -482,18 +484,14 @@ def api_login(body: Dict[str, Any]):
     token = create_access_token({"sub": email, "email": email, "role": "user"})
     return {"access_token": token, "token_type": "bearer"}
 
-# ----------------------------
 # Synchrone HTML-Rückgabe (praktisch für Debug/Preview)
-# ----------------------------
 @app.post("/render_html")
 async def render_html_endpoint(body: Dict[str, Any], user=Depends(current_user)):
     lang = (body.get("lang") or "de").lower()
     html = await analyze_to_html(body, lang)
     return {"ok": True, "lang": lang, "html": html}
 
-# ----------------------------
-# /briefing_async (unverändert, aber nutzt Template-Only HTML)
-# ----------------------------
+# /briefing_async
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends(current_user)):
     lang = (body.get("lang") or "de").lower()
@@ -542,18 +540,14 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
     bg.add_task(run)
     return {"job_id": job_id, "status": "queued"}
 
-# ----------------------------
-# /briefing_status/<job_id> (unverändert)
-# ----------------------------
+# /briefing_status/<job_id>
 @app.get("/briefing_status/{job_id}")
 async def briefing_status(job_id: str, user=Depends(current_user)):
     st = TASKS.get(job_id)
     if not st: raise HTTPException(status_code=404, detail="unknown job_id")
     return JSONResponse(st)
 
-# ----------------------------
-# /pdf_test (unverändert)
-# ----------------------------
+# /pdf_test
 @app.post("/pdf_test")
 async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
     lang = (body.get("lang") or "de").lower()
@@ -563,9 +557,7 @@ async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
     res = await send_html_to_pdf_service(html, to, subject="KI-Readiness Report (Test)", lang=lang, request_id="pdf_test")
     return res
 
-# ----------------------------
 # Root
-# ----------------------------
 @app.get("/")
 def root():
     return HTMLResponse(f"""<!doctype html>
