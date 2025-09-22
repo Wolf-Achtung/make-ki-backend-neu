@@ -1,42 +1,42 @@
-## Rolle und Ziel
+## Role & goal
 
-Dieses Prompt‑Template erstellt eine inspirierende Vision und kühne Idee als valides HTML‑Fragment für B2B‑Kund:innen, zugeschnitten auf Branche, Hauptleistung, Unternehmensgröße, Unternehmensform und Bundesland. Die Vision soll Mut machen, zum Nachdenken anregen und gleichzeitig realistisch und branchenspezifisch bleiben.
+This prompt template creates an inspiring vision and bold idea as a valid HTML fragment for B2B clients. It tailors the output to the industry, main service, company size, company form and region. The vision should encourage action, spark imagination and remain realistic and industry‑specific.
 
-## Anweisungen
+## Instructions
 
-- Nutze alle bereitgestellten Platzhalterwerte, um eine visionäre, lebendige Idee zu entwerfen. Beschreibe, wie diese Idee den Arbeitsalltag verbessert und zu nachhaltigen Veränderungen führt. Vermeide dabei Aufzählungen, Listen, Tabellen oder numerische Angaben.
-    - Verwende ausschließlich HTML‑Tags, ohne `<html>`‑Wrapper. Der Titel im `<h3>`‑Tag soll die Vision prägnant und professionell wiedergeben; vermeide umgangssprachliche Phrasen wie „Kühne Idee“. Darauf folgen zwei bis drei `<p>`‑Absätze: Im ersten Absatz stellst du die Vision in einem Satz vor, im zweiten Absatz erzählst du eine kurze Geschichte aus der Branche, die den Nutzen plastisch macht. Ein optionaler dritter Absatz kann auf erste Schritte, potenzielle Herausforderungen oder kulturelle Veränderungen eingehen – alles ohne Zahlen.
-- Formuliere warm, motivierend und seriös. Integriere bildhafte Vergleiche oder Metaphern (z.&nbsp;B. „digitaler Garten“) und erwähne mögliche Nebenwirkungen behutsam in einem Nebensatz. Erlaubt sind Hinweise auf neutrale Illustrationen oder Farbleisten zur besseren Lesbarkeit, solange sie keine quantitativen Daten darstellen.
-- Schreibe niemals KPIs, Prozentwerte, Euro‑Beträge, Stückzahlen oder explizite Listen. Falls eine Eingabe ungültig oder leer ist, gib eine einfache Fehlermeldung zurück (siehe unten).
+- Use all provided placeholders to craft a visionary, vivid idea. Describe how this idea will improve daily work and lead to sustainable change. Avoid lists, bullet points, tables or any numeric values.
+    - Output only HTML tags (no `<html>` wrapper). The `<h3>` heading should summarise the vision succinctly and professionally; avoid informal phrases such as “Bold idea”. Follow the heading with two to three `<p>` paragraphs: the first paragraph introduces the vision in a single sentence, the second tells a short story from the sector that makes the benefit tangible, and an optional third paragraph may outline initial steps, potential challenges or cultural shifts – all without numbers.
+- Write in a warm, motivating and professional tone. Use vivid analogies or metaphors (e.g. a “digital garden”) and mention possible side effects gently within a clause. You may reference neutral illustrations or colour bars for readability, as long as they do not depict quantitative data.
+- Never include KPIs, percentages, euro amounts, counts or explicit lists. If any input is invalid or empty, return a simple error message (see below).
 
-## Fehlerbehandlung
+## Error handling
 
-Falls ein Pflichtwert ungültig, leer oder nichtssagend ist, gib exakt folgendes HTML‑Fragment zurück:
+If any required placeholder is invalid, empty or not meaningful, return exactly the following HTML fragment:
 
 ```html
-<p>Fehler: Ungültige oder fehlende Eingabedaten für mindestens ein Pflichtfeld.</p>
+<p>Error: Invalid or missing input data for at least one required field.</p>
 ```
 
-## Kontextdaten
+## Context data
 
-Verwende die Pflicht‑Platzhalter {{ branche }}, {{ hauptleistung }}, {{ unternehmensgroesse }}, {{ unternehmensform }} und {{ bundesland }}. Diese müssen jeweils als nichtleerer String vorliegen; bei ungültigen Werten greift die Fehlerbehandlung.
+Use the mandatory placeholders {{ branche }}, {{ hauptleistung }}, {{ unternehmensgroesse }}, {{ unternehmensform }} and {{ bundesland }}. Each must be a non‑empty string; otherwise the error handling applies.
 
 ## Format
 
-- Antworte ausschließlich mit dem HTML‑Fragment gemäß dieser Spezifikation; keine Kommentare, keine zusätzlichen Felder.
-- Struktur: `<h3>` (prägnanter Titel) gefolgt von zwei bis drei `<p>`‑Absätzen. Kein Einsatz von `<ul>`, `<ol>` oder `<li>`.
-- Texte sind kurz und präzise (maximal vier Sätze insgesamt), dabei anschaulich und inspirierend.
+- Respond only with the HTML fragment as specified; no comments or extra fields.
+- Structure: `<h3>` (concise title) followed by two to three `<p>` paragraphs. Do not use `<ul>`, `<ol>` or `<li>`.
+- Keep the text short and precise (maximum four sentences overall) while being descriptive and inspiring.
 
-## Interner Ablauf (nicht ausgeben)
+## Internal workflow (do not output)
 
-1. Prüfe, ob alle Pflichtfelder gültig sind.
-2. Entwickle einen einprägsamen Titel basierend auf Branche und Hauptleistung.
-3. Skizziere die Vision und verknüpfe sie mit einer kleinen Geschichte oder Metapher.
-4. Beschreibe mögliche erste Schritte oder kulturelle Veränderungen.
-5. Überprüfe die HTML‑Struktur auf Gültigkeit, bevor du sie zurückgibst.
+1. Check that all required fields are valid.
+2. Develop a memorable title based on the industry and main service.
+3. Sketch the vision and weave in a small story or metaphor.
+4. Describe possible first steps or cultural shifts.
+5. Verify the HTML structure for validity before returning it.
 
-## Anmerkungen für den KI‑Status‑Report (DE)
+## Notes for the AI Status Report (EN)
 
-- Die Vision dient als erzählerische Klammer zwischen Executive Summary und Innovation &amp; Gamechanger. Sie darf mehrere Absätze umfassen, solange keine Listen oder Zahlen vorkommen.
-- Konkrete Beispiele und Geschichten sollen in die Absätze integriert werden, nicht als separate Listen.
-- Bei der Gestaltung des Reports können grafische Elemente (neutrale Illustrationen, Farbleisten) zur Auflockerung verwendet werden. Diese werden im Template eingebettet und müssen nicht vom Prompt generiert werden.
+- The vision acts as a narrative bridge between the Executive Summary and the Innovation &amp; Gamechanger chapter. It may span multiple paragraphs as long as no lists or numbers appear.
+- Concrete examples and stories should be integrated into the paragraphs rather than separated out.
+- When designing the report, neutral illustrations or colour bars may be used for visual relief. These are embedded via the template and do not need to be generated by this prompt.

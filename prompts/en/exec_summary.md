@@ -1,0 +1,2 @@
+<context>Company: {{company.name}} (Industry: {{company.industry}}, Size: {{company.size}}, Location: {{company.location}})</context>
+<task>2 short paragraphs: (1) situation & opportunities; (2) next steps (governance, 90‑day quick wins). No marketing; do not name tools or funding programmes.</task>
