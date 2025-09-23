@@ -1,0 +1,1 @@
+<p><strong>Start:</strong> Inventur, Policy, Prompt‑Bibliothek, 1 Pilot. <strong>Tools?</strong> Siehe Whitelist‑Tabelle. <strong>Messung:</strong> vorher/nachher Zeit & Qualität.</p>

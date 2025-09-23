@@ -1,0 +1,1 @@
+<p><strong>Start:</strong> Inventory, policy, prompt library, one pilot. <strong>Tools?</strong> See whitelist. <strong>Measure:</strong> before/after time & quality.</p>
