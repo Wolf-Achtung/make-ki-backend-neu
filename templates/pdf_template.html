@@ -4,16 +4,18 @@
 <meta charset="utf-8" />
 <title>KI‑Statusbericht</title>
 <style>
-/* Cheatsheet-inspirierter Look (Bessere Präsentationen ab S.2): klare Hierarchie, Kicker-Linien, Callouts, saubere Tabellen) */
 :root{
   --ink:#0F172A; --muted:#475569; --brand:#1E40AF; --accent:#3B82F6;
   --bg:#FFFFFF; --bg-soft:#F8FAFC; --line:#E2E8F0; --callout:#EFF6FF;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:13.5pt/1.52 system-ui,-apple-system,Segoe UI,Roboto,Arial;}
-main{margin:22mm 18mm 24mm;}
+header.brand{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--line);padding:14px 18mm 10px;margin:0}
+header.brand .logo{height:28px;width:auto;object-fit:contain}
+header.brand .brandname{font-weight:800;color:var(--brand);font-size:14pt;letter-spacing:.2px}
+main{margin:18mm 18mm 24mm;}
 h1,h2,h3{margin:0 0 .35em;color:var(--brand);font-weight:700;line-height:1.2;}
-h1{font-size:24pt;margin-top:0;}
+h1{font-size:24pt;margin-top:6px}
 h2{font-size:16pt;margin-top:1.4em;padding-bottom:.2em;border-bottom:3px solid var(--line);}
 h2 .kicker{display:block;color:var(--muted);font-weight:600;font-size:10pt;letter-spacing:.02em;margin-bottom:.15em;}
 h3{font-size:13.5pt;margin-top:.9em}
@@ -30,57 +32,61 @@ p{margin:.3em 0 .6em}
 .badge{display:inline-block;font-size:.8em;padding:.15em .5em;border-radius:.5em}
 .badge.souveraen{background:#DCFCE7;color:#065F46}
 footer.pagenum{position:fixed;bottom:8mm;left:0;right:0;text-align:center;color:var(--muted);font-size:10pt}
-
-/* Fußzeilen-Seitenzahl per CSS Counter (Puppeteer unterstützt das) */
-@page { size: A4; margin: 20mm 15mm 24mm 15mm; }
+@page { size: A4; margin: 16mm 15mm 24mm 15mm; }
 @page { @bottom-center { content: counter(page) " / " counter(pages); } }
 </style>
 </head>
 <body>
-<footer class="pagenum"><script>document.write('');</script></footer>
+<header class="brand">
+  {% if meta.logo_url %}<img class="logo" src="{{ meta.logo_url }}" alt="KI‑Sicherheit">{% endif %}
+  <div class="brandname">KI‑Sicherheit.jetzt</div>
+</header>
 <main>
   <h1>KI‑Statusbericht</h1>
   <div class="section">
     <div><strong>Unternehmen:</strong> {{ meta.company_name }}</div>
     <div><strong>Branche:</strong> {{ meta.branche }} &nbsp;&nbsp; <strong>Größe:</strong> {{ meta.groesse }} &nbsp;&nbsp; <strong>Standort:</strong> {{ meta.standort }}</div>
-    <div><strong>Datum:</strong> {{ meta.date }} &nbsp;&nbsp; <strong>Stand:</strong> {{ meta.as_of }}</div>
+    <div><strong>Datum:</strong> {{ meta.date }} &nbsp;&nbsp; <strong>Stand:</strong> {{ meta.as_of }} &nbsp;&nbsp; <strong>Erstellt von:</strong> {{ meta.created_by }}</div>
   </div>
 
   <h2><span class="kicker">Kontext & Ergebnis</span>Executive Summary</h2>
-  <div class="section"><p>{{ executive_summary }}</p></div>
+  <div class="section"><p>{{ executive_summary|safe }}</p></div>
+
+  <h2><span class="kicker">Ambition mit Nutzen</span>Visionäre Empfehlung</h2>
+  <div class="section"><div class="callout">{{ visionary_recommendation|safe }}</div></div>
 
   <h2><span class="kicker">Schnelle Wirkung</span>Quick Wins (90 Tage)</h2>
-  <div class="section"><p>{{ quick_wins }}</p></div>
+  <div class="section"><p>{{ quick_wins|safe }}</p></div>
 
   <h2><span class="kicker">Regulatorik & Nachweise</span>EU AI Act &amp; Compliance</h2>
   <div class="section">
     <div class="callout">Klassifikation · Dokumentation (technical file) · Datenquellen · Metriken · Human Oversight · Logging · Evaluations · Risiko‑Management · Rollen · DSFA bei hohem Risiko · AVV · Speicherorte (EU/EEA), RAG‑Datenhaltung</div>
-    {% if regwatch %}<div class="section">{{ regwatch }}</div>{% endif %}
+    {% if regwatch %}<div class="section">{{ regwatch|safe }}</div>{% endif %}
   </div>
 
   <h2><span class="kicker">Risiken steuern</span>Risiken &amp; Absicherung</h2>
-  <div class="section"><p>{{ risks }}</p></div>
+  <div class="section"><p>{{ risks|safe }}</p></div>
 
   <h2><span class="kicker">Pragmatische Schritte</span>Empfehlungen</h2>
-  <div class="section"><p>{{ recommendations }}</p></div>
+  <div class="section"><p>{{ recommendations|safe }}</p></div>
 
   <h2><span class="kicker">Planbare Umsetzung</span>Roadmap (12 Monate)</h2>
-  <div class="section"><p>{{ roadmap }}</p></div>
+  <div class="section"><p>{{ roadmap|safe }}</p></div>
 
   <h2><span class="kicker">Verlässliche Basis</span>Kuratiertes Tool‑Set (Whitelist‑Only)</h2>
-  <div class="section">{{ tools_table }}</div>
-  {% if tools_news %}<div class="section">{{ tools_news }}</div>{% endif %}
+  <div class="section">{{ tools_table|safe }}</div>
+  {% if tools_news %}<div class="section">{{ tools_news|safe }}</div>{% endif %}
 
   <h2><span class="kicker">Förder‑Hebel</span>Aktuelle Fördermöglichkeiten (Whitelist‑Only)</h2>
   <div class="section">
-    {{ funding_table }}
-    {% if funding_realtime %}<div class="section">{{ funding_realtime }}</div>{% endif %}
-    {% if funding_deadlines %}<div class="section">{{ funding_deadlines }}</div>{% endif %}
+    {{ funding_table|safe }}
+    {% if funding_realtime %}<div class="section">{{ funding_realtime|safe }}</div>{% endif %}
+    {% if funding_deadlines %}<div class="section">{{ funding_deadlines|safe }}</div>{% endif %}
     <p class="small muted">* Branchen‑Fit wird – falls im Datensatz vorhanden – in der Spalte „Leistung/Status“ ausgewiesen.</p>
   </div>
 
-  {% if gamechanger %}<h2><span class="kicker">Vision & Vorteil</span>Innovation &amp; Gamechanger</h2><div class="section">{{ gamechanger }}</div>{% endif %}
-  {% if appendix %}<h2><span class="kicker">Referenzen & Leitplanken</span>Anhang</h2><div class="section">{{ appendix }}</div>{% endif %}
+  {% if gamechanger %}<h2><span class="kicker">Vorsprung sichern</span>Innovation &amp; Gamechanger</h2><div class="section">{{ gamechanger|safe }}</div>{% endif %}
+  {% if appendix %}<h2><span class="kicker">Referenzen & Leitplanken</span>Anhang</h2><div class="section">{{ appendix|safe }}</div>{% endif %}
 
   <div class="hr"></div>
   <p class="small muted">KI‑Sicherheit.jetzt · © {{ meta.as_of[:4] }}</p>
