@@ -1,0 +1,93 @@
+[
+  {
+    "category": "LLM/Assistant (on‑prem/EU)",
+    "name": "Mistral (Small/Codestral)",
+    "sovereign": true,
+    "hosting": "EU/self‑host",
+    "note": "Open‑Modelle; on‑prem möglich"
+  },
+  {
+    "category": "LLM/Assistant (EU)",
+    "name": "Aleph Alpha",
+    "sovereign": true,
+    "hosting": "EU (DE)",
+    "note": "Unternehmens‑Features, EU‑Standorte"
+  },
+  {
+    "category": "Model Hub/Inference",
+    "name": "Hugging Face",
+    "sovereign": true,
+    "hosting": "EU‑Optionen/self‑host",
+    "note": "Open‑Models, CI/Kontroll‑Optionen"
+  },
+  {
+    "category": "Local UI/Orchestration",
+    "name": "OpenWebUI / Ollama",
+    "sovereign": true,
+    "hosting": "self‑host",
+    "note": "lokale Nutzung, schnelle Prototypen"
+  },
+  {
+    "category": "Collaboration/Files",
+    "name": "Nextcloud + Collabora",
+    "sovereign": true,
+    "hosting": "self‑host/EU",
+    "note": "Dokumente/Office, Alternative zu O365/Google"
+  },
+  {
+    "category": "Docs/Notes",
+    "name": "CryptPad",
+    "sovereign": true,
+    "hosting": "EU",
+    "note": "E2E‑verschlüsselt (Editor, Kanban, Whiteboard)"
+  },
+  {
+    "category": "Messaging",
+    "name": "Matrix (Element)",
+    "sovereign": true,
+    "hosting": "self‑host/EU",
+    "note": "E2E; Föderation; Integrationen"
+  },
+  {
+    "category": "Messaging",
+    "name": "Wire",
+    "sovereign": true,
+    "hosting": "EU",
+    "note": "E2E; EU‑Hosting"
+  },
+  {
+    "category": "Messaging/Integrations",
+    "name": "Slack Enterprise Grid",
+    "sovereign": false,
+    "hosting": "US/EU options",
+    "note": "Kontrollen/SCIM/DLP möglich"
+  },
+  {
+    "category": "Project Mgmt",
+    "name": "Trello Enterprise",
+    "sovereign": false,
+    "hosting": "US/EU options",
+    "note": "Boards, Automations"
+  },
+  {
+    "category": "Whiteboard",
+    "name": "Miro Enterprise",
+    "sovereign": false,
+    "hosting": "EU options",
+    "note": "Workshops/Ideation"
+  },
+  {
+    "category": "Analytics/ML (open)",
+    "name": "KNIME",
+    "sovereign": true,
+    "hosting": "self‑host/EU",
+    "note": "No‑code pipelines"
+  },
+  {
+    "category": "AutoML",
+    "name": "H2O.ai",
+    "sovereign": false,
+    "hosting": "US/EU options",
+    "note": "Open‑source + Enterprise"
+  }
+]
