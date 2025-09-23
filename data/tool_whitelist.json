@@ -1,93 +1,82 @@
 [
   {
-    "category": "LLM/Assistant (on‑prem/EU)",
-    "name": "Mistral (Small/Codestral)",
+    "name": "Mistral Platform / Le Chat Enterprise",
+    "category": "LLM/Assistant",
     "sovereign": true,
-    "hosting": "EU/self‑host",
-    "note": "Open‑Modelle; on‑prem möglich"
+    "data_residency": "EU regions / private cloud / on‑prem",
+    "notes": "EU provider; DPA/Sub‑processors prüfen",
+    "as_of": "2025-09-23"
   },
   {
-    "category": "LLM/Assistant (EU)",
-    "name": "Aleph Alpha",
+    "name": "Aleph Alpha (PhariaAI Suite)",
+    "category": "LLM/Assistant",
     "sovereign": true,
-    "hosting": "EU (DE)",
-    "note": "Unternehmens‑Features, EU‑Standorte"
+    "data_residency": "On‑prem / sovereign cloud",
+    "notes": "Explainability; EU sovereignty focus",
+    "as_of": "2025-09-23"
   },
   {
-    "category": "Model Hub/Inference",
-    "name": "Hugging Face",
-    "sovereign": true,
-    "hosting": "EU‑Optionen/self‑host",
-    "note": "Open‑Models, CI/Kontroll‑Optionen"
-  },
-  {
-    "category": "Local UI/Orchestration",
-    "name": "OpenWebUI / Ollama",
-    "sovereign": true,
-    "hosting": "self‑host",
-    "note": "lokale Nutzung, schnelle Prototypen"
-  },
-  {
+    "name": "Nextcloud + ONLYOFFICE/Collabora",
     "category": "Collaboration/Files",
-    "name": "Nextcloud + Collabora",
     "sovereign": true,
-    "hosting": "self‑host/EU",
-    "note": "Dokumente/Office, Alternative zu O365/Google"
+    "data_residency": "Self‑host / EU hosting",
+    "notes": "Ownership & Residency",
+    "as_of": "2025-09-23"
   },
   {
-    "category": "Docs/Notes",
     "name": "CryptPad",
+    "category": "Collaboration/Files",
     "sovereign": true,
-    "hosting": "EU",
-    "note": "E2E‑verschlüsselt (Editor, Kanban, Whiteboard)"
+    "data_residency": "E2EE; EU hosting/self‑host",
+    "notes": "Zero‑knowledge collaboration",
+    "as_of": "2025-09-23"
   },
   {
+    "name": "Matrix / Element",
     "category": "Messaging",
-    "name": "Matrix (Element)",
     "sovereign": true,
-    "hosting": "self‑host/EU",
-    "note": "E2E; Föderation; Integrationen"
+    "data_residency": "Self‑host/EU",
+    "notes": "E2EE messaging",
+    "as_of": "2025-09-23"
   },
   {
-    "category": "Messaging",
     "name": "Wire",
+    "category": "Messaging",
     "sovereign": true,
-    "hosting": "EU",
-    "note": "E2E; EU‑Hosting"
+    "data_residency": "EU hosting",
+    "notes": "Business messenger; E2EE",
+    "as_of": "2025-09-23"
   },
   {
-    "category": "Messaging/Integrations",
-    "name": "Slack Enterprise Grid",
+    "name": "Slack (EU residency)",
+    "category": "Team Communication",
     "sovereign": false,
-    "hosting": "US/EU options",
-    "note": "Kontrollen/SCIM/DLP möglich"
+    "data_residency": "EU regions",
+    "notes": "Integrationen; AI‑Optionen",
+    "as_of": "2025-09-23"
   },
   {
-    "category": "Project Mgmt",
-    "name": "Trello Enterprise",
+    "name": "Trello",
+    "category": "Project Management",
     "sovereign": false,
-    "hosting": "US/EU options",
-    "note": "Boards, Automations"
+    "data_residency": "Vendor program",
+    "notes": "Boards & Automations",
+    "as_of": "2025-09-23"
   },
   {
-    "category": "Whiteboard",
-    "name": "Miro Enterprise",
+    "name": "Miro",
+    "category": "Whiteboard/Ideation",
     "sovereign": false,
-    "hosting": "EU options",
-    "note": "Workshops/Ideation"
+    "data_residency": "Vendor‑managed",
+    "notes": "Workshops & Ideation",
+    "as_of": "2025-09-23"
   },
   {
-    "category": "Analytics/ML (open)",
     "name": "KNIME",
+    "category": "Analytics",
     "sovereign": true,
-    "hosting": "self‑host/EU",
-    "note": "No‑code pipelines"
-  },
-  {
-    "category": "AutoML",
-    "name": "H2O.ai",
-    "sovereign": false,
-    "hosting": "US/EU options",
-    "note": "Open‑source + Enterprise"
+    "data_residency": "Self‑host",
+    "notes": "Open platform analytics",
+    "as_of": "2025-09-23"
   }
 ]
