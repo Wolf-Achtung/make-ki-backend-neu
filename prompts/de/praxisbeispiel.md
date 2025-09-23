@@ -1,1 +1,1 @@
-<p>Provide a credible, sector‑specific case study. 5–7 sentences; no bullet points; clear benefits and lessons learned.</p>
+<p>Beschreibe ein kurzes, glaubwürdiges Praxisbeispiel aus der Branche des Kunden. 5–7 Sätze, keine Bullet‑Points, nachvollziehbarer Nutzen, Lessons Learned.</p>

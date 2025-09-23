@@ -1,15 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import os
-import sys
-import psycopg2
 
-DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or os.getenv("POSTGRESQL_URL")
-if not DATABASE_URL:
-    print("DATABASE_URL/POSTGRES_URL not set", file=sys.stderr)
-    sys.exit(1)
 
-users = [
+    # Test-User mit individuellen Passwörtern
     ("j.hohl@freenet.de", "passjhohl!", "user"),
     ("kerstin.geffert@gmail.com", "passkerstin!", "user"),
     ("post@zero2.de", "passzero2!", "user"),
@@ -29,20 +20,24 @@ users = [
     ("christian.ulitzka@ulitzka-partner.de", "pass2rigz!", "user"),
     ("srack@gmx.net", "pass2rack!", "user"),
     ("buss@maria-hilft.de", "pass2mar!", "user"),
-    ("bewertung@ki-sicherheit.jetzt", "passadmin1!", "admin")
+    ("bewertung@ki-sicherheit.jetzt", "passadmin1!", "admin"),
 ]
+
+
+print("Starte Einfügen/Update der User...")
 
 conn = psycopg2.connect(DATABASE_URL)
 cur = conn.cursor()
-cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
+
 for email, password, role in users:
-    print("Verarbeite:", email)
+    print(f"Verarbeite: {email}")
     cur.execute("""
         INSERT INTO users (email, password_hash, role)
         VALUES (%s, crypt(%s, gen_salt('bf')), %s)
-        ON CONFLICT (email)
+        ON CONFLICT (email) 
         DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role
     """, (email, password, role))
+
 conn.commit()
 cur.close()
 conn.close()
