@@ -1,10 +1,10 @@
-# main.py — KI-Readiness Backend (Gold-Standard + Login restored) — 2025-09-23
+# main.py — KI-Readiness Backend (Gold-Standard + Login restored, email hotfix) — 2025-09-23
 import os, re, json, time, hashlib, logging, datetime, asyncio, hmac
 from pathlib import Path
 from typing import Any, Dict, Optional
 from fastapi import FastAPI, Depends, BackgroundTasks, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, field_validator
 import httpx
 
 APP_NAME = "KI-Readiness Backend"
@@ -177,14 +177,22 @@ async def send_html_to_pdf_service(html: str, user_email: str, *, subject: str, 
         return {"ok": False, "error": str(e)}
 
 # -------------------------
-#      LOGIN  (RESTORED)
+#      LOGIN  (RESTORED) — EmailStr -> str (no extra deps)
 # -------------------------
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        from email.utils import parseaddr
+        name, addr = parseaddr(v or "")
+        if not addr or "@" not in addr:
+            raise ValueError("Invalid email format")
+        return addr
+
 def _load_users() -> Dict[str, str]:
-    # Preferred: JSON dict {email: password}
     raw = os.getenv("LOGIN_USERS_JSON","").strip()
     if raw:
         try:
@@ -192,7 +200,6 @@ def _load_users() -> Dict[str, str]:
             if isinstance(data, dict):
                 return {k.lower(): str(v) for k,v in data.items()}
             if isinstance(data, list):
-                # list of {"email": "...", "password": "..."}
                 d = {}
                 for it in data:
                     if isinstance(it, dict) and it.get("email"):
@@ -200,7 +207,6 @@ def _load_users() -> Dict[str, str]:
                 return d
         except Exception as e:
             logger.error("LOGIN_USERS_JSON parse error: %s", e)
-    # Fallback: single test user
     u = os.getenv("TEST_LOGIN_USER","").lower()
     p = os.getenv("TEST_LOGIN_PASS","")
     return {u: p} if u else {}
@@ -211,7 +217,6 @@ def _verify_user(email: str, password: str) -> bool:
     if email.lower() in users:
         stored = users[email.lower()] or ""
         return True if allow_any else hmac.compare_digest(password, stored)
-    # Optional: allow login if no users configured but allow_any=1
     if allow_any and users == {}:
         return True
     return False
@@ -230,9 +235,7 @@ async def me_endpoint(user=Depends(current_user)):
     return {"ok": True, "email": user.get("email") or user.get("sub")}
 
 @app.post("/api/logout")
-async def logout_endpoint():
-    # stateless JWT; nothing to invalidate serverside
-    return {"ok": True}
+async def logout_endpoint(): return {"ok": True}
 
 # --- Routes for report ---
 @app.get("/health")
