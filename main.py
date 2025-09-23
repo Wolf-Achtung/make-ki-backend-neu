@@ -1,34 +1,26 @@
-# main.py — Gold-Standard Backend (Template-Only) — 2025-09-23
-# Änderungen ggü. Ihrer Version:
-# - normalize_company(): robustes Mapping, Fallbacks
-# - analyze_to_html(): Template-Only + Prompt-Appendix wie gehabt
-# - send_html_to_pdf_service(): JSON-minimal bevorzugt, korrekte Header
-# - resolve_recipient(): Body.to > JWT.email > ADMIN_EMAIL
-# - Startup-Sanity: Tavily-Gate bleibt; Logging gestrafft
-
-import os, re, json, time, hashlib, logging, datetime, asyncio, base64
+# main.py — KI-Readiness Backend (Gold-Standard) — 2025-09-23
+import os, re, json, time, hashlib, logging, datetime, asyncio
 from pathlib import Path
 from typing import Any, Dict, Optional
-from fastapi import FastAPI, Depends, BackgroundTasks
+from fastapi import FastAPI, Depends, BackgroundTasks, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
-from email.message import EmailMessage
-from email.utils import parseaddr, formataddr
+from email.utils import parseaddr
 
 APP_NAME = "KI-Readiness Backend"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, format="%(levelname)s %(asctime)s [%(name)s] %(message)s")
 logger = logging.getLogger("backend")
 
-# Startup sanity
+# --- Startup sanity (LLM/Tavily) ---
 if (os.getenv("LLM_MODE", "off").lower() != "off") and not os.getenv("OPENAI_API_KEY"):
     logger.warning("[LLM] OPENAI_API_KEY missing -> forcing LLM_MODE=off"); os.environ["LLM_MODE"] = "off"
 if not os.getenv("TAVILY_API_KEY"):
     if os.getenv("ALLOW_TAVILY", "0") not in ("0","false","False"):
         logger.warning("[Tavily] TAVILY_API_KEY missing -> forcing ALLOW_TAVILY=0"); os.environ["ALLOW_TAVILY"] = "0"
 
-# JWT / Auth
+# --- JWT (optional) ---
 from jose import jwt
 from jose.exceptions import JWTError
 JWT_SECRET = os.getenv("JWT_SECRET", "change-me-now")
@@ -43,7 +35,7 @@ def decode_token(token: str) -> Dict[str, Any]:
     try: return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
     except JWTError: return {}
 
-# App
+# --- App & CORS ---
 app = FastAPI(title=APP_NAME)
 app.add_middleware(
     CORSMiddleware,
@@ -51,60 +43,13 @@ app.add_middleware(
     allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
 
-# SMTP feedback (unverändert)
-SMTP_HOST = os.getenv("SMTP_HOST"); SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER"); SMTP_PASS = os.getenv("SMTP_PASS")
-SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or ""); FEEDBACK_TO = os.getenv("FEEDBACK_TO")
-
-def _clean_header_value(v: Optional[str]) -> Optional[str]:
-    if not v: return None
-    v = v.replace("\\r","").replace("\\n","").strip()
-    name, addr = parseaddr(v)
-    if addr: return formataddr((name, addr)) if name else addr
-    return v
-
-# PG optional (unverändert stark gekürzt)
-DB_POOL = None
-try:
-    import psycopg2
-    from psycopg2.pool import SimpleConnectionPool
-    if os.getenv("DATABASE_URL"):
-      DB_POOL = SimpleConnectionPool(1, 5, os.getenv("DATABASE_URL"))
-      logger.info("[DB] Pool initialisiert")
-except Exception as e:
-    logger.info("[DB] optional: %s", e)
-
-# Templates
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-TEMPLATE_DIR = Path(os.getenv("TEMPLATE_DIR", "templates"))
-TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
-TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
-_jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)), autoescape=select_autoescape(["html","xml"]))
-
-def _render_template_only(lang: str, context: Dict[str, Any]) -> str:
-    tpl_name = TEMPLATE_DE if str(lang).lower().startswith("de") else TEMPLATE_EN
-    tpl = _jinja_env.get_template(tpl_name)
-    return tpl.render(**context)
-
-def strip_code_fences(s: str) -> str:
-    return re.sub(r"^```(html|json)?|```$", "", s.strip(), flags=re.M)
-
-def _has_unresolved_tokens(html: str) -> bool:
-    return ("{{" in html) or ("{%" in html)
-
+# --- Idempotency store ---
+IDEMP_DIR = os.getenv("IDEMP_DIR", "/tmp/ki_idempotency"); Path(IDEMP_DIR).mkdir(parents=True, exist_ok=True)
+IDEMP_TTL_SECONDS = int(os.getenv("IDEMP_TTL_SECONDS", "1800"))
+def _idem_path(key: str) -> str: return str(Path(IDEMP_DIR) / f"{key}.json")
 def _stable_json(obj: Dict[str, Any]) -> str:
     try: return json.dumps(obj, sort_keys=True, ensure_ascii=False, separators=(",",":"))
     except Exception: return str(obj)
-
-# Idempotenz
-IDEMP_DIR = os.getenv("IDEMP_DIR", "/tmp/ki_idempotency")
-IDEMP_TTL_SECONDS = int(os.getenv("IDEMP_TTL_SECONDS", "1800"))
-Path(IDEMP_DIR).mkdir(parents=True, exist_ok=True)
-def _idem_path(key: str) -> str: return str(Path(IDEMP_DIR) / f"{key}.json")
-def make_idempotency_key(user_email: str, payload: Dict[str, Any], html: Optional[str] = None) -> str:
-    base = {"user": (user_email or "").strip().lower(), "payload": payload}
-    if html is not None: base["html_sha256"] = hashlib.sha256((html or "").encode("utf-8")).hexdigest()
-    return hashlib.sha256(_stable_json(base).encode("utf-8")).hexdigest()
 def idempotency_get(key: str) -> Optional[Dict[str, Any]]:
     p = Path(_idem_path(key))
     if not p.is_file(): return None
@@ -116,96 +61,142 @@ def idempotency_get(key: str) -> Optional[Dict[str, Any]]:
 def idempotency_set(key: str, result: Dict[str, Any]) -> None:
     Path(_idem_path(key)).write_text(json.dumps({"ts": int(time.time()), "result": result}, ensure_ascii=False), encoding="utf-8")
 
-# Analyzer
+# --- Current user from Bearer ---
+def current_user(request: Request) -> Dict[str, Any]:
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        try:
+            claims = decode_token(auth[7:])
+            if isinstance(claims, dict): return claims
+        except Exception: pass
+    return {}
+
+# --- Rate limiter (in-memory; IP+User) ---
+RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "1") in ("1","true","True")
+RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW_SEC", "60"))
+RATE_LIMIT_MAX = int(os.getenv("RATE_LIMIT_MAX", "5"))
+_rate_buckets: Dict[str, list] = {}
+
+def _rl_key(request: Request, user: Dict[str, Any]) -> str:
+    ip = (request.client.host if request and request.client else "0.0.0.0")
+    email = (user.get("email") or user.get("sub") or "").lower()
+    return f"{ip}|{email}"
+
+def _check_rate_limit(key: str) -> Dict[str,int]:
+    now = int(time.time())
+    bucket = _rate_buckets.get(key, [])
+    bucket = [t for t in bucket if now - t < RATE_LIMIT_WINDOW]
+    allowed = len(bucket) < RATE_LIMIT_MAX
+    if allowed:
+        bucket.append(now); _rate_buckets[key] = bucket
+    remaining = max(0, RATE_LIMIT_MAX - len(bucket))
+    return {"allowed": int(allowed), "remaining": remaining}
+
+# --- Jinja template env ---
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+TEMPLATE_DIR = Path(os.getenv("TEMPLATE_DIR", "templates"))
+TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
+TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
+_jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)), autoescape=select_autoescape(["html","xml"]))
+def _render_template_only(lang: str, context: Dict[str, Any]) -> str:
+    tpl = _jinja_env.get_template(TEMPLATE_DE if lang.startswith("de") else TEMPLATE_EN)
+    return tpl.render(**context)
+def _has_unresolved_tokens(html: str) -> bool: return ("{{" in html) or ("{%" in html)
+def strip_code_fences(s: str) -> str: return re.sub(r"^```(html|json)?|```$", "", s.strip(), flags=re.M)
+
+# --- Analyzer bridge ---
 async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
     def normalize_company(data: Dict[str, Any]) -> Dict[str, Any]:
         c = data.get("company") if isinstance(data.get("company"), dict) else {}
-        merged = { **data, **c }
-        # Normalize keys
+        merged = { **{k:v for k,v in data.items() if k not in ("company",)}, **c }
         cn = merged.get("unternehmen") or merged.get("company") or "—"
         br = merged.get("branche") or merged.get("industry") or "—"
         sz = merged.get("unternehmensgroesse") or merged.get("size") or "—"
         lc = merged.get("standort") or merged.get("location") or "—"
-        # fallback aus E-Mail Domain
-        if (cn == "—") and data.get("_user_email"):
+        if (not cn or cn == "—") and data.get("_user_email"):
             cn = data["_user_email"].split("@")[-1].split(".")[0].title()
         return {"unternehmen": cn, "branche": br, "unternehmensgroesse": sz, "location": lc}
-    # try import analyzer
+
     report: Dict[str, Any] = {}
     try:
         from gpt_analyze import analyze_briefing
+        if body.get("_user_email"): body.setdefault("meta", {})["created_by"] = body["_user_email"]
         body["company"] = normalize_company(body)
         report = analyze_briefing(body, lang=lang)
     except Exception as e:
         logger.exception("analyze_briefing failed: %s", e)
-        report = {"title": "KI-Readiness Report", "executive_summary": "Analysemodul nicht geladen — Fallback.", "score_percent": 0}
+        now = datetime.date.today().isoformat()
+        report = {
+          "meta": {"company_name":"—","branche":"—","groesse":"—","standort":"—","date":now,"as_of":now,"created_by":body.get("_user_email","")},
+          "executive_summary":"Analysemodul nicht geladen — Fallback.",
+          "quick_wins":"Inventur/Policy/Quick Wins.",
+          "risks":"Datenqualität, Compliance, Schatten‑IT.",
+          "recommendations":"Automatisieren, Governance, Rollen.",
+          "roadmap":"0–3 M, 3–6 M, 6–12 M.", "tools_table":"", "funding_table":""
+        }
 
     try:
         html = _render_template_only(lang, report)
-        if _has_unresolved_tokens(html): raise RuntimeError("Unresolved template tokens")
+        if _has_unresolved_tokens(html): raise RuntimeError("Unresolved template tokens in HTML")
         return strip_code_fences(html)
     except Exception as e:
-        logger.error("Jinja render failed (%s)", repr(e))
-        return "<html><body><h1>Renderfehler</h1><pre>{}</pre></body></html>".format(str(e))
+        logger.error("Jinja render failed: %s", e)
+        return f"<html><body><h1>Renderfehler</h1><pre>{str(e)}</pre></body></html>"
 
-# Auth helper
-from fastapi import Request
-def current_user(request: Request) -> Dict[str, Any]:
-    auth = request.headers.get("Authorization", "")
-    if auth.startswith("Bearer "):
-        claims = decode_token(auth[7:])
-        if isinstance(claims, dict): return claims
-    return {}
-
-def resolve_recipient(user_claims: Dict[str, Any], body: Dict[str, Any]) -> str:
-    return body.get("to") or user_claims.get("email") or user_claims.get("sub") or os.getenv("ADMIN_EMAIL","")
-
-# HTTP helpers
+# --- Helpers for PDF service ---
 async def warmup_pdf_service(rid: str, base_url: str) -> None:
     if not base_url: return
     try:
         async with httpx.AsyncClient(timeout=5.0) as c:
-            await c.get(f"{base_url}/health")
-    except Exception:
-        pass
+            r = await c.get(f"{base_url}/health")
+            logger.info("[PDF] rid=%s warmup %s", rid, r.status_code)
+    except Exception: pass
 
 async def send_html_to_pdf_service(html: str, user_email: str, *, subject: str, lang: str, request_id: str) -> Dict[str, Any]:
     PDF_SERVICE_URL = os.getenv("PDF_SERVICE_URL","").rstrip("/")
     if not PDF_SERVICE_URL: return {"ok": False, "error": "PDF_SERVICE_URL missing"}
-    mode = os.getenv("PDF_POST_MODE","json").lower()
+    mode = os.getenv("PDF_POST_MODE","json").lower()  # "json" | "html"
     PDF_JSON_MINIMAL = os.getenv("PDF_JSON_MINIMAL","1") in ("1","true","True")
     timeout_sec = int(os.getenv("PDF_TIMEOUT","120"))
+
+    headers = {"X-Request-ID": request_id, "X-User-Email": user_email or "", "X-Subject": subject, "X-Lang": lang}
     try:
         async with httpx.AsyncClient(timeout=timeout_sec) as client:
             if mode == "json":
-                payload = {"html": html} if PDF_JSON_MINIMAL else {"html": html, "to": user_email or "", "adminEmail": os.getenv("ADMIN_EMAIL",""), "subject": subject, "lang": lang, "rid": request_id}
-                resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", json=payload)
+                payload = {"html": html} if PDF_JSON_MINIMAL else {"html": html, "to": user_email or "", "subject": subject, "lang": lang, "rid": request_id}
+                resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", json=payload, headers=headers)
             else:
-                headers = {"X-Request-ID": request_id, "X-User-Email": user_email or "", "X-Subject": subject, "X-Lang": lang,
-                           "Accept": "application/pdf", "Content-Type": "text/html; charset=utf-8"}
+                headers.update({"Accept":"application/pdf","Content-Type":"text/html; charset=utf-8"})
                 resp = await client.post(f"{PDF_SERVICE_URL}/generate-pdf", headers=headers, content=html.encode("utf-8"))
 
         ct = resp.headers.get("content-type","")
+        status = resp.status_code
+        logger.info("[PDF] rid=%s attempt=1 mode=%s status=%s ct=%s", request_id, mode, status, ct)
         if "application/pdf" in ct:
-            return {"ok": True, "status": resp.status_code, "data": {"pdf_stream": True}}
+            return {"ok": True, "status": status, "data": {"pdf_stream": True}}
         js = resp.json() if "application/json" in ct else {"text": (resp.text or "")[:1024]}
-        return {"ok": (resp.status_code//100)==2, "status": resp.status_code, "data": js, "error": js.get("error")}
+        return {"ok": (status//100)==2, "status": status, "data": js, "error": js.get("error")}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
-# Routes
+# --- Routes ---
 @app.get("/health")
-def health(): return {"ok": True, "ts": int(time.time())}
+def health(): return {"ok": True, "ts": int(time.time()), "app": APP_NAME}
 
+from fastapi import Response
 @app.post("/render_html")
-async def render_html_endpoint(body: Dict[str, Any], user=Depends(current_user)):
+async def render_html_endpoint(body: Dict[str, Any], request: Request, user=Depends(current_user)):
     lang = (body.get("lang") or "de").lower()
     if user and user.get("email"): body["_user_email"] = user["email"]
     html = await analyze_to_html(body, lang)
     return {"ok": True, "lang": lang, "html": html}
 
 @app.post("/briefing_async")
-async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends(current_user)):
+async def briefing_async(body: Dict[str, Any], request: Request, bg: BackgroundTasks, user=Depends(current_user)):
+    if RATE_LIMIT_ENABLED:
+        rl = _check_rate_limit(_rl_key(request, user))
+        if not rl["allowed"]:
+            raise HTTPException(status_code=429, detail=f"Rate limit exceeded. Retry later. Remaining=0")
     lang = (body.get("lang") or "de").lower()
     job_id = hashlib.sha256(os.urandom(16)).hexdigest()[:16]
     async def run():
@@ -213,8 +204,7 @@ async def briefing_async(body: Dict[str, Any], bg: BackgroundTasks, user=Depends
             if user and user.get("email"): body["_user_email"] = user["email"]
             await warmup_pdf_service(job_id, os.getenv("PDF_SERVICE_URL","").rstrip("/"))
             html = await analyze_to_html(body, lang)
-            user_email = resolve_recipient(user, body)
-            if not user_email: raise RuntimeError("No recipient email")
+            user_email = body.get("to") or user.get("email") or user.get("sub") or os.getenv("ADMIN_EMAIL","")
             res = await send_html_to_pdf_service(html, user_email, subject="KI-Readiness Report", lang=lang, request_id=job_id)
             logger.info("[PDF] send result: %s", res)
         except Exception as e:
