@@ -1,12 +1,11 @@
-# main.py — KI-Readiness Backend (Gold-Standard) — 2025-09-23
-import os, re, json, time, hashlib, logging, datetime, asyncio
+# main.py — KI-Readiness Backend (Gold-Standard + Login restored) — 2025-09-23
+import os, re, json, time, hashlib, logging, datetime, asyncio, hmac
 from pathlib import Path
 from typing import Any, Dict, Optional
 from fastapi import FastAPI, Depends, BackgroundTasks, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 import httpx
-from email.utils import parseaddr
 
 APP_NAME = "KI-Readiness Backend"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -20,7 +19,7 @@ if not os.getenv("TAVILY_API_KEY"):
     if os.getenv("ALLOW_TAVILY", "0") not in ("0","false","False"):
         logger.warning("[Tavily] TAVILY_API_KEY missing -> forcing ALLOW_TAVILY=0"); os.environ["ALLOW_TAVILY"] = "0"
 
-# --- JWT (optional) ---
+# --- JWT (Auth) ---
 from jose import jwt
 from jose.exceptions import JWTError
 JWT_SECRET = os.getenv("JWT_SECRET", "change-me-now")
@@ -76,12 +75,10 @@ RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "1") in ("1","true","True")
 RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW_SEC", "60"))
 RATE_LIMIT_MAX = int(os.getenv("RATE_LIMIT_MAX", "5"))
 _rate_buckets: Dict[str, list] = {}
-
 def _rl_key(request: Request, user: Dict[str, Any]) -> str:
     ip = (request.client.host if request and request.client else "0.0.0.0")
     email = (user.get("email") or user.get("sub") or "").lower()
     return f"{ip}|{email}"
-
 def _check_rate_limit(key: str) -> Dict[str,int]:
     now = int(time.time())
     bucket = _rate_buckets.get(key, [])
@@ -179,11 +176,68 @@ async def send_html_to_pdf_service(html: str, user_email: str, *, subject: str, 
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
-# --- Routes ---
+# -------------------------
+#      LOGIN  (RESTORED)
+# -------------------------
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+def _load_users() -> Dict[str, str]:
+    # Preferred: JSON dict {email: password}
+    raw = os.getenv("LOGIN_USERS_JSON","").strip()
+    if raw:
+        try:
+            data = json.loads(raw)
+            if isinstance(data, dict):
+                return {k.lower(): str(v) for k,v in data.items()}
+            if isinstance(data, list):
+                # list of {"email": "...", "password": "..."}
+                d = {}
+                for it in data:
+                    if isinstance(it, dict) and it.get("email"):
+                        d[str(it["email"]).lower()] = str(it.get("password",""))
+                return d
+        except Exception as e:
+            logger.error("LOGIN_USERS_JSON parse error: %s", e)
+    # Fallback: single test user
+    u = os.getenv("TEST_LOGIN_USER","").lower()
+    p = os.getenv("TEST_LOGIN_PASS","")
+    return {u: p} if u else {}
+
+def _verify_user(email: str, password: str) -> bool:
+    users = _load_users()
+    allow_any = os.getenv("LOGIN_ALLOW_ANY_PASSWORD","0").lower() in ("1","true","yes")
+    if email.lower() in users:
+        stored = users[email.lower()] or ""
+        return True if allow_any else hmac.compare_digest(password, stored)
+    # Optional: allow login if no users configured but allow_any=1
+    if allow_any and users == {}:
+        return True
+    return False
+
+@app.post("/api/login")
+async def login_endpoint(req: LoginRequest):
+    if not _verify_user(req.email, req.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token({"sub": req.email, "email": req.email})
+    return {"access_token": token, "token_type": "bearer"}
+
+@app.get("/api/me")
+async def me_endpoint(user=Depends(current_user)):
+    if not user or not (user.get("email") or user.get("sub")):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return {"ok": True, "email": user.get("email") or user.get("sub")}
+
+@app.post("/api/logout")
+async def logout_endpoint():
+    # stateless JWT; nothing to invalidate serverside
+    return {"ok": True}
+
+# --- Routes for report ---
 @app.get("/health")
 def health(): return {"ok": True, "ts": int(time.time()), "app": APP_NAME}
 
-from fastapi import Response
 @app.post("/render_html")
 async def render_html_endpoint(body: Dict[str, Any], request: Request, user=Depends(current_user)):
     lang = (body.get("lang") or "de").lower()
