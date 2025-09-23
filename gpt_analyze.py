@@ -221,3 +221,23 @@ def analyze_briefing(body: Dict[str,Any], lang: str="de") -> Dict[str,Any]:
         "vision_html": vision_html or "",
         "gamechanger_html": gamechanger_html
     }
+# ------- Backwards-Compat SHIM (für app/routers/report.py) -------
+def build_report_payload(body: dict, lang: str = "de"):
+    """
+    Kompatibilität zu älteren Routern:
+    - Erwartet ehemals ein Payload-Objekt für das Rendern.
+    - Gibt jetzt das Template-Only-Dict von analyze_briefing zurück.
+    """
+    try:
+        return analyze_briefing(body or {}, lang=lang)
+    except Exception:
+        # niemals crashen – leeres, aber gültiges Template-Context-Dict zurückgeben
+        return {
+            "company": {"name":"—","industry":"—","size":"—","location":"—"},
+            "meta": {"date":"", "stand":"", "year":"", "owner":""},
+            "summary": {"opportunities":[],"risks":[]},
+            "roadmap": {"q90":[],"q180":[],"q365":[]},
+            "quick_wins_html":"", "eu_ai_act_html":"", "tools_html":"", "funding_html":"",
+            "executive_summary_html":"", "risks_html":"", "recommendations_html":"",
+            "roadmap_html":"", "vision_html":"", "gamechanger_html":""
+        }
