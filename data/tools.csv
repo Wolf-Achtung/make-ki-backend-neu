@@ -1,13 +1,61 @@
-name,industry,target,use_case,cost_tier,one_liner,homepage_url,region,company_size,last_checked
-ChatGPT Enterprise,*,Wissensarbeit,Assistent & Recherche,€€€,"Sichere Unternehmens‑Assistenz mit Admin‑Kontrollen",https://openai.com/enterprise,*,*,2025-09-17
-Microsoft Copilot,*,Wissensarbeit,Office‑Automatisierung,€€,"KI in M365 integriert (Mail, Doku, Präsentation)",https://copilot.microsoft.com,*,*,2025-09-17
-Claude for Teams,*,Wissensarbeit,Schreiben & Auswerten,€€,"Starke Langtexte, sensible Daten per Team‑Kontrollen",https://www.anthropic.com,*,*,2025-09-17
-Perplexity Enterprise,*,Wissensarbeit,Antworten mit Quellen,€€,"Schnelle Antworten mit Zitaten",https://www.perplexity.ai,*,*,2025-09-17
-Mistral Codestral,*,Tech,Code‑Assistenz,€,"Leichte Code‑Hilfen on‑prem/self‑host",https://mistral.ai,*,*,2025-09-17
-Elastic Search+RAG,*,Wissensarbeit,RAG‑Suche,€€,"Eigene Wissensbasis mit Abruf‑Generierung",https://www.elastic.co,*,*,2025-09-17
-LangChain Server,*,Tech,Orchestrierung,€,"Pipelines & Evaluierung",https://www.langchain.com,*,*,2025-09-17
-Pinecone,*,Tech,Vektor‑DB,€€,"Embeddings & Ähnlichkeitssuche",https://www.pinecone.io,*,*,2025-09-17
-Weaviate,*,Tech,Vektor‑DB,€,"Open‑Source Vektor‑DB",https://weaviate.io,*,*,2025-09-17
-ElevenLabs,*,Marketing,Sprachsynthese,€€,"Hochwertige Stimmen für Audio/Video",https://elevenlabs.io,*,*,2025-09-17
-Stability SDXL,*,Kreativ,Bildgenerierung,€,"Bildideen & Visuals",https://stability.ai,*,*,2025-09-17
-Notion AI,*,KMU,Doku‑Assistent,€,"Notes, Wiki & Aufgaben mit KI",https://www.notion.so,*,*,2025-09-17
+Tool-Name,Branche,Branche-Slugs,Unternehmensgröße,Funktion/Zweck,Link/Website,Kostenkategorie,Kurze Beschreibung,Kompatibilität/Integration,Datensitz,Tags
+Canva,Marketing & Werbung,marketing,alle,Design & Content Creation,https://www.canva.com,sehr gering, sofort nutzbar,Social-Media-Grafiken & Präsentationen,n/a,
+Writesonic,Marketing & Werbung,marketing,alle,KI-Textgenerator,https://writesonic.com,gering, Einführung,Texterstellung für Kampagnen,n/a,
+AdCreative.ai,Marketing & Werbung,marketing,KMU,KI-Banner & Werbeanzeigen,https://www.adcreative.ai,gering, erste Ergebnisse sofort,Werbebanner automatisch generieren,n/a,
+Buffer,Marketing & Werbung,marketing,alle,Social Media Automation,https://buffer.com,sehr gering, erste Kanäle verbinden,Geplantes,n/a,
+Brandwatch,Marketing & Werbung,marketing,KMU,Social Listening & Analyse,https://www.brandwatch.com,mittel, Training,Social-Media-Analyse mit KI,n/a,
+Asana,Beratung & Dienstleistungen,beratung,alle,Projektmanagement,https://asana.com,sehr gering, direkt nutzbar,Projekte und Aufgaben digital steuern,USA/EU,
+Miro,Beratung & Dienstleistungen,beratung,alle,Online-Whiteboard & KI-Brainstorming,https://miro.com,gering, Onboarding,Visuelles Brainstorming & KI-Funktionen,USA/EU,
+Zapier,Beratung & Dienstleistungen,beratung,alle,Automatisierung,https://zapier.com,gering, erster Workflow,Workflows mit KI-Anbindung,USA/EU,
+Jasper,Beratung & Dienstleistungen,beratung,alle,KI-Content & Text,https://www.jasper.ai,gering, Einführung,Texte,USA,
+Notion,Beratung & Dienstleistungen,beratung,alle,Consulting-Wissensmanagement,https://notion.so,sehr gering, sofort,Projekte,USA/EU,
+GitHub Copilot,IT & Software,it,alle,KI-Codeunterstützung,https://github.com/features/copilot,gering, Integration,KI-Code-Vervollständigung,n/a,
+Dataiku,IT & Software,it,KMU,KI-Prozessanalyse,https://dataiku.com,mittel, Datenimport,KI-getriebene Analyse & Automatisierung,n/a,
+Slack,IT & Software,it,alle,Team-Kommunikation,https://slack.com,sehr gering, sofort,Chat,n/a,
+Tableau,IT & Software,it,alle,Datenvisualisierung,https://tableau.com,gering, Schulung,Dashboards & Berichte,n/a,
+n8n,IT & Software,it,KMU,No-Code Automatisierung,https://n8n.io,gering, Workflow bauen,Automatisierte Workflows,n/a,
+Planerio,Handwerk,bau,KMU,Schichtplanung & Disposition,https://www.planerio.de,gering, Einrichtung,Automatisierte Einsatzplanung,n/a,
+Meisterwerk,Handwerk,bau,KMU,Auftragsverwaltung,https://meisterwerk.app,sehr gering, Stammdaten anlegen,Digitale Baustellenakte,n/a,
+OpenAI-Tabellen,Handwerk,bau,KMU,Kalkulation & Angebot,https://platform.openai.com,gering, Vorlage laden,KI-gestützte Angebotskalkulation,n/a,
+Sage,Handwerk,bau,alle,Buchhaltung & Rechnungswesen,https://www.sage.com,gering, Datenimport,Buchhaltung und Lohn digitalisieren,n/a,
+JobRouter,Handwerk,bau,KMU,Workflow-Automatisierung,https://jobrouter.com,mittel, Onboarding,Digitale Workflows von Angebot bis Abnahme,n/a,
+Doctolib,Gesundheitswesen,gesundheit,alle,Online-Terminmanagement,https://www.doctolib.de,sehr gering, Integration,Automatisierte Terminvergabe,n/a,
+Infermedica,Gesundheitswesen,gesundheit,alle,KI-Patienten-Check,https://infermedica.com,gering, Onboarding,KI-Anamnese & Triage,n/a,
+Planerio,Gesundheitswesen,gesundheit,alle,Schichtplanung,https://www.planerio.de,gering, Einrichtung,Einsatzplanung für Praxen,n/a,
+Amboss,Gesundheitswesen,gesundheit,alle,KI-gestütztes Nachschlagewerk,https://amboss.com,sehr gering, direkt nutzen,Medizinische Entscheidungsunterstützung,n/a,
+CureBot,Gesundheitswesen,gesundheit,KMU,KI-Chatbot für Praxen,https://curebot.de,gering, Trainingsphase,Patientenfragen KI-gestützt beantworten,n/a,
+Capmo,Bauwesen,,KMU,KI-Baustellenmanagement,https://www.capmo.de,gering, Onboarding,Digitale Baudokumentation,n/a,
+PlanRadar,Bauwesen,,alle,Baumängel & Dokumentation,https://www.planradar.com,gering, Dokumentieren,KI-gestützte Mängelerfassung,n/a,
+BauMaster,Bauwesen,,KMU,Projektplanung,https://www.baumaster.com,gering, Einrichtung,Digitalisierte Projektsteuerung,n/a,
+DocuWare,Bauwesen,,alle,Dokumentenmanagement,https://www.docuware.com,gering, Integration,Digitale Akte & Archiv,n/a,
+OpenAI-Tabellen,Bauwesen,,KMU,Kalkulation & Angebot,https://platform.openai.com,gering, Vorlage laden,KI-gestützte Angebotskalkulation,n/a,
+Shopify,Handel & E-Commerce,handel,alle,Onlineshop-Plattform,https://shopify.de,sehr gering, Shop anlegen,Webshop mit KI-Funktionen,n/a,
+Algolia,Handel & E-Commerce,handel,alle,Produktsuche & Empfehlungen,https://algolia.com,gering, Integration,Personalisierte Produktempfehlungen,n/a,
+Epoq,Handel & E-Commerce,handel,KMU,Recommendation Engine,https://www.epoq.de,gering, Anpassung,Personalisierte Empfehlungen,n/a,
+Billbee,Handel & E-Commerce,handel,KMU,Multichannel-Order-Management,https://billbee.io,gering, Import,Automatisierung von Bestellungen,n/a,
+parcelLab,Handel & E-Commerce,handel,KMU,KI-Versandkommunikation,https://parcellab.com,gering, Einrichtung,Kundenkommunikation Versand,n/a,
+MindSphere,Industrie/Produktion,industrie,KMU,Predictive Maintenance,https://siemens.mindsphere.io,hoch, Partner,KI-basierte Wartung & Prognosen,n/a,
+Dataiku,Industrie/Produktion,industrie,KMU,Prozessanalyse,https://dataiku.com,mittel, Datenimport,KI-getriebene Prozessoptimierung,n/a,
+FactoryCube,Industrie/Produktion,industrie,KMU,Produktionsdatenerfassung,https://factorycube.io,gering, Einweisung,Maschinendaten mit KI auswerten,n/a,
+Senseforce,Industrie/Produktion,industrie,KMU,Datenvisualisierung,https://senseforce.io,gering, Integration,Dashboards für Produktion,n/a,
+Tableau,Industrie/Produktion,industrie,alle,Dashboards & Analyse,https://tableau.com,gering, Schulung,Visualisierung Produktionsdaten,n/a,
+DATEV,Finanzen & Versicherungen,finanzen,alle,Buchhaltung & Steuer,https://www.datev.de,sehr gering, Datenimport,Buchhaltung digitalisieren,n/a,
+finAPI,Finanzen & Versicherungen,finanzen,alle,Finanzdatenanalyse,https://finapi.io,gering, API-Key,KI-Analyse von Zahlungsströmen,n/a,
+DataGuard,Finanzen & Versicherungen,finanzen,alle,Datenschutzmanagement,https://dataguard.de,mittel, Setup,DSGVO-Compliance,n/a,
+Priverion,Finanzen & Versicherungen,finanzen,KMU,Datenschutzmanagement,https://priverion.com,mittel, Einrichtung,Datenschutz-Dokumente managen,n/a,
+Personetics,Finanzen & Versicherungen,finanzen,KMU,KI-Kundenberatung,https://personetics.com,mittel, Onboarding,KI-gestützte Finanzberatung,n/a,
+Sdui,Bildung,bildung,alle,Lernplattform,https://sdui.de,sehr gering, Einführung,KI-gestützte Lernpfade,n/a,
+Knewton,Bildung,bildung,alle,KI-Adaptive Learning,https://knewton.com,gering, Setup,Individuelle Lernwege,n/a,
+Coursera,Bildung,bildung,alle,Online-Kurse & Zertifikate,https://coursera.org,sehr gering, Kurs wählen,Kurse & KI-Fortbildung,n/a,
+Quizlet,Bildung,bildung,alle,KI-Lernkarten,https://quizlet.com,sehr gering, sofort,KI-gestütztes Lernen,n/a,
+Examio,Bildung,bildung,KMU,Prüfungsautomatisierung,https://examio.com,gering, Einrichtung,KI-basierte Prüfungsaufgaben,n/a,
+Zapier,Sonstige,,alle,Automatisierung,https://zapier.com,gering, erster Workflow,Allgemeine Automatisierungen,n/a,
+Notion,Sonstige,,alle,Wissensmanagement,https://notion.so,sehr gering, sofort nutzbar,Allgemeines Wissensmanagement,n/a,
+OpenAI GPT,Sonstige,,alle,KI-Text & Analyse,https://chat.openai.com,sehr gering, sofort nutzbar,Texte,n/a,
+Google Forms,Sonstige,,alle,Umfragen & Feedback,https://forms.google.com,sehr gering, Vorlage wählen,Feedback & Datenerhebung,n/a,
+Power Automate,Sonstige,,alle,Prozessautomatisierung,https://powerautomate.microsoft.com,gering, erster Flow,Automatisierte Prozesse,n/a,
+
+# Open‑Source Alternativen für Teams und KMU
+OpenProject,Sonstige,,KMU,Projektmanagement & Aufgabenverwaltung,https://www.openproject.org,sehr gering,Open‑Source Plattform für Projekt- und Aufgabenverwaltung,GitHub / CSV,EU,open-source
+EspoCRM,Sonstige,,KMU,CRM & Vertriebsmanagement,https://www.espocrm.com,sehr gering,Open‑Source CRM-System zur Verwaltung von Kundenbeziehungen,REST API,EU,open-source
+Mattermost,Sonstige,,KMU,Teamkommunikation & Chat,https://mattermost.com,sehr gering,Open‑Source Alternative zu Slack für sichere Teamkommunikation,Integrationen mit GitLab und Jira,EU,open-source
