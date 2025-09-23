@@ -1,86 +1,113 @@
-
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>KI-Status-Report</title>
-  <style>{{ styles }}</style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KI‑Statusbericht – {{ company.name or '—' }}</title>
+<style>
+:root{ --ink:#0B2A5F; --blue-900:#081A3A; --blue-700:#1747A6; --blue-300:#E6EEFF; --muted:#38527F; --hint:#F5F8FF; --expert:#EEF4FF; }
+*{box-sizing:border-box}
+@page { size: A4; margin: 20mm; @bottom-right { content: "Seite " counter(page) " / " counter(pages); } }
+body{font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);line-height:1.45;font-size:12.3pt;margin:0;padding:0}
+main{padding:28px}
+h1,h2,h3{color:var(--blue-900); margin:0 0 8px 0}
+h1{font-size:26pt; letter-spacing:.2px}
+h2{font-size:19pt; margin-top:22px}
+h3{font-size:15pt; margin-top:14px}
+p{margin:8px 0}
+.small{font-size:10.6pt;color:var(--muted)}
+.hr{height:1px;background:linear-gradient(90deg,var(--blue-300),transparent);margin:16px 0}
+.kv{display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 10px 0}
+.kv .item{background:var(--hint);border:1px solid #d8e4ff;border-radius:8px;padding:6px 10px}
+.table{width:100%;border-collapse:collapse;margin:8px 0 2px 0}
+.table th{background:var(--blue-300);text-align:left;padding:6px;border:1px solid #d6def0}
+.table td{padding:6px;border:1px solid #e7ecf7;vertical-align:top}
+.badge{display:inline-block;padding:.1em .45em;border-radius:.4em;background:var(--blue-300);color:var(--blue-900);font-size:.8em;margin-left:.35em}
+.callout{border-left:3px solid var(--blue-700);background:var(--hint);padding:10px 12px;border-radius:8px;margin:8px 0}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+ul{margin:6px 0 6px 18px}
+footer{margin-top:26px;padding-top:10px;border-top:1px solid #e7ecf7;color:var(--muted);font-size:10.6pt}
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>KI‑Status‑Report</h1>
-      <span class="badge">Sprache: Deutsch</span>
+<main>
+  <header>
+    <h1>KI‑Statusbericht</h1>
+    <div class="kv">
+      <div class="item"><b>Unternehmen:</b> {{ company.name or '—' }}</div>
+      <div class="item"><b>Branche:</b> {{ company.industry or '—' }}</div>
+      <div class="item"><b>Größe:</b> {{ company.size or '—' }}</div>
+      <div class="item"><b>Standort:</b> {{ company.location or '—' }}</div>
+      <div class="item"><b>Stand:</b> {{ meta.stand }}</div>
     </div>
+    <div class="hr"></div>
+  </header>
 
-    <div class="card">
-      <strong>Unternehmen:</strong> {{ meta.company or "–" }}<br/>
-      <strong>Branche:</strong> {{ meta.industry or "–" }}
+  {% if executive_summary_html %}
+  <section>
+    <h2>Executive Summary</h2>
+    {{ executive_summary_html|safe }}
+  </section>
+  {% endif %}
+
+  <section>
+    <h2>Schnelle Hebel</h2>
+    <div class="callout">{{ quick_wins_html|safe }}</div>
+  </section>
+
+  <section>
+    <h2>Chancen & Risiken (kurz)</h2>
+    <div class="columns">
+      <div><h3>Chancen</h3><ul>{% for x in summary.opportunities %}<li>{{ x }}</li>{% endfor %}</ul></div>
+      <div><h3>Risiken</h3><ul>{% for x in summary.risks %}<li>{{ x }}</li>{% endfor %}</ul></div>
     </div>
+  </section>
 
-    {% if sections.einleitung %}
-      <div class="section">
-        <h2>Einleitung</h2>
-        <div class="card">{{ sections.einleitung | safe }}</div>
-      </div>
-    {% endif %}
+  <section>
+    <h2>Datenschutzfreundliche/souveräne Tools (Whitelist)</h2>
+    {{ tools_html|safe }}
+    <p class="small">Hinweis: Nur kuratierte Optionen. Keine generative Ergänzung.</p>
+  </section>
 
-    {% if sections.strategie %}
-      <div class="section">
-        <h2>Strategie</h2>
-        <div class="card">{{ sections.strategie | safe }}</div>
-      </div>
-    {% endif %}
-
-    {% if sections.governance %}
-      <div class="section">
-        <h2>Governance</h2>
-        <div class="card">{{ sections.governance | safe }}</div>
-      </div>
-    {% endif %}
-
-    {% if sections.regulierung %}
-      <div class="section">
-        <h2>Regulierung</h2>
-        <div class="card">{{ sections.regulierung | safe }}</div>
-      </div>
-    {% endif %}
-
-    {% if sections.projekte %}
-      <div class="section">
-        <h2>Projekte</h2>
-        <div class="card">{{ sections.projekte | safe }}</div>
-      </div>
-    {% endif %}
-
-    {% if sections.news %}
-      <div class="section">
-        <h2>Aktuelle Meldungen</h2>
-        {% if sections.news|length == 0 %}
-          <div class="card">Keine aktuellen Meldungen verfügbar.</div>
-        {% else %}
-          {% for item in sections.news %}
-            <div class="card">
-              <div><strong>{{ item.title }}</strong></div>
-              {% if item.snippet %}<div style="margin-top:6px;">{{ item.snippet }}</div>{% endif %}
-              {% if item.url %}<div style="margin-top:8px;"><a href="{{ item.url }}" target="_blank">{{ item.url }}</a></div>{% endif %}
-            </div>
-          {% endfor %}
-        {% endif %}
-      </div>
-    {% endif %}
-
-    {% if sections.ausblick %}
-      <div class="section">
-        <h2>Ausblick</h2>
-        <div class="card">{{ sections.ausblick | safe }}</div>
-      </div>
-    {% endif %}
-
-    <div class="footer">
-      © 2025-09-23 · Automatisch generierter Bericht
+  <section>
+    <h2>Roadmap</h2>
+    {% if roadmap_html %}
+      {{ roadmap_html|safe }}
+    {% else %}
+    <div class="columns">
+      <div><h3>0–90 Tage</h3><ul>{% for x in roadmap.q90 %}<li>{{ x }}</li>{% endfor %}</ul></div>
+      <div><h3>91–180 Tage</h3><ul>{% for x in roadmap.q180 %}<li>{{ x }}</li>{% endfor %}</ul></div>
     </div>
-  </div>
-</body>
-</html>
+    <h3>181–365 Tage</h3><ul>{% for x in roadmap.q365 %}<li>{{ x }}</li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>EU‑AI‑Act – kompakte Checkliste</h2>
+    {{ eu_ai_act_html|safe }}
+  </section>
+
+  <section>
+    <h2>Förderprogramme (Whitelist)</h2>
+    {{ funding_html|safe }}
+  </section>
+
+  {% if risks_html %}
+  <section><h2>Risiken – Analyse</h2>{{ risks_html|safe }}</section>
+  {% endif %}
+  {% if recommendations_html %}
+  <section><h2>Empfehlungen</h2>{{ recommendations_html|safe }}</section>
+  {% endif %}
+  {% if vision_html %}
+  <section><h2>Vision</h2>{{ vision_html|safe }}</section>
+  {% endif %}
+
+  {% if gamechanger_html %}
+  <section>
+    <h2>Innovation &amp; Gamechanger</h2>
+    {{ gamechanger_html|safe }}
+  </section>
+  {% endif %}
+
+  <footer>© {{ meta.year }} {{ meta.owner }} · Abschnitte ohne valide Daten werden ausgelassen.</footer>
+</main>
+</body></html>

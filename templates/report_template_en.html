@@ -1,86 +1,83 @@
-
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Status Report</title>
-  <style>{{ styles }}</style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Readiness Report – {{ company.name or '—' }}</title>
+<style>
+:root{ --ink:#0B2A5F; --blue-900:#081A3A; --blue-700:#1747A3; --blue-300:#E6EEFF; --muted:#38527F; --hint:#F5F8FF; --expert:#EEF4FF; }
+*{box-sizing:border-box}
+@page { size: A4; margin: 20mm; @bottom-right { content: "Page " counter(page) " / " counter(pages); } }
+body{font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);line-height:1.45;font-size:12.3pt;margin:0;padding:0}
+main{padding:28px}
+h1,h2,h3{color:var(--blue-900); margin:0 0 8px 0}
+h1{font-size:26pt} h2{font-size:19pt; margin-top:22px} h3{font-size:15pt; margin-top:14px}
+p{margin:8px 0}
+.small{font-size:10.6pt;color:var(--muted)}
+.hr{height:1px;background:linear-gradient(90deg,var(--blue-300),transparent);margin:16px 0}
+.kv{display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 10px 0}
+.kv .item{background:var(--hint);border:1px solid #d8e4ff;border-radius:8px;padding:6px 10px}
+.table{width:100%;border-collapse:collapse;margin:8px 0 2px 0}
+.table th{background:var(--blue-300);text-align:left;padding:6px;border:1px solid #d6def0}
+.table td{padding:6px;border:1px solid #e7ecf7;vertical-align:top}
+.badge{display:inline-block;padding:.1em .45em;border-radius:.4em;background:var(--blue-300);color:var(--blue-900);font-size:.8em;margin-left:.35em}
+.callout{border-left:3px solid var(--blue-700);background:var(--hint);padding:10px 12px;border-radius:8px;margin:8px 0}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+ul{margin:6px 0 6px 18px}
+footer{margin-top:26px;padding-top:10px;border-top:1px solid #e7ecf7;color:var(--muted);font-size:10.6pt}
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>AI Status Report</h1>
-      <span class="badge">Language: English</span>
+<main>
+  <header>
+    <h1>AI Readiness Report</h1>
+    <div class="kv">
+      <div class="item"><b>Company:</b> {{ company.name or '—' }}</div>
+      <div class="item"><b>Industry:</b> {{ company.industry or '—' }}</div>
+      <div class="item"><b>Size:</b> {{ company.size or '—' }}</div>
+      <div class="item"><b>Location:</b> {{ company.location or '—' }}</div>
+      <div class="item"><b>As of:</b> {{ meta.stand }}</div>
     </div>
+    <div class="hr"></div>
+  </header>
 
-    <div class="card">
-      <strong>Company:</strong> {{ meta.company or "–" }}<br/>
-      <strong>Industry:</strong> {{ meta.industry or "–" }}
+  {% if executive_summary_html %}
+  <section><h2>Executive Summary</h2>{{ executive_summary_html|safe }}</section>
+  {% endif %}
+
+  <section><h2>Quick Wins</h2><div class="callout">{{ quick_wins_html|safe }}</div></section>
+
+  <section>
+    <h2>Opportunities & Risks (short)</h2>
+    <div class="columns">
+      <div><h3>Opportunities</h3><ul>{% for x in summary.opportunities %}<li>{{ x }}</li>{% endfor %}</ul></div>
+      <div><h3>Risks</h3><ul>{% for x in summary.risks %}<li>{{ x }}</li>{% endfor %}</ul></div>
     </div>
+  </section>
 
-    {% if sections.introduction %}
-      <div class="section">
-        <h2>Introduction</h2>
-        <div class="card">{{ sections.introduction | safe }}</div>
-      </div>
-    {% endif %}
+  <section><h2>GDPR‑friendly / sovereign tools (whitelist)</h2>{{ tools_html|safe }}<p class="small">Curated options only. No generative completion.</p></section>
 
-    {% if sections.strategy %}
-      <div class="section">
-        <h2>Strategy</h2>
-        <div class="card">{{ sections.strategy | safe }}</div>
-      </div>
-    {% endif %}
-
-    {% if sections.governance %}
-      <div class="section">
-        <h2>Governance</h2>
-        <div class="card">{{ sections.governance | safe }}</div>
-      </div>
-    {% endif %}
-
-    {% if sections.regulation %}
-      <div class="section">
-        <h2>Regulation</h2>
-        <div class="card">{{ sections.regulation | safe }}</div>
-      </div>
-    {% endif %}
-
-    {% if sections.projects %}
-      <div class="section">
-        <h2>Projects</h2>
-        <div class="card">{{ sections.projects | safe }}</div>
-      </div>
-    {% endif %}
-
-    {% if sections.news %}
-      <div class="section">
-        <h2>Latest News</h2>
-        {% if sections.news|length == 0 %}
-          <div class="card">No recent items available.</div>
-        {% else %}
-          {% for item in sections.news %}
-            <div class="card">
-              <div><strong>{{ item.title }}</strong></div>
-              {% if item.snippet %}<div style="margin-top:6px;">{{ item.snippet }}</div>{% endif %}
-              {% if item.url %}<div style="margin-top:8px;"><a href="{{ item.url }}" target="_blank">{{ item.url }}</a></div>{% endif %}
-            </div>
-          {% endfor %}
-        {% endif %}
-      </div>
-    {% endif %}
-
-    {% if sections.outlook %}
-      <div class="section">
-        <h2>Outlook</h2>
-        <div class="card">{{ sections.outlook | safe }}</div>
-      </div>
-    {% endif %}
-
-    <div class="footer">
-      © 2025-09-23 · Automatically generated report
+  <section>
+    <h2>Roadmap</h2>
+    {% if roadmap_html %}
+      {{ roadmap_html|safe }}
+    {% else %}
+    <div class="columns">
+      <div><h3>0–90 days</h3><ul>{% for x in roadmap.q90 %}<li>{{ x }}</li>{% endfor %}</ul></div>
+      <div><h3>91–180 days</h3><ul>{% for x in roadmap.q180 %}<li>{{ x }}</li>{% endfor %}</ul></div>
     </div>
-  </div>
-</body>
-</html>
+    <h3>181–365 days</h3><ul>{% for x in roadmap.q365 %}<li>{{ x }}</li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+
+  <section><h2>EU AI Act — compact checklist</h2>{{ eu_ai_act_html|safe }}</section>
+  <section><h2>Funding (whitelist)</h2>{{ funding_html|safe }}</section>
+
+  {% if risks_html %}<section><h2>Risks — analysis</h2>{{ risks_html|safe }}</section>{% endif %}
+  {% if recommendations_html %}<section><h2>Recommendations</h2>{{ recommendations_html|safe }}</section>{% endif %}
+  {% if vision_html %}<section><h2>Vision</h2>{{ vision_html|safe }}</section>{% endif %}
+
+  {% if gamechanger_html %}<section><h2>Innovation &amp; Game‑changers</h2>{{ gamechanger_html|safe }}</section>{% endif %}
+
+  <footer>© {{ meta.year }} {{ meta.owner }} · Sections without valid data are omitted.</footer>
+</main>
+</body></html>
