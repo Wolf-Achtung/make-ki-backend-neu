@@ -1,1 +1,0 @@
-<p><strong>Glossar</strong></p><p><b>KI-Governance:</b> Regeln und Rollen für sicheren KI-Einsatz.</p><p><b>Dateninventur:</b> Überblick über Datenbestände.</p><p><b>DSFA:</b> Datenschutz-Folgenabschätzung bei höheren Risiken.</p><p><b>Prompt-Richtlinie:</b> Leitplanken für sichere Eingaben.</p>
