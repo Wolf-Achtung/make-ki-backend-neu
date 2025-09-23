@@ -1,106 +1,86 @@
+
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>KI‑Statusbericht – {{ company.name or '—' }}</title>
-<style>
-:root{
-  --ink:#0B2A5F;          /* Copy (dunkelblau) */
-  --blue-900:#081A3A;     /* Headlines */
-  --blue-700:#1747A6;     /* Akzente */
-  --blue-300:#E6EEFF;     /* Flächen/Tabellen */
-  --muted:#38527F;        /* dezente Hinweise */
-  --hint:#F5F8FF;         /* Tipp-Box */
-  --expert:#EEF4FF;       /* Expertentipp-Box */
-}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{
-  font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial,'Noto Sans',sans-serif;
-  color:var(--ink);
-  line-height:1.45;
-  font-size:12.3pt;
-  -webkit-font-smoothing:antialiased;
-  padding:32px;
-}
-h1,h2,h3{color:var(--blue-900); margin:0 0 8px 0}
-h1{font-size:28pt; letter-spacing:0.2px}
-h2{font-size:20pt; margin-top:24px}
-h3{font-size:16pt; margin-top:16px}
-p{margin:8px 0}
-.small{font-size:10.8pt;color:var(--muted)}
-.hr{height:1px;background:linear-gradient(90deg,var(--blue-300),transparent);margin:16px 0}
-.kv{display:flex;gap:18px;flex-wrap:wrap;margin:4px 0 12px 0}
-.kv .item{background:var(--hint);border:1px solid #d8e4ff;border-radius:8px;padding:6px 10px}
-.table{width:100%;border-collapse:collapse;margin:8px 0 2px 0}
-.table th{background:var(--blue-300);text-align:left;padding:6px;border:1px solid #d6def0}
-.table td{padding:6px;border:1px solid #e7ecf7;vertical-align:top}
-.badge{display:inline-block;padding:.1em .45em;border-radius:.4em;background:var(--blue-300);color:var(--blue-900);font-size:.85em;margin-left:.25em}
-.callout{border-left:3px solid var(--blue-700);background:var(--hint);padding:10px 12px;border-radius:8px;margin:8px 0}
-footer{margin-top:28px;padding-top:12px;border-top:1px solid #e7ecf7;color:var(--muted);font-size:11pt}
-@media print{body{padding:24px}}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KI-Status-Report</title>
+  <style>{{ styles }}</style>
 </head>
 <body>
-  <header>
-    <h1>KI‑Statusbericht</h1>
-    <div class="kv">
-      <div class="item"><b>Unternehmen:</b> {{ company.name or '—' }}</div>
-      <div class="item"><b>Branche:</b> {{ company.industry or '—' }}</div>
-      <div class="item"><b>Größe:</b> {{ company.size or '—' }}</div>
-      <div class="item"><b>Standort:</b> {{ company.location or '—' }}</div>
-      <div class="item"><b>Stand:</b> {{ meta.stand }}</div>
+  <div class="container">
+    <div class="header">
+      <h1>KI‑Status‑Report</h1>
+      <span class="badge">Sprache: Deutsch</span>
     </div>
-    <div class="hr"></div>
-  </header>
 
-  {% if executive_summary_html %}
-  <section>
-    <h2>Executive Summary</h2>
-    {{ executive_summary_html|safe }}
-  </section>
-  {% endif %}
-
-  <section>
-    <h2>Schnelle Hebel</h2>
-    <div class="callout">
-      {{ quick_wins_html|safe }}
+    <div class="card">
+      <strong>Unternehmen:</strong> {{ meta.company or "–" }}<br/>
+      <strong>Branche:</strong> {{ meta.industry or "–" }}
     </div>
-  </section>
 
-  <section>
-    <h2>Datenschutzfreundliche/ souveräne Tools (Whitelist)</h2>
-    {{ tools_html|safe }}
-    <p class="small">Hinweis: Nur kuratierte Optionen. Keine generative Ergänzung.</p>
-  </section>
+    {% if sections.einleitung %}
+      <div class="section">
+        <h2>Einleitung</h2>
+        <div class="card">{{ sections.einleitung | safe }}</div>
+      </div>
+    {% endif %}
 
-  {% if roadmap_html %}
-  <section>
-    <h2>Roadmap</h2>
-    {{ roadmap_html|safe }}
-  </section>
-  {% endif %}
+    {% if sections.strategie %}
+      <div class="section">
+        <h2>Strategie</h2>
+        <div class="card">{{ sections.strategie | safe }}</div>
+      </div>
+    {% endif %}
 
-  <section>
-    <h2>EU‑AI‑Act – kompakte Checkliste</h2>
-    {{ eu_ai_act_html|safe }}
-  </section>
+    {% if sections.governance %}
+      <div class="section">
+        <h2>Governance</h2>
+        <div class="card">{{ sections.governance | safe }}</div>
+      </div>
+    {% endif %}
 
-  <section>
-    <h2>Förderprogramme (Whitelist)</h2>
-    {{ funding_html|safe }}
-  </section>
+    {% if sections.regulierung %}
+      <div class="section">
+        <h2>Regulierung</h2>
+        <div class="card">{{ sections.regulierung | safe }}</div>
+      </div>
+    {% endif %}
 
-  {% if vision_html %}
-  <section>
-    <h2>Vision &amp; Gamechanger</h2>
-    {{ vision_html|safe }}
-  </section>
-  {% endif %}
+    {% if sections.projekte %}
+      <div class="section">
+        <h2>Projekte</h2>
+        <div class="card">{{ sections.projekte | safe }}</div>
+      </div>
+    {% endif %}
 
-  <footer>
-    © {{ meta.year }} {{ meta.owner }} · Dieser Report wurde aus Formularangaben generiert; Abschnitte ohne valide Daten werden ausgelassen.
-  </footer>
+    {% if sections.news %}
+      <div class="section">
+        <h2>Aktuelle Meldungen</h2>
+        {% if sections.news|length == 0 %}
+          <div class="card">Keine aktuellen Meldungen verfügbar.</div>
+        {% else %}
+          {% for item in sections.news %}
+            <div class="card">
+              <div><strong>{{ item.title }}</strong></div>
+              {% if item.snippet %}<div style="margin-top:6px;">{{ item.snippet }}</div>{% endif %}
+              {% if item.url %}<div style="margin-top:8px;"><a href="{{ item.url }}" target="_blank">{{ item.url }}</a></div>{% endif %}
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if sections.ausblick %}
+      <div class="section">
+        <h2>Ausblick</h2>
+        <div class="card">{{ sections.ausblick | safe }}</div>
+      </div>
+    {% endif %}
+
+    <div class="footer">
+      © 2025-09-23 · Automatisch generierter Bericht
+    </div>
+  </div>
 </body>
 </html>
