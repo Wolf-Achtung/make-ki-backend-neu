@@ -6,13 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
-      /* Dunkelblauer Fließtext & Bleu-Akzente */
       --ink:#0B1F3B; --ink-2:#123B70; --ink-3:#1C4F91; --accent:#2B6CB0;
-      --bg:#ffffff; --muted:#5B6B7C; --rule:#D4DDED; --panel:#E9F0FB;
-      --panel-strong:#D8E6FA;
+      --bg:#ffffff; --muted:#5B6B7C; --rule:#D4DDED; --panel:#E9F0FB; --panel-strong:#D8E6FA;
     }
     @page{ size:A4; margin:18mm 18mm; }
-    html,body{ color:var(--ink); background:var(--bg); font: 13.5pt/1.55 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    html,body{ color:var(--ink); background:var(--bg); font: 13.5pt/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
     h1,h2,h3{ color:var(--ink-2); margin:0 0 .35rem 0; page-break-after:avoid; }
     h1{ font-size:28px; letter-spacing:.2px; }
     h2{ font-size:22px; }
@@ -21,6 +19,7 @@
     a{ color:var(--accent); text-decoration:none; } a:hover{ text-decoration:underline; }
     .muted{ color:var(--muted); }
     .chip{ display:inline-block; background:#fff; color:var(--ink-2); border:1px solid var(--rule); padding:2px 8px; border-radius:999px; font-size:11px; margin-right:6px; margin-top:6px; }
+    .badge{ display:inline-block; border:1px solid var(--rule); color:var(--ink-2); background:#F5F9FF; border-radius:6px; padding:1px 6px; font-size:10.5px; margin-left:4px; }
     .grid{ display:grid; grid-template-columns: 1fr 2fr; grid-column-gap:18px; }
     .left{ background: linear-gradient(180deg, var(--panel) 0%, #fff 70%); border:2px solid var(--rule); border-radius:12px; padding:16px; }
     .left h1{ margin-bottom:6px; }
@@ -37,7 +36,6 @@
 </head>
 <body>
 
-  {# Bundesland-Text (nur anzeigen, wenn vorhanden) #}
   {% set bl_map = {
     'bw':'Baden‑Württemberg','by':'Bayern','be':'Berlin','bb':'Brandenburg','hb':'Bremen','hh':'Hamburg','he':'Hessen',
     'mv':'Mecklenburg‑Vorpommern','ni':'Niedersachsen','nw':'Nordrhein‑Westfalen','rp':'Rheinland‑Pfalz','sl':'Saarland',
@@ -46,12 +44,9 @@
   {% set standort_txt = bl_map.get(bundesland, '') %}
 
   <section class="grid">
-    <!-- linke Spalte: Titel/Meta -->
     <div class="left">
       <h1>{{ (meta|default({})).title|default('KI‑Statusbericht', true) }}</h1>
-      <div class="meta muted">
-        {% if now %}{{ now().strftime('%d.%m.%Y') }}{% endif %}
-      </div>
+      <div class="meta muted">{% if now %}{{ now().strftime('%d.%m.%Y') }}{% endif %}</div>
       <div class="meta">
         {% if branche %}<span class="chip">Branche: {{ branche }}</span>{% endif %}
         {% if company_size_label or unternehmensgroesse %}<span class="chip">Größe: {{ company_size_label or unternehmensgroesse }}</span>{% endif %}
@@ -63,7 +58,6 @@
       </div>
     </div>
 
-    <!-- rechte Spalte: Inhalt -->
     <div>
       {% macro section(title, html) -%}
         {% if html %}
