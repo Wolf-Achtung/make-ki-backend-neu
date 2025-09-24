@@ -76,7 +76,6 @@ def idempotency_set(key: str, meta: Dict[str, Any]) -> None:
         with open(p, "w", encoding="utf-8") as f: json.dump({"ts": time.time(), "meta": meta}, f, ensure_ascii=False)
     except Exception: pass
 
-# ---- Jinja (nur für Fallbacks/Debug) ----
 def _build_jinja_env() -> Environment:
     env = Environment(loader=FileSystemLoader(TEMPLATE_DIR),
                       autoescape=select_autoescape(["html","xml"]), trim_blocks=True, lstrip_blocks=True)
@@ -94,7 +93,7 @@ def strip_code_fences(text: str) -> str:
     while "```" in t: t = t.replace("```","")
     return t
 
-# ---- JWT ----
+# ---- JWT --------------------------------------------------------------------
 def create_access_token(data: Dict[str, Any], expires_in: int = JWT_EXP_SECONDS) -> str:
     payload = data.copy(); payload["exp"] = int(time.time()) + expires_in
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
@@ -109,7 +108,7 @@ def current_user(request: Request) -> Dict[str, Any]:
     try: return decode_token(token)
     except JWTError as e: raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
-# ---- Analyze-Lader ----
+# ---- Analyze-Lader ----------------------------------------------------------
 def load_analyze_module():
     try:
         import importlib.util
@@ -136,7 +135,7 @@ def load_analyze_module():
         logger.exception("gpt_analyze import failed: %s", e)
     return None, None
 
-# ---- Health ----
+# ---- Health -----------------------------------------------------------------
 async def health_info() -> Dict[str, Any]:
     info = {"app": APP_NAME, "time": dt.datetime.utcnow().isoformat()+"Z",
             "pdf_service_url_configured": bool(PDF_SERVICE_URL),
@@ -151,7 +150,7 @@ async def health_info() -> Dict[str, Any]:
             info["status_pdf_service"] = f"unreachable: {e.__class__.__name__}"
     return info
 
-# ---- Admin Copy Helpers ----
+# ---- Admin Copy Helpers -----------------------------------------------------
 def _clean_header_value(v: Optional[str]) -> Optional[str]:
     if not v: return None
     v = v.replace("\r","").replace("\n","").strip()
@@ -196,7 +195,7 @@ async def send_admin_notice_async(user_email: str, lang: str, rid: str):
             s.login(SMTP_USER, SMTP_PASS); s.send_message(msg)
     loop = asyncio.get_event_loop(); await loop.run_in_executor(None, _send)
 
-# ---- PDF Service ----
+# ---- PDF Service ------------------------------------------------------------
 async def send_html_to_pdf_service(html: str, user_email: str, subject: str, lang: str, request_id: str, file_name: str|None=None) -> dict:
     if not PDF_SERVICE_URL:
         logger.warning("[PDF] rid=%s no PDF_SERVICE_URL configured", request_id)
@@ -218,7 +217,7 @@ async def send_html_to_pdf_service(html: str, user_email: str, subject: str, lan
         logger.warning("[PDF] rid=%s send failed: %s", request_id, e)
         return {"ok": False, "error": str(e)}
 
-# ---- Analyze → HTML ----
+# ---- Analyze → HTML ---------------------------------------------------------
 async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
     analyze_fn, _mod = load_analyze_module()
     if analyze_fn:
@@ -235,10 +234,9 @@ async def analyze_to_html(body: Dict[str, Any], lang: str) -> str:
             return html
         except Exception as e:
             logger.exception("analyze_briefing failed: %s", e)
-    # Fallback – minimales HTML
     return "<!doctype html><meta charset='utf-8'><h1>Report</h1><p>Fallback.</p>"
 
-# ---- FastAPI ----
+# ---- FastAPI ----------------------------------------------------------------
 app = FastAPI(title=APP_NAME)
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ALLOW, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
