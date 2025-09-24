@@ -20,6 +20,7 @@
     .muted{ color:var(--muted); }
     .chip{ display:inline-block; background:#fff; color:var(--ink-2); border:1px solid var(--rule); padding:2px 8px; border-radius:999px; font-size:11px; margin-right:6px; margin-top:6px; }
     .badge{ display:inline-block; border:1px solid var(--rule); color:var(--ink-2); background:#F5F9FF; border-radius:6px; padding:1px 6px; font-size:10.5px; margin-left:4px; }
+    .infobox{ background: var(--panel); border-left:6px solid var(--ink-3); border:1px solid var(--rule); border-radius:10px; padding:8px 12px; margin:10px 0; }
     .grid{ display:grid; grid-template-columns: 1fr 2fr; grid-column-gap:18px; }
     .left{ background: linear-gradient(180deg, var(--panel) 0%, #fff 70%); border:2px solid var(--rule); border-radius:12px; padding:16px; }
     .left h1{ margin-bottom:6px; }
@@ -74,6 +75,7 @@
       {{ section('Recommendations',             recommendations_html|default('', true)) }}
       {{ section('Business Coaching Pathfinder',coaching_html|default('', true)) }}
       {{ section('Roadmap',                     roadmap_html|default('', true)) }}
+      {% if benchmark_html %}{{ section(benchmark_title|default('Benchmark'), benchmark_html) }}{% endif %}
       {{ section('Vision & Game Changer',       (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
       {{ section('Compliance',                  compliance_html|default('', true)) }}
       {{ section('Funding (Selection)',         funding_html|default('', true)) }}
