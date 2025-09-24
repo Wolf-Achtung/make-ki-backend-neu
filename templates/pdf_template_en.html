@@ -7,101 +7,95 @@
   <style>
     :root{
       --ink:#0B1F3B; --ink-2:#123B70; --ink-3:#1C4F91; --accent:#2B6CB0;
-      --muted:#5B6B7C; --bg:#fff; --rule:#D4DDED; --chip:#E9F0FB;
+      --bg:#ffffff; --muted:#5B6B7C; --rule:#D4DDED; --panel:#E9F0FB; --panel-strong:#D8E6FA;
     }
-    @page{ size:A4; margin:24mm 20mm; }
-    html,body{
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif;
-      color:var(--ink); background:var(--bg); line-height:1.55;
-    }
+    @page{ size:A4; margin:18mm 18mm; }
+    html,body{ color:var(--ink); background:var(--bg); font: 13.5pt/1.55 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     h1,h2,h3{ color:var(--ink-2); margin:0 0 .35rem 0; page-break-after:avoid; }
     h1{ font-size:28px; letter-spacing:.2px; }
-    h2{
-      font-size:22px; margin-top:22px; padding:6px 8px;
-      background:linear-gradient(90deg,#E9F0FB 0%,#ffffff 70%);
-      border-left:6px solid var(--ink-3);
-    }
-    h3{ font-size:18px; margin-top:10px; }
-    p{ margin:.55rem 0; }
-    a{ color:var(--accent); text-decoration:none; }
-    a:hover{ text-decoration:underline; }
+    h2{ font-size:22px; }
+    h3{ font-size:16px; }
+    p{ margin:.5rem 0; }
+    a{ color:var(--accent); text-decoration:none; } a:hover{ text-decoration:underline; }
     .muted{ color:var(--muted); }
-    .cover{ border:2px solid var(--rule); padding:20px; border-radius:12px; background:linear-gradient(180deg,#F7FAFF 0,#fff 100%); }
-    .meta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; color:var(--muted); }
-    .chip{ background:var(--chip); color:var(--ink-2); border:1px solid var(--rule); padding:2px 8px; border-radius:999px; font-size:12px; }
-    .chapter{ page-break-before:always; }
-    .chapter:first-of-type{ page-break-before:auto; }
-    .section{ margin-top:8px; }
-    .rule{ height:1px; background:var(--rule); border:0; margin:12px 0 16px; }
+    .chip{ display:inline-block; background:#fff; color:var(--ink-2); border:1px solid var(--rule); padding:2px 8px; border-radius:999px; font-size:11px; margin-right:6px; margin-top:6px; }
+    .grid{ display:grid; grid-template-columns: 1fr 2fr; grid-column-gap:18px; }
+    .left{ background: linear-gradient(180deg, var(--panel) 0%, #fff 70%); border:2px solid var(--rule); border-radius:12px; padding:16px; }
+    .left h1{ margin-bottom:6px; }
+    .left .meta{ margin-top:6px; }
+    .left .box{ background: var(--panel-strong); border-left:6px solid var(--ink-3); padding:10px 12px; border-radius:10px; margin-top:10px; }
+    .row{ display:contents; }
+    .col-h{ padding:10px 12px; background: var(--panel-strong); border-left:6px solid var(--ink-3); border-radius:10px; margin:10px 0; }
+    .col-c{ padding:6px 4px; margin:10px 0; }
     table{ width:100%; border-collapse:collapse; margin:.4rem 0 0; }
     th,td{ text-align:left; vertical-align:top; padding:6px 8px; border-bottom:1px solid var(--rule); }
-    th{ font-weight:600; color:var(--ink-2); }
-    footer{ position:fixed; bottom:16px; left:20mm; right:20mm; font-size:11px; color:var(--muted); }
-    .watermark{ float:right; }
+    th{ font-weight:600; color:var(--ink-2); background:#F5F9FF; }
+    footer{ position:fixed; bottom:12mm; left:18mm; right:18mm; font-size:10pt; color:var(--muted); }
   </style>
 </head>
 <body>
 
-  {# State fallback from German Bundesland code #}
   {% set bl_map = {
-    'bw':'Baden‑Württemberg','by':'Bavaria','be':'Berlin','bb':'Brandenburg',
-    'hb':'Bremen','hh':'Hamburg','he':'Hesse','mv':'Mecklenburg‑Western Pomerania',
-    'ni':'Lower Saxony','nw':'North Rhine‑Westphalia','rp':'Rhineland‑Palatinate',
+    'bw':'Baden‑Württemberg','by':'Bavaria','be':'Berlin','bb':'Brandenburg','hb':'Bremen','hh':'Hamburg','he':'Hesse',
+    'mv':'Mecklenburg‑Western Pomerania','ni':'Lower Saxony','nw':'North Rhine‑Westphalia','rp':'Rhineland‑Palatinate',
     'sl':'Saarland','sn':'Saxony','st':'Saxony‑Anhalt','sh':'Schleswig‑Holstein','th':'Thuringia'
   } %}
-  {% set state_txt = bl_map.get(bundesland, '—') %}
+  {% set state_txt = bl_map.get(bundesland, '') %}
 
-  <section class="cover">
-    <h1>{{ (meta|default({})).title|default('AI Readiness Report', true) }}</h1>
-    <p class="muted">
-      Narrative report – GDPR & EU‑AI‑Act ready.
-      {% if now %}{{ now().strftime('%Y-%m-%d') }} · {% endif %}
-      Industry: {{ branche|default('—', true) }} ·
-      Size: {{ company_size_label|default(unternehmensgroesse|default('—', true), true) }} ·
-      State: {{ state_txt }}
-    </p>
-    <div class="meta">
-      {% if (meta|default({})).author %}<span class="chip">Author: {{ meta.author }}</span>{% endif %}
-      {% if (meta|default({})).version %}<span class="chip">Version: {{ meta.version }}</span>{% endif %}
-      <span class="chip">Language: EN</span>
+  <section class="grid">
+    <div class="left">
+      <h1>{{ (meta|default({})).title|default('AI Readiness Report', true) }}</h1>
+      <div class="meta muted">
+        {% if now %}{{ now().strftime('%Y-%m-%d') }}{% endif %}
+      </div>
+      <div class="meta">
+        {% if branche %}<span class="chip">Industry: {{ branche }}</span>{% endif %}
+        {% if company_size_label or unternehmensgroesse %}<span class="chip">Size: {{ company_size_label or unternehmensgroesse }}</span>{% endif %}
+        {% if state_txt %}<span class="chip">State: {{ state_txt }}</span>{% endif %}
+        <span class="chip">Language: EN</span>
+      </div>
+      <div class="box">
+        <p class="muted">Narrative report · GDPR &amp; EU‑AI‑Act‑ready · blue design as in the reference layout.</p>
+      </div>
+    </div>
+
+    <div>
+      {% macro section(title, html) -%}
+        {% if html %}
+          <div class="row">
+            <div class="col-h"><h2>{{ title }}</h2></div>
+            <div class="col-c">{{ html|safe }}</div>
+          </div>
+        {% endif %}
+      {%- endmacro %}
+
+      {{ section('Executive Summary',           exec_summary_html|default('', true)) }}
+      {{ section('Quick Wins',                  quick_wins_html|default('', true)) }}
+      {{ section('Risks',                       risks_html|default('', true)) }}
+      {{ section('Recommendations',             recommendations_html|default('', true)) }}
+      {{ section('Business Coaching Pathfinder',coaching_html|default('', true)) }}
+      {{ section('Roadmap',                     roadmap_html|default('', true)) }}
+      {{ section('Vision & Game Changer',       (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
+      {{ section('Compliance',                  compliance_html|default('', true)) }}
+      {{ section('Funding (Selection)',         funding_html|default('', true)) }}
+      {{ section('AI Tools & Software',         tools_html|default('', true)) }}
+
+      {% if live_html %}
+        <div class="row">
+          <div class="col-h"><h2>{{ live_title|default('New & relevant', true) }}</h2></div>
+          <div class="col-c">{{ live_html|safe }}</div>
+        </div>
+      {% endif %}
+
+      {% if appendix_end_html %}
+        <div class="row">
+          <div class="col-h"><h2>Notes &amp; Glossary</h2></div>
+          <div class="col-c">{{ appendix_end_html|safe }}</div>
+        </div>
+      {% endif %}
     </div>
   </section>
 
-  <hr class="rule"/>
-
-  {% macro section(title, html) -%}
-    {% if html %}
-      <section class="chapter section">
-        <h2>{{ title }}</h2>
-        {{ html|safe }}
-      </section>
-    {% endif %}
-  {%- endmacro %}
-
-  {{ section('Executive Summary',           exec_summary_html|default('', true)) }}
-  {{ section('Quick Wins',                  quick_wins_html|default('', true)) }}
-  {{ section('Risks',                       risks_html|default('', true)) }}
-  {{ section('Recommendations',             recommendations_html|default('', true)) }}
-
-  {{ section('Business Coaching Pathfinder', coaching_html|default('', true)) }}
-
-  {{ section('Roadmap',                     roadmap_html|default('', true)) }}
-  {{ section('Vision & Game Changer',       (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
-  {{ section('Compliance',                  compliance_html|default('', true)) }}
-  {{ section('Funding (Selection)',         funding_html|default('', true)) }}
-  {{ section('AI Tools & Software',         tools_html|default('', true)) }}
-
-  {% if live_html %}
-    <section class="chapter section">
-      <h2>{{ live_title|default('New & relevant', true) }}</h2>
-      {{ live_html|safe }}
-      <p class="muted">Curated through trusted indexes. Please validate sources internally if decisions rely on them.</p>
-    </section>
-  {% endif %}
-
-  <footer>
-    © {{ copyright_year|default(now().year if now else '2025', true) }} {{ copyright_owner|default('Wolf Hohl', true) }}
-    <span class="watermark">AI Security · GDPR & EU‑AI‑Act ready</span>
-  </footer>
+  <footer>© {{ copyright_year|default(now().year if now else '2025', true) }} {{ copyright_owner|default('Wolf Hohl', true) }} · KI‑Sicherheit.jetzt</footer>
 </body>
 </html>
