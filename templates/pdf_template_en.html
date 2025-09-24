@@ -6,49 +6,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
-      --ink: #0B1F3B;
-      --ink-2: #123B70;
-      --ink-3: #1C4F91;
-      --accent: #2B6CB0;
-      --muted: #5B6B7C;
-      --bg: #ffffff;
-      --rule: #D4DDED;
-      --chip: #E9F0FB;
+      --ink:#0B1F3B; --ink-2:#123B70; --ink-3:#1C4F91; --accent:#2B6CB0;
+      --muted:#5B6B7C; --bg:#fff; --rule:#D4DDED; --chip:#E9F0FB;
     }
-    @page{ size:A4; margin:22mm 18mm; }
-    html,body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
-               color:var(--ink); background:var(--bg); line-height:1.45; }
-    h1,h2,h3{ color:var(--ink-2); margin:0 0 .2rem 0; page-break-after:avoid; }
-    h1{ font-size:26px; letter-spacing:.2px; }
-    h2{ font-size:20px; border-bottom:2px solid var(--rule); padding-bottom:6px; margin-top:18px; }
-    h3{ font-size:16px; margin-top:8px; }
-    p{ margin:.45rem 0; }
+    @page{ size:A4; margin:24mm 20mm; }
+    html,body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif;
+      color:var(--ink); background:var(--bg); line-height:1.55;
+    }
+    h1,h2,h3{ color:var(--ink-2); margin:0 0 .35rem 0; page-break-after:avoid; }
+    h1{ font-size:28px; letter-spacing:.2px; }
+    h2{
+      font-size:22px; margin-top:22px; padding:6px 8px;
+      background:linear-gradient(90deg,#E9F0FB 0%,#ffffff 70%);
+      border-left:6px solid var(--ink-3);
+    }
+    h3{ font-size:18px; margin-top:10px; }
+    p{ margin:.55rem 0; }
     a{ color:var(--accent); text-decoration:none; }
     a:hover{ text-decoration:underline; }
     .muted{ color:var(--muted); }
-    .cover{ border:2px solid var(--rule); padding:18px; border-radius:10px; background:linear-gradient(180deg,#F7FAFF 0,#fff 100%); }
-    .meta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; color:var(--muted); }
+    .cover{ border:2px solid var(--rule); padding:20px; border-radius:12px; background:linear-gradient(180deg,#F7FAFF 0,#fff 100%); }
+    .meta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; color:var(--muted); }
     .chip{ background:var(--chip); color:var(--ink-2); border:1px solid var(--rule); padding:2px 8px; border-radius:999px; font-size:12px; }
     .chapter{ page-break-before:always; }
     .chapter:first-of-type{ page-break-before:auto; }
-    .section{ margin-top:6px; }
-    .rule{ height:1px; background:var(--rule); border:0; margin:10px 0 14px; }
-    .live ul{ margin:.6rem 0 .2rem 1.1rem; padding:0; }
-    .live li{ margin:.25rem 0; }
-    footer{ position:fixed; bottom:16px; left:18mm; right:18mm; font-size:11px; color:var(--muted); }
+    .section{ margin-top:8px; }
+    .rule{ height:1px; background:var(--rule); border:0; margin:12px 0 16px; }
+    table{ width:100%; border-collapse:collapse; margin:.4rem 0 0; }
+    th,td{ text-align:left; vertical-align:top; padding:6px 8px; border-bottom:1px solid var(--rule); }
+    th{ font-weight:600; color:var(--ink-2); }
+    footer{ position:fixed; bottom:16px; left:20mm; right:20mm; font-size:11px; color:var(--muted); }
     .watermark{ float:right; }
   </style>
 </head>
 <body>
 
+  {# State fallback from German Bundesland code #}
+  {% set bl_map = {
+    'bw':'Baden‑Württemberg','by':'Bavaria','be':'Berlin','bb':'Brandenburg',
+    'hb':'Bremen','hh':'Hamburg','he':'Hesse','mv':'Mecklenburg‑Western Pomerania',
+    'ni':'Lower Saxony','nw':'North Rhine‑Westphalia','rp':'Rhineland‑Palatinate',
+    'sl':'Saarland','sn':'Saxony','st':'Saxony‑Anhalt','sh':'Schleswig‑Holstein','th':'Thuringia'
+  } %}
+  {% set state_txt = bl_map.get(bundesland, '—') %}
+
   <section class="cover">
     <h1>{{ (meta|default({})).title|default('AI Readiness Report', true) }}</h1>
     <p class="muted">
-      Narrative report – GDPR & EU‑AI‑Act ready. 
+      Narrative report – GDPR & EU‑AI‑Act ready.
       {% if now %}{{ now().strftime('%Y-%m-%d') }} · {% endif %}
       Industry: {{ branche|default('—', true) }} ·
       Size: {{ company_size_label|default(unternehmensgroesse|default('—', true), true) }} ·
-      Location: {{ city|default(ort|default(stadt|default('—', true), true), true) }}
+      State: {{ state_txt }}
     </p>
     <div class="meta">
       {% if (meta|default({})).author %}<span class="chip">Author: {{ meta.author }}</span>{% endif %}
@@ -68,21 +78,24 @@
     {% endif %}
   {%- endmacro %}
 
-  {{ section('Executive Summary',        exec_summary_html|default('', true)) }}
-  {{ section('Quick Wins',               quick_wins_html|default('', true)) }}
-  {{ section('Risks',                    risks_html|default('', true)) }}
-  {{ section('Recommendations',          recommendations_html|default('', true)) }}
-  {{ section('Roadmap',                  roadmap_html|default('', true)) }}
-  {{ section('Vision & Game Changer',    (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
-  {{ section('Compliance',               compliance_html|default('', true)) }}
-  {{ section('Funding (Selection)',      funding_html|default('', true)) }}
-  {{ section('AI Tools & Software',      tools_html|default('', true)) }}
+  {{ section('Executive Summary',           exec_summary_html|default('', true)) }}
+  {{ section('Quick Wins',                  quick_wins_html|default('', true)) }}
+  {{ section('Risks',                       risks_html|default('', true)) }}
+  {{ section('Recommendations',             recommendations_html|default('', true)) }}
+
+  {{ section('Business Coaching Pathfinder', coaching_html|default('', true)) }}
+
+  {{ section('Roadmap',                     roadmap_html|default('', true)) }}
+  {{ section('Vision & Game Changer',       (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
+  {{ section('Compliance',                  compliance_html|default('', true)) }}
+  {{ section('Funding (Selection)',         funding_html|default('', true)) }}
+  {{ section('AI Tools & Software',         tools_html|default('', true)) }}
 
   {% if live_html %}
-    <section class="chapter section live">
+    <section class="chapter section">
       <h2>{{ live_title|default('New & relevant', true) }}</h2>
       {{ live_html|safe }}
-      <p class="muted">Curated through trusted indexes. Please have your team validate sources if critical decisions depend on them.</p>
+      <p class="muted">Curated through trusted indexes. Please validate sources internally if decisions rely on them.</p>
     </section>
   {% endif %}
 
