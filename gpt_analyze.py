@@ -47,8 +47,6 @@ def _sanitize_text(s: str) -> str:
     s = _strip_code_fences(s)
     # remove stray checklist markers like "[] **" or "[] **Text"
     s = re.sub(r"\[\]\s*\*\*", "", s)
-    # remove known leftover placeholder occurrences
-    s = s.replace("Realtime-Check {{datum}}", "")
     # collapse bullets left-overs
     s = re.sub(r"^[\-\*\•]\s*", "", s, flags=re.MULTILINE)
     # normalize whitespace
@@ -208,14 +206,6 @@ def _prompt_for(lang: str, *keys: str, prompts: Optional[Dict[str, str]] = None)
             if c in prompts:
                 return prompts[c]
     return ""  # okay: we are robust to empty coach/persona
-
-def _render_prompt_template(text: str, ctx: Dict[str, Any]) -> str:
-    if not text:
-        return ""
-    def repl(m):
-        key = (m.group(1) or "").strip()
-        return str(ctx.get(key, ""))
-    return re.sub(r"\{\{\s*([^}]+?)\s*\}\}", repl, text)
 
 # ----------------------------- Live search (Tavily / SerpAPI) -----------------------------
 
@@ -383,27 +373,30 @@ def build_tools_html(answers: Dict[str, Any], branche: str, lang: str, max_items
 
 # ----------------------------- Funding (CSV + Tavily, w/ deadline) -----------------------------
 
-
 def build_funding_html(answers: Dict[str, Any], lang: str, max_items: int = 8) -> str:
     rows = _read_csv_rows(_find_data_file(["foerderung.csv","foerderprogramme.csv","funding.csv"]))
-
     bundesland = (answers.get("bundesland") or answers.get("state") or "").strip()
-    # Helper to create row dict
-    def _normalize_row(r: Dict[str,str]) -> Dict[str,str]:
+    out = []
+
+    def _row_to_html(r: Dict[str,str]) -> str:
         title = _sanitize_text(r.get("name") or r.get("title") or "Programm")
         link = r.get("link") or r.get("url") or ""
         region = r.get("region") or r.get("bundesland") or "DE"
         grant = r.get("grant") or r.get("zuschuss") or ""
         deadline = r.get("deadline") or r.get("frist") or ""
         if not deadline:
-            deadline = _parse_deadline(" ".join([r.get("content",""), r.get("desc") or ""]) or "") or "–"
-        return {"title": title, "link": link, "region": region, "grant": grant, "deadline": deadline}
+            deadline = _parse_deadline(" ".join([r.get("content",""), r.get("desc","") or ""]) or "") or "–"
+        parts = [f"<b>{_make_link(link, title)}</b>"]
+        if region: parts.append(f"({region})")
+        if grant: parts.append(f" – {grant}")
+        parts.append(f" · <b>Frist:</b> {deadline}")
+        return "<p>" + " ".join(parts) + "</p>"
 
-    items: List[Dict[str,str]] = []
-    for r in rows or []:
-        items.append(_normalize_row(r))
+    if rows:
+        for r in rows[:max_items]:
+            out.append(_row_to_html(r))
 
-    # Live augmentation via Tavily/SerpAPI with dedupe by (title, link)
+    # Live augmentation via Tavily
     TAVILY_DAYS_FUNDING = int(os.getenv("TAVILY_DAYS_FUNDING") or os.getenv("SEARCH_DAYS_FUNDING") or 14)
     queries_de = [
         f"Förderprogramm Digitalisierung KI KMU {bundesland} aktuelle Ausschreibung Frist",
@@ -416,38 +409,31 @@ def build_funding_html(answers: Dict[str, Any], lang: str, max_items: int = 8) -
     ]
     queries = queries_de if lang == "de" else queries_en
 
-    live: List[Dict[str,str]] = []
+    live = []
     for q in queries:
         res = _tavily_search(q, days=TAVILY_DAYS_FUNDING, max_results=4) or _serpapi_search(q, max_results=3)
-        for r in res or []:
+        for r in res:
             title = _sanitize_text(r.get("title") or "")
             url = r.get("url") or ""
             content = (r.get("content") or "")[:400]
+            deadline = _parse_deadline(" ".join([title, content])) or "–"
             if not title or not url:
                 continue
-            deadline = _parse_deadline(" ".join([title, content])) or "–"
-            live.append({"title": title, "link": url, "region": "DE", "grant": "", "deadline": deadline})
-
-    # De-dupe (title + link) and limit
+            live.append({
+                "title": title,
+                "url": url,
+                "deadline": deadline
+            })
+    # de-dupe by title/url
     uniq = []
     seen = set()
-    for r in items + live:
-        k = (r["title"].strip().lower(), r.get("link",""))
-        if k in seen: 
+    for r in live:
+        k = (r["title"].lower(), r["url"])
+        if k in seen:
             continue
         seen.add(k); uniq.append(r)
-    uniq = uniq[:max_items]
-
-    if not uniq:
-        return ""
-
-    # Table rendering: only programme name is a link
-    header = ["Programm", "Region", ("Zuschuss" if lang=="de" else "Grant"), ("Frist" if lang=="de" else "Deadline")]
-    out = ["<table>", "<thead><tr>" + "".join(f"<th>{h}</th>" for h in header) + "</tr></thead>", "<tbody>"]
-    for r in uniq:
-        name_html = _make_link(r.get("link",""), r["title"]) if r.get("link") else _sanitize_text(r["title"]) 
-        out.append("<tr>" + "".join([f"<td>{name_html}</td>", f"<td>{_sanitize_text(r.get('region',''))}</td>", f"<td>{_sanitize_text(r.get('grant',''))}</td>", f"<td>{_sanitize_text(r.get('deadline','–'))}</td>"]) + "</tr>")
-    out.append("</tbody></table>")
+    for r in uniq[:max_items - len(out)]:
+        out.append(_row_to_html(r))
     return "\n".join(out)
 
 # ----------------------------- Live updates box -----------------------------
@@ -633,17 +619,6 @@ def analyze_briefing(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     persona = _prompt_for(lang, "persona", prompts=prompts)
     coach = _prompt_for(lang, "business_coach", "business_prompt", prompts=prompts)
 
-    token_ctx = {
-        "branche": branche,
-        "company_size_label": size_label,
-        "bundesland": bundesland,
-        "hauptleistung": main_product or answers.get("hauptleistung") or "",
-        "main_product": main_product or answers.get("hauptleistung") or "",
-        "score_percent": 0
-    }
-    persona = _render_prompt_template(persona, token_ctx)
-    coach = _render_prompt_template(coach, token_ctx)
-
     # 6) generate main narrative sections via LLM
     sections = [
         ("Executive Summary","executive_summary") if lang=="en" else ("Executive Summary","Executive Summary"),
@@ -693,12 +668,9 @@ def analyze_briefing(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
         "unternehmensgroesse": size,
         "company_size_label": size_label,
         "main_product": main_product,
+        "hauptleistung": main_product,
         "bundesland": bundesland,
         "chips": chips,
-
-        "hauptleistung": main_product,  # alias for template chip
-        "coach_html": coaching_html,    # alias for compatibility
-
         "score_percent": score,
 
         # narrative sections
@@ -711,6 +683,7 @@ def analyze_briefing(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
         "vision_html": html_parts.get("vision_html",""),
         "gamechanger_html": html_parts.get("gamechanger_html",""),
         "coaching_html": coaching_html,  # will be used by updated templates
+        "coach_html": coaching_html,
 
         # data-driven sections
         "funding_html": funding_html,
@@ -722,20 +695,6 @@ def analyze_briefing(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
         "copyright_owner": "Wolf Hohl",
         "copyright_year": _dt.now().year
     }
-
-    # 13) health-check endnotes (no empty chapters, prompt availability)
-    warnings = []
-    if not persona.strip():
-        warnings.append("Hinweis: persona‑Prompt nicht gefunden (de/en). Bitte /prompts prüfen.")
-    if not coach.strip():
-        warnings.append("Hinweis: coach/business‑Prompt nicht gefunden (de/en). Coaching‑Kapitel ggf. leer.")
-    empty_sections = [k for k in ["exec_summary_html","quick_wins_html","recommendations_html","roadmap_html"] if not (ctx.get(k) or "").strip()]
-    if empty_sections:
-        warnings.append("Leere Kapitel erkannt: " + ", ".join(empty_sections))
-    if warnings:
-        ctx["endnotes_html"] = "<div class='note'><b>Leistung & Nachweis.</b><br>" + "<br>".join(warnings) + "</div>"
-    else:
-        ctx["endnotes_html"] = "<div class='note'><b>Leistung & Nachweis.</b> Dieser Report wurde automatisiert generiert und redaktionell geprüft.</div>"
     # Final safety pass: clean accidental artifacts
     for k, v in list(ctx.items()):
         if isinstance(v, str):
