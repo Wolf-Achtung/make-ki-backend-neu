@@ -5,83 +5,108 @@
   <title>{{ (meta|default({})).title|default('AI Readiness Report', true) }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    @page { size: A4; margin: 14mm 16mm; }
-    html, body { margin:0; padding:0; }
     :root{
-      --rail: #0B3A66; --ink: #0B1F3B; --ink-2: #123B70; --muted:#5B6B7C; --rule:#D4DDED; --chip:#E9F0FB; --link:#2B6CB0;
+      --ink: #0B1F3B;
+      --ink-2: #123B70;
+      --accent: #1E5AA5;
+      --muted: #5B6B7C;
+      --bg: #ffffff;
+      --rule: #D4DDED;
+      --chip: #E9F0FB;
+      --left-bg: #E2ECFA;
     }
-    body::before{ content:""; position:fixed; top:0; left:0; bottom:0; width:33%; background:var(--rail); z-index:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    body { color: var(--ink); font: 12.5pt/1.55 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif; }
-    .page{ position:relative; z-index:1; }
-    .cover h1{ color:#fff; margin:0 0 6mm 0; padding:10mm 8mm 4mm 8mm; font-size:26pt; font-weight:700; }
-    .cover-card{ margin-left:36%; border:1px solid var(--rule); border-radius:10px; padding:10mm; background:#fff; }
-    .meta{ display:flex; flex-wrap:wrap; gap:6px; color:var(--muted); margin-top:2mm; }
-    .chip{ background:var(--chip); color:var(--ink-2); border:1px solid var(--rule); padding:2px 8px; border-radius:999px; font-size:10pt; }
-    .chapter{ display:grid; grid-template-columns:33% 1fr; gap:12mm; page-break-inside:avoid; margin:0 0 14mm 0; }
-    .rail{ color:#fff; padding:0 6mm; display:flex; align-items:flex-start; }
-    .rail h2{ color:#fff; font-size:18pt; line-height:1.25; margin:0; }
-    .content{ background:#fff; border:0; padding:0; }
-    .content h3{ color:var(--ink-2); font-size:13.5pt; margin:0 0 3mm 0; }
-    .content p{ margin:3.5mm 0; }
-    .content a{ color:var(--link); text-decoration:none; } .content a:hover{ text-decoration:underline; }
-    table{ width:100%; border-collapse:collapse; table-layout:fixed; }
-    th,td{ border:1px solid var(--rule); padding:3mm; vertical-align:top; word-break:break-word; }
-    th{ background:#F7FAFF; color:var(--ink-2); }
-    ul{ margin:2mm 0 2mm 5mm; } li{ margin:1mm 0; }
-    footer{ position:fixed; left:6mm; bottom:8mm; right:0; color:#fff; font-size:10.5pt; }
+    @page{ size:A4; margin:16mm 14mm; }
+    html,body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      color:var(--ink-2);
+      background:var(--bg);
+      line-height:1.5;
+    }
+    h1,h2,h3{ color:var(--ink-2); margin:0 0 .3rem 0; page-break-after:avoid; }
+    h1{ font-size:28px; letter-spacing:.2px; }
+    h2{ font-size:20px; }
+    h3{ font-size:16px; }
+    p{ margin:.5rem 0; }
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    .cover{ border:2px solid var(--rule); padding:18px; border-radius:12px; background:#F7FAFF; }
+    .meta{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; color:var(--muted); }
+    .chip{ background:var(--chip); border:1px solid var(--rule); padding:2px 8px; border-radius:999px; font-size:12px; color:var(--ink-2); }
+
+    .chapter{ page-break-inside:avoid; break-inside: avoid; margin-top:14px; }
+    .twocol{ display:grid; grid-template-columns: 28% 72%; column-gap: 16px; align-items:start; }
+    .left{ background:var(--left-bg); padding:12px 10px; border-radius:10px; min-height:40mm; position:relative; }
+    .left h2{ margin:0 0 6px 0; }
+    .left .chips{ margin-top:6px; display:flex; flex-wrap:wrap; gap:6px; }
+    .left footer{ position:absolute; bottom:8px; left:10px; right:10px; color:var(--ink); font-size:11px; }
+    .right{ padding:4px 2px; }
+    .rule{ height:1px; background:var(--rule); border:0; margin:10px 0 14px; }
+    .kv{ width:100%; border-collapse:collapse; font-size:12.5px; }
+    .kv th, .kv td{ border-bottom:1px solid var(--rule); padding:6px 6px; vertical-align:top; }
+    .kv th{ text-align:left; white-space:nowrap; }
+    .muted{ color:var(--muted); font-size:12px; }
+
+    .live ul{ margin:.4rem 0 .2rem 1.1rem; padding:0; }
+    .live li{ margin:.2rem 0; }
   </style>
 </head>
 <body>
-  <div class="page">
-    <section class="cover">
-      <h1>{{ (meta|default({})).title|default('AI Readiness Report', true) }}</h1>
-      <div class="cover-card">
-        <p class="muted">
-          Narrative report – GDPR & EU‑AI‑Act ready.
-          {% if now %} {{ now().strftime('%Y-%m-%d') }} · {% endif %}
-          Industry: {{ branche|default('—', true) }} ·
-          Size: {{ company_size_label|default(unternehmensgroesse|default('—', true), true) }} ·
-          Location: {{ city|default(ort|default(stadt|default('—', true), true), true) }}
-        </p>
-        <div class="meta">
-          {% if (meta|default({})).author %}<span class="chip">{{ meta.author }}</span>{% endif %}
-          {% if (meta|default({})).version %}<span class="chip">Version: {{ meta.version }}</span>{% endif %}
-          <span class="chip">Language: EN</span>
-        </div>
+
+  <section class="cover">
+    <h1>{{ (meta|default({})).title|default('AI Readiness Report', true) }}</h1>
+    <div class="meta">
+      <span class="chip">Industry: {{ meta.branche|default(branche|default('—', true), true) }}</span>
+      <span class="chip">Size: {{ meta.company_size|default('—', true) }}</span>
+      {% if meta.product %}<span class="chip">Product: {{ meta.product }}</span>{% endif %}
+      <span class="chip">{{ meta.date|default(now().strftime('%Y‑%m‑%d'), true) }}</span>
+    </div>
+  </section>
+
+  {% macro chips(items) -%}
+    {% if items and items|length>0 %}
+      <div class="chips">
+        {% for c in items %}<span class="chip">{{ c }}</span>{% endfor %}
       </div>
-    </section>
+    {% endif %}
+  {%- endmacro %}
 
-    {% macro chapter(title, html) -%}
-      {% if html|default('', true)|trim %}
-        <section class="chapter">
-          <aside class="rail"><h2>{{ title }}</h2></aside>
-          <article class="content">{{ html|safe }}</article>
-        </section>
-      {% endif %}
-    {%- endmacro %}
-
-    {{ chapter('Executive Summary',               exec_summary_html|default('', true)) }}
-    {{ chapter('Quick Wins',                       quick_wins_html|default('', true)) }}
-    {{ chapter('Risks',                            risks_html|default('', true)) }}
-    {{ chapter('Recommendations',                  recommendations_html|default('', true)) }}
-    {{ chapter('Coach: Next Steps',                coach_html|default('', true)) }}
-    {{ chapter('Roadmap',                          roadmap_html|default('', true)) }}
-    {{ chapter('Vision & Game Changer',            (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
-    {{ chapter('Compliance',                       compliance_html|default('', true)) }}
-    {{ chapter('Funding (Selection)',              funding_html|default('', true)) }}
-    {{ chapter('AI Tools & Software',              tools_html|default('', true)) }}
-
-    {% if live_html %}
-      <section class="chapter live">
-        <aside class="rail"><h2>{{ live_title|default('New & relevant', true) }}</h2></aside>
-        <article class="content">
-          {{ live_html|safe }}
-          <p class="muted">Curated via trusted indexes. Please let your team validate sources if critical decisions depend on them.</p>
-        </article>
+  {% macro section(title, html, badges=[]) -%}
+    {% if html and html|trim %}
+      <section class="chapter twocol">
+        <div class="left">
+          <h2>{{ title }}</h2>
+          {{ chips(badges) }}
+          <footer>TÜV‑certified AI management · © {{ now().year }} Wolf Hohl · KI‑Sicherheit.jetzt</footer>
+        </div>
+        <div class="right">{{ html|safe }}</div>
       </section>
     {% endif %}
-  </div>
+  {%- endmacro %}
 
-  <footer>TÜV‑certified AI management   © 2025 Wolf Hohl · KI‑Sicherheit.jetzt</footer>
+  {{ section('Executive Summary',     exec_summary_html|default('', true)) }}
+  {{ section('Quick Wins',            quick_wins_html|default('', true)) }}
+  {{ section('Risks',                 risks_html|default('', true)) }}
+  {{ section('Recommendations',       recommendations_html|default('', true)) }}
+  {{ section('Coaching',              coach_html|default('', true)) }}
+  {{ section('Roadmap',               roadmap_html|default('', true)) }}
+  {{ section('Vision & Game‑Changers',vision_html|default('', true)) }}
+  {{ section('Compliance',            compliance_html|default('', true)) }}
+  {{ section('Funding Programmes',    funding_html|default('', true)) }}
+  {{ section('AI Tools & Software',   tools_html|default('', true)) }}
+
+  {% if live_html %}
+    <section class="chapter twocol live">
+      <div class="left">
+        <h2>{{ live_title|default('Fresh & relevant', true) }}</h2>
+        <footer>TÜV‑certified AI management · © {{ now().year }} Wolf Hohl · KI‑Sicherheit.jetzt</footer>
+      </div>
+      <div class="right">
+        {{ live_html|safe }}
+        <p class="muted">Curated sources. Please review with your team before taking action.</p>
+      </div>
+    </section>
+  {% endif %}
+
 </body>
 </html>
