@@ -19,8 +19,8 @@
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
       color: var(--ink);
       background: var(--page);
-      line-height: 1.55;
-      font-size: 13.25px;
+      line-height: 1.6;
+      font-size: 14px;
     }
 
     .chapter{ page-break-before: always; }
@@ -29,7 +29,7 @@
     .chapter-grid{
       display: grid;
       grid-template-columns: 34% 66%;
-      column-gap: 14mm;
+      column-gap: 18mm;
       align-items: start;
       min-height: 60mm;
     }
@@ -41,7 +41,7 @@
     }
     .left-rail h2{
       color: var(--ink-2);
-      font-size: 22px;
+      font-size: 24px;
       margin: 0;
       line-height: 1.2;
     }
@@ -113,7 +113,7 @@
     }
     .muted{ color:#5B6B7C; }
 
-    .section{ margin-top: 4mm; }
+    .section{ margin-top: 6mm; }
 
     footer{
       position: fixed;
@@ -145,8 +145,10 @@
       {% if branche %}<span class="chip">{{ branche }}</span>{% endif %}
       {% if unternehmensgroesse %}<span class="chip">{{ company_size_label|default(unternehmensgroesse, true) }}</span>{% endif %}
       {% if bundesland %}<span class="chip">{{ bundesland }}</span>{% endif %}
-      {% if hauptleistung %}<span class="chip">Focus: {{ hauptleistung }}</span>{% endif %}
-    </div>
+      {% if hauptleistung %}<span class="chip">Focus: {{ hauptleistung|default(main_product, true) }}</span>{% endif %}
+    
+    {% if chips %}{% for c in chips %}<span class="chip">{{ c }}</span>{% endfor %}{% endif %}
+
     {% if (meta|default({})).subtitle %}
       <p class="muted">{{ meta.subtitle }}</p>
     {% endif %}
@@ -169,7 +171,7 @@
   {{ section('Quick wins',                   quick_wins_html|default('', true)) }}
   {{ section('Risks',                        risks_html|default('', true)) }}
   {{ section('Recommendations',              recommendations_html|default('', true)) }}
-  {{ section('Coach mode (precise next steps)', coach_html|default('', true)) }}
+  {{ section('Coach mode (precise next steps)', coach_html|default(coaching_html, true)) }}
   {{ section('Roadmap',                      roadmap_html|default('', true)) }}
   {{ section('Vision & game‑changers',       (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
   {{ section('Compliance',                   compliance_html|default('', true)) }}
