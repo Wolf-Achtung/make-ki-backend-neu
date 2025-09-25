@@ -2,15 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>{{ (meta|default({})).title|default('AI Readiness Report', true) }}</title>
+  <title>{{ (meta|default({})).title|default("AI Readiness Report", true) }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    /* ===== Farbwelt (Blautöne, keine Icons) ===== */
     :root{
-      --ink:   #0B1F3B;
-      --ink-2: #123B70;
-      --ink-3: #1C4F91;
-      --chip:  #E9F0FB;
-      --edge:  #D4DDED;
+      --ink:   #0B1F3B;   /* Grundtext in Dunkelblau */
+      --ink-2: #123B70;   /* Headlines/Subheads */
+      --ink-3: #1C4F91;   /* Akzente */
+      --chip:  #E9F0FB;   /* Pastellblau für Chips/Boxen */
+      --edge:  #D4DDED;   /* feine Linien */
       --page:  #ffffff;
     }
 
@@ -19,20 +20,22 @@
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
       color: var(--ink);
       background: var(--page);
-      line-height: 1.6;
-      font-size: 14px;
+      line-height: 1.55;
+      font-size: 13.25px; /* etwas größer & luftiger */
     }
 
+    /* ===== Layout: Kapitel mit linker Überschrifts-Spalte ===== */
     .chapter{ page-break-before: always; }
-    .chapter:first-of-type{ page-break-before: auto; }
+    .chapter:first-of-type{ page-break-before:auto; }
 
     .chapter-grid{
       display: grid;
       grid-template-columns: 34% 66%;
-      column-gap: 18mm;
+      column-gap: 14mm;
       align-items: start;
       min-height: 60mm;
     }
+
     .left-rail{
       background: var(--chip);
       border-left: 6px solid var(--ink-2);
@@ -41,12 +44,16 @@
     }
     .left-rail h2{
       color: var(--ink-2);
-      font-size: 24px;
+      font-size: 22px;
       margin: 0;
       line-height: 1.2;
     }
-    .content{ padding: 4px 0; }
 
+    .content{
+      padding: 4px 0;
+    }
+
+    /* Cover */
     .cover{
       border: 2px solid var(--edge);
       border-radius: 12px;
@@ -65,9 +72,11 @@
       margin: 8px 0 6px 0;
     }
 
+    /* Texte, Listen, Tabellen */
     p{ margin: .5rem 0; }
     a{ color: var(--ink-3); text-decoration: none; }
     a:hover{ text-decoration: underline; }
+
     ul,ol{ margin: .5rem 0 .5rem 1.2rem; }
     li{ margin: .25rem 0; }
 
@@ -113,8 +122,10 @@
     }
     .muted{ color:#5B6B7C; }
 
-    .section{ margin-top: 6mm; }
+    /* Kapitelabstand */
+    .section{ margin-top: 4mm; }
 
+    /* Footer mit linkem Balken */
     footer{
       position: fixed;
       left: 16mm; right: 16mm; bottom: 12mm;
@@ -138,17 +149,16 @@
 </head>
 <body>
 
+  <!-- Titelseite -->
   <section class="cover">
     <h1>{{ (meta|default({})).title|default('AI Readiness Report', true) }}</h1>
     <div class="meta">
-      {% if now %}<span>{{ now().strftime('%Y‑%m‑%d') }}</span>{% endif %}
+      {% if now %}<span>{{ now().strftime('%d.%m.%Y') }}</span>{% endif %}
       {% if branche %}<span class="chip">{{ branche }}</span>{% endif %}
       {% if unternehmensgroesse %}<span class="chip">{{ company_size_label|default(unternehmensgroesse, true) }}</span>{% endif %}
       {% if bundesland %}<span class="chip">{{ bundesland }}</span>{% endif %}
-      {% if hauptleistung %}<span class="chip">Focus: {{ hauptleistung|default(main_product, true) }}</span>{% endif %}
-    
-    {% if chips %}{% for c in chips %}<span class="chip">{{ c }}</span>{% endfor %}{% endif %}
-
+      {% if hauptleistung %}<span class="chip">Focus: {{ hauptleistung }}</span>{% endif %}
+    </div>
     {% if (meta|default({})).subtitle %}
       <p class="muted">{{ meta.subtitle }}</p>
     {% endif %}
@@ -167,24 +177,25 @@
     {% endif %}
   {%- endmacro %}
 
-  {{ section('Executive summary',            exec_summary_html|default('', true)) }}
-  {{ section('Quick wins',                   quick_wins_html|default('', true)) }}
-  {{ section('Risks',                        risks_html|default('', true)) }}
-  {{ section('Recommendations',              recommendations_html|default('', true)) }}
-  {{ section('Coach mode (precise next steps)', coach_html|default(coaching_html, true)) }}
-  {{ section('Roadmap',                      roadmap_html|default('', true)) }}
-  {{ section('Vision & game‑changers',       (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
-  {{ section('Compliance',                   compliance_html|default('', true)) }}
-  {{ section('Funding (selection)',          funding_html|default('', true)) }}
-  {{ section('AI tools & software',          tools_html|default('', true)) }}
+  {{ section('Executive Summary',           exec_summary_html|default('', true)) }}
+  {{ section('Quick Wins',              quick_wins_html|default('', true)) }}
+  {{ section('Risks',                     risks_html|default('', true)) }}
+  {{ section('Recommendations',                recommendations_html|default('', true)) }}
+  {{ section('Coach Mode (next steps)', coaching_html|default('', true)) }}
+  {{ section('Roadmap',                     roadmap_html|default('', true)) }}
+  {{ section('Vision & Gamechanger',        (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
+  {{ section('Compliance',                  compliance_html|default('', true)) }}
+  {{ section('Funding (selected)',   funding_html|default('', true)) }}
+  {{ section('AI Tools & Software',         tools_html|default('', true)) }}
 
+  {# RegWatch & News – nur wenn vorhanden #}
   {% if regwatch_html %}
     <section class="chapter">
       <div class="chapter-grid">
-        <div class="left-rail"><h2>{{ regwatch_title|default('RegWatch – regulation & oversight', true) }}</h2></div>
+        <div class="left-rail"><h2>{{ regwatch_title|default('RegWatch – Law & Oversight', true) }}</h2></div>
         <div class="content">
           {{ regwatch_html|safe }}
-          <p class="muted">Note: results are curated. Please have your team validate sources if decisions depend on them.</p>
+          <p class="muted">Hinweis: Ergebnisse sind kuratiert; bitte interne Fachprüfung bei kritischen Entscheidungen.</p>
         </div>
       </div>
     </section>
@@ -196,16 +207,16 @@
         <div class="left-rail"><h2>{{ live_title|default('New & relevant', true) }}</h2></div>
         <div class="content">
           {{ live_html|safe }}
-          <p class="muted">Curated through trusted indexes. Please validate sources internally if needed.</p>
+          <p class="muted">Kuratiert über vertrauenswürdige Quellen. Bitte ggf. intern verifizieren.</p>
         </div>
       </div>
     </section>
   {% endif %}
 
-  {{ section('Appendix & notes', endnotes_html|default('', true)) }}
+  {{ section('Appendix & Notes', endnotes_html|default('', true)) }}
 
   <footer>
-    <div class="left">TÜV‑certified AI management · © {{ copyright_year|default(now().year if now else '2025', true) }} {{ copyright_owner|default('Wolf Hohl', true) }} · KI‑Sicherheit.jetzt</div>
+    <div class="left">TÜV‑certified AI Management · © {{ copyright_year|default(now().year if now else '2025', true) }} {{ copyright_owner|default('Wolf Hohl', true) }} · KI‑Sicherheit.jetzt</div>
     <div class="right">GDPR · ePrivacy · Digital Services Act · EU AI Act</div>
   </footer>
 </body>
