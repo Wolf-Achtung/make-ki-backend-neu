@@ -5,98 +5,143 @@
   <title>{{ (meta|default({})).title|default('KI‑Statusbericht', true) }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    /* --- Druckseite --- */
+    @page { size: A4; margin: 14mm 16mm; }
+    html, body { margin:0; padding:0; }
+    /* Farben */
     :root{
-      --ink:#0B1F3B; --ink-2:#123B70; --ink-3:#1C4F91; --accent:#2B6CB0;
-      --bg:#ffffff; --muted:#5B6B7C; --rule:#D4DDED; --panel:#E9F0FB; --panel-strong:#D8E6FA;
+      --rail: #0B3A66;     /* linker Streifen */
+      --ink: #0B1F3B;      /* Fließtext (dunkles Blau) */
+      --ink-2: #123B70;    /* Headline */
+      --muted: #5B6B7C;    /* Meta */
+      --rule: #D4DDED;     /* Linien */
+      --chip: #E9F0FB;     /* Chips */
+      --link: #2B6CB0;     /* Links */
     }
-    @page{ size:A4; margin:18mm 18mm; }
-    html,body{ color:var(--ink); background:var(--bg); font: 13.5pt/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
-    h1,h2,h3{ color:var(--ink-2); margin:0 0 .35rem 0; page-break-after:avoid; }
-    h1{ font-size:28px; letter-spacing:.2px; }
-    h2{ font-size:22px; }
-    h3{ font-size:16px; }
-    p{ margin:.5rem 0; }
-    a{ color:var(--accent); text-decoration:none; } a:hover{ text-decoration:underline; }
-    .muted{ color:var(--muted); }
-    .chip{ display:inline-block; background:#fff; color:var(--ink-2); border:1px solid var(--rule); padding:2px 8px; border-radius:999px; font-size:11px; margin-right:6px; margin-top:6px; }
-    .badge{ display:inline-block; border:1px solid var(--rule); color:var(--ink-2); background:#F5F9FF; border-radius:6px; padding:1px 6px; font-size:10.5px; margin-left:4px; }
-    .infobox{ background: var(--panel); border-left:6px solid var(--ink-3); border:1px solid var(--rule); border-radius:10px; padding:8px 12px; margin:10px 0; }
-    .grid{ display:grid; grid-template-columns: 1fr 2fr; grid-column-gap:18px; }
-    .left{ background: linear-gradient(180deg, var(--panel) 0%, #fff 70%); border:2px solid var(--rule); border-radius:12px; padding:16px; }
-    .left h1{ margin-bottom:6px; }
-    .left .meta{ margin-top:6px; }
-    .left .box{ background: var(--panel-strong); border-left:6px solid var(--ink-3); padding:10px 12px; border-radius:10px; margin-top:10px; }
-    .row{ display:contents; }
-    .col-h{ padding:10px 12px; background: var(--panel-strong); border-left:6px solid var(--ink-3); border-radius:10px; margin:10px 0; }
-    .col-c{ padding:6px 4px; margin:10px 0; }
-    table{ width:100%; border-collapse:collapse; margin:.4rem 0 0; }
-    th,td{ text-align:left; vertical-align:top; padding:6px 8px; border-bottom:1px solid var(--rule); }
-    th{ font-weight:600; color:var(--ink-2); background:#F5F9FF; }
-    footer{ position:fixed; bottom:12mm; left:18mm; right:18mm; font-size:10pt; color:var(--muted); }
+
+    /* Linker, konstanter Streifen über alle Seiten */
+    body::before{
+      content:"";
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 33%;
+      background: var(--rail);
+      z-index: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body { color: var(--ink); font: 12.5pt/1.55 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif; }
+
+    /* Grundlayout */
+    .page { position: relative; z-index: 1; }
+    .cover { background: #fff; border: 0; padding: 0; margin: 0 0 10mm 0; }
+    .cover h1{
+      color:#fff; margin:0 0 6mm 0; padding:10mm 8mm 4mm 8mm;
+      font-size: 26pt; font-weight: 700;
+    }
+    /* Untertitel/Meta auf heller Karte rechts */
+    .cover-card{
+      margin-left: 36%;
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      padding: 10mm;
+      background: #fff;
+    }
+    .meta{ display:flex; flex-wrap:wrap; gap:6px; color:var(--muted); margin-top: 2mm; }
+    .chip{ background:var(--chip); color:var(--ink-2); border:1px solid var(--rule); padding:2px 8px; border-radius:999px; font-size:10pt; }
+    .chip a{ color: var(--ink-2); text-decoration: none; }
+
+    /* Kapitel: zwei Spalten – links Titel, rechts Inhalt */
+    .chapter{
+      display: grid; grid-template-columns: 33% 1fr; gap: 12mm;
+      page-break-inside: avoid; margin: 0 0 14mm 0;
+    }
+    .rail{
+      color:#fff; padding: 0 6mm; display:flex; align-items:flex-start;
+    }
+    .rail h2{ color:#fff; font-size: 18pt; line-height: 1.25; margin:0; }
+    .content{
+      background: #fff; border: 0; padding: 0; margin-right: 0;
+    }
+    .content h3{ color: var(--ink-2); font-size: 13.5pt; margin: 0 0 3mm 0; }
+    .content p{ margin: 3.5mm 0; }
+    .content a{ color: var(--link); text-decoration: none; }
+    .content a:hover{ text-decoration: underline; }
+
+    /* Tabellen sicher machen */
+    table{ width:100%; border-collapse: collapse; table-layout: fixed; }
+    th, td{ border:1px solid var(--rule); padding: 3mm; vertical-align: top; word-break: break-word; }
+    th{ background:#F7FAFF; color: var(--ink-2); }
+
+    /* Listen */
+    ul{ margin: 2mm 0 2mm 5mm; }
+    li{ margin: 1mm 0; }
+
+    /* Live-Updates (kleiner) */
+    .live .content li{ margin:1.5mm 0; }
+    .muted{ color: var(--muted); }
+
+    /* Footer unten links im Streifen */
+    footer{
+      position: fixed; left: 6mm; bottom: 8mm; right: 0;
+      color:#fff; font-size:10.5pt;
+    }
   </style>
 </head>
 <body>
-
-  {% set bl_map = {
-    'bw':'Baden‑Württemberg','by':'Bayern','be':'Berlin','bb':'Brandenburg','hb':'Bremen','hh':'Hamburg','he':'Hessen',
-    'mv':'Mecklenburg‑Vorpommern','ni':'Niedersachsen','nw':'Nordrhein‑Westfalen','rp':'Rheinland‑Pfalz','sl':'Saarland',
-    'sn':'Sachsen','st':'Sachsen‑Anhalt','sh':'Schleswig‑Holstein','th':'Thüringen'
-  } %}
-  {% set standort_txt = bl_map.get(bundesland, '') %}
-
-  <section class="grid">
-    <div class="left">
+  <div class="page">
+    <!-- Cover -->
+    <section class="cover">
       <h1>{{ (meta|default({})).title|default('KI‑Statusbericht', true) }}</h1>
-      <div class="meta muted">{% if now %}{{ now().strftime('%d.%m.%Y') }}{% endif %}</div>
-      <div class="meta">
-        {% if branche %}<span class="chip">Branche: {{ branche }}</span>{% endif %}
-        {% if company_size_label or unternehmensgroesse %}<span class="chip">Größe: {{ company_size_label or unternehmensgroesse }}</span>{% endif %}
-        {% if standort_txt %}<span class="chip">Bundesland: {{ standort_txt }}</span>{% endif %}
-        <span class="chip">Sprache: DE</span>
-      </div>
-      <div class="box">
-        <p class="muted">Narrativer Report · DSGVO &amp; EU‑AI‑Act‑ready · Blau‑Design nach Vorlage.</p>
-      </div>
-    </div>
-
-    <div>
-      {% macro section(title, html) -%}
-        {% if html %}
-          <div class="row">
-            <div class="col-h"><h2>{{ title }}</h2></div>
-            <div class="col-c">{{ html|safe }}</div>
-          </div>
-        {% endif %}
-      {%- endmacro %}
-
-      {{ section('Executive Summary',            exec_summary_html|default('', true)) }}
-      {{ section('Schnelle Hebel',               quick_wins_html|default('', true)) }}
-      {{ section('Risiken',                      risks_html|default('', true)) }}
-      {{ section('Empfehlungen',                 recommendations_html|default('', true)) }}
-      {{ section('Coaching‑Pfadfinder',          coaching_html|default('', true)) }}
-      {{ section('Roadmap',                      roadmap_html|default('', true)) }}
-      {% if benchmark_html %}{{ section(benchmark_title|default('Benchmark'), benchmark_html) }}{% endif %}
-      {{ section('Vision & Gamechanger',         (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
-      {{ section('Compliance',                   compliance_html|default('', true)) }}
-      {{ section('Förderprogramme (Auswahl)',    funding_html|default('', true)) }}
-      {{ section('KI‑Tools & Software',          tools_html|default('', true)) }}
-
-      {% if live_html %}
-        <div class="row">
-          <div class="col-h"><h2>{{ live_title|default('Neu & relevant', true) }}</h2></div>
-          <div class="col-c">{{ live_html|safe }}</div>
+      <div class="cover-card">
+        <p class="muted">
+          Narrativer Report – DSGVO‑ & EU‑AI‑Act‑ready.
+          {% if now %} {{ now().strftime('%d.%m.%Y') }} · {% endif %}
+          Branche: {{ branche|default('—', true) }} ·
+          Größe: {{ company_size_label|default(unternehmensgroesse|default('—', true), true) }} ·
+          Standort: {{ ort|default(stadt|default('—', true), true) }}
+        </p>
+        <div class="meta">
+          {% if (meta|default({})).author %}<span class="chip">{{ meta.author }}</span>{% endif %}
+          {% if (meta|default({})).version %}<span class="chip">Version: {{ meta.version }}</span>{% endif %}
+          <span class="chip">Sprache: DE</span>
         </div>
-      {% endif %}
+      </div>
+    </section>
 
-      {% if appendix_end_html %}
-        <div class="row">
-          <div class="col-h"><h2>Hinweise &amp; Glossar</h2></div>
-          <div class="col-c">{{ appendix_end_html|safe }}</div>
-        </div>
+    {# Hilfs-Makro für Kapitel #}
+    {% macro chapter(title, html) -%}
+      {% if html|default('', true)|trim %}
+        <section class="chapter">
+          <aside class="rail"><h2>{{ title }}</h2></aside>
+          <article class="content">{{ html|safe }}</article>
+        </section>
       {% endif %}
-    </div>
-  </section>
+    {%- endmacro %}
 
-  <footer>© {{ copyright_year|default(now().year if now else '2025', true) }} {{ copyright_owner|default('Wolf Hohl', true) }} · KI‑Sicherheit.jetzt</footer>
+    {{ chapter('Executive Summary',               exec_summary_html|default('', true)) }}
+    {{ chapter('Schnelle Hebel',                  quick_wins_html|default('', true)) }}
+    {{ chapter('Risiken',                         risks_html|default('', true)) }}
+    {{ chapter('Empfehlungen',                    recommendations_html|default('', true)) }}
+    {{ chapter('Coach: Nächste Schritte',         coach_html|default('', true)) }}
+    {{ chapter('Roadmap',                         roadmap_html|default('', true)) }}
+    {{ chapter('Vision & Gamechanger',            (vision_html|default('', true)) ~ (gamechanger_html|default('', true)) ) }}
+    {{ chapter('Compliance',                      compliance_html|default('', true)) }}
+    {{ chapter('Förderprogramme (Auswahl)',       funding_html|default('', true)) }}
+    {{ chapter('KI‑Tools & Software',             tools_html|default('', true)) }}
+
+    {% if live_html %}
+      <section class="chapter live">
+        <aside class="rail"><h2>{{ live_title|default('Neu & relevant', true) }}</h2></aside>
+        <article class="content">
+          {{ live_html|safe }}
+          <p class="muted">Kuratiert über vertrauenswürdige Indizes. Bitte Quellen teamseitig gegenprüfen, wenn Entscheidungen davon abhängen.</p>
+        </article>
+      </section>
+    {% endif %}
+  </div>
+
+  <footer>TÜV‑zertifiziertes KI‑Management   © 2025 Wolf Hohl · KI‑Sicherheit.jetzt</footer>
 </body>
 </html>
