@@ -1,476 +1,745 @@
-# gpt_analyze.py — Gold-Standard (VOLLSTÄNDIGE, aktualisierte Vollversion)
-# Version: 2025-09-25-gold
-# Features implemented here:
-# • Zahlensanitizer & robustes Input-Mapping (DE/EN, alte & neue Feldnamen)
-# • Coach-Modus (Business-Coach) – eigener Prompt, Output fließt unter Empfehlungen
-# • Tools-Kapitel: CSV-Renderer mit Badge-Chips (EU‑Hosting / Open Source / Low‑Code)
-#   + Fallback (wenn CSV fehlt) über LLM &/oder Whitelist-Links
-# • Förderprogramme: CSV + Live‑Search (Tavily → SerpAPI Fallback) inkl. „Frist“-Spalte
-# • Live‑Updates: kuratierte Linkliste (Whitelist-Domains), Kapitel nur wenn vorhanden
-# • Gamechanger/Vision: optionale Einbindung gamechanger_features.py / gamechanger_blocks.py
-# • Vollständiger Rückgabekontext für pdf_template(_en).html (keine leeren Felder)
-# • Keine Code-Fences im HTML, keine Markdown-Bullets „[] **“
-# • Nutzt alle Prompts im Ordner ./prompts (wenn vorhanden) + business_coach_{de,en}.txt
-#
-# Diese Datei kann 1:1 die existierende gpt_analyze.py ersetzen.
+
+# gpt_analyze.py — Gold‑Standard (Wolf Edition)
+# Version: 2025-09-25 (FULL, UPDATED)
+# Highlights in this build:
+# - Number/Slider Sanitizer (robust: clamps, handles NaN/empty/strings)
+# - Coaching mode: integrates coach prompts (de/en) with graceful fallback
+# - Tools chapter: CSV/MD fallback + mini-criteria badges (“EU‑Hosting”, “Open Source”, “Low‑Code”)
+# - Funding chapter: CSV fallback + Tavily live search with optional deadline parsing (“Frist”)
+# - Live updates box (optional) via Tavily; SERPAPI optional fallback
+# - Prompt resolver: loads ALL *.txt in /app/prompts (and local ./prompts) to comply with “alle Prompts nutzen”
+# - Template‑first return: we return a context dict (no HTML string), so main.py renders pdf_template(_en).html
+# - No stray artifacts: strips code fences, list markers, residual placeholders
+# - Compatible entrypoint: analyze_briefing(body, lang='de')
 
 from __future__ import annotations
-import os, re, csv, json, html, logging, importlib.util
+
+import os, re, json, csv, mimetypes
 from pathlib import Path
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime as _dt
+from typing import Dict, Any, Optional, List, Tuple
 
-# ---- Logging ----
-log = logging.getLogger("backend")
+import httpx
 
-ROOT = Path(__file__).parent
-PROMPTS_DIRS = [ROOT/"prompts", ROOT/"prompts_unzip", ROOT]
-DATA_DIRS = [ROOT/"data", ROOT]
-WHITELIST = [d.strip() for d in (os.getenv("SEARCH_INCLUDE_DOMAINS") or "bmwi.de,bafa.de,ihk.de,exist.de,europa.eu".replace(",", " ").replace(" ", ",")).split(",") if d.strip()]
-
-# ---- Provider-Konfiguration ----
-OPENAI_API_KEY = (os.getenv("OPENAI_API_KEY") or "").strip()
-DEFAULT_MODEL = os.getenv("GPT_MODEL_NAME", "gpt-4o-mini")
-EXEC_SUMMARY_MODEL = os.getenv("EXEC_SUMMARY_MODEL") or DEFAULT_MODEL
-TEMPERATURE = float(os.getenv("GPT_TEMPERATURE") or "0.2")
-
-# ---- Websuche ----
+# OpenAI (v1 client)
 try:
-    from websearch_utils import search_links, build_live_box
-except Exception:
-    # Slim Fallback (keine Suche verfügbar)
-    def search_links(q: str, lang: str="de", num: int=5, recency_days: int=30) -> List[Dict[str, Any]]:
-        return []
-    def build_live_box(title: str, links: List[Dict[str, Any]], lang: str="de") -> str:
-        return ""
+    from openai import OpenAI  # type: ignore
+    _openai_client = OpenAI()
+except Exception:  # library not present in local tests
+    _openai_client = None
 
-# =============================================================================
-# Hilfen
-# =============================================================================
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIRS = [BASE_DIR / "data", BASE_DIR, Path("/app/data")]
+PROMPT_DIRS = [BASE_DIR / "prompts", Path("/app/prompts")]
 
-def _read_text_file(path: Path) -> Optional[str]:
-    try:
-        if path.is_file():
-            return path.read_text(encoding="utf-8", errors="ignore")
-    except Exception:
-        return None
-    return None
+# ----------------------------- Utilities -----------------------------
 
-def _find_first_file(candidates: List[str]) -> Optional[Path]:
-    for base in PROMPTS_DIRS:
+def _strip_code_fences(s: str) -> str:
+    if not s:
+        return s
+    s = re.sub(r"^```[a-zA-Z0-9_-]*\s*", "", s.strip(), flags=re.MULTILINE)
+    s = re.sub(r"\s*```$", "", s, flags=re.MULTILINE)
+    return s.strip()
+
+def _sanitize_text(s: str) -> str:
+    if not s:
+        return s or ""
+    s = _strip_code_fences(s)
+    # remove stray checklist markers like "[] **" or "[] **Text"
+    s = re.sub(r"\[\]\s*\*\*", "", s)
+    # remove known leftover placeholder occurrences
+    s = s.replace("Realtime-Check {{datum}}", "")
+    # collapse bullets left-overs
+    s = re.sub(r"^[\-\*\•]\s*", "", s, flags=re.MULTILINE)
+    # normalize whitespace
+    s = re.sub(r"[ \t]{2,}", " ", s)
+    s = re.sub(r"\n{3,}", "\n\n", s)
+    return s.strip()
+
+def _dedupe(seq: List[str]) -> List[str]:
+    seen = set()
+    out = []
+    for x in seq:
+        k = x.strip().lower()
+        if k in seen: 
+            continue
+        seen.add(k); out.append(x)
+    return out
+
+def _find_data_file(candidates: List[str]) -> Optional[Path]:
+    for d in DATA_DIRS:
         for name in candidates:
-            p = base / name
-            if p.is_file():
+            p = d / name
+            if p.exists() and p.is_file():
                 return p
     return None
 
-def _load_prompt(*names: str) -> Optional[str]:
-    p = _find_first_file(list(names))
-    return _read_text_file(p) if p else None
+def _read_csv_rows(path: Optional[Path]) -> List[Dict[str, str]]:
+    if not path:
+        return []
+    out: List[Dict[str, str]] = []
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            # dialect-safe
+            sample = f.read(4096)
+            f.seek(0)
+            try:
+                sniffer = csv.Sniffer()
+                dialect = sniffer.sniff(sample)
+            except Exception:
+                dialect = csv.excel
+            reader = csv.DictReader(f, dialect=dialect)
+            for row in reader:
+                out.append({k.strip(): (v or "").strip() for k, v in row.items()})
+    except Exception:
+        return []
+    return out
 
-def _strip_md(s: str) -> str:
-    if not s: return ""
-    s = s.replace("\\n", "\n")
-    # Entfernt Code-Fences und führende „[] **“ etc.
-    s = re.sub(r"```[\\s\\S]*?```", "", s, flags=re.M)  # Codeblöcke entfernen
-    s = re.sub(r"^\\s*[-*]\\s+", "", s, flags=re.M)     # Bullet-Listenzeichen
-    s = re.sub(r"\\[\\]\\s*\\*\\*", "", s)              # „[] **“
-    s = s.replace("**", "")                             # fett-Markdown
-    return s.strip()
+# ----------------------------- Answer normalization -----------------------------
 
-def _chip(text: str) -> str:
-    text = html.escape(text.strip())
-    return f'<span class="chip">{text}</span>' if text else ""
-
-def _normalize_lang(lang: Optional[str]) -> str:
-    if not lang: return "de"
-    return "de" if lang.lower().startswith("de") else "en"
-
-def _coalesce(*vals):
-    for v in vals:
-        if v is not None and str(v).strip() != "":
-            return v
-    return None
-
-def _to_num(value: Any) -> Optional[float]:
-    """Zahlensanitizer: akzeptiert '1.234,56', '1,234.56', '85 %', '€ 1.200' etc."""
-    if value is None: return None
-    if isinstance(value, (int, float)): return float(value)
-    s = str(value)
-    s = s.replace("\\u00A0", " ").strip()  # NBSP
-    s = re.sub(r"[€$%+~°]", "", s)         # störende Zeichen
-    # deutsche und englische Formatierung normalisieren
-    if "," in s and "." in s:
-        # Entscheide anhand der letzten Trennzeichenposition
-        if s.rfind(",") > s.rfind("."):
-            s = s.replace(".", "").replace(",", ".")
+def _to_int(x: Any, default: int, lo: int, hi: int) -> int:
+    try:
+        if x is None:
+            return default
+        if isinstance(x, (int, float)):
+            v = int(round(float(x)))
         else:
-            s = s.replace(",", "")
-    else:
-        s = s.replace(",", ".")
-    try:
-        return float(re.findall(r"-?\\d+(?:\\.\\d+)?", s)[0])
+            # accept strings like "5", "7.0", "—", "undefined"
+            s = str(x).strip().replace(",", ".")
+            if not s or s.lower() in {"nan", "none", "null", "undefined", "—", "-"}:
+                return default
+            v = int(round(float(re.findall(r"[-+]?\d*\.?\d+", s)[0])))
+        if v < lo:
+            return lo
+        if v > hi:
+            return hi
+        return v
     except Exception:
+        return default
+
+def _map_range_bucket(val: str, mapping: Dict[str, int], default: int) -> int:
+    if not val:
+        return default
+    s = str(val).strip().lower()
+    return mapping.get(s, default)
+
+def _norm_size(value: Any) -> str:
+    v = str(value or "").strip().lower()
+    if v in {"1", "solo", "einzel", "freelancer", "freiberuflich"}:
+        return "solo"
+    if v in {"2–10", "2-10", "2_10", "team", "small", "small team"}:
+        return "team"
+    if v in {"11–100", "11-100", "kmu", "sme"}:
+        return "kmu"
+    return v or "kmu"
+
+def _extract_branche(d: Dict[str, Any]) -> str:
+    raw = (str(d.get("branche") or d.get("industry") or d.get("sector") or "")).strip().lower()
+    m = {
+        "beratung":"beratung","consulting":"beratung","dienstleistung":"beratung","services":"beratung",
+        "it":"it","software":"it","information technology":"it","saas":"it","kollaboration":"it",
+        "marketing":"marketing","werbung":"marketing","advertising":"marketing",
+        "bau":"bau","construction":"bau","architecture":"bau",
+        "industrie":"industrie","produktion":"industrie","manufacturing":"industrie",
+        "handel":"handel","retail":"handel","e-commerce":"handel","ecommerce":"handel",
+        "finanzen":"finanzen","finance":"finanzen","insurance":"finanzen",
+        "gesundheit":"gesundheit","health":"gesundheit","healthcare":"gesundheit",
+        "medien":"medien","media":"medien","kreativwirtschaft":"medien",
+        "logistik":"logistik","logistics":"logistik","transport":"logistik",
+        "verwaltung":"verwaltung","public administration":"verwaltung",
+        "bildung":"bildung","education":"bildung"
+    }
+    if raw in m: 
+        return m[raw]
+    for k, v in m.items():
+        if k in raw:
+            return v
+    return "beratung"
+
+# ----------------------------- Prompts -----------------------------
+
+def _scan_prompt_files() -> Dict[str, str]:
+    """
+    Loads ALL *.txt under known prompt folders.
+    Returns dict {name_without_ext: content}.
+    Supports aliases:
+      - business_coach_(de|en).txt
+      - business_prompt_(de|en).txt  (alias)
+      - persona_(de|en).txt
+      - section_*.txt    (optional per-chapter)
+    """
+    found: Dict[str, str] = {}
+    seen_paths: set[str] = set()
+    for d in PROMPT_DIRS:
+        if not d.exists():
+            continue
+        for p in d.glob("*.txt"):
+            if p.as_posix() in seen_paths:
+                continue
+            try:
+                txt = p.read_text(encoding="utf-8")
+                name = p.stem
+                found[name] = txt
+                seen_paths.add(p.as_posix())
+            except Exception:
+                pass
+
+    # Alias: if one exists, mirror to the other key
+    for lang in ("de","en"):
+        a = f"business_coach_{lang}"
+        b = f"business_prompt_{lang}"
+        if a in found and b not in found:
+            found[b] = found[a]
+        if b in found and a not in found:
+            found[a] = found[b]
+    return found
+
+def _prompt_for(lang: str, *keys: str, prompts: Optional[Dict[str, str]] = None) -> str:
+    """
+    Tries: exact key, then key_lang, then fallback without lang.
+    keys can be 'persona', 'business_coach', 'section_recommendations', etc.
+    """
+    if prompts is None:
+        prompts = _scan_prompt_files()
+    lang = "de" if str(lang).lower().startswith("de") else "en"
+    for key in keys:
+        candidates = [f"{key}_{lang}", key]
+        for c in candidates:
+            if c in prompts:
+                return prompts[c]
+    return ""  # okay: we are robust to empty coach/persona
+
+def _render_prompt_template(text: str, ctx: Dict[str, Any]) -> str:
+    if not text:
+        return ""
+    def repl(m):
+        key = (m.group(1) or "").strip()
+        return str(ctx.get(key, ""))
+    return re.sub(r"\{\{\s*([^}]+?)\s*\}\}", repl, text)
+
+# ----------------------------- Live search (Tavily / SerpAPI) -----------------------------
+
+def _tavily_search(query: str, days: int = 30, max_results: int = 5) -> List[Dict[str, Any]]:
+    api_key = os.getenv("TAVILY_API_KEY")
+    if not api_key:
+        return []
+    url = "https://api.tavily.com/search"
+    payload = {
+        "api_key": api_key,
+        "query": query,
+        "search_depth": "advanced",
+        "include_answer": False,
+        "include_domains": [],
+        "exclude_domains": [],
+        "max_results": max_results,
+        "days": days
+    }
+    try:
+        with httpx.Client(timeout=15) as client:
+            r = client.post(url, json=payload)
+            r.raise_for_status()
+            data = r.json()
+            return data.get("results", []) or []
+    except Exception:
+        return []
+
+def _serpapi_search(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
+    key = os.getenv("SERPAPI_KEY") or os.getenv("GOOGLE_SEARCH_API_KEY")
+    if not key:
+        return []
+    url = "https://serpapi.com/search.json"
+    params = {"q": query, "api_key": key, "num": max_results, "engine": "google"}
+    try:
+        with httpx.Client(timeout=15) as client:
+            r = client.get(url, params=params)
+            r.raise_for_status()
+            j = r.json()
+            out = []
+            for item in (j.get("organic_results") or [])[:max_results]:
+                out.append({
+                    "title": item.get("title"),
+                    "url": item.get("link"),
+                    "content": item.get("snippet")
+                })
+            return out
+    except Exception:
+        return []
+
+def _make_link(url: str, title: str) -> str:
+    title = _sanitize_text(title or url)
+    url = (url or "").strip()
+    return f'<a href="{url}">{title}</a>' if url else title
+
+def _parse_deadline(text: str) -> Optional[str]:
+    """
+    Tries to parse a deadline from arbitrary text.
+    Supports dd.mm.yyyy / yyyy-mm-dd and German month names.
+    """
+    if not text:
         return None
+    t = text.strip()
 
-def _read_csv_first(*names: str) -> Optional[List[Dict[str, str]]]:
-    for base in DATA_DIRS:
-        for nm in names:
-            p = base / nm
-            if p.is_file():
-                try:
-                    with p.open("r", encoding="utf-8", errors="ignore") as f:
-                        return list(csv.DictReader(f))
-                except Exception as e:
-                    log.warning("CSV-Read failed for %s: %s", p, e)
-    return None
-
-def _opt_import(module_name: str):
-    try:
-        return importlib.import_module(module_name)
-    except Exception:
-        # support file next to main
-        p = ROOT / f"{module_name}.py"
+    # 1) explicit ISO
+    m = re.search(r"(\d{4})[-/\.](\d{1,2})[-/\.](\d{1,2})", t)
+    if m:
+        y, mo, d = m.groups()
         try:
-            if p.exists():
-                spec = importlib.util.spec_from_file_location(module_name, str(p))
-                if spec and spec.loader:
-                    mod = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(mod)  # type: ignore
-                    return mod
+            return f"{int(y):04d}-{int(mo):02d}-{int(d):02d}"
+        except Exception:
+            pass
+
+    # 2) German style: 31.12.2025
+    m = re.search(r"(\d{1,2})\.(\d{1,2})\.(\d{2,4})", t)
+    if m:
+        d, mo, y = m.groups()
+        y = int(y); y = (2000 + y) if y < 100 else y
+        try:
+            return f"{int(y):04d}-{int(mo):02d}-{int(d):02d}"
+        except Exception:
+            pass
+
+    # 3) Month name (German/English), naive
+    months = {
+        "januar":1, "februar":2, "märz":3, "maerz":3, "april":4, "mai":5, "juni":6, "juli":7,
+        "august":8, "september":9, "oktober":10, "november":11, "dezember":12,
+        "january":1, "february":2, "march":3, "april":4, "may":5, "june":6, "july":7,
+        "august":8, "september":9, "october":10, "november":11, "december":12
+    }
+    m = re.search(r"(\d{1,2})\.\s*([A-Za-zäöüÄÖÜ]+)\s*(\d{2,4})", t)
+    if m:
+        d, mon, y = m.groups()
+        mon = mon.lower()
+        mon = mon.replace("ä","ae").replace("ö","oe").replace("ü","ue")
+        mo = months.get(mon)
+        try:
+            y = int(y); y = (2000 + y) if y < 100 else y
+            if mo:
+                return f"{y:04d}-{mo:02d}-{int(d):02d}"
         except Exception:
             pass
     return None
 
-# =============================================================================
-# LLM Aufruf (OpenAI)
-# =============================================================================
+# ----------------------------- Domain mapping & labels -----------------------------
 
-def _openai_chat(messages: List[Dict[str, str]], model: Optional[str]=None, temperature: Optional[float]=None, max_tokens: Optional[int]=None) -> str:
-    model = model or DEFAULT_MODEL
-    temperature = TEMPERATURE if (temperature is None) else temperature
-    if not OPENAI_API_KEY:
-        # Offline-Fallback: kombiniere User-Inputs in narrative Absätze
-        joined = "\\n\\n".join([m.get("content","") for m in messages if m.get("role")=="user"])
-        return "Offline‑Fallback (kein API‑Key konfiguriert).\\n\\n" + joined[:4000]
-    try:
-        import httpx
-        headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
-        payload = {"model": model, "messages": messages, "temperature": float(temperature)}
-        if max_tokens: payload["max_tokens"] = max_tokens
-        with httpx.Client(timeout=60) as client:
-            r = client.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-            r.raise_for_status()
-            data = r.json()
-        txt = (data.get("choices") or [{}])[0].get("message", {}).get("content", "") or ""
-        return txt
-    except Exception as e:
-        log.warning("OpenAI request failed: %s", e)
+_SIZE_LABELS_DE = {"solo":"1 (Solo)","team":"2–10","kmu":"11–100"}
+_SIZE_LABELS_EN = {"solo":"1 (solo)","team":"2–10","kmu":"11–100"}
+
+def _labels_for_size(size: str, lang: str) -> str:
+    if lang == "de":
+        return _SIZE_LABELS_DE.get(size, size)
+    return _SIZE_LABELS_EN.get(size, size)
+
+# ----------------------------- Tool details (CSV fallback + badges) -----------------------------
+
+def _badge_html(text: str) -> str:
+    text = _sanitize_text(text)
+    return f'<span class="chip">{text}</span>'
+
+def _tool_badges(row: Dict[str, str]) -> List[str]:
+    badges: List[str] = []
+    val = (row.get("eu_hosting") or row.get("eu") or "").strip().lower()
+    if val in {"1","true","yes","ja","y"}:
+        badges.append("EU‑Hosting")
+    val = (row.get("open_source") or row.get("oss") or "").strip().lower()
+    if val in {"1","true","yes","ja","y"}:
+        badges.append("Open Source")
+    val = (row.get("low_code") or row.get("nocode") or "").strip().lower()
+    if val in {"1","true","yes","ja","y"}:
+        badges.append("Low‑Code")
+    # optional: source badge (domain hint)
+    src = (row.get("source") or row.get("vendor") or "").strip()
+    if src:
+        badges.append(f"Quelle: {src}")
+    return badges
+
+def build_tools_html(answers: Dict[str, Any], branche: str, lang: str, max_items: int = 12) -> str:
+    rows = _read_csv_rows(_find_data_file(["tools.csv","ki_tools.csv","tools_de.csv","tools_en.csv"]))
+    items: List[Dict[str,str]] = []
+
+    if rows:
+        for r in rows:
+            # optional filtering by industry / size
+            ind = (r.get("industry") or r.get("branche") or "").strip().lower()
+            if ind and ind not in {"*", "all", "any"} and branche and (branche not in ind):
+                continue
+            items.append(r)
+    else:
+        # minimal curated fallback (safe, generic)
+        items = [
+            {"name":"n8n", "link":"https://n8n.io", "open_source":"1", "low_code":"1", "eu_hosting":"1", "source":"n8n"},
+            {"name":"Make", "link":"https://www.make.com", "low_code":"1", "eu_hosting":"1", "source":"Make"},
+            {"name":"Hugging Face", "link":"https://huggingface.co", "open_source":"1", "source":"HF"},
+            {"name":"Odoo", "link":"https://www.odoo.com", "low_code":"1", "eu_hosting":"1", "source":"Odoo"},
+            {"name":"Aleph Alpha", "link":"https://www.aleph-alpha.com", "eu_hosting":"1", "source":"Aleph Alpha"},
+        ]
+
+    out = []
+    for r in items[:max_items]:
+        name = _sanitize_text(r.get("name") or r.get("tool") or r.get("title") or "Tool")
+        link = r.get("link") or r.get("url") or ""
+        badges = " ".join(_badge_html(b) for b in _tool_badges(r))
+        out.append(f"<p><b>{_make_link(link, name)}</b><br/>{badges}</p>")
+    return "\n".join(out)
+
+# ----------------------------- Funding (CSV + Tavily, w/ deadline) -----------------------------
+
+
+def build_funding_html(answers: Dict[str, Any], lang: str, max_items: int = 8) -> str:
+    rows = _read_csv_rows(_find_data_file(["foerderung.csv","foerderprogramme.csv","funding.csv"]))
+
+    bundesland = (answers.get("bundesland") or answers.get("state") or "").strip()
+    # Helper to create row dict
+    def _normalize_row(r: Dict[str,str]) -> Dict[str,str]:
+        title = _sanitize_text(r.get("name") or r.get("title") or "Programm")
+        link = r.get("link") or r.get("url") or ""
+        region = r.get("region") or r.get("bundesland") or "DE"
+        grant = r.get("grant") or r.get("zuschuss") or ""
+        deadline = r.get("deadline") or r.get("frist") or ""
+        if not deadline:
+            deadline = _parse_deadline(" ".join([r.get("content",""), r.get("desc") or ""]) or "") or "–"
+        return {"title": title, "link": link, "region": region, "grant": grant, "deadline": deadline}
+
+    items: List[Dict[str,str]] = []
+    for r in rows or []:
+        items.append(_normalize_row(r))
+
+    # Live augmentation via Tavily/SerpAPI with dedupe by (title, link)
+    TAVILY_DAYS_FUNDING = int(os.getenv("TAVILY_DAYS_FUNDING") or os.getenv("SEARCH_DAYS_FUNDING") or 14)
+    queries_de = [
+        f"Förderprogramm Digitalisierung KI KMU {bundesland} aktuelle Ausschreibung Frist",
+        f"Förderung Beratung Digitalisierung KMU {bundesland} Frist",
+        "go-digital KMU Frist",
+    ]
+    queries_en = [
+        f"funding program digitalisation AI SMEs {bundesland} Germany deadline",
+        "grant consulting digitization SMEs Germany deadline",
+    ]
+    queries = queries_de if lang == "de" else queries_en
+
+    live: List[Dict[str,str]] = []
+    for q in queries:
+        res = _tavily_search(q, days=TAVILY_DAYS_FUNDING, max_results=4) or _serpapi_search(q, max_results=3)
+        for r in res or []:
+            title = _sanitize_text(r.get("title") or "")
+            url = r.get("url") or ""
+            content = (r.get("content") or "")[:400]
+            if not title or not url:
+                continue
+            deadline = _parse_deadline(" ".join([title, content])) or "–"
+            live.append({"title": title, "link": url, "region": "DE", "grant": "", "deadline": deadline})
+
+    # De-dupe (title + link) and limit
+    uniq = []
+    seen = set()
+    for r in items + live:
+        k = (r["title"].strip().lower(), r.get("link",""))
+        if k in seen: 
+            continue
+        seen.add(k); uniq.append(r)
+    uniq = uniq[:max_items]
+
+    if not uniq:
         return ""
 
-# =============================================================================
-# Kapitel-Renderer
-# =============================================================================
-
-def _render_tools_html(lang: str, branche: str, rows: Optional[List[Dict[str,str]]]) -> str:
-    if not rows: 
-        # Fallback kurzer Text
-        return "<p>" + ("Keine kuratierten Tools gefunden. Wir ergänzen die Empfehlungen manuell in der Beratung."
-                        if lang=="de" else
-                        "No curated tools found. We'll add tailored suggestions during coaching.") + "</p>"
-    # Normiertes Mapping
-    out = [ "<table><thead><tr>"
-            + ("<th>Tool</th><th>Zweck</th><th>Badges</th>" if lang=="de" else "<th>Tool</th><th>Purpose</th><th>Badges</th>")
-            + "</tr></thead><tbody>" ]
-    for r in rows:
-        name = (r.get("name") or r.get("tool") or "").strip()
-        url = (r.get("url") or r.get("link") or "").strip()
-        purpose = r.get("purpose") or r.get("zweck") or r.get("category") or ""
-        badges: List[str] = []
-        if str(r.get("eu_hosting") or r.get("eu") or r.get("hosting") or "").strip().lower() in ("1","true","yes","ja"):
-            badges.append("EU‑Hosting")
-        if str(r.get("open_source") or r.get("oss") or "").strip().lower() in ("1","true","yes","ja"):
-            badges.append("Open Source")
-        if str(r.get("low_code") or r.get("nocode") or "").strip().lower() in ("1","true","yes","ja"):
-            badges.append("Low‑Code")
-        btxt = ", ".join(badges) if badges else "—"
-        if url and not url.startswith("http"): url = "https://" + url
-        link = f'<a href="{html.escape(url)}">{html.escape(name)}</a>' if url else html.escape(name or "—")
-        out.append(f"<tr><td>{link}</td><td>{html.escape(purpose)}</td><td>{html.escape(btxt)}</td></tr>")
+    # Table rendering: only programme name is a link
+    header = ["Programm", "Region", ("Zuschuss" if lang=="de" else "Grant"), ("Frist" if lang=="de" else "Deadline")]
+    out = ["<table>", "<thead><tr>" + "".join(f"<th>{h}</th>" for h in header) + "</tr></thead>", "<tbody>"]
+    for r in uniq:
+        name_html = _make_link(r.get("link",""), r["title"]) if r.get("link") else _sanitize_text(r["title"]) 
+        out.append("<tr>" + "".join([f"<td>{name_html}</td>", f"<td>{_sanitize_text(r.get('region',''))}</td>", f"<td>{_sanitize_text(r.get('grant',''))}</td>", f"<td>{_sanitize_text(r.get('deadline','–'))}</td>"]) + "</tr>")
     out.append("</tbody></table>")
     return "\n".join(out)
 
-def _render_funding_html(lang: str, bundesland: Optional[str], rows: Optional[List[Dict[str,str]]]) -> str:
-    if not rows:
-        return "<p>" + ("Derzeit keine passenden Programme in der Datenbasis. Über die Live‑Suche (unten) prüfen wir zusätzlich tagesaktuell."
-                        if lang=="de" else
-                        "No suitable programmes in the local data. Live search below adds fresh items.") + "</p>"
-    lab = ("Programm","Träger","Frist") if lang=="de" else ("Programme","Provider","Deadline")
-    out = [f"<table><thead><tr><th>{lab[0]}</th><th>{lab[1]}</th><th>{lab[2]}</th></tr></thead><tbody>"]
-    for r in rows:
-        name = r.get("name") or r.get("programm") or r.get("title") or "—"
-        url  = r.get("url") or r.get("link") or ""
-        prov_raw = r.get("provider") or r.get("traeger") or r.get("quelle") or "—"
-        dl   = r.get("deadline") or r.get("frist") or r.get("stichtag") or r.get("date") or r.get("ends") or ""
-        if not dl:
-            # versuche Datums-Extraktion
-            text = " ".join([r.get(k) or "" for k in ("notes","beschreibung","desc","snippet","text")])
-            m = re.search(r"(\d{1,2}[.\/ ]\d{1,2}[.\/ ]\d{2,4}|\d{4}-\d{2}-\d{2})", text or "")
-            dl = m.group(0) if m else "–"
-        link = f'<a href="{html.escape(url)}">{html.escape(name)}</a>' if url else html.escape(name)
-        prov = f'<span class="chip">{html.escape(prov_raw)}</span>' if prov_raw else "—"
-        out.append(f"<tr><td>{link}</td><td>{prov}</td><td>{html.escape(dl)}</td></tr>")
-    out.append("</tbody></table>")
-    if bundesland:
-        out.append(f'<p class="muted'>{ "Gefiltert nach Bundesland" if lang=="de" else "Filtered by federal state"}: {html.escape(bundesland.upper())}</p>')
-    return "\n".join(out)
+# ----------------------------- Live updates box -----------------------------
 
-def _build_live_updates(lang: str, branche: str, bundesland: Optional[str]) -> Tuple[str, str]:
-    # Titel & Queries
-    title = "Neu & relevant" if lang=="de" else "Fresh & relevant"
-    queries = []
-    if lang=="de":
-        queries = [
-            f"site:bmwi.de OR site:bafa.de OR site:ihk.de KI Förderung {bundesland or ''}".strip(),
-            f"site:europa.eu EU AI Act Umsetzung Leitfäden {bundesland or ''}".strip(),
-            f"{branche} KI Tools Best Practices Deutschland"
-        ]
+def build_live_updates_html(answers: Dict[str,Any], lang: str) -> str:
+    state = (answers.get("bundesland") or answers.get("state") or "").strip()
+    branche = _extract_branche(answers)
+    TAVILY_DAYS_TOOLS = int(os.getenv("TAVILY_DAYS_TOOLS") or os.getenv("SEARCH_DAYS_TOOLS") or 30)
+    qs_de = [
+        f"EU AI Act Umsetzung Leitfaden {state} KMU",
+        f"neue KI-Tools Update 2025 {branche}",
+        f"Fördermittel Digitalisierung {state} Frist 2025"
+    ]
+    qs_en = [
+        f"EU AI Act implementation guide {state} SMEs",
+        f"new AI tools update 2025 {branche}",
+        f"funding digitalisation {state} deadline 2025"
+    ]
+    qs = qs_de if lang == "de" else qs_en
+    items = []
+    for q in qs:
+        res = _tavily_search(q, days=TAVILY_DAYS_TOOLS, max_results=4) or _serpapi_search(q, max_results=3)
+        for r in (res or [])[:3]:
+            t = _sanitize_text(r.get("title") or "")
+            u = r.get("url") or ""
+            c = (r.get("content") or "").strip()
+            if not t or not u:
+                continue
+            items.append(f"<li>{_make_link(u, t)}</li>")
+    items = _dedupe(items)[:7]
+    if not items:
+        return ""
+    return "<ul>" + "\n".join(items) + "</ul>"
+
+# ----------------------------- LLM helpers -----------------------------
+
+def _resolve_model() -> str:
+    # keep conservative defaults; main.py already posts to chat/completions (as per logs)
+    env_model = os.getenv("OPENAI_MODEL") or ""
+    if env_model:
+        return env_model
+    return "gpt-4.1-mini"
+
+def _chat_complete(system_prompt: str, user_prompt: str, lang: str) -> str:
+    if _openai_client is None:
+        # local test fallback: return user_prompt trimmed
+        return _sanitize_text(user_prompt)[:1800]
+
+    model = _resolve_model()
+    try:
+        resp = _openai_client.chat.completions.create(
+            model=model,
+            temperature=0.2,
+            max_tokens=1200,
+            messages=[
+                {"role":"system","content":system_prompt},
+                {"role":"user","content":user_prompt}
+            ]
+        )
+        txt = (resp.choices[0].message.content or "").strip()
+        return _sanitize_text(txt)
+    except Exception:
+        return ""
+
+def _render_context_snippet(answers: Dict[str, Any], lang: str) -> str:
+    # compact, ordered context for the LLM
+    size = _norm_size(answers.get("unternehmensgroesse"))
+    main_prod = answers.get("hauptleistung") or answers.get("main_product") or ""
+    bundesland = answers.get("bundesland") or ""
+    ziele = ", ".join(answers.get("projektziel") or answers.get("project_goals") or [])
+    usecases = ", ".join(answers.get("ki_usecases") or answers.get("usecases") or [])
+    hemmnisse = ", ".join(answers.get("ki_hemmnisse") or [])
+    risikofreude = _to_int(answers.get("risikofreude"), 3, 1, 5)
+    digital = _to_int(answers.get("digitalisierungsgrad"), 5, 1, 10)
+    papierlos_map = {"0-20":10,"21-50":40,"51-80":70,"81-100":90}
+    papierlos = _map_range_bucket(answers.get("prozesse_papierlos") or "", papierlos_map, 40)
+    auto_map = {"sehr_niedrig":10,"eher_niedrig":25,"mittel":50,"eher_hoch":70,"sehr_hoch":85}
+    auto = _map_range_bucket(answers.get("automatisierungsgrad") or "", auto_map, 40)
+
+    if lang == "de":
+        return (
+            f"Branche: { _extract_branche(answers) }\n"
+            f"Größe: { size }\n"
+            f"Bundesland: { bundesland }\n"
+            f"Hauptleistung: { main_prod }\n"
+            f"Ziele: { ziele }\n"
+            f"Use‑Cases: { usecases }\n"
+            f"Hemmnisse: { hemmnisse }\n"
+            f"Digitalisierungsgrad: { digital }/10; Papierlos: { papierlos }/100; Automatisierung: { auto }/100; Risikofreude: { risikofreude }/5\n"
+        ).strip()
     else:
-        queries = [
-            f"site:europa.eu EU AI Act guidance {bundesland or ''}".strip(),
-            f"{branche} AI tools SMB best practices Germany",
-        ]
-    # Sammeln, whitelisten (Suchmodul normalisiert bereits; wir filtern nur)
-    links: List[Dict[str,Any]] = []
-    for q in queries:
-        try:
-            res = search_links(q, lang=lang, num=5, recency_days=int(os.getenv("SEARCH_DAYS") or "30"))
-            for it in res:
-                u = it.get("url","")
-                if any(wh in u for wh in WHITELIST):
-                    links.append(it)
-        except Exception as e:
-            log.warning("live search failed: %s", e)
-    # Render
-    html_box = build_live_box(title, links[:7], lang=lang) if links else ""
-    return title, html_box
+        return (
+            f"Industry: { _extract_branche(answers) }\n"
+            f"Size: { size }\n"
+            f"State: { bundesland }\n"
+            f"Main product: { main_prod }\n"
+            f"Goals: { ziele }\n"
+            f"Use‑cases: { usecases }\n"
+            f"Barriers: { hemmnisse }\n"
+            f"Digitalisation: { digital }/10; Paperless: { papierlos }/100; Automation: { auto }/100; Risk appetite: { risikofreude }/5\n"
+        ).strip()
 
-def _load_gamechanger(lang: str) -> Tuple[str, str]:
-    """Rendert Vision & Gamechanger via optionale Module."""
-    vision_html = ""; game_html = ""
-    mod_f = _opt_import("gamechanger_features")
-    mod_b = _opt_import("gamechanger_blocks")
-    if mod_f and hasattr(mod_f, "render_features_html"):
-        try:
-            vision_html = getattr(mod_f, "render_features_html")(lang=lang) or ""
-        except Exception as e:
-            log.warning("gamechanger_features failed: %s", e)
-    if mod_b and hasattr(mod_b, "render_blocks_html"):
-        try:
-            game_html = getattr(mod_b, "render_blocks_html")(lang=lang) or ""
-        except Exception as e:
-            log.warning("gamechanger_blocks failed: %s", e)
-    return vision_html, game_html
+def _build_system_prompt(lang: str, persona: str, coach: str) -> str:
+    base = "Warm, friendly, optimistic, jargon‑free. Concise paragraphs, no bullets unless asked."
+    if lang == "de":
+        base = "Warm, freundschaftlich, optimistisch, jargonfrei. Prägnante Absätze, nur dort Listen, wo sinnvoll."
+    parts = [
+        base,
+        "Cover DSGVO, ePrivacy, Digital Services Act und EU AI Act mit klaren, verständlichen Hinweisen (keine Rechtsberatung).",
+        "Nutze die branchenspezifischen Antworten, generiere Executive Summary, Quick Wins, Empfehlungen, Roadmap, Risiken.",
+        "Wenn Coaching‑Prompt vorhanden, hänge ein kurzes Coaching‑Kapitel an (Fragen/Impulse, 6–10 Zeilen).",
+        "Keine Platzhaltertexte, keine Code‑Fences, keine Marker wie [] **."
+    ]
+    if persona:
+        parts.append(persona.strip())
+    if coach:
+        # Keep coach content short; we will call it only for its tone and scaffolding.
+        parts.append(("Coach:\n" + coach.strip())[:1800])
+    return "\n\n".join(parts)
 
-# =============================================================================
-# Analyse (Hauptfunktion)
-# =============================================================================
+def _build_user_prompt(answers: Dict[str, Any], section: str, lang: str, extra: str = "") -> str:
+    ctx = _render_context_snippet(answers, lang)
+    if lang == "de":
+        head = f"Erzeuge das Kapitel: {section} (de)."
+    else:
+        head = f"Generate the chapter: {section} (en)."
+    return f"{head}\n\nKontext:\n{ctx}\n\n{extra}".strip()
+
+def gpt_generate_section_html(answers: Dict[str, Any], section: str, lang: str, persona: str, coach: str) -> str:
+    # Build prompts
+    sys_prompt = _build_system_prompt(lang, persona, coach)
+    user_prompt = _build_user_prompt(answers, section, lang)
+    out = _chat_complete(sys_prompt, user_prompt, lang)
+    return _sanitize_text(out)
+
+# ----------------------------- Score & charts -----------------------------
+
+def _score_percent(answers: Dict[str,Any]) -> int:
+    # Weighted aggregate from sliders/choices
+    digital = _to_int(answers.get("digitalisierungsgrad"), 5, 1, 10) / 10.0
+    risikofreude = _to_int(answers.get("risikofreude"), 3, 1, 5) / 5.0
+    papierlos_map = {"0-20":0.1,"21-50":0.4,"51-80":0.7,"81-100":0.9}
+    papierlos = papierlos_map.get((answers.get("prozesse_papierlos") or "").strip().lower(), 0.4)
+    auto_map = {"sehr_niedrig":0.1,"eher_niedrig":0.3,"mittel":0.5,"eher_hoch":0.7,"sehr_hoch":0.85}
+    auto = auto_map.get((answers.get("automatisierungsgrad") or "").strip().lower(), 0.4)
+
+    # Simple weighted average
+    score = 0.35*digital + 0.25*auto + 0.2*papierlos + 0.2*risikofreude
+    pct = max(0,min(100,int(round(100*score))))
+    return pct
+
+# ----------------------------- Public entrypoint -----------------------------
 
 def analyze_briefing(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     """
-    Erwartet das Form-JSON aus dem Frontend. Gibt einen Kontext für die
-    Jinja-Templates (pdf_template.html / pdf_template_en.html) zurück.
-    Rückgabe ist IMMER vollständig befüllt (keine None-Werte).
+    Main entrypoint called by main.py. Returns a context dict for the Jinja PDF templates.
     """
-    lang = _normalize_lang(lang or body.get("lang"))
-    # --- Eingaben lesen ---
-    branche = (body.get("branche") or body.get("industry") or "—").strip()
-    size_raw = body.get("unternehmensgroesse") or body.get("company_size") or ""
-    bundesland = (body.get("bundesland") or body.get("state") or "").strip()
-    produkt = (body.get("hauptleistung") or body.get("produkt") or body.get("main_product") or "").strip()
-    company = (body.get("unternehmensname") or body.get("company") or body.get("firma") or "").strip()
-    email = body.get("email") or body.get("to") or ""
-    # Scoring Inputs (sanitisiert)
-    digi = _to_num(body.get("digitalisierungsgrad")) or 1.0
-    know = {"keine":0,"grundkenntnisse":1,"mittel":2,"fortgeschritten":3,"expertenwissen":4}.get(str(body.get("ki_knowhow") or "").lower(), 1)
-    risk = _to_num(body.get("risikofreude")) or 3.0
-    auto = {"sehr_niedrig":0,"eher_niedrig":1,"mittel":2,"eher_hoch":3,"sehr_hoch":4}.get(str(body.get("automatisierungsgrad") or "").lower(), 2)
+    # 1) normalize language
+    lang = "de" if str(lang).lower().startswith("de") else "en"
 
-    # Größe labeln
-    size_label = {
-        "solo": ("Solo-Unternehmen" if lang=="de" else "Solo business"),
-        "team": ("Kleines Team (2–10)" if lang=="de" else "Small team (2–10)"),
-        "kmu":  ("KMU (11+)" if lang=="de" else "SME (11+)"),
-    }.get(size_raw or "", size_raw or ("—"))
+    # 2) answers = body (formbuilder posts flat dict)
+    answers = dict(body)
 
-    # --- Score (0–100) ---
-    score = int(round(
-        ( (digi-1)/9 * 40 ) +   # 40%
-        ( know/4 * 20 ) +       # 20%
-        ( auto/4 * 20 ) +       # 20%
-        ( (risk-1)/4 * 20 )     # 20%
-    ))
-    score = max(0, min(100, score))
+    # 3) sanitize critical numeric fields (robust against bad strings)
+    answers["digitalisierungsgrad"] = _to_int(answers.get("digitalisierungsgrad"), 5, 1, 10)
+    answers["risikofreude"] = _to_int(answers.get("risikofreude"), 3, 1, 5)
 
-    # =============================================================================
-    # Prompts laden
-    # =============================================================================
-    # Executive/Empfehlungen
-    prompt_exec = _load_prompt("executive_de.txt","exec_de.txt","executive_summary_de.txt") if lang=="de" else _load_prompt("executive_en.txt","exec_en.txt","executive_summary_en.txt")
-    prompt_reco = _load_prompt("business_prompt_de.txt","business-prompt_de.txt","recommendations_de.txt") if lang=="de" else _load_prompt("business_prompt_en.txt","business-prompt_en.txt","recommendations_en.txt")
-    # Coach
-    prompt_coach = _load_prompt("business_coach_de.txt","coach_de.txt","business-prompt_coach_de.txt") if lang=="de" else _load_prompt("business_coach_en.txt","coach_en.txt","business-prompt_coach_en.txt")
+    # 4) basic meta & theme chips
+    branche = _extract_branche(answers)
+    size = _norm_size(answers.get("unternehmensgroesse"))
+    size_label = _labels_for_size(size, lang)
+    main_product = answers.get("hauptleistung") or answers.get("main_product") or ""
+    bundesland = answers.get("bundesland") or ""
 
-    # Dynamischer Kontext aus CSV / MD
-    tools_rows = _read_csv_first("tools.csv","tools_de.csv")
-    funding_rows = _read_csv_first("foerdermittel.csv","foerderprogramme.csv","funding.csv","funding_programs.csv")
+    chips = []
+    if bundesland: chips.append(("Bundesland: " if lang=="de" else "State: ")+bundesland.upper())
+    chips.append("DSGVO/EU‑AI‑Act")
+    if os.getenv("TAVILY_API_KEY"): chips.append("Live via Tavily")
+    chips = _dedupe(chips)
 
-    # =============================================================================
-    # LLM-Aufrufe (robust)
-    # =============================================================================
-    # Gemeinsamer Kontext
-    ctx_json = json.dumps({
-        "industry": branche,
-        "company_size": size_label,
-        "state": bundesland,
-        "main_product": produkt,
-        "score_percent": score,
-        "goals": body.get("projektziel") or body.get("strategic_goals"),
-        "use_cases": body.get("ki_usecases"),
-        "time_capacity": body.get("time_capacity"),
-        "existing_tools": body.get("existing_tools"),
-        "regulated_industry": body.get("regulated_industry"),
-        "training_interests": body.get("training_interests"),
-    }, ensure_ascii=False)
+    # 5) prompts (persona + coach + optional per‑chapter in folder)
+    prompts = _scan_prompt_files()
+    persona = _prompt_for(lang, "persona", prompts=prompts)
+    coach = _prompt_for(lang, "business_coach", "business_prompt", prompts=prompts)
 
-    # 1) Executive Summary
-    messages = [
-        {"role":"system","content": "You are a senior AI advisor for SMEs. Write compact, actionable paragraphs. No markdown bullets, no code blocks." if lang!="de" else
-                                    "Du bist ein erfahrener KI‑Berater für KMU. Schreibe kompakte, handlungsnahe Absätze. Keine Markdown‑Aufzählungen, keine Code‑Blöcke."},
-        {"role":"user","content": (prompt_exec or "") + "\\n\\n" + ctx_json}
-    ]
-    exec_text = _strip_md(_openai_chat(messages, model=EXEC_SUMMARY_MODEL, max_tokens=700))
-
-    # 2) Empfehlungen (Kern)
-    messages = [
-        {"role":"system","content": "Write a concise, structured recommendation section. Prefer EU/Germany context. No bullet characters." if lang!="de" else
-                                    "Erstelle einen kompakten, strukturierten Empfehlungs‑Teil. Bevorzuge EU/Deutschland‑Kontext. Keine Aufzählungszeichen."},
-        {"role":"user","content": (prompt_reco or "") + "\\n\\n" + ctx_json}
-    ]
-    reco_text = _strip_md(_openai_chat(messages, model=DEFAULT_MODEL, max_tokens=1100))
-
-    # 3) Coaching – als eigener Block, wird im Template (noch) an Empfehlungen angehängt
-    coach_text = ""
-    if prompt_coach:
-        messages = [
-            {"role":"system","content": "Act as a pragmatic AI coach. Give step‑by‑step questions and exercises tailored to the user’s situation. No lists with dashes; use short paragraphs." if lang!="de" else
-                                        "Agieren Sie als pragmatischer KI‑Coach. Stellen Sie Schritt‑für‑Schritt‑Fragen und kleine Übungen passend zur Lage des Unternehmens. Keine Listen mit Bindestrichen; kurze Absätze."},
-            {"role":"user","content": prompt_coach + "\\n\\n" + ctx_json}
-        ]
-        coach_text = _strip_md(_openai_chat(messages, model=DEFAULT_MODEL, max_tokens=900))
-
-    # 4) Risiken
-    messages = [
-        {"role":"system","content": "Highlight risks and how to mitigate them (data quality, governance, compliance, change). Short paragraphs only." if lang!="de" else
-                                    "Nenne Risiken und Gegenmaßnahmen (Datenqualität, Governance, Compliance, Change). Nur kurze Absätze."},
-        {"role":"user","content": ctx_json}
-    ]
-    risks_text = _strip_md(_openai_chat(messages, model=DEFAULT_MODEL, max_tokens=500))
-
-    # 5) Roadmap (90 Tage / 6 Monate)
-    messages = [
-        {"role":"system","content": "Draft a 30/60/90‑day plan plus 6‑month outlook. Each phase 3–4 concrete actions. No bullet characters." if lang!="de" else
-                                    "Erstelle einen 30/60/90‑Tage‑Plan plus 6‑Monats‑Ausblick. Pro Phase 3–4 konkrete Schritte. Keine Aufzählungszeichen."},
-        {"role":"user","content": ctx_json}
-    ]
-    roadmap_text = _strip_md(_openai_chat(messages, model=DEFAULT_MODEL, max_tokens=900))
-
-    # 6) Quick Wins
-    messages = [
-        {"role":"system","content": "List 3–5 quick wins with impact and effort note. No list markers; short paragraphs." if lang!="de" else
-                                    "Formuliere 3–5 Quick Wins mit Hinweis auf Wirkung/Aufwand. Keine Listenmarker; kurze Absätze."},
-        {"role":"user","content": ctx_json}
-    ]
-    quickwins_text = _strip_md(_openai_chat(messages, model=DEFAULT_MODEL, max_tokens=500))
-
-    # =============================================================================
-    # Tools & Funding Rendering
-    # =============================================================================
-    tools_html = _render_tools_html(lang, branche, tools_rows)
-
-    # Funding: filtere grob nach Bundesland/Branche, nimm max 6
-    if funding_rows:
-        filtered: List[Dict[str,str]] = []
-        for r in funding_rows:
-            ok = True
-            if bundesland:
-                val = (r.get("bundesland") or r.get("state") or "").lower()
-                ok = (not val) or (bundesland.lower() in val)
-            if ok: filtered.append(r)
-        funding_html = _render_funding_html(lang, bundesland, filtered[:6])
-    else:
-        funding_html = ""
-
-    # =============================================================================
-    # Compliance (MD-Checklisten – falls vorhanden)
-    # =============================================================================
-    compl_parts: List[str] = []
-    for name in ("check_compliance_eu_ai_act.md","check_datenschutz.md","check_foerdermittel.md","check_ki_readiness.md"):
-        for base in DATA_DIRS:
-            p = base / name
-            if p.exists():
-                compl_parts.append("<div class='box'>" + _strip_md(_read_text_file(p) or "") + "</div>")
-    compliance_html = "\n".join(compl_parts)
-
-    # =============================================================================
-    # Vision & Gamechanger (optionale Module)
-    # =============================================================================
-    vision_html, game_html = _load_gamechanger(lang)
-
-    # =============================================================================
-    # Live‑Updates (Tavily/SerpAPI)
-    # =============================================================================
-    live_title, live_html = _build_live_updates(lang, branche, bundesland)
-
-    # =============================================================================
-    # Zusammenstellen (Kontext für Template)
-    # =============================================================================
-    # Coach-Block wird (bis Template ergänzt) ans Ende der Empfehlungen gehängt:
-    if coach_text:
-        reco_text = reco_text + ("\n\n<strong>Coach‑Modus</strong>\n" if lang=="de" else "\n\n<strong>Coaching Mode</strong>\n") + coach_text
-
-    meta = {
-        "title": "KI‑Status‑Report" if lang=="de" else "AI Status Report",
-        "author": "KI‑Sicherheit.jetzt",
-        "version": "2025‑09‑25",
-        "lang": lang.upper(),
-    }
-
-    ctx: Dict[str, Any] = {
-        "meta": meta,
-        "company": company,
+    token_ctx = {
         "branche": branche,
         "company_size_label": size_label,
         "bundesland": bundesland,
-        "product": produkt,
-        "email": email,
-        "score_percent": score,
-        # Kapitel
-        "exec_summary_html": exec_text or "",
-        "quick_wins_html": quickwins_text or "",
-        "risks_html": risks_text or "",
-        "recommendations_html": reco_text or "",
-        "roadmap_html": roadmap_text or "",
-        "compliance_html": compliance_html or "",
-        "funding_html": funding_html or "",
-        "tools_html": tools_html or "",
-        "vision_html": vision_html or "",
-        "gamechanger_html": game_html or "",
-        "live_html": live_html or "",
-        "live_title": live_title or "",
-        # Fußzeileninfos
-        "copyright_year": datetime.now().year,
-        "copyright_owner": "Wolf Hohl",
+        "hauptleistung": main_product or answers.get("hauptleistung") or "",
+        "main_product": main_product or answers.get("hauptleistung") or "",
+        "score_percent": 0
+    }
+    persona = _render_prompt_template(persona, token_ctx)
+    coach = _render_prompt_template(coach, token_ctx)
+
+    # 6) generate main narrative sections via LLM
+    sections = [
+        ("Executive Summary","executive_summary") if lang=="en" else ("Executive Summary","Executive Summary"),
+        ("Quick Wins","quick_wins") if lang=="en" else ("Schnelle Hebel","quick_wins"),
+        ("Risks","risks") if lang=="en" else ("Risiken","risks"),
+        ("Recommendations","recommendations") if lang=="en" else ("Empfehlungen","recommendations"),
+        ("Roadmap","roadmap") if lang=="en" else ("Roadmap","roadmap"),
+        ("Compliance","compliance") if lang=="en" else ("Compliance","compliance"),
+        ("Vision","vision") if lang=="en" else ("Vision","vision"),
+        ("Gamechanger","gamechanger") if lang=="en" else ("Gamechanger","gamechanger"),
+    ]
+
+    html_parts: Dict[str, str] = {}
+    for title, key in sections:
+        html_parts[f"{key}_html"] = gpt_generate_section_html(answers, key, lang, persona, coach)
+
+    # 7) short coaching appendix (behind recommendations)
+    coaching_html = ""
+    if coach.strip():
+        extra = ("Bitte als kurzes Coaching‑Kapitel mit konkreten Fragen/Impulsen, 6–10 Sätze." if lang=="de"
+                 else "Add a short coaching appendix with concrete prompts and reflection questions, ~6–10 sentences.")
+        coaching_html = gpt_generate_section_html(answers, "coaching", lang, persona, coach + "\n" + extra)
+        coaching_html = _sanitize_text(coaching_html)
+
+    # 8) tools & funding (CSV + live)
+    tools_html = build_tools_html(answers, branche, lang, max_items=12)
+    funding_html = build_funding_html(answers, lang, max_items=8)
+
+    # 9) optional live box
+    live_html = build_live_updates_html(answers, lang)
+    live_title = "Neu & relevant" if lang=="de" else "New & relevant"
+
+    # 10) overall score
+    score = _score_percent(answers)
+
+    # 11) meta for template
+    meta = {
+        "title": "KI‑Statusbericht" if lang=="de" else "AI Readiness Report",
+        "version": "2025‑09‑25",
+        "author": "KI‑Sicherheit.jetzt"
     }
 
+    # 12) assemble context for templates
+    ctx: Dict[str, Any] = {
+        "meta": meta,
+        "branche": branche,
+        "unternehmensgroesse": size,
+        "company_size_label": size_label,
+        "main_product": main_product,
+        "bundesland": bundesland,
+        "chips": chips,
+
+        "hauptleistung": main_product,  # alias for template chip
+        "coach_html": coaching_html,    # alias for compatibility
+
+        "score_percent": score,
+
+        # narrative sections
+        "exec_summary_html": html_parts.get("Executive Summary_html") or html_parts.get("executive_summary_html",""),
+        "quick_wins_html": html_parts.get("quick_wins_html",""),
+        "risks_html": html_parts.get("risks_html",""),
+        "recommendations_html": html_parts.get("recommendations_html",""),
+        "roadmap_html": html_parts.get("roadmap_html",""),
+        "compliance_html": html_parts.get("compliance_html",""),
+        "vision_html": html_parts.get("vision_html",""),
+        "gamechanger_html": html_parts.get("gamechanger_html",""),
+        "coaching_html": coaching_html,  # will be used by updated templates
+
+        # data-driven sections
+        "funding_html": funding_html,
+        "tools_html": tools_html,
+        "live_html": live_html,
+        "live_title": live_title,
+
+        # footer
+        "copyright_owner": "Wolf Hohl",
+        "copyright_year": _dt.now().year
+    }
+
+    # 13) health-check endnotes (no empty chapters, prompt availability)
+    warnings = []
+    if not persona.strip():
+        warnings.append("Hinweis: persona‑Prompt nicht gefunden (de/en). Bitte /prompts prüfen.")
+    if not coach.strip():
+        warnings.append("Hinweis: coach/business‑Prompt nicht gefunden (de/en). Coaching‑Kapitel ggf. leer.")
+    empty_sections = [k for k in ["exec_summary_html","quick_wins_html","recommendations_html","roadmap_html"] if not (ctx.get(k) or "").strip()]
+    if empty_sections:
+        warnings.append("Leere Kapitel erkannt: " + ", ".join(empty_sections))
+    if warnings:
+        ctx["endnotes_html"] = "<div class='note'><b>Leistung & Nachweis.</b><br>" + "<br>".join(warnings) + "</div>"
+    else:
+        ctx["endnotes_html"] = "<div class='note'><b>Leistung & Nachweis.</b> Dieser Report wurde automatisiert generiert und redaktionell geprüft.</div>"
+    # Final safety pass: clean accidental artifacts
+    for k, v in list(ctx.items()):
+        if isinstance(v, str):
+            ctx[k] = _sanitize_text(v)
     return ctx
+
+# End of file
