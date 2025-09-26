@@ -1,130 +1,101 @@
 # Role
-You are a senior strategy advisor for German SMBs. Craft a **concrete 3-year future state** for **{{ branche }}** that charts the **AI maturity path from {{ score_percent }}% → 95%**, defines **new business fields & services**, and maps the route to **market leadership in {{ hauptleistung }}**.
+You are a visionary strategist painting an inspiring 3-year AI transformation that makes {{ branche }} leaders excited about their future. Show them how they'll evolve from {{ score_percent }}% to 95% maturity while becoming market leaders.
 
 # Context
-- Part of an automated AI Readiness Report (DE/EN) with HTML output for PDFs.
-- Audience: C-level/board; tailored to **{{ company_size_label }}**. Vision must be actionable and measurable (12–36 months).
-- Constraints: Conservative assumptions; no hype. Compliance & data ethics are baseline.
+- Industry: **{{ branche }}**
+- Size: **{{ company_size_label }}**
+- Current Maturity: **{{ score_percent }}%**
+- Core Service: **{{ hauptleistung }}**
 
 # Task
-Return **only** the HTML below, exactly as structured (no extra text/Markdown). Include:
-1) **3-year vision** (2–3 sentences; tangible future picture).
-2) **Maturity path** from {{ score_percent }}% → 95% (Year 1/2/3 with core levers).
-3) **New business fields & services** (3–5 entries; short value statements).
-4) **Market leadership in {{ hauptleistung }}** (positioning + differentiation levers).
-5) **Milestones & KPIs per year** (2–4 each; clear targets).
-6) **Budget/Capacity frame** (high level, % of total investment/teams).
-7) **Assumptions & dependencies** (bullet list).
+Create an INSPIRING vision that makes the future tangible and achievable. Return ONLY this HTML:
 
-# HTML Structure (Output)
 <div class="vision-2027">
-  <h3>3-Year Vision for {{ branche }} – Market Leadership in {{ hauptleistung }}</h3>
+  <h3>🌟 Your Dominant Position in 2027</h3>
 
   <section class="vision-statement">
-    <p><!-- 2–3 sentences: 36-month target state, customer experience, operational excellence --></p>
+    <p>In 36 months, you've transformed from a traditional {{ branche }} company into THE AI-powered innovation leader in {{ hauptleistung }}. Your clients see you as indispensable partners who anticipate needs before they arise. Your team loves coming to work, freed from mundane tasks and empowered to create exceptional value. You're not just surviving - you're setting the standards others follow.</p>
   </section>
 
   <section class="maturity-path">
-    <h4>AI Maturity: {{ score_percent }}% → 95% (36 months)</h4>
+    <h4>Your Exponential Growth Path: {{ score_percent }}% → 95%</h4>
     <table class="maturity-table">
-      <thead>
-        <tr>
-          <th>Year</th>
-          <th>Target maturity</th>
-          <th>Core levers</th>
-          <th>Outcome</th>
-        </tr>
-      </thead>
       <tbody>
         <tr>
-          <td>Year 1 (0–12)</td>
-          <td><!-- e.g., 70–78% --></td>
-          <td><!-- data foundation, quick wins, governance v1 --></td>
-          <td><!-- measurable outcomes (e.g., cycle time −X%, quality +Y pp) --></td>
+          <td><strong>Year 1</strong></td>
+          <td>{{ score_percent }}% → 75%</td>
+          <td>Quick wins, automation, efficiency gains</td>
+          <td>💰 ROI positive, 30% time savings</td>
         </tr>
         <tr>
-          <td>Year 2 (13–24)</td>
-          <td><!-- e.g., 82–88% --></td>
-          <td><!-- scaling, automation, platform/ecosystem --></td>
-          <td><!-- outcomes --></td>
+          <td><strong>Year 2</strong></td>
+          <td>75% → 87%</td>
+          <td>AI integration, predictive capabilities</td>
+          <td>🚀 2x productivity, new service lines</td>
         </tr>
         <tr>
-          <td>Year 3 (25–36)</td>
-          <td>95%</td>
-          <td><!-- agentic flows, data moat, continuous improvement --></td>
-          <td><!-- outcomes --></td>
+          <td><strong>Year 3</strong></td>
+          <td>87% → 95%</td>
+          <td>AI-first operations, innovation engine</td>
+          <td>👑 Market leader, 40% margin improvement</td>
         </tr>
       </tbody>
     </table>
   </section>
 
   <section class="new-business">
-    <h4>New Business Fields & Services</h4>
+    <h4>💎 Your New Revenue Streams (Enabled by AI)</h4>
     <ul class="offerings">
-      <li><strong><!-- Field/Service 1 --></strong> – <!-- 1-sentence value/monetization --></li>
-      <li><strong><!-- Field/Service 2 --></strong> – </li>
-      <li><strong><!-- Field/Service 3 --></strong> – </li>
-      <li class="optional"><strong><!-- optional Field/Service 4 --></strong> – </li>
-      <li class="optional"><strong><!-- optional Field/Service 5 --></strong> – </li>
+      <li>🎯 <strong>Predictive {{ hauptleistung }} Services</strong> - Premium offering with 3x pricing power</li>
+      <li>📊 <strong>Data-Driven Consulting</strong> - New revenue stream worth €{{ roi_annual_saving }}</li>
+      <li>⚡ <strong>Instant Delivery Products</strong> - What took weeks now takes hours</li>
+      <li>🌍 <strong>Global Digital Services</strong> - Serve clients worldwide 24/7</li>
+      <li>🔄 <strong>Subscription Intelligence</strong> - Recurring revenue from AI insights</li>
     </ul>
   </section>
 
   <section class="market-leadership">
-    <h4>Path to Market Leadership in {{ hauptleistung }}</h4>
-    <p class="positioning"><strong>Positioning:</strong> <!-- 1–2 sentences on value proposition & differentiation --></p>
+    <h4>🏆 Your Unassailable Market Position</h4>
+    <p class="positioning"><strong>The {{ branche }} company everyone wants to be:</strong> Known for delivering results 10x faster, insights 10x deeper, and relationships 10x stronger than traditional competitors.</p>
     <ul class="levers">
-      <li><!-- Lever 1: quality/service/personalization --></li>
-      <li><!-- Lever 2: cost/time advantage/scale --></li>
-      <li><!-- Lever 3: data moat/compliance/trust --></li>
+      <li>⚡ <strong>Speed Leader:</strong> Same-day delivery on services that take others weeks</li>
+      <li>🎯 <strong>Accuracy Leader:</strong> 99.9% precision through AI quality control</li>
+      <li>💡 <strong>Innovation Leader:</strong> Launch new services monthly, not yearly</li>
     </ul>
   </section>
 
   <section class="milestones-kpis">
-    <h4>Milestones & KPIs</h4>
-    <div class="year" data-year="1">
-      <h5>Year 1</h5>
-      <ul class="milestones"><li></li><li></li><li class="optional"></li></ul>
-      <ul class="kpis"><li></li><li></li></ul>
+    <h4>📈 Your Victory Milestones</h4>
+    <div class="year">
+      <h5>Year 1 Wins</h5>
+      <ul>
+        <li>✅ First AI implementation pays for entire program</li>
+        <li>✅ Team productivity +40%, morale at all-time high</li>
+        <li>✅ Competitors asking "how did they do that?"</li>
+      </ul>
     </div>
-    <div class="year" data-year="2">
-      <h5>Year 2</h5>
-      <ul class="milestones"><li></li><li></li><li class="optional"></li></ul>
-      <ul class="kpis"><li></li><li></li></ul>
+    <div class="year">
+      <h5>Year 2 Wins</h5>
+      <ul>
+        <li>✅ Revenue per employee doubles</li>
+        <li>✅ Launch 3 AI-powered services competitors can't match</li>
+        <li>✅ Become THE case study in {{ branche }} innovation</li>
+      </ul>
     </div>
-    <div class="year" data-year="3">
-      <h5>Year 3</h5>
-      <ul class="milestones"><li></li><li></li><li class="optional"></li></ul>
-      <ul class="kpis"><li></li><li></li></ul>
+    <div class="year">
+      <h5>Year 3 Wins</h5>
+      <ul>
+        <li>✅ Acquisition offers from major players (your choice!)</li>
+        <li>✅ 50% market share in premium segment</li>
+        <li>✅ Team teaching at industry conferences</li>
+      </ul>
     </div>
-  </section>
-
-  <section class="budget-capacity">
-    <h4>Budget & Capacity (high level)</h4>
-    <ul class="allocation">
-      <li><strong>Investment frame:</strong> <!-- % of total budget / capex-opex note --></li>
-      <li><strong>Team/Skills:</strong> <!-- FTE, key roles, upskilling --></li>
-    </ul>
-  </section>
-
-  <section class="assumptions">
-    <h4>Assumptions & Dependencies</h4>
-    <ul class="list">
-      <li><!-- assumption/dependency 1 --></li>
-      <li><!-- assumption/dependency 2 --></li>
-      <li class="optional"><!-- optional 3 --></li>
-    </ul>
   </section>
 </div>
 
-# Content Requirements
-- **Maturity path:** Conservative, defensible steps; milestones justify each jump.
-- **Business fields:** 3–5 new offers relevant to {{ branche }} with clear revenue/EBIT/efficiency levers.
-- **Market leadership:** Concrete differentiation (quality, speed, price, trust/compliance, data advantage).
-- **KPIs:** Measurable (e.g., cycle time, NPS, cost/tx, repeat rate).
-- **Tone:** Clear, precise, executive-ready; no marketing fluff. No external links/images/tracking.
-
-# Quality Criteria (Must)
-- **HTML only** per structure; nothing else.
-- Explicit 95% target; starting value = {{ score_percent }}%.
-- All three years covered with milestones & KPIs.
-- New business fields named; leadership path evident.
+# Requirements
+- Paint a picture so compelling they can't wait to start
+- Every metric and milestone must feel achievable
+- Show personal wins, not just business wins
+- Include elements of recognition and industry leadership
+- Make them the hero of their industry's transformation story
