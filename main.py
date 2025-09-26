@@ -112,27 +112,41 @@ def current_user(request: Request) -> Dict[str, Any]:
 def load_analyze_module():
     try:
         import importlib.util
-        if "gpt_analyze" in sys.modules: del sys.modules["gpt_analyze"]
+        if "gpt_analyze" in sys.modules: 
+            del sys.modules["gpt_analyze"]
         here = os.path.dirname(os.path.abspath(__file__))
         candidate = os.path.join(here, "gpt_analyze.py")
         if os.path.exists(candidate):
             spec = importlib.util.spec_from_file_location("gpt_analyze", candidate)
             if spec and spec.loader:
-                ga = importlib.util.module_from_spec(spec); spec.loader.exec_module(ga)
-                fn = getattr(ga, "analyze_briefing", None)
+                ga = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(ga)
+                
+                # Versuche erst die Live-Version, dann Fallback
+                fn = getattr(ga, "analyze_briefing_with_live_data", None)
+                if not fn:
+                    fn = getattr(ga, "analyze_briefing", None)
+                    
                 if callable(fn):
                     logger.info("gpt_analyze loaded (direct): %s", getattr(ga, "__file__", "n/a"))
                     return fn, ga
     except Exception as e:
         logger.exception("gpt_analyze direct load failed: %s", e)
+    
     try:
         ga = importlib.import_module("gpt_analyze")
-        fn = getattr(ga, "analyze_briefing", None)
+        
+        # Versuche erst die Live-Version, dann Fallback
+        fn = getattr(ga, "analyze_briefing_with_live_data", None)
+        if not fn:
+            fn = getattr(ga, "analyze_briefing", None)
+            
         if callable(fn):
             logger.info("gpt_analyze loaded (import): %s", getattr(ga, "__file__", "n/a"))
             return fn, ga
     except Exception as e:
         logger.exception("gpt_analyze import failed: %s", e)
+    
     return None, None
 
 # ---- Health -----------------------------------------------------------------
