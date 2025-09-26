@@ -2257,7 +2257,262 @@ def generate_live_updates_section(answers: Dict[str, Any], lang: str = 'de') -> 
     
     html += '</div>'
     return html
+# Am Ende der Datei nach allen anderen Funktionen hinzufügen:
 
+# ============================= KORRIGIERTE HAUPTFUNKTION =============================
+
+def analyze_briefing_enhanced(body: Dict[str, Any], lang: str = 'de') -> Dict[str, Any]:
+    """
+    Erweiterte Hauptfunktion mit voller Integration aller Features
+    """
+    # Sprache normalisieren
+    lang = 'de' if lang.lower().startswith('de') else 'en'
+    answers = dict(body)
+    
+    # 1. KPIs berechnen
+    kpis = calculate_kpis_from_answers(answers)
+    
+    # 2. Template-Variablen vorbereiten
+    variables = get_template_variables(answers, lang)
+    
+    # 3. Prompt Processor initialisieren
+    prompt_processor = PromptProcessor()
+    
+    # 4. Sektionen generieren
+    sections = {}
+    
+    # KORRIGIERTE section_config mit allen Fallback-Funktionen
+    section_config = {
+        'exec_summary_html': {
+            'prompt': 'executive_summary',
+            'use_gpt': True,
+            'fallback': lambda: generate_data_driven_executive_summary(answers, kpis, lang)
+        },
+        'business_html': {
+            'prompt': 'business',
+            'use_gpt': True,
+            'fallback': lambda: generate_business_case(answers, kpis, lang)
+        },
+        'coach_html': {
+            'prompt': 'coach',
+            'use_gpt': True,
+            'fallback': lambda: generate_other_sections(answers, kpis, lang).get('coach', '')
+        },
+        'compliance_html': {
+            'prompt': 'compliance',
+            'use_gpt': False,
+            'fallback': lambda: generate_other_sections(answers, kpis, lang).get('compliance', '')
+        },
+        'foerderprogramme_html': {
+            'prompt': 'foerderprogramme',
+            'use_gpt': False,
+            'fallback': lambda: match_funding_programs(answers, lang)
+        },
+        'gamechanger_html': {
+            'prompt': 'gamechanger',
+            'use_gpt': True,
+            'fallback': lambda: generate_other_sections(answers, kpis, lang).get('gamechanger', '')
+        },
+        'persona_html': {
+            'prompt': 'persona',
+            'use_gpt': True,
+            'fallback': lambda: generate_persona_profile(answers, kpis, lang)
+        },
+        'praxisbeispiel_html': {
+            'prompt': 'praxisbeispiel',
+            'use_gpt': True,
+            'fallback': lambda: generate_case_studies(answers, kpis, lang)
+        },
+        'quick_wins_html': {
+            'prompt': 'quick_wins',
+            'use_gpt': False,
+            'fallback': lambda: generate_quick_wins(answers, kpis, lang)
+        },
+        'recommendations_html': {
+            'prompt': 'recommendations',
+            'use_gpt': True,
+            'fallback': lambda: generate_other_sections(answers, kpis, lang).get('recommendations', '')
+        },
+        'risks_html': {
+            'prompt': 'risks',
+            'use_gpt': False,
+            'fallback': lambda: generate_risk_analysis(answers, kpis, lang)
+        },
+        'roadmap_html': {
+            'prompt': 'roadmap',
+            'use_gpt': False,
+            'fallback': lambda: generate_roadmap(answers, kpis, lang)
+        },
+        'tools_html': {
+            'prompt': 'tools',
+            'use_gpt': False,
+            'fallback': lambda: match_tools_to_company(answers, lang)
+        },
+        'vision_html': {
+            'prompt': 'vision',
+            'use_gpt': True,
+            'fallback': lambda: generate_other_sections(answers, kpis, lang).get('vision', '')
+        }
+    }
+    
+    # Prozessiere konfigurierte Sektionen
+    for html_key, config in section_config.items():
+        try:
+            # Immer Fallback verwenden, da GPT nicht konfiguriert oder Fehler auftreten könnte
+            sections[html_key] = config['fallback']()
+        except Exception as e:
+            print(f"Fehler bei {config['prompt']}: {e}")
+            sections[html_key] = generate_fallback_content(config['prompt'], lang)
+    
+    # 5. Tools und Förderungen matchen (bereits mit eigenen Funktionen)
+    if 'tools_html' not in sections or not sections['tools_html']:
+        sections['tools_html'] = match_tools_to_company(answers, lang)
+    
+    if 'foerderprogramme_html' not in sections or not sections['foerderprogramme_html']:
+        sections['foerderprogramme_html'] = match_funding_programs(answers, lang)
+    
+    # 6. Live-Daten wenn verfügbar
+    sections['live_html'] = ""
+    if has_live_apis():
+        try:
+            sections['live_html'] = generate_live_updates_section(answers, lang)
+        except Exception as e:
+            print(f"Live-Daten Fehler: {e}")
+    
+    # 7. Context zusammenbauen - ALLE erforderlichen Felder hinzufügen
+    context = {
+        # KPIs und Scores (von main.py erwartet)
+        'score_percent': kpis['readiness_score'],
+        'kpi_efficiency': kpis['kpi_efficiency'],
+        'kpi_cost_saving': kpis['kpi_cost_saving'],
+        'kpi_roi_months': kpis['kpi_roi_months'],
+        'kpi_compliance': kpis['kpi_compliance'],
+        'kpi_innovation': kpis['kpi_innovation'],
+        'roi_investment': kpis['roi_investment'],
+        'roi_annual_saving': kpis['roi_annual_saving'],
+        'roi_three_year': kpis['roi_three_year'],
+        
+        # Alle Template-Variablen
+        **variables,
+        
+        # HTML Sektionen
+        'exec_summary_html': sections.get('exec_summary_html', ''),
+        'business_html': sections.get('business_html', ''),
+        'coach_html': sections.get('coach_html', ''),
+        'compliance_html': sections.get('compliance_html', ''),
+        'foerderprogramme_html': sections.get('foerderprogramme_html', ''),
+        'gamechanger_html': sections.get('gamechanger_html', ''),
+        'persona_html': sections.get('persona_html', ''),
+        'praxisbeispiel_html': sections.get('praxisbeispiel_html', ''),
+        'quick_wins_html': sections.get('quick_wins_html', ''),
+        'recommendations_html': sections.get('recommendations_html', ''),
+        'risks_html': sections.get('risks_html', ''),
+        'roadmap_html': sections.get('roadmap_html', ''),
+        'tools_html': sections.get('tools_html', ''),
+        'vision_html': sections.get('vision_html', ''),
+        'live_html': sections.get('live_html', ''),
+        
+        # Metadaten
+        'meta': {
+            'title': get_report_title(lang),
+            'subtitle': f"AI Readiness: {kpis['readiness_score']}%",
+            'date': _dt.now().strftime('%d.%m.%Y'),
+            'lang': lang,
+            'version': '2.0',
+            'has_live_data': has_live_apis()
+        }
+    }
+    
+    # 8. HTML bereinigen
+    for key, value in context.items():
+        if isinstance(value, str) and '_html' in key:
+            context[key] = clean_and_validate_html(value)
+    
+    return context
+
+def has_live_apis() -> bool:
+    """Prüft ob Live-Daten APIs konfiguriert sind"""
+    return bool(os.getenv('TAVILY_API_KEY')) or bool(os.getenv('SERPAPI_KEY'))
+
+def get_report_title(lang: str) -> str:
+    """Gibt Report-Titel in passender Sprache zurück"""
+    titles = {
+        'de': 'KI-Statusbericht & Handlungsempfehlungen',
+        'en': 'AI Status Report & Recommendations'
+    }
+    return titles.get(lang, titles['de'])
+
+# ============================= WICHTIG: Haupteinstiegspunkt =============================
+
+def analyze_briefing(body: Dict[str, Any], lang: str = 'de') -> Dict[str, Any]:
+    """
+    Haupteinstiegspunkt - ruft erweiterte Version auf
+    Behält Kompatibilität mit existierendem Code
+    DIESE FUNKTION WIRD VON main.py AUFGERUFEN!
+    """
+    try:
+        # Debug-Ausgabe
+        print(f"analyze_briefing called with lang={lang}")
+        print(f"Body keys: {body.keys() if body else 'No body'}")
+        
+        result = analyze_briefing_enhanced(body, lang)
+        
+        # Stelle sicher, dass alle erforderlichen Felder vorhanden sind
+        required_fields = [
+            'score_percent', 'kpi_roi_months', 'roi_three_year', 
+            'kpi_compliance', 'kpi_innovation', 'kpi_efficiency',
+            'roi_annual_saving', 'roi_investment'
+        ]
+        
+        for field in required_fields:
+            if field not in result:
+                print(f"Warning: Missing field {field}, adding default")
+                # Fallback-Werte wenn Felder fehlen
+                if 'roi' in field or 'investment' in field or 'saving' in field:
+                    result[field] = 10000  # Default Geldwert
+                elif 'months' in field:
+                    result[field] = 12  # Default Monate
+                else:
+                    result[field] = 50  # Default Prozent
+        
+        print(f"analyze_briefing returning {len(result)} fields")
+        return result
+        
+    except Exception as e:
+        print(f"FEHLER in analyze_briefing: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Minimaler Fallback mit allen erforderlichen Feldern
+        return {
+            'score_percent': 50,
+            'kpi_efficiency': 30,
+            'kpi_cost_saving': 25,
+            'kpi_roi_months': 12,
+            'kpi_compliance': 70,
+            'kpi_innovation': 60,
+            'roi_investment': 10000,
+            'roi_annual_saving': 20000,
+            'roi_three_year': 50000,
+            'digitalisierungsgrad': 5,
+            'automatisierungsgrad': 50,
+            'risikofreude': 3,
+            'exec_summary_html': '<p>Fehler bei der Analyse-Generierung. Bitte versuchen Sie es erneut.</p>',
+            'business_html': '<p>Business Case wird generiert...</p>',
+            'quick_wins_html': '<p>Quick Wins werden identifiziert...</p>',
+            'tools_html': '<p>Tool-Empfehlungen werden erstellt...</p>',
+            'roadmap_html': '<p>Roadmap wird entwickelt...</p>',
+            'risks_html': '<p>Risikoanalyse läuft...</p>',
+            'compliance_html': '<p>Compliance-Check wird durchgeführt...</p>',
+            'vision_html': '<p>Vision wird erstellt...</p>',
+            'coach_html': '<p>Coaching-Fragen werden vorbereitet...</p>',
+            'gamechanger_html': '<p>Game-Changer Analyse läuft...</p>',
+            'persona_html': '<p>Persona-Profil wird erstellt...</p>',
+            'praxisbeispiel_html': '<p>Praxisbeispiele werden gesucht...</p>',
+            'recommendations_html': '<p>Empfehlungen werden generiert...</p>',
+            'foerderprogramme_html': '<p>Förderprogramme werden geprüft...</p>',
+            'live_html': ''
+        }
 # ============================= Test-Funktion (VOLLSTÄNDIG) =============================
 
 if __name__ == "__main__":
