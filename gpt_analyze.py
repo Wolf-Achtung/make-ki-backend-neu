@@ -82,37 +82,37 @@ def safe_str(text: Any) -> str:
     return str(text)
 
 def clean_text(text: str) -> str:
-    """Bereinigt Text von Artefakten und Encoding-Problemen"""
     if not text:
         return ""
-    
-    # Fix common encoding issues
+
+    # 1) Versuche generelles Mojibake zu reparieren (latin1->utf8)
+    try:
+        # Nur wenn es wirklich "kaputt" aussieht
+        if "Ã" in text or "â" in text:
+            text = text.encode("latin1", errors="ignore").decode("utf-8", errors="ignore")
+    except Exception:
+        pass
+
+    # 2) Zusätzliche sichere Ersetzungen (nur valide Literale/Unicode-Escapes)
     replacements = {
-        'â€™': "'",
-        'â€œ': '"',
-        'â€': '"',
-        'â€"': '–',
-        'â€'': '-',
-        'Ã¤': 'ä',
-        'Ã¶': 'ö',
-        'Ã¼': 'ü',
-        'Ã„': 'Ä',
-        'Ã–': 'Ö',
-        'Ãœ': 'Ü',
-        'ÃŸ': 'ß',
+        "â€™": "'",
+        "â€˜": "'",
+        "â€œ": "\"",
+        "â€\x9d": "\"",   # ” (smart quote, sicher via \x9d)
+        "â€“": "–",      # en dash
+        "â€”": "—",      # em dash
+        "Ã„": "Ä", "Ã–": "Ö", "Ãœ": "Ü",
+        "Ã¤": "ä", "Ã¶": "ö", "Ã¼": "ü",
+        "ÃŸ": "ß",
     }
-    
     for old, new in replacements.items():
         text = text.replace(old, new)
-    
-    # Remove code fences
+
+    # 3) Codefences/Whitespace säubern
     text = re.sub(r'^```[a-zA-Z0-9_-]*\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'\s*```$', '', text, flags=re.MULTILINE)
-    
-    # Clean up whitespace
     text = re.sub(r'[ \t]{2,}', ' ', text)
     text = re.sub(r'\n{3,}', '\n\n', text)
-    
     return text.strip()
 
 def calculate_readiness_score(answers: Dict[str, Any]) -> int:
