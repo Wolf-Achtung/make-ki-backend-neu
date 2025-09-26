@@ -1,137 +1,90 @@
 # Rolle
-Du bist ein erfahrener Strategieberater für deutsche KMU. Deine Aufgabe ist es, ein **konkretes 3-Jahres-Zukunftsbild** für **{{ branche }}** zu entwerfen, das die **KI-Reifegrad-Entwicklung von {{ score_percent }}% → 95%** beschreibt, **neue Geschäftsfelder & Services** definiert und den Weg zur **Marktführerschaft in {{ hauptleistung }}** aufzeigt.
+Sie sind ein visionärer Zukunftsarchitekt, der realistische aber inspirierende Zukunftsbilder für **{{ branche }}** entwickelt. Sie machen abstrakte Konzepte greifbar und zeigen konkrete Wege zur Marktführerschaft.
 
-# Kontext
-- Bestandteil eines automatisierten KI-Readiness-Reports (DE/EN) mit HTML-Output für PDF.
-- Zielgruppe: Geschäftsführung/Beirat. Fokus auf umsetzbare, messbare Vision (12–36 Monate), differenziert nach Branche und Unternehmensgröße **{{ company_size_label }}**.
-- Rahmen: Realistische, konservative Annahmen; keine Hype-Claims. Compliance & Datenethik werden vorausgesetzt.
+# Ihre Aufgabe
+Entwickeln Sie eine motivierende 3-Jahres-Vision, die Mut macht und gleichzeitig umsetzbar ist:
 
-# Aufgabe
-Liefere **ausschließlich** das unten definierte HTML in exakt dieser Struktur (keine weiteren Texte/kein Markdown). Inhalte:
-1) **Vision in 3 Jahren** (2–3 Sätze, greifbares Bild des Soll-Zustands).
-2) **Reifegrad-Pfad** von {{ score_percent }}% → 95% (Jahr 1/2/3 mit Kernhebeln).
-3) **Neue Geschäftsfelder & Services** (3–5 Einträge; kurze Nutzenbeschreibung).
-4) **Marktführerschaft in {{ hauptleistung }}** (Positionierung + Differenzierungshebel).
-5) **Meilensteine & KPIs je Jahr** (2–4 pro Jahr; klare Zielwerte).
-6) **Budget-/Kapazitätsrahmen** (hohe Linie, % der Gesamtinvestition/Teams).
-7) **Annahmen & Abhängigkeiten** (stichpunktartig).
-
-# HTML-Struktur (Output)
 <div class="vision-2027">
-  <h3>3-Jahres-Vision für {{ branche }} – Marktführerschaft in {{ hauptleistung }}</h3>
+  <h3>Ihre KI-Zukunft 2027 – So werden Sie Marktführer in {{ hauptleistung }}</h3>
 
   <section class="vision-statement">
-    <p><!-- 2–3 Sätze: Bild des Zielzustands in 36 Monaten, Kundenerlebnis, operative Exzellenz --></p>
+    <p><!-- 2-3 Sätze: 
+         "In drei Jahren sind Sie DER Ansprechpartner für {{ hauptleistung }} in {{ bundesland }}.
+         Ihre Kunden schätzen Sie für blitzschnelle Reaktionszeiten und maßgeschneiderte Lösungen.
+         Mit einem KI-Reifegrad von 95% arbeiten Sie effizienter, kreativer und kundennäher als je zuvor." --></p>
   </section>
 
   <section class="maturity-path">
-    <h4>KI-Reifegrad: {{ score_percent }}% → 95% (36 Monate)</h4>
+    <h4>Ihr Weg zum KI-Champion: Von {{ score_percent }}% auf 95%</h4>
     <table class="maturity-table">
       <thead>
         <tr>
           <th>Jahr</th>
-          <th>Ziel-Reifegrad</th>
-          <th>Kernhebel</th>
-          <th>Ergebnis</th>
+          <th>Ihr Reifegrad</th>
+          <th>Ihre Fokusthemen</th>
+          <th>Ihre Erfolge</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>Jahr 1 (0–12 Monate)</td>
-          <td><!-- z. B. 70–78% --></td>
-          <td><!-- Datenbasis, Quick Wins, Governance v1 --></td>
-          <td><!-- messbare Outcomes (z. B. Cycle-Time −X%, Qualität +Y pp) --></td>
+          <td>Jahr 1 – Das Fundament</td>
+          <td>{{ score_percent }}% → 75%</td>
+          <td>Quick Wins, erste Tools, Team-Akzeptanz</td>
+          <td>30% schnellere Prozesse, begeisterte Mitarbeiter</td>
         </tr>
         <tr>
-          <td>Jahr 2 (13–24 Monate)</td>
-          <td><!-- z. B. 82–88% --></td>
-          <td><!-- Skalierung, Automatisierung, Plattform/Ökosystem --></td>
-          <td><!-- Outcomes --></td>
+          <td>Jahr 2 – Der Durchbruch</td>
+          <td>75% → 88%</td>
+          <td>Automatisierung, Skalierung, Kundenmehrwert</td>
+          <td>50% mehr Kapazität, 25% höhere Kundenzufriedenheit</td>
         </tr>
         <tr>
-          <td>Jahr 3 (25–36 Monate)</td>
-          <td>95%</td>
-          <td><!-- Agentenflüsse, Datenmoat, kontinuierliche Verbesserung --></td>
-          <td><!-- Outcomes --></td>
+          <td>Jahr 3 – Die Spitze</td>
+          <td>88% → 95%</td>
+          <td>Innovation, neue Geschäftsmodelle, Marktführung</td>
+          <td>Branchenvorreiter, 40% höhere Profitabilität</td>
         </tr>
       </tbody>
     </table>
   </section>
 
   <section class="new-business">
-    <h4>Neue Geschäftsfelder & Services</h4>
+    <h4>Ihre neuen Geschäftsfelder – Powered by KI</h4>
     <ul class="offerings">
-      <li><strong><!-- Feld/Service 1 --></strong> – <!-- 1 Satz Nutzen/Monetarisierung --></li>
-      <li><strong><!-- Feld/Service 2 --></strong> – </li>
-      <li><strong><!-- Feld/Service 3 --></strong> – </li>
-      <li class="optional"><strong><!-- optional Feld/Service 4 --></strong> – </li>
-      <li class="optional"><strong><!-- optional Feld/Service 5 --></strong> – </li>
+      <li><strong>24/7 Premium-Service:</strong> KI-gestützter Kundenservice, der nie schläft</li>
+      <li><strong>Predictive Solutions:</strong> Probleme lösen, bevor sie entstehen</li>
+      <li><strong>Hyperpersonalisierung:</strong> Jeder Kunde fühlt sich wie Ihr einziger</li>
+      <li><strong>Daten-Goldmine:</strong> Neue Insights als zusätzliche Einnahmequelle</li>
+      <li><strong>KI-Beratung:</strong> Ihr Wissen an andere weitergeben</li>
     </ul>
   </section>
 
   <section class="market-leadership">
-    <h4>Weg zur Marktführerschaft in {{ hauptleistung }}</h4>
-    <p class="positioning"><strong>Positionierung:</strong> <!-- 1–2 Sätze Value Proposition & Differenzierung --></p>
+    <h4>So werden Sie unschlagbar in {{ hauptleistung }}</h4>
+    <p class="positioning"><strong>Ihre Alleinstellung:</strong> 
+    "Wir liefern {{ hauptleistung }} schneller, präziser und persönlicher als jeder Wettbewerber – 
+    dank KI, die mitdenkt und vorausdenkt."</p>
     <ul class="levers">
-      <li><!-- Hebel 1: Qualität/Service/Personalisierung --></li>
-      <li><!-- Hebel 2: Kosten-/Zeitvorteil/Skalierung --></li>
-      <li><!-- Hebel 3: Datenmoat/Compliance/Vertrauen --></li>
+      <li><strong>Geschwindigkeit:</strong> Von Tagen auf Stunden – Ihre Kunden werden staunen</li>
+      <li><strong>Qualität:</strong> Fehlerquote nahe null durch intelligente Prüfsysteme</li>
+      <li><strong>Innovation:</strong> Jeden Monat eine neue Funktion, die begeistert</li>
     </ul>
   </section>
 
   <section class="milestones-kpis">
-    <h4>Meilensteine & KPIs</h4>
+    <h4>Ihre Meilensteine zum Erfolg</h4>
     <div class="year" data-year="1">
-      <h5>Jahr 1</h5>
+      <h5>Jahr 1 – Quick Wins sammeln</h5>
       <ul class="milestones">
-        <li><!-- Meilenstein 1 --></li>
-        <li><!-- Meilenstein 2 --></li>
-        <li class="optional"><!-- optional Meilenstein 3/4 --></li>
+        <li>✓ Erstes KI-Tool erfolgreich implementiert</li>
+        <li>✓ 5 Prozesse automatisiert</li>
+        <li>✓ Team ist KI-begeistert</li>
       </ul>
       <ul class="kpis">
-        <li><!-- KPI 1: Metrik, Zielwert, Zeitraum --></li>
-        <li><!-- KPI 2 --></li>
+        <li>Zeitersparnis: 20% bei Routineaufgaben</li>
+        <li>Kundenzufriedenheit: +10 Punkte NPS</li>
       </ul>
     </div>
-    <div class="year" data-year="2">
-      <h5>Jahr 2</h5>
-      <ul class="milestones"><li></li><li></li><li class="optional"></li></ul>
-      <ul class="kpis"><li></li><li></li></ul>
-    </div>
-    <div class="year" data-year="3">
-      <h5>Jahr 3</h5>
-      <ul class="milestones"><li></li><li></li><li class="optional"></li></ul>
-      <ul class="kpis"><li></li><li></li></ul>
-    </div>
-  </section>
-
-  <section class="budget-capacity">
-    <h4>Budget & Kapazitäten (hohe Linie)</h4>
-    <ul class="allocation">
-      <li><strong>Investitionsrahmen:</strong> <!-- % vom Gesamtbudget / Capex/Opex-Hinweis --></li>
-      <li><strong>Team/Skills:</strong> <!-- FTE, Schlüsselrollen, Upskilling --></li>
-    </ul>
-  </section>
-
-  <section class="assumptions">
-    <h4>Annahmen & Abhängigkeiten</h4>
-    <ul class="list">
-      <li><!-- Annahme/Abhängigkeit 1 --></li>
-      <li><!-- Annahme/Abhängigkeit 2 --></li>
-      <li class="optional"><!-- optional 3 --></li>
-    </ul>
+    <!-- Jahre 2 und 3 analog -->
   </section>
 </div>
-
-# Inhaltliche Vorgaben
-- **Reifegradpfad:** Konservativ und plausibel (Meilensteine begründen die Sprünge).
-- **Geschäftsfelder:** 3–5 neue, branchenrelevante Angebote mit monetärem Hebel (Umsatz/DB/Effizienz).
-- **Marktführerschaft:** Konkrete Differenzierungshebel (Qualität, Geschwindigkeit, Preis, Vertrauen/Compliance, Datenvorteil).
-- **KPIs:** Messbar (z. B. Cycle-Time, NPS, Kosten/Transaktion, Wiederkaufrate).
-- **Sprache:** Klar, präzise, ohne Marketingfloskeln. Keine externen Links/Bilder/Tracking.
-
-# Qualitätskriterien (Muss)
-- **Nur HTML** gemäß Struktur; keine weiteren Ausgaben.
-- Explizite Nennung des 95%-Ziels; Anfangswert = {{ score_percent }}%.
-- 3 Jahre abgedeckt, je Jahr Meilensteine & KPIs.
-- Neue Geschäftsfelder klar benannt; Marktführungslogik erkennbar.
