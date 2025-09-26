@@ -8,6 +8,7 @@ import os
 import re
 import json
 import csv
+Import sys
 from pathlib import Path
 from datetime import datetime as _dt, timedelta
 from typing import Dict, Any, Optional, List, Tuple, Union
@@ -30,14 +31,15 @@ PROMPT_DIRS = [BASE_DIR / "prompts", Path("/app/prompts")]
 
 # ============================= Branchenbenchmarks 2025 =============================
 
-@dataclass
 class IndustryBenchmark:
     """Aktuelle Branchendurchschnittswerte für KI-Adoption"""
-    digitalisierung_avg: float  # 1-10 Skala
-    automatisierung_avg: float  # Prozent
-    ki_adoption_rate: float     # Prozent der Unternehmen mit KI
-    roi_expectation: float      # Faktor (z.B. 3.2 = 320% ROI)
-    time_to_value_days: int     # Durchschnitt bis erste Ergebnisse
+    def __init__(self, digitalisierung_avg, automatisierung_avg, 
+                 ki_adoption_rate, roi_expectation, time_to_value_days):
+        self.digitalisierung_avg = digitalisierung_avg
+        self.automatisierung_avg = automatisierung_avg
+        self.ki_adoption_rate = ki_adoption_rate
+        self.roi_expectation = roi_expectation
+        self.time_to_value_days = time_to_value_days
 
 INDUSTRY_BENCHMARKS = {
     "beratung": IndustryBenchmark(7.2, 65, 42, 3.2, 90),
