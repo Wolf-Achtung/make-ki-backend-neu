@@ -2312,12 +2312,12 @@ def analyze_briefing_enhanced(body: Dict[str, Any], lang: str = 'de') -> Dict[st
         },
         'compliance_html': {
             'prompt': 'compliance',
-            'use_gpt': False,
+            'use_gpt': True,
             'fallback': lambda: generate_other_sections(answers, kpis, lang).get('compliance', '')
         },
         'foerderprogramme_html': {
             'prompt': 'foerderprogramme',
-            'use_gpt': False,
+            'use_gpt': True,
             'fallback': lambda: match_funding_programs(answers, lang)
         },
         'gamechanger_html': {
@@ -2337,7 +2337,7 @@ def analyze_briefing_enhanced(body: Dict[str, Any], lang: str = 'de') -> Dict[st
         },
         'quick_wins_html': {
             'prompt': 'quick_wins',
-            'use_gpt': False,
+            'use_gpt': True,
             'fallback': lambda: generate_quick_wins(answers, kpis, lang)
         },
         'recommendations_html': {
@@ -2347,17 +2347,17 @@ def analyze_briefing_enhanced(body: Dict[str, Any], lang: str = 'de') -> Dict[st
         },
         'risks_html': {
             'prompt': 'risks',
-            'use_gpt': False,
+            'use_gpt': True,
             'fallback': lambda: generate_risk_analysis(answers, kpis, lang)
         },
         'roadmap_html': {
             'prompt': 'roadmap',
-            'use_gpt': False,
+            'use_gpt': True,
             'fallback': lambda: generate_roadmap(answers, kpis, lang)
         },
         'tools_html': {
             'prompt': 'tools',
-            'use_gpt': False,
+            'use_gpt': True,
             'fallback': lambda: match_tools_to_company(answers, lang)
         },
         'vision_html': {
