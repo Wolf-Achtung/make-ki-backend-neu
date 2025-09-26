@@ -5,41 +5,67 @@
   <title>{{ (meta|default({})).title|default('KI-Statusbericht', true) }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    /* ===== Gold Standard Design System ===== */
+    /* ===== GOLD STANDARD+ Design System ===== */
     :root {
-      /* Premium Blau-Palette */
-      --primary-900: #0A1628;     /* Tiefes Marineblau */
-      --primary-800: #1E3A5F;     /* Dunkelblau */
-      --primary-700: #2C4F7C;     /* Königsblau */
-      --primary-600: #3B5998;     /* Mittelblau */
-      --primary-500: #4A69BD;     /* Hauptblau */
-      --primary-400: #5B7CCD;     /* Hellblau */
-      --primary-300: #7B95E1;     /* Pastellblau */
-      --primary-200: #A8BFF8;     /* Sehr hell */
-      --primary-100: #E3ECFF;     /* Fast weiß */
-      --primary-50:  #F4F7FF;     /* Hintergrund */
+      /* Premium Blau-Palette (Primärfarben) */
+      --primary-950: #020617;     /* Tiefstes Dunkelblau */
+      --primary-900: #0F172A;     /* Sehr dunkel */
+      --primary-800: #1E293B;     /* Dunkelblau */
+      --primary-700: #334155;     /* Mittel-Dunkelblau */
+      --primary-600: #475569;     /* Mittelblau */
+      --primary-500: #64748B;     /* Hauptblau */
+      --primary-400: #94A3B8;     /* Hellblau */
+      --primary-300: #CBD5E1;     /* Sehr Hellblau */
+      --primary-200: #E2E8F0;     /* Fast weiß-blau */
+      --primary-100: #F1F5F9;     /* Hintergrund hell */
+      --primary-50:  #F8FAFC;     /* Hintergrund sehr hell */
       
-      /* Semantische Farben */
-      --success: #10B981;
-      --warning: #F59E0B;
-      --danger: #EF4444;
-      --info: #3B82F6;
+      /* Akzentfarben (minimal einsetzen) */
+      --accent-blue: #2563EB;     /* Lebhaftes Blau für wichtige CTAs */
+      --accent-sky: #0284C7;      /* Himmelblau für Links */
+      --accent-green: #10B981;    /* Erfolg (sparsam!) */
+      --accent-amber: #F59E0B;    /* Warnung */
+      --accent-red: #DC2626;      /* Gefahr/Fehler */
       
-      /* Layout */
+      /* Neutrale Farben */
+      --gray-900: #111827;
+      --gray-800: #1F2937;
+      --gray-700: #374151;
+      --gray-600: #4B5563;
+      --gray-500: #6B7280;
+      --gray-400: #9CA3AF;
+      --gray-300: #D1D5DB;
+      --gray-200: #E5E7EB;
+      --gray-100: #F3F4F6;
+      --gray-50:  #F9FAFB;
+      
+      /* Layout & Typografie */
       --page-bg: #FFFFFF;
-      --text-primary: #1A202C;
-      --text-secondary: #4A5568;
-      --text-muted: #718096;
-      --border-color: #E2E8F0;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-      --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+      --text-primary: var(--gray-900);
+      --text-secondary: var(--gray-700);
+      --text-muted: var(--gray-500);
+      --border-color: var(--gray-200);
+      
+      /* Schatten (subtiler) */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      
+      /* Abstände */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --spacing-2xl: 48px;
+      --spacing-3xl: 64px;
     }
 
     /* ===== Reset & Base ===== */
     @page { 
       size: A4; 
-      margin: 15mm 15mm 20mm 15mm;
+      margin: 20mm 20mm 25mm 20mm;
       @bottom-center {
         content: counter(page);
       }
@@ -53,121 +79,150 @@
     
     html, body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      font-size: 10.5pt;
-      line-height: 1.6;
+      font-size: 10pt;
+      line-height: 1.65;
       color: var(--text-primary);
       background: var(--page-bg);
       font-feature-settings: 'kern' 1, 'liga' 1;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      width: 100%;
     }
 
-    /* ===== Titelseite ===== */
+    /* ===== Titelseite (optimiert) ===== */
     .cover {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      background: linear-gradient(135deg, var(--primary-50) 0%, var(--page-bg) 100%);
+      align-items: center;
+      background: linear-gradient(180deg, var(--primary-50) 0%, var(--page-bg) 60%);
       page-break-after: always;
       position: relative;
-      padding: 40px;
+      padding: var(--spacing-2xl);
+      overflow: hidden;
     }
     
     .cover::before {
       content: '';
       position: absolute;
-      top: 0;
-      right: 0;
-      width: 300px;
-      height: 300px;
+      top: -100px;
+      right: -100px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--primary-100) 0%, transparent 60%);
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+    
+    .cover::after {
+      content: '';
+      position: absolute;
+      bottom: -150px;
+      left: -150px;
+      width: 500px;
+      height: 500px;
       background: radial-gradient(circle, var(--primary-100) 0%, transparent 70%);
       border-radius: 50%;
-      opacity: 0.5;
+      opacity: 0.4;
     }
     
     .cover-content {
       position: relative;
       z-index: 1;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
     }
     
     .cover h1 {
-      font-size: 42pt;
+      font-size: 36pt;
       font-weight: 700;
-      color: var(--primary-800);
-      margin-bottom: 10px;
-      letter-spacing: -0.5px;
-      line-height: 1.1;
+      color: var(--primary-900);
+      margin-bottom: var(--spacing-md);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
     }
     
     .cover-subtitle {
-      font-size: 16pt;
-      color: var(--primary-600);
-      margin-bottom: 30px;
+      font-size: 14pt;
+      color: var(--gray-600);
+      margin-bottom: var(--spacing-xl);
       font-weight: 400;
+      line-height: 1.4;
     }
     
     .cover-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 40px;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-2xl);
+      justify-content: center;
     }
     
     .meta-badge {
       display: inline-flex;
       align-items: center;
-      padding: 8px 16px;
+      padding: var(--spacing-sm) var(--spacing-md);
       background: var(--page-bg);
-      border: 2px solid var(--primary-200);
-      border-radius: 24px;
+      border: 1px solid var(--primary-300);
+      border-radius: 20px;
       font-size: 9pt;
-      font-weight: 600;
-      color: var(--primary-700);
+      font-weight: 500;
+      color: var(--primary-800);
       box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
     }
     
     .score-display {
-      margin-top: 40px;
-      padding: 30px;
+      margin-top: var(--spacing-2xl);
+      padding: var(--spacing-xl);
       background: var(--page-bg);
-      border-radius: 16px;
-      box-shadow: var(--shadow-md);
-      max-width: 400px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 320px;
+      margin-left: auto;
+      margin-right: auto;
     }
     
     .score-title {
-      font-size: 11pt;
-      color: var(--text-secondary);
-      margin-bottom: 12px;
+      font-size: 10pt;
+      color: var(--text-muted);
+      margin-bottom: var(--spacing-sm);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.05em;
+      font-weight: 500;
     }
     
     .score-value {
-      font-size: 48pt;
+      font-size: 42pt;
       font-weight: 700;
-      color: var(--primary-600);
+      color: var(--accent-blue);
       line-height: 1;
+      margin-bottom: var(--spacing-sm);
     }
     
     .score-bar {
-      height: 12px;
-      background: var(--primary-100);
-      border-radius: 6px;
-      margin-top: 16px;
+      height: 8px;
+      background: var(--gray-200);
+      border-radius: 4px;
+      margin-top: var(--spacing-md);
       overflow: hidden;
     }
     
     .score-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
-      border-radius: 6px;
+      background: linear-gradient(90deg, var(--accent-sky), var(--accent-blue));
+      border-radius: 4px;
+      transition: width 0.3s ease;
     }
 
-    /* ===== Kapitel-Layout ===== */
+    /* ===== Kapitel-Layout (einspaltig!) ===== */
     .chapter {
       page-break-before: always;
-      padding: 30px 0;
+      padding: var(--spacing-xl) 0;
+      width: 100%;
     }
     
     .chapter:first-of-type {
@@ -175,141 +230,169 @@
     }
     
     .chapter-header {
-      margin-bottom: 30px;
-      padding-bottom: 16px;
-      border-bottom: 3px solid var(--primary-200);
+      margin-bottom: var(--spacing-xl);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 2px solid var(--primary-200);
     }
     
     .chapter-number {
       font-size: 9pt;
       font-weight: 600;
-      color: var(--primary-500);
+      color: var(--accent-blue);
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
+      letter-spacing: 0.08em;
+      margin-bottom: var(--spacing-xs);
     }
     
     .chapter-title {
-      font-size: 24pt;
+      font-size: 22pt;
       font-weight: 700;
-      color: var(--primary-800);
+      color: var(--primary-900);
       line-height: 1.2;
     }
     
+    /* WICHTIG: Immer einspaltig! */
     .chapter-content {
-      column-count: 2;
-      column-gap: 24px;
-      text-align: justify;
-    }
-    
-    .chapter-content.single-column {
-      column-count: 1;
+      width: 100%;
+      column-count: 1 !important;
+      text-align: left;
     }
 
-    /* ===== Executive Summary Special ===== */
+    /* ===== Executive Summary (optimiert) ===== */
     .executive-summary {
       background: linear-gradient(135deg, var(--primary-50) 0%, var(--page-bg) 100%);
-      padding: 32px;
-      border-radius: 16px;
-      margin-bottom: 24px;
+      padding: var(--spacing-xl);
+      border-radius: 12px;
+      margin-bottom: var(--spacing-lg);
       box-shadow: var(--shadow-md);
+      border: 1px solid var(--primary-100);
+    }
+    
+    .executive-summary-content p {
+      font-size: 10.5pt;
+      line-height: 1.7;
+      margin-bottom: var(--spacing-md);
+      color: var(--text-primary);
+    }
+    
+    .executive-summary-content p.situation strong,
+    .executive-summary-content p.strategy strong,
+    .executive-summary-content p.value strong {
+      color: var(--primary-900);
+      font-weight: 600;
     }
     
     .key-insights {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-      margin-top: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-lg);
     }
     
     .insight-card {
       background: var(--page-bg);
-      padding: 20px;
-      border-radius: 12px;
-      border-left: 4px solid var(--primary-500);
+      padding: var(--spacing-md);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-blue);
       box-shadow: var(--shadow-sm);
       page-break-inside: avoid;
     }
     
     .insight-label {
-      font-size: 9pt;
+      font-size: 8.5pt;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
+      letter-spacing: 0.04em;
+      margin-bottom: var(--spacing-xs);
+      font-weight: 500;
     }
     
     .insight-value {
-      font-size: 18pt;
+      font-size: 16pt;
       font-weight: 700;
-      color: var(--primary-700);
+      color: var(--primary-800);
       line-height: 1;
     }
     
     .insight-description {
       font-size: 9pt;
       color: var(--text-secondary);
-      margin-top: 8px;
+      margin-top: var(--spacing-xs);
     }
 
     /* ===== Inhaltselemente ===== */
     h2 {
-      font-size: 18pt;
+      font-size: 16pt;
       font-weight: 600;
-      color: var(--primary-700);
-      margin: 24px 0 16px 0;
+      color: var(--primary-800);
+      margin: var(--spacing-lg) 0 var(--spacing-md) 0;
       page-break-after: avoid;
     }
     
     h3 {
-      font-size: 14pt;
+      font-size: 13pt;
       font-weight: 600;
-      color: var(--primary-600);
-      margin: 20px 0 12px 0;
+      color: var(--primary-700);
+      margin: var(--spacing-lg) 0 var(--spacing-sm) 0;
       page-break-after: avoid;
     }
     
+    h4 {
+      font-size: 11pt;
+      font-weight: 600;
+      color: var(--primary-700);
+      margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+    }
+    
     p {
-      margin-bottom: 12px;
+      margin-bottom: var(--spacing-sm);
       orphans: 3;
       widows: 3;
+      text-align: left;
     }
     
     strong {
       font-weight: 600;
-      color: var(--primary-800);
+      color: var(--primary-900);
+    }
+    
+    em {
+      font-style: italic;
+      color: var(--text-secondary);
     }
     
     a {
-      color: var(--primary-600);
+      color: var(--accent-sky);
       text-decoration: none;
-      border-bottom: 1px solid var(--primary-200);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s ease;
     }
     
     a:hover {
-      border-bottom-color: var(--primary-600);
+      border-bottom-color: var(--accent-sky);
     }
 
-    /* ===== Listen ===== */
+    /* ===== Listen (optimiert) ===== */
     ul, ol {
-      margin: 12px 0 12px 24px;
+      margin: var(--spacing-sm) 0 var(--spacing-md) var(--spacing-lg);
     }
     
     li {
-      margin-bottom: 8px;
-      line-height: 1.6;
+      margin-bottom: var(--spacing-xs);
+      line-height: 1.65;
+      color: var(--text-primary);
     }
     
     li::marker {
-      color: var(--primary-500);
+      color: var(--accent-blue);
     }
 
-    /* ===== Tabellen ===== */
+    /* ===== Tabellen (kein Überlappen!) ===== */
     table {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
-      margin: 20px 0;
+      margin: var(--spacing-md) 0;
       box-shadow: var(--shadow-sm);
       border-radius: 8px;
       overflow: hidden;
@@ -318,20 +401,22 @@
     }
     
     thead {
-      background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+      background: var(--primary-800);
       color: white;
     }
     
     th {
-      padding: 12px 16px;
+      padding: var(--spacing-sm) var(--spacing-md);
       text-align: left;
       font-weight: 600;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.02em;
+      font-size: 9pt;
     }
     
     td {
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border-color);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-bottom: 1px solid var(--gray-100);
+      color: var(--text-primary);
     }
     
     tbody tr:last-child td {
@@ -339,106 +424,220 @@
     }
     
     tbody tr:nth-child(even) {
+      background: var(--gray-50);
+    }
+    
+    tbody tr:hover {
       background: var(--primary-50);
     }
 
-    /* ===== Info-Boxen ===== */
+    /* ===== Info-Boxen (optimiert) ===== */
     .info-box {
       background: var(--primary-50);
-      border: 2px solid var(--primary-200);
-      border-radius: 12px;
-      padding: 20px;
-      margin: 20px 0;
+      border: 1px solid var(--primary-200);
+      border-radius: 8px;
+      padding: var(--spacing-md);
+      margin: var(--spacing-md) 0;
       page-break-inside: avoid;
+    }
+    
+    .info-box.tip {
+      background: var(--primary-50);
+      border-color: var(--accent-blue);
+      border-left-width: 3px;
     }
     
     .info-box.warning {
       background: #FEF3C7;
-      border-color: #F59E0B;
+      border-color: var(--accent-amber);
+      border-left-width: 3px;
     }
     
     .info-box.danger {
       background: #FEE2E2;
-      border-color: #EF4444;
+      border-color: var(--accent-red);
+      border-left-width: 3px;
     }
     
     .info-box.success {
       background: #D1FAE5;
-      border-color: #10B981;
+      border-color: var(--accent-green);
+      border-left-width: 3px;
     }
     
     .info-box-title {
       font-weight: 600;
-      font-size: 11pt;
-      margin-bottom: 8px;
+      font-size: 10.5pt;
+      margin-bottom: var(--spacing-xs);
+      color: var(--primary-900);
     }
 
     /* ===== Fortschrittsanzeigen ===== */
     .progress-indicator {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin: 16px 0;
+      gap: var(--spacing-sm);
+      margin: var(--spacing-md) 0;
     }
     
     .progress-label {
-      min-width: 140px;
+      min-width: 120px;
       font-size: 9pt;
       color: var(--text-secondary);
     }
     
     .progress-bar {
       flex: 1;
-      height: 8px;
-      background: var(--border-color);
-      border-radius: 4px;
+      height: 6px;
+      background: var(--gray-200);
+      border-radius: 3px;
       overflow: hidden;
     }
     
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
-      border-radius: 4px;
+      background: linear-gradient(90deg, var(--accent-sky), var(--accent-blue));
+      border-radius: 3px;
     }
     
     .progress-value {
-      min-width: 40px;
+      min-width: 50px;
       text-align: right;
       font-weight: 600;
-      color: var(--primary-700);
+      color: var(--primary-800);
       font-size: 9pt;
     }
 
-    /* ===== Tool & Förder-Badges ===== */
-    .tool-item {
-      padding: 12px;
-      background: var(--primary-50);
+    /* ===== Tool-Karten ===== */
+    .tool-card {
+      padding: var(--spacing-md);
+      background: var(--gray-50);
       border-radius: 8px;
-      margin-bottom: 12px;
-      border-left: 3px solid var(--primary-400);
+      margin-bottom: var(--spacing-md);
+      border: 1px solid var(--gray-200);
+      page-break-inside: avoid;
     }
     
-    .chip {
-      display: inline-block;
+    .tool-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .tool-header h4 {
+      color: var(--primary-900);
+      font-size: 11pt;
+      margin: 0;
+    }
+    
+    .fit-score {
+      background: var(--accent-blue);
+      color: white;
       padding: 2px 8px;
-      background: var(--primary-100);
-      color: var(--primary-700);
       border-radius: 12px;
       font-size: 8pt;
-      margin-right: 6px;
+      font-weight: 600;
+    }
+    
+    .tool-badges {
+      display: flex;
+      gap: var(--spacing-xs);
+      margin-top: var(--spacing-sm);
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      background: var(--primary-100);
+      color: var(--primary-700);
+      border-radius: 4px;
+      font-size: 7.5pt;
+      font-weight: 500;
+    }
+    
+    .badge.badge-success {
+      background: var(--accent-green);
+      color: white;
+    }
+    
+    .badge.badge-info {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    /* ===== Funding-Tabelle ===== */
+    .funding-table {
+      width: 100%;
+      margin: var(--spacing-md) 0;
+    }
+    
+    .funding-row {
+      transition: background 0.2s ease;
+    }
+    
+    .funding-row:hover {
+      background: var(--primary-50);
+    }
+    
+    .fit-high {
+      background: var(--accent-green);
+    }
+    
+    .fit-medium {
+      background: var(--accent-amber);
+    }
+    
+    .fit-low {
+      background: var(--gray-400);
+    }
+
+    /* ===== Business Case Sections ===== */
+    .business-case section {
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .business-case h3 {
+      color: var(--primary-900);
+      border-bottom: 2px solid var(--primary-200);
+      padding-bottom: var(--spacing-xs);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .business-case h4 {
+      color: var(--primary-800);
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .business-case .figures li {
+      list-style: none;
+      padding: var(--spacing-xs) 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .business-case .figures li:last-child {
+      border-bottom: none;
+    }
+    
+    .innovation {
+      background: var(--gray-50);
+      padding: var(--spacing-md);
+      border-radius: 8px;
+      margin-bottom: var(--spacing-md);
+      border-left: 3px solid var(--accent-blue);
     }
 
     /* ===== Footer ===== */
     .footer {
       position: fixed;
-      bottom: 10mm;
-      left: 15mm;
-      right: 15mm;
+      bottom: 15mm;
+      left: 20mm;
+      right: 20mm;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 12px;
-      border-top: 1px solid var(--border-color);
+      padding-top: var(--spacing-sm);
+      border-top: 1px solid var(--gray-200);
       font-size: 8pt;
       color: var(--text-muted);
     }
@@ -450,51 +649,220 @@
     .footer-center {
       text-align: center;
       font-weight: 600;
-      color: var(--primary-600);
+      color: var(--primary-700);
     }
     
     .footer-right {
       flex: 1;
       text-align: right;
+      font-size: 7.5pt;
     }
 
     /* ===== Print Optimierungen ===== */
     @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color-adjust: exact;
+      }
+      
       .chapter {
         page-break-before: always;
       }
       
-      .info-box, .insight-card, table, .tool-item {
+      .info-box, .insight-card, table, .tool-card, .innovation {
         page-break-inside: avoid;
+      }
+      
+      h2, h3, h4 {
+        page-break-after: avoid;
       }
       
       a {
         border-bottom: none;
-        color: var(--primary-700);
+        color: var(--primary-800);
       }
     }
+    
+    /* ===== Spezial-Klassen für bessere Lesbarkeit ===== */
+    .highlight {
+      background: linear-gradient(to right, var(--primary-100), transparent);
+      padding: var(--spacing-xs);
+      border-radius: 4px;
+    }
+    
+    .metric-big {
+      font-size: 18pt;
+      font-weight: 700;
+      color: var(--accent-blue);
+    }
+    
+    .metric-label {
+      font-size: 9pt;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+/* Zusätzliche Optimierungen für bessere Lesbarkeit */
+
+/* Motivierende Highlight-Boxen */
+.highlight-box {
+  background: linear-gradient(135deg, #EBF8FF 0%, #FFFFFF 100%);
+  border-left: 4px solid var(--accent-blue);
+  padding: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.highlight-box strong {
+  color: var(--accent-blue);
+}
+
+/* Erfolgs-Metriken hervorheben */
+.success-metric {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--accent-green);
+  color: white;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 9pt;
+}
+
+/* Roadmap-Phasen visuell optimiert */
+.roadmap-phase {
+  position: relative;
+  padding-left: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.roadmap-phase::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: -var(--spacing-lg);
+  width: 2px;
+  background: var(--primary-300);
+}
+
+.roadmap-phase::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 18px;
+  height: 18px;
+  background: var(--accent-blue);
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: var(--shadow-md);
+}
+
+.roadmap-phase.completed::after {
+  background: var(--accent-green);
+}
+
+/* Call-to-Action Buttons (für digitale Version) */
+.cta-button {
+  display: inline-block;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--accent-blue);
+  color: white;
+  border-radius: 24px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.cta-button:hover {
+  background: var(--primary-700);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Testimonial-Style für Erfolgsgeschichten */
+.success-story {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+
+.success-story::before {
+  content: '"';
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  font-size: 48pt;
+  color: var(--primary-200);
+  font-family: serif;
+}
+
+/* Optimierte Druckdarstellung */
+@media print {
+  /* Farben für Druck optimieren */
+  :root {
+    --accent-blue: #1E40AF;
+    --accent-green: #059669;
+  }
+  
+  /* Seitenumbrüche intelligent steuern */
+  .chapter-content > * {
+    page-break-inside: avoid;
+  }
+  
+  h2, h3, h4 {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+  
+  /* Tabellen nicht umbrechen */
+  table {
+    page-break-inside: avoid;
+  }
+  
+  /* Listen zusammenhalten */
+  ul, ol {
+    page-break-inside: avoid;
+  }
+  
+  li {
+    page-break-inside: avoid;
+    page-break-after: avoid;
+  }
+}
   </style>
 </head>
 <body>
 
+  <!-- Rest des HTML-Templates bleibt strukturell gleich, 
+       aber mit angepassten Klassen und einspaltiger Darstellung -->
+  
   <!-- Titelseite -->
   <section class="cover">
     <div class="cover-content">
-      <h1>{{ (meta|default({})).title|default('KI-Statusbericht', true) }}</h1>
+      <h1>{{ (meta|default({})).title|default('KI-Statusbericht & Handlungsempfehlungen', true) }}</h1>
       <div class="cover-subtitle">
-        Ihre strategische Analyse für erfolgreiche KI-Integration
+        Ihre persönliche Roadmap für erfolgreiche KI-Integration
       </div>
       
       <div class="cover-meta">
-        {% if now %}<span class="meta-badge">{{ now().strftime('%d.%m.%Y') }}</span>{% endif %}
-        {% if branche %}<span class="meta-badge">{{ branche|capitalize }}</span>{% endif %}
-        {% if unternehmensgroesse %}<span class="meta-badge">{{ company_size_label|default(unternehmensgroesse, true) }} Mitarbeiter</span>{% endif %}
-        {% if bundesland %}<span class="meta-badge">{{ bundesland|upper }}</span>{% endif %}
+        {% if now %}<span class="meta-badge">📅 {{ now().strftime('%d.%m.%Y') }}</span>{% endif %}
+        {% if branche %}<span class="meta-badge">🏢 {{ branche|capitalize }}</span>{% endif %}
+        {% if unternehmensgroesse %}<span class="meta-badge">👥 {{ company_size_label|default(unternehmensgroesse, true) }}</span>{% endif %}
+        {% if bundesland %}<span class="meta-badge">📍 {{ bundesland|upper }}</span>{% endif %}
       </div>
       
       {% if score_percent %}
       <div class="score-display">
-        <div class="score-title">KI-Reifegrad</div>
+        <div class="score-title">Ihr KI-Reifegrad</div>
         <div class="score-value">{{ score_percent }}%</div>
         <div class="score-bar">
           <div class="score-fill" style="width: {{ score_percent }}%"></div>
@@ -512,48 +880,36 @@
       <h1 class="chapter-title">Executive Summary</h1>
     </div>
     
-    <div class="executive-summary">
-      {{ exec_summary_html|safe }}
+    <div class="chapter-content">
+      <div class="executive-summary">
+        {{ exec_summary_html|safe }}
+      </div>
       
       <div class="key-insights">
         <div class="insight-card">
-          <div class="insight-label">Digitalisierungsgrad</div>
+          <div class="insight-label">Digitalisierung</div>
           <div class="insight-value">{{ digitalisierungsgrad|default(5) }}/10</div>
-          <div class="insight-description">{{ 'Überdurchschnittlich' if digitalisierungsgrad|default(5) > 6 else 'Ausbaufähig' }}</div>
+          <div class="insight-description">{{ 'Hervorragend' if digitalisierungsgrad|default(5) >= 8 else 'Gut' if digitalisierungsgrad|default(5) >= 6 else 'Ausbaufähig' }}</div>
         </div>
         
         <div class="insight-card">
           <div class="insight-label">Automatisierung</div>
           <div class="insight-value">{{ automatisierungsgrad|default('mittel')|capitalize }}</div>
-          <div class="insight-description">Prozessoptimierung möglich</div>
+          <div class="insight-description">Großes Optimierungspotenzial</div>
         </div>
         
         <div class="insight-card">
-          <div class="insight-label">Risikobereitschaft</div>
+          <div class="insight-label">Innovation</div>
           <div class="insight-value">{{ risikofreude|default(3) }}/5</div>
-          <div class="insight-description">{{ 'Innovationsfreudig' if risikofreude|default(3) > 3 else 'Vorsichtig' }}</div>
+          <div class="insight-description">{{ 'Vorreiter' if risikofreude|default(3) >= 4 else 'Aufgeschlossen' if risikofreude|default(3) >= 3 else 'Vorsichtig' }}</div>
         </div>
         
         <div class="insight-card">
-          <div class="insight-label">Hauptfokus</div>
-          <div class="insight-value">KI-Integration</div>
-          <div class="insight-description">{{ hauptleistung|default('Beratung & Automatisierung') }}</div>
+          <div class="insight-label">ROI-Potenzial</div>
+          <div class="insight-value">{{ kpi_roi_months|default(12) }}M</div>
+          <div class="insight-description">Schneller Return on Investment</div>
         </div>
       </div>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- Business Case -->
-  {% if business_html %}
-  <section class="chapter">
-    <div class="chapter-header">
-      <div class="chapter-number">Kapitel 2</div>
-      <h1 class="chapter-title">Business Case</h1>
-    </div>
-    
-    <div class="chapter-content single-column">
-      {{ business_html|safe }}
     </div>
   </section>
   {% endif %}
