@@ -82,37 +82,41 @@ def safe_str(text: Any) -> str:
     return str(text)
 
 def clean_text(text: str) -> str:
+    """Bereinigt Text von Artefakten und Encoding-Problemen"""
     if not text:
         return ""
 
-    # 1) Versuche generelles Mojibake zu reparieren (latin1->utf8)
+    # 1) Generische Mojibake-Reparatur (latin1->utf8), nur wenn nötig
     try:
-        # Nur wenn es wirklich "kaputt" aussieht
         if "Ã" in text or "â" in text:
             text = text.encode("latin1", errors="ignore").decode("utf-8", errors="ignore")
     except Exception:
         pass
 
-    # 2) Zusätzliche sichere Ersetzungen (nur valide Literale/Unicode-Escapes)
+    # 2) Sichere Ersetzungen (nur valide Literale/Unicode-Escapes)
     replacements = {
-        "â€™": "'",
-        "â€˜": "'",
-        "â€œ": "\"",
-        "â€\x9d": "\"",   # ” (smart quote, sicher via \x9d)
-        "â€“": "–",      # en dash
-        "â€”": "—",      # em dash
+        "â€™": "'",     # ’
+        "â€˜": "'",     # ‘
+        "â€œ": "\"",    # “
+        "â€\x9d": "\"", # ” (als \x9d sicher angegeben)
+        "â€“": "–",     # en dash
+        "â€”": "—",     # em dash
         "Ã„": "Ä", "Ã–": "Ö", "Ãœ": "Ü",
         "Ã¤": "ä", "Ã¶": "ö", "Ã¼": "ü",
         "ÃŸ": "ß",
     }
+    
     for old, new in replacements.items():
         text = text.replace(old, new)
-
-    # 3) Codefences/Whitespace säubern
+    
+    # Remove code fences
     text = re.sub(r'^```[a-zA-Z0-9_-]*\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'\s*```$', '', text, flags=re.MULTILINE)
+    
+    # Clean up whitespace
     text = re.sub(r'[ \t]{2,}', ' ', text)
     text = re.sub(r'\n{3,}', '\n\n', text)
+    
     return text.strip()
 
 def calculate_readiness_score(answers: Dict[str, Any]) -> int:
@@ -526,7 +530,11 @@ def analyze_briefing(body: Dict[str, Any], lang: str = 'de') -> Dict[str, Any]:
     <p><em>Hinweis: Diese Übersicht ersetzt keine Rechtsberatung. 
     Konsultieren Sie bei Bedarf einen spezialisierten Anwalt.</em></p>
     """
-    
+        # >>> Fix für NameError: bundesland vor Nutzung setzen <<<
+    bundesland = (answers.get("bundesland") or answers.get("state") or "Berlin")
+    if isinstance(bundesland, str):
+        bundesland = bundesland.strip()
+
     # Erstelle finalen Kontext
     context = {
         'meta': {
