@@ -18,11 +18,18 @@ from jinja2 import Template, Environment, FileSystemLoader
 
 import httpx
 
-# OpenAI Client
+# OpenAI Client mit Debug-Output
 try:
     from openai import OpenAI
-    _openai_client = OpenAI()
-except Exception:
+    api_key = os.getenv('OPENAI_API_KEY')
+    if api_key:
+        _openai_client = OpenAI(api_key=api_key)
+        print(f"OpenAI Client initialisiert mit Key: {api_key[:8]}...")
+    else:
+        print("WARNUNG: OPENAI_API_KEY nicht gefunden!")
+        _openai_client = None
+except Exception as e:
+    print(f"FEHLER bei OpenAI Client Initialisierung: {e}")
     _openai_client = None
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -566,7 +573,10 @@ def call_gpt_api(prompt: str, section_name: str, lang: str = 'de') -> str:
     """Ruft OpenAI API mit optimierten Einstellungen auf"""
     try:
         if not _openai_client:
+            print(f"OpenAI Client nicht verfügbar für {section_name}")
             raise Exception("OpenAI Client nicht initialisiert")
+        
+        print(f"Rufe OpenAI API für {section_name}...")
         
         # System-Prompt basierend auf Sprache
         system_prompts = {
@@ -592,7 +602,9 @@ def call_gpt_api(prompt: str, section_name: str, lang: str = 'de') -> str:
             frequency_penalty=0.1
         )
         
-        return clean_and_validate_html(response.choices[0].message.content)
+        result = response.choices[0].message.content
+        print(f"OpenAI API Erfolg für {section_name}: {len(result)} Zeichen")
+        return clean_and_validate_html(result)
         
     except Exception as e:
         print(f"GPT API Fehler für {section_name}: {e}")
@@ -2358,11 +2370,18 @@ def analyze_briefing_enhanced(body: Dict[str, Any], lang: str = 'de') -> Dict[st
     # Prozessiere konfigurierte Sektionen
     for html_key, config in section_config.items():
         try:
-            # Immer Fallback verwenden, da GPT nicht konfiguriert oder Fehler auftreten könnte
-            sections[html_key] = config['fallback']()
+            if config['use_gpt'] and _openai_client and should_use_gpt(config['prompt'], answers):
+                print(f"Nutze GPT für {config['prompt']}")
+                prompt_text = prompt_processor.render_prompt(
+                    config['prompt'], variables, lang
+                )
+                sections[html_key] = call_gpt_api(prompt_text, config['prompt'], lang)
+            else:
+                print(f"Nutze Fallback für {config['prompt']}")
+                sections[html_key] = config['fallback']()
         except Exception as e:
             print(f"Fehler bei {config['prompt']}: {e}")
-            sections[html_key] = generate_fallback_content(config['prompt'], lang)
+            sections[html_key] = config['fallback']()
     
     # 5. Tools und Förderungen matchen (bereits mit eigenen Funktionen)
     if 'tools_html' not in sections or not sections['tools_html']:
