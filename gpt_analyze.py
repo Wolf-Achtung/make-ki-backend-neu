@@ -625,7 +625,7 @@ def validate_kpis(kpis: Dict[str, Any]) -> Dict[str, Any]:
 def should_use_gpt(prompt_name: str, answers: Dict[str, Any]) -> bool:
     """Bestimmt ob GPT für diese Sektion verwendet werden soll"""
     # Immer GPT für komplexe narrative Sektionen
-    gpt_sections = ['executive_summary', 'vision', 'gamechanger', 'coach', 'tools','quick_wins', foerderprogramme]
+    gpt_sections = ['executive_summary', 'vision', 'gamechanger', 'coach', 'tools','quick_wins', 'foerderprogramme']
     
     if prompt_name in gpt_sections:
         return True
