@@ -189,6 +189,7 @@ def get_template_variables(form_data: Dict[str, Any], lang: str = 'de') -> Dict[
         
         # === Digitale Metriken ===
         'digitalisierungsgrad': kpis['digitalisierungsgrad'],
+        'digitalisierungsgrad_percent': kpis['digitalisierungsgrad'] * 10,  # Für Prozent-An.
         'automatisierungsgrad': form_data.get('automatisierungsgrad', 'mittel'),
         'automatisierungsgrad_percent': kpis['automatisierungsgrad'],
         'prozesse_papierlos': form_data.get('prozesse_papierlos', '51-80'),
@@ -424,7 +425,7 @@ def calculate_kpis_from_answers(answers: Dict[str, Any]) -> Dict[str, Any]:
     Optimiert für realistisch-positive Darstellung
     """
     # Extrahiere Basis-Werte
-    digital = min(10, max(1, int(answers.get('digitalisierungsgrad', 5))))
+    digital = min(10, max(1, int(float(str(answers.get('digitalisierungsgrad', 5)).replace(',', '.')))))
     
     # Automatisierungsgrad mapping
     auto_map = {
@@ -603,20 +604,34 @@ def calculate_optimistic_kpis(raw_kpis: Dict[str, Any]) -> Dict[str, Any]:
         75, 
         int(optimized['kpi_efficiency'] * 0.85)
     )
-    
+
     return optimized
+# Neue Funktion hier einfügen:
+def validate_kpis(kpis: Dict[str, Any]) -> Dict[str, Any]:
+    """Finale Validierung für Plausibilität"""
+    # ROI sollte realistisch bleiben
+    max_annual_saving = kpis['roi_investment'] * 4  # Max 400% ROI im ersten Jahr
+    if kpis['roi_annual_saving'] > max_annual_saving:
+        kpis['roi_annual_saving'] = int(max_annual_saving)
+        kpis['roi_three_year'] = int((kpis['roi_annual_saving'] * 3) - kpis['roi_investment'])
+    
+    # Readiness Score Obergrenze für KMU
+    if kpis['readiness_score'] > 85:
+        kpis['readiness_score'] = 85
+    
+    return kpis
 # ============================= GPT Integration (Fortsetzung) =============================
 
 def should_use_gpt(prompt_name: str, answers: Dict[str, Any]) -> bool:
     """Bestimmt ob GPT für diese Sektion verwendet werden soll"""
     # Immer GPT für komplexe narrative Sektionen
-    gpt_sections = ['executive_summary', 'vision', 'gamechanger', 'coach']
+    gpt_sections = ['executive_summary', 'vision', 'gamechanger', 'coach', 'tools','quick_wins', foerderprogramme]
     
     if prompt_name in gpt_sections:
         return True
     
     # Lokale Generierung für datengetriebene Sektionen
-    local_sections = ['tools', 'funding', 'compliance', 'quick_wins']
+    local_sections = ['compliance']
     if prompt_name in local_sections:
         return False
     
@@ -2448,6 +2463,8 @@ def analyze_briefing_enhanced(body: Dict[str, Any], lang: str = 'de') -> Dict[st
     
     # 1. KPIs berechnen
     kpis = calculate_kpis_from_answers(answers)
+    kpis = calculate_optimistic_kpis(kpis)
+    kpis = validate_kpis(kpis)  # NEU: Finale Validierung
     
     # 2. Template-Variablen vorbereiten
     variables = get_template_variables(answers, lang)
