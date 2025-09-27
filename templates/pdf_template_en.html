@@ -316,6 +316,7 @@
 
     /* ===== Chapter Layout ===== */
     .chapter {
+      break-before: page;
       page-break-before: always;
       padding: var(--spacing-xl) 0;
       width: 100%;
@@ -886,9 +887,9 @@
       
       <div class="cover-meta">
         {% if now %}<span class="meta-badge">📅 {{ now().strftime('%d.%m.%Y') }}</span>{% endif %}
-        {% if branche %}<span class="meta-badge">🏢 {{ branche|capitalize }}</span>{% endif %}
+        {% if branche or branche_label %}<span class="meta-badge">🏢 {{ branche_label|default(branche|capitalize, true) }}</span>{% endif %}
         {% if unternehmensgroesse %}<span class="meta-badge">👥 {{ company_size_label|default(unternehmensgroesse, true) }}</span>{% endif %}
-        {% if bundesland %}<span class="meta-badge">📍 {{ bundesland|upper }}</span>{% endif %}
+        {% if bundesland or region_label %}<span class="meta-badge">📍 {{ region_label|default(bundesland|upper, true) }}</span>{% endif %}
       </div>
       
       {% if score_percent %}
@@ -996,13 +997,11 @@
       </div>
       {% endif %}
       
-      {% if compliance_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Chapter 11</span>
         <span class="toc-chapter-title">Compliance & Legal Security</span>
         <span class="toc-page-number">13</span>
       </div>
-      {% endif %}
       
       {% if foerderprogramme_html %}
       <div class="toc-item">
@@ -1078,7 +1077,7 @@
         
         <div class="insight-card">
           <div class="insight-label">Automation</div>
-          <div class="insight-value">{{ automatisierungsgrad|default('medium')|capitalize }}</div>
+          <div class="insight-value">{{ automatisierungsgrad_label|default(automatisierungsgrad|default('medium')|capitalize, true) }}</div>
           <div class="insight-description">Optimization potential identified</div>
         </div>
         

@@ -316,6 +316,7 @@
 
     /* ===== Kapitel-Layout ===== */
     .chapter {
+      break-before: page;
       page-break-before: always;
       padding: var(--spacing-xl) 0;
       width: 100%;
@@ -996,13 +997,11 @@
       </div>
       {% endif %}
       
-      {% if compliance_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 11</span>
         <span class="toc-chapter-title">Compliance & Rechtssicherheit</span>
         <span class="toc-page-number">13</span>
       </div>
-      {% endif %}
       
       {% if foerderprogramme_html %}
       <div class="toc-item">
