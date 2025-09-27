@@ -306,7 +306,7 @@
       font-size: 11pt;
     }
 
-    .toc-page-number {
+    .toc-page-number { display: none;
       color: var(--text-muted);
       font-size: 10pt;
       font-weight: 500;
@@ -316,7 +316,6 @@
 
     /* ===== Kapitel-Layout ===== */
     .chapter {
-      break-before: page;
       page-break-before: always;
       padding: var(--spacing-xl) 0;
       width: 100%;
@@ -860,6 +859,26 @@
         padding-right: 10mm;
       }
     }
+  
+    /* Anchor & Back-to-TOC helpers */
+    .back-to-toc {
+      font-size: 9pt;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-left: 8px;
+    }
+    .back-to-toc:hover { text-decoration: underline; }
+    .toc-chapter-title {
+      text-decoration: none;
+    }
+    .toc-chapter-title:hover {
+      text-decoration: underline;
+    }
+    @media print {
+      .back-to-toc { display: none !important; }
+      .footer-screen { display: none !important; }
+    }
+    
   </style>
 </head>
 <body>
@@ -913,7 +932,7 @@
   </section>
 
   <!-- Inhaltsverzeichnis -->
-  <section class="toc-page">
+  <section class="toc-page" id="inhalt">
     <div class="toc-header">
       <h2>Inhaltsverzeichnis</h2>
     </div>
@@ -921,14 +940,14 @@
     <div class="toc-content">
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 1</span>
-        <span class="toc-chapter-title">Executive Summary</span>
+        <a class="toc-chapter-title" href="#kapitel-1">Executive Summary</a>
         <span class="toc-page-number">3</span>
       </div>
       
       {% if business_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 2</span>
-        <span class="toc-chapter-title">Business Case</span>
+        <a class="toc-chapter-title" href="#kapitel-2">Business Case</a>
         <span class="toc-page-number">4</span>
       </div>
       {% endif %}
@@ -936,7 +955,7 @@
       {% if persona_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 3</span>
-        <span class="toc-chapter-title">Ihr KI-Readiness Profil</span>
+        <a class="toc-chapter-title" href="#kapitel-3">Ihr KI-Readiness Profil</a>
         <span class="toc-page-number">5</span>
       </div>
       {% endif %}
@@ -944,7 +963,7 @@
       {% if quick_wins_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 4</span>
-        <span class="toc-chapter-title">Quick Wins</span>
+        <a class="toc-chapter-title" href="#kapitel-4">Quick Wins</a>
         <span class="toc-page-number">6</span>
       </div>
       {% endif %}
@@ -952,7 +971,7 @@
       {% if risks_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 5</span>
-        <span class="toc-chapter-title">Risikomanagement</span>
+        <a class="toc-chapter-title" href="#kapitel-5">Risikomanagement</a>
         <span class="toc-page-number">7</span>
       </div>
       {% endif %}
@@ -960,7 +979,7 @@
       {% if recommendations_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 6</span>
-        <span class="toc-chapter-title">Strategische Empfehlungen</span>
+        <a class="toc-chapter-title" href="#kapitel-6">Strategische Empfehlungen</a>
         <span class="toc-page-number">8</span>
       </div>
       {% endif %}
@@ -968,7 +987,7 @@
       {% if roadmap_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 7</span>
-        <span class="toc-chapter-title">Implementierungs-Roadmap</span>
+        <a class="toc-chapter-title" href="#kapitel-7">Implementierungs-Roadmap</a>
         <span class="toc-page-number">9</span>
       </div>
       {% endif %}
@@ -976,7 +995,7 @@
       {% if praxisbeispiel_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 8</span>
-        <span class="toc-chapter-title">Praxisbeispiele</span>
+        <a class="toc-chapter-title" href="#kapitel-8">Praxisbeispiele</a>
         <span class="toc-page-number">10</span>
       </div>
       {% endif %}
@@ -984,7 +1003,7 @@
       {% if coach_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 9</span>
-        <span class="toc-chapter-title">Coaching & Reflexion</span>
+        <a class="toc-chapter-title" href="#kapitel-9">Coaching & Reflexion</a>
         <span class="toc-page-number">11</span>
       </div>
       {% endif %}
@@ -992,21 +1011,23 @@
       {% if vision_html or gamechanger_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 10</span>
-        <span class="toc-chapter-title">Vision & Gamechanger</span>
+        <a class="toc-chapter-title" href="#kapitel-10">Vision & Gamechanger</a>
         <span class="toc-page-number">12</span>
       </div>
       {% endif %}
       
+      {% if compliance_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 11</span>
-        <span class="toc-chapter-title">Compliance & Rechtssicherheit</span>
+        <a class="toc-chapter-title" href="#kapitel-11">Compliance & Rechtssicherheit</a>
         <span class="toc-page-number">13</span>
       </div>
+      {% endif %}
       
       {% if foerderprogramme_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 12</span>
-        <span class="toc-chapter-title">Förderprogramme</span>
+        <a class="toc-chapter-title" href="#kapitel-12">Förderprogramme</a>
         <span class="toc-page-number">14</span>
       </div>
       {% endif %}
@@ -1014,26 +1035,26 @@
       {% if tools_html %}
       <div class="toc-item">
         <span class="toc-chapter-number">Kapitel 13</span>
-        <span class="toc-chapter-title">KI-Tools & Software</span>
+        <a class="toc-chapter-title" href="#kapitel-13">KI-Tools & Software</a>
         <span class="toc-page-number">15</span>
       </div>
       {% endif %}
       
       <div class="toc-item">
         <span class="toc-chapter-number">Anhang</span>
-        <span class="toc-chapter-title">Glossar</span>
+        <a class="toc-chapter-title" href="#anhang-glossar">Glossar</a>
         <span class="toc-page-number">16</span>
       </div>
       
       <div class="toc-item">
         <span class="toc-chapter-number"></span>
-        <span class="toc-chapter-title">Leistung & Nachweis</span>
+        <a class="toc-chapter-title" href="#anhang-leistung">Leistung & Nachweis</a>
         <span class="toc-page-number">17</span>
       </div>
       
       <div class="toc-item">
         <span class="toc-chapter-number"></span>
-        <span class="toc-chapter-title">Ihre Meinung zählt</span>
+        <a class="toc-chapter-title" href="#anhang-feedback">Ihre Meinung zählt</a>
         <span class="toc-page-number">18</span>
       </div>
     </div>
@@ -1043,8 +1064,9 @@
   {% if exec_summary_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 1</div>
+      <div id="kapitel-1" class="chapter-number">Kapitel 1</div>
       <h1 class="chapter-title">Executive Summary</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1101,8 +1123,9 @@
   {% if business_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 2</div>
+      <div id="kapitel-2" class="chapter-number">Kapitel 2</div>
       <h1 class="chapter-title">Business Case</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1114,8 +1137,9 @@
   {% if persona_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 3</div>
+      <div id="kapitel-3" class="chapter-number">Kapitel 3</div>
       <h1 class="chapter-title">Ihr KI-Readiness Profil</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1132,8 +1156,9 @@
   {% if quick_wins_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 4</div>
+      <div id="kapitel-4" class="chapter-number">Kapitel 4</div>
       <h1 class="chapter-title">Quick Wins - Schnelle Erfolge</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1176,8 +1201,9 @@
   {% if risks_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 5</div>
+      <div id="kapitel-5" class="chapter-number">Kapitel 5</div>
       <h1 class="chapter-title">Risikomanagement</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1195,8 +1221,9 @@
   {% if recommendations_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 6</div>
+      <div id="kapitel-6" class="chapter-number">Kapitel 6</div>
       <h1 class="chapter-title">Strategische Empfehlungen</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1208,8 +1235,9 @@
   {% if roadmap_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 7</div>
+      <div id="kapitel-7" class="chapter-number">Kapitel 7</div>
       <h1 class="chapter-title">Implementierungs-Roadmap</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1221,8 +1249,9 @@
   {% if praxisbeispiel_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 8</div>
+      <div id="kapitel-8" class="chapter-number">Kapitel 8</div>
       <h1 class="chapter-title">Praxisbeispiele & Success Stories</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1239,8 +1268,9 @@
   {% if coach_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 9</div>
+      <div id="kapitel-9" class="chapter-number">Kapitel 9</div>
       <h1 class="chapter-title">Coaching & Reflexion</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1259,8 +1289,9 @@
   {% if vision_html or gamechanger_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 10</div>
+      <div id="kapitel-10" class="chapter-number">Kapitel 10</div>
       <h1 class="chapter-title">Vision & Gamechanger</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1282,8 +1313,9 @@
   {% if compliance_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 11</div>
+      <div id="kapitel-11" class="chapter-number">Kapitel 11</div>
       <h1 class="chapter-title">Compliance & Rechtssicherheit</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1295,8 +1327,9 @@
   {% if foerderprogramme_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 12</div>
+      <div id="kapitel-12" class="chapter-number">Kapitel 12</div>
       <h1 class="chapter-title">Förderprogramme</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1312,8 +1345,9 @@
   {% if tools_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Kapitel 13</div>
+      <div id="kapitel-13" class="chapter-number">Kapitel 13</div>
       <h1 class="chapter-title">Empfohlene KI-Tools & Software</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1328,8 +1362,9 @@
   {% if live_html %}
   <section class="chapter">
     <div class="chapter-header">
-      <div class="chapter-number">Anhang</div>
+      <div id="anhang-live" class="chapter-number">Anhang</div>
       <h1 class="chapter-title">{{ live_title|default('Aktuelle Entwicklungen', true) }}</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1343,9 +1378,10 @@
   {% endif %}
 
   <!-- Glossar -->
-  <section class="glossary-page">
+  <section class="glossary-page" id="anhang-glossar">
     <div class="chapter-header">
       <h1 class="chapter-title">Glossar</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1378,9 +1414,10 @@
   </section>
 
   <!-- Leistung & Nachweis -->
-  <section class="services-page">
+  <section class="services-page" id="anhang-leistung">
     <div class="chapter-header">
       <h1 class="chapter-title">Leistung & Nachweis</h1>
+      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
     </div>
     
     <div class="chapter-content">
@@ -1413,7 +1450,7 @@
   </section>
 
   <!-- Feedback-Seite -->
-  <section class="feedback-page">
+  <section class="feedback-page" id="anhang-feedback">
     <div class="feedback-box">
       <h2 class="feedback-title">Ihre Meinung zählt!</h2>
       
@@ -1440,8 +1477,8 @@
     </div>
   </section>
 
-  <!-- Footer auf allen Seiten -->
-  <div class="footer">
+  <!-- Footer (screen only; print via Puppeteer) -->
+  <div class="footer-screen">
     <div class="footer-left">
       © {{ copyright_year|default(now().year if now else '2025', true) }} {{ copyright_owner|default('KI-Sicherheit.jetzt', true) }}
     </div>
