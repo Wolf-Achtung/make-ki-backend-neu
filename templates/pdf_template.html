@@ -2,30 +2,35 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <title>{{ (meta|default({})).title|default('KI-Statusbericht', true) }}</title>
+  <title>{{ (meta|default({})).title|default('KI-Statusbericht & Handlungsempfehlungen', true) }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    /* ===== GOLD STANDARD+ Design System ===== */
+    /* ===== GOLD STANDARD Design System - Nur Blautöne ===== */
     :root {
-      /* Premium Blau-Palette (Primärfarben) */
-      --primary-950: #020617;     /* Tiefstes Dunkelblau */
-      --primary-900: #0F172A;     /* Sehr dunkel */
-      --primary-800: #1E293B;     /* Dunkelblau */
-      --primary-700: #334155;     /* Mittel-Dunkelblau */
-      --primary-600: #475569;     /* Mittelblau */
-      --primary-500: #64748B;     /* Hauptblau */
-      --primary-400: #94A3B8;     /* Hellblau */
-      --primary-300: #CBD5E1;     /* Sehr Hellblau */
-      --primary-200: #E2E8F0;     /* Fast weiß-blau */
-      --primary-100: #F1F5F9;     /* Hintergrund hell */
-      --primary-50:  #F8FAFC;     /* Hintergrund sehr hell */
+      /* Blau-Palette */
+      --primary-950: #020617;
+      --primary-900: #0F172A;
+      --primary-800: #1E293B;
+      --primary-700: #334155;
+      --primary-600: #475569;
+      --primary-500: #64748B;
+      --primary-400: #94A3B8;
+      --primary-300: #CBD5E1;
+      --primary-200: #E2E8F0;
+      --primary-100: #F1F5F9;
+      --primary-50:  #F8FAFC;
       
-      /* Akzentfarben (minimal einsetzen) */
-      --accent-blue: #2563EB;     /* Lebhaftes Blau für wichtige CTAs */
-      --accent-sky: #0284C7;      /* Himmelblau für Links */
-      --accent-green: #10B981;    /* Erfolg (sparsam!) */
-      --accent-amber: #F59E0B;    /* Warnung */
-      --accent-red: #DC2626;      /* Gefahr/Fehler */
+      /* Akzentfarben - Blautöne */
+      --accent-blue: #2563EB;
+      --accent-sky: #0EA5E9;
+      --accent-indigo: #4F46E5;
+      --accent-blue-light: #60A5FA;
+      --accent-blue-dark: #1E40AF;
+      
+      /* Status-Farben (minimal) */
+      --status-success: #10B981;
+      --status-warning: #F59E0B;
+      --status-danger: #DC2626;
       
       /* Neutrale Farben */
       --gray-900: #111827;
@@ -39,18 +44,17 @@
       --gray-100: #F3F4F6;
       --gray-50:  #F9FAFB;
       
-      /* Layout & Typografie */
+      /* Layout */
       --page-bg: #FFFFFF;
       --text-primary: var(--gray-900);
       --text-secondary: var(--gray-700);
       --text-muted: var(--gray-500);
       --border-color: var(--gray-200);
       
-      /* Schatten (subtiler) */
+      /* Schatten */
       --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
       --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
       
       /* Abstände */
       --spacing-xs: 4px;
@@ -59,16 +63,12 @@
       --spacing-lg: 24px;
       --spacing-xl: 32px;
       --spacing-2xl: 48px;
-      --spacing-3xl: 64px;
     }
 
     /* ===== Reset & Base ===== */
     @page { 
       size: A4; 
-      margin: 20mm 20mm 25mm 20mm;
-      @bottom-center {
-        content: counter(page);
-      }
+      margin: 15mm 15mm 20mm 15mm;
     }
     
     * {
@@ -85,22 +85,22 @@
       background: var(--page-bg);
       font-feature-settings: 'kern' 1, 'liga' 1;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
       width: 100%;
+      max-width: 210mm;
+      margin: 0 auto;
     }
 
-    /* ===== Titelseite (optimiert) ===== */
+    /* ===== Titelseite ===== */
     .cover {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
-      background: linear-gradient(180deg, var(--primary-50) 0%, var(--page-bg) 60%);
+      background: linear-gradient(180deg, var(--primary-50) 0%, #FFFFFF 100%);
       page-break-after: always;
       position: relative;
-      padding: var(--spacing-2xl);
-      overflow: hidden;
+      padding: var(--spacing-xl);
     }
     
     .cover::before {
@@ -110,21 +110,23 @@
       right: -100px;
       width: 400px;
       height: 400px;
-      background: radial-gradient(circle, var(--primary-100) 0%, transparent 60%);
-      border-radius: 50%;
-      opacity: 0.6;
-    }
-    
-    .cover::after {
-      content: '';
-      position: absolute;
-      bottom: -150px;
-      left: -150px;
-      width: 500px;
-      height: 500px;
       background: radial-gradient(circle, var(--primary-100) 0%, transparent 70%);
+      opacity: 0.5;
       border-radius: 50%;
-      opacity: 0.4;
+    }
+
+    .logo-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .logo-container img {
+      height: 50px;
+      width: auto;
+      object-fit: contain;
     }
     
     .cover-content {
@@ -133,10 +135,14 @@
       width: 100%;
       max-width: 600px;
       text-align: center;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     
     .cover h1 {
-      font-size: 36pt;
+      font-size: 32pt;
       font-weight: 700;
       color: var(--primary-900);
       margin-bottom: var(--spacing-md);
@@ -151,6 +157,16 @@
       font-weight: 400;
       line-height: 1.4;
     }
+
+    .cover-intro {
+      font-size: 11pt;
+      color: var(--accent-blue);
+      margin-bottom: var(--spacing-2xl);
+      padding: var(--spacing-md);
+      background: rgba(37, 99, 235, 0.05);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-blue);
+    }
     
     .cover-meta {
       display: flex;
@@ -164,26 +180,26 @@
       display: inline-flex;
       align-items: center;
       padding: var(--spacing-sm) var(--spacing-md);
-      background: var(--page-bg);
+      background: white;
       border: 1px solid var(--primary-300);
       border-radius: 20px;
       font-size: 9pt;
       font-weight: 500;
       color: var(--primary-800);
       box-shadow: var(--shadow-sm);
-      transition: all 0.2s ease;
     }
     
     .score-display {
-      margin-top: var(--spacing-2xl);
+      margin-top: var(--spacing-xl);
       padding: var(--spacing-xl);
-      background: var(--page-bg);
+      background: white;
       border-radius: 12px;
       box-shadow: var(--shadow-lg);
       width: 100%;
       max-width: 320px;
       margin-left: auto;
       margin-right: auto;
+      border: 1px solid var(--primary-200);
     }
     
     .score-title {
@@ -215,14 +231,96 @@
       height: 100%;
       background: linear-gradient(90deg, var(--accent-sky), var(--accent-blue));
       border-radius: 4px;
-      transition: width 0.3s ease;
     }
 
-    /* ===== Kapitel-Layout (einspaltig!) ===== */
+    .cover-footer {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .certification-badges {
+      display: flex;
+      gap: var(--spacing-md);
+      align-items: center;
+    }
+
+    .certification-badges span {
+      padding: var(--spacing-xs) var(--spacing-md);
+      background: var(--primary-50);
+      border: 1px solid var(--primary-200);
+      border-radius: 4px;
+      font-size: 8pt;
+      color: var(--primary-700);
+    }
+
+    /* ===== Inhaltsverzeichnis ===== */
+    .toc-page {
+      page-break-after: always;
+      padding: var(--spacing-2xl) 0;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, var(--primary-50) 0%, #FFFFFF 10%);
+    }
+
+    .toc-header {
+      text-align: center;
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .toc-header h2 {
+      font-size: 24pt;
+      color: var(--primary-900);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .toc-content {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .toc-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md) var(--spacing-lg);
+      margin-bottom: var(--spacing-sm);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .toc-chapter-number {
+      color: var(--accent-blue);
+      font-weight: 600;
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      min-width: 80px;
+    }
+
+    .toc-chapter-title {
+      flex-grow: 1;
+      margin: 0 var(--spacing-lg);
+      color: var(--text-primary);
+      font-size: 11pt;
+    }
+
+    .toc-page-number {
+      color: var(--text-muted);
+      font-size: 10pt;
+      font-weight: 500;
+      min-width: 30px;
+      text-align: right;
+    }
+
+    /* ===== Kapitel-Layout ===== */
     .chapter {
       page-break-before: always;
       padding: var(--spacing-xl) 0;
       width: 100%;
+      min-height: 100vh;
+      position: relative;
     }
     
     .chapter:first-of-type {
@@ -233,6 +331,17 @@
       margin-bottom: var(--spacing-xl);
       padding-bottom: var(--spacing-md);
       border-bottom: 2px solid var(--primary-200);
+      position: relative;
+    }
+
+    .chapter-header::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 80px;
+      height: 2px;
+      background: var(--accent-blue);
     }
     
     .chapter-number {
@@ -251,35 +360,52 @@
       line-height: 1.2;
     }
     
-    /* WICHTIG: Immer einspaltig! */
     .chapter-content {
       width: 100%;
-      column-count: 1 !important;
-      text-align: left;
+      max-width: 100%;
+      padding-right: var(--spacing-md);
     }
 
-    /* ===== Executive Summary (optimiert) ===== */
+    /* ===== Executive Summary ===== */
     .executive-summary {
-      background: linear-gradient(135deg, var(--primary-50) 0%, var(--page-bg) 100%);
+      background: var(--primary-50);
       padding: var(--spacing-xl);
       border-radius: 12px;
       margin-bottom: var(--spacing-lg);
-      box-shadow: var(--shadow-md);
-      border: 1px solid var(--primary-100);
+      border: 1px solid var(--primary-200);
     }
-    
+
     .executive-summary-content p {
       font-size: 10.5pt;
       line-height: 1.7;
       margin-bottom: var(--spacing-md);
       color: var(--text-primary);
     }
+
+    .executive-summary-content p.intro {
+      font-size: 11pt;
+      color: var(--accent-blue);
+      font-weight: 500;
+      margin-bottom: var(--spacing-lg);
+    }
     
-    .executive-summary-content p.situation strong,
-    .executive-summary-content p.strategy strong,
-    .executive-summary-content p.value strong {
-      color: var(--primary-900);
+    .executive-summary-content strong {
+      color: var(--accent-blue);
       font-weight: 600;
+    }
+
+    .key-message {
+      background: white;
+      padding: var(--spacing-lg);
+      border-radius: 8px;
+      margin: var(--spacing-lg) 0;
+      border-left: 4px solid var(--accent-blue);
+    }
+
+    .key-message h3 {
+      color: var(--accent-blue);
+      font-size: 13pt;
+      margin-bottom: var(--spacing-sm);
     }
     
     .key-insights {
@@ -290,7 +416,7 @@
     }
     
     .insight-card {
-      background: var(--page-bg);
+      background: white;
       padding: var(--spacing-md);
       border-radius: 8px;
       border-left: 3px solid var(--accent-blue);
@@ -348,17 +474,11 @@
       margin-bottom: var(--spacing-sm);
       orphans: 3;
       widows: 3;
-      text-align: left;
     }
     
     strong {
       font-weight: 600;
       color: var(--primary-900);
-    }
-    
-    em {
-      font-style: italic;
-      color: var(--text-secondary);
     }
     
     a {
@@ -367,12 +487,8 @@
       border-bottom: 1px solid transparent;
       transition: border-color 0.2s ease;
     }
-    
-    a:hover {
-      border-bottom-color: var(--accent-sky);
-    }
 
-    /* ===== Listen (optimiert) ===== */
+    /* ===== Listen ===== */
     ul, ol {
       margin: var(--spacing-sm) 0 var(--spacing-md) var(--spacing-lg);
     }
@@ -387,7 +503,7 @@
       color: var(--accent-blue);
     }
 
-    /* ===== Tabellen (kein Überlappen!) ===== */
+    /* ===== Tabellen ===== */
     table {
       width: 100%;
       border-collapse: separate;
@@ -426,12 +542,8 @@
     tbody tr:nth-child(even) {
       background: var(--gray-50);
     }
-    
-    tbody tr:hover {
-      background: var(--primary-50);
-    }
 
-    /* ===== Info-Boxen (optimiert) ===== */
+    /* ===== Info-Boxen ===== */
     .info-box {
       background: var(--primary-50);
       border: 1px solid var(--primary-200);
@@ -449,19 +561,13 @@
     
     .info-box.warning {
       background: #FEF3C7;
-      border-color: var(--accent-amber);
-      border-left-width: 3px;
-    }
-    
-    .info-box.danger {
-      background: #FEE2E2;
-      border-color: var(--accent-red);
+      border-color: var(--status-warning);
       border-left-width: 3px;
     }
     
     .info-box.success {
       background: #D1FAE5;
-      border-color: var(--accent-green);
+      border-color: var(--status-success);
       border-left-width: 3px;
     }
     
@@ -539,100 +645,172 @@
       font-size: 8pt;
       font-weight: 600;
     }
-    
-    .tool-badges {
-      display: flex;
-      gap: var(--spacing-xs);
-      margin-top: var(--spacing-sm);
-    }
-    
-    .badge {
-      display: inline-block;
-      padding: 2px 6px;
-      background: var(--primary-100);
-      color: var(--primary-700);
-      border-radius: 4px;
-      font-size: 7.5pt;
-      font-weight: 500;
-    }
-    
-    .badge.badge-success {
-      background: var(--accent-green);
-      color: white;
-    }
-    
-    .badge.badge-info {
-      background: var(--accent-blue);
-      color: white;
-    }
 
-    /* ===== Funding-Tabelle ===== */
-    .funding-table {
-      width: 100%;
-      margin: var(--spacing-md) 0;
-    }
-    
-    .funding-row {
-      transition: background 0.2s ease;
-    }
-    
-    .funding-row:hover {
+    /* ===== Highlight-Box ===== */
+    .highlight-box {
       background: var(--primary-50);
-    }
-    
-    .fit-high {
-      background: var(--accent-green);
-    }
-    
-    .fit-medium {
-      background: var(--accent-amber);
-    }
-    
-    .fit-low {
-      background: var(--gray-400);
+      border-left: 4px solid var(--accent-blue);
+      padding: var(--spacing-md);
+      margin: var(--spacing-md) 0;
+      border-radius: 0 8px 8px 0;
     }
 
-    /* ===== Business Case Sections ===== */
-    .business-case section {
-      margin-bottom: var(--spacing-lg);
+    .highlight-box strong {
+      color: var(--accent-blue);
     }
-    
-    .business-case h3 {
-      color: var(--primary-900);
-      border-bottom: 2px solid var(--primary-200);
-      padding-bottom: var(--spacing-xs);
+
+    /* ===== Roadmap-Phasen ===== */
+    .roadmap-phase {
+      position: relative;
+      padding-left: var(--spacing-xl);
+      margin-bottom: var(--spacing-lg);
+      padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) var(--spacing-xl);
+    }
+
+    .roadmap-phase::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: -var(--spacing-lg);
+      width: 2px;
+      background: var(--primary-300);
+    }
+
+    .roadmap-phase::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 20px;
+      width: 18px;
+      height: 18px;
+      background: var(--accent-blue);
+      border: 3px solid white;
+      border-radius: 50%;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ===== Coaching-Box ===== */
+    .coaching-box {
+      background: var(--primary-50);
+      padding: var(--spacing-lg);
+      border-radius: 12px;
+      margin: var(--spacing-lg) 0;
+      border: 1px solid var(--primary-200);
+    }
+
+    .coaching-box h3 {
+      color: var(--accent-blue);
       margin-bottom: var(--spacing-md);
     }
-    
-    .business-case h4 {
-      color: var(--primary-800);
-      margin-bottom: var(--spacing-sm);
+
+    .coaching-question {
+      background: white;
+      padding: var(--spacing-md);
+      margin: var(--spacing-sm) 0;
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-sky);
+      box-shadow: var(--shadow-sm);
     }
-    
-    .business-case .figures li {
-      list-style: none;
-      padding: var(--spacing-xs) 0;
-      border-bottom: 1px solid var(--gray-100);
+
+    /* ===== Glossar-Seite ===== */
+    .glossary-page {
+      page-break-before: always;
+      padding: var(--spacing-xl) 0;
+      min-height: 100vh;
     }
-    
-    .business-case .figures li:last-child {
+
+    .glossary-term {
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .glossary-term strong {
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+
+    /* ===== Leistungsseite ===== */
+    .services-page {
+      page-break-before: always;
+      padding: var(--spacing-xl) 0;
+      min-height: 100vh;
+    }
+
+    .service-list {
+      background: var(--primary-50);
+      padding: var(--spacing-lg);
+      border-radius: 8px;
+      margin: var(--spacing-lg) 0;
+    }
+
+    .service-item {
+      padding: var(--spacing-md) 0;
+      border-bottom: 1px solid var(--primary-200);
+    }
+
+    .service-item:last-child {
       border-bottom: none;
     }
-    
-    .innovation {
-      background: var(--gray-50);
-      padding: var(--spacing-md);
-      border-radius: 8px;
+
+    .service-item strong {
+      color: var(--accent-blue);
+    }
+
+    /* ===== Feedback-Seite ===== */
+    .feedback-page {
+      page-break-before: always;
+      padding: var(--spacing-xl) 0;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, var(--primary-50) 0%, #FFFFFF 20%);
+    }
+
+    .feedback-box {
+      background: white;
+      padding: var(--spacing-2xl);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+      max-width: 500px;
+      margin: var(--spacing-2xl) auto;
+      border: 1px solid var(--primary-200);
+    }
+
+    .feedback-title {
+      font-size: 18pt;
+      color: var(--primary-900);
       margin-bottom: var(--spacing-md);
-      border-left: 3px solid var(--accent-blue);
+    }
+
+    .feedback-link {
+      display: inline-block;
+      padding: var(--spacing-md) var(--spacing-xl);
+      background: var(--accent-blue);
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: var(--spacing-lg);
+      transition: background 0.2s ease;
+    }
+
+    .feedback-link:hover {
+      background: var(--accent-blue-dark);
+    }
+
+    .contact-info {
+      margin-top: var(--spacing-2xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-200);
     }
 
     /* ===== Footer ===== */
     .footer {
       position: fixed;
-      bottom: 15mm;
-      left: 20mm;
-      right: 20mm;
+      bottom: 10mm;
+      left: 15mm;
+      right: 15mm;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -655,10 +833,9 @@
     .footer-right {
       flex: 1;
       text-align: right;
-      font-size: 7.5pt;
     }
 
-    /* ===== Print Optimierungen ===== */
+    /* ===== Print-Optimierungen ===== */
     @media print {
       body {
         -webkit-print-color-adjust: exact;
@@ -670,7 +847,7 @@
         page-break-before: always;
       }
       
-      .info-box, .insight-card, table, .tool-card, .innovation {
+      .info-box, .insight-card, table, .tool-card {
         page-break-inside: avoid;
       }
       
@@ -678,179 +855,33 @@
         page-break-after: avoid;
       }
       
-      a {
-        border-bottom: none;
-        color: var(--primary-800);
+      .chapter-content {
+        padding-right: 10mm;
       }
     }
-    
-    /* ===== Spezial-Klassen für bessere Lesbarkeit ===== */
-    .highlight {
-      background: linear-gradient(to right, var(--primary-100), transparent);
-      padding: var(--spacing-xs);
-      border-radius: 4px;
-    }
-    
-    .metric-big {
-      font-size: 18pt;
-      font-weight: 700;
-      color: var(--accent-blue);
-    }
-    
-    .metric-label {
-      font-size: 9pt;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-/* Zusätzliche Optimierungen für bessere Lesbarkeit */
-
-/* Motivierende Highlight-Boxen */
-.highlight-box {
-  background: linear-gradient(135deg, #EBF8FF 0%, #FFFFFF 100%);
-  border-left: 4px solid var(--accent-blue);
-  padding: var(--spacing-md);
-  margin: var(--spacing-md) 0;
-  border-radius: 0 8px 8px 0;
-}
-
-.highlight-box strong {
-  color: var(--accent-blue);
-}
-
-/* Erfolgs-Metriken hervorheben */
-.success-metric {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--accent-green);
-  color: white;
-  border-radius: 16px;
-  font-weight: 600;
-  font-size: 9pt;
-}
-
-/* Roadmap-Phasen visuell optimiert */
-.roadmap-phase {
-  position: relative;
-  padding-left: var(--spacing-xl);
-  margin-bottom: var(--spacing-lg);
-}
-
-.roadmap-phase::before {
-  content: '';
-  position: absolute;
-  left: 8px;
-  top: 0;
-  bottom: -var(--spacing-lg);
-  width: 2px;
-  background: var(--primary-300);
-}
-
-.roadmap-phase::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 8px;
-  width: 18px;
-  height: 18px;
-  background: var(--accent-blue);
-  border: 3px solid white;
-  border-radius: 50%;
-  box-shadow: var(--shadow-md);
-}
-
-.roadmap-phase.completed::after {
-  background: var(--accent-green);
-}
-
-/* Call-to-Action Buttons (für digitale Version) */
-.cta-button {
-  display: inline-block;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--accent-blue);
-  color: white;
-  border-radius: 24px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow-md);
-}
-
-.cta-button:hover {
-  background: var(--primary-700);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-/* Testimonial-Style für Erfolgsgeschichten */
-.success-story {
-  background: white;
-  border: 1px solid var(--gray-200);
-  border-radius: 12px;
-  padding: var(--spacing-lg);
-  margin: var(--spacing-lg) 0;
-  position: relative;
-  box-shadow: var(--shadow-sm);
-}
-
-.success-story::before {
-  content: '"';
-  position: absolute;
-  top: -10px;
-  left: 20px;
-  font-size: 48pt;
-  color: var(--primary-200);
-  font-family: serif;
-}
-
-/* Optimierte Druckdarstellung */
-@media print {
-  /* Farben für Druck optimieren */
-  :root {
-    --accent-blue: #1E40AF;
-    --accent-green: #059669;
-  }
-  
-  /* Seitenumbrüche intelligent steuern */
-  .chapter-content > * {
-    page-break-inside: avoid;
-  }
-  
-  h2, h3, h4 {
-    page-break-after: avoid;
-    page-break-inside: avoid;
-  }
-  
-  /* Tabellen nicht umbrechen */
-  table {
-    page-break-inside: avoid;
-  }
-  
-  /* Listen zusammenhalten */
-  ul, ol {
-    page-break-inside: avoid;
-  }
-  
-  li {
-    page-break-inside: avoid;
-    page-break-after: avoid;
-  }
-}
   </style>
 </head>
 <body>
 
-  <!-- Rest des HTML-Templates bleibt strukturell gleich, 
-       aber mit angepassten Klassen und einspaltiger Darstellung -->
-  
   <!-- Titelseite -->
   <section class="cover">
+    <div class="logo-section">
+      <div class="logo-container">
+        <!-- Logo-Platzhalter - ersetzen Sie mit echten Logos -->
+        <img src="ki-sicherheit-logo.webp" alt="KI-Sicherheit.jetzt" />
+      </div>
+    </div>
+
     <div class="cover-content">
       <h1>{{ (meta|default({})).title|default('KI-Statusbericht & Handlungsempfehlungen', true) }}</h1>
       <div class="cover-subtitle">
-        Ihre persönliche Roadmap für erfolgreiche KI-Integration
+        Ihr strukturierter Weg zur erfolgreichen KI-Integration
+      </div>
+      
+      <div class="cover-intro">
+        Wir begleiten Sie bei jedem Schritt Ihrer KI-Transformation. 
+        Dieser Report zeigt Ihnen konkrete Wege und praktische Lösungen 
+        für Ihre individuellen Herausforderungen.
       </div>
       
       <div class="cover-meta">
@@ -870,6 +901,143 @@
       </div>
       {% endif %}
     </div>
+
+    <div class="cover-footer">
+      <div class="certification-badges">
+        <span>DSGVO-konform</span>
+        <span>EU AI Act-ready</span>
+        <span>TÜV-zertifiziert</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Inhaltsverzeichnis -->
+  <section class="toc-page">
+    <div class="toc-header">
+      <h2>Inhaltsverzeichnis</h2>
+    </div>
+
+    <div class="toc-content">
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 1</span>
+        <span class="toc-chapter-title">Executive Summary</span>
+        <span class="toc-page-number">3</span>
+      </div>
+      
+      {% if business_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 2</span>
+        <span class="toc-chapter-title">Business Case</span>
+        <span class="toc-page-number">4</span>
+      </div>
+      {% endif %}
+      
+      {% if persona_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 3</span>
+        <span class="toc-chapter-title">Ihr KI-Readiness Profil</span>
+        <span class="toc-page-number">5</span>
+      </div>
+      {% endif %}
+      
+      {% if quick_wins_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 4</span>
+        <span class="toc-chapter-title">Quick Wins</span>
+        <span class="toc-page-number">6</span>
+      </div>
+      {% endif %}
+      
+      {% if risks_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 5</span>
+        <span class="toc-chapter-title">Risikomanagement</span>
+        <span class="toc-page-number">7</span>
+      </div>
+      {% endif %}
+      
+      {% if recommendations_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 6</span>
+        <span class="toc-chapter-title">Strategische Empfehlungen</span>
+        <span class="toc-page-number">8</span>
+      </div>
+      {% endif %}
+      
+      {% if roadmap_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 7</span>
+        <span class="toc-chapter-title">Implementierungs-Roadmap</span>
+        <span class="toc-page-number">9</span>
+      </div>
+      {% endif %}
+      
+      {% if praxisbeispiel_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 8</span>
+        <span class="toc-chapter-title">Praxisbeispiele</span>
+        <span class="toc-page-number">10</span>
+      </div>
+      {% endif %}
+      
+      {% if coach_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 9</span>
+        <span class="toc-chapter-title">Coaching & Reflexion</span>
+        <span class="toc-page-number">11</span>
+      </div>
+      {% endif %}
+      
+      {% if vision_html or gamechanger_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 10</span>
+        <span class="toc-chapter-title">Vision & Gamechanger</span>
+        <span class="toc-page-number">12</span>
+      </div>
+      {% endif %}
+      
+      {% if compliance_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 11</span>
+        <span class="toc-chapter-title">Compliance & Rechtssicherheit</span>
+        <span class="toc-page-number">13</span>
+      </div>
+      {% endif %}
+      
+      {% if foerderprogramme_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 12</span>
+        <span class="toc-chapter-title">Förderprogramme</span>
+        <span class="toc-page-number">14</span>
+      </div>
+      {% endif %}
+      
+      {% if tools_html %}
+      <div class="toc-item">
+        <span class="toc-chapter-number">Kapitel 13</span>
+        <span class="toc-chapter-title">KI-Tools & Software</span>
+        <span class="toc-page-number">15</span>
+      </div>
+      {% endif %}
+      
+      <div class="toc-item">
+        <span class="toc-chapter-number">Anhang</span>
+        <span class="toc-chapter-title">Glossar</span>
+        <span class="toc-page-number">16</span>
+      </div>
+      
+      <div class="toc-item">
+        <span class="toc-chapter-number"></span>
+        <span class="toc-chapter-title">Leistung & Nachweis</span>
+        <span class="toc-page-number">17</span>
+      </div>
+      
+      <div class="toc-item">
+        <span class="toc-chapter-number"></span>
+        <span class="toc-chapter-title">Ihre Meinung zählt</span>
+        <span class="toc-page-number">18</span>
+      </div>
+    </div>
   </section>
 
   <!-- Executive Summary -->
@@ -882,39 +1050,68 @@
     
     <div class="chapter-content">
       <div class="executive-summary">
-        {{ exec_summary_html|safe }}
+        <div class="executive-summary-content">
+          <p class="intro">
+            Dieser Report zeigt Ihnen den optimalen Weg zu Ihrer erfolgreichen KI-Integration. 
+            Basierend auf Ihrer individuellen Situation haben wir konkrete Handlungsempfehlungen 
+            entwickelt, die Sie direkt umsetzen können.
+          </p>
+          {{ exec_summary_html|safe }}
+        </div>
+      </div>
+
+      <div class="key-message">
+        <h3>Ihre wichtigsten Potenziale auf einen Blick</h3>
+        <p>
+          Mit Ihrer aktuellen digitalen Reife und den richtigen KI-Werkzeugen können Sie 
+          Ihre Effizienz signifikant steigern und neue Geschäftsfelder erschließen. 
+          Die kommenden Seiten zeigen Ihnen genau, wie das gelingt.
+        </p>
       </div>
       
       <div class="key-insights">
         <div class="insight-card">
           <div class="insight-label">Digitalisierung</div>
           <div class="insight-value">{{ digitalisierungsgrad|default(5) }}/10</div>
-          <div class="insight-description">{{ 'Hervorragend' if digitalisierungsgrad|default(5) >= 8 else 'Gut' if digitalisierungsgrad|default(5) >= 6 else 'Ausbaufähig' }}</div>
+          <div class="insight-description">{{ 'Exzellent' if digitalisierungsgrad|default(5) >= 8 else 'Gut aufgestellt' if digitalisierungsgrad|default(5) >= 6 else 'Potenzial vorhanden' }}</div>
         </div>
         
         <div class="insight-card">
           <div class="insight-label">Automatisierung</div>
           <div class="insight-value">{{ automatisierungsgrad|default('mittel')|capitalize }}</div>
-          <div class="insight-description">Großes Optimierungspotenzial</div>
+          <div class="insight-description">Optimierungspotenzial erkannt</div>
         </div>
         
         <div class="insight-card">
           <div class="insight-label">Innovation</div>
           <div class="insight-value">{{ risikofreude|default(3) }}/5</div>
-          <div class="insight-description">{{ 'Vorreiter' if risikofreude|default(3) >= 4 else 'Aufgeschlossen' if risikofreude|default(3) >= 3 else 'Vorsichtig' }}</div>
+          <div class="insight-description">{{ 'Innovationsführer' if risikofreude|default(3) >= 4 else 'Progressiv' if risikofreude|default(3) >= 3 else 'Strukturiert' }}</div>
         </div>
         
         <div class="insight-card">
           <div class="insight-label">ROI-Potenzial</div>
-          <div class="insight-value">{{ kpi_roi_months|default(12) }}M</div>
-          <div class="insight-description">Schneller Return on Investment</div>
+          <div class="insight-value">{{ kpi_roi_months|default(12) }} Monate</div>
+          <div class="insight-description">Schnelle Amortisation</div>
         </div>
       </div>
     </div>
   </section>
   {% endif %}
 
-  <!-- Persona Profil -->
+  <!-- Weitere Kapitel -->
+  {% if business_html %}
+  <section class="chapter">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 2</div>
+      <h1 class="chapter-title">Business Case</h1>
+    </div>
+    
+    <div class="chapter-content">
+      {{ business_html|safe }}
+    </div>
+  </section>
+  {% endif %}
+
   {% if persona_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -922,17 +1119,17 @@
       <h1 class="chapter-title">Ihr KI-Readiness Profil</h1>
     </div>
     
-    <div class="chapter-content single-column">
-      <div class="info-box">
-        <div class="info-box-title">Ihre persönliche KI-Readiness Persona</div>
-        Wo stehen Sie im Vergleich zu Ihrer Branche?
+    <div class="chapter-content">
+      <div class="info-box tip">
+        <div class="info-box-title">Ihre individuelle Ausgangslage</div>
+        Jedes Unternehmen hat seinen eigenen Weg zur KI-Excellence. 
+        Ihr Profil zeigt, wo Sie heute stehen und welche Schritte als nächstes sinnvoll sind.
       </div>
       {{ persona_html|safe }}
     </div>
   </section>
   {% endif %}
 
-  <!-- Quick Wins -->
   {% if quick_wins_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -940,10 +1137,11 @@
       <h1 class="chapter-title">Quick Wins - Schnelle Erfolge</h1>
     </div>
     
-    <div class="chapter-content single-column">
+    <div class="chapter-content">
       <div class="info-box success">
-        <div class="info-box-title">Sofort umsetzbare Maßnahmen (30-60 Tage)</div>
-        Diese Maßnahmen erzielen schnelle Effekte mit überschaubarem Aufwand.
+        <div class="info-box-title">Sofort umsetzbare Maßnahmen</div>
+        Diese Lösungen bringen schnelle Ergebnisse mit überschaubarem Aufwand. 
+        Ideal für den Start Ihrer KI-Reise.
       </div>
       
       {{ quick_wins_html|safe }}
@@ -976,7 +1174,6 @@
   </section>
   {% endif %}
 
-  <!-- Risikomatrix -->
   {% if risks_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -984,10 +1181,11 @@
       <h1 class="chapter-title">Risikomanagement</h1>
     </div>
     
-    <div class="chapter-content single-column">
+    <div class="chapter-content">
       <div class="info-box warning">
-        <div class="info-box-title">Kritische Handlungsfelder</div>
-        Proaktives Risikomanagement sichert nachhaltigen Erfolg.
+        <div class="info-box-title">Proaktiv handeln</div>
+        Eine strukturierte Risikoanalyse sichert Ihren Erfolg. 
+        Diese Übersicht zeigt Ihnen die wichtigsten Handlungsfelder.
       </div>
       
       {{ risks_html|safe }}
@@ -995,7 +1193,6 @@
   </section>
   {% endif %}
 
-  <!-- Empfehlungen -->
   {% if recommendations_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -1009,7 +1206,6 @@
   </section>
   {% endif %}
 
-  <!-- Roadmap -->
   {% if roadmap_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -1017,13 +1213,12 @@
       <h1 class="chapter-title">Implementierungs-Roadmap</h1>
     </div>
     
-    <div class="chapter-content single-column">
+    <div class="chapter-content">
       {{ roadmap_html|safe }}
     </div>
   </section>
   {% endif %}
 
-  <!-- Praxisbeispiele -->
   {% if praxisbeispiel_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -1033,15 +1228,15 @@
     
     <div class="chapter-content">
       <div class="info-box success">
-        <div class="info-box-title">Erfolgreiche KI-Transformationen aus Ihrer Branche</div>
-        Lernen Sie von vergleichbaren Unternehmen
+        <div class="info-box-title">Von erfolgreichen Implementierungen lernen</div>
+        Diese Beispiele zeigen, wie andere Unternehmen Ihrer Branche 
+        KI erfolgreich eingesetzt haben.
       </div>
       {{ praxisbeispiel_html|safe }}
     </div>
   </section>
   {% endif %}
 
-  <!-- Coaching -->
   {% if coach_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -1049,16 +1244,19 @@
       <h1 class="chapter-title">Coaching & Reflexion</h1>
     </div>
     
-    <div class="chapter-content single-column">
-      <div class="info-box" style="background: linear-gradient(135deg, var(--primary-50), var(--primary-100));">
-        <div class="info-box-title">Leitfragen für Ihren Erfolg</div>
+    <div class="chapter-content">
+      <div class="coaching-box">
+        <h3>Leitfragen für Ihren Erfolg</h3>
+        <p>
+          Diese Fragen helfen Ihnen, die richtigen Prioritäten zu setzen 
+          und Ihre KI-Strategie zu schärfen.
+        </p>
         {{ coach_html|safe }}
       </div>
     </div>
   </section>
   {% endif %}
 
-  <!-- Vision & Gamechanger -->
   {% if vision_html or gamechanger_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -1082,7 +1280,6 @@
   </section>
   {% endif %}
 
-  <!-- Compliance -->
   {% if compliance_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -1090,13 +1287,12 @@
       <h1 class="chapter-title">Compliance & Rechtssicherheit</h1>
     </div>
     
-    <div class="chapter-content single-column">
+    <div class="chapter-content">
       {{ compliance_html|safe }}
     </div>
   </section>
   {% endif %}
 
-  <!-- Förderprogramme -->
   {% if foerderprogramme_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -1104,17 +1300,16 @@
       <h1 class="chapter-title">Förderprogramme</h1>
     </div>
     
-    <div class="chapter-content single-column">
+    <div class="chapter-content">
       <div class="info-box">
-        <div class="info-box-title">Aktuelle Fördermöglichkeiten für KI & Digitalisierung</div>
-        Nutzen Sie staatliche Unterstützung für Ihre KI-Transformation.
+        <div class="info-box-title">Finanzielle Unterstützung nutzen</div>
+        Aktuelle Fördermöglichkeiten für Ihre KI-Projekte.
       </div>
       {{ foerderprogramme_html|safe }}
     </div>
   </section>
   {% endif %}
 
-  <!-- KI-Tools -->
   {% if tools_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -1122,16 +1317,15 @@
       <h1 class="chapter-title">Empfohlene KI-Tools & Software</h1>
     </div>
     
-    <div class="chapter-content single-column">
+    <div class="chapter-content">
       <div class="info-box">
-        <div class="info-box-title">Ausgewählte Tools für Ihren Anwendungsfall</div>
+        <div class="info-box-title">Passende Tools für Ihren Anwendungsfall</div>
       </div>
       {{ tools_html|safe }}
     </div>
   </section>
   {% endif %}
 
-  <!-- Live Updates -->
   {% if live_html %}
   <section class="chapter">
     <div class="chapter-header">
@@ -1139,14 +1333,113 @@
       <h1 class="chapter-title">{{ live_title|default('Aktuelle Entwicklungen', true) }}</h1>
     </div>
     
-    <div class="chapter-content single-column">
+    <div class="chapter-content">
       {{ live_html|safe }}
       <p style="color: var(--text-muted); font-size: 9pt; margin-top: 20px;">
-        Hinweis: Informationen basieren auf aktuellen Quellen. Bitte prüfen Sie kritische Informationen vor geschäftlichen Entscheidungen.
+        Hinweis: Informationen basieren auf aktuellen Quellen. 
+        Bitte prüfen Sie kritische Informationen vor geschäftlichen Entscheidungen.
       </p>
     </div>
   </section>
   {% endif %}
+
+  <!-- Glossar -->
+  <section class="glossary-page">
+    <div class="chapter-header">
+      <h1 class="chapter-title">Glossar</h1>
+    </div>
+    
+    <div class="chapter-content">
+      <h3>Glossar</h3>
+      
+      <div class="glossary-term">
+        <strong>KI (Künstliche Intelligenz):</strong> Technologien, die aus Daten lernen und selbstständig Entscheidungen treffen oder Empfehlungen aussprechen.
+      </div>
+      
+      <div class="glossary-term">
+        <strong>DSGVO:</strong> Datenschutz-Grundverordnung der EU; regelt den Umgang mit personenbezogenen Daten.
+      </div>
+      
+      <div class="glossary-term">
+        <strong>DSFA:</strong> Datenschutz-Folgenabschätzung; Analyse der Risiken für Betroffene bei bestimmten Datenverarbeitungen.
+      </div>
+      
+      <div class="glossary-term">
+        <strong>EU AI Act:</strong> Zukünftige EU-Verordnung, die Anforderungen und Risikoklassen für KI-Systeme festlegt.
+      </div>
+      
+      <div class="glossary-term">
+        <strong>Quick Win:</strong> Maßnahme mit geringem Aufwand und schnellem Nutzen.
+      </div>
+      
+      <div class="glossary-term">
+        <strong>MVP:</strong> Minimum Viable Product; erste funktionsfähige Version eines Produkts mit minimalem Funktionsumfang.
+      </div>
+    </div>
+  </section>
+
+  <!-- Leistung & Nachweis -->
+  <section class="services-page">
+    <div class="chapter-header">
+      <h1 class="chapter-title">Leistung & Nachweis</h1>
+    </div>
+    
+    <div class="chapter-content">
+      <p>
+        Als TÜV-zertifizierter KI-Manager begleite ich Unternehmen bei der sicheren Einführung, Nutzung und Audit-Vorbereitung von KI – mit klarer Strategie, dokumentierter Förderfähigkeit und DSGVO-Konformität.
+      </p>
+      
+      <div class="service-list">
+        <div class="service-item">
+          <strong>KI-Strategie & Audit:</strong> TÜV-zertifizierte Entwicklung und Vorbereitung auf Prüfungen
+        </div>
+        
+        <div class="service-item">
+          <strong>EU AI Act & DSGVO:</strong> Beratung entlang aktueller Vorschriften und Standards
+        </div>
+        
+        <div class="service-item">
+          <strong>Dokumentation & Governance:</strong> Aufbau förderfähiger KI-Prozesse und Nachweise
+        </div>
+        
+        <div class="service-item">
+          <strong>Minimiertes Haftungsrisiko:</strong> Vertrauen bei Kunden, Partnern und Behörden
+        </div>
+      </div>
+      
+      <p style="margin-top: var(--spacing-xl);">
+        Kontakt: <a href="mailto:kontakt@ki-sicherheit.jetzt">kontakt@ki-sicherheit.jetzt</a> · <a href="https://ki-sicherheit.jetzt">ki-sicherheit.jetzt</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Feedback-Seite -->
+  <section class="feedback-page">
+    <div class="feedback-box">
+      <h2 class="feedback-title">Ihre Meinung zählt!</h2>
+      
+      <p style="font-size: 11pt; margin-bottom: var(--spacing-lg);">
+        Helfen Sie uns, diesen Report noch besser zu machen. 
+        Ihr Feedback dauert nur 2-3 Minuten und ist uns sehr wichtig.
+      </p>
+      
+      <a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html" class="feedback-link">
+        Feedback geben (2-3 Min.)
+      </a>
+      
+      <div class="contact-info">
+        <p style="font-size: 9pt; color: var(--text-muted);">
+          © 2025 KI-Sicherheit.jetzt – DSGVO & EU-AI-Act-Ready – Wolf Hohl
+        </p>
+        <p style="font-size: 9pt; color: var(--text-muted); margin-top: var(--spacing-sm);">
+          TÜV-zertifiziertes KI-Management © 2025: Wolf Hohl · E-Mail: kontakt@ki-sicherheit.jetzt
+        </p>
+        <p style="font-size: 9pt; color: var(--text-muted); margin-top: var(--spacing-sm);">
+          DSGVO & EU-AI-Act-konform · Alle Angaben ohne Gewähr; keine Rechtsberatung.
+        </p>
+      </div>
+    </div>
+  </section>
 
   <!-- Footer auf allen Seiten -->
   <div class="footer">
