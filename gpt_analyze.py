@@ -1,45 +1,46 @@
 # gpt_analyze.py — Direct Renderer + Enhanced Innenleben
-# Version: 2025-09-28
+# Version: 2025-09-28 (Wolf Merge)
 #
 # Außenhaut:
-#   - analyze_briefing(form_data, lang) -> str (fertiges HTML)
-#   - Robuster Jinja2-Env ohne Override built-ins (insb. 'default')
-#   - Sucht Template in /app/templates UND im App-Root
+#   analyze_briefing(form_data, lang) -> str  (liefert fertiges HTML)
+#   Stabiler Jinja2-Env (keine Überschreibung von built-ins wie 'default')
+#   Sucht Templates in /app/templates und App-Root
 #
 # Innenleben:
-#   - KPI-Berechnung (realistisch-optimistisch, validiert)
-#   - Prompt-Engine für {name}_{lang}.md in /prompts
-#   - Sektionen: executive_summary, business, persona, quick_wins, risks,
-#     recommendations, roadmap, praxisbeispiel, coach, vision, gamechanger,
-#     compliance, foerderprogramme, tools (+ optional live)
-#   - Fallback-Generatoren (rein HTML, narrativ)
-#   - Narrative-Sanitizer: entfernt Listen/Nummern -> Fließtext
+#   KPI-Berechnung (realistisch-optimistisch), Prompts, Fallbacks
+#   Sektionen: executive_summary, business, persona, quick_wins, risks,
+#              recommendations, roadmap, praxisbeispiel, coach, vision,
+#              gamechanger, compliance, foerderprogramme, tools
+#   Narrative-Sanitizer: entfernt ul/ol/li und führende Nummern → Fließtext
 #
-# Hinweise:
-#   - Erfordert keine Quality-Control-/Enhanced-Pipeline.
-#   - OpenAI optional (wenn OPENAI_API_KEY gesetzt).
-#   - Hält sich an "keine Bullet-Listen/Nummern" im finalen PDF.
+# Hinweis:
+#   OPENAI optional. Wenn kein Key vorhanden ist, werden Fallbacks genutzt.
 
 from __future__ import annotations
 
-import os, re, logging
+import glob
+import os
+import re
+import logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-# ---------------------------------------------------------------------------
-# Basiskonfiguration
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Basis / Pfade
+# -----------------------------------------------------------------------------
 BASE_DIR = os.path.abspath(os.getenv("APP_BASE", os.getcwd()))
 TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
-PROMPTS_DIR = os.path.join(BASE_DIR, "prompts")
+PROMPTS_DIR = os.getenv("PROMPTS_DIR", os.path.join(BASE_DIR, "prompts"))
 PDF_TEMPLATE_NAME = os.getenv("PDF_TEMPLATE_NAME", "pdf_template.html")
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 log = logging.getLogger("gpt_analyze")
 
-# OpenAI (optional)
+# -----------------------------------------------------------------------------
+# OpenAI optional
+# -----------------------------------------------------------------------------
 _openai = None
 try:
     from openai import OpenAI
@@ -50,9 +51,9 @@ except Exception as e:
     log.warning(f"OpenAI nicht verfügbar: {e}")
     _openai = None
 
-# ---------------------------------------------------------------------------
-# Jinja Environment – KEIN Override von built-ins!
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Jinja Environment – KEIN Override built-ins!
+# -----------------------------------------------------------------------------
 def make_env() -> Environment:
     env = Environment(
         loader=FileSystemLoader([TEMPLATE_DIR, BASE_DIR]),
@@ -60,7 +61,7 @@ def make_env() -> Environment:
         trim_blocks=True,
         lstrip_blocks=True,
     )
-    # konfliktfreie Zusatzfilter
+    # konfliktfreier Zusatzfilter
     def currency(v, symbol="€"):
         try:
             n = int(float(str(v).replace(",", ".").replace(" ", "").replace("€", "")))
@@ -73,9 +74,9 @@ def make_env() -> Environment:
     env.filters["currency"] = currency
     return env
 
-# ---------------------------------------------------------------------------
-# Helfer
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Utilities
+# -----------------------------------------------------------------------------
 def _safe_int(x, default=0) -> int:
     try:
         if isinstance(x, (int, float)): return int(x)
@@ -103,12 +104,17 @@ def _readiness_label(score: int, lang="de") -> str:
         0 if s<30 else 1 if s<50 else 2 if s<70 else 3 if s<85 else 4
     ]
 
-# ---------------------------------------------------------------------------
-# KPI-Berechnung (ausgebaut, optimistisch, validiert)
-#   – basiert inhaltlich auf deiner älteren Enhanced-Datei, konsolidiert
-# ---------------------------------------------------------------------------
-def get_budget_amount(budget_str: Any) -> int:
-    """Konvertiert Budget-String zu Zahl (robust, DE-Varianten)."""
+def _debug_list_prompts():
+    try:
+        files = sorted([os.path.basename(p) for p in glob.glob(os.path.join(PROMPTS_DIR, "*"))])
+        log.info("PROMPTS_DIR=%s, found=%s", PROMPTS_DIR, files)
+    except Exception as e:
+        log.warning("Prompt listing failed: %s", e)
+
+# -----------------------------------------------------------------------------
+# KPI-Berechnung (konsolidiert)
+# -----------------------------------------------------------------------------
+def _budget_amount(budget_str: Any) -> int:
     if not budget_str:
         return 6000
     s = str(budget_str).lower().replace("€","").replace(" ", "").replace(".","")
@@ -116,7 +122,7 @@ def get_budget_amount(budget_str: Any) -> int:
         "unter_2000": 1500, "unter2000": 1500,
         "2000-10000": 6000, "2.000-10.000": 6000,
         "10000-50000": 25000, "10.000-50.000": 25000,
-        "ueber_50000": 75000, "über50000": 75000, "ueber50000": 75000,
+        "ueber_50000": 75000, "ueber50000": 75000, "über50000": 75000,
     }
     for k,v in mapping.items():
         if k in s or s in k: return v
@@ -127,35 +133,29 @@ def get_budget_amount(budget_str: Any) -> int:
     return 6000
 
 def calculate_kpis_from_answers(answers: Dict[str, Any]) -> Dict[str, Any]:
-    # Digitalisierung 1–10
     digital = min(10, max(1, _safe_int(answers.get("digitalisierungsgrad", 5), 5)))
-    # Automatisierung -> Prozent
     auto_map = {'sehr_niedrig':10,'eher_niedrig':30,'mittel':50,'eher_hoch':70,'sehr_hoch':85}
     auto = auto_map.get(str(answers.get("automatisierungsgrad","mittel")).lower().replace(" ","_"), 50)
-    # Papierlos
-    pap_map = {'0-20':20,'21-50':40,'51-80':65,'81-100':85}
-    papier = pap_map.get(str(answers.get("prozesse_papierlos","51-80")).replace("_","-"), 65)
-    # Risiko 1–5
+    papier_map = {'0-20':20,'21-50':40,'51-80':65,'81-100':85}
+    papier = papier_map.get(str(answers.get("prozesse_papierlos","51-80")).replace("_","-"), 65)
     risk = min(5, max(1, _safe_int(answers.get("risikofreude", 3), 3)))
-    # Knowhow
-    kw_map = {'anfaenger':20, 'anfänger':20,'grundkenntnisse':40,'fortgeschritten':70,'experte':90}
+    kw_map = {'anfaenger':20,'anfänger':20,'grundkenntnisse':40,'fortgeschritten':70,'experte':90}
     kw = kw_map.get(str(answers.get("ki_knowhow","grundkenntnisse")).lower(), 40)
 
     readiness = int(digital*3.0 + (auto/10)*2.5 + (papier/10)*2.0 + (risk*2)*2.0 + (kw/10)*2.0 + 15)
     readiness = max(35, min(95, readiness))
 
-    budget = get_budget_amount(answers.get("budget","2000-10000"))
+    budget = _budget_amount(answers.get("budget","2000-10000"))
     efficiency_gap = 100 - auto
     kpi_eff = max(25, int(efficiency_gap * 0.75))
     kpi_cost = int(kpi_eff * 0.8)
 
-    branche = str(answers.get("branche","default")).lower()
+    branche = str(answers.get("branche","beratung")).lower()
     branche_mult = {'beratung':1.3,'it':1.4,'marketing':1.25,'handel':1.15,'industrie':1.2,
                     'produktion':1.2,'finanzen':1.35,'gesundheit':1.1,'logistik':1.15,'bildung':1.05}.get(branche, 1.1)
 
-    # grobe Kostenbasis nach Größe
     size = str(answers.get("unternehmensgroesse","2-10")).lower()
-    size_cost_base = {'1':60000, 'solo':60000, '2-10':300000, '11-100':3000000, '101-500':15000000}.get(size, 300000)
+    size_cost_base = {'1':60000,'solo':60000,'2-10':300000,'11-100':3000000,'101-500':15000000}.get(size, 300000)
     base_saving = int(size_cost_base * (kpi_cost/100))
     annual_saving = max(int(base_saving * branche_mult), int(budget * 2.5))
 
@@ -213,9 +213,9 @@ def validate_kpis(k: Dict[str, Any]) -> Dict[str, Any]:
         k["readiness_score"] = 85
     return k
 
-# ---------------------------------------------------------------------------
-# Labeling & Variable-Aufbereitung
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Labels & Variablen
+# -----------------------------------------------------------------------------
 def get_company_size_label(size: str, lang: str) -> str:
     labels = {
         'de': {'1':'1 (Solo-Selbstständig)','solo':'1 (Solo-Selbstständig)','2-10':'2-10 (Kleines Team)',
@@ -232,33 +232,8 @@ def get_knowledge_label(knowledge: str, lang: str) -> str:
     }
     return labels.get(lang, labels['de']).get(str(knowledge).lower(), str(knowledge))
 
-def get_automation_label(automation: str, lang: str) -> str:
-    labels = {
-        'de': {'sehr_niedrig':'Sehr niedrig (10%)','eher_niedrig':'Eher niedrig (30%)','mittel':'Mittel (50%)',
-               'eher_hoch':'Eher hoch (70%)','sehr_hoch':'Sehr hoch (85%)'},
-        'en': {'sehr_niedrig':'Very low (10%)','eher_niedrig':'Rather low (30%)','mittel':'Medium (50%)',
-               'eher_hoch':'Rather high (70%)','sehr_hoch':'Very high (85%)'}
-    }
-    return labels.get(lang, labels['de']).get(str(automation).lower(), str(automation))
-
-def get_paperless_percent(range_str: str) -> int:
-    return {'0-20':20,'21-50':40,'51-80':65,'81-100':85}.get(str(range_str), 50)
-
 def get_readiness_level(score: int, lang: str) -> str:
     return _readiness_label(score, lang)
-
-def get_compliance_status(form_data: Dict[str, Any], lang: str) -> str:
-    has_dpo = form_data.get('datenschutzbeauftragter') == 'ja'
-    has_dpia = form_data.get('dsgvo_folgenabschaetzung') in ['ja','teilweise']
-    has_ai = form_data.get('eu_ai_act_kenntnis') in ['gut','sehr_gut']
-    if lang.startswith('de'):
-        if has_dpo and has_dpia and has_ai: return 'Vollständig konform'
-        if has_dpo or has_dpia: return 'Teilweise konform'
-        return 'Grundlagen fehlen'
-    else:
-        if has_dpo and has_dpia and has_ai: return 'Fully compliant'
-        if has_dpo or has_dpia: return 'Partially compliant'
-        return 'Basics missing'
 
 def get_primary_quick_win(form_data: Dict[str, Any], lang: str) -> str:
     ucs = form_data.get('ki_usecases') or []
@@ -267,7 +242,7 @@ def get_primary_quick_win(form_data: Dict[str, Any], lang: str) -> str:
     mapping = {
         'de': {'texterstellung':'Automatisierte Texterstellung','spracherkennung':'Meeting-Transkription',
                'prozessautomatisierung':'Workflow-Automatisierung','datenanalyse':'Automatisierte Reports',
-               'kundensupport':'KI‑Chatbot','wissensmanagement':'Wissensdatenbank','marketing':'Content‑Automation'},
+               'kundensupport':'KI-Chatbot','wissensmanagement':'Wissensdatenbank','marketing':'Content-Automation'},
         'en': {'texterstellung':'Automated Writing','spracherkennung':'Meeting Transcription',
                'prozessautomatisierung':'Workflow Automation','datenanalyse':'Automated Reports',
                'kundensupport':'AI Chatbot','wissensmanagement':'Knowledge Base','marketing':'Content Automation'}
@@ -319,9 +294,6 @@ def get_template_variables(form_data: Dict[str, Any], lang: str='de') -> Dict[st
         "roi_investment": k["roi_investment"],
         "roi_annual_saving": k["roi_annual_saving"],
         "roi_three_year": k["roi_three_year"],
-        "roi_annual_saving_formatted": f"{k['roi_annual_saving']:,}".replace(",", ".") if lang.startswith("de") else f"{k['roi_annual_saving']:,}",
-        "roi_three_year_formatted": f"{k['roi_three_year']:,}".replace(",", ".") if lang.startswith("de") else f"{k['roi_three_year']:,}",
-        "roi_investment_formatted": f"{k['roi_investment']:,}".replace(",", ".") if lang.startswith("de") else f"{k['roi_investment']:,}",
 
         # KI-Daten
         "ki_usecases": ", ".join(map(str, form_data.get("ki_usecases", []))),
@@ -331,11 +303,8 @@ def get_template_variables(form_data: Dict[str, Any], lang: str='de') -> Dict[st
         "automatisierungsgrad": form_data.get("automatisierungsgrad","mittel"),
         "automatisierungsgrad_percent": k["automatisierungsgrad"],
         "prozesse_papierlos": form_data.get("prozesse_papierlos","51-80"),
-        "prozesse_papierlos_percent": get_paperless_percent(form_data.get("prozesse_papierlos","51-80")),
-        "quick_win_primary": get_primary_quick_win(form_data, lang),
-        "datenschutzbeauftragter": form_data.get("datenschutzbeauftragter","nein"),
 
-        # Tables/Listen (optional vom Template genutzt)
+        # Tabellen (optional vom Template genutzt)
         "funding_programs": form_data.get("funding_programs", []),
         "tools": form_data.get("tools", []),
         "foerderprogramme_table": form_data.get("funding_programs", []),
@@ -348,9 +317,9 @@ def get_template_variables(form_data: Dict[str, Any], lang: str='de') -> Dict[st
         vars["kpi_efficiency"] = 1
     return vars
 
-# ---------------------------------------------------------------------------
-# Prompt-Verarbeitung + GPT
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Prompt-Engine + GPT
+# -----------------------------------------------------------------------------
 class PromptLoader:
     def __init__(self, directory: str = PROMPTS_DIR):
         self.dir = directory
@@ -358,8 +327,14 @@ class PromptLoader:
             loader=FileSystemLoader([self.dir]),
             autoescape=False, trim_blocks=True, lstrip_blocks=True
         )
+
     def render(self, name: str, ctx: Dict[str, Any], lang: str) -> str:
-        candidates = [f"{name}_{lang}.md", f"{name}.md", f"{name}_{lang}.jinja", f"{name}.jinja"]
+        candidates = [
+            f"{name}_{lang}.md",
+            f"{name}.md",
+            f"{name}_{lang}.jinja",
+            f"{name}.jinja",
+        ]
         last_err = None
         for fn in candidates:
             try:
@@ -375,15 +350,15 @@ def _gpt(prompt: str, section: str, lang="de") -> Optional[str]:
         return None
     try:
         sys = (
-            "Du bist ein KI‑Strategieberater. Schreibe prägnante, narrative Abschnitte "
+            "Du bist ein KI-Strategieberater. Schreibe prägnante, narrative Abschnitte "
             "in reinem HTML (<p>…</p>, optional <strong>). "
-            "Keine Bullet‑Listen, keine nummerierten Listen, keine Tabellen. "
-            "DSGVO‑konform, sachlich, handlungsorientiert."
+            "Keine Bullet-Listen, keine nummerierten Listen, keine Tabellen. "
+            "DSGVO-konform, sachlich, handlungsorientiert."
             if lang.startswith("de") else
             "You are an AI strategy consultant. Write concise, narrative sections "
             "in plain HTML (<p>…</p>, optional <strong>). "
             "No bullet points, no numbered lists, no tables. "
-            "Compliant, factual, action‑oriented."
+            "Compliant, factual, action-oriented."
         )
         resp = _openai.chat.completions.create(
             model=os.getenv("OPENAI_MODEL","gpt-4o-mini"),
@@ -396,97 +371,67 @@ def _gpt(prompt: str, section: str, lang="de") -> Optional[str]:
         log.warning(f"GPT API Fehler ({section}): {e}")
         return None
 
-# ---------------------------------------------------------------------------
-# Fallbacks & Content-Generatoren (gekürzt auf narrative Absätze)
-#   – Die meisten originalen Abschnitte erzeugten <ul>/<li>; das wird
-#     später vom Sanitizer ohnehin in <p> umgewandelt.
-# ---------------------------------------------------------------------------
-def _p(s: str) -> str:  # Hilfsfunktion für Fallback-Absätze
+# -----------------------------------------------------------------------------
+# Fallbacks & kurze Generatoren (narrativ)
+# -----------------------------------------------------------------------------
+def _p(s: str) -> str:
     return f"<p>{s}</p>"
 
 def fallback_executive_summary(v: Dict[str, Any], lang="de") -> str:
     if lang.startswith("de"):
         return (
-            _p(f"<strong>Ausgangslage:</strong> Mit {v.get('score_percent',50)}% KI‑Reifegrad "
-               f"besteht eine solide Basis. Starten Sie mit {v.get('quick_win_primary','Quick Wins')} "
-               f"und professionalisieren Sie Schritt für Schritt.")
-            + _p(f"<strong>Wirtschaftlichkeit:</strong> Investition {v.get('roi_investment',10000)} €, "
-                 f"Break‑even in {v.get('kpi_roi_months',12)} Monaten, jährliche Einsparungen "
-                 f"{v.get('roi_annual_saving',20000)} €.")
+            _p(f"<strong>Ausgangslage:</strong> Mit {v.get('score_percent',50)}% KI-Reifegrad besteht eine solide Basis. "
+               f"Starten Sie mit {v.get('quick_win_primary','Quick Wins')} und professionalisieren Sie Schritt für Schritt.")
+            + _p(f"<strong>Wirtschaftlichkeit:</strong> Investition {v.get('roi_investment',10000)} €, "
+                 f"Break-even in {v.get('kpi_roi_months',12)} Monaten, jährliche Einsparungen {v.get('roi_annual_saving',20000)} €.")
         )
-    return (
-        _p(f"<strong>Starting point:</strong> With {v.get('score_percent',50)}% AI maturity you have "
-           f"a solid base. Begin with {v.get('quick_win_primary','quick wins')} and scale pragmatically.")
-    )
+    return _p("With a solid starting point, begin with pragmatic quick wins and scale responsibly.")
 
 def fallback_business(v: Dict[str, Any], lang="de") -> str:
     if lang.startswith("de"):
-        return _p(f"Der Business Case basiert auf einem Investitionsrahmen von "
-                  f"{v.get('roi_investment',10000)} €. Konservativ gerechnet ergeben sich "
-                  f"{v.get('roi_annual_saving',20000)} € jährliche Freisetzungseffekte und "
-                  f"{v.get('roi_three_year',50000)} € nach drei Jahren.")
-    return _p("Conservative business case with positive cash‑flow within the first year.")
+        return _p(f"Konservativer Business Case: Investition {v.get('roi_investment',10000)} €, "
+                  f"jährlicher Nutzen {v.get('roi_annual_saving',20000)} €, "
+                  f"3-Jahres-Nettonutzen {v.get('roi_three_year',50000)} €.")
+    return _p("Conservative business case with positive year-one cash-flow.")
 
 def fallback_generic(section: str, lang="de") -> str:
     return _p("Die Inhalte dieser Sektion wurden generiert und stehen bereit.") if lang.startswith("de") \
         else _p("This section has been generated and is ready.")
 
-# Beispielhafte Generatoren (die ggf. <ul> enthalten dürfen – Sanitizer greift):
 def generate_quick_wins(answers: Dict[str, Any], kpis: Dict[str, Any], lang: str = 'de') -> str:
     primary = get_primary_quick_win(answers, lang)
     if lang.startswith("de"):
-        return (
-            "<div><h3>Quick Wins für den Start</h3>"
-            "<ul>"
-            f"<li>Sofort starten mit <strong>{primary}</strong> – sichtbare Ergebnisse in 2–4 Wochen.</li>"
-            "<li>Meeting‑Notizen automatisieren (z. B. tl;dv/Otter) und Protokolle zentral ablegen.</li>"
-            "<li>Standardantworten im Kundenservice mit einem kleinen KI‑Assistenten vorqualifizieren.</li>"
-            "</ul></div>"
-        )
-    return (
-        "<div><h3>Quick wins to kick off</h3>"
-        "<ul><li>Start with your primary quick win for results in 2–4 weeks.</li></ul></div>"
-    )
+        return _p(f"Sofort starten mit <strong>{primary}</strong>; sichtbare Ergebnisse in 2–4 Wochen.")
+    return _p("Start with your primary quick win; visible results in 2–4 weeks.")
 
 def generate_risk_analysis(answers: Dict[str, Any], kpis: Dict[str, Any], lang: str = 'de') -> str:
     if lang.startswith("de"):
-        return (
-            "<div><h3>Risikomanagement</h3>"
-            "<ul>"
-            "<li>DSGVO‑Rahmen und Zuständigkeiten klarziehen (DPO/DSFA).</li>"
-            "<li>Schrittweise Einführung, Risiken iterativ reduzieren.</li>"
-            "<li>Shadow‑IT vermeiden, zentrale Tool‑Guidelines nutzen.</li>"
-            "</ul></div>"
-        )
-    return "<div><h3>Risk Management</h3><ul><li>Clarify GDPR ownership and DPIA.</li></ul></div>"
+        return _p("Risikomanagement: Zuständigkeiten klären (DPO/DSFA), schrittweise Einführung, Shadow-IT vermeiden.")
+    return _p("Risk management: clarify GDPR/DPIA, phased rollout, avoid shadow IT.")
 
 def generate_roadmap(answers: Dict[str, Any], kpis: Dict[str, Any], lang: str = 'de') -> str:
     b = kpis.get("roi_investment", 10000)
     m = kpis.get("kpi_roi_months", 12)
     if lang.startswith("de"):
-        return (
-            "<div><h3>Roadmap</h3>"
-            f"<ul><li>0–30 Tage: Quick‑Win aufsetzen (ca. {int(b*0.2)} €).</li>"
-            "<li>31–90 Tage: Scale‑Up auf zweite Abteilung.</li>"
-            f"<li>91–180 Tage: Optimierung, Break‑even nach ~{m} Monaten.</li></ul></div>"
-        )
-    return "<div><h3>Roadmap</h3><ul><li>0–30 days: Quick win, then scale.</li></ul></div>"
+        return _p(f"Roadmap: 0–30 Tage Quick-Win (ca. {int(b*0.2)} €); 31–90 Tage Scale-Up; "
+                  f"91–180 Tage Optimierung; Break-even nach ~{m} Monaten.")
+    return _p("Roadmap: quick win, scale up, optimize; break-even in the first year.")
 
-# Tools/Förderprogramme (kurzer interner Katalog – ausreichend für erste Version)
+# Tools (Mini-Katalog) & Förderprogramme (Kurzliste)
 TOOL_DATABASE = {
     "texterstellung": [
-        {"name":"DeepL Write","desc":"DSGVO‑konformes Schreibtool","use_case":"E‑Mails, Berichte","cost":"Free/Pro","fit_score":95},
-        {"name":"Jasper AI","desc":"Marketing‑Content Automation","use_case":"Blog/Social","cost":"ab 39€","fit_score":80},
+        {"name":"DeepL Write","desc":"DSGVO-konformes Schreibtool","use_case":"E-Mails, Berichte","cost":"Free/Pro","fit_score":95},
+        {"name":"Jasper AI","desc":"Content-Automation","use_case":"Blog/Social","cost":"ab 39€","fit_score":80},
     ],
     "prozessautomatisierung": [
-        {"name":"n8n","desc":"Open‑Source Workflows","use_case":"APIs/Automation","cost":"Free","fit_score":92},
-        {"name":"Make","desc":"Low‑Code Automatisierung","use_case":"Workflows","cost":"ab 9€","fit_score":88},
+        {"name":"n8n","desc":"Open-Source Workflows","use_case":"APIs/Automation","cost":"Free","fit_score":92},
+        {"name":"Make","desc":"Low-Code Automatisierung","use_case":"Workflows","cost":"ab 9€","fit_score":88},
     ],
     "datenanalyse": [
-        {"name":"Metabase","desc":"Open‑Source BI","use_case":"Dashboards","cost":"Free/Cloud","fit_score":85},
+        {"name":"Metabase","desc":"Open-Source BI","use_case":"Dashboards","cost":"Free/Cloud","fit_score":85},
     ],
     "kundensupport": [
-        {"name":"Typebot","desc":"Open‑Source Chatbot","use_case":"FAQ/Leads","cost":"Free","fit_score":90},
+        {"name":"Typebot","desc":"Open-Source Chatbot","use_case":"FAQ/Leads","cost":"Free","fit_score":90},
     ],
 }
 
@@ -506,8 +451,8 @@ def match_tools_to_company(answers: Dict[str, Any], lang: str='de') -> str:
                         picks.append(t); used.add(t["name"]); break
                 break
     if not picks:
-        return "<p>Individuelle Tool‑Empfehlungen folgen nach Detailklärung.</p>" if lang.startswith("de") \
-               else "<p>Individual tool recommendations will follow.</p>"
+        return _p("Individuelle Tool-Empfehlungen folgen nach Detailklärung.") if lang.startswith("de") \
+               else _p("Individual tool recommendations will follow.")
     out = []
     for t in picks[:6]:
         if lang.startswith("de"):
@@ -518,9 +463,9 @@ def match_tools_to_company(answers: Dict[str, Any], lang: str='de') -> str:
 
 FUNDING_PROGRAMS = {
     "bundesweit": [
-        {"name":"go‑digital","amount":"bis 16.500€ (50%)","deadline":"laufend","fit":90},
+        {"name":"go-digital","amount":"bis 16.500€ (50%)","deadline":"laufend","fit":90},
         {"name":"Digital Jetzt","amount":"bis 50.000€ (40%)","deadline":"bis 31.12.2025","fit":85},
-        {"name":"KfW‑Digitalisierungskredit","amount":"Kredit, günstiger Zins","deadline":"laufend","fit":80},
+        {"name":"KfW-Digitalisierungskredit","amount":"Kredit, günstiger Zins","deadline":"laufend","fit":80},
     ],
     "berlin": [
         {"name":"Digitalprämie Berlin","amount":"bis 17.000€","deadline":"31.12.2025","fit":88},
@@ -537,13 +482,13 @@ def match_funding_programs(answers: Dict[str, Any], lang: str='de') -> str:
         programs += FUNDING_PROGRAMS[region]
     programs = sorted(programs, key=lambda p: -p.get("fit",0))[:6]
     if not programs:
-        return "<p>Aktuell keine passenden Programme.</p>" if lang.startswith("de") else "<p>No suitable programs found.</p>"
+        return _p("Aktuell keine passenden Programme.") if lang.startswith("de") else _p("No suitable programs found.")
     rows = "; ".join([f"{p['name']} ({p['amount']})" for p in programs])
     return _p(("Förderoptionen: " + rows) if lang.startswith("de") else ("Funding options: " + rows))
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Sektionen-Renderer (Prompts → GPT → Fallback)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 def _render_section(name: str, ctx: Dict[str, Any], lang="de") -> str:
     # 1) Prompt laden
     prompt = None
@@ -554,9 +499,9 @@ def _render_section(name: str, ctx: Dict[str, Any], lang="de") -> str:
     # 2) GPT (optional)
     if prompt:
         html = _gpt(prompt, name, lang)
-        if html and len(html) > 80:
+        if html and len(html.strip()) > 80:
             return html
-    # 3) Fallback/Generatoren
+    # 3) Fallback/Generator
     if name == "executive_summary": return fallback_executive_summary(ctx, lang)
     if name == "business": return fallback_business(ctx, lang)
     if name == "quick_wins": return generate_quick_wins(ctx, ctx, lang)
@@ -566,20 +511,20 @@ def _render_section(name: str, ctx: Dict[str, Any], lang="de") -> str:
     if name == "foerderprogramme": return match_funding_programs(ctx, lang)
     return fallback_generic(name, lang)
 
-# ---------------------------------------------------------------------------
-# Narrative-Sanitizer (entfernt Listen/Nummern → Fließtext)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Narrative-Sanitizer (ul/ol/li → p; führende Nummern entfernen)
+# -----------------------------------------------------------------------------
 def _sanitize_html_block(html: str) -> str:
     if not isinstance(html, str):
         return ""
     s = html
 
-    # 1) <li> Inhalte extrahieren und in Absätze umwandeln
+    # 1) <li> Inhalte extrahieren → Absätze
     items = re.findall(r"<li[^>]*>(.*?)</li>", s, flags=re.I|re.S)
     if items:
         cleaned = []
         for it in items:
-            txt = re.sub(r"<[^>]+>", "", it)          # Tags raus
+            txt = re.sub(r"<[^>]+>", "", it)                 # Tags entfernen
             txt = re.sub(r"^\s*(?:\d+[\.\)]|[-\*•])\s*", "", txt)  # führende Nummern/Bullets
             if txt.strip():
                 cleaned.append(txt.strip())
@@ -587,12 +532,10 @@ def _sanitize_html_block(html: str) -> str:
             s = re.sub(r"</?ul[^>]*>|</?ol[^>]*>|<li[^>]*>.*?</li>", "", s, flags=re.I|re.S)
             s += "".join([f"<p>{c}</p>" for c in cleaned])
 
-    # 2) Aufzählungs-HTML entfernen, falls noch vorhanden
+    # 2) Restliche ul/ol entfernen
     s = re.sub(r"</?(ul|ol)[^>]*>", "", s, flags=re.I)
 
-    # 3) Falls noch Zeilen mit „1) …“ etc., in Fließtext wandeln
-    def repl_num(m):
-        return m.group(0).replace(m.group(1), "")
+    # 3) „1) …“ innerhalb von <p> entfernen
     s = re.sub(r"(<p[^>]*>)\s*\d+[\.\)]\s*", r"\1", s)
 
     # 4) Sicherstellen, dass es Absätze gibt
@@ -608,62 +551,73 @@ def sanitize_narrative(context: Dict[str, Any]) -> Dict[str, Any]:
             out[k] = _sanitize_html_block(v)
     return out
 
-# ---------------------------------------------------------------------------
-# Innenleben-API: Kontext erzeugen (ohne Rendern)
-#   – Integriert die „alte“ Funktionsfülle in einen stabilen Kontext.
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Innenleben-API: Kontext erzeugen (alle *_html Keys befüllen)
+# -----------------------------------------------------------------------------
 def analyze_briefing_enhanced(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     lang = "de" if str(lang).lower().startswith("de") else "en"
     vars = get_template_variables(body, lang)
 
-    sections = [
+    sections: List[str] = [
         "executive_summary","business","persona","quick_wins",
         "risks","recommendations","roadmap","praxisbeispiel",
         "coach","vision","gamechanger","compliance",
         "foerderprogramme","tools"
     ]
 
-    ctx = dict(vars)
+    ctx: Dict[str, Any] = dict(vars)
     for sec in sections:
         key = "exec_summary_html" if sec == "executive_summary" else f"{sec}_html"
         ctx[key] = _render_section(sec, vars, lang)
 
-    # Minimal: persona/recommendations/praxisbeispiel/vision/gamechanger/coach/compliance
-    # falls nicht via Prompt vorhanden, mit generischem Text füllen
+    # Falls manche Sektionen leer bleiben, mit generischen Texten auffüllen
     for aux in ["persona_html","recommendations_html","praxisbeispiel_html",
                 "vision_html","gamechanger_html","coach_html","compliance_html"]:
-        if not ctx.get(aux):
+        if not (ctx.get(aux) and len(ctx.get(aux, "").strip()) > 40):
             ctx[aux] = fallback_generic(aux[:-5] if aux.endswith("_html") else aux, lang)
 
     return ctx
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Außenhaut: Direct-to-HTML Renderer (stabil für Railway)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 def analyze_briefing(form_data: Dict[str, Any], lang: str = "de") -> str:
     """
-    Generiert das vollständige HTML (fertig für den PDF-Service).
+    Generiert vollständiges HTML (für den PDF-Service).
     """
     log.info("gpt_analyze loaded (direct): %s", os.path.join(BASE_DIR, "gpt_analyze.py"))
+
+    # Logge verfügbare Prompts (für schnelle Ursache-Findung im Deployment)
+    _debug_list_prompts()
+
     env = make_env()
     try:
         try:
             template = env.get_template(PDF_TEMPLATE_NAME)
         except Exception:
-            # Fallback: erstes .html im templates/-Ordner
             html_files = [f for f in os.listdir(TEMPLATE_DIR) if f.endswith(".html")]
             template = env.get_template(html_files[0]) if html_files else None
         if not template:
             raise RuntimeError("Kein HTML-Template gefunden")
 
         ctx = analyze_briefing_enhanced(form_data, lang)
-        ctx = sanitize_narrative(ctx)   # => keine Bullet-Listen/Nummern im Output
+        ctx = sanitize_narrative(ctx)   # → narrativer Fließtext, keine Listen
+
+        # Notfall-Guard: zentrale Sektionen nie leer lassen
+        def _minlen(x: str) -> int: return len((x or "").strip())
+        for k in ["exec_summary_html","business_html","quick_wins_html","risks_html","roadmap_html"]:
+            if _minlen(ctx.get(k,"")) < 80:
+                title = k.replace("_html","").replace("_"," ").title()
+                ctx[k] = ctx.get(k) or f"<p>Die Inhalte für <strong>{title}</strong> wurden vorbereitet.</p>"
+
+        # Legacy-Guard: alte Keys angleichen
+        if not ctx.get("quick_wins_html") and ctx.get("quickwins_html"):
+            ctx["quick_wins_html"] = ctx["quickwins_html"]
 
         return template.render(**ctx)
 
     except Exception as e:
         log.error(f"Template-Rendering fehlgeschlagen: {e}")
-        # Minimaler Fallback – entspricht dem „leeren Report“ im PDF-Fehlerfall
         return (
             "<html><body><h1>KI-Statusbericht</h1>"
             "<p>Der Report wird generiert. Bitte versuchen Sie es in wenigen Minuten erneut.</p>"
