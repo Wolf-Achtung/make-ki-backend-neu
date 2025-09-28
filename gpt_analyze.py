@@ -198,25 +198,46 @@ def get_template_variables(body: Dict[str, Any], lang: str) -> Dict[str, Any]:
     form = body.get("form", {}) if isinstance(body, dict) else {}
 
     branche = _pick(body, "branche", default=_pick(meta, "branche", default="Ihre Branche"))
-    company_size = _pick(body, "company_size", default=_pick(meta, "company_size", default="Mittelstand"))
-    budget_str = _pick(body, "budget", "investitionsbudget", default=_pick(form, "budget", default="2000-10000"))
+    company_size = _pick(body, "company_size", "unternehmensgroesse",
+                         default=_pick(meta, "company_size", default="Mittelstand"))
+    bundesland = _pick(body, "bundesland", default=_pick(meta, "bundesland", default=""))
+
+    budget_str = _pick(body, "budget", "investitionsbudget",
+                       default=_pick(form, "budget", default="2000-10000"))
     budget_amount = _budget_from_string(budget_str)
 
-    variables = {
+    # Basis
+    v: Dict[str, Any] = {
         "lang": (lang or DEFAULT_LANG).lower(),
         "today": datetime.utcnow().strftime("%Y-%m-%d"),
+        "datum": datetime.utcnow().strftime("%d.%m.%Y"),   # praktisch fürs Template statt now()
         "report_version": _pick(body, "report_version", default=_pick(meta, "report_version", default="GS-1.0")),
         "branche": branche,
+        "bundesland": bundesland,
         "company_size_label": _label_company_size(company_size),
+        "unternehmensgroesse": company_size,
         "budget": budget_str,
         "budget_amount": budget_amount,
-        # optionale Collections
+        "feedback_link": _pick(body, "feedback_link", default=_pick(meta, "feedback_link", default="")),
+        # Collections
         "funding_programs": body.get("funding_programs") or [],
         "tools": body.get("tools") or [],
-        # UX/Links
-        "feedback_link": _pick(body, "feedback_link", default=_pick(meta, "feedback_link", default="")),
     }
-    return variables
+
+    # Robuste Defaults für Prompts/Templates (aus deinen Logs abgeleitet)
+    v.setdefault("ki_usecases", body.get("ki_usecases") or [])
+    v.setdefault("kpi_compliance", "")
+    v.setdefault("kpi_roi_months", "")
+    v.setdefault("roi_investment", "")
+    v.setdefault("datenschutzbeauftragter", "")
+    v.setdefault("score_percent", None)  # None => KPI-Widgets im Template bleiben aus
+    v.setdefault("digitalisierungsgrad", body.get("digitalisierungsgrad") or 0)
+    v.setdefault("automatisierungsgrad", body.get("automatisierungsgrad") or "")
+    v.setdefault("risikofreude", body.get("risikofreude") or 0)
+    v.setdefault("copyright_year", datetime.utcnow().year)
+
+    return v
+
 
 # ---------------------------------------------------------------------------
 # Quality Control (sanft / optional)
@@ -523,7 +544,7 @@ def analyze_briefing(body: Dict[str,Any], lang: str=DEFAULT_LANG) -> str:
         "roadmap_html": _gen("roadmap"),
         "compliance_html": _gen("compliance"),
         "vision_html": _gen("vision"),
-        "innovation_html": _gen("innovation_gamechanger"),
+        "gamechanger_html": _gen("gamechanger"),
         # Rohdaten/Listen zur optionalen Tabelle
         "funding_programs": v.get("funding_programs") or [],
         "tools": v.get("tools") or [],
