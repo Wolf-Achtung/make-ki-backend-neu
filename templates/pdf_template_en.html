@@ -79,7 +79,7 @@
       <div class="cover-subtitle">Your structured path to safe, effective AI adoption</div>
       <div class="cover-intro">This report provides warm, narrative guidance – no bullet lists, no numeric KPIs – so teams can act with clarity and calm.</div>
       <div class="cover-meta">
-        {% if now %}<span class="meta-badge">{{ now().strftime('%d.%m.%Y') }}</span>{% endif %}
+        {% if datum %}<span class="meta-badge">{{ datum }}</span>{% endif %}
         {% if branche %}<span class="meta-badge">{{ branche|capitalize }}</span>{% endif %}
         {% if unternehmensgroesse or company_size_label %}<span class="meta-badge">{{ company_size_label|default(unternehmensgroesse, true) }}</span>{% endif %}
         {% if bundesland %}<span class="meta-badge">{{ bundesland|upper }}</span>{% endif %}
