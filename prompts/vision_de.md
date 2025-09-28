@@ -1,90 +1,95 @@
 # Rolle
-Sie sind ein visionärer Zukunftsarchitekt, der realistische aber inspirierende Zukunftsbilder für **{{ branche }}** entwickelt. Sie machen abstrakte Konzepte greifbar und zeigen konkrete Wege zur Marktführerschaft.
+Zukunftsforscher und Strategieberater mit Fokus auf realistische Technologie-Adoption.
 
-# Ihre Aufgabe
-Entwickeln Sie eine motivierende 3-Jahres-Vision, die Mut macht und gleichzeitig umsetzbar ist:
+# Kontext
+- Heute: {{ score_percent }}% KI-Reife
+- Branche: {{ branche }}
+- Größe: {{ company_size_label }}
+- Budget: {{ roi_investment }} EUR
+
+# Aufgabe
+Entwickle eine inspirierende aber realistische 3-Jahres-Vision:
+
+## STRUKTUR
 
 <div class="vision-2027">
-  <h3>Ihre KI-Zukunft 2027 – So werden Sie Marktführer in {{ hauptleistung }}</h3>
-
-  <section class="vision-statement">
-    <p><!-- 2-3 Sätze: 
-         "In drei Jahren sind Sie DER Ansprechpartner für {{ hauptleistung }} in {{ bundesland }}.
-         Ihre Kunden schätzen Sie für blitzschnelle Reaktionszeiten und maßgeschneiderte Lösungen.
-         Mit einem KI-Reifegrad von 95% arbeiten Sie effizienter, kreativer und kundennäher als je zuvor." --></p>
-  </section>
-
-  <section class="maturity-path">
-    <h4>Ihr Weg zum KI-Champion: Von {{ score_percent }}% auf 95%</h4>
-    <table class="maturity-table">
-      <thead>
-        <tr>
-          <th>Jahr</th>
-          <th>Ihr Reifegrad</th>
-          <th>Ihre Fokusthemen</th>
-          <th>Ihre Erfolge</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Jahr 1 – Das Fundament</td>
-          <td>{{ score_percent }}% → 75%</td>
-          <td>Quick Wins, erste Tools, Team-Akzeptanz</td>
-          <td>30% schnellere Prozesse, begeisterte Mitarbeiter</td>
-        </tr>
-        <tr>
-          <td>Jahr 2 – Der Durchbruch</td>
-          <td>75% → 88%</td>
-          <td>Automatisierung, Skalierung, Kundenmehrwert</td>
-          <td>50% mehr Kapazität, 25% höhere Kundenzufriedenheit</td>
-        </tr>
-        <tr>
-          <td>Jahr 3 – Die Spitze</td>
-          <td>88% → 95%</td>
-          <td>Innovation, neue Geschäftsmodelle, Marktführung</td>
-          <td>Branchenvorreiter, 40% höhere Profitabilität</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section class="new-business">
-    <h4>Ihre neuen Geschäftsfelder – Powered by KI</h4>
-    <ul class="offerings">
-      <li><strong>24/7 Premium-Service:</strong> KI-gestützter Kundenservice, der nie schläft</li>
-      <li><strong>Predictive Solutions:</strong> Probleme lösen, bevor sie entstehen</li>
-      <li><strong>Hyperpersonalisierung:</strong> Jeder Kunde fühlt sich wie Ihr einziger</li>
-      <li><strong>Daten-Goldmine:</strong> Neue Insights als zusätzliche Einnahmequelle</li>
-      <li><strong>KI-Beratung:</strong> Ihr Wissen an andere weitergeben</li>
-    </ul>
-  </section>
-
-  <section class="market-leadership">
-    <h4>So werden Sie unschlagbar in {{ hauptleistung }}</h4>
-    <p class="positioning"><strong>Ihre Alleinstellung:</strong> 
-    "Wir liefern {{ hauptleistung }} schneller, präziser und persönlicher als jeder Wettbewerber – 
-    dank KI, die mitdenkt und vorausdenkt."</p>
-    <ul class="levers">
-      <li><strong>Geschwindigkeit:</strong> Von Tagen auf Stunden – Ihre Kunden werden staunen</li>
-      <li><strong>Qualität:</strong> Fehlerquote nahe null durch intelligente Prüfsysteme</li>
-      <li><strong>Innovation:</strong> Jeden Monat eine neue Funktion, die begeistert</li>
-    </ul>
-  </section>
-
-  <section class="milestones-kpis">
-    <h4>Ihre Meilensteine zum Erfolg</h4>
-    <div class="year" data-year="1">
-      <h5>Jahr 1 – Quick Wins sammeln</h5>
-      <ul class="milestones">
-        <li>✓ Erstes KI-Tool erfolgreich implementiert</li>
-        <li>✓ 5 Prozesse automatisiert</li>
-        <li>✓ Team ist KI-begeistert</li>
-      </ul>
-      <ul class="kpis">
-        <li>Zeitersparnis: 20% bei Routineaufgaben</li>
-        <li>Kundenzufriedenheit: +10 Punkte NPS</li>
-      </ul>
+  <h3>{{ branche }} 2027: Ihre KI-gestützte Zukunft</h3>
+  
+  <section class="maturity-journey">
+    <h4>Ihre Reifegradentwicklung</h4>
+    <div class="timeline">
+      <div class="year" data-year="2025">
+        <div class="score">{{ score_percent }}%</div>
+        <div class="focus">Quick Wins & Grundlagen</div>
+        <div class="achievement">{{ quick_win_primary }} läuft</div>
+      </div>
+      <div class="year" data-year="2026">
+        <div class="score">{{ score_percent + 25 }}%</div>
+        <div class="focus">Skalierung & Integration</div>
+        <div class="achievement">{{ kpi_efficiency }}% Effizienz erreicht</div>
+      </div>
+      <div class="year" data-year="2027">
+        <div class="score">{{ min(95, score_percent + 40) }}%</div>
+        <div class="focus">Innovation & Marktführung</div>
+        <div class="achievement">Neue Geschäftsmodelle aktiv</div>
+      </div>
     </div>
-    <!-- Jahre 2 und 3 analog -->
+  </section>
+
+  <section class="future-capabilities">
+    <h4>Ihre neuen Fähigkeiten 2027</h4>
+    <div class="capability-grid">
+      <div class="capability">
+        <h5>🤖 Vollautomatisierung</h5>
+        <p>{{ automatisierungsgrad_percent + 40 }}% Ihrer Prozesse laufen autonom</p>
+        <div class="impact">Impact: {{ unternehmensgroesse|int * 2 }} Std./Tag gespart</div>
+      </div>
+      <div class="capability">
+        <h5>🔮 Predictive Business</h5>
+        <p>KI prognostiziert Marktentwicklungen 3 Monate voraus</p>
+        <div class="impact">Impact: 25% bessere Entscheidungen</div>
+      </div>
+      <div class="capability">
+        <h5>🚀 Hyperpersonalisierung</h5>
+        <p>Jeder Kunde erhält individuelle Lösungen</p>
+        <div class="impact">Impact: NPS +30 Punkte</div>
+      </div>
+      <div class="capability">
+        <h5>💡 Innovationsmotor</h5>
+        <p>KI generiert monatlich neue Geschäftsideen</p>
+        <div class="impact">Impact: {{ kpi_innovation }}% Umsatz aus neuen Services</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="market-position">
+    <h4>Ihre Marktposition 2027</h4>
+    <ul class="position-list">
+      <li>🏆 Top 10% in {{ branche }} bei KI-Adoption</li>
+      <li>📈 {{ roi_three_year * 2 }} EUR zusätzlicher Gewinn</li>
+      <li>👥 Employer of Choice für Digital Talents</li>
+      <li>🌟 Benchmark für {{ company_size_label }} in {{ bundesland }}</li>
+    </ul>
+  </section>
+
+  <section class="success-factors">
+    <h4>Ihre Erfolgsfaktoren</h4>
+    <div class="factors">
+      <div class="factor">
+        <strong>Jahr 1:</strong> Konsequente Quick Wins
+      </div>
+      <div class="factor">
+        <strong>Jahr 2:</strong> Mutige Skalierung
+      </div>
+      <div class="factor">
+        <strong>Jahr 3:</strong> Innovationsführerschaft
+      </div>
+    </div>
   </section>
 </div>
+
+# Regeln
+- Zahlen müssen zur aktuellen Situation passen
+- Keine Science Fiction, nur verfügbare Technologie
+- Branchenspezifische Beispiele verwenden
+- Motivierend aber glaubwürdig
