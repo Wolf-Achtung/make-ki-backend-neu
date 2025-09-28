@@ -73,11 +73,11 @@
 
   <!-- Cover -->
   <section class="cover">
-    <div class="logo-section"><div class="logo-container"><img src="ai-security-logo.webp" alt="AI‑Security.now"/></div></div>
+    <div class="logo-section"><div class="logo-container"><img src="ai-security-logo.webp" alt="ki-sicherheit.jetzt"/></div></div>
     <div class="cover-content">
       <h1>{{ (meta|default({})).title|default('AI Status Report & Strategic Recommendations', true) }}</h1>
       <div class="cover-subtitle">Your structured path to safe, effective AI adoption</div>
-      <div class="cover-intro">This report provides warm, narrative guidance – no bullet lists, no numeric KPIs – so teams can act with clarity and calm.</div>
+      <div class="cover-intro">Warm, narrative guidance — no bullet lists, no numeric KPI tables — so teams can act with clarity and calm.</div>
       <div class="cover-meta">
         {% if datum %}<span class="meta-badge">{{ datum }}</span>{% endif %}
         {% if branche %}<span class="meta-badge">{{ branche|capitalize }}</span>{% endif %}
@@ -85,7 +85,7 @@
         {% if bundesland %}<span class="meta-badge">{{ bundesland|upper }}</span>{% endif %}
       </div>
     </div>
-    <div class="cover-footer"><div class="certification-badges"><span>GDPR‑compliant</span><span>EU AI Act‑ready</span><span>TÜV‑certified</span></div></div>
+    <div class="cover-footer"><div class="certification-badges"><span>GDPR-compliant</span><span>EU AI Act-ready</span><span>TÜV-certified</span></div></div>
   </section>
 
   <!-- TOC -->
@@ -111,12 +111,12 @@
     </div>
   </section>
 
-  <!-- Executive Summary -->
+  <!-- Chapters (1–13) -->
   {% if exec_summary_html %}
   <section class="chapter">
     <div class="chapter-header"><div id="chapter-1" class="chapter-number">Chapter 1</div><h1 class="chapter-title">Executive Summary</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">
-      <div class="highlight-box"><strong>Orientation:</strong> A calm narrative path from where you are today to safe, useful AI – no lists, no numeric KPIs.</div>
+      <div class="highlight-box"><strong>Orientation:</strong> A calm narrative path from where you are today to safe, useful AI – no lists, no numeric KPI tables.</div>
       {{ exec_summary_html|safe }}
     </div>
   </section>
@@ -286,9 +286,9 @@
   <section class="chapter" id="appendix-services">
     <div class="chapter-header"><h1 class="chapter-title">Services & Credentials</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">
-      <p>As a TÜV‑certified AI Manager, I help organisations introduce and operate AI safely, with strategy, evidence and GDPR compliance.</p>
+      <p>As a TÜV-certified AI Manager, I help organisations introduce and operate AI safely, with strategy, evidence and GDPR compliance.</p>
       <div class="info-box"><div class="info-box-title">What we do</div>Strategy & Audit · EU AI Act & GDPR · Governance & Evidence · Minimized liability risk</div>
-      <p style="margin-top:24px">Contact: <a href="mailto:contact@ai-security.now">contact@ai-security.now</a> · <a href="https://ai-security.now">ai‑security.now</a></p>
+      <p style="margin-top:24px">kontakt: <a href="mailto:kontakt@ki-sicherheit.jetzt">kontakt@ki-sicherheit.jetzt</a> · <a href="https://ki-sicherheit.jetzt">ki-sicherheit.jetzt</a></p>
     </div>
   </section>
 
@@ -298,7 +298,7 @@
     <div class="chapter-content">
       <div class="info-box"><div class="info-box-title">Feedback</div>Please tell us how to make this report even better – the form takes only a few minutes.</div>
       <p><a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Give Feedback</a></p>
-      <p style="color:var(--text-muted);font-size:9pt;margin-top:8px">© {{ copyright_year|default('2025', true) }} AI‑Security.now – GDPR & EU‑AI‑Act‑ready – Wolf Hohl</p>
+      <p style="color:var(--text-muted);font-size:9pt;margin-top:8px">© {{ copyright_year|default('2025', true) }} KI-Sicherheit.jetzt – GDPR & EU-AI-Act-ready – Wolf Hohl</p>
     </div>
   </section>
 

@@ -21,7 +21,7 @@
     html,body{
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
       font-size:10pt;line-height:1.65;color:var(--text-primary);background:var(--page-bg);
-      font-feature-settings:'kern' 1,'liga' 1;-webkit-font-smoothing:antialiased;width:100%;max-width:210mm;margin:0 auto
+      -webkit-font-smoothing:antialiased;width:100%;max-width:210mm;margin:0 auto
     }
     /* Titelseite */
     .cover{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--primary-50) 0%,#FFF 100%);page-break-after:always;position:relative;padding:var(--spacing-xl)}
@@ -129,7 +129,7 @@
     <div class="toc-content">
       <div class="toc-item"><span class="toc-chapter-number">Kapitel 1</span><a class="toc-chapter-title" href="#kapitel-1">Executive Summary</a></div>
       {% if business_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 2</span><a class="toc-chapter-title" href="#kapitel-2">Business Case</a></div>{% endif %}
-      {% if persona_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 3</span><a class="toc-chapter-title" href="#kapitel-3">Ihr KI-Readiness Profil</a></div>{% endif %}
+      {% if persona_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 3</span><a class="toc-chapter-title" href="#kapitel-3">Ihr KI-Readiness-Profil</a></div>{% endif %}
       {% if quick_wins_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 4</span><a class="toc-chapter-title" href="#kapitel-4">Quick Wins</a></div>{% endif %}
       {% if risks_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 5</span><a class="toc-chapter-title" href="#kapitel-5">Risikomanagement</a></div>{% endif %}
       {% if recommendations_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 6</span><a class="toc-chapter-title" href="#kapitel-6">Strategische Empfehlungen</a></div>{% endif %}
@@ -146,10 +146,252 @@
     </div>
   </section>
 
-  <!-- Kapitel-Sektionen - gekürzt für Übersicht -->
-  <!-- [Alle anderen Kapitel bleiben unverändert] -->
+  <!-- Kapitel 1: Executive Summary -->
+  {% if exec_summary_html or executive_summary_html %}
+  <section class="chapter" id="kapitel-1">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 1</div>
+      <h1 class="chapter-title">Executive Summary</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">
+      <div class="highlight-box"><strong>Orientierung:</strong> Ein ruhiger, narrativer Pfad von heute zu sicher nutzbarer KI – ohne Listen und ohne Zahlenkolonnen.</div>
+      {% if exec_summary_html %}{{ exec_summary_html|safe }}{% else %}{{ executive_summary_html|safe }}{% endif %}
+    </div>
+  </section>
+  {% endif %}
 
-  <!-- Feedback - KORRIGIERT -->
+  <!-- Kapitel 2: Business Case -->
+  {% if business_html %}
+  <section class="chapter" id="kapitel-2">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 2</div>
+      <h1 class="chapter-title">Business Case</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">{{ business_html|safe }}</div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 3: Readiness-Profil -->
+  {% if persona_html %}
+  <section class="chapter" id="kapitel-3">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 3</div>
+      <h1 class="chapter-title">Ihr KI-Readiness-Profil</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">
+      <div class="info-box tip"><div class="info-box-title">Ausgangspunkt</div>Ihr Profil macht Stärken sichtbar und fokussiert die nächsten sinnvollen Schritte.</div>
+      {{ persona_html|safe }}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 4: Quick Wins -->
+  {% if quick_wins_html %}
+  <section class="chapter" id="kapitel-4">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 4</div>
+      <h1 class="chapter-title">Quick Wins</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">
+      <div class="info-box success"><div class="info-box-title">Klein starten, Wirkung sehen</div>Piloten im echten Workflow, klare Freigaben, einfaches Feedback-Loop.</div>
+      {{ quick_wins_html|safe }}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 5: Risikomanagement -->
+  {% if risks_html %}
+  <section class="chapter" id="kapitel-5">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 5</div>
+      <h1 class="chapter-title">Risikomanagement</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">
+      <div class="info-box warning"><div class="info-box-title">Leitplanken</div>Klare Rollen, saubere Datenflüsse, dokumentierte Freigaben – beherrschbare Risiken.</div>
+      {{ risks_html|safe }}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 6: Strategische Empfehlungen -->
+  {% if recommendations_html %}
+  <section class="chapter" id="kapitel-6">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 6</div>
+      <h1 class="chapter-title">Strategische Empfehlungen</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">{{ recommendations_html|safe }}</div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 7: Roadmap -->
+  {% if roadmap_html %}
+  <section class="chapter" id="kapitel-7">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 7</div>
+      <h1 class="chapter-title">Implementierungs-Roadmap</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">{{ roadmap_html|safe }}</div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 8: Praxisbeispiele -->
+  {% if praxisbeispiel_html %}
+  <section class="chapter" id="kapitel-8">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 8</div>
+      <h1 class="chapter-title">Praxisbeispiele</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">
+      <div class="info-box success"><div class="info-box-title">Aus der Praxis</div>Konkrete Anwendungsfälle mit spürbarem Nutzen im Alltag.</div>
+      {{ praxisbeispiel_html|safe }}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 9: Coaching & Reflexion -->
+  {% if coach_html %}
+  <section class="chapter" id="kapitel-9">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 9</div>
+      <h1 class="chapter-title">Coaching & Reflexion</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">
+      <div class="info-box"><div class="info-box-title">Leitfragen</div>Kurze Impulse, die Prioritäten schärfen und Entscheidungen unterstützen.</div>
+      {{ coach_html|safe }}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 10: Leitidee & Gamechanger -->
+  {% if vision_html or gamechanger_html %}
+  <section class="chapter" id="kapitel-10">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 10</div>
+      <h1 class="chapter-title">Leitidee & Gamechanger</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">
+      {% if vision_html %}<h2>Leitidee</h2>{{ vision_html|safe }}{% endif %}
+      {% if gamechanger_html %}<h2>Innovation & Gamechanger</h2><div class="info-box success">{{ gamechanger_html|safe }}</div>{% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 11: Compliance -->
+  {% if compliance_html %}
+  <section class="chapter" id="kapitel-11">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 11</div>
+      <h1 class="chapter-title">Compliance & Rechtssicherheit</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">{{ compliance_html|safe }}</div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 12: Förderprogramme -->
+  {% if foerderprogramme_html or funding_rich_html or dynamic_funding_html or foerderprogramme_table %}
+  <section class="chapter" id="kapitel-12">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 12</div>
+      <h1 class="chapter-title">Förderprogramme</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">
+      <div class="info-box"><div class="info-box-title">Clever fördern lassen</div>Aktuelle Programme erleichtern Einstieg, Qualifizierung und Skalierung.</div>
+
+      {% if funding_rich_html is defined and funding_rich_html and funding_rich_html|trim %}
+        {{ funding_rich_html|safe }}
+      {% elif dynamic_funding_html is defined and dynamic_funding_html and dynamic_funding_html|trim %}
+        {{ dynamic_funding_html|safe }}
+      {% elif foerderprogramme_html %}
+        {{ foerderprogramme_html|safe }}
+      {% endif %}
+
+      {% if foerderprogramme_table is defined and foerderprogramme_table and foerderprogramme_table|length>0 %}
+        <table>
+          <thead><tr><th>Programm</th><th>Link</th></tr></thead>
+          <tbody>
+          {% for p in foerderprogramme_table %}
+            <tr>
+              <td>{{ p.name or p.title or 'Programm' }}</td>
+              <td>{% set u = p.url or p.link %}{% if u %}<a href="{{ u }}">{{ u }}</a>{% else %}-{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Kapitel 13: Tools -->
+  {% if tools_html or tools_rich_html or tools_table %}
+  <section class="chapter" id="kapitel-13">
+    <div class="chapter-header">
+      <div class="chapter-number">Kapitel 13</div>
+      <h1 class="chapter-title">KI-Tools & Software</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
+    </div>
+    <div class="chapter-content">
+      <div class="info-box"><div class="info-box-title">Weniger ist mehr</div>Einige robuste Tools mit klarer Zuständigkeit sind einer Tool-Flut überlegen.</div>
+
+      {% if tools_rich_html is defined and tools_rich_html and tools_rich_html|trim %}
+        {{ tools_rich_html|safe }}
+      {% elif tools_html %}
+        {{ tools_html|safe }}
+      {% endif %}
+
+      {% if tools_table is defined and tools_table and tools_table|length>0 %}
+        <table>
+          <thead><tr><th>Tool</th><th>Link</th></tr></thead>
+          <tbody>
+          {% for t in tools_table %}
+            <tr>
+              <td>{{ t.name or t.title or 'Tool' }}</td>
+              <td>{% set u = t.url or t.link %}{% if u %}<a href="{{ u }}">{{ u }}</a>{% else %}-{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Anhang: Glossar -->
+  <section class="chapter" id="anhang-glossar">
+    <div class="chapter-header"><h1 class="chapter-title">Glossar</h1><a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a></div>
+    <div class="chapter-content">
+      <h3>Begriffe</h3>
+      <p><strong>KI (Künstliche Intelligenz):</strong> Technologien, die aus Daten lernen und Entscheidungen mit Entwürfen/Empfehlungen unterstützen.</p>
+      <p><strong>DSGVO:</strong> EU-Verordnung zum Schutz personenbezogener Daten.</p>
+      <p><strong>DSFA:</strong> Datenschutz-Folgenabschätzung (DPIA).</p>
+      <p><strong>EU AI Act:</strong> EU-Verordnung mit Anforderungen und Risikoklassen für KI-Systeme.</p>
+    </div>
+  </section>
+
+  <!-- Anhang: Leistung & Nachweis -->
+  <section class="chapter" id="anhang-leistung">
+    <div class="chapter-header"><h1 class="chapter-title">Leistung & Nachweis</h1><a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a></div>
+    <div class="chapter-content">
+      <p>Als TÜV-zertifizierter KI-Manager unterstütze ich Organisationen bei Einführung und Betrieb von KI – strategisch, evidenzbasiert, DSGVO-konform.</p>
+      <div class="info-box"><div class="info-box-title">Was wir tun</div>Strategie & Audit · EU AI Act & DSGVO · Governance & Evidenz · Reduziertes Haftungsrisiko</div>
+      <p style="margin-top:24px">Kontakt: <a href="mailto:kontakt@ki-sicherheit.jetzt">kontakt@ki-sicherheit.jetzt</a> · <a href="https://ki-sicherheit.jetzt">ki-sicherheit.jetzt</a></p>
+    </div>
+  </section>
+
+  <!-- Anhang: Feedback -->
   <section class="chapter" id="anhang-feedback">
     <div class="chapter-header"><h1 class="chapter-title">Ihre Meinung zählt</h1><a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a></div>
     <div class="chapter-content">
