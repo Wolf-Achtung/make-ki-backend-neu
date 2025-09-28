@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import glob
+import io
 import os
 import re
 import logging
@@ -311,7 +312,7 @@ def get_template_variables(form_data: Dict[str, Any], lang: str='de') -> Dict[st
         "tools_table": form_data.get("tools", []),
 
         # Links
-        "feedback_link": "https://make.ki-sicherheit.jetzt/feedback",
+        "feedback_link": "https://make.ki-sicherheit.jetzt/feedback/feedback.html",
     }
     if vars["kpi_efficiency"] == 0:
         vars["kpi_efficiency"] = 1
@@ -323,27 +324,41 @@ def get_template_variables(form_data: Dict[str, Any], lang: str='de') -> Dict[st
 class PromptLoader:
     def __init__(self, directory: str = PROMPTS_DIR):
         self.dir = directory
+        # Jinja-Env nur für .jinja Templates:
         self.env = Environment(
             loader=FileSystemLoader([self.dir]),
             autoescape=False, trim_blocks=True, lstrip_blocks=True
         )
 
+    def _render_md_plain(self, text: str, ctx: Dict[str, Any]) -> str:
+        # sehr robuste, minimale Platzhalter-Substitution für {{ var }}
+        def repl(m):
+            key = m.group(1).strip()
+            val = ctx.get(key, "")
+            return str(val) if val is not None else ""
+        return re.sub(r"\{\{\s*([a-zA-Z0-9_\.]+)\s*\}\}", repl, text)
+
     def render(self, name: str, ctx: Dict[str, Any], lang: str) -> str:
         candidates = [
-            f"{name}_{lang}.md",
+            f"{name}_{lang}.md",  # 1) bevorzugt: .md (plain)
             f"{name}.md",
-            f"{name}_{lang}.jinja",
+            f"{name}_{lang}.jinja",  # 2) optional: .jinja (echtes Jinja)
             f"{name}.jinja",
         ]
         last_err = None
         for fn in candidates:
+            path = os.path.join(self.dir, fn)
             try:
-                tpl = self.env.get_template(fn)
-                return tpl.render(**ctx)
+                if fn.endswith(".md"):
+                    with io.open(path, "r", encoding="utf-8") as f:
+                        return self._render_md_plain(f.read(), ctx)
+                else:
+                    tpl = self.env.get_template(fn)
+                    return tpl.render(**ctx)
             except Exception as e:
                 last_err = e
                 continue
-        raise FileNotFoundError(f"Prompt nicht gefunden: {name} ({last_err})")
+        raise FileNotFoundError(f"Prompt nicht renderbar: {name} ({last_err})")
 
 def _gpt(prompt: str, section: str, lang="de") -> Optional[str]:
     if not _openai:
@@ -582,12 +597,7 @@ def analyze_briefing_enhanced(body: Dict[str, Any], lang: str = "de") -> Dict[st
 # Außenhaut: Direct-to-HTML Renderer (stabil für Railway)
 # -----------------------------------------------------------------------------
 def analyze_briefing(form_data: Dict[str, Any], lang: str = "de") -> str:
-    """
-    Generiert vollständiges HTML (für den PDF-Service).
-    """
     log.info("gpt_analyze loaded (direct): %s", os.path.join(BASE_DIR, "gpt_analyze.py"))
-
-    # Logge verfügbare Prompts (für schnelle Ursache-Findung im Deployment)
     _debug_list_prompts()
 
     env = make_env()
@@ -601,16 +611,29 @@ def analyze_briefing(form_data: Dict[str, Any], lang: str = "de") -> str:
             raise RuntimeError("Kein HTML-Template gefunden")
 
         ctx = analyze_briefing_enhanced(form_data, lang)
-        ctx = sanitize_narrative(ctx)   # → narrativer Fließtext, keine Listen
+        ctx = sanitize_narrative(ctx)   # <— bereits vorhanden
 
-        # Notfall-Guard: zentrale Sektionen nie leer lassen
-        def _minlen(x: str) -> int: return len((x or "").strip())
-        for k in ["exec_summary_html","business_html","quick_wins_html","risks_html","roadmap_html"]:
-            if _minlen(ctx.get(k,"")) < 80:
-                title = k.replace("_html","").replace("_"," ").title()
-                ctx[k] = ctx.get(k) or f"<p>Die Inhalte für <strong>{title}</strong> wurden vorbereitet.</p>"
+        # >>>>>>>>>>>>>>> HIER DEIN NEUER GUARD-BLOCK EINFÜGEN <<<<<<<<<<<<<<<
+        def _ensure_narrative(ctx, key, title):
+            if not isinstance(ctx.get(key), str) or len(ctx[key].strip()) < 80:
+                ctx[key] = (
+                    f"<p><strong>{title}:</strong> Dieser Abschnitt wurde vorläufig automatisch erzeugt. "
+                    f"Er enthält eine narrative, verständliche Beschreibung der nächsten "
+                    f"Schritte – ohne Aufzählungszeichen und ohne Zahlenkolonnen. "
+                    f"Die kuratierte Fassung wird im nächsten Lauf ergänzt.</p>"
+                )
 
-        # Legacy-Guard: alte Keys angleichen
+        for k, t in [
+            ("exec_summary_html","Executive Summary"),
+            ("business_html","Business Case"),
+            ("quick_wins_html","Quick Wins"),
+            ("risks_html","Risikomanagement"),
+            ("roadmap_html","Roadmap"),
+        ]:
+            _ensure_narrative(ctx, k, t)
+        # <<<<<<<<<<<<<<<< ENDE DEINES GUARD-BLOCKS <<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        # (Optional, falls noch Alt-Key auftauchen kann)
         if not ctx.get("quick_wins_html") and ctx.get("quickwins_html"):
             ctx["quick_wins_html"] = ctx["quickwins_html"]
 
@@ -624,5 +647,6 @@ def analyze_briefing(form_data: Dict[str, Any], lang: str = "de") -> str:
             "<p>Bei anhaltenden Problemen kontaktieren Sie: kontakt@ki-sicherheit.jetzt</p>"
             "</body></html>"
         )
+
 
 __all__ = ["analyze_briefing", "analyze_briefing_enhanced"]
