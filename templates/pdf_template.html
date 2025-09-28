@@ -7,878 +7,87 @@
   <style>
     /* ===== GOLD STANDARD Design System - Nur Blautöne ===== */
     :root {
-      /* Blau-Palette */
-      --primary-950: #020617;
-      --primary-900: #0F172A;
-      --primary-800: #1E293B;
-      --primary-700: #334155;
-      --primary-600: #475569;
-      --primary-500: #64748B;
-      --primary-400: #94A3B8;
-      --primary-300: #CBD5E1;
-      --primary-200: #E2E8F0;
-      --primary-100: #F1F5F9;
-      --primary-50:  #F8FAFC;
-      
-      /* Akzentfarben - Blautöne */
-      --accent-blue: #2563EB;
-      --accent-sky: #0EA5E9;
-      --accent-indigo: #4F46E5;
-      --accent-blue-light: #60A5FA;
-      --accent-blue-dark: #1E40AF;
-      
-      /* Status-Farben (minimal) */
-      --status-success: #10B981;
-      --status-warning: #F59E0B;
-      --status-danger: #DC2626;
-      
-      /* Neutrale Farben */
-      --gray-900: #111827;
-      --gray-800: #1F2937;
-      --gray-700: #374151;
-      --gray-600: #4B5563;
-      --gray-500: #6B7280;
-      --gray-400: #9CA3AF;
-      --gray-300: #D1D5DB;
-      --gray-200: #E5E7EB;
-      --gray-100: #F3F4F6;
-      --gray-50:  #F9FAFB;
-      
-      /* Layout */
-      --page-bg: #FFFFFF;
-      --text-primary: var(--gray-900);
-      --text-secondary: var(--gray-700);
-      --text-muted: var(--gray-500);
-      --border-color: var(--gray-200);
-      
-      /* Schatten */
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      
-      /* Abstände */
-      --spacing-xs: 4px;
-      --spacing-sm: 8px;
-      --spacing-md: 16px;
-      --spacing-lg: 24px;
-      --spacing-xl: 32px;
-      --spacing-2xl: 48px;
-    }
-
-    /* ===== Reset & Base ===== */
-    @page { 
-      size: A4; 
-      margin: 15mm 15mm 20mm 15mm;
-    }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    html, body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      font-size: 10pt;
-      line-height: 1.65;
-      color: var(--text-primary);
-      background: var(--page-bg);
-      font-feature-settings: 'kern' 1, 'liga' 1;
-      -webkit-font-smoothing: antialiased;
-      width: 100%;
-      max-width: 210mm;
-      margin: 0 auto;
-    }
-
-    /* ===== Titelseite ===== */
-    .cover {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      background: linear-gradient(180deg, var(--primary-50) 0%, #FFFFFF 100%);
-      page-break-after: always;
-      position: relative;
-      padding: var(--spacing-xl);
-    }
-    
-    .cover::before {
-      content: '';
-      position: absolute;
-      top: -100px;
-      right: -100px;
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, var(--primary-100) 0%, transparent 70%);
-      opacity: 0.5;
-      border-radius: 50%;
-    }
-
-    .logo-section {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: var(--spacing-lg);
-      margin-bottom: var(--spacing-xl);
-    }
-
-    .logo-container img {
-      height: 50px;
-      width: auto;
-      object-fit: contain;
-    }
-    
-    .cover-content {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 600px;
-      text-align: center;
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    
-    .cover h1 {
-      font-size: 32pt;
-      font-weight: 700;
-      color: var(--primary-900);
-      margin-bottom: var(--spacing-md);
-      letter-spacing: -0.02em;
-      line-height: 1.15;
-    }
-    
-    .cover-subtitle {
-      font-size: 14pt;
-      color: var(--gray-600);
-      margin-bottom: var(--spacing-xl);
-      font-weight: 400;
-      line-height: 1.4;
-    }
-
-    .cover-intro {
-      font-size: 11pt;
-      color: var(--accent-blue);
-      margin-bottom: var(--spacing-2xl);
-      padding: var(--spacing-md);
-      background: rgba(37, 99, 235, 0.05);
-      border-radius: 8px;
-      border-left: 3px solid var(--accent-blue);
-    }
-    
-    .cover-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--spacing-sm);
-      margin-bottom: var(--spacing-2xl);
-      justify-content: center;
-    }
-    
-    .meta-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: var(--spacing-sm) var(--spacing-md);
-      background: white;
-      border: 1px solid var(--primary-300);
-      border-radius: 20px;
-      font-size: 9pt;
-      font-weight: 500;
-      color: var(--primary-800);
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .score-display {
-      margin-top: var(--spacing-xl);
-      padding: var(--spacing-xl);
-      background: white;
-      border-radius: 12px;
-      box-shadow: var(--shadow-lg);
-      width: 100%;
-      max-width: 320px;
-      margin-left: auto;
-      margin-right: auto;
-      border: 1px solid var(--primary-200);
-    }
-    
-    .score-title {
-      font-size: 10pt;
-      color: var(--text-muted);
-      margin-bottom: var(--spacing-sm);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-weight: 500;
-    }
-    
-    .score-value {
-      font-size: 42pt;
-      font-weight: 700;
-      color: var(--accent-blue);
-      line-height: 1;
-      margin-bottom: var(--spacing-sm);
-    }
-    
-    .score-bar {
-      height: 8px;
-      background: var(--gray-200);
-      border-radius: 4px;
-      margin-top: var(--spacing-md);
-      overflow: hidden;
-    }
-    
-    .score-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent-sky), var(--accent-blue));
-      border-radius: 4px;
-    }
-
-    .cover-footer {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding-top: var(--spacing-lg);
-      border-top: 1px solid var(--gray-200);
-    }
-
-    .certification-badges {
-      display: flex;
-      gap: var(--spacing-md);
-      align-items: center;
-    }
-
-    .certification-badges span {
-      padding: var(--spacing-xs) var(--spacing-md);
-      background: var(--primary-50);
-      border: 1px solid var(--primary-200);
-      border-radius: 4px;
-      font-size: 8pt;
-      color: var(--primary-700);
-    }
-
-    /* ===== Inhaltsverzeichnis ===== */
-    .toc-page {
-      page-break-after: always;
-      padding: var(--spacing-2xl) 0;
-      min-height: 100vh;
-      background: linear-gradient(to bottom, var(--primary-50) 0%, #FFFFFF 10%);
-    }
-
-    .toc-header {
-      text-align: center;
-      margin-bottom: var(--spacing-2xl);
-    }
-
-    .toc-header h2 {
-      font-size: 24pt;
-      color: var(--primary-900);
-      margin-bottom: var(--spacing-sm);
-    }
-
-    .toc-content {
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    .toc-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: var(--spacing-md) var(--spacing-lg);
-      margin-bottom: var(--spacing-sm);
-      border-bottom: 1px solid var(--gray-200);
-    }
-
-    .toc-chapter-number {
-      color: var(--accent-blue);
-      font-weight: 600;
-      font-size: 9pt;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      min-width: 80px;
-    }
-
-    .toc-chapter-title {
-      flex-grow: 1;
-      margin: 0 var(--spacing-lg);
-      color: var(--text-primary);
-      font-size: 11pt;
-    }
-
-    .toc-page-number { display: none;
-      color: var(--text-muted);
-      font-size: 10pt;
-      font-weight: 500;
-      min-width: 30px;
-      text-align: right;
-    }
-
-    /* ===== Kapitel-Layout ===== */
-    .chapter {
-      page-break-before: always;
-      padding: var(--spacing-xl) 0;
-      width: 100%;
-      min-height: 100vh;
-      position: relative;
-    }
-    
-    .chapter:first-of-type {
-      page-break-before: auto;
-    }
-    
-    .chapter-header {
-      margin-bottom: var(--spacing-xl);
-      padding-bottom: var(--spacing-md);
-      border-bottom: 2px solid var(--primary-200);
-      position: relative;
-    }
-
-    .chapter-header::after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      width: 80px;
-      height: 2px;
-      background: var(--accent-blue);
-    }
-    
-    .chapter-number {
-      font-size: 9pt;
-      font-weight: 600;
-      color: var(--accent-blue);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: var(--spacing-xs);
-    }
-    
-    .chapter-title {
-      font-size: 22pt;
-      font-weight: 700;
-      color: var(--primary-900);
-      line-height: 1.2;
-    }
-    
-    .chapter-content {
-      width: 100%;
-      max-width: 100%;
-      padding-right: var(--spacing-md);
-    }
-
-    /* ===== Executive Summary ===== */
-    .executive-summary {
-      background: var(--primary-50);
-      padding: var(--spacing-xl);
-      border-radius: 12px;
-      margin-bottom: var(--spacing-lg);
-      border: 1px solid var(--primary-200);
-    }
-
-    .executive-summary-content p {
-      font-size: 10.5pt;
-      line-height: 1.7;
-      margin-bottom: var(--spacing-md);
-      color: var(--text-primary);
-    }
-
-    .executive-summary-content p.intro {
-      font-size: 11pt;
-      color: var(--accent-blue);
-      font-weight: 500;
-      margin-bottom: var(--spacing-lg);
-    }
-    
-    .executive-summary-content strong {
-      color: var(--accent-blue);
-      font-weight: 600;
-    }
-
-    .key-message {
-      background: white;
-      padding: var(--spacing-lg);
-      border-radius: 8px;
-      margin: var(--spacing-lg) 0;
-      border-left: 4px solid var(--accent-blue);
-    }
-
-    .key-message h3 {
-      color: var(--accent-blue);
-      font-size: 13pt;
-      margin-bottom: var(--spacing-sm);
-    }
-    
-    .key-insights {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: var(--spacing-md);
-      margin-top: var(--spacing-lg);
-    }
-    
-    .insight-card {
-      background: white;
-      padding: var(--spacing-md);
-      border-radius: 8px;
-      border-left: 3px solid var(--accent-blue);
-      box-shadow: var(--shadow-sm);
-      page-break-inside: avoid;
-    }
-    
-    .insight-label {
-      font-size: 8.5pt;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: var(--spacing-xs);
-      font-weight: 500;
-    }
-    
-    .insight-value {
-      font-size: 16pt;
-      font-weight: 700;
-      color: var(--primary-800);
-      line-height: 1;
-    }
-    
-    .insight-description {
-      font-size: 9pt;
-      color: var(--text-secondary);
-      margin-top: var(--spacing-xs);
-    }
-
-    /* ===== Inhaltselemente ===== */
-    h2 {
-      font-size: 16pt;
-      font-weight: 600;
-      color: var(--primary-800);
-      margin: var(--spacing-lg) 0 var(--spacing-md) 0;
-      page-break-after: avoid;
-    }
-    
-    h3 {
-      font-size: 13pt;
-      font-weight: 600;
-      color: var(--primary-700);
-      margin: var(--spacing-lg) 0 var(--spacing-sm) 0;
-      page-break-after: avoid;
-    }
-    
-    h4 {
-      font-size: 11pt;
-      font-weight: 600;
-      color: var(--primary-700);
-      margin: var(--spacing-md) 0 var(--spacing-sm) 0;
-    }
-    
-    p {
-      margin-bottom: var(--spacing-sm);
-      orphans: 3;
-      widows: 3;
-    }
-    
-    strong {
-      font-weight: 600;
-      color: var(--primary-900);
-    }
-    
-    a {
-      color: var(--accent-sky);
-      text-decoration: none;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.2s ease;
-    }
-
-    /* ===== Listen ===== */
-    ul, ol {
-      margin: var(--spacing-sm) 0 var(--spacing-md) var(--spacing-lg);
-    }
-    
-    li {
-      margin-bottom: var(--spacing-xs);
-      line-height: 1.65;
-      color: var(--text-primary);
-    }
-    
-    li::marker {
-      color: var(--accent-blue);
-    }
-
-    /* ===== Tabellen ===== */
-    table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      margin: var(--spacing-md) 0;
-      box-shadow: var(--shadow-sm);
-      border-radius: 8px;
-      overflow: hidden;
-      font-size: 9pt;
-      page-break-inside: avoid;
-    }
-    
-    thead {
-      background: var(--primary-800);
-      color: white;
-    }
-    
-    th {
-      padding: var(--spacing-sm) var(--spacing-md);
-      text-align: left;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      font-size: 9pt;
-    }
-    
-    td {
-      padding: var(--spacing-sm) var(--spacing-md);
-      border-bottom: 1px solid var(--gray-100);
-      color: var(--text-primary);
-    }
-    
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
-    
-    tbody tr:nth-child(even) {
-      background: var(--gray-50);
-    }
-
-    /* ===== Info-Boxen ===== */
-    .info-box {
-      background: var(--primary-50);
-      border: 1px solid var(--primary-200);
-      border-radius: 8px;
-      padding: var(--spacing-md);
-      margin: var(--spacing-md) 0;
-      page-break-inside: avoid;
-    }
-    
-    .info-box.tip {
-      background: var(--primary-50);
-      border-color: var(--accent-blue);
-      border-left-width: 3px;
-    }
-    
-    .info-box.warning {
-      background: #FEF3C7;
-      border-color: var(--status-warning);
-      border-left-width: 3px;
-    }
-    
-    .info-box.success {
-      background: #D1FAE5;
-      border-color: var(--status-success);
-      border-left-width: 3px;
-    }
-    
-    .info-box-title {
-      font-weight: 600;
-      font-size: 10.5pt;
-      margin-bottom: var(--spacing-xs);
-      color: var(--primary-900);
-    }
-
-    /* ===== Fortschrittsanzeigen ===== */
-    .progress-indicator {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      margin: var(--spacing-md) 0;
-    }
-    
-    .progress-label {
-      min-width: 120px;
-      font-size: 9pt;
-      color: var(--text-secondary);
-    }
-    
-    .progress-bar {
-      flex: 1;
-      height: 6px;
-      background: var(--gray-200);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent-sky), var(--accent-blue));
-      border-radius: 3px;
-    }
-    
-    .progress-value {
-      min-width: 50px;
-      text-align: right;
-      font-weight: 600;
-      color: var(--primary-800);
-      font-size: 9pt;
-    }
-
-    /* ===== Tool-Karten ===== */
-    .tool-card {
-      padding: var(--spacing-md);
-      background: var(--gray-50);
-      border-radius: 8px;
-      margin-bottom: var(--spacing-md);
-      border: 1px solid var(--gray-200);
-      page-break-inside: avoid;
-    }
-    
-    .tool-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: var(--spacing-sm);
-    }
-    
-    .tool-header h4 {
-      color: var(--primary-900);
-      font-size: 11pt;
-      margin: 0;
-    }
-    
-    .fit-score {
-      background: var(--accent-blue);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 8pt;
-      font-weight: 600;
-    }
-
-    /* ===== Highlight-Box ===== */
-    .highlight-box {
-      background: var(--primary-50);
-      border-left: 4px solid var(--accent-blue);
-      padding: var(--spacing-md);
-      margin: var(--spacing-md) 0;
-      border-radius: 0 8px 8px 0;
-    }
-
-    .highlight-box strong {
-      color: var(--accent-blue);
-    }
-
-    /* ===== Roadmap-Phasen ===== */
-    .roadmap-phase {
-      position: relative;
-      padding-left: var(--spacing-xl);
-      margin-bottom: var(--spacing-lg);
-      padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) var(--spacing-xl);
-    }
-
-    .roadmap-phase::before {
-      content: '';
-      position: absolute;
-      left: 8px;
-      top: 0;
-      bottom: -var(--spacing-lg);
-      width: 2px;
-      background: var(--primary-300);
-    }
-
-    .roadmap-phase::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 20px;
-      width: 18px;
-      height: 18px;
-      background: var(--accent-blue);
-      border: 3px solid white;
-      border-radius: 50%;
-      box-shadow: var(--shadow-md);
-    }
-
-    /* ===== Coaching-Box ===== */
-    .coaching-box {
-      background: var(--primary-50);
-      padding: var(--spacing-lg);
-      border-radius: 12px;
-      margin: var(--spacing-lg) 0;
-      border: 1px solid var(--primary-200);
-    }
-
-    .coaching-box h3 {
-      color: var(--accent-blue);
-      margin-bottom: var(--spacing-md);
-    }
-
-    .coaching-question {
-      background: white;
-      padding: var(--spacing-md);
-      margin: var(--spacing-sm) 0;
-      border-radius: 8px;
-      border-left: 3px solid var(--accent-sky);
-      box-shadow: var(--shadow-sm);
-    }
-
-    /* ===== Glossar-Seite ===== */
-    .glossary-page {
-      page-break-before: always;
-      padding: var(--spacing-xl) 0;
-      min-height: 100vh;
-    }
-
-    .glossary-term {
-      margin-bottom: var(--spacing-md);
-      padding-bottom: var(--spacing-sm);
-      border-bottom: 1px solid var(--gray-200);
-    }
-
-    .glossary-term strong {
-      color: var(--accent-blue);
-      font-weight: 600;
-    }
-
-    /* ===== Leistungsseite ===== */
-    .services-page {
-      page-break-before: always;
-      padding: var(--spacing-xl) 0;
-      min-height: 100vh;
-    }
-
-    .service-list {
-      background: var(--primary-50);
-      padding: var(--spacing-lg);
-      border-radius: 8px;
-      margin: var(--spacing-lg) 0;
-    }
-
-    .service-item {
-      padding: var(--spacing-md) 0;
-      border-bottom: 1px solid var(--primary-200);
-    }
-
-    .service-item:last-child {
-      border-bottom: none;
-    }
-
-    .service-item strong {
-      color: var(--accent-blue);
-    }
-
-    /* ===== Feedback-Seite ===== */
-    .feedback-page {
-      page-break-before: always;
-      padding: var(--spacing-xl) 0;
-      min-height: 100vh;
-      background: linear-gradient(to bottom, var(--primary-50) 0%, #FFFFFF 20%);
-    }
-
-    .feedback-box {
-      background: white;
-      padding: var(--spacing-2xl);
-      border-radius: 12px;
-      box-shadow: var(--shadow-lg);
-      text-align: center;
-      max-width: 500px;
-      margin: var(--spacing-2xl) auto;
-      border: 1px solid var(--primary-200);
-    }
-
-    .feedback-title {
-      font-size: 18pt;
-      color: var(--primary-900);
-      margin-bottom: var(--spacing-md);
-    }
-
-    .feedback-link {
-      display: inline-block;
-      padding: var(--spacing-md) var(--spacing-xl);
-      background: var(--accent-blue);
-      color: white;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      margin-top: var(--spacing-lg);
-      transition: background 0.2s ease;
-    }
-
-    .feedback-link:hover {
-      background: var(--accent-blue-dark);
-    }
-
-    .contact-info {
-      margin-top: var(--spacing-2xl);
-      padding-top: var(--spacing-lg);
-      border-top: 1px solid var(--gray-200);
-    }
-
-    /* ===== Footer ===== */
-    .footer {
-      position: fixed;
-      bottom: 10mm;
-      left: 15mm;
-      right: 15mm;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: var(--spacing-sm);
-      border-top: 1px solid var(--gray-200);
-      font-size: 8pt;
-      color: var(--text-muted);
-    }
-    
-    .footer-left {
-      flex: 1;
-    }
-    
-    .footer-center {
-      text-align: center;
-      font-weight: 600;
-      color: var(--primary-700);
-    }
-    
-    .footer-right {
-      flex: 1;
-      text-align: right;
-    }
-
-    /* ===== Print-Optimierungen ===== */
-    @media print {
-      body {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-        color-adjust: exact;
-      }
-      
-      .chapter {
-        page-break-before: always;
-      }
-      
-      .info-box, .insight-card, table, .tool-card {
-        page-break-inside: avoid;
-      }
-      
-      h2, h3, h4 {
-        page-break-after: avoid;
-      }
-      
-      .chapter-content {
-        padding-right: 10mm;
-      }
-    }
-  
-    /* Anchor & Back-to-TOC helpers */
-    .back-to-toc {
-      font-size: 9pt;
-      color: var(--text-muted);
-      text-decoration: none;
-      margin-left: 8px;
-    }
-    .back-to-toc:hover { text-decoration: underline; }
-    .toc-chapter-title {
-      text-decoration: none;
-    }
-    .toc-chapter-title:hover {
-      text-decoration: underline;
-    }
-    @media print {
-      .back-to-toc { display: none !important; }
-      .footer-screen { display: none !important; }
-    }
-    
+      --primary-950:#020617;--primary-900:#0F172A;--primary-800:#1E293B;--primary-700:#334155;--primary-600:#475569;
+      --primary-500:#64748B;--primary-400:#94A3B8;--primary-300:#CBD5E1;--primary-200:#E2E8F0;--primary-100:#F1F5F9;--primary-50:#F8FAFC;
+      --accent-blue:#2563EB;--accent-sky:#0EA5E9;--accent-indigo:#4F46E5;--accent-blue-light:#60A5FA;--accent-blue-dark:#1E40AF;
+      --status-success:#10B981;--status-warning:#F59E0B;--status-danger:#DC2626;
+      --gray-900:#111827;--gray-800:#1F2937;--gray-700:#374151;--gray-600:#4B5563;--gray-500:#6B7280;--gray-400:#9CA3AF;--gray-300:#D1D5DB;--gray-200:#E5E7EB;--gray-100:#F3F4F6;--gray-50:#F9FAFB;
+      --page-bg:#FFFFFF;--text-primary:var(--gray-900);--text-secondary:var(--gray-700);--text-muted:var(--gray-500);--border-color:var(--gray-200);
+      --shadow-sm:0 1px 2px rgba(0,0,0,.05);--shadow-md:0 4px 6px -1px rgba(0,0,0,.1);--shadow-lg:0 10px 15px -3px rgba(0,0,0,.1);
+      --spacing-xs:4px;--spacing-sm:8px;--spacing-md:16px;--spacing-lg:24px;--spacing-xl:32px;--spacing-2xl:48px
+    }
+    @page{size:A4;margin:15mm 15mm 20mm 15mm}
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+      font-size:10pt;line-height:1.65;color:var(--text-primary);background:var(--page-bg);
+      font-feature-settings:'kern' 1,'liga' 1;-webkit-font-smoothing:antialiased;width:100%;max-width:210mm;margin:0 auto
+    }
+    /* Titelseite */
+    .cover{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--primary-50) 0%,#FFF 100%);page-break-after:always;position:relative;padding:var(--spacing-xl)}
+    .cover::before{content:'';position:absolute;top:-100px;right:-100px;width:400px;height:400px;background:radial-gradient(circle,var(--primary-100) 0%,transparent 70%);opacity:.5;border-radius:50%}
+    .logo-section{display:flex;justify-content:center;align-items:center;gap:var(--spacing-lg);margin-bottom:var(--spacing-xl)}
+    .logo-container img{height:50px;width:auto;object-fit:contain}
+    .cover-content{position:relative;z-index:1;width:100%;max-width:600px;text-align:center;flex-grow:1;display:flex;flex-direction:column;justify-content:center}
+    .cover h1{font-size:32pt;font-weight:700;color:var(--primary-900);margin-bottom:var(--spacing-md);letter-spacing:-.02em;line-height:1.15}
+    .cover-subtitle{font-size:14pt;color:var(--gray-600);margin-bottom:var(--spacing-xl);font-weight:400;line-height:1.4}
+    .cover-intro{font-size:11pt;color:var(--accent-blue);margin-bottom:var(--spacing-2xl);padding:var(--spacing-md);background:rgba(37,99,235,.05);border-radius:8px;border-left:3px solid var(--accent-blue)}
+    .cover-meta{display:flex;flex-wrap:wrap;gap:var(--spacing-sm);margin-bottom:var(--spacing-2xl);justify-content:center}
+    .meta-badge{display:inline-flex;align-items:center;padding:var(--spacing-sm) var(--spacing-md);background:#FFF;border:1px solid var(--primary-300);border-radius:20px;font-size:9pt;font-weight:500;color:var(--primary-800);box-shadow:var(--shadow-sm)}
+    .cover-footer{width:100%;display:flex;justify-content:center;align-items:center;padding-top:var(--spacing-lg);border-top:1px solid var(--gray-200)}
+    .certification-badges{display:flex;gap:var(--spacing-md);align-items:center}
+    .certification-badges span{padding:var(--spacing-xs) var(--spacing-md);background:var(--primary-50);border:1px solid var(--primary-200);border-radius:4px;font-size:8pt;color:var(--primary-700)}
+    /* Inhaltsverzeichnis */
+    .toc-page{page-break-after:always;padding:var(--spacing-2xl) 0;min-height:100vh;background:linear-gradient(to bottom,var(--primary-50) 0%,#FFF 10%)}
+    .toc-header{text-align:center;margin-bottom:var(--spacing-2xl)}
+    .toc-header h2{font-size:24pt;color:var(--primary-900);margin-bottom:var(--spacing-sm)}
+    .toc-content{max-width:600px;margin:0 auto}
+    .toc-item{display:flex;justify-content:space-between;align-items:center;padding:var(--spacing-md) var(--spacing-lg);margin-bottom:var(--spacing-sm);border-bottom:1px solid var(--gray-200)}
+    .toc-chapter-number{color:var(--accent-blue);font-weight:600;font-size:9pt;text-transform:uppercase;letter-spacing:.05em;min-width:80px}
+    .toc-chapter-title{flex-grow:1;margin:0 var(--spacing-lg);color:var(--text-primary);font-size:11pt;text-decoration:none}
+    .toc-chapter-title:hover{text-decoration:underline}
+    .toc-page-number{display:none}
+    /* Kapitel */
+    .chapter{page-break-before:always;padding:var(--spacing-xl) 0;width:100%;min-height:100vh;position:relative}
+    .chapter:first-of-type{page-break-before:auto}
+    .chapter-header{margin-bottom:var(--spacing-xl);padding-bottom:var(--spacing-md);border-bottom:2px solid var(--primary-200);position:relative}
+    .chapter-header::after{content:'';position:absolute;bottom:-2px;left:0;width:80px;height:2px;background:var(--accent-blue)}
+    .chapter-number{font-size:9pt;font-weight:600;color:var(--accent-blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:var(--spacing-xs)}
+    .chapter-title{font-size:22pt;font-weight:700;color:var(--primary-900);line-height:1.2}
+    .chapter-content{width:100%;max-width:100%;padding-right:var(--spacing-md)}
+    /* Inhaltselemente */
+    h2{font-size:16pt;font-weight:600;color:var(--primary-800);margin:var(--spacing-lg) 0 var(--spacing-md);page-break-after:avoid}
+    h3{font-size:13pt;font-weight:600;color:var(--primary-700);margin:var(--spacing-lg) 0 var(--spacing-sm);page-break-after:avoid}
+    h4{font-size:11pt;font-weight:600;color:var(--primary-700);margin:var(--spacing-md) 0 var(--spacing-sm)}
+    p{margin-bottom:var(--spacing-sm);orphans:3;widows:3}
+    strong{font-weight:600;color:var(--primary-900)}
+    a{color:var(--accent-sky);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s ease}
+    /* Info-Boxen */
+    .info-box{background:var(--primary-50);border:1px solid var(--primary-200);border-radius:8px;padding:var(--spacing-md);margin:var(--spacing-md) 0;page-break-inside:avoid}
+    .info-box.tip{background:var(--primary-50);border-color:var(--accent-blue);border-left-width:3px}
+    .info-box.warning{background:#FEF3C7;border-color:var(--status-warning);border-left-width:3px}
+    .info-box.success{background:#D1FAE5;border-color:var(--status-success);border-left-width:3px}
+    .info-box-title{font-weight:600;font-size:10.5pt;margin-bottom:var(--spacing-xs);color:var(--primary-900)}
+    .highlight-box{background:var(--primary-50);border-left:4px solid var(--accent-blue);padding:var(--spacing-md);margin:var(--spacing-md) 0;border-radius:0 8px 8px 0}
+    .highlight-box strong{color:var(--accent-blue)}
+    /* Tabellen (nur für optionale Link-Listen) */
+    table{width:100%;border-collapse:separate;border-spacing:0;margin:var(--spacing-md) 0;box-shadow:var(--shadow-sm);border-radius:8px;overflow:hidden;font-size:9pt;page-break-inside:avoid}
+    thead{background:var(--primary-800);color:#FFF}
+    th{padding:var(--spacing-sm) var(--spacing-md);text-align:left;font-weight:600;letter-spacing:.02em;font-size:9pt}
+    td{padding:var(--spacing-sm) var(--spacing-md);border-bottom:1px solid var(--gray-100);color:var(--text-primary)}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:nth-child(even){background:var(--gray-50)}
+    /* Print */
+    @media print{
+      body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
+      .chapter{page-break-before:always}
+      .info-box,table{page-break-inside:avoid}
+      h2,h3,h4{page-break-after:avoid}
+      .chapter-content{padding-right:10mm}
+    }
+    .back-to-toc{font-size:9pt;color:var(--text-muted);text-decoration:none;margin-left:8px}
+    .back-to-toc:hover{text-decoration:underline}
+    @media print{.back-to-toc{display:none!important}}
   </style>
 </head>
 <body>
@@ -887,176 +96,54 @@
   <section class="cover">
     <div class="logo-section">
       <div class="logo-container">
-        <!-- Logo-Platzhalter - ersetzen Sie mit echten Logos -->
-        <img src="ki-sicherheit-logo.webp" alt="KI-Sicherheit.jetzt" />
+        <img src="ki-sicherheit-logo.webp" alt="KI-Sicherheit.jetzt"/>
       </div>
     </div>
 
     <div class="cover-content">
       <h1>{{ (meta|default({})).title|default('KI-Statusbericht & Handlungsempfehlungen', true) }}</h1>
-      <div class="cover-subtitle">
-        Ihr strukturierter Weg zur erfolgreichen KI-Integration
-      </div>
-      
+      <div class="cover-subtitle">Ihr strukturierter Weg zur erfolgreichen KI‑Integration</div>
       <div class="cover-intro">
-        Wir begleiten Sie bei jedem Schritt Ihrer KI-Transformation. 
-        Dieser Report zeigt Ihnen konkrete Wege und praktische Lösungen 
-        für Ihre individuellen Herausforderungen.
+        Wir begleiten Sie bei jedem Schritt Ihrer KI‑Transformation. Dieser Report zeigt narrative Empfehlungen,
+        die ohne Bullet‑Listen, Zahlen oder Prozentangaben auskommen – klar, warm und umsetzbar.
       </div>
-      
       <div class="cover-meta">
-        {% if now %}<span class="meta-badge">📅 {{ now().strftime('%d.%m.%Y') }}</span>{% endif %}
-        {% if branche %}<span class="meta-badge">🏢 {{ branche|capitalize }}</span>{% endif %}
-        {% if unternehmensgroesse %}<span class="meta-badge">👥 {{ company_size_label|default(unternehmensgroesse, true) }}</span>{% endif %}
-        {% if bundesland %}<span class="meta-badge">📍 {{ bundesland|upper }}</span>{% endif %}
+        {% if now %}<span class="meta-badge">{{ now().strftime('%d.%m.%Y') }}</span>{% endif %}
+        {% if branche %}<span class="meta-badge">{{ branche|capitalize }}</span>{% endif %}
+        {% if unternehmensgroesse or company_size_label %}<span class="meta-badge">{{ company_size_label|default(unternehmensgroesse, true) }}</span>{% endif %}
+        {% if bundesland %}<span class="meta-badge">{{ bundesland|upper }}</span>{% endif %}
       </div>
-      
-      {% if score_percent %}
-      <div class="score-display">
-        <div class="score-title">Ihr KI-Reifegrad</div>
-        <div class="score-value">{{ score_percent }}%</div>
-        <div class="score-bar">
-          <div class="score-fill" style="width: {{ score_percent }}%"></div>
-        </div>
-      </div>
-      {% endif %}
     </div>
 
     <div class="cover-footer">
       <div class="certification-badges">
-        <span>DSGVO-konform</span>
-        <span>EU AI Act-ready</span>
-        <span>TÜV-zertifiziert</span>
+        <span>DSGVO‑konform</span>
+        <span>EU AI Act‑ready</span>
+        <span>TÜV‑zertifiziert</span>
       </div>
     </div>
   </section>
 
   <!-- Inhaltsverzeichnis -->
   <section class="toc-page" id="inhalt">
-    <div class="toc-header">
-      <h2>Inhaltsverzeichnis</h2>
-    </div>
-
+    <div class="toc-header"><h2>Inhaltsverzeichnis</h2></div>
     <div class="toc-content">
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 1</span>
-        <a class="toc-chapter-title" href="#kapitel-1">Executive Summary</a>
-        <span class="toc-page-number">3</span>
-      </div>
-      
-      {% if business_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 2</span>
-        <a class="toc-chapter-title" href="#kapitel-2">Business Case</a>
-        <span class="toc-page-number">4</span>
-      </div>
-      {% endif %}
-      
-      {% if persona_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 3</span>
-        <a class="toc-chapter-title" href="#kapitel-3">Ihr KI-Readiness Profil</a>
-        <span class="toc-page-number">5</span>
-      </div>
-      {% endif %}
-      
-      {% if quick_wins_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 4</span>
-        <a class="toc-chapter-title" href="#kapitel-4">Quick Wins</a>
-        <span class="toc-page-number">6</span>
-      </div>
-      {% endif %}
-      
-      {% if risks_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 5</span>
-        <a class="toc-chapter-title" href="#kapitel-5">Risikomanagement</a>
-        <span class="toc-page-number">7</span>
-      </div>
-      {% endif %}
-      
-      {% if recommendations_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 6</span>
-        <a class="toc-chapter-title" href="#kapitel-6">Strategische Empfehlungen</a>
-        <span class="toc-page-number">8</span>
-      </div>
-      {% endif %}
-      
-      {% if roadmap_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 7</span>
-        <a class="toc-chapter-title" href="#kapitel-7">Implementierungs-Roadmap</a>
-        <span class="toc-page-number">9</span>
-      </div>
-      {% endif %}
-      
-      {% if praxisbeispiel_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 8</span>
-        <a class="toc-chapter-title" href="#kapitel-8">Praxisbeispiele</a>
-        <span class="toc-page-number">10</span>
-      </div>
-      {% endif %}
-      
-      {% if coach_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 9</span>
-        <a class="toc-chapter-title" href="#kapitel-9">Coaching & Reflexion</a>
-        <span class="toc-page-number">11</span>
-      </div>
-      {% endif %}
-      
-      {% if vision_html or gamechanger_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 10</span>
-        <a class="toc-chapter-title" href="#kapitel-10">Vision & Gamechanger</a>
-        <span class="toc-page-number">12</span>
-      </div>
-      {% endif %}
-      
-      {% if compliance_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 11</span>
-        <a class="toc-chapter-title" href="#kapitel-11">Compliance & Rechtssicherheit</a>
-        <span class="toc-page-number">13</span>
-      </div>
-      {% endif %}
-      
-      {% if foerderprogramme_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 12</span>
-        <a class="toc-chapter-title" href="#kapitel-12">Förderprogramme</a>
-        <span class="toc-page-number">14</span>
-      </div>
-      {% endif %}
-      
-      {% if tools_html %}
-      <div class="toc-item">
-        <span class="toc-chapter-number">Kapitel 13</span>
-        <a class="toc-chapter-title" href="#kapitel-13">KI-Tools & Software</a>
-        <span class="toc-page-number">15</span>
-      </div>
-      {% endif %}
-      
-      <div class="toc-item">
-        <span class="toc-chapter-number">Anhang</span>
-        <a class="toc-chapter-title" href="#anhang-glossar">Glossar</a>
-        <span class="toc-page-number">16</span>
-      </div>
-      
-      <div class="toc-item">
-        <span class="toc-chapter-number"></span>
-        <a class="toc-chapter-title" href="#anhang-leistung">Leistung & Nachweis</a>
-        <span class="toc-page-number">17</span>
-      </div>
-      
-      <div class="toc-item">
-        <span class="toc-chapter-number"></span>
-        <a class="toc-chapter-title" href="#anhang-feedback">Ihre Meinung zählt</a>
-        <span class="toc-page-number">18</span>
-      </div>
+      <div class="toc-item"><span class="toc-chapter-number">Kapitel 1</span><a class="toc-chapter-title" href="#kapitel-1">Executive Summary</a></div>
+      {% if business_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 2</span><a class="toc-chapter-title" href="#kapitel-2">Business Case</a></div>{% endif %}
+      {% if persona_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 3</span><a class="toc-chapter-title" href="#kapitel-3">Ihr KI‑Readiness Profil</a></div>{% endif %}
+      {% if quick_wins_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 4</span><a class="toc-chapter-title" href="#kapitel-4">Quick Wins</a></div>{% endif %}
+      {% if risks_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 5</span><a class="toc-chapter-title" href="#kapitel-5">Risikomanagement</a></div>{% endif %}
+      {% if recommendations_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 6</span><a class="toc-chapter-title" href="#kapitel-6">Strategische Empfehlungen</a></div>{% endif %}
+      {% if roadmap_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 7</span><a class="toc-chapter-title" href="#kapitel-7">Implementierungs‑Roadmap</a></div>{% endif %}
+      {% if praxisbeispiel_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 8</span><a class="toc-chapter-title" href="#kapitel-8">Praxisbeispiele</a></div>{% endif %}
+      {% if coach_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 9</span><a class="toc-chapter-title" href="#kapitel-9">Coaching & Reflexion</a></div>{% endif %}
+      {% if vision_html or gamechanger_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 10</span><a class="toc-chapter-title" href="#kapitel-10">Leitidee & Gamechanger</a></div>{% endif %}
+      {% if compliance_html %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 11</span><a class="toc-chapter-title" href="#kapitel-11">Compliance & Rechtssicherheit</a></div>{% endif %}
+      {% if foerderprogramme_html or funding_rich_html or dynamic_funding_html or foerderprogramme_table %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 12</span><a class="toc-chapter-title" href="#kapitel-12">Förderprogramme</a></div>{% endif %}
+      {% if tools_html or tools_rich_html or tools_table %}<div class="toc-item"><span class="toc-chapter-number">Kapitel 13</span><a class="toc-chapter-title" href="#kapitel-13">KI‑Tools & Software</a></div>{% endif %}
+      <div class="toc-item"><span class="toc-chapter-number">Anhang</span><a class="toc-chapter-title" href="#anhang-glossar">Glossar</a></div>
+      <div class="toc-item"><span class="toc-chapter-number"></span><a class="toc-chapter-title" href="#anhang-leistung">Leistung & Nachweis</a></div>
+      <div class="toc-item"><span class="toc-chapter-number"></span><a class="toc-chapter-title" href="#anhang-feedback">Ihre Meinung zählt</a></div>
     </div>
   </section>
 
@@ -1066,71 +153,23 @@
     <div class="chapter-header">
       <div id="kapitel-1" class="chapter-number">Kapitel 1</div>
       <h1 class="chapter-title">Executive Summary</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
     <div class="chapter-content">
-      <div class="executive-summary">
-        <div class="executive-summary-content">
-          <p class="intro">
-            Dieser Report zeigt Ihnen den optimalen Weg zu Ihrer erfolgreichen KI-Integration. 
-            Basierend auf Ihrer individuellen Situation haben wir konkrete Handlungsempfehlungen 
-            entwickelt, die Sie direkt umsetzen können.
-          </p>
-          {{ exec_summary_html|safe }}
-        </div>
-      </div>
-
-      <div class="key-message">
-        <h3>Ihre wichtigsten Potenziale auf einen Blick</h3>
-        <p>
-          Mit Ihrer aktuellen digitalen Reife und den richtigen KI-Werkzeugen können Sie 
-          Ihre Effizienz signifikant steigern und neue Geschäftsfelder erschließen. 
-          Die kommenden Seiten zeigen Ihnen genau, wie das gelingt.
-        </p>
-      </div>
-      
-      <div class="key-insights">
-        <div class="insight-card">
-          <div class="insight-label">Digitalisierung</div>
-          <div class="insight-value">{{ digitalisierungsgrad|default(5) }}/10</div>
-          <div class="insight-description">{{ 'Exzellent' if digitalisierungsgrad|default(5) >= 8 else 'Gut aufgestellt' if digitalisierungsgrad|default(5) >= 6 else 'Potenzial vorhanden' }}</div>
-        </div>
-        
-        <div class="insight-card">
-          <div class="insight-label">Automatisierung</div>
-          <div class="insight-value">{{ automatisierungsgrad|default('mittel')|capitalize }}</div>
-          <div class="insight-description">Optimierungspotenzial erkannt</div>
-        </div>
-        
-        <div class="insight-card">
-          <div class="insight-label">Innovation</div>
-          <div class="insight-value">{{ risikofreude|default(3) }}/5</div>
-          <div class="insight-description">{{ 'Innovationsführer' if risikofreude|default(3) >= 4 else 'Progressiv' if risikofreude|default(3) >= 3 else 'Strukturiert' }}</div>
-        </div>
-        
-        <div class="insight-card">
-          <div class="insight-label">ROI-Potenzial</div>
-          <div class="insight-value">{{ kpi_roi_months|default(12) }} Monate</div>
-          <div class="insight-description">Schnelle Amortisation</div>
-        </div>
-      </div>
+      <div class="highlight-box"><strong>Orientierung:</strong> Der Bericht fasst Ihren Ausgangspunkt zusammen und leitet daraus einen pragmatischen Weg ab – verständlich, risikoarm und alltagstauglich.</div>
+      {{ exec_summary_html|safe }}
     </div>
   </section>
   {% endif %}
 
-  <!-- Weitere Kapitel -->
   {% if business_html %}
   <section class="chapter">
     <div class="chapter-header">
       <div id="kapitel-2" class="chapter-number">Kapitel 2</div>
       <h1 class="chapter-title">Business Case</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
-    <div class="chapter-content">
-      {{ business_html|safe }}
-    </div>
+    <div class="chapter-content">{{ business_html|safe }}</div>
   </section>
   {% endif %}
 
@@ -1138,16 +177,11 @@
   <section class="chapter">
     <div class="chapter-header">
       <div id="kapitel-3" class="chapter-number">Kapitel 3</div>
-      <h1 class="chapter-title">Ihr KI-Readiness Profil</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <h1 class="chapter-title">Ihr KI‑Readiness Profil</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
     <div class="chapter-content">
-      <div class="info-box tip">
-        <div class="info-box-title">Ihre individuelle Ausgangslage</div>
-        Jedes Unternehmen hat seinen eigenen Weg zur KI-Excellence. 
-        Ihr Profil zeigt, wo Sie heute stehen und welche Schritte als nächstes sinnvoll sind.
-      </div>
+      <div class="info-box tip"><div class="info-box-title">Ihre Ausgangslage</div>Das Profil zeigt, wo Sie heute stehen und welche Schritte als nächstes sinnvoll sind.</div>
       {{ persona_html|safe }}
     </div>
   </section>
@@ -1157,43 +191,12 @@
   <section class="chapter">
     <div class="chapter-header">
       <div id="kapitel-4" class="chapter-number">Kapitel 4</div>
-      <h1 class="chapter-title">Quick Wins - Schnelle Erfolge</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <h1 class="chapter-title">Quick Wins – Schnelle Erfolge</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
     <div class="chapter-content">
-      <div class="info-box success">
-        <div class="info-box-title">Sofort umsetzbare Maßnahmen</div>
-        Diese Lösungen bringen schnelle Ergebnisse mit überschaubarem Aufwand. 
-        Ideal für den Start Ihrer KI-Reise.
-      </div>
-      
+      <div class="info-box success"><div class="info-box-title">Sofort anpacken</div>Die folgenden Vorschläge schaffen spürbare Entlastung ohne Overhead.</div>
       {{ quick_wins_html|safe }}
-      
-      <h3>Zeitplan & Priorisierung</h3>
-      <div class="progress-indicator">
-        <span class="progress-label">Woche 1-2</span>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: 25%"></div>
-        </div>
-        <span class="progress-value">Analyse</span>
-      </div>
-      
-      <div class="progress-indicator">
-        <span class="progress-label">Woche 3-4</span>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: 50%"></div>
-        </div>
-        <span class="progress-value">Pilot</span>
-      </div>
-      
-      <div class="progress-indicator">
-        <span class="progress-label">Woche 5-8</span>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: 100%"></div>
-        </div>
-        <span class="progress-value">Rollout</span>
-      </div>
     </div>
   </section>
   {% endif %}
@@ -1203,16 +206,10 @@
     <div class="chapter-header">
       <div id="kapitel-5" class="chapter-number">Kapitel 5</div>
       <h1 class="chapter-title">Risikomanagement</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
     <div class="chapter-content">
-      <div class="info-box warning">
-        <div class="info-box-title">Proaktiv handeln</div>
-        Eine strukturierte Risikoanalyse sichert Ihren Erfolg. 
-        Diese Übersicht zeigt Ihnen die wichtigsten Handlungsfelder.
-      </div>
-      
+      <div class="info-box warning"><div class="info-box-title">Proaktiv handeln</div>Klare Rollen, saubere Datenflüsse und dokumentierte Freigaben halten Risiken beherrschbar.</div>
       {{ risks_html|safe }}
     </div>
   </section>
@@ -1223,12 +220,9 @@
     <div class="chapter-header">
       <div id="kapitel-6" class="chapter-number">Kapitel 6</div>
       <h1 class="chapter-title">Strategische Empfehlungen</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
-    <div class="chapter-content">
-      {{ recommendations_html|safe }}
-    </div>
+    <div class="chapter-content">{{ recommendations_html|safe }}</div>
   </section>
   {% endif %}
 
@@ -1236,13 +230,10 @@
   <section class="chapter">
     <div class="chapter-header">
       <div id="kapitel-7" class="chapter-number">Kapitel 7</div>
-      <h1 class="chapter-title">Implementierungs-Roadmap</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <h1 class="chapter-title">Implementierungs‑Roadmap</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
-    <div class="chapter-content">
-      {{ roadmap_html|safe }}
-    </div>
+    <div class="chapter-content">{{ roadmap_html|safe }}</div>
   </section>
   {% endif %}
 
@@ -1251,15 +242,10 @@
     <div class="chapter-header">
       <div id="kapitel-8" class="chapter-number">Kapitel 8</div>
       <h1 class="chapter-title">Praxisbeispiele & Success Stories</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
     <div class="chapter-content">
-      <div class="info-box success">
-        <div class="info-box-title">Von erfolgreichen Implementierungen lernen</div>
-        Diese Beispiele zeigen, wie andere Unternehmen Ihrer Branche 
-        KI erfolgreich eingesetzt haben.
-      </div>
+      <div class="info-box success"><div class="info-box-title">Aus der Praxis</div>So setzen Organisationen Ihrer Branche KI sicher und sinnvoll ein.</div>
       {{ praxisbeispiel_html|safe }}
     </div>
   </section>
@@ -1270,18 +256,11 @@
     <div class="chapter-header">
       <div id="kapitel-9" class="chapter-number">Kapitel 9</div>
       <h1 class="chapter-title">Coaching & Reflexion</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
     <div class="chapter-content">
-      <div class="coaching-box">
-        <h3>Leitfragen für Ihren Erfolg</h3>
-        <p>
-          Diese Fragen helfen Ihnen, die richtigen Prioritäten zu setzen 
-          und Ihre KI-Strategie zu schärfen.
-        </p>
-        {{ coach_html|safe }}
-      </div>
+      <div class="info-box"><div class="info-box-title">Leitfragen</div>Kleine Fragen mit großer Wirkung: Sie schärfen Prioritäten und erleichtern Entscheidungen.</div>
+      {{ coach_html|safe }}
     </div>
   </section>
   {% endif %}
@@ -1290,22 +269,12 @@
   <section class="chapter">
     <div class="chapter-header">
       <div id="kapitel-10" class="chapter-number">Kapitel 10</div>
-      <h1 class="chapter-title">Vision & Gamechanger</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <h1 class="chapter-title">Leitidee & Gamechanger</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
     <div class="chapter-content">
-      {% if vision_html %}
-      <h2>Ihre KI-Vision 2027</h2>
-      {{ vision_html|safe }}
-      {% endif %}
-      
-      {% if gamechanger_html %}
-      <h2>Der Gamechanger</h2>
-      <div class="info-box success">
-        {{ gamechanger_html|safe }}
-      </div>
-      {% endif %}
+      {% if vision_html %}<h2>Leitidee</h2>{{ vision_html|safe }}{% endif %}
+      {% if gamechanger_html %}<h2>Innovation & Gamechanger</h2><div class="info-box success">{{ gamechanger_html|safe }}</div>{% endif %}
     </div>
   </section>
   {% endif %}
@@ -1315,180 +284,111 @@
     <div class="chapter-header">
       <div id="kapitel-11" class="chapter-number">Kapitel 11</div>
       <h1 class="chapter-title">Compliance & Rechtssicherheit</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
-    <div class="chapter-content">
-      {{ compliance_html|safe }}
-    </div>
+    <div class="chapter-content">{{ compliance_html|safe }}</div>
   </section>
   {% endif %}
 
-  {% if foerderprogramme_html %}
+  {% if foerderprogramme_html or funding_rich_html or dynamic_funding_html or foerderprogramme_table %}
   <section class="chapter">
     <div class="chapter-header">
       <div id="kapitel-12" class="chapter-number">Kapitel 12</div>
       <h1 class="chapter-title">Förderprogramme</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
     <div class="chapter-content">
-      <div class="info-box">
-        <div class="info-box-title">Finanzielle Unterstützung nutzen</div>
-        Aktuelle Fördermöglichkeiten für Ihre KI-Projekte.
-      </div>
-      {{ foerderprogramme_html|safe }}
+      <div class="info-box"><div class="info-box-title">Unterstützung nutzen</div>Aktuelle Programme erleichtern Einstieg, Qualifizierung und Skalierung.</div>
+
+      {% if funding_rich_html is defined and funding_rich_html and funding_rich_html|trim %}
+        {{ funding_rich_html|safe }}
+      {% elif dynamic_funding_html is defined and dynamic_funding_html and dynamic_funding_html|trim %}
+        {{ dynamic_funding_html|safe }}
+      {% elif foerderprogramme_html %}
+        {{ foerderprogramme_html|safe }}
+      {% endif %}
+
+      {% if foerderprogramme_table is defined and foerderprogramme_table and foerderprogramme_table|length>0 %}
+        <table>
+          <thead><tr><th>Programm</th><th>Link</th></tr></thead>
+          <tbody>
+          {% for p in foerderprogramme_table %}
+            <tr>
+              <td>{{ p.name or p.title or 'Programm' }}</td>
+              <td>{% set u = p.url or p.link %}{% if u %}<a href="{{ u }}">{{ u }}</a>{% else %}-{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
     </div>
   </section>
   {% endif %}
 
-  {% if tools_html %}
+  {% if tools_html or tools_rich_html or tools_table %}
   <section class="chapter">
     <div class="chapter-header">
       <div id="kapitel-13" class="chapter-number">Kapitel 13</div>
-      <h1 class="chapter-title">Empfohlene KI-Tools & Software</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
+      <h1 class="chapter-title">Empfohlene KI‑Tools & Software</h1>
+      <a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a>
     </div>
-    
     <div class="chapter-content">
-      <div class="info-box">
-        <div class="info-box-title">Passende Tools für Ihren Anwendungsfall</div>
-      </div>
-      {{ tools_html|safe }}
-    </div>
-  </section>
-  {% endif %}
+      <div class="info-box"><div class="info-box-title">Passende Werkzeuge</div>Wenige, robuste Tools mit klarer Zuständigkeit – statt vieler Insellösungen.</div>
 
-  {% if live_html %}
-  <section class="chapter">
-    <div class="chapter-header">
-      <div id="anhang-live" class="chapter-number">Anhang</div>
-      <h1 class="chapter-title">{{ live_title|default('Aktuelle Entwicklungen', true) }}</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
-    </div>
-    
-    <div class="chapter-content">
-      {{ live_html|safe }}
-      <p style="color: var(--text-muted); font-size: 9pt; margin-top: 20px;">
-        Hinweis: Informationen basieren auf aktuellen Quellen. 
-        Bitte prüfen Sie kritische Informationen vor geschäftlichen Entscheidungen.
-      </p>
+      {% if tools_rich_html is defined and tools_rich_html and tools_rich_html|trim %}
+        {{ tools_rich_html|safe }}
+      {% elif tools_html %}
+        {{ tools_html|safe }}
+      {% endif %}
+
+      {% if tools_table is defined and tools_table and tools_table|length>0 %}
+        <table>
+          <thead><tr><th>Tool</th><th>Link</th></tr></thead>
+          <tbody>
+          {% for t in tools_table %}
+            <tr>
+              <td>{{ t.name or t.title or 'Tool' }}</td>
+              <td>{% set u = t.url or t.link %}{% if u %}<a href="{{ u }}">{{ u }}</a>{% else %}-{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
     </div>
   </section>
   {% endif %}
 
   <!-- Glossar -->
-  <section class="glossary-page" id="anhang-glossar">
-    <div class="chapter-header">
-      <h1 class="chapter-title">Glossar</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
-    </div>
-    
+  <section class="chapter" id="anhang-glossar">
+    <div class="chapter-header"><h1 class="chapter-title">Glossar</h1><a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a></div>
     <div class="chapter-content">
-      <h3>Glossar</h3>
-      
-      <div class="glossary-term">
-        <strong>KI (Künstliche Intelligenz):</strong> Technologien, die aus Daten lernen und selbstständig Entscheidungen treffen oder Empfehlungen aussprechen.
-      </div>
-      
-      <div class="glossary-term">
-        <strong>DSGVO:</strong> Datenschutz-Grundverordnung der EU; regelt den Umgang mit personenbezogenen Daten.
-      </div>
-      
-      <div class="glossary-term">
-        <strong>DSFA:</strong> Datenschutz-Folgenabschätzung; Analyse der Risiken für Betroffene bei bestimmten Datenverarbeitungen.
-      </div>
-      
-      <div class="glossary-term">
-        <strong>EU AI Act:</strong> Zukünftige EU-Verordnung, die Anforderungen und Risikoklassen für KI-Systeme festlegt.
-      </div>
-      
-      <div class="glossary-term">
-        <strong>Quick Win:</strong> Maßnahme mit geringem Aufwand und schnellem Nutzen.
-      </div>
-      
-      <div class="glossary-term">
-        <strong>MVP:</strong> Minimum Viable Product; erste funktionsfähige Version eines Produkts mit minimalem Funktionsumfang.
-      </div>
+      <h3>Begriffe</h3>
+      <p><strong>KI (Künstliche Intelligenz):</strong> Technologien, die aus Daten lernen und Vorschläge, Entwürfe oder Entscheidungen unterstützen.</p>
+      <p><strong>DSGVO:</strong> EU‑Datenschutzgrundverordnung; Rahmen für den Umgang mit personenbezogenen Daten.</p>
+      <p><strong>DSFA:</strong> Datenschutz‑Folgenabschätzung; Bewertung möglicher Auswirkungen auf Betroffene.</p>
+      <p><strong>EU AI Act:</strong> EU‑Verordnung mit Anforderungen und Risikoklassen für KI‑Systeme.</p>
     </div>
   </section>
 
   <!-- Leistung & Nachweis -->
-  <section class="services-page" id="anhang-leistung">
-    <div class="chapter-header">
-      <h1 class="chapter-title">Leistung & Nachweis</h1>
-      <a href="#inhalt" class="back-to-toc" aria-label="Zum Inhaltsverzeichnis">↑ Inhaltsverzeichnis</a>
-    </div>
-    
+  <section class="chapter" id="anhang-leistung">
+    <div class="chapter-header"><h1 class="chapter-title">Leistung & Nachweis</h1><a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a></div>
     <div class="chapter-content">
-      <p>
-        Als TÜV-zertifizierter KI-Manager begleite ich Unternehmen bei der sicheren Einführung, Nutzung und Audit-Vorbereitung von KI – mit klarer Strategie, dokumentierter Förderfähigkeit und DSGVO-Konformität.
-      </p>
-      
-      <div class="service-list">
-        <div class="service-item">
-          <strong>KI-Strategie & Audit:</strong> TÜV-zertifizierte Entwicklung und Vorbereitung auf Prüfungen
-        </div>
-        
-        <div class="service-item">
-          <strong>EU AI Act & DSGVO:</strong> Beratung entlang aktueller Vorschriften und Standards
-        </div>
-        
-        <div class="service-item">
-          <strong>Dokumentation & Governance:</strong> Aufbau förderfähiger KI-Prozesse und Nachweise
-        </div>
-        
-        <div class="service-item">
-          <strong>Minimiertes Haftungsrisiko:</strong> Vertrauen bei Kunden, Partnern und Behörden
-        </div>
-      </div>
-      
-      <p style="margin-top: var(--spacing-xl);">
-        Kontakt: <a href="mailto:kontakt@ki-sicherheit.jetzt">kontakt@ki-sicherheit.jetzt</a> · <a href="https://ki-sicherheit.jetzt">ki-sicherheit.jetzt</a>
-      </p>
+      <p>Als TÜV‑zertifizierter KI‑Manager begleite ich Unternehmen bei der sicheren Einführung, Nutzung und Audit‑Vorbereitung von KI – mit klarer Strategie, förderfähiger Dokumentation und gelebter DSGVO‑Konformität.</p>
+      <div class="info-box"><div class="info-box-title">Unsere Arbeit</div>Strategie & Audit · EU AI Act & DSGVO · Governance & Nachweise · Minimiertes Haftungsrisiko</div>
+      <p style="margin-top:24px">Kontakt: <a href="mailto:kontakt@ki-sicherheit.jetzt">kontakt@ki-sicherheit.jetzt</a> · <a href="https://ki-sicherheit.jetzt">ki‑sicherheit.jetzt</a></p>
     </div>
   </section>
 
-  <!-- Feedback-Seite -->
-  <section class="feedback-page" id="anhang-feedback">
-    <div class="feedback-box">
-      <h2 class="feedback-title">Ihre Meinung zählt!</h2>
-      
-      <p style="font-size: 11pt; margin-bottom: var(--spacing-lg);">
-        Helfen Sie uns, diesen Report noch besser zu machen. 
-        Ihr Feedback dauert nur 2-3 Minuten und ist uns sehr wichtig.
-      </p>
-      
-      <a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html" class="feedback-link">
-        Feedback geben (2-3 Min.)
-      </a>
-      
-      <div class="contact-info">
-        <p style="font-size: 9pt; color: var(--text-muted);">
-          © 2025 KI-Sicherheit.jetzt – DSGVO & EU-AI-Act-Ready – Wolf Hohl
-        </p>
-        <p style="font-size: 9pt; color: var(--text-muted); margin-top: var(--spacing-sm);">
-          TÜV-zertifiziertes KI-Management © 2025: Wolf Hohl · E-Mail: kontakt@ki-sicherheit.jetzt
-        </p>
-        <p style="font-size: 9pt; color: var(--text-muted); margin-top: var(--spacing-sm);">
-          DSGVO & EU-AI-Act-konform · Alle Angaben ohne Gewähr; keine Rechtsberatung.
-        </p>
-      </div>
+  <!-- Feedback -->
+  <section class="chapter" id="anhang-feedback">
+    <div class="chapter-header"><h1 class="chapter-title">Ihre Meinung zählt</h1><a href="#inhalt" class="back-to-toc">↑ Inhaltsverzeichnis</a></div>
+    <div class="chapter-content">
+      <div class="info-box"><div class="info-box-title">Feedback</div>Helfen Sie uns, diesen Report weiter zu verfeinern – das Formular dauert nur wenige Minuten.</div>
+      <p><a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Feedback geben</a></p>
+      <p style="color:var(--text-muted);font-size:9pt;margin-top:8px">© {{ copyright_year|default(now().year if now else '2025', true) }} KI‑Sicherheit.jetzt – DSGVO & EU‑AI‑Act‑ready – Wolf Hohl</p>
     </div>
   </section>
-
-  <!-- Footer (screen only; print via Puppeteer) -->
-  <div class="footer-screen">
-    <div class="footer-left">
-      © {{ copyright_year|default(now().year if now else '2025', true) }} {{ copyright_owner|default('KI-Sicherheit.jetzt', true) }}
-    </div>
-    <div class="footer-center">
-      Seite <span class="page-number"></span>
-    </div>
-    <div class="footer-right">
-      DSGVO • EU AI Act • DSA
-    </div>
-  </div>
 
 </body>
 </html>
