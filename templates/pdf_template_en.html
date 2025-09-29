@@ -8,90 +8,70 @@
     :root{
       --primary-950:#020617;--primary-900:#0F172A;--primary-800:#1E293B;--primary-700:#334155;--primary-600:#475569;
       --primary-500:#64748B;--primary-400:#94A3B8;--primary-300:#CBD5E1;--primary-200:#E2E8F0;--primary-100:#F1F5F9;--primary-50:#F8FAFC;
-      --accent-blue:#2563EB;--accent-sky:#0EA5E9;--accent-indigo:#4F46E5;--accent-blue-light:#60A5FA;--accent-blue-dark:#1E40AF;
-      --status-ok:#DDEAFE;--status-strong:#C7D2FE;--status-border:#2563EB;
-      --gray-900:#111827;--gray-800:#1F2937;--gray-700:#374151;--gray-600:#4B5563;--gray-500:#6B7280;--gray-400:#9CA3AF;--gray-300:#D1D5DB;--gray-200:#E5E7EB;--gray-100:#F3F4F6;--gray-50:#F9FAFB;
-      --page-bg:#FFFFFF;--text-primary:var(--gray-900);--text-secondary:var(--gray-700);--text-muted:var(--gray-500);--border-color:var(--gray-200);
-      --shadow-sm:0 1px 2px rgba(0,0,0,.05);--shadow-md:0 4px 6px -1px rgba(0,0,0,.1);
-      --spacing-xs:4px;--spacing-sm:8px;--spacing-md:16px;--spacing-lg:24px;--spacing-xl:32px;--spacing-2xl:48px
+      --accent-blue:#2563EB;--accent-sky:#0EA5E9;--accent-indigo:#4F46E5;
+      --page-bg:#FFFFFF;--text-primary:#111827;--text-secondary:#374151;--text-muted:#6B7280;--border-color:#E5E7EB;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.05);
     }
     @page{size:A4;margin:15mm 15mm 20mm 15mm}
     *{margin:0;padding:0;box-sizing:border-box}
-    html,body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:10pt;line-height:1.65;color:var(--text-primary);background:var(--page-bg);-webkit-font-smoothing:antialiased;width:100%;max-width:180mm;margin:0 auto}
+    html,body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:10pt;line-height:1.65;color:var(--text-primary);background:var(--page-bg);-webkit-font-smoothing:antialiased;width:100%;max-width:210mm;margin:0 auto}
+    .cover{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--primary-50) 0%,#FFF 100%);page-break-after:always;position:relative;padding:32px}
+    .logo-section{display:flex;gap:16px;align-items:center;justify-content:center;margin-bottom:24px}
+    .logo-section img{height:44px;object-fit:contain}
+    .cover h1{font-size:32pt;font-weight:700;color:var(--primary-900);letter-spacing:-.02em;line-height:1.15;margin:8px 0 12px}
+    .cover-subtitle{font-size:14pt;color:var(--text-secondary);margin-bottom:16px}
+    .cover-intro{font-size:11pt;color:var(--accent-blue);padding:12px 14px;background:rgba(37,99,235,.05);border-left:3px solid var(--accent-blue);border-radius:6px;margin-bottom:20px}
+    .cover-meta{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:20px}
+    .meta-badge{display:inline-flex;align-items:center;padding:6px 10px;background:#FFF;border:1px solid var(--primary-300);border-radius:18px;font-size:9pt;color:var(--primary-800);box-shadow:var(--shadow-sm)}
+    .cover-footer{width:100%;display:flex;justify-content:center;align-items:center;padding-top:16px;border-top:1px solid var(--border-color)}
+    .certification-badges{display:flex;gap:10px;align-items:center}
+    .certification-badges img{height:20px;object-fit:contain;filter:grayscale(100%) brightness(0.2)}
 
-    .cover{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--primary-50) 0%,#FFF 100%);page-break-after:always;position:relative;padding:var(--spacing-xl)}
-    .cover::before{content:'';position:absolute;top:-100px;right:-100px;width:400px;height:400px;background:radial-gradient(circle,var(--primary-100) 0%,transparent 70%);opacity:.5;border-radius:50%}
-    .brand-logos{display:flex;gap:16px;align-items:center;justify-content:center;margin-bottom:var(--spacing-xl)}
-    .brand-logos img{height:44px;width:auto;object-fit:contain}
-    .badge-logos{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:var(--spacing-lg)}
-    .badge-logos img{height:22px;width:auto;object-fit:contain;opacity:.9}
-
-    .cover-content{position:relative;z-index:1;width:100%;max-width:600px;text-align:center;flex-grow:1;display:flex;flex-direction:column;justify-content:center}
-    .cover h1{font-size:32pt;font-weight:700;color:var(--primary-900);margin-bottom:var(--spacing-md);letter-spacing:-.02em;line-height:1.15}
-    .cover-subtitle{font-size:14pt;color:var(--gray-600);margin-bottom:var(--spacing-xl)}
-    .cover-intro{font-size:11pt;color:var(--accent-blue);margin-bottom:var(--spacing-2xl);padding:var(--spacing-md);background:rgba(37,99,235,.05);border-radius:8px;border-left:3px solid var(--accent-blue)}
-    .cover-meta{display:flex;flex-wrap:wrap;gap:var(--spacing-sm);margin-bottom:var(--spacing-2xl);justify-content:center}
-    .meta-badge{display:inline-flex;align-items:center;padding:var(--spacing-sm) var(--spacing-md);background:#FFF;border:1px solid var(--primary-300);border-radius:20px;font-size:9pt;font-weight:500;color:var(--primary-800);box-shadow:var(--shadow-sm)}
-
-    .toc-page{page-break-after:always;padding:var(--spacing-2xl) 0;min-height:100vh;background:linear-gradient(to bottom,var(--primary-50) 0%,#FFF 10%)}
-    .toc-header{text-align:center;margin-bottom:var(--spacing-2xl)}.toc-header h2{font-size:24pt;color:var(--primary-900);margin-bottom:var(--spacing-sm)}
+    .toc-page{page-break-after:always;padding:48px 0;min-height:100vh;background:linear-gradient(to bottom,var(--primary-50) 0%,#FFF 12%)}
+    .toc-header{text-align:center;margin-bottom:28px}.toc-header h2{font-size:24pt;color:var(--primary-900)}
     .toc-content{max-width:600px;margin:0 auto}
-    .toc-item{display:flex;justify-content:space-between;align-items:center;padding:var(--spacing-md) var(--spacing-lg);margin-bottom:var(--spacing-sm);border-bottom:1px solid var(--gray-200)}
-    .toc-chapter-number{color:var(--accent-blue);font-weight:600;font-size:9pt;text-transform:uppercase;letter-spacing:.05em;min-width:90px}
-    .toc-chapter-title{flex-grow:1;margin:0 var(--spacing-lg);color:var(--text-primary);font-size:11pt;text-decoration:none}
+    .toc-item{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;border-bottom:1px solid var(--border-color)}
+    .toc-chapter-number{color:var(--accent-blue);font-weight:600;font-size:9pt;text-transform:uppercase;letter-spacing:.05em;min-width:80px}
+    .toc-chapter-title{flex-grow:1;margin:0 18px;color:var(--text-primary);font-size:11pt;text-decoration:none}
     .toc-chapter-title:hover{text-decoration:underline}
 
-    .chapter{page-break-before:always;padding:var(--spacing-xl) 0;width:100%;min-height:100vh;position:relative}
+    .chapter{page-break-before:always;padding:28px 0;min-height:100vh}
     .chapter:first-of-type{page-break-before:auto}
-    .chapter-header{margin-bottom:var(--spacing-xl);padding-bottom:var(--spacing-md);border-bottom:2px solid var(--primary-200);position:relative}
+    .chapter-header{margin-bottom:22px;padding-bottom:10px;border-bottom:2px solid var(--primary-200);position:relative}
     .chapter-header::after{content:'';position:absolute;bottom:-2px;left:0;width:80px;height:2px;background:var(--accent-blue)}
-    .chapter-number{font-size:9pt;font-weight:600;color:var(--accent-blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:var(--spacing-xs)}
-    .chapter-title{font-size:22pt;font-weight:700;color:var(--primary-900);line-height:1.2}
-    .chapter-content{width:100%;max-width:100%;padding-right:var(--spacing-md)}
+    .chapter-number{font-size:9pt;font-weight:600;color:var(--accent-blue);letter-spacing:.08em;margin-bottom:4px}
+    .chapter-title{font-size:22pt;font-weight:700;color:var(--primary-900)}
+    .chapter-content{width:100%;max-width:100%;padding-right:8px}
+    h2{font-size:16pt;font-weight:600;color:var(--primary-800);margin:20px 0 10px}
+    h3{font-size:13pt;font-weight:600;color:var(--primary-700);margin:16px 0 8px}
+    h4{font-size:11pt;font-weight:600;color:var(--primary-700);margin:12px 0 6px}
+    p{margin-bottom:8px}
+    a{color:var(--accent-sky);text-decoration:none;border-bottom:1px solid transparent}
 
-    h2{font-size:16pt;font-weight:600;color:var(--primary-800);margin:var(--spacing-lg) 0 var(--spacing-md);page-break-after:avoid}
-    h3{font-size:13pt;font-weight:600;color:var(--primary-700);margin:var(--spacing-lg) 0 var(--spacing-sm);page-break-after:avoid}
-    h4{font-size:11pt;font-weight:600;color:var(--primary-700);margin:var(--spacing-md) 0 var(--spacing-sm)}
-    p{margin-bottom:var(--spacing-sm);orphans:3;widows:3}
-    strong{font-weight:600;color:var(--primary-900)}
-    a{color:var(--accent-sky);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s ease}
+    .info-box{background:var(--primary-50);border:1px solid var(--primary-200);border-radius:8px;padding:12px;margin:12px 0}
+    .info-box.tip{border-left:3px solid var(--accent-blue)}
+    .info-box.warning{border-left:3px solid var(--accent-blue)}
+    .info-box.success{border-left:3px solid var(--accent-blue)}
+    .info-box-title{font-weight:600;font-size:10.5pt;margin-bottom:4px;color:var(--primary-900)}
+    .highlight-box{background:var(--primary-50);border-left:4px solid var(--accent-blue);padding:12px;margin:12px 0;border-radius:0 8px 8px 0}
 
-    .info-box{background:var(--primary-50);border:1px solid var(--primary-200);border-radius:8px;padding:var(--spacing-md);margin:var(--spacing-md) 0;page-break-inside:avoid}
-    .info-box.tip{background:var(--primary-50);border-color:var(--accent-blue);border-left-width:3px}
-    .info-box.warning{background:var(--status-ok);border-color:var(--status-border);border-left-width:3px}
-    .info-box.success{background:var(--status-strong);border-color:var(--status-border);border-left-width:3px}
-    .info-box-title{font-weight:600;font-size:10.5pt;margin-bottom:var(--spacing-xs);color:var(--primary-900)}
-    .highlight-box{background:var(--primary-50);border-left:4px solid var(--accent-blue);padding:var(--spacing-md);margin:var(--spacing-md) 0;border-radius:0 8px 8px 0}
-    .highlight-box strong{color:var(--accent-blue)}
-
-    .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0 4px}
-    .metric{background:linear-gradient(180deg,var(--primary-50),#fff);border:1px solid var(--primary-200);border-radius:10px;padding:12px;box-shadow:var(--shadow-sm)}
-    .metric .label{font-size:9pt;color:var(--primary-700);font-weight:600;margin-bottom:6px}
-    .metric .value{font-size:13pt;font-weight:700;color:var(--primary-900);margin:4px 0 8px}
-    .progress{width:100%;height:8px;background:var(--primary-200);border-radius:999px;overflow:hidden}
-    .progress span{display:block;height:100%;background:linear-gradient(90deg,var(--accent-blue),var(--accent-indigo))}
-
-    .table-wrap{max-width:100%}
-    table{width:100%;max-width:100%;border-collapse:separate;border-spacing:0;margin:var(--spacing-md) 0;box-shadow:var(--shadow-sm);border-radius:8px;overflow:hidden;
-      font-size:9pt;page-break-inside:avoid;table-layout:fixed}
+    table{width:100%;border-collapse:separate;border-spacing:0;margin:12px 0;box-shadow:var(--shadow-sm);border-radius:8px;overflow:hidden;font-size:9pt;table-layout:fixed}
     thead{background:var(--primary-800);color:#FFF}
-    th,td{padding:var(--spacing-sm) var(--spacing-md);text-align:left}
-    th{font-weight:600;letter-spacing:.02em;font-size:9pt}
-    td{border-bottom:1px solid var(--gray-100);color:var(--text-primary)}
+    th,td{padding:8px 10px;text-align:left}
+    td{border-bottom:1px solid #F3F4F6;color:#111827}
     tbody tr:last-child td{border-bottom:none}
-    tbody tr:nth-child(even){background:var(--gray-50)}
-    th,td{overflow-wrap:anywhere;word-break:normal;hyphens:auto}
+    tbody tr:nth-child(even){background:#F9FAFB}
+    td,th{overflow-wrap:anywhere;word-break:break-word}
+    td a{overflow-wrap:anywhere}
 
     @media print{
       body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
       .chapter{page-break-before:always}
       .info-box,table{page-break-inside:avoid}
       h2,h3,h4{page-break-after:avoid}
-      .chapter-content{padding-right:8mm}
+      .chapter-content{padding-right:10mm}
     }
-
     .back-to-toc{font-size:9pt;color:var(--text-muted);text-decoration:none;margin-left:8px}
-    .back-to-toc:hover{text-decoration:underline}
     @media print{.back-to-toc{display:none!important}}
   </style>
 </head>
@@ -99,26 +79,24 @@
 
   <!-- Cover -->
   <section class="cover">
-    <div class="brand-logos">
-      <img src="ki-sicherheit-logo.webp" alt="KI-Sicherheit.jetzt" />
-      <img src="tuev-logo-transparent.webp" alt="TÜV" />
+    <div class="logo-section">
+      <img src="tuev-logo.webp" alt="TÜV" />
+      <img src="ai-security-logo.webp" alt="ki-sicherheit.jetzt"/>
+      <img src="eu-ai.svg" alt="EU AI Act"/>
+      <img src="dsgvo.svg" alt="GDPR"/>
     </div>
-
     <div class="cover-content">
       <h1>{{ (meta|default({})).title|default('AI Status Report & Strategic Recommendations', true) }}</h1>
       <div class="cover-subtitle">Your structured path to safe, effective AI adoption</div>
-      <div class="cover-intro">Calm, narrative guidance — no bullet lists and no dense KPI tables.</div>
+      <div class="cover-intro">Warm, narrative guidance — no bullet lists, no numeric KPI tables — so teams can act with clarity and calm.</div>
       <div class="cover-meta">
         {% if datum %}<span class="meta-badge">{{ datum }}</span>{% endif %}
         {% if branche %}<span class="meta-badge">{{ branche|capitalize }}</span>{% endif %}
-        {% if unternehmensgroesse or company_size_label %}<span class="meta-badge">{{ company_size_label|default(unternehmensgroesse, true) }}</span>{% endif %}
+        {% if undernehmensgroesse or company_size_label %}<span class="meta-badge">{{ company_size_label|default(unternehmensgroesse, true) }}</span>{% endif %}
         {% if bundesland %}<span class="meta-badge">{{ bundesland|upper }}</span>{% endif %}
       </div>
-      <div class="badge-logos">
-        <img src="dsgvo.svg" alt="GDPR" />
-        <img src="eu-ai.svg" alt="EU AI Act" />
-      </div>
     </div>
+    <div class="cover-footer"><div class="certification-badges"><span style="color:var(--text-muted);font-size:9pt">GDPR‑compliant · EU‑AI‑Act‑ready · TÜV‑certified</span></div></div>
   </section>
 
   <!-- TOC -->
@@ -136,8 +114,11 @@
       {% if coach_html %}<div class="toc-item"><span class="toc-chapter-number">Chapter 9</span><a class="toc-chapter-title" href="#chapter-9">Coaching & Reflection</a></div>{% endif %}
       {% if vision_html or gamechanger_html %}<div class="toc-item"><span class="toc-chapter-number">Chapter 10</span><a class="toc-chapter-title" href="#chapter-10">Guiding Idea & Game Changer</a></div>{% endif %}
       {% if compliance_html %}<div class="toc-item"><span class="toc-chapter-number">Chapter 11</span><a class="toc-chapter-title" href="#chapter-11">Compliance & Legal Security</a></div>{% endif %}
-      {% if foerderprogramme_html or funding_rich_html or dynamic_funding_html or foerderprogramme_table %}<div class="toc-item"><span class="toc-chapter-number">Chapter 12</span><a class="toc-chapter-title" href="#chapter-12">Funding Programs</a></div>{% endif %}
-      {% if tools_html or tools_rich_html or tools_table %}<div class="toc-item"><span class="toc-chapter-number">Chapter 13</span><a class="toc-chapter-title" href="#chapter-13">AI Tools & Software</a></div>{% endif %}
+      {% if funding_rich_html or dynamic_funding_html or foerderprogramme_html or foerderprogramme_table %}<div class="toc-item"><span class="toc-chapter-number">Chapter 12</span><a class="toc-chapter-title" href="#chapter-12">Funding Programs</a></div>{% endif %}
+      {% if tools_rich_html or tools_html or tools_table %}<div class="toc-item"><span class="toc-chapter-number">Chapter 13</span><a class="toc-chapter-title" href="#chapter-13">AI Tools & Software</a></div>{% endif %}
+      <div class="toc-item"><span class="toc-chapter-number">Appendix</span><a class="toc-chapter-title" href="#appendix-glossary">Glossary</a></div>
+      <div class="toc-item"><span class="toc-chapter-number"></span><a class="toc-chapter-title" href="#appendix-services">Services & Credentials</a></div>
+      <div class="toc-item"><span class="toc-chapter-number"></span><a class="toc-chapter-title" href="#appendix-feedback">Your Opinion Matters</a></div>
     </div>
   </section>
 
@@ -145,33 +126,8 @@
   {% if exec_summary_html %}
   <section class="chapter">
     <div class="chapter-header"><div id="chapter-1" class="chapter-number">Chapter 1</div><h1 class="chapter-title">Executive Summary</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
-
-    <!-- KPI cards -->
-    <div class="metric-grid">
-      <div class="metric">
-        <div class="label">AI Readiness</div>
-        <div class="value">{{ score_percent|default(0, true) }}%</div>
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ score_percent|default(0,true) }}"><span style="width: {{ score_percent|default(0,true) }}%"></span></div>
-      </div>
-      <div class="metric">
-        <div class="label">Efficiency Potential</div>
-        <div class="value">{{ kpi_efficiency|default(0, true) }}%</div>
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ kpi_efficiency|default(0,true) }}"><span style="width: {{ kpi_efficiency|default(0,true) }}%"></span></div>
-      </div>
-      <div class="metric">
-        <div class="label">Compliance</div>
-        <div class="value">{{ kpi_compliance|default(0, true) }}%</div>
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ kpi_compliance|default(0,true) }}"><span style="width: {{ kpi_compliance|default(0,true) }}%"></span></div>
-      </div>
-      <div class="metric">
-        <div class="label">Innovation</div>
-        <div class="value">{{ kpi_innovation|default(0, true) }}%</div>
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ kpi_innovation|default(0,true) }}"><span style="width: {{ kpi_innovation|default(0,true) }}%"></span></div>
-      </div>
-    </div>
-
     <div class="chapter-content">
-      <div class="highlight-box"><strong>Orientation:</strong> Calm narrative path to safe and useful AI – no lists, no dense KPI tables.</div>
+      <div class="highlight-box"><strong>Orientation:</strong> A calm narrative path from where you are today to safe, useful AI – no lists, no numeric KPI tables.</div>
       {{ exec_summary_html|safe }}
     </div>
   </section>
@@ -190,15 +146,19 @@
     <div class="chapter-content">
       <div class="info-box tip"><div class="info-box-title">Starting Point</div>Your profile highlights strengths and the next sensible steps.</div>
       {{ persona_html|safe }}
+      {% if readiness_benchmark_html %}
+        <h3 style="margin-top:18px">Benchmark ({{ readiness_benchmark_label }})</h3>
+        {{ readiness_benchmark_html|safe }}
+      {% endif %}
     </div>
   </section>
   {% endif %}
 
   {% if quick_wins_html %}
   <section class="chapter">
-    <div class="chapter-header"><div id="chapter-4" class="chapter-number">Chapter 4</div><h1 class="chapter-title">Quick Wins</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
+    <div class="chapter-header"><div id="chapter-4" class="chapter-number">Chapter 4</div><h1 class="chapter-title">Quick Wins – Fast Relief</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">
-      <div class="info-box success"><div class="info-box-title">Start small & safe</div>Pilots in real workflows, clear approvals, simple feedback loop.</div>
+      <div class="info-box tip"><div class="info-box-title">Start small & safe</div>Pilots in real workflows, clear approvals, and a simple feedback loop.</div>
       {{ quick_wins_html|safe }}
     </div>
   </section>
@@ -208,7 +168,7 @@
   <section class="chapter">
     <div class="chapter-header"><div id="chapter-5" class="chapter-number">Chapter 5</div><h1 class="chapter-title">Risk Management</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">
-      <div class="info-box warning"><div class="info-box-title">Guardrails</div>Clear roles, clean data flows, documented approvals – manageable risks.</div>
+      <div class="info-box tip"><div class="info-box-title">Guardrails</div>Clear roles, clean data flows, documented approvals – manageable risks.</div>
       {{ risks_html|safe }}
     </div>
   </section>
@@ -232,7 +192,7 @@
   <section class="chapter">
     <div class="chapter-header"><div id="chapter-8" class="chapter-number">Chapter 8</div><h1 class="chapter-title">Case Studies & Success Stories</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">
-      <div class="info-box success"><div class="info-box-title">From practice</div>Real examples of safe, useful AI in everyday work.</div>
+      <div class="info-box tip"><div class="info-box-title">From practice</div>Real examples of safe, useful AI in everyday work.</div>
       {{ praxisbeispiel_html|safe }}
     </div>
   </section>
@@ -253,7 +213,7 @@
     <div class="chapter-header"><div id="chapter-10" class="chapter-number">Chapter 10</div><h1 class="chapter-title">Guiding Idea & Game Changer</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">
       {% if vision_html %}<h2>Guiding Idea</h2>{{ vision_html|safe }}{% endif %}
-      {% if gamechanger_html %}<h2>Innovation & Game Changer</h2><div class="info-box success">{{ gamechanger_html|safe }}</div>{% endif %}
+      {% if gamechanger_html %}<h2>Innovation & Game Changer</h2><div class="info-box">{{ gamechanger_html|safe }}</div>{% endif %}
     </div>
   </section>
   {% endif %}
@@ -269,30 +229,19 @@
   <section class="chapter">
     <div class="chapter-header"><div id="chapter-12" class="chapter-number">Chapter 12</div><h1 class="chapter-title">Funding Programs</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">
-      <div class="info-box"><div class="info-box-title">Leverage support</div>Current programs can ease entry, upskilling and scaling. {% if last_updated %}<span style="color:var(--text-muted)">· Updated: {{ last_updated }}</span>{% endif %}</div>
+      <div class="info-box"><div class="info-box-title">Leverage support</div>Current programs can ease entry, upskilling and scaling.
+        {% if last_updated %}<span style="color:var(--text-muted);font-size:9pt"> · last update: {{ last_updated }}</span>{% endif %}
+      </div>
+      {% if funding_rich_html %}{{ funding_rich_html|safe }}
+      {% elif dynamic_funding_html %}{{ dynamic_funding_html|safe }}
+      {% elif foerderprogramme_html %}{{ foerderprogramme_html|safe }}{% endif %}
 
-      {% if funding_rich_html is defined and funding_rich_html and funding_rich_html|trim %}
-        {{ funding_rich_html|safe }}
-      {% elif dynamic_funding_html is defined and dynamic_funding_html and dynamic_funding_html|trim %}
-        {{ dynamic_funding_html|safe }}
-      {% elif foerderprogramme_html %}
-        {{ foerderprogramme_html|safe }}
-      {% endif %}
-
-      {% if foerderprogramme_table is defined and foerderprogramme_table and foerderprogramme_table|length>0 %}
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Program</th><th>Link</th></tr></thead>
-            <tbody>
-            {% for p in foerderprogramme_table %}
-              <tr>
-                <td>{{ p.name or p.title or 'Program' }}</td>
-                <td>{% set u = p.url or p.link %}{% if u %}<a href="{{ u }}">{{ u }}</a>{% else %}-{% endif %}</td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
+      {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
+        <table><thead><tr><th>Program</th><th>Link</th></tr></thead><tbody>
+        {% for p in foerderprogramme_table %}
+          <tr><td>{{ p.name or p.title or 'Program' }}</td>
+              <td>{% set u = p.url or p.link %}{% if u %}<a href="{{ u }}">{{ u }}</a>{% else %}-{% endif %}</td></tr>
+        {% endfor %}</tbody></table>
       {% endif %}
     </div>
   </section>
@@ -302,28 +251,19 @@
   <section class="chapter">
     <div class="chapter-header"><div id="chapter-13" class="chapter-number">Chapter 13</div><h1 class="chapter-title">AI Tools & Software</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">
-      <div class="info-box"><div class="info-box-title">Right tools, right place</div>Few robust tools with clear ownership beat sprawling stacks.</div>
+      <div class="info-box"><div class="info-box-title">Right tools, right place</div>Few robust tools with clear ownership beat sprawling stacks.
+        {% if last_updated %}<span style="color:var(--text-muted);font-size:9pt"> · last update: {{ last_updated }}</span>{% endif %}
+      </div>
 
-      {% if tools_rich_html is defined and tools_rich_html and tools_rich_html|trim %}
-        {{ tools_rich_html|safe }}
-      {% elif tools_html %}
-        {{ tools_html|safe }}
-      {% endif %}
+      {% if tools_rich_html %}{{ tools_rich_html|safe }}
+      {% elif tools_html %}{{ tools_html|safe }}{% endif %}
 
-      {% if tools_table is defined and tools_table and tools_table|length>0 %}
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Tool</th><th>Link</th></tr></thead>
-            <tbody>
-            {% for t in tools_table %}
-              <tr>
-                <td>{{ t.name or t.title or 'Tool' }}</td>
-                <td>{% set u = t.url or t.link %}{% if u %}<a href="{{ u }}">{{ u }}</a>{% else %}-{% endif %}</td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
+      {% if tools_table and tools_table|length>0 %}
+        <table><thead><tr><th>Tool</th><th>Link</th></tr></thead><tbody>
+        {% for t in tools_table %}
+          <tr><td>{{ t.name or t.title or 'Tool' }}</td>
+              <td>{% set u = t.url or t.link %}{% if u %}<a href="{{ u }}">{{ u }}</a>{% else %}-{% endif %}</td></tr>
+        {% endfor %}</tbody></table>
       {% endif %}
     </div>
   </section>
@@ -334,7 +274,7 @@
     <div class="chapter-header"><h1 class="chapter-title">Glossary</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">
       <h3>Terms</h3>
-      <p><strong>AI (Artificial Intelligence):</strong> Technologies that learn from data and support decisions with suggestions or drafts.</p>
+      <p><strong>AI:</strong> Technologies that learn from data and support decisions with suggestions or drafts.</p>
       <p><strong>GDPR:</strong> EU regulation governing personal data.</p>
       <p><strong>DPIA:</strong> Assessment of potential impacts on data subjects.</p>
       <p><strong>EU AI Act:</strong> EU regulation defining requirements and risk classes for AI systems.</p>
@@ -346,9 +286,18 @@
     <div class="chapter-content">
       <p>As a TÜV‑certified AI Manager, I help organisations introduce and operate AI safely, with strategy, evidence and GDPR compliance.</p>
       <div class="info-box"><div class="info-box-title">What we do</div>Strategy & Audit · EU AI Act & GDPR · Governance & Evidence · Minimized liability risk</div>
-      <p style="margin-top:24px">contact: <a href="mailto:kontakt@ki-sicherheit.jetzt">kontakt@ki-sicherheit.jetzt</a> · <a href="https://ki-sicherheit.jetzt">ki-sicherheit.jetzt</a></p>
-      <p style="color:var(--text-muted);font-size:9pt;margin-top:8px">© {{ copyright_year|default('2025', true) }} KI‑Sicherheit.jetzt</p>
+      <p style="margin-top:16px">contact: <a href="mailto:kontakt@ki-sicherheit.jetzt">kontakt@ki-sicherheit.jetzt</a> · <a href="https://ki-sicherheit.jetzt">ki‑sicherheit.jetzt</a></p>
     </div>
   </section>
+
+  <section class="chapter" id="appendix-feedback">
+    <div class="chapter-header"><h1 class="chapter-title">Your Opinion Matters</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
+    <div class="chapter-content">
+      <div class="info-box"><div class="info-box-title">Feedback</div>Please tell us how to make this report even better – the form takes only a few minutes.</div>
+      <p><a href="https://make.ki-sicherheit.jetzt/feedback/feedback.html">Give Feedback</a></p>
+      <p style="color:var(--text-muted);font-size:9pt;margin-top:8px">© {{ copyright_year|default('2025', true) }} KI‑Sicherheit.jetzt – GDPR & EU‑AI‑Act‑ready – Wolf Hohl</p>
+    </div>
+  </section>
+
 </body>
 </html>
