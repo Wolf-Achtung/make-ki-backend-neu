@@ -1,249 +1,118 @@
+<!-- templates/pdf_template_en.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>{{ (meta|default({})).title|default('AI Status Report & Recommendations', true) }}</title>
+  <title>{{ (meta|default({})).title|default('AI Status Report & Strategic Recommendations', true) }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root {
-      --primary-950:#020617;--primary-900:#0F172A;--primary-800:#1E293B;--primary-700:#334155;--primary-600:#475569;
-      --primary-500:#64748B;--primary-400:#94A3B8;--primary-300:#CBD5E1;--primary-200:#E2E8F0;--primary-100:#F1F5F9;--primary-50:#F8FAFC;
-      --accent-blue:#2563EB;--accent-blue-dark:#1E40AF;--page-bg:#FFFFFF;--text-primary:#111827;--text-secondary:#374151;--text-muted:#6B7280;--border-color:#E5E7EB;
-      --shadow-sm:0 1px 2px rgba(0,0,0,.05)
-    }
+    :root{--primary-950:#020617;--primary-900:#0F172A;--primary-800:#1E293B;--primary-700:#334155;--primary-600:#475569;--primary-500:#64748B;--primary-400:#94A3B8;--primary-300:#CBD5E1;--primary-200:#E2E8F0;--primary-100:#F1F5F9;--primary-50:#F8FAFC;--accent-blue:#2563EB;--accent-sky:#0EA5E9;--accent-indigo:#4F46E5;--accent-blue-light:#60A5FA;--accent-blue-dark:#1E40AF;--page-bg:#FFFFFF;--text-primary:#111827;--border-color:#E5E7EB}
     @page{size:A4;margin:15mm 15mm 20mm 15mm}
     *{margin:0;padding:0;box-sizing:border-box}
-    html,body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:10pt;line-height:1.65;color:var(--text-primary);background:var(--page-bg);width:100%;max-width:210mm;margin:0 auto}
-    .cover{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--primary-50) 0%,#FFF 100%);page-break-after:always;padding:24px}
+    html,body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:10pt;line-height:1.65;color:var(--text-primary);background:var(--page-bg);-webkit-font-smoothing:antialiased;width:100%;max-width:210mm;margin:0 auto}
+    .cover{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--primary-50) 0%,#FFF 100%);page-break-after:always;padding:32px}
+    .logo-section{display:flex;justify-content:center;margin-bottom:24px}
     .logo-container img{height:50px;width:auto;object-fit:contain}
-    .cover-content{max-width:600px;text-align:center}
-    .cover h1{font-size:32pt;font-weight:700;color:var(--primary-900);margin-bottom:12px}
-    .cover-subtitle{font-size:14pt;color:var(--text-secondary);margin-bottom:24px}
+    .cover h1{font-size:32pt;font-weight:700;margin-bottom:12px;letter-spacing:-.02em}
+    .cover-subtitle{font-size:14pt;color:#4B5563;margin-bottom:24px}
     .cover-intro{font-size:11pt;color:var(--accent-blue);margin-bottom:32px;padding:12px;background:rgba(37,99,235,.05);border-radius:8px;border-left:3px solid var(--accent-blue)}
-    .cover-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px;justify-content:center}
-    .meta-badge{display:inline-flex;align-items:center;padding:6px 10px;background:#FFF;border:1px solid var(--primary-300);border-radius:20px;font-size:9pt;font-weight:500;color:var(--primary-800);box-shadow:var(--shadow-sm)}
-    .toc-page{page-break-after:always;padding:32px 0;min-height:100vh;background:linear-gradient(to bottom,var(--primary-50) 0%,#FFF 10%)}
+    .cover-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;justify-content:center}
+    .meta-badge{display:inline-flex;align-items:center;padding:8px 12px;background:#FFF;border:1px solid #CBD5E1;border-radius:20px;font-size:9pt}
+    .toc-page{page-break-after:always;padding:48px 0;min-height:100vh;background:linear-gradient(to bottom,#F8FAFC 0%,#FFF 10%)}
     .toc-content{max-width:600px;margin:0 auto}
-    .toc-item{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;margin-bottom:6px;border-bottom:1px solid var(--border-color)}
-    .chapter{page-break-before:always;padding:24px 0;min-height:100vh}
-    .chapter-header{margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid var(--primary-200);position:relative}
+    .toc-item{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;margin-bottom:6px;border-bottom:1px solid var(--border-color)}
+    .chapter{page-break-before:always;padding:32px 0;width:100%;min-height:100vh}
+    .chapter-header{margin-bottom:32px;padding-bottom:12px;border-bottom:2px solid #E2E8F0;position:relative}
     .chapter-header::after{content:'';position:absolute;bottom:-2px;left:0;width:80px;height:2px;background:var(--accent-blue)}
-    .chapter-number{font-size:9pt;font-weight:600;color:var(--accent-blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-    .chapter-title{font-size:22pt;font-weight:700;color:var(--primary-900)}
-    .info-box{background:var(--primary-50);border:1px solid var(--primary-200);border-radius:8px;padding:12px;margin:12px 0}
-    .info-box .info-box-title{font-weight:600;font-size:10.5pt;margin-bottom:4px;color:var(--primary-900)}
-    /* tables */
-    table{table-layout:fixed;width:100%;border-collapse:separate;border-spacing:0;margin:12px 0;box-shadow:var(--shadow-sm);border-radius:8px;overflow:hidden;font-size:9pt}
-    thead{background:var(--primary-800);color:#FFF}
-    th,td{padding:8px 10px;text-align:left}
-    td{border-bottom:1px solid var(--primary-100);word-break:break-word}
+    .chapter-title{font-size:22pt;font-weight:700}
+    .chapter-content{width:100%;max-width:100%;padding-right:10px}
+    h2{font-size:16pt;font-weight:600;margin:24px 0 12px}
+    h3{font-size:13pt;font-weight:600;margin:24px 0 8px}
+    .info-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px;margin:12px 0}
+    .highlight-box{background:#F8FAFC;border-left:4px solid var(--accent-blue);padding:12px;margin:12px 0;border-radius:0 8px 8px 0}
+    table{width:100%;border-collapse:separate;border-spacing:0;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.05);border-radius:8px;overflow:hidden;font-size:9pt;table-layout:fixed}
+    thead{background:#1E293B;color:#FFF}
+    th,td{padding:10px;border-bottom:1px solid #F3F4F6;word-break:break-word;overflow-wrap:anywhere}
     tbody tr:last-child td{border-bottom:none}
-    tbody tr:nth-child(even){background:#F9FAFB}
-    @media print{.chapter{page-break-before:always}}
+    tbody tr:nth-child(even){background:#F6F8FB}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.chapter{page-break-before:always}.chapter-content{padding-right:10mm}}
+    .back-to-toc{font-size:9pt;color:#6B7280;text-decoration:none;margin-left:8px}
   </style>
 </head>
 <body>
-
   <section class="cover">
-    <div class="logo-container">
-      <img src="ki-sicherheit-logo.webp" alt="KI‑Sicherheit.jetzt"/>
-    </div>
-    <div class="cover-content">
-      <h1>{{ (meta|default({})).title|default('AI Status Report & Recommendations', true) }}</h1>
-      <div class="cover-subtitle">Your structured path to successful AI adoption</div>
-      <div class="cover-intro">Practical, narrative guidance for safe and value‑creating AI – without bullet points and number dumps.</div>
-      <div class="cover-meta">
-        {% if datum %}<span class="meta-badge">{{ datum }}</span>{% endif %}
-        {% if branche %}<span class="meta-badge">{{ branche|capitalize }}</span>{% endif %}
-        {% if company_size_label %}<span class="meta-badge">{{ company_size_label }}</span>{% endif %}
-        {% if bundesland %}<span class="meta-badge">{{ bundesland|upper }}</span>{% endif %}
-        {% if last_updated %}<span class="meta-badge">Live: {{ last_updated }}</span>{% endif %}
-      </div>
+    <div class="logo-section"><div class="logo-container"><img src="ai-security-logo.webp" alt="ki-sicherheit.jetzt"/></div></div>
+    <h1>{{ (meta|default({})).title|default('AI Status Report & Strategic Recommendations', true) }}</h1>
+    <div class="cover-subtitle">Your structured path to safe, effective AI adoption</div>
+    <div class="cover-intro">Warm, narrative guidance — no lists or numeric tables — so teams can act with clarity and calm.</div>
+    <div class="cover-meta">
+      {% if datum %}<span class="meta-badge">{{ datum }}</span>{% endif %}
+      {% if branche %}<span class="meta-badge">{{ branche|capitalize }}</span>{% endif %}
+      {% if company_size_label %}<span class="meta-badge">{{ company_size_label }}</span>{% endif %}
+      {% if bundesland %}<span class="meta-badge">{{ bundesland|upper }}</span>{% endif %}
+      {% if last_updated %}<span class="meta-badge">Live: {{ last_updated }}</span>{% endif %}
     </div>
   </section>
 
-  <section class="toc-page" id="toc">
+  <section class="toc-page" id="contents">
     <div class="toc-content">
-      <div class="toc-item"><span>Chapter 1</span> <a href="#ch1">Executive Summary</a></div>
-      {% if business_html %}<div class="toc-item"><span>Chapter 2</span> <a href="#ch2">Business Case</a></div>{% endif %}
-      {% if persona_html %}<div class="toc-item"><span>Chapter 3</span> <a href="#ch3">AI Readiness Profile</a></div>{% endif %}
-      {% if quick_wins_html %}<div class="toc-item"><span>Chapter 4</span> <a href="#ch4">Quick Wins</a></div>{% endif %}
-      {% if risks_html %}<div class="toc-item"><span>Chapter 5</span> <a href="#ch5">Risk Management</a></div>{% endif %}
-      {% if recommendations_html %}<div class="toc-item"><span>Chapter 6</span> <a href="#ch6">Strategic Recommendations</a></div>{% endif %}
-      {% if roadmap_html %}<div class="toc-item"><span>Chapter 7</span> <a href="#ch7">Implementation Roadmap</a></div>{% endif %}
-      {% if praxisbeispiel_html %}<div class="toc-item"><span>Chapter 8</span> <a href="#ch8">Case Studies</a></div>{% endif %}
-      {% if coach_html %}<div class="toc-item"><span>Chapter 9</span> <a href="#ch9">Coaching & Reflection</a></div>{% endif %}
-      {% if vision_html or gamechanger_html %}<div class="toc-item"><span>Chapter 10</span> <a href="#ch10">Vision & Gamechangers</a></div>{% endif %}
-      {% if compliance_html %}<div class="toc-item"><span>Chapter 11</span> <a href="#ch11">Compliance</a></div>{% endif %}
-      {% if foerderprogramme_html or funding_rich_html or dynamic_funding_html or foerderprogramme_table %}<div class="toc-item"><span>Chapter 12</span> <a href="#ch12">Funding Programs</a></div>{% endif %}
-      {% if tools_html or tools_rich_html or tools_table %}<div class="toc-item"><span>Chapter 13</span> <a href="#ch13">AI Tools</a></div>{% endif %}
+      <div class="toc-item"><span>Chapter 1</span><a href="#chapter-1">Executive Summary</a></div>
+      {% if business_html %}<div class="toc-item"><span>Chapter 2</span><a href="#chapter-2">Business Case</a></div>{% endif %}
+      {% if persona_html %}<div class="toc-item"><span>Chapter 3</span><a href="#chapter-3">Your AI Readiness Profile</a></div>{% endif %}
+      {% if quick_wins_html %}<div class="toc-item"><span>Chapter 4</span><a href="#chapter-4">Quick Wins</a></div>{% endif %}
+      {% if risks_html %}<div class="toc-item"><span>Chapter 5</span><a href="#chapter-5">Risk Management</a></div>{% endif %}
+      {% if recommendations_html %}<div class="toc-item"><span>Chapter 6</span><a href="#chapter-6">Strategic Recommendations</a></div>{% endif %}
+      {% if roadmap_html %}<div class="toc-item"><span>Chapter 7</span><a href="#chapter-7">Implementation Roadmap</a></div>{% endif %}
     </div>
   </section>
 
-  {% if exec_summary_html or executive_summary_html %}
-  <section class="chapter" id="ch1">
-    <div class="chapter-header">
-      <div class="chapter-number">Chapter 1</div>
-      <h1 class="chapter-title">Executive Summary</h1>
-    </div>
-    <div class="chapter-content">
-      <div class="info-box"><div class="info-box-title">Orientation</div>Narrative guidance without bullet points or dense numeric tables.</div>
-      {% if exec_summary_html %}{{ exec_summary_html|safe }}{% else %}{{ executive_summary_html|safe }}{% endif %}
-    </div>
+  {% if exec_summary_html %}
+  <section class="chapter" id="chapter-1">
+    <div class="chapter-header"><h1 class="chapter-title">Executive Summary</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
+    <div class="chapter-content"><div class="highlight-box"><strong>Orientation:</strong> A calm narrative path from where you are today to safe, useful AI.</div>{{ exec_summary_html|safe }}</div>
   </section>
   {% endif %}
 
   {% if business_html %}
-  <section class="chapter" id="ch2">
-    <div class="chapter-header"><div class="chapter-number">Chapter 2</div><h1 class="chapter-title">Business Case</h1></div>
+  <section class="chapter" id="chapter-2">
+    <div class="chapter-header"><h1 class="chapter-title">Business Case</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">{{ business_html|safe }}</div>
   </section>
   {% endif %}
 
   {% if persona_html %}
-  <section class="chapter" id="ch3">
-    <div class="chapter-header"><div class="chapter-number">Chapter 3</div><h1 class="chapter-title">AI Readiness Profile</h1></div>
+  <section class="chapter" id="chapter-3">
+    <div class="chapter-header"><h1 class="chapter-title">Your AI Readiness Profile</h1><a href="#contents" class="back-to-toc">↑ Contents</a></div>
     <div class="chapter-content">
       <div class="info-box"><div class="info-box-title">Starting Point</div>Your profile highlights strengths and the next sensible steps.</div>
       {{ persona_html|safe }}
 
-      {% if benchmark_table %}
-        <h2>Benchmark – compact comparison</h2>
+      {% if readiness_benchmark and readiness_benchmark|length>0 %}
+        <h3>Benchmark vs. Industry Average</h3>
         <table>
-          <thead>
-            <tr>
-              <th style="width:32%">KPI</th>
-              <th style="width:17%">Your value</th>
-              <th style="width:17%">Benchmark</th>
-              <th style="width:17%">Δ (pp)</th>
-              <th style="width:17%">Interpretation</th>
-            </tr>
-          </thead>
+          <thead><tr><th>KPI</th><th>Your value</th><th>Benchmark</th><th>Δ</th><th>Interpretation</th></tr></thead>
           <tbody>
-            {% for r in benchmark_table %}
-            <tr>
-              <td>{{ r.kpi }}</td>
-              <td>{{ r.our }}</td>
-              <td>{{ r.benchmark }}</td>
-              <td>{{ r.delta }}</td>
-              <td>{{ r.interpretation }}</td>
-            </tr>
-            {% endfor %}
+          {% for r in readiness_benchmark %}
+            <tr><td>{{ r.kpi }}</td><td>{{ r.our }}</td><td>{{ r.benchmark }}</td><td>{{ r.delta }}</td><td>{{ r.interpretation }}</td></tr>
+          {% endfor %}
           </tbody>
         </table>
-        {% if benchmark_note %}<p style="color:var(--text-muted)">{{ benchmark_note }}</p>{% endif %}
       {% endif %}
     </div>
   </section>
   {% endif %}
 
   {% if quick_wins_html %}
-  <section class="chapter" id="ch4">
-    <div class="chapter-header"><div class="chapter-number">Chapter 4</div><h1 class="chapter-title">Quick Wins</h1></div>
-    <div class="chapter-content">{{ quick_wins_html|safe }}</div>
-  </section>
+  <section class="chapter" id="chapter-4"><div class="chapter-header"><h1 class="chapter-title">Quick Wins</h1><a href="#contents" class="back-to-toc">↑</a></div><div class="chapter-content">{{ quick_wins_html|safe }}</div></section>
   {% endif %}
-
   {% if risks_html %}
-  <section class="chapter" id="ch5">
-    <div class="chapter-header"><div class="chapter-number">Chapter 5</div><h1 class="chapter-title">Risk Management</h1></div>
-    <div class="chapter-content">{{ risks_html|safe }}</div>
-  </section>
+  <section class="chapter" id="chapter-5"><div class="chapter-header"><h1 class="chapter-title">Risk Management</h1><a href="#contents" class="back-to-toc">↑</a></div><div class="chapter-content">{{ risks_html|safe }}</div></section>
   {% endif %}
-
   {% if recommendations_html %}
-  <section class="chapter" id="ch6">
-    <div class="chapter-header"><div class="chapter-number">Chapter 6</div><h1 class="chapter-title">Strategic Recommendations</h1></div>
-    <div class="chapter-content">{{ recommendations_html|safe }}</div>
-  </section>
+  <section class="chapter" id="chapter-6"><div class="chapter-header"><h1 class="chapter-title">Strategic Recommendations</h1><a href="#contents" class="back-to-toc">↑</a></div><div class="chapter-content">{{ recommendations_html|safe }}</div></section>
   {% endif %}
-
   {% if roadmap_html %}
-  <section class="chapter" id="ch7">
-    <div class="chapter-header"><div class="chapter-number">Chapter 7</div><h1 class="chapter-title">Implementation Roadmap</h1></div>
-    <div class="chapter-content">{{ roadmap_html|safe }}</div>
-  </section>
+  <section class="chapter" id="chapter-7"><div class="chapter-header"><h1 class="chapter-title">Implementation Roadmap</h1><a href="#contents" class="back-to-toc">↑</a></div><div class="chapter-content">{{ roadmap_html|safe }}</div></section>
   {% endif %}
-
-  {% if praxisbeispiel_html %}
-  <section class="chapter" id="ch8">
-    <div class="chapter-header"><div class="chapter-number">Chapter 8</div><h1 class="chapter-title">Case Studies</h1></div>
-    <div class="chapter-content">{{ praxisbeispiel_html|safe }}</div>
-  </section>
-  {% endif %}
-
-  {% if coach_html %}
-  <section class="chapter" id="ch9">
-    <div class="chapter-header"><div class="chapter-number">Chapter 9</div><h1 class="chapter-title">Coaching & Reflection</h1></div>
-    <div class="chapter-content">{{ coach_html|safe }}</div>
-  </section>
-  {% endif %}
-
-  {% if vision_html or gamechanger_html %}
-  <section class="chapter" id="ch10">
-    <div class="chapter-header"><div class="chapter-number">Chapter 10</div><h1 class="chapter-title">Vision & Gamechangers</h1></div>
-    <div class="chapter-content">
-      {% if vision_html %}<h2>Vision</h2>{{ vision_html|safe }}{% endif %}
-      {% if gamechanger_html %}<h2>Innovation & Gamechangers</h2><div class="info-box">{{ gamechanger_html|safe }}</div>{% endif %}
-    </div>
-  </section>
-  {% endif %}
-
-  {% if compliance_html %}
-  <section class="chapter" id="ch11">
-    <div class="chapter-header"><div class="chapter-number">Chapter 11</div><h1 class="chapter-title">Compliance</h1></div>
-    <div class="chapter-content">{{ compliance_html|safe }}</div>
-  </section>
-  {% endif %}
-
-  {% if foerderprogramme_html or funding_rich_html or dynamic_funding_html or foerderprogramme_table %}
-  <section class="chapter" id="ch12">
-    <div class="chapter-header"><div class="chapter-number">Chapter 12</div><h1 class="chapter-title">Funding Programs</h1></div>
-    <div class="chapter-content">
-      {% if funding_rich_html %}{{ funding_rich_html|safe }}
-      {% elif dynamic_funding_html %}{{ dynamic_funding_html|safe }}
-      {% elif foerderprogramme_html %}{{ foerderprogramme_html|safe }}{% endif %}
-
-      {% if foerderprogramme_table and foerderprogramme_table|length>0 %}
-      <table>
-        <thead><tr><th>Program</th><th>Link</th></tr></thead>
-        <tbody>
-        {% for p in foerderprogramme_table %}
-          <tr>
-            <td>{{ p.name or p.title or 'Program' }}</td>
-            <td>{% set u = p.url or p.link %}{% if u %}<a href="{{ u }}">{{ u }}</a>{% else %}-{% endif %}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-      {% endif %}
-    </div>
-  </section>
-  {% endif %}
-
-  {% if tools_html or tools_rich_html or tools_table %}
-  <section class="chapter" id="ch13">
-    <div class="chapter-header"><div class="chapter-number">Chapter 13</div><h1 class="chapter-title">AI Tools</h1></div>
-    <div class="chapter-content">
-      {% if tools_rich_html %}{{ tools_rich_html|safe }}
-      {% elif tools_html %}{{ tools_html|safe }}{% endif %}
-
-      {% if tools_table and tools_table|length>0 %}
-      <table>
-        <thead><tr><th>Tool</th><th>Link</th></tr></thead>
-        <tbody>
-        {% for t in tools_table %}
-          <tr>
-            <td>{{ t.name or t.title or 'Tool' }}</td>
-            <td>{% set u = t.url or t.link %}{% if u %}<a href="{{ u }}">{{ u }}</a>{% else %}-{% endif %}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-      {% endif %}
-    </div>
-  </section>
-  {% endif %}
-
 </body>
 </html>
