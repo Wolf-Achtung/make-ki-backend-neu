@@ -89,3 +89,7 @@ Gib **nur** folgendes HTML in exakt dieser Struktur (keine zusätzlichen Erklär
 - {{ kpi_innovation }}% wird in jedem Szenario genannt.
 - Paradigmenwechsel für {{ hauptleistung }} pro Szenario explizit.
 - Keine externen Links, Bilder oder Tracking.
+
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

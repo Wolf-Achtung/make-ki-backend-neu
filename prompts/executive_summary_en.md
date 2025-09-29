@@ -60,3 +60,6 @@ Return ONLY this HTML (no markdown/explanations):
 - Must reference all provided metrics
 - Must be motivating and action-oriented
 - Must position the company as a future winner regardless of current state
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

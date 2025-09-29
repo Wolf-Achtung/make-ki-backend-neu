@@ -99,3 +99,7 @@ Return **only** this HTML (no extra explanations/Markdown) exactly with the clas
 - One consistent archetype, 6–8 benchmark rows, 4–6 development steps.
 - Every strength/gap references a KPI.
 - No external links, images, or tracking.
+
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

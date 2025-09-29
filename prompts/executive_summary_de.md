@@ -49,3 +49,6 @@ Erstellen Sie eine Executive Summary in EXAKT dieser HTML-Struktur:
     Der erste Schritt beginnt morgen mit [KONKRETE AKTION].
   </p>
 </div>
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

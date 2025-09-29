@@ -72,3 +72,6 @@ Generieren Sie GENAU 3 Quick Wins, die innerhalb von 14 Tagen messbare Ergebniss
 1. Höchster ROI / Geringster Aufwand
 2. Sofort startbar (keine Vorprojekte)
 3. Sichtbarer Erfolg in 14 Tagen
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

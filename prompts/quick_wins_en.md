@@ -66,3 +66,7 @@ Return **only** the following HTML (no extra explanations, no Markdown), exactly
 - **Concrete numbers** for time saved, cost, and implementation time.
 - **Compliance to-do** per Quick Win.
 - **No** external links, **no** tracking, **no** images/icons.
+
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

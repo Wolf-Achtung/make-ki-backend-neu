@@ -99,3 +99,6 @@ Create a COMPELLING Business Case that excites leadership about AI adoption. Ret
 - Use concrete benefits, not abstract concepts
 - Include emojis for visual appeal (sparingly)
 - Frame all risks as easily manageable
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

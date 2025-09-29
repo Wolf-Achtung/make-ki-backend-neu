@@ -121,3 +121,7 @@ Gib **ausschließlich** folgendes HTML in exakt dieser Struktur (keine zusätzli
 - Tabelle hat **genau 5** Datenzeilen.
 - Jede Tabellenzeile enthält Angaben zu Summe/Quote, Frist und Anforderungen.
 - Kombinationen und Schritte klar, prüfbar und realistisch für KMU.
+
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

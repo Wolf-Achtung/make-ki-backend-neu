@@ -106,3 +106,6 @@ Erstellen Sie inspirierende Reflexionsimpulse, die zum Handeln motivieren:
 - Optimistisch aber realistisch
 - Wertschätzend für bisherige Leistungen
 - Einladend statt fordernd
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

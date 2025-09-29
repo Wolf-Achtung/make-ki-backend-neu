@@ -137,3 +137,7 @@ Use **only** this structure/classes; no extra text or Markdown:
 - **HTML only** per structure; **exactly 6** tool cards when feasible; otherwise **exactly 5**.
 - Each card includes complexity, time-to-value, cost, GDPR note, integration, and rationale.
 - Budget rule strictly applied; no external links/images/tracking.
+
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

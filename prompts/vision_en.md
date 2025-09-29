@@ -99,3 +99,6 @@ Create an INSPIRING vision that makes the future tangible and achievable. Return
 - Show personal wins, not just business wins
 - Include elements of recognition and industry leadership
 - Make them the hero of their industry's transformation story
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

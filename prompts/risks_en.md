@@ -96,3 +96,7 @@ Use exactly this structure and class names (no extra explanations/Markdown):
 - **4–5 risks** in the table; if {{ kpi_compliance }} < 60 a GDPR risk is **mandatory**.
 - Each row includes traffic light, mitigation, and cost/effort.
 - Priorities P1–P3 include rationale and costs.
+
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

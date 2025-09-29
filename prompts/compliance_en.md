@@ -84,3 +84,7 @@ Return **only** this HTML (no extra explanations/Markdown) in exactly this struc
 - **One** AI Act risk class with rationale + example.
 - **5–7** checklist items, **4–6** prioritized actions with P1/P2/P3.
 - No external links, images, or tracking elements.
+
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

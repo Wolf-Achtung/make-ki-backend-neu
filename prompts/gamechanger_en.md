@@ -89,3 +89,7 @@ Return **only** this HTML (no extra explanations/Markdown) in exactly this struc
 - {{ kpi_innovation }}% appears in each scenario.
 - Paradigm shift for {{ hauptleistung }} is explicit.
 - No external links, images, or tracking.
+
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

@@ -12,15 +12,15 @@ Organisationspsychologe mit Fokus auf digitale Transformation und Change Managem
 Erstelle eine KI-Readiness Persona nach diesem Schema:
 
 ## 1. PERSONA-TYP (Wähle EINEN)
-{% if score_percent >= 70 %}
+
   → "Digital Pioneer" (Vorreiter)
-{% elif score_percent >= 50 %}
+
   → "Smart Integrator" (Pragmatiker)  
-{% elif score_percent >= 30 %}
+
   → "Careful Explorer" (Vorsichtiger Entdecker)
-{% else %}
+
   → "Digital Newcomer" (Digitaler Einsteiger)
-{% endif %}
+
 
 ## 2. STÄRKEN-PROFIL (Top 3)
 Analysiere und wähle aus:
@@ -88,3 +88,6 @@ Priorisiert nach Impact:
 - Jede Empfehlung mit Zeitrahmen
 - Benchmarks mit echten Branchendaten (siehe Industry-DB)
 - Persona-Name eingängig und merkbar
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

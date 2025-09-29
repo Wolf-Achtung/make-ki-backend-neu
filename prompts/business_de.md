@@ -142,3 +142,6 @@ Erstellen Sie einen überzeugenden Business Case mit dieser exakten Struktur:
     </table>
   </section>
 </div>
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

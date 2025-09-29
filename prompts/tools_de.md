@@ -12,7 +12,7 @@ Wähle die TOP 5 Tools für {{ ki_usecases }} aus.
 
 # Output-Template PRO TOOL:
 <div class="tool-card">
-  <h4>{{ tool_name }}</h4>
+  <h4>TOOL_NAME</h4>
   <div class="badges">
     <!-- Wenn DSGVO-konform: -->
     <span class="badge-gdpr">✓ DSGVO</span>
@@ -21,13 +21,13 @@ Wähle die TOP 5 Tools für {{ ki_usecases }} aus.
   </div>
   
   <table class="tool-facts">
-    <tr><td>Kosten:</td><td>{{ exact_price }} EUR/Monat</td></tr>
-    <tr><td>Setup:</td><td>{{ hours }} Stunden</td></tr>
-    <tr><td>Nutzen:</td><td>{{ concrete_benefit }}</td></tr>
+    <tr><td>Kosten:</td><td>EXACT_PRICE EUR/Monat</td></tr>
+    <tr><td>Setup:</td><td>HOURS Stunden</td></tr>
+    <tr><td>Nutzen:</td><td>CONCRETE_BENEFIT</td></tr>
   </table>
   
   <div class="compliance">
-    <strong>DSGVO-Maßnahme:</strong> {{ specific_action }}
+    <strong>DSGVO-Maßnahme:</strong> SPECIFIC_ACTION
   </div>
 </div>
 
@@ -35,3 +35,6 @@ Wähle die TOP 5 Tools für {{ ki_usecases }} aus.
 - Bei Budget < 2000 EUR: Mind. 3 kostenlose Tools
 - KEINE Tools ohne EU-Datenverarbeitung
 - KEINE Beta-Versionen
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

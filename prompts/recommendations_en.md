@@ -80,3 +80,7 @@ Return **only** this HTML (no extra explanations/Markdown) exactly in the struct
 - **Exactly 3** recommendations (`.recommendation`), #1 = "{{ quick_win_primary }}".
 - ROI given in months; efficiency ≈ {{ kpi_efficiency }}% for each item.
 - No external links, images, or tracking.
+
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

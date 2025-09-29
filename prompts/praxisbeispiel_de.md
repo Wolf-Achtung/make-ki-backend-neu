@@ -90,3 +90,7 @@ Gib **ausschließlich** dieses HTML in exakt dieser Struktur und mit den vorgege
 - **Zwei** `.case`-Blöcke, je eine KPI-Tabelle mit mind. 4 Zeilen.
 - Vorher–Nachher und Δ (%) pro Case vorhanden.
 - Keine externen Links, Bilder, Logos oder Tracking.
+
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

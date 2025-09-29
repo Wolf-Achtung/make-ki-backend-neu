@@ -95,3 +95,6 @@ Create coaching content that INSPIRES immediate action. Return ONLY this HTML:
 - Frame all challenges as opportunities
 - Include specific, measurable micro-actions
 - Build confidence through achievable quick wins
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

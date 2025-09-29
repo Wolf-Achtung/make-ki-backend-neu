@@ -89,3 +89,7 @@ Return **only** this HTML in exactly this structure with the specified classes:
 - **Two** `.case` blocks, each with a KPI table (min. 4 rows).
 - Before–After and Δ (%) present for each case.
 - No external links, images, logos, or tracking.
+
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

@@ -23,23 +23,26 @@ Erstelle eine 4-Phasen-Roadmap mit EXAKT dieser Struktur:
 - 3 Meilensteine
 - 2 KPIs mit Zielwert
 - Owner: Fachbereiche
-- {% if kpi_roi_months <= 90 %}✓ BREAK-EVEN ERREICHT{% endif %}
+- ✓ BREAK-EVEN ERREICHT
 
 ## PHASE 3: Integration (91-180 Tage)
 - Budget: 35% (= {{ (roi_investment * 0.35)|round }} EUR)
 - Fokus: Prozess-Integration
 - 3 Meilensteine
 - 2 KPIs mit Zielwert
-- {% if kpi_roi_months > 90 and kpi_roi_months <= 180 %}✓ BREAK-EVEN{% endif %}
+- ✓ BREAK-EVEN
 
 ## PHASE 4: Innovation (180+ Tage)
 - Budget: 15% (= {{ (roi_investment * 0.15)|round }} EUR)
 - Fokus: Neue Use Cases
 - 3 Meilensteine
 - 2 KPIs
-- {% if kpi_roi_months > 180 %}✓ BREAK-EVEN{% endif %}
+- ✓ BREAK-EVEN
 
 # Output-Regeln
 - KEINE vagen Formulierungen ("etwa", "ungefähr")
 - JEDER Meilenstein mit messbarem Ergebnis
 - JEDE KPI mit konkretem Zielwert und Einheit
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

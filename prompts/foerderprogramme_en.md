@@ -121,3 +121,7 @@ Return **only** this HTML (no extra explanations/Markdown) in exactly this struc
 - Table has **exactly 5** data rows.
 - Each row includes amount/rate, deadline, and key requirements.
 - Combinations and steps are clear, auditable, and realistic for SMBs.
+
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

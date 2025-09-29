@@ -106,3 +106,7 @@ Return **only** this HTML exactly as structured (no extra explanations/Markdown)
 - **Exactly 4 phases** with the specified time ranges.
 - Break-even visibly marked; per-phase budget in % **and** €; total 100%.
 - Each phase lists 2–4 milestones and 2–4 KPIs with owner & risk.
+
+
+[OUTPUT FORMAT]
+Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.

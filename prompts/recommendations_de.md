@@ -80,3 +80,7 @@ Gib **nur** dieses HTML in exakt dieser Struktur zurück (keine zusätzlichen Er
 - **Genau 3** Empfehlungen (`.recommendation`), #1 = "{{ quick_win_primary }}".
 - ROI in Monaten genannt; Effizienz ≈ {{ kpi_efficiency }}% pro Empfehlung.
 - Keine externen Links, Bilder oder Tracking.
+
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

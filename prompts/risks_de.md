@@ -44,7 +44,7 @@ Identifiziere die TOP 5 Risiken und erstelle eine Risikomatrix:
     </thead>
     <tbody>
       <!-- RISIKO 1: Immer Compliance wenn kpi_compliance < 60 -->
-      {% if kpi_compliance < 60 %}
+      
       <tr class="risk-critical">
         <td>DSGVO-Verstoß</td>
         <td>🔴</td>
@@ -58,7 +58,7 @@ Identifiziere die TOP 5 Risiken und erstelle eine Risikomatrix:
         <td>500-2000 EUR</td>
         <td>GF</td>
       </tr>
-      {% endif %}
+      
       
       <!-- RISIKO 2-5: Dynamisch nach Kontext -->
       <tr class="risk-medium">
@@ -112,3 +112,6 @@ Identifiziere die TOP 5 Risiken und erstelle eine Risikomatrix:
 - DSB extern: 200-500 EUR/Monat
 - Schulung: 500-2000 EUR/Person
 - Software: Aus Tool-Datenbank
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.

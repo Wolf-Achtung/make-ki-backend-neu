@@ -93,3 +93,6 @@ Entwickle eine inspirierende aber realistische 3-Jahres-Vision:
 - Keine Science Fiction, nur verfügbare Technologie
 - Branchenspezifische Beispiele verwenden
 - Motivierend aber glaubwürdig
+
+[AUSGABE-FORMAT]
+Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.
