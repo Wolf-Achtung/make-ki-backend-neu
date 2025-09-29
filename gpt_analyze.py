@@ -1,47 +1,27 @@
-# gpt_analyze.py — Direct Renderer + Enhanced Innenleben
-# Version: 2025-09-28 (Wolf Merge)
-#
-# Außenhaut:
-#   analyze_briefing(form_data, lang) -> str  (liefert fertiges HTML)
-#   Stabiler Jinja2-Env (keine Überschreibung von built-ins wie 'default')
-#   Sucht Templates in /app/templates und App-Root
-#
-# Innenleben:
-#   KPI-Berechnung (realistisch-optimistisch), Prompts, Fallbacks
-#   Sektionen: executive_summary, business, persona, quick_wins, risks,
-#              recommendations, roadmap, praxisbeispiel, coach, vision,
-#              gamechanger, compliance, foerderprogramme, tools
-#   Narrative-Sanitizer: entfernt ul/ol/li und führende Nummern → Fließtext
-#
-# Hinweis:
-#   OPENAI optional. Wenn kein Key vorhanden ist, werden Fallbacks genutzt.
+# gpt_analyze.py — Direct Renderer + Enhanced Innenleben (+ Live Updates)
+# Stand: 2025-09-29
 
 from __future__ import annotations
-
-import glob
-import io
-import os
-import re
-import logging
+import glob, io, os, re, logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime
-
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-# -----------------------------------------------------------------------------
-# Basis / Pfade
-# -----------------------------------------------------------------------------
+from websearch_utils import collect_recent_items  # Live-Sektionen (Tavily etc.)
+
 BASE_DIR = os.path.abspath(os.getenv("APP_BASE", os.getcwd()))
 TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
 PROMPTS_DIR = os.getenv("PROMPTS_DIR", os.path.join(BASE_DIR, "prompts"))
-PDF_TEMPLATE_NAME = os.getenv("PDF_TEMPLATE_NAME", "pdf_template.html")
+
+# Template-Namen über ENV, ansonsten sprachbasiert
+TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
+TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
+PDF_TEMPLATE_NAME = os.getenv("PDF_TEMPLATE_NAME")  # optional override
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 log = logging.getLogger("gpt_analyze")
 
-# -----------------------------------------------------------------------------
-# OpenAI optional
-# -----------------------------------------------------------------------------
+# ----------------------------- OpenAI optional -----------------------------
 _openai = None
 try:
     from openai import OpenAI
@@ -52,9 +32,7 @@ except Exception as e:
     log.warning(f"OpenAI nicht verfügbar: {e}")
     _openai = None
 
-# -----------------------------------------------------------------------------
-# Jinja Environment – KEIN Override built-ins!
-# -----------------------------------------------------------------------------
+# ----------------------------- Jinja Environment ---------------------------
 def make_env() -> Environment:
     env = Environment(
         loader=FileSystemLoader([TEMPLATE_DIR, BASE_DIR]),
@@ -62,22 +40,18 @@ def make_env() -> Environment:
         trim_blocks=True,
         lstrip_blocks=True,
     )
-    # konfliktfreier Zusatzfilter
     def currency(v, symbol="€"):
         try:
             n = int(float(str(v).replace(",", ".").replace(" ", "").replace("€", "")))
         except Exception:
             n = 0
         s = f"{n:,}"
-        if symbol == "€":
-            s = s.replace(",", ".")
+        if symbol == "€": s = s.replace(",", ".")
         return f"{s} {symbol}"
     env.filters["currency"] = currency
     return env
 
-# -----------------------------------------------------------------------------
-# Utilities
-# -----------------------------------------------------------------------------
+# ----------------------------- Utils ---------------------------------------
 def _safe_int(x, default=0) -> int:
     try:
         if isinstance(x, (int, float)): return int(x)
@@ -112,9 +86,13 @@ def _debug_list_prompts():
     except Exception as e:
         log.warning("Prompt listing failed: %s", e)
 
-# -----------------------------------------------------------------------------
-# KPI-Berechnung (konsolidiert)
-# -----------------------------------------------------------------------------
+def _get_bool(name: str, default: bool=False) -> bool:
+    v = (os.getenv(name) or "").strip().lower()
+    if v in {"1","true","yes","y","on"}: return True
+    if v in {"0","false","no","n","off"}: return False
+    return default
+
+# ----------------------------- KPIs ----------------------------------------
 def _budget_amount(budget_str: Any) -> int:
     if not budget_str:
         return 6000
@@ -207,16 +185,18 @@ def calculate_optimistic_kpis(raw: Dict[str, Any]) -> Dict[str, Any]:
     return k
 
 def validate_kpis(k: Dict[str, Any]) -> Dict[str, Any]:
+    # harte Schranken
     if k["roi_annual_saving"] > k["roi_investment"]*4:
         k["roi_annual_saving"] = int(k["roi_investment"]*4)
         k["roi_three_year"] = int(k["roi_annual_saving"]*3 - k["roi_investment"])
     if k["readiness_score"] > 85:
         k["readiness_score"] = 85
+    # Mindest-Payback: 4 Monate
+    if k["kpi_roi_months"] < 4:
+        k["kpi_roi_months"] = 4
     return k
 
-# -----------------------------------------------------------------------------
-# Labels & Variablen
-# -----------------------------------------------------------------------------
+# ----------------------------- Labels / Vars -------------------------------
 def get_company_size_label(size: str, lang: str) -> str:
     labels = {
         'de': {'1':'1 (Solo-Selbstständig)','solo':'1 (Solo-Selbstständig)','2-10':'2-10 (Kleines Team)',
@@ -233,7 +213,7 @@ def get_knowledge_label(knowledge: str, lang: str) -> str:
     }
     return labels.get(lang, labels['de']).get(str(knowledge).lower(), str(knowledge))
 
-def get_readiness_level(score: int, lang: str) -> str:
+def _readiness_level(score: int, lang: str) -> str:
     return _readiness_label(score, lang)
 
 def get_primary_quick_win(form_data: Dict[str, Any], lang: str) -> str:
@@ -268,7 +248,7 @@ def get_template_variables(form_data: Dict[str, Any], lang: str='de') -> Dict[st
             "subtitle": f"AI Readiness: {k['readiness_score']}%",
             "date": datetime.now().strftime("%d.%m.%Y"),
             "lang": lang,
-            "version": "3.0",
+            "version": "3.1",
         },
         "lang": lang,
         "is_german": lang.startswith("de"),
@@ -282,7 +262,7 @@ def get_template_variables(form_data: Dict[str, Any], lang: str='de') -> Dict[st
 
         # KPIs
         "score_percent": k["readiness_score"],
-        "readiness_level": get_readiness_level(k["readiness_score"], lang),
+        "readiness_level": _readiness_level(k["readiness_score"], lang),
         "kpi_efficiency": k["kpi_efficiency"],
         "kpi_cost_saving": k["kpi_cost_saving"],
         "kpi_roi_months": k["kpi_roi_months"],
@@ -297,13 +277,14 @@ def get_template_variables(form_data: Dict[str, Any], lang: str='de') -> Dict[st
         "roi_three_year": k["roi_three_year"],
 
         # KI-Daten
-        "ki_usecases": ", ".join(map(str, form_data.get("ki_usecases", []))),
-        "ki_hemmnisse": ", ".join(map(str, form_data.get("ki_hemmnisse", []))),
+        "ki_usecases": form_data.get("ki_usecases", []),
+        "ki_hemmnisse": form_data.get("ki_hemmnisse", []),
         "ki_knowhow": form_data.get("ki_knowhow","grundkenntnisse"),
         "ki_knowhow_label": get_knowledge_label(form_data.get("ki_knowhow","grundkenntnisse"), lang),
         "automatisierungsgrad": form_data.get("automatisierungsgrad","mittel"),
         "automatisierungsgrad_percent": k["automatisierungsgrad"],
         "prozesse_papierlos": form_data.get("prozesse_papierlos","51-80"),
+        "quick_win_primary": get_primary_quick_win(form_data, lang),
 
         # Tabellen (optional vom Template genutzt)
         "funding_programs": form_data.get("funding_programs", []),
@@ -318,31 +299,31 @@ def get_template_variables(form_data: Dict[str, Any], lang: str='de') -> Dict[st
         vars["kpi_efficiency"] = 1
     return vars
 
-# -----------------------------------------------------------------------------
-# Prompt-Engine + GPT
-# -----------------------------------------------------------------------------
+# ----------------------------- Prompt-Engine -------------------------------
 class PromptLoader:
     def __init__(self, directory: str = PROMPTS_DIR):
         self.dir = directory
-        # Jinja-Env nur für .jinja Templates:
         self.env = Environment(
             loader=FileSystemLoader([self.dir]),
             autoescape=False, trim_blocks=True, lstrip_blocks=True
         )
 
     def _render_md_plain(self, text: str, ctx: Dict[str, Any]) -> str:
-        # sehr robuste, minimale Platzhalter-Substitution für {{ var }}
+        # 1) Alle etwaigen Jinja-Blöcke aus .md entfernen (wir interpretieren .md NICHT als Jinja)
+        text = re.sub(r"\{%.*?%\}", "", text, flags=re.S)
+        # 2) Platzhalter {{ var }} ersetzen
         def repl(m):
             key = m.group(1).strip()
             val = ctx.get(key, "")
             return str(val) if val is not None else ""
-        return re.sub(r"\{\{\s*([a-zA-Z0-9_\.]+)\s*\}\}", repl, text)
+        out = re.sub(r"\{\{\s*([a-zA-Z0-9_\.]+)\s*\}\}", repl, text)
+        return out
 
     def render(self, name: str, ctx: Dict[str, Any], lang: str) -> str:
         candidates = [
-            f"{name}_{lang}.md",  # 1) bevorzugt: .md (plain)
+            f"{name}_{lang}.md",
             f"{name}.md",
-            f"{name}_{lang}.jinja",  # 2) optional: .jinja (echtes Jinja)
+            f"{name}_{lang}.jinja",
             f"{name}.jinja",
         ]
         last_err = None
@@ -351,33 +332,36 @@ class PromptLoader:
             try:
                 if fn.endswith(".md"):
                     with io.open(path, "r", encoding="utf-8") as f:
-                        return self._render_md_plain(f.read(), ctx)
+                        html = self._render_md_plain(f.read(), ctx)
+                        log.info("Prompt resolved: %s -> %s (mode=md-plain)", name, fn)
+                        return html
                 else:
                     tpl = self.env.get_template(fn)
+                    log.info("Prompt resolved: %s -> %s (mode=jinja)", name, fn)
                     return tpl.render(**ctx)
             except Exception as e:
                 last_err = e
                 continue
         raise FileNotFoundError(f"Prompt nicht renderbar: {name} ({last_err})")
 
+# ----------------------------- GPT optional --------------------------------
 def _gpt(prompt: str, section: str, lang="de") -> Optional[str]:
     if not _openai:
         return None
     try:
-        sys = (
+        system_msg = (
             "Du bist ein KI-Strategieberater. Schreibe prägnante, narrative Abschnitte "
-            "in reinem HTML (<p>…</p>, optional <strong>). "
-            "Keine Bullet-Listen, keine nummerierten Listen, keine Tabellen. "
-            "DSGVO-konform, sachlich, handlungsorientiert."
+            "in reinem HTML (<p>…</p>, optional <strong>), ohne Listen/Tabellen. "
+            "Kein Payback < 4 Monaten nennen. Werte nicht über 100% ausgeben."
             if lang.startswith("de") else
             "You are an AI strategy consultant. Write concise, narrative sections "
-            "in plain HTML (<p>…</p>, optional <strong>). "
-            "No bullet points, no numbered lists, no tables. "
-            "Compliant, factual, action-oriented."
+            "in plain HTML (<p>…</p>, optional <strong>), no lists/tables. "
+            "Do not claim payback under 4 months. Do not output values > 100%."
         )
+        from openai import OpenAI
         resp = _openai.chat.completions.create(
             model=os.getenv("OPENAI_MODEL","gpt-4o-mini"),
-            messages=[{"role":"system","content":sys},{"role":"user","content":prompt}],
+            messages=[{"role":"system","content":system_msg},{"role":"user","content":prompt}],
             temperature=_safe_float(os.getenv("LLM_TEMPERATURE", 0.6), 0.6),
             max_tokens=int(os.getenv("LLM_MAX_TOKENS", 1200)),
         )
@@ -386,9 +370,7 @@ def _gpt(prompt: str, section: str, lang="de") -> Optional[str]:
         log.warning(f"GPT API Fehler ({section}): {e}")
         return None
 
-# -----------------------------------------------------------------------------
-# Fallbacks & kurze Generatoren (narrativ)
-# -----------------------------------------------------------------------------
+# ----------------------------- Fallback-Generatoren ------------------------
 def _p(s: str) -> str:
     return f"<p>{s}</p>"
 
@@ -432,10 +414,10 @@ def generate_roadmap(answers: Dict[str, Any], kpis: Dict[str, Any], lang: str = 
                   f"91–180 Tage Optimierung; Break-even nach ~{m} Monaten.")
     return _p("Roadmap: quick win, scale up, optimize; break-even in the first year.")
 
-# Tools (Mini-Katalog) & Förderprogramme (Kurzliste)
+# ----------------------------- Tool/Funding-Kataloge (statisch, knapp) ----
 TOOL_DATABASE = {
     "texterstellung": [
-        {"name":"DeepL Write","desc":"DSGVO-konformes Schreibtool","use_case":"E-Mails, Berichte","cost":"Free/Pro","fit_score":95},
+        {"name":"DeepL Write","desc":"DSGVO-freundliches Schreibtool","use_case":"E-Mails, Berichte","cost":"Free/Pro","fit_score":95},
         {"name":"Jasper AI","desc":"Content-Automation","use_case":"Blog/Social","cost":"ab 39€","fit_score":80},
     ],
     "prozessautomatisierung": [
@@ -454,8 +436,7 @@ def match_tools_to_company(answers: Dict[str, Any], lang: str='de') -> str:
     ucs = answers.get('ki_usecases') or []
     if isinstance(ucs, str): ucs = [ucs]
     if not ucs: ucs = ['prozessautomatisierung']
-    picks = []
-    used = set()
+    picks, used = [], set()
     for uc in ucs:
         key = re.sub(r"[\s\-]", "", str(uc).lower())
         for dbk, tools in TOOL_DATABASE.items():
@@ -471,9 +452,9 @@ def match_tools_to_company(answers: Dict[str, Any], lang: str='de') -> str:
     out = []
     for t in picks[:6]:
         if lang.startswith("de"):
-            out.append(f"{t['name']} – {t['desc']} ({t['use_case']}, {t['cost']})")
+            out.append(f"{t['name']} – {t['desc']} ({t['use_case']}, {t['cost']}). Hinweis: Prüfen Sie stets AVV/DPA & Region.")
         else:
-            out.append(f"{t['name']} – {t['desc']} ({t['use_case']}, {t['cost']})")
+            out.append(f"{t['name']} – {t['desc']} ({t['use_case']}, {t['cost']}). Note: Always verify DPA & region.")
     return _p(" ".join(out))
 
 FUNDING_PROGRAMS = {
@@ -501,9 +482,7 @@ def match_funding_programs(answers: Dict[str, Any], lang: str='de') -> str:
     rows = "; ".join([f"{p['name']} ({p['amount']})" for p in programs])
     return _p(("Förderoptionen: " + rows) if lang.startswith("de") else ("Funding options: " + rows))
 
-# -----------------------------------------------------------------------------
-# Sektionen-Renderer (Prompts → GPT → Fallback)
-# -----------------------------------------------------------------------------
+# ----------------------------- Sektionen-Renderer --------------------------
 def _render_section(name: str, ctx: Dict[str, Any], lang="de") -> str:
     # 1) Prompt laden
     prompt = None
@@ -526,37 +505,25 @@ def _render_section(name: str, ctx: Dict[str, Any], lang="de") -> str:
     if name == "foerderprogramme": return match_funding_programs(ctx, lang)
     return fallback_generic(name, lang)
 
-# -----------------------------------------------------------------------------
-# Narrative-Sanitizer (ul/ol/li → p; führende Nummern entfernen)
-# -----------------------------------------------------------------------------
+# ----------------------------- Narrative Sanitizer -------------------------
 def _sanitize_html_block(html: str) -> str:
-    if not isinstance(html, str):
-        return ""
+    if not isinstance(html, str): return ""
     s = html
-
-    # 1) <li> Inhalte extrahieren → Absätze
     items = re.findall(r"<li[^>]*>(.*?)</li>", s, flags=re.I|re.S)
     if items:
         cleaned = []
         for it in items:
-            txt = re.sub(r"<[^>]+>", "", it)                 # Tags entfernen
-            txt = re.sub(r"^\s*(?:\d+[\.\)]|[-\*•])\s*", "", txt)  # führende Nummern/Bullets
+            txt = re.sub(r"<[^>]+>", "", it)
+            txt = re.sub(r"^\s*(?:\d+[\.\)]|[-\*•])\s*", "", txt)
             if txt.strip():
                 cleaned.append(txt.strip())
         if cleaned:
             s = re.sub(r"</?ul[^>]*>|</?ol[^>]*>|<li[^>]*>.*?</li>", "", s, flags=re.I|re.S)
             s += "".join([f"<p>{c}</p>" for c in cleaned])
-
-    # 2) Restliche ul/ol entfernen
     s = re.sub(r"</?(ul|ol)[^>]*>", "", s, flags=re.I)
-
-    # 3) „1) …“ innerhalb von <p> entfernen
     s = re.sub(r"(<p[^>]*>)\s*\d+[\.\)]\s*", r"\1", s)
-
-    # 4) Sicherstellen, dass es Absätze gibt
     if "<p" not in s.strip().lower():
         s = f"<p>{re.sub(r'<[^>]+>', '', s).strip()}</p>"
-
     return s
 
 def sanitize_narrative(context: Dict[str, Any]) -> Dict[str, Any]:
@@ -566,9 +533,29 @@ def sanitize_narrative(context: Dict[str, Any]) -> Dict[str, Any]:
             out[k] = _sanitize_html_block(v)
     return out
 
-# -----------------------------------------------------------------------------
-# Innenleben-API: Kontext erzeugen (alle *_html Keys befüllen)
-# -----------------------------------------------------------------------------
+def _clamp_percents_in_html(ctx: Dict[str, Any]) -> Dict[str, Any]:
+    pct = re.compile(r"(\d{1,3})%")
+    for k,v in list(ctx.items()):
+        if isinstance(v, str) and k.endswith("_html"):
+            ctx[k] = pct.sub(lambda m: f"{min(int(m.group(1)),100)}%", v)
+    return ctx
+
+# ----------------------------- Live Updates (Tavily) -----------------------
+def inject_live_updates(ctx: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Fügt news_html / tools_rich_html / funding_rich_html hinzu (wenn erlaubt & Key vorhanden).
+    """
+    if not _get_bool("ALLOW_TAVILY", True) or not os.getenv("TAVILY_API_KEY"):
+        return ctx
+    try:
+        adds = collect_recent_items(ctx, lang=ctx.get("lang","de"))
+        ctx.update(adds)
+        ctx["last_updated"] = datetime.now().strftime("%Y-%m-%d")
+    except Exception as e:
+        log.warning("inject_live_updates failed: %s", e)
+    return ctx
+
+# ----------------------------- Innenleben-API -------------------------------
 def analyze_briefing_enhanced(body: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     lang = "de" if str(lang).lower().startswith("de") else "en"
     vars = get_template_variables(body, lang)
@@ -585,25 +572,31 @@ def analyze_briefing_enhanced(body: Dict[str, Any], lang: str = "de") -> Dict[st
         key = "exec_summary_html" if sec == "executive_summary" else f"{sec}_html"
         ctx[key] = _render_section(sec, vars, lang)
 
-    # Falls manche Sektionen leer bleiben, mit generischen Texten auffüllen
+    # Sektionen ohne Inhalt auffüllen
     for aux in ["persona_html","recommendations_html","praxisbeispiel_html",
                 "vision_html","gamechanger_html","coach_html","compliance_html"]:
         if not (ctx.get(aux) and len(ctx.get(aux, "").strip()) > 40):
             ctx[aux] = fallback_generic(aux[:-5] if aux.endswith("_html") else aux, lang)
 
+    # Live-Updates (News/Tools/Förderungen) einmischen
+    ctx = inject_live_updates(ctx)
+
     return ctx
 
-# -----------------------------------------------------------------------------
-# Außenhaut: Direct-to-HTML Renderer (stabil für Railway)
-# -----------------------------------------------------------------------------
+# ----------------------------- Außenhaut: Renderer -------------------------
 def analyze_briefing(form_data: Dict[str, Any], lang: str = "de") -> str:
     log.info("gpt_analyze loaded (direct): %s", os.path.join(BASE_DIR, "gpt_analyze.py"))
     _debug_list_prompts()
 
     env = make_env()
     try:
+        # Template anhand Sprache / ENV wählen
+        chosen = PDF_TEMPLATE_NAME
+        if not chosen:
+            chosen = TEMPLATE_DE if str(lang).lower().startswith("de") else TEMPLATE_EN
+
         try:
-            template = env.get_template(PDF_TEMPLATE_NAME)
+            template = env.get_template(chosen)
         except Exception:
             html_files = [f for f in os.listdir(TEMPLATE_DIR) if f.endswith(".html")]
             template = env.get_template(html_files[0]) if html_files else None
@@ -611,9 +604,10 @@ def analyze_briefing(form_data: Dict[str, Any], lang: str = "de") -> str:
             raise RuntimeError("Kein HTML-Template gefunden")
 
         ctx = analyze_briefing_enhanced(form_data, lang)
-        ctx = sanitize_narrative(ctx)   # <— bereits vorhanden
+        ctx = sanitize_narrative(ctx)
+        ctx = _clamp_percents_in_html(ctx)
 
-        # >>>>>>>>>>>>>>> HIER DEIN NEUER GUARD-BLOCK EINFÜGEN <<<<<<<<<<<<<<<
+        # Guard: wichtige Kapitel nie leer
         def _ensure_narrative(ctx, key, title):
             if not isinstance(ctx.get(key), str) or len(ctx[key].strip()) < 80:
                 ctx[key] = (
@@ -622,7 +616,6 @@ def analyze_briefing(form_data: Dict[str, Any], lang: str = "de") -> str:
                     f"Schritte – ohne Aufzählungszeichen und ohne Zahlenkolonnen. "
                     f"Die kuratierte Fassung wird im nächsten Lauf ergänzt.</p>"
                 )
-
         for k, t in [
             ("exec_summary_html","Executive Summary"),
             ("business_html","Business Case"),
@@ -631,9 +624,8 @@ def analyze_briefing(form_data: Dict[str, Any], lang: str = "de") -> str:
             ("roadmap_html","Roadmap"),
         ]:
             _ensure_narrative(ctx, k, t)
-        # <<<<<<<<<<<<<<<< ENDE DEINES GUARD-BLOCKS <<<<<<<<<<<<<<<<<<<<<<<<<<
 
-        # (Optional, falls noch Alt-Key auftauchen kann)
+        # Legacy-Key
         if not ctx.get("quick_wins_html") and ctx.get("quickwins_html"):
             ctx["quick_wins_html"] = ctx["quickwins_html"]
 
@@ -647,6 +639,5 @@ def analyze_briefing(form_data: Dict[str, Any], lang: str = "de") -> str:
             "<p>Bei anhaltenden Problemen kontaktieren Sie: kontakt@ki-sicherheit.jetzt</p>"
             "</body></html>"
         )
-
 
 __all__ = ["analyze_briefing", "analyze_briefing_enhanced"]
