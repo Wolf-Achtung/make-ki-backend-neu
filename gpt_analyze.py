@@ -842,11 +842,12 @@ def _render_section(name: str, ctx: Dict[str, Any], lang="de") -> str:
 def _sanitize_html_block(html: str) -> str:
     if not isinstance(html, str):
         return ""
-    s = html
+    # Entferne Code-Fences wie ```html ... ``` oder ```
+    s = re.sub(r"```(?:html|md|markdown)?\s*|```", "", html, flags=re.I)
     # Listen in narrative Absätze umwandeln
     items = re.findall(r"<li[^>]*>(.*?)</li>", s, flags=re.I | re.S)
     if items:
-        cleaned = []
+        cleaned: List[str] = []
         for it in items:
             txt = re.sub(r"<[^>]+>", "", it)
             txt = re.sub(r"^\s*(?:\d+[\.\)]|[-\*•])\s*", "", txt)

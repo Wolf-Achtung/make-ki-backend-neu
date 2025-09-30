@@ -54,27 +54,109 @@ def _cache_set(key: str, payload: Any) -> None:
     data[key] = {"_ts": dt.datetime.utcnow().timestamp(), "payload": payload}
     _write_cache(data)
 
-def _tv_search(query: str, days: int, max_results: int, include_domains: List[str], exclude_domains: List[str]) -> List[Dict[str, Any]]:
+def _tv_search(
+    query: str,
+    days: int,
+    max_results: int,
+    include_domains: List[str],
+    exclude_domains: List[str],
+    *,
+    topic: Optional[str] = None,
+    time_range: Optional[str] = None,
+    language: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Führe eine Suche über die Tavily‑API aus. Dieses Hilfsmodul kapselt
+    sämtliche Parameter und sorgt für robuste Standardwerte. Es werden
+    unnötige Felder entfernt, wenn sie nicht gesetzt sind, und sensible
+    Header wie "Authorization" nur optional hinzugefügt. Falls ein
+    ``topic`` angegeben ist, wird ``days`` nur beim Topic ``news``
+    verwendet, andernfalls wird ein ``time_range`` aus den Tagen
+    generiert. ``include_answer`` und ``include_raw_content`` sind
+    standardmäßig deaktiviert. Durch das Argument ``language`` kann
+    optional die Sprache übergeben werden (falls von Tavily unterstützt).
+
+    Bei HTTP‑Fehlern oder fehlgeschlagenen Requests wird eine leere
+    Liste zurückgegeben. Der Rückgabewert ist auf ``max_results``
+    begrenzt.
+    """
+
     api_key = os.getenv("TAVILY_API_KEY")
     if not api_key:
         return []
-    payload = {
+
+    # Basispayload definieren
+    payload: Dict[str, Any] = {
         "api_key": api_key,
         "query": query,
         "search_depth": os.getenv("SEARCH_DEPTH", "basic"),
-        "include_domains": include_domains or None,
-        "exclude_domains": exclude_domains or None,
         "max_results": max_results,
-        "time_range": f"d{max(1, days)}",
+        "include_answer": False,
+        "include_raw_content": False,
     }
+
+    # include/exclude nur setzen, wenn Listen nicht leer sind
+    if include_domains:
+        payload["include_domains"] = include_domains
+    if exclude_domains:
+        payload["exclude_domains"] = exclude_domains
+
+    # Sprache (optional)
+    if language:
+        payload["language"] = language
+
+    # Topic‑spezifische Logik: news → days
+    if topic:
+        payload["topic"] = topic
+        if topic == "news":
+            payload["days"] = max(1, int(days))
+
+    # Zeitfenster bestimmen
+    if time_range:
+        payload["time_range"] = time_range
+    elif not topic or topic != "news":
+        # Wenn weder time_range noch topic=news gesetzt ist, days in time_range mappen
+        d = max(1, int(days))
+        if d <= 1:
+            tr = "day"
+        elif d <= 7:
+            tr = "week"
+        elif d <= 31:
+            tr = "month"
+        else:
+            tr = "year"
+        payload["time_range"] = tr
+
+    # Optionaler Bearer‑Header, falls gefordert
+    headers: Dict[str, str] = {"Content-Type": "application/json"}
+    if os.getenv("TAVILY_USE_BEARER", "0").lower() in {"1", "true", "yes"}:
+        headers["Authorization"] = f"Bearer {api_key}"
+
     try:
-        with httpx.Client(timeout=20) as cli:
-            r = cli.post("https://api.tavily.com/search", json=payload)
+        with httpx.Client(timeout=httpx.Timeout(20.0)) as cli:
+            r = cli.post(
+                "https://api.tavily.com/search",
+                json=payload,
+                headers=headers,
+            )
             if r.status_code != 200:
+                if LOG:
+                    try:
+                        detail = r.text[:500]
+                    except Exception:
+                        detail = "<no-body>"
+                    print(
+                        f"[tavily] HTTP {r.status_code} for query='{query}': {detail}"
+                    )
                 return []
             data = r.json()
-            return data.get("results", []) or []
-    except Exception:
+            results = data.get("results") or []
+            if not isinstance(results, list):
+                return []
+            return results[:max_results]
+    except Exception as e:
+        if LOG:
+            print(f"[tavily] request failed: {e}")
         return []
 
 def _cards(items: List[Dict[str, Any]], title_de: str, title_en: str, lang: str) -> str:
@@ -97,57 +179,107 @@ def _cards(items: List[Dict[str, Any]], title_de: str, title_en: str, lang: str)
 
 def collect_recent_items(ctx: Dict[str, Any], lang: str = "de") -> Dict[str, str]:
     """
-    Liefert HTML-Blöcke: news_html, tools_rich_html, funding_rich_html, funding_deadlines_html
-    Gesteuert über ENV:
-      - SEARCH_DAYS, SEARCH_DAYS_TOOLS, SEARCH_DAYS_FUNDING
-      - SEARCH_MAX_RESULTS, LIVE_NEWS_MAX, LIVE_ITEM_MAXLEN
-      - SEARCH_INCLUDE_DOMAINS, SEARCH_EXCLUDE_DOMAINS
-      - SHOW_TOOLS_NEWS, SHOW_FUNDING_STATUS, SHOW_FUNDING_DEADLINES
+    Stellt vier HTML-Blöcke bereit – für Nachrichten, Tools, Förderungen und Deadlines –
+    die über die Tavily‑API recherchiert werden. Die Funktion nutzt konfigurierbare
+    Zeiträume und Ergebnisse pro Kategorie und unterstützt Sprachvarianten. Die
+    Suchbegriffe werden abhängig von der Sprache generiert:
+
+      * news: „KI News“ oder „AI News“
+      * tools: „KI Tools“ oder „new AI tools“
+      * funding: „Förderprogramme Deutschland“ oder „funding grants Germany“
+      * deadlines: „Förderfrist Deutschland“ oder „grant deadline Germany“
+
+    Die Ergebnisse werden gecached, um unnötige API‑Aufrufe zu vermeiden.
     """
+
+    # Konfiguration aus der Umgebung lesen
     days = int(os.getenv("SEARCH_DAYS", "14"))
-    days_tools = int(os.getenv("SEARCH_DAYS_TOOLS", os.getenv("SEARCH_DAYS_TOOLS", "30")))
+    days_tools = int(os.getenv("SEARCH_DAYS_TOOLS", "30"))
     days_funding = int(os.getenv("SEARCH_DAYS_FUNDING", "30"))
     max_results = int(os.getenv("SEARCH_MAX_RESULTS", "7"))
     live_max = int(os.getenv("LIVE_NEWS_MAX", "5"))
-    include_domains = [d.strip() for d in (os.getenv("SEARCH_INCLUDE_DOMAINS", "")).split(",") if d.strip()]
-    exclude_domains = [d.strip() for d in (os.getenv("SEARCH_EXCLUDE_DOMAINS", "")).split(",") if d.strip()]
+    include_domains = [d.strip() for d in os.getenv("SEARCH_INCLUDE_DOMAINS", "").split(",") if d.strip()]
+    exclude_domains = [d.strip() for d in os.getenv("SEARCH_EXCLUDE_DOMAINS", "").split(",") if d.strip()]
 
     out: Dict[str, str] = {}
     company_topic = ctx.get("branche") or ctx.get("hauptleistung") or "KI Mittelstand"
 
-    # --- News
-    if os.getenv("SHOW_REGWATCH", "1") in {"1", "true", "yes"}:
-        key = f"news:{company_topic}:{days}:{max_results}"
+    # Suchbegriffe je Sprache festlegen
+    if lang.lower().startswith("de"):
+        news_query = f"{company_topic} KI News"
+        tools_query = f"KI Tools {company_topic}"
+        funding_query = f"{company_topic} Förderprogramme Deutschland"
+        deadlines_query = f"{company_topic} Förderfrist Deutschland"
+        language_param = "de"
+    else:
+        news_query = f"{company_topic} AI News"
+        tools_query = f"new AI tools {company_topic}"
+        funding_query = f"{company_topic} funding grants Germany"
+        deadlines_query = f"{company_topic} grant deadline Germany"
+        language_param = "en"
+
+    # Nachrichten (topic=news)
+    if os.getenv("SHOW_REGWATCH", "1").lower() in {"1", "true", "yes"}:
+        key = f"news:{company_topic}:{days}:{max_results}:{language_param}"
         news = _cache_get(key)
         if news is None:
-            news = _tv_search(f"{company_topic} KI News", days, max_results, include_domains, exclude_domains)[:live_max]
+            news = _tv_search(
+                news_query,
+                days,
+                max_results,
+                include_domains,
+                exclude_domains,
+                topic="news",
+                language=language_param,
+            )[:live_max]
             _cache_set(key, news)
         out["news_html"] = _cards(news, "Aktuelle Meldungen", "Recent updates", lang)
 
-    # --- Tools
-    if os.getenv("SHOW_TOOLS_NEWS", "1") in {"1", "true", "yes"}:
-        key = f"tools:{company_topic}:{days_tools}:{max_results}"
+    # Neue Tools & Releases
+    if os.getenv("SHOW_TOOLS_NEWS", "1").lower() in {"1", "true", "yes"}:
+        key = f"tools:{company_topic}:{days_tools}:{max_results}:{language_param}"
         tools = _cache_get(key)
         if tools is None:
-            tools = _tv_search(f"new AI tools {company_topic}", days_tools, max_results, include_domains, exclude_domains)[:live_max]
+            tools = _tv_search(
+                tools_query,
+                days_tools,
+                max_results,
+                include_domains,
+                exclude_domains,
+                language=language_param,
+            )[:live_max]
             _cache_set(key, tools)
         out["tools_rich_html"] = _cards(tools, "Neue Tools & Releases", "New tools & releases", lang)
 
-    # --- Funding
-    if os.getenv("SHOW_FUNDING_STATUS", "1") in {"1", "true", "yes"}:
-        key = f"funding:{company_topic}:{days_funding}:{max_results}"
+    # Förderprogramme
+    if os.getenv("SHOW_FUNDING_STATUS", "1").lower() in {"1", "true", "yes"}:
+        key = f"funding:{company_topic}:{days_funding}:{max_results}:{language_param}"
         fund = _cache_get(key)
         if fund is None:
-            fund = _tv_search(f"{company_topic} funding grants Germany", days_funding, max_results, include_domains, exclude_domains)[:live_max]
+            fund = _tv_search(
+                funding_query,
+                days_funding,
+                max_results,
+                include_domains,
+                exclude_domains,
+                language=language_param,
+            )[:live_max]
             _cache_set(key, fund)
         out["funding_rich_html"] = _cards(fund, "Förderprogramme & Ausschreibungen", "Funding & grants", lang)
 
-    # --- Deadlines (optional separater Query)
-    if os.getenv("SHOW_FUNDING_DEADLINES", "1") in {"1", "true", "yes"}:
-        key = f"deadlines:{company_topic}:{days_funding}:{max_results}"
+    # Deadlines
+    if os.getenv("SHOW_FUNDING_DEADLINES", "1").lower() in {"1", "true", "yes"}:
+        key = f"deadlines:{company_topic}:{days_funding}:{max_results}:{language_param}"
         dls = _cache_get(key)
         if dls is None:
-            dls = _tv_search(f"{company_topic} grant deadline Germany", days_funding, max_results, include_domains, exclude_domains)[:live_max]
+            dls = _tv_search(
+                deadlines_query,
+                days_funding,
+                max_results,
+                include_domains,
+                exclude_domains,
+                language=language_param,
+            )[:live_max]
             _cache_set(key, dls)
         out["funding_deadlines_html"] = _cards(dls, "Fristen & Deadlines", "Deadlines", lang)
 
