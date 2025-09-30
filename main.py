@@ -1,13 +1,12 @@
 # main.py — Production API (PDF via Puppeteer, Admin Notices, Benchmarks fix)
-# Version: 2025-09-29
-# - Gold-Standard: PEP8, strukturierte Logs, robuste Fehlerbehandlung
-# - Benchmarks: keine Unterordner; Dateien liegen direkt in ./data (z.B. benchmark_beratung.csv)
-# - Admin: erhält JSON-Rohdaten + PDF-Kopie; User erhält PDF über PDF-Service
-# - Endpunkte kompatibel: /api/login, /briefing_async, /pdf_test, /feedback, /
+# Gold-Standard+: PEP8, strukturierte Logs, robuste Fehlerbehandlung
+# - Benchmarks: Dateien liegen direkt in ./data (z.B. benchmark_beratung.csv)
+# - Admin: JSON-Rohdaten + PDF-Kopie; User-PDF über PDF-Service
+# - Endpunkte: /api/login, /briefing_async, /pdf_test, /feedback, /
+# - Aliase: SEND_TO_USER oder MAIL_TO_USER; PDF_TIMEOUT versteht s/ms
 
 from __future__ import annotations
 
-import asyncio
 import datetime as dt
 import hashlib
 import json
@@ -15,7 +14,6 @@ import logging
 import os
 import re
 import smtplib
-import sys
 import time
 import uuid
 from email.message import EmailMessage
@@ -30,7 +28,6 @@ from jose import jwt
 from jose.exceptions import JWTError
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import BaseModel
-from urllib.parse import quote_plus
 
 # ---------------------------------------------------------------------------
 # Konfiguration
@@ -50,28 +47,30 @@ PROMPTS_DIR = os.getenv("PROMPTS_DIR", os.path.join(BASE_DIR, "prompts"))
 TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
 TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
 
-PDF_SERVICE_URL = os.getenv("PDF_SERVICE_URL", "").rstrip("/")
-PDF_POST_MODE = os.getenv("PDF_POST_MODE", "json")
-PDF_TIMEOUT = int(os.getenv("PDF_TIMEOUT", "45"))
+PDF_SERVICE_URL = (os.getenv("PDF_SERVICE_URL") or "").rstrip("/")
+# PDF_TIMEOUT kann Sekunden (z.B. "90") ODER Millisekunden (z.B. "90000") sein:
+_pdf_timeout_raw = int(os.getenv("PDF_TIMEOUT", "45"))
+PDF_TIMEOUT = _pdf_timeout_raw / 1000 if _pdf_timeout_raw > 1000 else _pdf_timeout_raw
 PDF_MAX_BYTES = int(os.getenv("PDF_MAX_BYTES", str(10 * 1024 * 1024)))
-PDF_STRIP_SCRIPTS = os.getenv("PDF_STRIP_SCRIPTS", "1") in {"1", "true", "yes"}
+PDF_STRIP_SCRIPTS = (os.getenv("PDF_STRIP_SCRIPTS", "1").lower() in {"1", "true", "yes"})
 
-SEND_TO_USER = os.getenv("SEND_TO_USER", "1") in {"1", "true", "yes"}
-ADMIN_NOTIFY = os.getenv("ADMIN_NOTIFY", "1") in {"1", "true", "yes"}
+# Alias-Unterstützung: SEND_TO_USER oder MAIL_TO_USER
+SEND_TO_USER = (
+    os.getenv("SEND_TO_USER", "").lower() in {"1", "true", "yes"}
+    or os.getenv("MAIL_TO_USER", "1").lower() in {"1", "true", "yes"}
+)
+
+ADMIN_NOTIFY = (os.getenv("ADMIN_NOTIFY", "1").lower() in {"1", "true", "yes"})
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", os.getenv("SMTP_FROM", ""))
+
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "noreply@example.com")
 
-ALLOW_TAVILY = os.getenv("ALLOW_TAVILY", "1") in {"1", "true", "yes"}
-
-IDEMP_DIR = os.getenv("IDEMP_DIR", "/tmp/ki_idempotency")
-os.makedirs(IDEMP_DIR, exist_ok=True)
-
 # CORS
-CORS_ALLOW = [o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")]
+CORS_ALLOW = [o.strip() for o in (os.getenv("CORS_ALLOW_ORIGINS") or "*").split(",")]
 if not CORS_ALLOW:
     CORS_ALLOW = ["*"]
 
@@ -87,15 +86,6 @@ log = logging.getLogger("backend")
 # ---------------------------------------------------------------------------
 
 
-def _env_bool(name: str, default: bool = False) -> bool:
-    v = (os.getenv(name) or "").strip().lower()
-    if v in {"1", "true", "yes", "y", "on"}:
-        return True
-    if v in {"0", "false", "no", "n", "off"}:
-        return False
-    return default
-
-
 def _now() -> str:
     return dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -106,7 +96,9 @@ def _sanitize_email(value: str) -> str:
 
 
 def _safe_recipient(body: Dict[str, Any], fallback: str) -> str:
-    # Priorität: body["email"] -> body["user_email"] -> body["user"]["email"] -> fallback
+    """
+    Priorität: body['email'] > body['user_email'] > body['user']['email'] > fallback
+    """
     cand = (
         body.get("email")
         or body.get("user_email")
@@ -121,13 +113,18 @@ def _make_job_id() -> str:
 
 
 def _idem_key(s: str) -> str:
-    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+    import hashlib as _hl
+
+    return _hl.sha256(s.encode("utf-8")).hexdigest()
 
 
 def _idem_seen(key: str) -> bool:
-    path = os.path.join(IDEMP_DIR, key)
+    """
+    Einfache Idempotenz: legt eine Spurdatei in /tmp an.
+    """
+    path = os.path.join("/tmp/ki_idempotency", key)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     if os.path.exists(path):
-        # Ablauf?
         try:
             age = time.time() - os.path.getmtime(path)
             if age < TOKEN_TTL_SECONDS:
@@ -148,7 +145,7 @@ def _lang_from_body(body: Dict[str, Any]) -> str:
 
 
 def _safe_mail_file_name(user_email: str, prefix: str, lang: str) -> str:
-    base = re.sub(r"[^a-zA-Z0-9_.-]+", "_", user_email.split("@")[0]) or "user"
+    base = re.sub(r"[^a-zA-Z0-9_.-]+", "_", (user_email or "user").split("@")[0]) or "user"
     return f"{prefix}-{base}-{lang}.pdf"
 
 
@@ -165,7 +162,7 @@ def _issue_token(email: str) -> str:
     payload = {
         "sub": email,
         "iat": int(time.time()),
-        "exp": int(time.time() + 86400 * 14),  # 14 Tage
+        "exp": int(time.time() + 86400 * 14),
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
 
@@ -180,7 +177,6 @@ async def current_user(req: Request) -> Dict[str, Any]:
             return {"sub": payload.get("sub"), "email": payload.get("sub")}
         except JWTError:
             pass
-    # anonym zulassen (für öffentliche Formulare)
     return {"sub": "anon", "email": ""}
 
 
@@ -226,11 +222,7 @@ async def send_html_to_pdf_service(
     try:
         async with httpx.AsyncClient(timeout=PDF_TIMEOUT) as cli:
             resp = await cli.post(f"{PDF_SERVICE_URL}/generate-pdf", json=payload)
-            return {
-                "status": resp.status_code,
-                "ok": resp.status_code == 200,
-                "detail": resp.text[:300],
-            }
+            return {"status": resp.status_code, "ok": resp.status_code == 200, "detail": resp.text[:300]}
     except Exception as e:
         log.error("[PDF] send failed: %s", e)
         return {"status": 0, "ok": False, "detail": str(e)}
@@ -285,12 +277,10 @@ def send_admin_notice(
     msg["To"] = admin_to
     msg.set_content("\n".join(body_lines))
 
-    # Rohdaten zusätzlich als Anhang
+    # Rohdaten auch als Anhang
     if raw_payload:
         raw_bytes = json.dumps(raw_payload, ensure_ascii=False, indent=2).encode("utf-8")
-        msg.add_attachment(
-            raw_bytes, maintype="application", subtype="json", filename="briefing.json"
-        )
+        msg.add_attachment(raw_bytes, maintype="application", subtype="json", filename="briefing.json")
 
     try:
         _smtp_send(msg)
@@ -305,13 +295,12 @@ def send_admin_notice(
 
 
 def _make_env() -> Environment:
-    env = Environment(
+    return Environment(
         loader=FileSystemLoader([TEMPLATE_DIR, BASE_DIR]),
         autoescape=select_autoescape(["html", "xml"]),
         trim_blocks=True,
         lstrip_blocks=True,
     )
-    return env
 
 
 # ---------------------------------------------------------------------------
@@ -346,7 +335,6 @@ class BriefingReq(BaseModel):
     html: Optional[str] = None
     answers: Optional[Dict[str, Any]] = None
     # legacy/compat: payload evtl. flach, daher Dict[str, Any] zulassen
-    # weitere Felder werden unverändert an gpt_analyze durchgereicht
 
 
 @app.post("/briefing_async")
@@ -356,20 +344,20 @@ async def briefing_async(
     user=Depends(current_user),
 ):
     """
-    Erzeugt den Report sofort (synchron) und übergibt ihn dem PDF‑Service.
+    Erzeugt den Report sofort und übergibt ihn dem PDF‑Service.
     Rückgabe = Status beider PDF‑Versände (User + Admin).
     """
     lang = _lang_from_body(body)
     job_id = _make_job_id()
 
-    # Idempotency (einfach): Hash über request body (ohne volatile Felder)
+    # Idempotency (einfach)
     idem_source = json.dumps(body, sort_keys=True, ensure_ascii=False)
     idem_key = _idem_key(idem_source)
     if _idem_seen(idem_key):
         log.info("[idem] skip duplicate request")
         return JSONResponse({"status": "duplicate", "job_id": job_id})
 
-    # HTML generieren (gpt_analyze rendert vollständige Seite mit Template)
+    # HTML generieren
     try:
         from gpt_analyze import analyze_briefing
     except Exception as e:
@@ -380,13 +368,13 @@ async def briefing_async(
     if not recipient_user:
         raise HTTPException(status_code=400, detail="recipient could not be resolved")
 
-    # Optional: Antworten stehen mal unter 'answers', mal flach; beides weiterreichen
+    # answers + flache Keys zusammenführen
     form_data = dict(body.get("answers") or {})
     for k, v in body.items():
         if k not in form_data:
             form_data[k] = v
 
-    # PDF‑Service Warmlauf
+    # PDF-Service Warmlauf
     await warmup_pdf_service("briefing_async", PDF_SERVICE_URL)
 
     # HTML bauen
@@ -396,7 +384,7 @@ async def briefing_async(
         log.error("analyze_briefing failed: %s", e)
         raise HTTPException(status_code=500, detail="rendering failed")
 
-    # Versand über PDF‑Service
+    # Versand
     subject = "KI‑Status Report" if lang == "de" else "AI Status Report"
     filename_user = _safe_mail_file_name(recipient_user or "user", "KI-Status-Report", lang)
 
@@ -415,7 +403,6 @@ async def briefing_async(
         )
         log.info("[PDF] rid=%s attempt status=%s", job_id, user_result.get("status"))
 
-    # Admin‑Kopie via PDF‑Service (damit Admin die gleiche PDF erhält)
     admin_result = {"ok": False, "status": 0, "detail": "skipped"}
     if ADMIN_EMAIL:
         filename_admin = _safe_mail_file_name(ADMIN_EMAIL, "KI-Status-Report", lang)[:-4] + "-admin.pdf"
@@ -439,19 +426,12 @@ async def briefing_async(
                 lang=lang,
                 user_email=recipient_user,
                 pdf_service_url=PDF_SERVICE_URL,
-                raw_payload=form_data,  # <- Rohdaten 1:1
+                raw_payload=form_data,
             )
         except Exception as e:
             log.warning("admin notice failed: %s", e)
 
-    return JSONResponse(
-        {
-            "status": "ok",
-            "job_id": job_id,
-            "user_pdf": user_result,
-            "admin_pdf": admin_result,
-        }
-    )
+    return JSONResponse({"status": "ok", "job_id": job_id, "user_pdf": user_result, "admin_pdf": admin_result})
 
 
 # ------------------------------- Hilfsrouten -------------------------------
@@ -460,7 +440,7 @@ async def briefing_async(
 @app.post("/pdf_test")
 async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
     """
-    Einfacher Test: beliebiges HTML an den PDF‑Service schicken.
+    Schickt beliebiges HTML an den PDF‑Service (Debug).
     """
     lang = _lang_from_body(body)
     html = body.get("html") or "<!doctype html><h1>Ping</h1>"
@@ -468,15 +448,13 @@ async def pdf_test(body: Dict[str, Any], user=Depends(current_user)):
     await warmup_pdf_service("pdf_test", PDF_SERVICE_URL)
     subject = "KI‑Readiness Report (Test)" if lang == "de" else "AI Readiness Report (Test)"
     fname = _safe_mail_file_name(to or "user", "pdf_test", lang)
-    res = await send_html_to_pdf_service(html, to, subject, lang, "pdf_test", fname)
-    return res
+    return await send_html_to_pdf_service(html, to, subject, lang, "pdf_test", fname)
 
 
 @app.post("/feedback")
 async def feedback(body: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Akzeptiert Feedback-POSTs (verhindert 404 in den Logs).
-    Persistenz optional (DB/Queue); hier nur Logging/ACK.
+    Nimmt Feedback-POSTs entgegen (verhindert 404 in Logs).
     """
     log.info("[feedback] received: keys=%s", list(body.keys()))
     return {"status": "ok", "received": True, "ts": _now()}
