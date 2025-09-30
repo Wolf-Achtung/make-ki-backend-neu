@@ -100,20 +100,22 @@
     {%- endif -%}
   {%- endmacro %}
 
-  <div class="container">
-
-    <!-- Header mit Logos -->
-    <div class="header">
-      <div class="logos-left" aria-label="Logos">
-        <img src="tuev-logo.webp" alt="TÜV Logo" />
-        <img src="ki-sicherheit-logo.webp" alt="KI‑Sicherheit.jetzt Logo" />
-      </div>
-      <div class="logos-right">
-        <img src="eu-ai.svg" alt="EU AI" />
-        <img src="dsgvo.svg" alt="DSGVO" />
-        <img src="ki-ready-2025.webp" alt="KI Ready 2025" />
-      </div>
+  <!-- Use semantic structure: header, main, footer for better accessibility -->
+  <header class="header">
+    <div class="logos-left" aria-label="Logos">
+      <img src="tuev-logo.webp" alt="TÜV Logo" />
+      <img src="ki-sicherheit-logo.webp" alt="KI‑Sicherheit.jetzt Logo" />
     </div>
+    <div class="logos-right">
+      <img src="eu-ai.svg" alt="EU AI" />
+      <img src="dsgvo.svg" alt="DSGVO" />
+      <img src="ki-ready-2025.webp" alt="KI Ready 2025" />
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Hauptinhalte -->
 
     <!-- Titel & Meta -->
     <div class="title">{{ meta.title }}</div>
@@ -205,14 +207,14 @@
     <h2>Tools & Empfehlungen</h2>
     <div class="card avoid-break">{{ tools_html|safe }}</div>
 
-    <!-- Footer -->
-    <div class="footer">
+    </main>
+
+    <footer class="footer">
       <div class="logos-footer" aria-label="Partnerlogos">
         <img src="tuev-logo-transparent.webp" alt="TÜV" />
         <img src="ki-sicherheit-logo.webp" alt="KI‑Sicherheit.jetzt" />
       </div>
       © {{ copyright_year }} · ki‑sicherheit.jetzt · <a href="{{ feedback_link }}">Feedback geben</a>
-    </div>
-  </div>
-</body>
+    </footer>
+  </body>
 </html>

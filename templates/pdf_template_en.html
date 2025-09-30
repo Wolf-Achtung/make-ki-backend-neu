@@ -86,8 +86,8 @@
     {%- endif -%}
   {%- endmacro %}
 
-  <!-- Header -->
-  <div class="header">
+  <!-- Semantic header for logos -->
+  <header class="header">
     <div class="logos-left" aria-label="Logos">
       <img src="tuev-logo.webp" alt="TUEV Logo" />
       <img src="ki-sicherheit-logo.webp" alt="ki‑sicherheit.jetzt Logo" />
@@ -97,7 +97,10 @@
       <img src="dsgvo.svg" alt="GDPR" />
       <img src="ki-ready-2025.webp" alt="AI Ready 2025" />
     </div>
-  </div>
+  </header>
+
+  <!-- Main content wrapper -->
+  <main class="container">
 
   <!-- Title & meta -->
   <div class="title">{{ meta.title }}</div>
@@ -189,9 +192,11 @@
   <h2>Tools & Recommendations</h2>
   <div class="card avoid-break">{{ tools_html|safe }}</div>
 
+  </main>
+
   <!-- Footer -->
-  <div class="footer">
+  <footer class="footer">
     © {{ copyright_year }} · ki‑sicherheit.jetzt · <a href="{{ feedback_link }}">Give feedback</a>
-  </div>
+  </footer>
 </body>
 </html>
