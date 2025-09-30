@@ -78,6 +78,23 @@ FUNDING_PROGRAMS_2025 = {
             "status": "AKTIV",
             "processing_time": "8-12 Wochen",
             "success_rate": 65
+        },
+        {
+            # Neu: KOMPASS-Programm für Solo-Selbstständige (ESF Plus 2021-2027)
+            # Dieses Programm fördert passgenaue Qualifizierungen und Beratungen
+            # zur Krisenvorsorge und Zukunftssicherung von Solo-Selbstständigen. 
+            "name": "KOMPASS – Kompakte Hilfe für Solo-Selbstständige",
+            "provider": "BMAS / ESF-Plus",
+            "amount": "Bis 4.500€ Zuschuss (90% Förderquote)",
+            "deadline": "Laufend",
+            "requirements": "Solo-Selbstständige aller Branchen",
+            "use_case": "Qualifizierung, Weiterbildung, Coaching",
+            "fit_small": 100,
+            "fit_medium": 60,
+            "url": "https://www.esf.de/portal/DE/ESF-Plus-2021-2027/Foerderprogramme/b/kompass.html",
+            "status": "AKTIV",
+            "processing_time": "1-2 Wochen",
+            "success_rate": 75
         }
     ],
     "berlin": [

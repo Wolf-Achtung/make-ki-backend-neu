@@ -179,17 +179,24 @@ def _cards(items: List[Dict[str, Any]], title_de: str, title_en: str, lang: str)
 
 def collect_recent_items(ctx: Dict[str, Any], lang: str = "de") -> Dict[str, str]:
     """
-    Stellt vier HTML-Blöcke bereit – für Nachrichten, Tools, Förderungen und Deadlines –
-    die über die Tavily‑API recherchiert werden. Die Funktion nutzt konfigurierbare
-    Zeiträume und Ergebnisse pro Kategorie und unterstützt Sprachvarianten. Die
-    Suchbegriffe werden abhängig von der Sprache generiert:
+    Ermittelt aktuelle News, neue Tools sowie Förderprogramme und deren Fristen
+    über die Tavily‑API und erstellt daraus HTML‑Kacheln. Die Suchanfragen
+    werden dynamisch aus den Fragebogendaten (Branche, Hauptleistung,
+    Bundesland) zusammengesetzt, damit die Ergebnisse möglichst relevant
+    für das jeweilige Unternehmen sind. Optional lässt sich die Sprache
+    steuern (Deutsch/Englisch).
 
-      * news: „KI News“ oder „AI News“
-      * tools: „KI Tools“ oder „new AI tools“
-      * funding: „Förderprogramme Deutschland“ oder „funding grants Germany“
-      * deadlines: „Förderfrist Deutschland“ oder „grant deadline Germany“
+    Es gelten folgende Abfragen (für Deutsch; Englisch analog mit „AI“):
 
-    Die Ergebnisse werden gecached, um unnötige API‑Aufrufe zu vermeiden.
+    * Nachrichten:  "<Branche> <Hauptleistung> KI News <Region>"
+    * Tools:       "KI Tools <Branche> <Hauptleistung> <Region>"
+    * Förderungen:  "<Branche> <Hauptleistung> Förderprogramme <Region>"
+    * Deadlines:    "<Branche> <Hauptleistung> Förderfrist <Region>"
+
+    Region wird aus dem Bundesland abgeleitet (z. B. „Berlin“, „Bayern",
+    „Baden-Württemberg“). Falls keine Branch-/Leistungsangaben existieren,
+    wird ein generischer Begriff wie „KI Mittelstand“ verwendet. Alle
+    Ergebnisse werden gecached, um unnötige API‑Requests zu vermeiden.
     """
 
     # Konfiguration aus der Umgebung lesen
@@ -202,25 +209,52 @@ def collect_recent_items(ctx: Dict[str, Any], lang: str = "de") -> Dict[str, str
     exclude_domains = [d.strip() for d in os.getenv("SEARCH_EXCLUDE_DOMAINS", "").split(",") if d.strip()]
 
     out: Dict[str, str] = {}
-    company_topic = ctx.get("branche") or ctx.get("hauptleistung") or "KI Mittelstand"
 
-    # Suchbegriffe je Sprache festlegen
+    # Bestimme Branch- und Leistungsbegriffe
+    branch = str(ctx.get("branche") or "").strip()
+    service = str(ctx.get("hauptleistung") or "").strip()
+    # Kombiniere zu einem Schlagwort (Company-Topic)
+    company_topic = " ".join([branch, service]).strip()
+    if not company_topic:
+        company_topic = "KI Mittelstand" if lang.lower().startswith("de") else "AI SMEs"
+
+    # Leite Region aus Bundesland ab
+    region_code = str(ctx.get("bundesland", "")).upper()
+    region_map = {
+        "BE": "Berlin",
+        "BY": "Bayern",
+        "BW": "Baden-Württemberg",
+        "NW": "Nordrhein-Westfalen",
+        "HE": "Hessen",
+    }
+    region_name = region_map.get(region_code, "Deutschland" if lang.lower().startswith("de") else "Germany")
+
+    # Sprachabhängige Basisterme
     if lang.lower().startswith("de"):
-        news_query = f"{company_topic} KI News"
-        tools_query = f"KI Tools {company_topic}"
-        funding_query = f"{company_topic} Förderprogramme Deutschland"
-        deadlines_query = f"{company_topic} Förderfrist Deutschland"
+        news_term = "KI News"
+        tools_term = "KI Tools"
+        funding_term = "Förderprogramme"
+        deadline_term = "Förderfrist"
         language_param = "de"
     else:
-        news_query = f"{company_topic} AI News"
-        tools_query = f"new AI tools {company_topic}"
-        funding_query = f"{company_topic} funding grants Germany"
-        deadlines_query = f"{company_topic} grant deadline Germany"
+        news_term = "AI News"
+        tools_term = "new AI tools"
+        funding_term = "funding grants"
+        deadline_term = "grant deadline"
         language_param = "en"
+
+    # Generiere Queries, Region anhängen falls vorhanden
+    def build_query(*parts: str) -> str:
+        return " ".join([p for p in parts if p]).strip()
+
+    news_query = build_query(company_topic, news_term, region_name)
+    tools_query = build_query(tools_term, company_topic, region_name)
+    funding_query = build_query(company_topic, funding_term, region_name)
+    deadlines_query = build_query(company_topic, deadline_term, region_name)
 
     # Nachrichten (topic=news)
     if os.getenv("SHOW_REGWATCH", "1").lower() in {"1", "true", "yes"}:
-        key = f"news:{company_topic}:{days}:{max_results}:{language_param}"
+        key = f"news:{company_topic}:{region_name}:{days}:{max_results}:{language_param}"
         news = _cache_get(key)
         if news is None:
             news = _tv_search(
@@ -237,7 +271,7 @@ def collect_recent_items(ctx: Dict[str, Any], lang: str = "de") -> Dict[str, str
 
     # Neue Tools & Releases
     if os.getenv("SHOW_TOOLS_NEWS", "1").lower() in {"1", "true", "yes"}:
-        key = f"tools:{company_topic}:{days_tools}:{max_results}:{language_param}"
+        key = f"tools:{company_topic}:{region_name}:{days_tools}:{max_results}:{language_param}"
         tools = _cache_get(key)
         if tools is None:
             tools = _tv_search(
@@ -253,7 +287,7 @@ def collect_recent_items(ctx: Dict[str, Any], lang: str = "de") -> Dict[str, str
 
     # Förderprogramme
     if os.getenv("SHOW_FUNDING_STATUS", "1").lower() in {"1", "true", "yes"}:
-        key = f"funding:{company_topic}:{days_funding}:{max_results}:{language_param}"
+        key = f"funding:{company_topic}:{region_name}:{days_funding}:{max_results}:{language_param}"
         fund = _cache_get(key)
         if fund is None:
             fund = _tv_search(
@@ -269,7 +303,7 @@ def collect_recent_items(ctx: Dict[str, Any], lang: str = "de") -> Dict[str, str
 
     # Deadlines
     if os.getenv("SHOW_FUNDING_DEADLINES", "1").lower() in {"1", "true", "yes"}:
-        key = f"deadlines:{company_topic}:{days_funding}:{max_results}:{language_param}"
+        key = f"deadlines:{company_topic}:{region_name}:{days_funding}:{max_results}:{language_param}"
         dls = _cache_get(key)
         if dls is None:
             dls = _tv_search(
