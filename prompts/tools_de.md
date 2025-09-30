@@ -36,5 +36,4 @@ Wähle die TOP 5 Tools für {{ ki_usecases }} aus.
 - KEINE Tools ohne EU-Datenverarbeitung
 - KEINE Beta-Versionen
 
-[AUSGABE-FORMAT]
-Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.
+<!-- HINWEIS: Gib ausschließlich den finalen HTML-Code zurück. Keine zusätzlichen Listen oder Tabellen. Keine Prozentwerte über 100 %, kein Payback unter vier Monaten. Der Ton muss ruhig und professionell bleiben. -->

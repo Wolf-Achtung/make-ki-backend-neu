@@ -100,5 +100,4 @@ Create a COMPELLING Business Case that excites leadership about AI adoption. Ret
 - Include emojis for visual appeal (sparingly)
 - Frame all risks as easily manageable
 
-[OUTPUT FORMAT]
-Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.
+<!-- NOTE: Output only the final HTML code. Use no additional lists or tables. Avoid percentages over 100% and payback periods less than four months. The tone must remain calm and professional. -->

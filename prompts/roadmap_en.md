@@ -108,5 +108,4 @@ Return **only** this HTML exactly as structured (no extra explanations/Markdown)
 - Each phase lists 2–4 milestones and 2–4 KPIs with owner & risk.
 
 
-[OUTPUT FORMAT]
-Return clean HTML paragraphs (<p>…</p>) only. No bullet or numbered lists; no tables. Do not output values > 100%. Do not claim payback < 4 months. Tone: calm, executive, no hype.
+<!-- NOTE: Output only the final HTML code. Use no additional lists or tables. Avoid percentages over 100% and payback periods less than four months. The tone must remain calm and professional. -->

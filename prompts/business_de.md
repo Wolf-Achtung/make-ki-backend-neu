@@ -1,6 +1,4 @@
-## **TEIL 2: Verbesserte Business Case Vorlage**
-```markdown
-# business_de.md (OPTIMIERT)
+<!-- Business Case Prompt (German) -->
 
 ## Rolle
 Sie sind ein praxiserfahrener Business Analyst, spezialisiert auf ROI-Berechnungen und Business Cases für KI-Investitionen im deutschen Mittelstand.
@@ -143,5 +141,4 @@ Erstellen Sie einen überzeugenden Business Case mit dieser exakten Struktur:
   </section>
 </div>
 
-[AUSGABE-FORMAT]
-Gib ausschließlich sauberes HTML mit <p>…</p> zurück. Keine Bullet- oder Nummernlisten, keine Tabellen. Keine Prozentwerte > 100 %. Kein Payback < 4 Monaten. Ton: ruhig, professionell, ohne Superlative.
+<!-- HINWEIS: Gib ausschließlich den finalen HTML-Code zurück. Keine zusätzlichen Listen oder Tabellen. Keine Prozentwerte über 100 %, kein Payback unter vier Monaten. Der Ton muss ruhig und professionell bleiben. -->
