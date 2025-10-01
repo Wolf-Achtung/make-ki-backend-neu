@@ -1,88 +1,90 @@
 # filename: eu_connectors.py
 # -*- coding: utf-8 -*-
 """
-EU-Datenquellen (best-effort, robust gegen API-Änderungen).
-Alle Funktionen liefern kurze, homogene Diktlisten mit Feldern: title/url/summary/date
+Einfache, fehlertolerante EU-Connectoren.
+Hinweise:
+- Endpunkte können sich ändern; Code fängt HTTP/Schemafehler robust ab.
+- Ergebnisse sind auf die im Report verwendeten Felder gemappt (title, url, date, summary).
 """
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime, timedelta
-from typing import Dict, List
-
+from typing import Dict, List, Optional
 import httpx
 
-logger = logging.getLogger("eu_connectors")
 
-TIMEOUT = 20.0
+def _http_get_json(url: str, params: Optional[Dict[str, str]] = None, timeout: float = 20.0):
+    with httpx.Client(timeout=timeout) as client:
+        r = client.get(url, params=params)
+        r.raise_for_status()
+        return r.json()
 
-def _days_ago_iso(days: int) -> str:
-    return (datetime.utcnow() - timedelta(days=days)).date().isoformat()
 
-def openaire_search_projects(query: str, from_days: int = 60, size: int = 8) -> List[Dict[str, str]]:
+def _clip(s: str, n: int = 280) -> str:
+    s = s or ""
+    return s if len(s) <= n else s[: n - 1] + "…"
+
+
+def openaire_search_projects(query: str, from_days: int = 60, max_results: int = 8) -> List[Dict[str, str]]:
+    """
+    OpenAIRE (public search). Schema variiert, wir mappen defensiv.
+    """
     try:
         base = "https://api.openaire.eu/search/projects"
-        params = {"format": "json", "pagesize": str(size), "fp7": "false", "query": query}
-        with httpx.Client(timeout=TIMEOUT) as c:
-            r = c.get(base, params=params)
-            r.raise_for_status()
-            data = r.json()
-            projects = (data.get("response", {}).get("results", {}).get("result") or [])
-            out = []
-            for p in projects:
-                md = p.get("metadata", {})
-                title = (md.get("title", {}) or {}).get("$", "OpenAIRE-Projekt")
-                date = (md.get("dateofcollection", {}) or {}).get("$", "")
-                link = ""
-                if md.get("pid"):
-                    link = md["pid"][0].get("$")
-                out.append({"title": title, "url": link, "summary": "", "date": date})
-            return out
-    except Exception as e:
-        logger.warning("OpenAIRE error: %s", e)
+        params = {"format": "json", "size": str(max_results), "title": query}
+        data = _http_get_json(base, params=params)
+        items = data.get("response", {}).get("results", []) or data.get("results", []) or []
+        out: List[Dict[str, str]] = []
+        for it in items[:max_results]:
+            title = it.get("title") or it.get("name") or ""
+            url = it.get("url") or it.get("link") or ""
+            start = it.get("startdate") or it.get("startDate") or ""
+            abs_ = it.get("objective") or it.get("summary") or it.get("description") or ""
+            out.append({"title": title, "url": url, "date": start, "summary": _clip(abs_)})
+        return out
+    except Exception:
         return []
 
-def cordis_search_projects(query: str, from_days: int = 60, size: int = 8) -> List[Dict[str, str]]:
+
+def cordis_search_projects(query: str, from_days: int = 60, max_results: int = 8) -> List[Dict[str, str]]:
+    """
+    CORDIS API (EU-Forschung). Defensive Feld-Mappings.
+    """
     try:
-        # CORDIS hat mehrere Varianten; diese Endpoint-Auswahl ist best-effort
         base = "https://cordis.europa.eu/api/projects"
-        params = {"page": "1", "size": str(size), "searchText": query}
-        with httpx.Client(timeout=TIMEOUT) as c:
-            r = c.get(base, params=params)
-            r.raise_for_status()
-            data = r.json()
-            items = data.get("projects", []) if isinstance(data, dict) else []
-            out = []
-            for it in items:
-                out.append({
-                    "title": it.get("title", "CORDIS-Projekt"),
-                    "url": it.get("rcn", ""),
-                    "summary": it.get("objective", ""),
-                    "date": it.get("startDate", ""),
-                })
-            return out
-    except Exception as e:
-        logger.warning("CORDIS error: %s", e)
+        params = {"search": query, "format": "json", "limit": str(max_results)}
+        data = _http_get_json(base, params=params)
+        items = data.get("projects", []) or data.get("result", []) or []
+        out: List[Dict[str, str]] = []
+        for it in items[:max_results]:
+            title = it.get("title") or it.get("acronym") or ""
+            url = it.get("rcn_url") or it.get("url") or ""
+            date = it.get("startDate") or it.get("startdate") or ""
+            sum_ = it.get("objective") or it.get("summary") or it.get("description") or ""
+            out.append({"title": title, "url": url, "date": date, "summary": _clip(sum_)})
+        return out
+    except Exception:
         return []
 
-def funding_tenders_search(query: str, from_days: int = 60, size: int = 8) -> List[Dict[str, str]]:
+
+def funding_tenders_search(query: str, from_days: int = 60, max_results: int = 8) -> List[Dict[str, str]]:
+    """
+    Funding & Tenders (EU Portal).
+    """
     try:
-        base = "https://ec.europa.eu/info/funding-tenders/opportunities/data/reference/opportunities/search"
-        params = {"page": "0", "pageSize": str(size), "sort": "publicationDate,desc", "text": query}
-        with httpx.Client(timeout=TIMEOUT) as c:
-            r = c.get(base, params=params)
-            r.raise_for_status()
-            data = r.json()
-            items = data.get("items", [])
-            out = []
-            for it in items:
-                title = it.get("title", "EU Call")
-                url = "https://ec.europa.eu/info/funding-tenders/opportunities/portal"  # Fallback
-                summary = it.get("programme", "")
-                date = it.get("publicationDate", "")
-                out.append({"title": title, "url": url, "summary": summary, "date": date})
-            return out
-    except Exception as e:
-        logger.warning("F&T error: %s", e)
+        base = "https://ec.europa.eu/info/funding-tenders/opportunities/api/search"
+        since = (datetime.utcnow() - timedelta(days=from_days)).date().isoformat()
+        params = {"text": query, "programme": "", "type": "call", "modifiedFrom": since, "limit": str(max_results)}
+        data = _http_get_json(base, params=params)
+        items = data.get("items", []) or data.get("data", []) or []
+        out: List[Dict[str, str]] = []
+        for it in items[:max_results]:
+            title = it.get("title") or it.get("identifier") or ""
+            url = it.get("url") or it.get("permalink") or ""
+            date = it.get("deadline") or it.get("publicationDate") or ""
+            sum_ = it.get("objective") or it.get("summary") or it.get("description") or ""
+            out.append({"title": title, "url": url, "date": date, "summary": _clip(sum_)})
+        return out
+    except Exception:
         return []
