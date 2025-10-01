@@ -28,6 +28,88 @@ try:
 except Exception:
     match_funding_programs_smart = None  # Wird später geprüft
 
+# ---------------------------------------------------------------------------
+# Externe Datenquellen (Stubs)
+#
+# Diese Funktionen dienen als Platzhalter für die Integration offizieller
+# Förderprogrammdaten (z. B. BMWK, Förderdatenbank.de) und branchenspezifischer
+# Benchmark‑Informationen. Bei Verfügbarkeit entsprechender APIs oder
+# Datenfeeds können diese Funktionen die Daten abrufen und in strukturierter
+# Form zurückgeben. Aktuell geben sie eine leere Liste zurück, sodass das
+# System auf interne Datenquellen (CSV/YAML/Datenbank) zurückfällt.
+
+def fetch_official_funding_programs(answers: Dict[str, Any], max_results: int = 10) -> List[Dict[str, Any]]:
+    """
+    Liefert eine Liste offizieller EU‑Förderprogramme basierend auf Branche, Unternehmensgröße
+    und Hauptleistung. Die Funktion nutzt externe APIs von OpenAIRE, CORDIS und dem
+    EU Funding & Tenders Portal, sofern die entsprechenden Schlüssel gesetzt sind.
+    Falls keine Daten abgerufen werden können (z. B. aufgrund fehlender Internetverbindung
+    oder API-Keys), wird eine leere Liste zurückgegeben.
+
+    :param answers: Formularantworten (enthält Branche, Bundesland, Unternehmensgröße, Hauptleistung)
+    :param max_results: Maximale Anzahl zurückzugebender Programme
+    :return: Liste von Programmen (dict mit name, amount, deadline, url, source)
+    """
+    from eu_funding_api import (
+        fetch_openaire_projects,
+        fetch_cordis_projects,
+        fetch_eu_portal_calls,
+    )
+    programmes: List[Dict[str, Any]] = []
+    # Erzeuge Schlüsselwörter für die Suche: Kombination aus Branche und Hauptleistung
+    branche_kw = str(answers.get("branche", "")).replace("&", " ").strip()
+    leistung_kw = str(answers.get("hauptleistung", "")).strip()
+    keywords = " ".join([branche_kw, leistung_kw]).strip()
+    if not keywords:
+        keywords = branche_kw or leistung_kw or "artificial intelligence"
+    # Ländercode (Bundesland zu Land)
+    state_to_country = {"BE": "DE", "BY": "DE", "BW": "DE", "NW": "DE", "HE": "DE"}
+    country = state_to_country.get(str(answers.get("bundesland", "")).upper(), "DE")
+    try:
+        # EU Funding & Tenders Portal (offene Calls)
+        portal_calls = fetch_eu_portal_calls(text=keywords, max_results=max_results)
+        programmes.extend(portal_calls or [])
+    except Exception as e:
+        log.warning("fetch_eu_portal_calls failed: %s", e)
+    try:
+        # OpenAIRE Projekte (EU-Forschung)
+        openaire_projects = fetch_openaire_projects(keywords=keywords, country=country, size=max_results)
+        programmes.extend(openaire_projects or [])
+    except Exception as e:
+        log.warning("fetch_openaire_projects failed: %s", e)
+    try:
+        # CORDIS Projekte (Programm HORIZON etc.)
+        cordis_projects = fetch_cordis_projects(country=country, max_results=max_results)
+        programmes.extend(cordis_projects or [])
+    except Exception as e:
+        log.warning("fetch_cordis_projects failed: %s", e)
+    # Fallback: keine Ergebnisse
+    if not programmes:
+        return []
+    # Entferne doppelte Einträge (gleicher Name und Quelle)
+    seen = set()
+    unique_programmes: List[Dict[str, Any]] = []
+    for p in programmes:
+        key = (p.get("name"), p.get("source"))
+        if key not in seen:
+            seen.add(key)
+            unique_programmes.append(p)
+        if len(unique_programmes) >= max_results:
+            break
+    return unique_programmes
+
+
+def fetch_external_benchmarks(branche: str, lang: str = "de") -> Optional[str]:
+    """
+    Placeholder zum Abruf externer Benchmark-Daten. In einer späteren
+    Implementierung könnte diese Funktion branchenspezifische Umsatzgrößen,
+    ROI-Spannen und weitere KPIs aus öffentlichen Quellen (z. B. statistische
+    Bundesämter, Branchenberichte) abrufen und in HTML-Form zurückgeben.
+    Aktuell liefert sie ``None`` und wird nicht verwendet.
+    """
+    # TODO: Integration realer Benchmarks via API oder Web-Scraping
+    return None
+
 BASE_DIR = os.path.abspath(os.getenv("APP_BASE", os.getcwd()))
 TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
 PROMPTS_DIR = os.getenv("PROMPTS_DIR", os.path.join(BASE_DIR, "prompts"))
@@ -717,9 +799,16 @@ def get_template_variables(form_data: Dict[str, Any], lang: str = "de") -> Dict[
         "generation_date": datetime.now().strftime("%d.%m.%Y"),
         "copyright_year": datetime.now().year,
         "meta": {
-            "title": "KI-Statusbericht & Handlungsempfehlungen"
-            if lang.startswith("de")
-            else "AI Status Report & Recommendations",
+            # Der Titel zeigt das aktuelle Motto des Projekts. Für deutschsprachige
+            # Reports lautet es "Mehrwert im Wettbewerb durch KI". Für die
+            # englische Fassung verwenden wir eine sinngemäße Übersetzung. Der
+            # Untertitel bleibt für beide Sprachen ein Hinweis auf den
+            # Readiness-Wert.
+            "title": (
+                "Mehrwert im Wettbewerb durch KI"
+                if lang.startswith("de")
+                else "Added Value in Competition Through AI"
+            ),
             "subtitle": f"AI Readiness: {k['readiness_score']}%",
             "date": datetime.now().strftime("%d.%m.%Y"),
             "lang": lang,
@@ -1071,6 +1160,28 @@ def match_funding_programs(answers: Dict[str, Any], lang: str = "de") -> str:
     """
     programmes: List[Dict[str, Any]] = []
 
+    # 0) Extern: Versuche, offizielle Förderprogramme über APIs abzurufen
+    try:
+        ext = fetch_official_funding_programs(answers, max_results=8)
+        if ext:
+            for prog in ext:
+                # Vereinheitliche Feldnamen
+                name = str(prog.get("name") or prog.get("title") or "").strip()
+                amount = str(prog.get("amount") or prog.get("volumen") or "").strip()
+                deadline = str(prog.get("deadline") or prog.get("frist") or "").strip()
+                url = str(prog.get("url") or prog.get("link") or "").strip()
+                programmes.append({
+                    "name": name,
+                    "amount": amount,
+                    "deadline": deadline,
+                    "use_case": prog.get("use_case"),
+                    "requirements": prog.get("requirements"),
+                    "url": url,
+                    "region": prog.get("region", answers.get("bundesland", ""))
+                })
+    except Exception as e:
+        log.warning(f"fetch_official_funding_programs error: {e}")
+
     # 1) Versuche, mit der intelligenten Matching-Funktion Programme zu finden
     if match_funding_programs_smart:
         try:
@@ -1242,9 +1353,23 @@ def _sanitize_html_block(html: str) -> str:
 
 
 def sanitize_narrative(context: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Bereinigt narrative HTML-Blöcke, indem unerwünschte Code-Fences und
+    Aufzählungen entfernt werden. Live‑Sektionen aus der Tavily‑Integration
+    (news_html, tools_rich_html, funding_rich_html, funding_deadlines_html)
+    sowie der Benchmark-Block bleiben unverändert, um ihre Struktur zu erhalten.
+    """
     out = dict(context)
+    # Keys, die nicht sanitiziert werden sollen (sie enthalten strukturiertes HTML)
+    skip_keys = {
+        "news_html",
+        "tools_rich_html",
+        "funding_rich_html",
+        "funding_deadlines_html",
+        "benchmarks_compact_html",
+    }
     for k, v in list(out.items()):
-        if isinstance(v, str) and k.endswith("_html"):
+        if isinstance(v, str) and k.endswith("_html") and k not in skip_keys:
             out[k] = _sanitize_html_block(v)
     return out
 
