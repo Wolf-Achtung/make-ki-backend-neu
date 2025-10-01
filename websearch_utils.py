@@ -179,24 +179,10 @@ def _cards(items: List[Dict[str, Any]], title_de: str, title_en: str, lang: str)
 
 def collect_recent_items(ctx: Dict[str, Any], lang: str = "de") -> Dict[str, str]:
     """
-    Ermittelt aktuelle News, neue Tools sowie Förderprogramme und deren Fristen
-    über die Tavily‑API und erstellt daraus HTML‑Kacheln. Die Suchanfragen
-    werden dynamisch aus den Fragebogendaten (Branche, Hauptleistung,
-    Bundesland) zusammengesetzt, damit die Ergebnisse möglichst relevant
-    für das jeweilige Unternehmen sind. Optional lässt sich die Sprache
-    steuern (Deutsch/Englisch).
-
-    Es gelten folgende Abfragen (für Deutsch; Englisch analog mit „AI“):
-
-    * Nachrichten:  "<Branche> <Hauptleistung> KI News <Region>"
-    * Tools:       "KI Tools <Branche> <Hauptleistung> <Region>"
-    * Förderungen:  "<Branche> <Hauptleistung> Förderprogramme <Region>"
-    * Deadlines:    "<Branche> <Hauptleistung> Förderfrist <Region>"
-
-    Region wird aus dem Bundesland abgeleitet (z. B. „Berlin“, „Bayern",
-    „Baden-Württemberg“). Falls keine Branch-/Leistungsangaben existieren,
-    wird ein generischer Begriff wie „KI Mittelstand“ verwendet. Alle
-    Ergebnisse werden gecached, um unnötige API‑Requests zu vermeiden.
+    Liefert HTML-Blöcke für die Kategorien Nachrichten, Tools, Förderungen und Deadlines.
+    Die Suche verwendet die Tavily-API mit anpassbaren Parametern. Der Suchbegriff
+    wird dynamisch aus Branche, Hauptleistung und Bundesland zusammengesetzt, um
+    relevantere Treffer zu erzielen. Cache wird genutzt, um Anfragen zu reduzieren.
     """
 
     # Konfiguration aus der Umgebung lesen
@@ -209,48 +195,33 @@ def collect_recent_items(ctx: Dict[str, Any], lang: str = "de") -> Dict[str, str
     exclude_domains = [d.strip() for d in os.getenv("SEARCH_EXCLUDE_DOMAINS", "").split(",") if d.strip()]
 
     out: Dict[str, str] = {}
-
-    # Bestimme Branch- und Leistungsbegriffe
-    branch = str(ctx.get("branche") or "").strip()
-    service = str(ctx.get("hauptleistung") or "").strip()
-    # Kombiniere zu einem Schlagwort (Company-Topic)
-    company_topic = " ".join([branch, service]).strip()
-    if not company_topic:
-        company_topic = "KI Mittelstand" if lang.lower().startswith("de") else "AI SMEs"
-
-    # Leite Region aus Bundesland ab
+    # Bestimme Branchenschlagwort und Hauptleistung (Freitext)
+    branche = str(ctx.get("branche") or "").strip()
+    haupt = str(ctx.get("hauptleistung") or "").strip()
+    # Kombiniere Branchenschlagwort und Hauptleistung (falls beide vorhanden)
+    company_topic = " ".join([x for x in [branche, haupt] if x]).strip() or "KI Mittelstand"
+    # Bestimme Bundeslandname aus Kürzel
     region_code = str(ctx.get("bundesland", "")).upper()
     region_map = {
-        "BE": "Berlin",
-        "BY": "Bayern",
-        "BW": "Baden-Württemberg",
-        "NW": "Nordrhein-Westfalen",
-        "HE": "Hessen",
+        "BE": "Berlin", "BY": "Bayern", "BW": "Baden-Württemberg", "NW": "Nordrhein-Westfalen", "HE": "Hessen",
+        "RP": "Rheinland-Pfalz", "SL": "Saarland", "SN": "Sachsen", "TH": "Thüringen", "HB": "Bremen",
+        "HH": "Hamburg", "MV": "Mecklenburg-Vorpommern", "NI": "Niedersachsen", "SH": "Schleswig-Holstein",
+        "ST": "Sachsen-Anhalt", "BB": "Brandenburg"
     }
-    region_name = region_map.get(region_code, "Deutschland" if lang.lower().startswith("de") else "Germany")
-
-    # Sprachabhängige Basisterme
+    region_name = region_map.get(region_code, "Deutschland")
+    # Sprache bestimmen
     if lang.lower().startswith("de"):
-        news_term = "KI News"
-        tools_term = "KI Tools"
-        funding_term = "Förderprogramme"
-        deadline_term = "Förderfrist"
         language_param = "de"
+        news_query = f"{company_topic} {region_name} KI News"
+        tools_query = f"{company_topic} {region_name} KI Tools"
+        funding_query = f"{company_topic} {region_name} Förderprogramme"
+        deadlines_query = f"{company_topic} {region_name} Förderfrist"
     else:
-        news_term = "AI News"
-        tools_term = "new AI tools"
-        funding_term = "funding grants"
-        deadline_term = "grant deadline"
         language_param = "en"
-
-    # Generiere Queries, Region anhängen falls vorhanden
-    def build_query(*parts: str) -> str:
-        return " ".join([p for p in parts if p]).strip()
-
-    news_query = build_query(company_topic, news_term, region_name)
-    tools_query = build_query(tools_term, company_topic, region_name)
-    funding_query = build_query(company_topic, funding_term, region_name)
-    deadlines_query = build_query(company_topic, deadline_term, region_name)
+        news_query = f"{company_topic} {region_name} AI News"
+        tools_query = f"{company_topic} {region_name} AI tools"
+        funding_query = f"{company_topic} {region_name} funding grants"
+        deadlines_query = f"{company_topic} {region_name} grant deadline"
 
     # Nachrichten (topic=news)
     if os.getenv("SHOW_REGWATCH", "1").lower() in {"1", "true", "yes"}:

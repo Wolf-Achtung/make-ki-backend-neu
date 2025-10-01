@@ -14,19 +14,19 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from websearch_utils import collect_recent_items  # Live-Sektionen (Tavily etc.)
 
-# Optional YAML und HTML: Für branchenspezifische Daten und sichere HTML-Ausgabe
+# Zusätzliche Imports für YAML- und HTML-Verarbeitung
 try:
     import yaml  # type: ignore
 except Exception:
-    yaml = None  # Wird geprüft, bevor YAML-Dateien geladen werden
+    yaml = None  # Fallback, falls PyYAML nicht installiert ist
 
-import html  # Für Escape in Tool-/Förderlisten
+import html  # Zum Escapen von Strings in Tool-/Förder-HTML
 
-# Versuche, die intelligente Förderprogramm-Matching-Funktion zu importieren
 try:
-    from ENHANCED_FUNDING_DATABASE import match_funding_programs_smart  # type: ignore
+    # Optional: Intelligentes Fördermatching aus der erweiterten Förderdatenbank
+    from ENHANCED_FUNDING_DATABASE import match_funding_programs_smart
 except Exception:
-    match_funding_programs_smart = None
+    match_funding_programs_smart = None  # Wird später geprüft
 
 BASE_DIR = os.path.abspath(os.getenv("APP_BASE", os.getcwd()))
 TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
@@ -394,9 +394,9 @@ def _load_branchen_context(branche: str, lang: str) -> Optional[str]:
 # Neu: Laden von branchenspezifischen YAML-Definitionen
 def _load_branch_yaml(branch: str) -> Optional[Dict[str, Any]]:
     """
-    Lädt Daten aus branchenkontext/<branch>.yaml oder <branch>.de.yaml.
+    Lädt Daten aus branchenkontext/<branche>.yaml oder <branche>.de.yaml.
     Gibt ein Dictionary mit den Feldern ``tools_list`` und ``foerderprogramme_list`` zurück.
-    Wenn keine Datei existiert oder PyYAML nicht verfügbar ist, wird ``None`` zurückgegeben.
+    Wenn keine Datei existiert oder PyYAML nicht verfügbar ist, wird None zurückgegeben.
     """
     if not yaml or not BRANCHEN_DIR:
         return None
@@ -414,7 +414,7 @@ def _load_branch_yaml(branch: str) -> Optional[Dict[str, Any]]:
                 with open(path, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f)
                     if isinstance(data, dict):
-                        return data  # type: ignore
+                        return data
             except Exception:
                 continue
     return None
@@ -436,9 +436,10 @@ def _filter_csv_tools(
     csv_path = os.path.join(DATA_DIR, "tools.csv")
     if not os.path.exists(csv_path):
         return results
+    # Normalisiere Felder für Vergleiche
     branch_key = (branch or "").lower().split("&")[0].strip()
     size_key = str(company_size).lower()
-    keywords: List[str] = []
+    keywords = []
     if main_service:
         keywords += re.findall(r"[a-zA-Z0-9äöüÄÖÜß]+", main_service.lower())
     for uc in use_cases:
@@ -448,12 +449,15 @@ def _filter_csv_tools(
         with open(csv_path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
+                # Filter nach Branche (industry) – akzeptiere Einträge mit passender oder generischer Branche
                 industry = (row.get("industry", "").lower()).strip()
                 if branch_key and industry and branch_key not in industry and industry not in branch_key:
                     continue
+                # Filter nach Unternehmensgröße (company_size)
                 size_field = (row.get("company_size", "").lower()).strip()
                 if size_field and size_key not in size_field and size_field not in size_key:
                     continue
+                # Filter nach Use‑Case / Keywords
                 text_fields = " ".join([
                     row.get("use_case", ""),
                     row.get("description", ""),
@@ -478,6 +482,99 @@ def _filter_csv_tools(
     except Exception as e:
         log.warning(f"tools.csv parse failed: {e}")
     return results
+
+# Neu: Filtert Förderprogramme aus foerderprogramme.csv anhand von Region, Unternehmensgröße und Branche
+def _filter_csv_funding(
+    state: str,
+    company_size: str,
+    branch: str,
+    max_results: int = 6,
+) -> List[Dict[str, str]]:
+    """
+    Lädt zusätzliche Förderprogramme aus der CSV-Datei ``foerderprogramme.csv`` im Datenverzeichnis.
+    Filtert Programme anhand des Bundeslands (region), der Unternehmensgröße und optional der Branche.
+    Die CSV muss die Spalten ``name``, ``region``, ``industry``, ``company_size``, ``amount`` und ``info_url`` enthalten.
+    Regionale Einträge wie "Baden-Württemberg" oder "Berlin" werden über eine Mapping-Tabelle dem
+    Bundesland-Code zugeordnet. Programme mit ``region`` == "Deutschland" gelten als bundesweit.
+    """
+    res: List[Dict[str, str]] = []
+    csv_path = os.path.join(DATA_DIR, "foerderprogramme.csv")
+    if not os.path.exists(csv_path):
+        return res
+    # Mapping von Bundesland-Code zu Regionennamen
+    region_map = {
+        "BE": "Berlin",
+        "BY": "Bayern",
+        "BW": "Baden-Württemberg",
+        "NW": "Nordrhein-Westfalen",
+        "HE": "Hessen",
+        "RP": "Rheinland-Pfalz",
+        "SL": "Saarland",
+        "SN": "Sachsen",
+        "TH": "Thüringen",
+        "HB": "Bremen",
+        "HH": "Hamburg",
+        "MV": "Mecklenburg-Vorpommern",
+        "NI": "Niedersachsen",
+        "SH": "Schleswig-Holstein",
+        "ST": "Sachsen-Anhalt",
+        "BB": "Brandenburg",
+    }
+    region_name = region_map.get(state.upper(), None)
+    branch_key = (branch or "").lower().split("&")[0].strip()
+    size_key = str(company_size or "").lower()
+    try:
+        with open(csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # Region prüfen: akzeptiere bundesweit (Deutschland) oder spezifisches Land
+                region_field = (row.get("region", "") or "").strip()
+                if region_name:
+                    if region_field and region_field.lower() not in {region_name.lower(), "deutschland", "bundesweit"}:
+                        continue
+                # Branche prüfen: akzeptiere "*", "all", "alle" oder spezifische Branche
+                industry_field = (row.get("industry", "") or "").lower().strip()
+                if industry_field and industry_field not in {"*", "all", "alle"}:
+                    if branch_key and branch_key not in industry_field and industry_field not in branch_key:
+                        continue
+                # Unternehmensgröße prüfen: akzeptiere "*" oder passende Größenspanne
+                size_field = (row.get("company_size", "") or "").lower().strip()
+                if size_field and size_field not in {"*", size_key}:
+                    if "-" in size_field:
+                        try:
+                            lo, hi = [s.strip() for s in size_field.split("-")]
+                            size_num = None
+                            if size_key in {"1", "solo"}:
+                                size_num = 1
+                            elif size_key.isdigit():
+                                size_num = int(size_key)
+                            if size_num is not None and lo.isdigit() and hi.isdigit():
+                                if not (int(lo) <= size_num <= int(hi)):
+                                    continue
+                            elif size_num is None:
+                                pass
+                        except Exception:
+                            pass
+                    else:
+                        continue
+                name = (row.get("name") or "").strip()
+                if not name:
+                    continue
+                amount = (row.get("amount") or "").strip()
+                url = (row.get("info_url") or row.get("link") or "").strip()
+                region_label = region_field if region_field else "Bundesweit"
+                res.append({
+                    "name": name,
+                    "amount": amount,
+                    "deadline": (row.get("last_checked") or "").strip(),
+                    "url": url,
+                    "region": region_label,
+                })
+                if len(res) >= max_results:
+                    break
+    except Exception as e:
+        log.warning(f"foerderprogramme.csv parse failed: {e}")
+    return res
 
 
 # ----------------------------- Benchmarks (CSV in ./data) ------------------
@@ -846,131 +943,112 @@ TOOL_DATABASE = {
 
 def match_tools_to_company(answers: Dict[str, Any], lang: str = "de") -> str:
     """
-    Erstellt eine auf das Unternehmen zugeschnittene Liste von Tool‑Empfehlungen.
-
-    Diese Funktion kombiniert mehrere Datenquellen:
-    - Branchenkontexte (YAML): Enthalten manuell kuratierte Tools pro Branche.
-    - CSV‑Datenbank (data/tools.csv): Enthält eine breite Palette an Tools mit
-      Branchen‑, Größen‑ und Use‑Case‑Tags.
-    - Fallback‑Datenbank (TOOL_DATABASE): Wird nur genutzt, wenn weder YAML noch
-      CSV passende Ergebnisse liefern.
-
-    Dabei werden Branche, Unternehmensgröße, Hauptdienstleistung sowie die
-    ausgewählten KI‑Use‑Cases zur Filterung verwendet. Duplikate werden
-    entfernt. Das Ergebnis wird als HTML in einem Absatz ausgegeben.
+    Liefert eine Liste empfohlener Tools basierend auf Branche, Unternehmensgröße,
+    Hauptleistung und angegebenen KI-Use-Cases. Die Daten werden aus branchenspezifischen
+    YAML-Dateien und der allgemeinen tools.csv geladen. Fällt zurück auf die
+    ursprünglich definierten TOOL_DATABASE-Einträge, falls keine Ergebnisse gefunden werden.
     """
-    # Sammle Eingaben
-    branch = str(answers.get("branche", "")).strip()
-    company_size = str(answers.get("unternehmensgroesse", "")).strip()
-    main_service = str(answers.get("hauptleistung", "")).strip()
-    use_cases = answers.get("ki_usecases") or []
-    if isinstance(use_cases, str):
-        use_cases = [use_cases]
+    branche = str(answers.get("branche", "beratung")).lower()
+    size = str(answers.get("unternehmensgroesse", "1")).lower()
+    hauptleistung = str(answers.get("hauptleistung", "")).strip()
+    ucs = answers.get("ki_usecases") or []
+    if isinstance(ucs, str):
+        ucs = [ucs]
 
-    suggestions: List[Dict[str, str]] = []
-    seen_names: set[str] = set()
-
-    # 1) Branchen-YAML laden
-    branch_data = _load_branch_yaml(branch)
-    if branch_data and isinstance(branch_data, dict):
-        for t in branch_data.get("tools_list", []):
-            name = str(t.get("name", "")).strip()
-            if not name or name in seen_names:
+    # Versuche branchenspezifische YAML zu laden
+    tools_from_yaml: List[Dict[str, Any]] = []
+    branch_data = _load_branch_yaml(branche.split("&")[0].strip())
+    if branch_data and isinstance(branch_data.get("tools_list"), list):
+        for item in branch_data.get("tools_list", []):
+            # Erwartete Felder: name, kurzbeschreibung, datenschutz, link
+            name = str(item.get("name") or item.get("titel") or "").strip()
+            if not name:
                 continue
-            desc = str(t.get("desc", t.get("description", ""))).strip()
-            cost = str(t.get("cost", "")).strip()
-            url = str(t.get("link", "")).strip()
-            dpa = str(t.get("datenschutz", "")).strip()
-            suggestions.append({
+            desc = str(item.get("kurzbeschreibung") or item.get("beschreibung") or item.get("desc") or "").strip()
+            dpa = str(item.get("datenschutz") or item.get("dpa") or "").strip()
+            link = str(item.get("link") or item.get("url") or "").strip()
+            entry = {
                 "name": name,
                 "description": desc,
-                "cost": cost,
-                "link": url,
-                "dpa": dpa,
-            })
-            seen_names.add(name)
-            if len(suggestions) >= 6:
-                break
+                "cost": dpa or "",
+                "link": link,
+            }
+            tools_from_yaml.append(entry)
 
-    # 2) CSV‑Tools filtern, wenn noch Platz ist
-    if len(suggestions) < 6:
-        csv_tools = _filter_csv_tools(branch, company_size, main_service, use_cases, max_results=6)
-        for t in csv_tools:
-            name = t.get("name", "").strip()
+    # Lade generische Tools aus CSV, gefiltert nach Branche, Unternehmensgröße und Keywords
+    csv_tools = _filter_csv_tools(
+        branche,
+        size,
+        hauptleistung,
+        ucs,
+        max_results=6,
+    )
+
+    # Kombiniere Empfehlungen aus YAML und CSV, vermeide Duplikate
+    combined: List[Dict[str, str]] = []
+    seen_names: set[str] = set()
+    for source in (tools_from_yaml, csv_tools):
+        for t in source:
+            name = t.get("name")
             if not name or name in seen_names:
                 continue
-            suggestions.append({
-                "name": name,
-                "description": t.get("description", "").strip(),
-                "cost": t.get("cost", "").strip(),
-                "link": t.get("link", "").strip(),
-                "dpa": "",
-            })
             seen_names.add(name)
-            if len(suggestions) >= 6:
+            combined.append(t)
+            if len(combined) >= 6:
                 break
+        if len(combined) >= 6:
+            break
 
-    # 3) Fallback: Statische Datenbank
-    if not suggestions:
-        ucs = use_cases or ["prozessautomatisierung"]
-        for uc in ucs:
+    # Fallback auf statisches TOOL_DATABASE, falls keine Treffer
+    if not combined:
+        default = []
+        default_ucs = ucs or ["prozessautomatisierung"]
+        picks, used = [], set()
+        for uc in default_ucs:
             key = re.sub(r"[\s\-]", "", str(uc).lower())
             for dbk, tools in TOOL_DATABASE.items():
                 if dbk in key or key in dbk:
                     best = sorted(tools, key=lambda t: -t.get("fit_score", 0))
                     for t in best:
-                        name = t.get("name")
-                        if name and name not in seen_names:
-                            suggestions.append({
-                                "name": t["name"],
-                                "description": t.get("desc", ""),
-                                "cost": t.get("cost", ""),
-                                "link": t.get("use_case", ""),  # Fallback: Use-Case im Link-Feld
-                                "dpa": "",
-                            })
-                            seen_names.add(name)
+                        if t["name"] not in used:
+                            picks.append(t)
+                            used.add(t["name"])
                             break
                     break
-            if len(suggestions) >= 6:
-                break
+        for t in picks[:6]:
+            combined.append({
+                "name": t["name"],
+                "description": t.get("desc") or t.get("description") or "",
+                "cost": t.get("cost") or "",
+                "link": "",
+            })
 
-    # Formatierung
-    if not suggestions:
-        return _p("Individuelle Tool‑Empfehlungen folgen nach Detailklärung." if lang.startswith("de") else "Individual tool recommendations will follow.")
+    if not combined:
+        return _p("Individuelle Tool‑Empfehlungen folgen nach Detailklärung.") if lang.startswith("de") else _p("Individual tool recommendations will follow.")
 
-    lines = []
-    for t in suggestions[:6]:
-        name = html.escape(t["name"])
-        desc = html.escape(t.get("description", ""))
+    # Formatiere HTML-Ausgabe
+    paragraphs = []
+    for t in combined:
+        name = html.escape(t.get("name", ""))
+        desc = html.escape(t.get("description", "").rstrip("."))
         cost = html.escape(t.get("cost", ""))
         link = t.get("link", "").strip()
-        dpa = t.get("dpa", "").strip()
         if lang.startswith("de"):
-            parts = [name]
-            if desc:
-                parts.append(f"– {desc}")
+            text = f"<strong>{name}</strong> – {desc}"
             if cost:
-                parts.append(f"({cost})")
-            if dpa:
-                parts.append(f"AVV: {dpa}")
+                text += f" ({cost})"
             if link:
-                parts.append(f"{link}")
-            lines.append(" ".join(parts))
+                text += f". <a href=\"{html.escape(link)}\" target=\"_blank\" rel=\"noopener\">Mehr erfahren</a>"
         else:
-            parts = [name]
-            if desc:
-                parts.append(f"– {desc}")
+            text = f"<strong>{name}</strong> – {desc}"
             if cost:
-                parts.append(f"({cost})")
-            if dpa:
-                parts.append(f"DPA: {dpa}")
+                text += f" ({cost})"
             if link:
-                parts.append(f"{link}")
-            lines.append(" ".join(parts))
-    return _p("; ".join(lines))
+                text += f". <a href=\"{html.escape(link)}\" target=\"_blank\" rel=\"noopener\">Learn more</a>"
+        paragraphs.append(text)
+    return _p(" ".join(paragraphs))
 
 
-# Statische Fallback-Datenbank für Förderprogramme (wird selten genutzt)
 FUNDING_PROGRAMS = {
     "bundesweit": [
         {"name": "go‑digital", "amount": "bis 16.500€ (50%)", "deadline": "laufend", "fit": 90},
@@ -983,115 +1061,128 @@ FUNDING_PROGRAMS = {
     ],
 }
 
+
 def match_funding_programs(answers: Dict[str, Any], lang: str = "de") -> str:
     """
-    Liefert eine Liste passender Förderprogramme als HTML. Die Auswahl basiert auf
-    Bundesland, Unternehmensgröße, Branche und Hauptleistung. Es wird zunächst
-    versucht, die intelligente Matching-Funktion aus ENHANCED_FUNDING_DATABASE
-    zu verwenden. Schlägt dies fehl oder stehen keine Programme zur Verfügung,
-    werden branchenspezifische YAML-Definitionen genutzt. Als letzter Fallback
-    greift eine statische Liste.
+    Liefert eine Liste passender Förderprogramme. Versucht zuerst die intelligente
+    Matching-Funktion aus ENHANCED_FUNDING_DATABASE, filtert nach Branche und
+    Hauptleistung, und fällt ansonsten auf branchenspezifische YAML-Listen und
+    generische Programme zurück. Die Ausgabe ist HTML-formatiert.
     """
-    # Versuche intelligente Förderprogramme
-    progs: List[Dict[str, Any]] = []
-    try:
-        if match_funding_programs_smart:
-            progs = match_funding_programs_smart(answers)  # type: ignore
-    except Exception as e:
-        log.warning(f"smart funding match failed: {e}")
-        progs = []
+    programmes: List[Dict[str, Any]] = []
 
-    # Falls vorhanden: nutze nur die Top 8
-    if progs:
-        # Optional: Filtere anhand von Keywords aus Hauptleistung/Branche
-        main_service = str(answers.get("hauptleistung", "")).lower()
-        branche = str(answers.get("branche", "")).lower()
-        keywords: List[str] = []
-        if main_service:
-            keywords += re.findall(r"[a-zA-Z0-9äöüÄÖÜß]+", main_service)
-        if branche:
-            keywords += re.findall(r"[a-zA-Z0-9äöüÄÖÜß]+", branche)
-        filtered: List[Dict[str, Any]] = []
-        if keywords:
-            for p in progs:
-                text = (p.get("use_case", "") + " " + p.get("name", "")).lower()
-                if any(k in text for k in keywords):
-                    filtered.append(p)
-        # Wenn zu wenige Treffer, nimm dennoch die besten
-        if not filtered:
-            filtered = progs
-        progs = filtered[:6]
-        # Formatieren
-        lines: List[str] = []
-        for p in progs:
-            name = html.escape(p.get("name", ""))
-            amount = html.escape(p.get("amount", ""))
-            deadline = html.escape(p.get("deadline", ""))
-            url = p.get("url", "")
-            if lang.startswith("de"):
-                parts = [name]
-                if amount:
-                    parts.append(f"– {amount}")
-                if deadline:
-                    parts.append(f"(Frist: {deadline})")
-                if url:
-                    parts.append(url)
-                lines.append(" ".join(parts))
-            else:
-                parts = [name]
-                if amount:
-                    parts.append(f"– {amount}")
-                if deadline:
-                    parts.append(f"(Deadline: {deadline})")
-                if url:
-                    parts.append(url)
-                lines.append(" ".join(parts))
-        return _p("; ".join(lines))
+    # 1) Versuche, mit der intelligenten Matching-Funktion Programme zu finden
+    if match_funding_programs_smart:
+        try:
+            matched = match_funding_programs_smart(answers)
+            # Optional: Filtere weiter nach Keywords aus Hauptleistung / Branche
+            hauptleistung = str(answers.get("hauptleistung", "")).lower()
+            branche = str(answers.get("branche", "")).lower()
+            if matched:
+                for prog in matched:
+                    # Einschluss nur, wenn Use-Case oder Name auf Branche/Hauptleistung schließen lässt
+                    use_case = (prog.get("use_case") or "").lower()
+                    if hauptleistung and hauptleistung not in use_case and use_case not in hauptleistung:
+                        continue
+                    # Akzeptiere Programme ohne spezifischen Use-Case oder wenn Branche im Use-Case vorkommt
+                    programmes.append(prog)
+            # Begrenze auf die Top 6
+            if not programmes:
+                programmes = matched[:6]
+        except Exception as e:
+            log.warning(f"match_funding_programs_smart error: {e}")
 
-    # Zweiter Fallback: Branchen-YAML
-    branch = str(answers.get("branche", "")).strip()
-    branch_data = _load_branch_yaml(branch)
-    if branch_data and isinstance(branch_data, dict):
-        fp_list = branch_data.get("foerderprogramme_list", [])
-        formatted: List[str] = []
-        for p in fp_list:
-            name = html.escape(str(p.get("name", "")))
-            amount = html.escape(str(p.get("amount", "")))
-            deadline = html.escape(str(p.get("deadline", "")))
-            link = p.get("link", "")
-            if lang.startswith("de"):
-                parts = [name]
-                if amount:
-                    parts.append(f"– {amount}")
-                if deadline:
-                    parts.append(f"(Frist: {deadline})")
-                if link:
-                    parts.append(link)
-                formatted.append(" ".join(parts))
-            else:
-                parts = [name]
-                if amount:
-                    parts.append(f"– {amount}")
-                if deadline:
-                    parts.append(f"(Deadline: {deadline})")
-                if link:
-                    parts.append(link)
-                formatted.append(" ".join(parts))
-        if formatted:
-            return _p("; ".join(formatted[:6]))
+    # 2) Fallback: Nutze branchenspezifische YAML-Liste
+    if not programmes:
+        branch_data = _load_branch_yaml(str(answers.get("branche", "")).split("&")[0].strip())
+        if branch_data and isinstance(branch_data.get("foerderprogramme_list"), list):
+            for item in branch_data["foerderprogramme_list"]:
+                name = str(item.get("name") or item.get("titel") or "").strip()
+                amount = str(item.get("volumen") or item.get("amount") or "").strip()
+                deadline = str(item.get("deadline") or item.get("frist") or "").strip()
+                link = str(item.get("link") or item.get("url") or "").strip()
+                programmes.append({
+                    "name": name,
+                    "amount": amount,
+                    "deadline": deadline,
+                    "requirements": item.get("requirements", item.get("voraussetzungen", "")),
+                    "use_case": item.get("use_case", item.get("anwendungsfall", "")),
+                    "url": link,
+                    "region": answers.get("bundesland", "BE")
+                })
 
-    # Letzter Fallback: Statische Datenbank
-    state = str(answers.get("bundesland", "BE")).upper()
-    region_map = {"BE": "berlin"}
-    region = region_map.get(state)
-    programs = list(FUNDING_PROGRAMS.get("bundesweit", []))
-    if region and region in FUNDING_PROGRAMS:
-        programs += FUNDING_PROGRAMS[region]
-    programs = sorted(programs, key=lambda p: -p.get("fit", 0))[:6]
-    if not programs:
-        return _p("Aktuell keine passenden Programme." if lang.startswith("de") else "No suitable programs found.")
-    rows = "; ".join([f"{p['name']} ({p['amount']})" for p in programs])
-    return _p(("Förderoptionen: " + rows) if lang.startswith("de") else ("Funding options: " + rows))
+    # 3) Fallback: CSV-basierte Förderprogramme aus foerderprogramme.csv
+    if not programmes:
+        state_code = str(answers.get("bundesland", "")).upper()
+        company_size = str(answers.get("unternehmensgroesse", "")).lower()
+        branch = str(answers.get("branche", "")).lower()
+        csv_progs = _filter_csv_funding(state_code, company_size, branch)
+        if csv_progs:
+            lines: List[str] = []
+            for p in csv_progs:
+                name = html.escape(p.get("name", ""))
+                amount = html.escape(p.get("amount", ""))
+                deadline = html.escape(p.get("deadline", ""))
+                url = p.get("url", "")
+                if lang.startswith("de"):
+                    parts = [name]
+                    if amount:
+                        parts.append(f"– {amount}")
+                    if deadline:
+                        parts.append(f"(Stand: {deadline})")
+                    if url:
+                        parts.append(url)
+                    lines.append(" ".join(parts))
+                else:
+                    parts = [name]
+                    if amount:
+                        parts.append(f"– {amount}")
+                    if deadline:
+                        parts.append(f"(As of: {deadline})")
+                    if url:
+                        parts.append(url)
+                    lines.append(" ".join(parts))
+            return _p("; ".join(lines[:6]))
+
+    # 4) Letzter Fallback: Alte statische Liste, falls weiterhin nichts vorhanden
+    if not programmes:
+        state = str(answers.get("bundesland", "BE")).upper()
+        region_map = {"BE": "berlin"}
+        region = region_map.get(state)
+        all_progs: List[Dict[str, Any]] = []
+        all_progs += FUNDING_PROGRAMS.get("bundesweit", [])
+        if region and region in FUNDING_PROGRAMS:
+            all_progs += FUNDING_PROGRAMS[region]
+        programmes = all_progs
+
+    if not programmes:
+        return _p("Aktuell keine passenden Programme.") if lang.startswith("de") else _p("No suitable programs found.")
+
+    # Sortiere nach Fit-Wert oder final_score
+    programmes_sorted = sorted(programmes, key=lambda p: -int(p.get("final_score", p.get("fit_small", p.get("fit", 0)))), reverse=False)
+
+    # Formatiere HTML-Ausgabe
+    items = []
+    for prog in programmes_sorted[:6]:
+        name = html.escape(str(prog.get("name", "")))
+        amount = html.escape(str(prog.get("amount", "")).strip())
+        deadline = html.escape(str(prog.get("deadline", prog.get("deadline")) or "").strip())
+        url = str(prog.get("url", "")).strip()
+        if lang.startswith("de"):
+            text = f"<strong>{name}</strong> – {amount}"
+            if deadline:
+                text += f", Einreichung bis {deadline}"
+            if url:
+                text += f". <a href=\"{html.escape(url)}\" target=\"_blank\" rel=\"noopener\">Mehr Infos</a>"
+        else:
+            text = f"<strong>{name}</strong> – {amount}"
+            if deadline:
+                text += f", apply by {deadline}"
+            if url:
+                text += f". <a href=\"{html.escape(url)}\" target=\"_blank\" rel=\"noopener\">More info</a>"
+        items.append(text)
+
+    return _p(" ".join(items))
 
 
 # ----------------------------- Sektionen-Renderer --------------------------
