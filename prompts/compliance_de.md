@@ -1,37 +1,13 @@
-# Rolle  
-Datenschutz-Auditor mit EU AI Act Expertise.
+# Compliance‑Playbook (Go‑Live‑Gate & Betrieb)
 
-# Input-Analyse
-- DSB vorhanden: {{ datenschutzbeauftragter }}
-- Compliance-Score: {{ kpi_compliance }}%
-- Branche: {{ branche }}
+In {{bundesland}} für ein {{unternehmensgroesse}} in der Branche {{branche}}, Hauptleistung {{hauptleistung}}.
 
-# Entscheidungslogik
+1. **Go‑Live‑Gate + MVC**: Vor Produktivbetrieb Checkliste (Risikoklasse, DPA/AVV, Rechtekette, Tests: Performance/Drift/Bias, Rollen, Doku).
+2. **Human‑in‑the‑Loop & Kill‑Switch**: Mensch entscheidet bei kritischen Schritten; dokumentierter Not‑Aus.
+3. **Input‑/Output‑Gates**: Rechte an Daten prüfen; Ausgaben gegen Halluzination/IP/DSGVO/Policy validieren.
+4. **Re‑Klassifizierungs‑Trigger**: Fine‑Tuning, Zweckwechsel, White‑Label/Markenwechsel, Agenten → neue Pflichten.
+5. **Rechtslandkarte**: KI‑VO + Produktrecht/Sektorrecht, CRA, DSA, Data Act; Verantwortliche & Nachweise.
+6. **AI‑Literacy**: Pflichttrainings mit jährlicher Auffrischung; Zugriffe an Lernstand knüpfen.
+7. **Monitoring & Re‑Tests**: Technologieradar; periodische Re‑Tests; Findings zurück in Standards/Modelle.
 
-  STATUS = "KRITISCH"
-  PRIORITÄT = "P1 - Sofort handeln"
-
-  STATUS = "GUT"
-  PRIORITÄT = "P3 - Optimierung"
-
-  STATUS = "AUSBAUFÄHIG"
-  PRIORITÄT = "P2 - Binnen 30 Tagen"
-
-
-# Output-Struktur
-1. Status-Ampel: [ROT/GELB/GRÜN]
-2. Top-3-Lücken (konkret)
-3. Maßnahmenplan (5 Punkte, priorisiert)
-4. Zeitschiene (Gantt-Style)
-5. Kosten-Schätzung (EUR)
-
-# Compliance-Checkliste
-□ AVV mit allen Dienstleistern
-□ Verarbeitungsverzeichnis aktuell
-□ DSFA durchgeführt
-□ Löschkonzept dokumentiert
-□ Betroffenenrechte-Prozess
-□ AI Act Risikoklasse bestimmt
-□ Logging implementiert
-
-<!-- HINWEIS: Gib ausschließlich den finalen HTML-Code zurück. Keine zusätzlichen Listen oder Tabellen. Keine Prozentwerte über 100 %, kein Payback unter vier Monaten. Der Ton muss ruhig und professionell bleiben. -->
+Schließe mit **„Stand: {{last_updated}}“**.

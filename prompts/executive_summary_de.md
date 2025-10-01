@@ -1,53 +1,20 @@
-<!-- Executive Summary Prompt (German) -->
+# Executive Summary – „Mehrwert im Wettbewerb durch KI“
 
-## Rolle
-Sie sind ein erfahrener KI-Strategieberater mit 15+ Jahren Expertise in der digitalen Transformation des deutschen Mittelstands. Ihre Stärke: Komplexe Sachverhalte präzise auf den Punkt bringen.
+Schreibe eine prägnante Executive Summary für ein **{{branche}}**, **{{unternehmensgroesse}}** in **{{bundesland}}** mit der **Hauptleistung: {{hauptleistung}}**. 
+Halte den Ton sachlich und motivierend, ohne Marketing-Sprech.
 
-## Kontext
-### Unternehmensprofil
-- **Branche**: {{ branche }}
-- **Größe**: {{ company_size_label }}
-- **Standort**: {{ bundesland }}
-- **Kernkompetenz**: {{ hauptleistung }}
+## Ausgangslage
+- KI‑Reifegrad, Stärken/Schwächen in 2–3 Sätzen.
+- Größte Chance für {{branche}} in {{bundesland}} (konkret, 1 Satz).
 
-### Digitale Ausgangslage
-- **KI-Reifegrad**: {{ score_percent }}% ({{ readiness_level }})
-- **Digitalisierung**: {{ digitalisierungsgrad }}/10
-- **Automatisierung**: {{ automatisierungsgrad_percent }}%
-- **Papierlose Prozesse**: {{ prozesse_papierlos_percent }}%
+## Erfolgsweg (90 Tage)
+- 3 Etappen mit Ziel, Owner und KPI (0–30/31–60/61–90).
 
-### Geschäftspotenziale
-- **Effizienzsteigerung**: {{ kpi_efficiency }}%
-- **Kostenreduktion**: {{ kpi_cost_saving }}%
-- **ROI-Zeitraum**: {{ kpi_roi_months }} Monate
-- **Budget**: {{ budget_amount }} EUR
+## Business Value (Zahlen sauber!)
+- Investition: **{{business_case.invest_eur}} €**
+- Jährliche Einsparung: **{{business_case.annual_saving_eur}} €**
+- **ROI (Jahr 1): {{business_case.roi_year1_pct}} %** · **Payback: {{business_case.payback_months}} Monate**
+- Zeitgewinn: **≈ {{business_case.time_saved_hours_per_month}} Std/Monat** (Basis: 8 h × 20 Tage)
 
-## Aufgabe
-Erstellen Sie eine Executive Summary in EXAKT dieser HTML-Struktur:
-<!-- HTML structure start -->
-<div class="executive-summary-content">
-  <p class="situation">
-    <strong>Ihre Ausgangslage:</strong> 
-    Mit einem KI-Reifegrad von {{ score_percent }}% befinden Sie sich [EINORDNUNG: im oberen Drittel/soliden Mittelfeld/am Anfang] Ihrer Branche. 
-    Ihre Stärken liegen in [TOP-3-STÄRKEN mit konkreten Zahlen]. 
-    Die größte Chance für {{ company_size_label }} in {{ branche }} liegt in [KONKRETES POTENZIAL].
-  </p>
-  
-  <p class="strategy">
-    <strong>Ihr Erfolgsweg:</strong> 
-    Starten Sie mit [QUICK-WIN aus {{ ki_usecases }}] - messbare Erfolge in [ZEITRAUM]. 
-    Dies bringt Ihnen [KONKRETER NUTZEN in Zahlen oder Zeit]. 
-    Der schrittweise Ausbau über 6 Monate führt zu einer Effizienzsteigerung von {{ kpi_efficiency }}%. 
-    Ihr Team wird [POSITIVE VERÄNDERUNG].
-  </p>
-  
-  <p class="value">
-    <strong>Ihr Business Value:</strong> 
-    Bei einer Investition von {{ budget_amount }} EUR erwirtschaften Sie {{ roi_annual_saving }} EUR jährlich - Break-Even nach nur {{ kpi_roi_months }} Monaten. 
-    Zusätzlich gewinnen Sie: [3 QUALITATIVE VORTEILE]. 
-    Nach 12 Monaten sind Sie [MARKTPOSITION]. 
-    Der erste Schritt beginnt morgen mit [KONKRETE AKTION].
-  </p>
-</div>
-
-<!-- HINWEIS: Gib ausschließlich den finalen HTML-Code zurück. Keine zusätzlichen Listen oder Tabellen. Keine Prozentwerte über 100 %, kein Payback unter vier Monaten. Der Ton muss ruhig und professionell bleiben. -->
+> Gib keine widersprüchlichen Werte aus. Verwende ausschließlich die übergebenen Zahlen.
+> Füge „Stand: {{last_updated}}“ hinzu.
