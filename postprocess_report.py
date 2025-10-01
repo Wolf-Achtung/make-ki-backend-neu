@@ -1,88 +1,133 @@
-# filename: postprocess_report.py
+# postprocess_report.py
 # -*- coding: utf-8 -*-
 """
-MAKE-KI Backend – Post-Processor (Gold-Standard+)
-- Erzwingt korrekte ROI-/Payback-Berechnungen
-- Repariert unplausible Zeitangaben (z. B. "32 Stunden/Tag")
-- Fügt "Stand: YYYY-MM-DD" in Live-Sektionen ein (News/Tools/Förderungen)
-- Füllt Benchmark-Tabelle aus Fallback/Datei
+Post-Processing: Aus Sections + Live-Addins werden HTML-Blöcke für den PDF-Service.
+- Einheitliche Komponenten (Karten, Progress-Bars, Quellenliste, Deadlines-Tabelle).
+- Benchmarks (data/benchmarks_<branche>_kmu.json) werden bei Verfügbarkeit eingespielt.
+- Jede Kachel erhält "Stand: YYYY-MM-DD | Quelle(n): …" (Gold-Standard+ "Transparenz").
+
+Export:
+    render_pdf_payload(result: dict, briefing: dict) -> dict
+        -> gibt {html_sections:{...}, assets:[], metadata:{...}} zurück
 """
 
 from __future__ import annotations
 
+import html
 import json
-import logging
-import os
-import re
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-logger = logging.getLogger("postprocess_report")
+DATA_DIR = Path("data")
 
-def iso_today() -> str:
-    return datetime.now().date().isoformat()
 
-def compute_business_case(invest: float, annual_saving: float) -> Dict[str, Any]:
-    if invest <= 0 or annual_saving <= 0:
-        return {"roi_year1_pct": 0, "payback_months": 0.0, "three_year_profit": 0}
-    roi = round(((annual_saving - invest) / invest) * 100)
-    payback = round(invest / (annual_saving / 12.0), 1)
-    profit3y = int(round(annual_saving * 3 - invest))
-    return {"roi_year1_pct": roi, "payback_months": payback, "three_year_profit": profit3y}
+def _load_benchmarks(industry: str) -> Dict[str, Any]:
+    path = DATA_DIR / f"benchmarks_{industry}_kmu.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
 
-def fix_time_claims(text: str) -> str:
-    # Ersetzt "40% = 32 Stunden/Tag" durch Monatsdarstellung (8h/Tag, 20 Tage)
-    text = re.sub(r"40%\s*=\s*32\s*Stunden/Tag", "40% ≈ 64 Stunden/Monat (Basis: 8 h × 20 Tage)", text)
-    return text
 
-def inject_stand_date(html: str) -> str:
-    return re.sub(r"(Aktuelle Meldungen.*?</h3>)", r"\1 <span class='stand'>(Stand: %s)</span>" % iso_today(), html, flags=re.I)
+def _meta_line(stand_iso: str, sources: List[str]) -> str:
+    src = ", ".join(sorted(set(sources))) if sources else "—"
+    dt = stand_iso.split("T")[0] if "T" in stand_iso else stand_iso[:10]
+    return f"<div class='meta'>Stand: {html.escape(dt)} &nbsp;·&nbsp; Quellen: {html.escape(src)}</div>"
 
-def fill_benchmarks(html: str, benchmarks: Dict[str, float]) -> str:
-    # Sucht leere Benchmark-Tabelle und trägt Werte ein
-    # (einfaches Platzhalter-Verfahren; die PDF-Engine rendert <table> sauber)
-    for key, val in {
-        "Digitalisierungsgrad": f"{benchmarks.get('digitalisierung', 7.5):.1f}/10",
-        "Automatisierungsgrad": f"{int(benchmarks.get('automatisierung', 0.65) * 100)}%",
-        "Datenschutz-Compliance": f"{int(benchmarks.get('compliance', 0.73) * 100)}%",
-        "Prozessreife": f"{int(benchmarks.get('prozessreife', 0.68) * 100)}%",
-        "Innovationsgrad": f"{int(benchmarks.get('innovation', 0.60) * 100)}%",
-    }.items():
-        html = re.sub(rf"({re.escape(key)}.*?<td>)\s*-\s*(</td>)", rf"\1{val}\2", html, flags=re.S)
-    return html
 
-def run(payload_path: Path, html_path: Path) -> None:
-    data = json.loads(payload_path.read_text(encoding="utf-8"))
-    # Business Case
-    bc = data.get("business_case", {})
-    fixed = compute_business_case(float(bc.get("invest_eur", 0)), float(bc.get("annual_saving_eur", 0)))
-    bc.update(fixed)
-    data["business_case"] = bc
+def _render_sources(items: List[Dict[str, Any]]) -> List[str]:
+    srcs = []
+    for it in items:
+        s = it.get("source") or ""
+        if s:
+            srcs.append(s)
+    return srcs
 
-    # HTML laden & korrigieren
-    html = html_path.read_text(encoding="utf-8")
-    html = fix_time_claims(html)
-    html = inject_stand_date(html)
-    html = fill_benchmarks(html, data.get("benchmarks", {}))
 
-    # Compliance-Playbook anhängen, falls noch nicht enthalten
-    compl_html = data.get("compliance_playbook_html")
-    if compl_html and "Compliance‑Playbook" not in html:
-        html += "\n" + compl_html
+def _progress(value: int) -> str:
+    value = max(0, min(100, int(value)))
+    return f"""
+    <div class="progress"><div class="bar" style="width:{value}%"></div></div>
+    """
 
-    # Speichern
-    payload_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    html_path.write_text(html, encoding="utf-8")
-    logger.info("Post-Processing abgeschlossen: ROI/Payback korrigiert, Benchmarks/Stand eingefügt.")
 
-if __name__ == "__main__":
-    # Erwartet Pfade als ENV (oder Standard)
-    payload = Path(os.getenv("REPORT_PAYLOAD", "build/payload.json"))
-    html = Path(os.getenv("REPORT_HTML", "build/report.html"))
-    if payload.exists() and html.exists():
-        run(payload, html)
-    else:
-        logger.warning("payload/html nicht gefunden – nichts zu tun.")
+def _table(rows: List[List[str]]) -> str:
+    th = "".join(f"<th>{html.escape(c)}</th>" for c in rows[0])
+    body = []
+    for r in rows[1:]:
+        body.append("<tr>" + "".join(f"<td>{html.escape(c)}</td>" for c in r) + "</tr>")
+    return f"<table class='compact'><thead><tr>{th}</tr></thead><tbody>{''.join(body)}</tbody></table>"
+
+
+def _render_funding(items: List[Dict[str, Any]], generated_at: str) -> str:
+    rows = [["Programm", "Frist", "Quelle"]]
+    for it in items[:10]:
+        rows.append([
+            it.get("title", ""),
+            it.get("deadline", "") or "—",
+            it.get("url", ""),
+        ])
+    tbl = _table(rows)
+    srcs = _render_sources(items)
+    return f"<h3>Förderprogramme & Deadlines</h3>{tbl}{_meta_line(generated_at, srcs)}"
+
+
+def _render_news(items: List[Dict[str, Any]], generated_at: str, title: str) -> str:
+    cards = []
+    for it in items[:10]:
+        cards.append(
+            f"<div class='card'><h4><a href='{html.escape(it.get('url',''))}'>{html.escape(it.get('title',''))}</a></h4>"
+            f"<p>{html.escape(it.get('summary',''))}</p>"
+            f"<div class='fine'>{html.escape((it.get('published_at') or '')[:10])} · {html.escape(it.get('source',''))}</div>"
+            f"</div>"
+        )
+    srcs = _render_sources(items)
+    return f"<h3>{html.escape(title)}</h3>{''.join(cards)}{_meta_line(generated_at, srcs)}"
+
+
+def _render_benchmarks(industry: str, generated_at: str) -> str:
+    data = _load_benchmarks(industry)
+    if not data:
+        return ""
+    rows = [["KPI", "Branchen‑Richtwert", "Quelle"]]
+    for kpi in data.get("kpis", []):
+        rows.append([kpi["name"], str(kpi["value"]), kpi.get("source", "—")])
+    return f"<h3>Benchmark‑Vergleich ({html.escape(industry)})</h3>{_table(rows)}{_meta_line(generated_at, [d.get('source_domain','') for d in data.get('kpis', [])])}"
+
+
+def render_pdf_payload(result: Dict[str, Any], briefing: Dict[str, Any]) -> Dict[str, Any]:
+    sections = result["sections"]
+    live = result.get("live", {})
+    meta = result.get("meta", {})
+    generated_at = meta.get("generated_at", datetime.now(timezone.utc).isoformat())
+
+    html_sections = {
+        "executive_summary": sections.get("executive_summary", ""),
+        "business": sections.get("business", ""),
+        "persona": sections.get("persona", ""),
+        "quick_wins": sections.get("quick_wins", ""),
+        "risks": sections.get("risks", ""),
+        "recommendations": sections.get("recommendations", ""),
+        "roadmap": sections.get("roadmap", ""),
+        "praxisbeispiel": sections.get("praxisbeispiel", ""),
+        "coach": sections.get("coach", ""),
+        "vision": sections.get("vision", ""),
+        "gamechanger": sections.get("gamechanger", ""),
+        "compliance": sections.get("compliance", ""),
+        # Live‑Blöcke
+        "benchmarks": _render_benchmarks(briefing.get("branche", ""), generated_at),
+        "news_html": _render_news(live.get("news", []), generated_at, "Aktuelle Meldungen"),
+        "tools_rich_html": _render_news(live.get("tools", []), generated_at, "Neue Tools & Releases"),
+        "funding_rich_html": _render_news(live.get("publications", []), generated_at, "Relevante Studien/Projekte"),
+        "funding_deadlines_html": _render_funding(live.get("funding", []), generated_at),
+    }
+
+    return {
+        "html_sections": html_sections,
+        "assets": [],
+        "metadata": {
+            "generated_at": generated_at,
+            "benchmarks_loaded": meta.get("benchmarks_loaded", False),
+            "sources_count": meta.get("sources_count", {}),
+        },
+    }
