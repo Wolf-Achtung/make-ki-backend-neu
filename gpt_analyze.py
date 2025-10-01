@@ -29,7 +29,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import httpx
-import html
 
 # Optionale lokale Module (robuste Fallbacks)
 try:
@@ -68,25 +67,6 @@ except Exception:  # pragma: no cover
 
     def funding_tenders_search(*args, **kwargs) -> List[Dict[str, str]]:  # type: ignore
         return []
-
-# Optional: high-level live item orchestrator
-try:
-    # ``query_live_items`` returns dicts of lists for news, funding, publications and tools.
-    from websearch_utils import query_live_items  # type: ignore
-except Exception:
-    # fallback stub if not available
-    def query_live_items(
-        *,
-        industry: str,
-        size: str,
-        main_service: str,
-        region: Optional[str] = None,
-        days_news: Optional[int] = None,
-        days_tools: Optional[int] = None,
-        days_funding: Optional[int] = None,
-        max_results: Optional[int] = None,
-    ) -> Dict[str, List[Dict[str, Any]]]:
-        return {"news": [], "funding": [], "publications": [], "tools": []}
 
 # -----------------------------------------------------------------------------
 # Logging
@@ -186,6 +166,585 @@ class BusinessCase:
     def time_saved_hours_per_month(self) -> int:
         # 40% * 8h * 20 AT ≈ gesparte Stunden/Monat pro FTE
         return int(round(self.efficiency_gain_frac * self.base_hours_per_day * 20))
+
+
+# -----------------------------------------------------------------------------
+# Fallback generators for section content
+#
+# Wenn kein API‑Key für OpenAI vorhanden ist, liefern die LLM‑Aufrufe oben leere
+# Zeichenketten.  Um dennoch aussagekräftige Berichte zu erzeugen, werden hier
+# einfache Heuristiken verwendet, die auf den Eingabedaten und dem Business
+# Case basieren.  Diese Funktionen erzeugen kurze HTML‑Blöcke, die die
+# wichtigsten Informationen zusammenfassen.  Sie ersetzen keine echte
+# Generierung mit einem LLM, liefern aber nützliche Platzhalter für die
+# wichtigsten Sektionen.
+
+def _fallback_exec_summary(data: Dict[str, Any], bc: BusinessCase) -> str:
+    """Erzeugt eine kurze Executive Summary ohne LLM.
+
+    Die Zusammenfassung orientiert sich an den Vorgaben aus den Prompt‑MDs:
+    Ausgangslage & Chancen, Werthebel, Kennzahlen und ein konkreter nächster
+    Schritt.  Alle Werte werden aus den Eingabedaten und dem Business Case
+    berechnet.
+
+    :param data: questionaire answers (flattened) or briefing dict
+    :param bc: vorberechneter BusinessCase
+    :return: HTML‑String mit drei Absätzen, Bullet‑Liste und Abschlusszeile
+    """
+    branche = data.get("branche", "")
+    bundesland = data.get("bundesland", "")
+    size = data.get("unternehmensgroesse", "")
+    leistung = data.get("hauptleistung", "")
+
+    # Abschnitt 1: Ausgangslage & Chancen
+    p1 = (
+        f"Ihr Unternehmen in der Branche {branche.title()} in {bundesland.upper()} "
+        f"({size}) erbringt {leistung}. Das hohe Digitalisierungsniveau und eine offene "
+        f"Innovationskultur schaffen ideale Voraussetzungen für den Einsatz von KI." )
+
+    # Abschnitt 2: Werthebel
+    p2 = (
+        "Durch den gezielten Einsatz von KI können Sie Effizienz steigern, Qualität "
+        "sichern, das Kundenerlebnis verbessern und Risiken reduzieren."
+    )
+
+    # Abschnitt 3: Kennzahlen
+    p3 = (
+        f"Investition: {bc.invest_eur:,.0f} € · ROI im 1. Jahr: {bc.roi_year1_pct}% · "
+        f"Payback: {bc.payback_months} Monate · 3‑Jahres‑Gewinn: {bc.three_year_profit:,.0f} € · "
+        f"Zeitersparnis: {bc.time_saved_hours_per_month} Std./Monat."
+    )
+
+    # Nächster Schritt
+    next_step = (
+        "<ul><li>Starten Sie innerhalb von 14 Tagen ein Pilotprojekt für automatisierte "
+        "Texterstellung und Übersetzung, um erste Erfahrungen zu sammeln und Prozesse zu optimieren.</li></ul>"
+    )
+
+    return (
+        f"<p>{p1}</p><p>{p2}</p><p>{p3}</p>{next_step}<p class='stand'>Stand: {now_iso()}</p>"
+    )
+
+
+def _fallback_business_html(bc: BusinessCase) -> str:
+    """Erstellt einen Business‑Case‑Abschnitt mit Kennzahlen als HTML.
+
+    :param bc: berechneter BusinessCase
+    :return: HTML‑String mit einer kompakten Tabelle
+    """
+    rows = [
+        ["Investition", f"{bc.invest_eur:,.0f} €"],
+        ["Jährliche Einsparung", f"{bc.annual_saving_eur:,.0f} €"],
+        ["ROI (Jahr 1)", f"{bc.roi_year1_pct}%"],
+        ["Payback", f"{bc.payback_months} Monate"],
+        ["3‑Jahres‑Gewinn", f"{bc.three_year_profit:,.0f} €"],
+        ["Zeitersparnis/Monat", f"{bc.time_saved_hours_per_month} Std."],
+    ]
+    table_html = "<table class='compact'><thead><tr><th>Kennzahl</th><th>Wert</th></tr></thead><tbody>"
+    for r in rows:
+        table_html += f"<tr><td>{r[0]}</td><td>{r[1]}</td></tr>"
+    table_html += "</tbody></table>"
+    return table_html + f"<p class='stand'>Stand: {now_iso()}</p>"
+
+
+def _fallback_persona_html(data: Dict[str, Any]) -> str:
+    """Erstellt eine einfache Persona‑Beschreibung.
+
+    :param data: questionaire answers
+    :return: HTML‑String
+    """
+    branche = data.get("branche", "")
+    size = data.get("unternehmensgroesse", "")
+    leistung = data.get("hauptleistung", "")
+    bundesland = data.get("bundesland", "")
+    persona = (
+        f"<p><strong>Unternehmen:</strong> Ein {size.upper()}‑Unternehmen aus der Branche {branche.title()} in {bundesland.upper()}.</p>"
+        f"<p><strong>Leistung:</strong> {leistung}.</p>"
+        f"<p><strong>Vision:</strong> {data.get('ki_geschaeftsmodell_vision', '').strip() or '–'}</p>"
+    )
+    return persona + f"<p class='stand'>Stand: {now_iso()}</p>"
+
+
+def _fallback_recommendations_html() -> str:
+    """Erzeugt strategische Empfehlungspunkte als HTML.
+    Diese Vorschläge sind generischer Natur und können als Ausgangspunkt dienen.
+    """
+    recs = [
+        "Priorisieren Sie Automatisierungsprojekte, um Effizienz und Skalierbarkeit zu erhöhen.",
+        "Investieren Sie in Datenqualität und Governance, um belastbare Ergebnisse zu erzielen.",
+        "Bauen Sie interne KI‑Kompetenzen aus (Schulungen, AI‑Literacy).",
+        "Integrieren Sie Compliance von Anfang an (DSGVO, AI Act, CRA, DSA, Data Act).",
+        "Nutzen Sie Fördermittel und Netzwerke (BMWK, EU‑Programme) zur Unterstützung Ihrer Projekte.",
+    ]
+    html_list = "<ul>" + "".join(f"<li>{r}</li>" for r in recs) + "</ul>"
+    return html_list + f"<p class='stand'>Stand: {now_iso()}</p>"
+
+
+def _fallback_quick_wins_html() -> str:
+    """Erzeugt eine Liste von Quick Wins als HTML.
+    Diese Maßnahmen lassen sich kurzfristig realisieren und liefern schnelle Erfolge.
+    """
+    wins = [
+        "Automatisieren Sie Übersetzungen mit Tools wie DeepL API.",
+        "Nutzen Sie ChatGPT für Ideengenerierung und Inhaltserstellung.",
+        "Implementieren Sie Spracherkennung für Transkripte und Untertitel.",
+        "Setzen Sie Workflows zur Qualitätskontrolle (z. B. automatisch generierte Checklisten) um.",
+        "Testen Sie Tools zur Bildgenerierung für Social‑Media Assets.",
+    ]
+    html_list = "<ul>" + "".join(f"<li>{w}</li>" for w in wins) + "</ul>"
+    return html_list + f"<p class='stand'>Stand: {now_iso()}</p>"
+
+
+def _fallback_risks_html() -> str:
+    """Erzeugt eine kurze Risikomatrix als HTML.
+    """
+    risks = [
+        ("Datenschutzverletzungen", "Durch unzureichende Anonymisierung oder Nutzung sensibler Daten."),
+        ("Bias & Diskriminierung", "Modelle könnten unbeabsichtigte Vorurteile verstärken."),
+        ("Abhängigkeit von Drittanbietern", "Externe Dienste könnten ausfallen oder Kosten erhöhen."),
+        ("Komplexität & Wartung", "Modelle müssen überwacht und regelmäßig angepasst werden."),
+    ]
+    rows = "<table class='compact'><thead><tr><th>Risiko</th><th>Beschreibung</th></tr></thead><tbody>"
+    for name, desc in risks:
+        rows += f"<tr><td>{name}</td><td>{desc}</td></tr>"
+    rows += "</tbody></table>"
+    return rows + f"<p class='stand'>Stand: {now_iso()}</p>"
+
+
+def _fallback_roadmap_html() -> str:
+    """Erzeugt eine einfache 90‑Tage‑Roadmap als HTML.
+    """
+    phases = [
+        ("0–30 Tage", "Use‑Cases identifizieren, Datenquelle evaluieren, Pilotprojekt auswählen."),
+        ("31–60 Tage", "Pilot implementieren, Ergebnisse messen, Feedback einholen."),
+        ("61–90 Tage", "Pilot skalieren, Prozesse optimieren, weitere Use‑Cases planen."),
+    ]
+    rows = "<table class='compact'><thead><tr><th>Zeitraum</th><th>Aktionen</th></tr></thead><tbody>"
+    for period, action in phases:
+        rows += f"<tr><td>{period}</td><td>{action}</td></tr>"
+    rows += "</tbody></table>"
+    return rows + f"<p class='stand'>Stand: {now_iso()}</p>"
+
+
+def _fallback_compliance_html() -> str:
+    """Verwendet das Compliance‑Playbook als Fallback für die Compliance‑Sektion."""
+    return render_compliance_playbook()
+
+
+def _fallback_tools_html() -> str:
+    """Erzeugt eine Liste empfohlener KI‑Tools als HTML.
+    Diese Liste ist generisch und sollte bei Bedarf auf das Unternehmen abgestimmt werden.
+    """
+    tools = [
+        ("ChatGPT", "Textgenerierung & kreativer Schreibassistent", "https://openai.com"),
+        ("DeepL", "Übersetzung & Lokalisierung", "https://deepl.com"),
+        ("Canva", "Design & Social‑Media Content", "https://canva.com"),
+        ("Otter.ai", "Spracherkennung & Transkription", "https://otter.ai"),
+        ("Notion", "Wissensmanagement & Dokumentation", "https://www.notion.so"),
+    ]
+    cards = []
+    for name, desc, url in tools:
+        cards.append(
+            f"<div class='card'><h4><a href='{url}' target='_blank' rel='noopener'>{name}</a></h4><p>{desc}</p></div>"
+        )
+    return "".join(cards) + f"<p class='stand'>Stand: {now_iso()}</p>"
+
+
+def _fallback_foerderprogramme_html() -> str:
+    """Generiert eine kurze Auflistung von Förderprogrammen.
+    Diese Fallback‑Liste basiert auf öffentlich verfügbaren Programmen und dient der Illustration.
+    """
+    programmes = [
+        ("Digital Jetzt", "Investitionszuschuss für KMU zur Digitalisierung", "https://www.bmwi.de", "laufend"),
+        ("go-inno", "Beratungsförderung für Innovationsmanagement", "https://www.bmwi.de", "laufend"),
+        ("KMU-innovativ", "Förderung von Forschungs‑ und Entwicklungsprojekten", "https://www.bmbf.de", "laufend"),
+    ]
+    rows = "<table class='compact'><thead><tr><th>Programm</th><th>Frist</th><th>Link</th></tr></thead><tbody>"
+    for name, desc, url, deadline in programmes:
+        rows += f"<tr><td>{name}</td><td>{deadline}</td><td><a href='{url}'>{url}</a></td></tr>"
+    rows += "</tbody></table>"
+    return rows + f"<p class='stand'>Stand: {now_iso()}</p>"
+
+
+# -----------------------------------------------------------------------------
+# Helper to generate report payload directly from a dictionary (not JSON file)
+#
+# In FastAPI, the questionnaire answers are passed as a dict.  The existing
+# generate_report_payload() expects a path to briefing.json.  This helper
+# constructs a Briefing instance from the provided dict and produces an
+# equivalent payload.  The logic for business case, live add‑ins, compliance
+# and benchmarks is reused from generate_report_payload().
+
+def generate_report_payload_from_dict(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Wie generate_report_payload(), aber Eingang ist ein dict statt JSON-Pfad."""
+    # Instantiate Briefing from dict values
+    b = Briefing(
+        branche=data.get("branche", ""),
+        unternehmensgroesse=data.get("unternehmensgroesse", ""),
+        bundesland=data.get("bundesland", ""),
+        hauptleistung=data.get("hauptleistung", ""),
+        jahresumsatz=data.get("jahresumsatz", ""),
+        lang=data.get("lang", DEFAULT_LANG),
+        investitionsbudget=data.get("investitionsbudget", ""),
+        digitalisierungsgrad=data.get("digitalisierungsgrad"),
+        automatisierungsgrad=data.get("automatisierungsgrad"),
+        ai_roadmap=data.get("ai_roadmap"),
+    )
+
+    # Business Case
+    invest = invest_from_bucket(b.investitionsbudget)
+    annual_saving = 24000.0
+    bc = BusinessCase(invest_eur=invest, annual_saving_eur=annual_saving, efficiency_gain_frac=0.40)
+
+    # Live‑Add‑ins
+    live = get_live_news_tools_funding(b)
+
+    # Compliance Playbook
+    playbook_html = render_compliance_playbook()
+
+    # Benchmarks
+    bm = load_benchmarks(b.branche)
+
+    # Prompt sections: generiere via LLM (falls verfügbar) oder fallback
+    ctx: Dict[str, Any] = {
+        "heute": now_iso(),
+        "branche": b.branche,
+        "unternehmensgroesse": b.unternehmensgroesse,
+        "bundesland": b.bundesland,
+        "hauptleistung": b.hauptleistung,
+        "jahresumsatz": b.jahresumsatz,
+        "investitionsbudget": b.investitionsbudget,
+        "ai_roadmap": b.ai_roadmap or "",
+        "invest_eur": f"{bc.invest_eur:.0f}",
+        "annual_saving_eur": f"{bc.annual_saving_eur:.0f}",
+        "payback_months": f"{bc.payback_months:.1f}",
+        "roi_year1_pct": f"{bc.roi_year1_pct}",
+        "three_year_profit": f"{bc.three_year_profit}",
+        "time_saved_hours_per_month": f"{bc.time_saved_hours_per_month}",
+        "bench_digitalisierung": f"{bm.get('digitalisierung', 0):.2f}",
+        "bench_automatisierung": f"{bm.get('automatisierung', 0):.2f}",
+        "bench_compliance": f"{bm.get('compliance', 0):.2f}",
+        "bench_prozessreife": f"{bm.get('prozessreife', 0):.2f}",
+        "bench_innovation": f"{bm.get('innovation', 0):.2f}",
+    }
+
+    llm = OpenAIChat()
+    sections: Dict[str, str] = {}
+    if ENABLE_LLM_SECTIONS and llm.api_key:
+        for sec in SECTION_FILES:
+            sections[sec] = render_section_text(sec, b.lang, ctx, llm)
+    else:
+        # Fallback: generiere zentrale Sektionen manuell
+        sections["executive_summary"] = _fallback_exec_summary(data, bc)
+        sections["business"] = _fallback_business_html(bc)
+        sections["persona"] = _fallback_persona_html(data)
+        sections["quick_wins"] = _fallback_quick_wins_html()
+        sections["recommendations"] = _fallback_recommendations_html()
+        sections["roadmap"] = _fallback_roadmap_html()
+        sections["risks"] = _fallback_risks_html()
+        sections["compliance"] = _fallback_compliance_html()
+        sections["praxisbeispiel"] = ""
+        sections["coach"] = ""
+        sections["vision"] = ""
+        sections["gamechanger"] = ""
+        sections["foerderprogramme"] = _fallback_foerderprogramme_html()
+        sections["tools"] = _fallback_tools_html()
+
+    # Farbpalette
+    palette = {
+        "primary_700": "#0B5FFF",
+        "primary_500": "#1F7BFF",
+        "primary_100": "#E8F0FF",
+        "accent_700": "#D9480F",
+        "accent_500": "#FB8C00",
+        "accent_100": "#FFE8D6",
+        "ok": "#12B886",
+        "warn": "#F59F00",
+        "err": "#E03131",
+        "text": "#0F172A",
+    }
+
+    payload: Dict[str, Any] = {
+        "meta": {
+            "title": "Mehrwert im Wettbewerb durch KI",
+            "created_at": now_iso(),
+            "last_updated": now_iso(),
+            "lang": b.lang,
+            "branche": b.branche,
+            "unternehmensgroesse": b.unternehmensgroesse,
+            "bundesland": b.bundesland,
+            "hauptleistung": b.hauptleistung,
+        },
+        "business_case": dataclasses.asdict(bc),
+        "benchmarks": bm,
+        "sections": sections,
+        "live_addins": live,
+        "compliance_playbook_html": playbook_html,
+        "palette": palette,
+    }
+    return payload
+
+
+# -----------------------------------------------------------------------------
+# Templating / Context building
+#
+def _compute_scores(data: Dict[str, Any]) -> Tuple[int, int, int, int]:
+    """Berechnet Balkenwerte für Readiness‑Profil.
+
+    Aus den Eingabedaten werden vier Skalen zwischen 0 und 100 abgeleitet: 
+    - gesamt (score_percent)
+    - Effizienzpotenzial (kpi_efficiency)
+    - Compliance-Reife (kpi_compliance)
+    - Innovationskraft (kpi_innovation)
+
+    :param data: Fragebogendaten
+    :return: Tuple(score_percent, kpi_efficiency, kpi_compliance, kpi_innovation)
+    """
+    # Digitalisierung (0-10) → 0-100
+    try:
+        dig = float(data.get("digitalisierungsgrad", 0))
+    except Exception:
+        dig = 0.0
+    score_percent = int(max(0, min(100, dig * 10)))
+
+    # Automatisierungsgrad (string) auf Prozent mappen
+    auto_map = {
+        "sehr_hoch": 90,
+        "eher_hoch": 75,
+        "hoch": 80,
+        "mittel": 50,
+        "eher_gering": 30,
+        "niedrig": 20,
+        "gering": 30,
+    }
+    auto_str = str(data.get("automatisierungsgrad", "")).lower()
+    kpi_efficiency = auto_map.get(auto_str, 60)
+
+    # Compliance: aus Datenschutzstatus und datenschutzbeauftragter
+    has_dpo = str(data.get("datenschutzbeauftragter", "")).lower() in {"ja", "extern"}
+    has_gov = str(data.get("governance", "")).lower() in {"ja", "true", "1"}
+    kpi_compliance = 80 if has_dpo and has_gov else 60
+
+    # Innovation: aus Innovationskultur
+    innov_map = {
+        "sehr_offen": 90,
+        "offen": 75,
+        "neutral": 50,
+        "begrenzt": 40,
+        "verschlossen": 20,
+    }
+    innov_str = str(data.get("innovationskultur", "")).lower()
+    kpi_innovation = innov_map.get(innov_str, 50)
+
+    return score_percent, kpi_efficiency, kpi_compliance, kpi_innovation
+
+
+def build_context_for_template(payload: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    """Baut den Kontext für das HTML‑Template auf.
+
+    Kombiniert die generierten Sektionen, Live‑Add‑ins und KPIs mit zusätzlichen
+    Feldern (Generation Timestamp, Labels).  Der zurückgegebene Kontext kann
+    direkt mit jinja2 und pdf_template.html gerendert werden.
+
+    :param payload: Ergebnis von generate_report_payload_from_dict
+    :param data: Rohdaten des Formulars (für KPIs)
+    :return: Kontext‑Dictionary
+    """
+    meta = payload.get("meta", {})
+    sections = payload.get("sections", {})
+    live = payload.get("live_addins", {})
+
+    score_percent, kpi_efficiency, kpi_compliance, kpi_innovation = _compute_scores(data)
+
+    context: Dict[str, Any] = {
+        "meta": {
+            "title": meta.get("title", "KI‑Status Report"),
+            "subtitle": "KI‑Readiness & Business Case",  # generische Unterzeile
+        },
+        "generation_date": meta.get("created_at", now_iso()),
+        "last_updated": meta.get("last_updated", now_iso()),
+        "branche": meta.get("branche", ""),
+        "company_size_label": meta.get("unternehmensgroesse", ""),
+        "score_percent": score_percent,
+        "kpi_efficiency": kpi_efficiency,
+        "kpi_compliance": kpi_compliance,
+        "kpi_innovation": kpi_innovation,
+        # Sektionen (HTML)
+        "exec_summary_html": sections.get("executive_summary", ""),
+        "business_html": sections.get("business", ""),
+        "persona_html": sections.get("persona", ""),
+        "quick_wins_html": sections.get("quick_wins", ""),
+        "recommendations_html": sections.get("recommendations", ""),
+        "roadmap_html": sections.get("roadmap", ""),
+        "risks_html": sections.get("risks", ""),
+        "compliance_html": sections.get("compliance", payload.get("compliance_playbook_html", "")),
+        "praxisbeispiel_html": sections.get("praxisbeispiel", ""),
+        "coach_html": sections.get("coach", ""),
+        "vision_html": sections.get("vision", ""),
+        "gamechanger_html": sections.get("gamechanger", ""),
+        # Live und Funding
+        "news_html": live.get("news_html", ""),
+        "tools_rich_html": live.get("tools_rich_html", ""),
+        "funding_rich_html": live.get("funding_rich_html", ""),
+        "funding_deadlines_html": live.get("funding_deadlines_html", ""),
+        "foerderprogramme_html": sections.get("foerderprogramme", ""),
+        "tools_html": sections.get("tools", ""),
+        # Benchmarks (kompakte Darstellung): hier generieren wir einfache Tabelle
+        "benchmarks_compact_html": "",
+        # Palette (für spätere Verwendung)
+        "palette": payload.get("palette", {}),
+        # Footer
+        "copyright_year": datetime.now().year,
+        "feedback_link": "https://ki‑sicherheit.jetzt/feedback",
+    }
+    # optional: generiere eine kompakte Benchmark‑Tabelle wenn Benchmarks vorhanden sind
+    bm = payload.get("benchmarks", {})
+    if isinstance(bm, dict) and bm:
+        rows = [["KPI", "Unser Wert", "Benchmark", "Δ"]]
+        # unser Werte aus KPIs
+        our = {
+            "digitalisierung": score_percent / 10.0,
+            "automatisierung": kpi_efficiency / 100.0,
+            "compliance": kpi_compliance / 100.0,
+            "innovation": kpi_innovation / 100.0,
+        }
+        for key, bench_val in bm.items():
+            our_val = our.get(key, None)
+            if our_val is not None:
+                delta = (our_val - float(bench_val)) * 100.0 if bench_val else 0.0
+                rows.append([
+                    key.capitalize(),
+                    f"{our_val*100:.1f}%", 
+                    f"{float(bench_val)*100:.1f}%", 
+                    f"{delta:+.1f}%"
+                ])
+        # Build table HTML
+        table_html = "<table class='compact'><thead><tr>" + "".join(f"<th>{c}</th>" for c in rows[0]) + "</tr></thead><tbody>"
+        for r in rows[1:]:
+            table_html += "<tr>" + "".join(f"<td>{v}</td>" for v in r) + "</tr>"
+        table_html += "</tbody></table>"
+        context["benchmarks_compact_html"] = table_html + f"<p class='stand'>Stand: {now_iso()}</p>"
+
+    return context
+
+
+# -----------------------------------------------------------------------------
+# analyze_briefing / analyze_briefing_enhanced
+#
+def analyze_briefing(form_data: Dict[str, Any], lang: str = "de") -> str:
+    """Generiert das HTML für den KI‑Status‑Report.
+
+    Diese Funktion wird vom FastAPI‑Endpoint /briefing_async aufgerufen.  Sie
+    kombiniert die Fragebogendaten mit Benchmarks, Business Case, Live‑Add‑ins
+    und Compliance‑Playbook, berechnet einfache Heuristiken für KPIs und
+    rendert die HTML‑Vorlage mit jinja2.  Das Ergebnis kann direkt an einen
+    PDF‑Service gesendet werden.
+
+    :param form_data: Formularinhalte aus dem Frontend
+    :param lang: Sprachcode ("de" oder "en")
+    :return: vollständiges HTML
+    """
+    # Erzeuge payload aus den rohen Daten
+    payload = generate_report_payload_from_dict(form_data)
+    # Baue Kontext für das Template
+    context = build_context_for_template(payload, form_data)
+    # Template auswählen (Deutsch oder Englisch)
+    template_dir = Path(os.getenv("TEMPLATE_DIR", "project/make-ki-backend-neu-main/templates")).resolve()
+    template_name = os.getenv("TEMPLATE_DE", "pdf_template.html") if (lang or "de").lower().startswith("de") else os.getenv("TEMPLATE_EN", "pdf_template_en.html")
+    template_path = template_dir / template_name
+    # Fallback falls Vorlagendatei nicht existiert
+    if not template_path.exists():
+        logger.warning("Template %s nicht gefunden – fallback auf inline", template_path)
+        # Einfaches Fallback mit minimaler Struktur
+        html = ["<html><head><meta charset='utf-8'><title>KI‑Status Report</title></head><body>"]
+        html.append(f"<h1>{context['meta']['title']}</h1>")
+        html.append(f"<h2>Executive Summary</h2>{context['exec_summary_html']}")
+        html.append(f"<h2>Business Case</h2>{context['business_html']}")
+        html.append(f"<h2>Compliance</h2>{context['compliance_html']}")
+        html.append("</body></html>")
+        return "".join(html)
+    # Verwende jinja2 zum Rendern
+    try:
+        from jinja2 import Environment, FileSystemLoader, select_autoescape
+        env = Environment(
+            loader=FileSystemLoader(str(template_dir)),
+            autoescape=select_autoescape(["html", "xml"]),
+        )
+        tmpl = env.get_template(template_name)
+        rendered: str = tmpl.render(**context)
+        return rendered
+    except Exception as exc:
+        logger.error("Template rendering failed: %s", exc)
+        # Fallback auf einfache Ausgabe
+        html = ["<html><head><meta charset='utf-8'><title>KI‑Status Report</title></head><body>"]
+        html.append(f"<h1>{context['meta']['title']}</h1>")
+        for key, val in context.items():
+            if key.endswith('_html'):
+                html.append(f"<h2>{key.replace('_html','').replace('_',' ').title()}</h2>{val}")
+        html.append("</body></html>")
+        return "".join(html)
+
+
+def analyze_briefing_enhanced(form_data: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
+    """Erzeugt einen Kontext für Qualitätskontrolle und Post‑Processing.
+
+    Anders als analyze_briefing liefert diese Funktion ein Dictionary mit allen
+    relevanten Inhalten (HTML‑Sektionen, KPI‑Werten, Live‑Blöcken).  Dieses
+    Format wird von quality_control.py und enhanced_main_integration.py
+    erwartet.  Es enthält die gleichen Felder wie das Template‑Kontext, aber
+    strukturiert, damit Tests und Verbesserungen darauf zugreifen können.
+
+    :param form_data: Formularinhalte
+    :param lang: Sprachcode
+    :return: Kontext‑Dictionary
+    """
+    payload = generate_report_payload_from_dict(form_data)
+    context = build_context_for_template(payload, form_data)
+    # Richte Felder ein, die Quality Control erwartet
+    qc_context: Dict[str, Any] = {
+        "exec_summary_html": context.get("exec_summary_html", ""),
+        "business_html": context.get("business_html", ""),
+        "persona_html": context.get("persona_html", ""),
+        "quick_wins_html": context.get("quick_wins_html", ""),
+        "recommendations_html": context.get("recommendations_html", ""),
+        "roadmap_html": context.get("roadmap_html", ""),
+        "risks_html": context.get("risks_html", ""),
+        "compliance_html": context.get("compliance_html", ""),
+        "praxisbeispiel_html": context.get("praxisbeispiel_html", ""),
+        "coach_html": context.get("coach_html", ""),
+        "vision_html": context.get("vision_html", ""),
+        "gamechanger_html": context.get("gamechanger_html", ""),
+        "benchmarks_compact_html": context.get("benchmarks_compact_html", ""),
+        "news_html": context.get("news_html", ""),
+        "tools_rich_html": context.get("tools_rich_html", ""),
+        "funding_rich_html": context.get("funding_rich_html", ""),
+        "funding_deadlines_html": context.get("funding_deadlines_html", ""),
+        "foerderprogramme_html": context.get("foerderprogramme_html", ""),
+        "tools_html": context.get("tools_html", ""),
+        # KPIs
+        "score_percent": context.get("score_percent", 0),
+        "kpi_efficiency": context.get("kpi_efficiency", 0),
+        "kpi_compliance": context.get("kpi_compliance", 0),
+        "kpi_innovation": context.get("kpi_innovation", 0),
+        # Compliance relevance
+        "datenschutzbeauftragter": form_data.get("datenschutzbeauftragter"),
+        "datenschutz": bool(form_data.get("datenschutz")),
+        # Business numbers for QC
+        "roi_investment": payload["business_case"].get("invest_eur", 0),
+        "roi_annual_saving": payload["business_case"].get("annual_saving_eur", 0),
+        "benchmarks": payload.get("benchmarks", {}),
+    }
+    # Füge meta hinzu
+    qc_context["meta"] = {
+        "generated_at": payload["meta"].get("created_at", now_iso()),
+        "last_updated": payload["meta"].get("last_updated", now_iso()),
+        "lang": payload["meta"].get("lang", "de"),
+        "branche": payload["meta"].get("branche", ""),
+        "unternehmensgroesse": payload["meta"].get("unternehmensgroesse", ""),
+        "bundesland": payload["meta"].get("bundesland", ""),
+        "hauptleistung": payload["meta"].get("hauptleistung", ""),
+    }
+    return qc_context
 
 
 # -----------------------------------------------------------------------------
@@ -583,291 +1142,6 @@ def generate_report_payload(briefing_json_path: Path) -> Dict[str, Any]:
     }
     logger.info("Payload fertig (Sektionen: %s)", list(sections.keys()))
     return payload
-
-
-# -----------------------------------------------------------------------------
-# Additional helpers for dictionary-based briefing processing
-# -----------------------------------------------------------------------------
-
-def _create_briefing_from_dict(data: Dict[str, Any]) -> Briefing:
-    """Construct a ``Briefing`` instance from a questionnaire dictionary.
-
-    This helper accepts free‑form user input and applies defaults where fields
-    are missing.  It mirrors the logic of ``Briefing.from_json`` but reads
-    values directly from a dictionary.  Unknown keys are ignored.
-
-    :param data: raw form data from the API
-    :return: Briefing dataclass with normalised values
-    """
-    return Briefing(
-        branche=data.get("branche", ""),
-        unternehmensgroesse=data.get("unternehmensgroesse", ""),
-        bundesland=data.get("bundesland", ""),
-        hauptleistung=data.get("hauptleistung", ""),
-        jahresumsatz=data.get("jahresumsatz", ""),
-        lang=str(data.get("lang", DEFAULT_LANG)),
-        investitionsbudget=data.get("investitionsbudget", ""),
-        digitalisierungsgrad=data.get("digitalisierungsgrad"),
-        automatisierungsgrad=data.get("automatisierungsgrad"),
-        ai_roadmap=data.get("ai_roadmap"),
-    )
-
-
-def generate_report_payload_from_dict(form_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate a complete report payload from dictionary input.
-
-    This function wraps the core logic of ``generate_report_payload`` but
-    accepts raw questionnaire data rather than a path.  It constructs a
-    ``Briefing`` object, calculates business‑case metrics, fetches live
-    content and LLM sections, and assembles the final payload structure.
-
-    :param form_data: questionnaire answers as key/value pairs
-    :return: report payload dictionary (same format as ``generate_report_payload``)
-    """
-    b = _create_briefing_from_dict(form_data)
-    invest = invest_from_bucket(b.investitionsbudget)
-    annual_saving = 24000.0
-    bc = BusinessCase(invest_eur=invest, annual_saving_eur=annual_saving, efficiency_gain_frac=0.40)
-
-    live = get_live_news_tools_funding(b)
-    playbook_html = render_compliance_playbook()
-    bm = load_benchmarks(b.branche)
-
-    ctx: Dict[str, Any] = {
-        "heute": now_iso(),
-        "branche": b.branche,
-        "unternehmensgroesse": b.unternehmensgroesse,
-        "bundesland": b.bundesland,
-        "hauptleistung": b.hauptleistung,
-        "jahresumsatz": b.jahresumsatz,
-        "investitionsbudget": b.investitionsbudget,
-        "ai_roadmap": b.ai_roadmap or "",
-        "invest_eur": f"{bc.invest_eur:.0f}",
-        "annual_saving_eur": f"{bc.annual_saving_eur:.0f}",
-        "payback_months": f"{bc.payback_months:.1f}",
-        "roi_year1_pct": f"{bc.roi_year1_pct}",
-        "three_year_profit": f"{bc.three_year_profit}",
-        "time_saved_hours_per_month": f"{bc.time_saved_hours_per_month}",
-        "bench_digitalisierung": f"{bm.get('digitalisierung', 0):.2f}",
-        "bench_automatisierung": f"{bm.get('automatisierung', 0):.2f}",
-        "bench_compliance": f"{bm.get('compliance', 0):.2f}",
-        "bench_prozessreife": f"{bm.get('prozessreife', 0):.2f}",
-        "bench_innovation": f"{bm.get('innovation', 0):.2f}",
-    }
-
-    # LLM sections generation
-    llm = OpenAIChat()
-    sections: Dict[str, str] = {}
-    if ENABLE_LLM_SECTIONS:
-        for sec in SECTION_FILES:
-            sections[sec] = render_section_text(sec, b.lang, ctx, llm)
-    else:
-        sections = {sec: "" for sec in SECTION_FILES}
-
-    palette = {
-        "primary_700": "#0B5FFF",
-        "primary_500": "#1F7BFF",
-        "primary_100": "#E8F0FF",
-        "accent_700": "#D9480F",
-        "accent_500": "#FB8C00",
-        "accent_100": "#FFE8D6",
-        "ok": "#12B886",
-        "warn": "#F59F00",
-        "err": "#E03131",
-        "text": "#0F172A",
-    }
-
-    payload: Dict[str, Any] = {
-        "meta": {
-            "title": "Mehrwert im Wettbewerb durch KI",
-            "created_at": now_iso(),
-            "last_updated": now_iso(),
-            "lang": b.lang,
-            "branche": b.branche,
-            "unternehmensgroesse": b.unternehmensgroesse,
-            "bundesland": b.bundesland,
-            "hauptleistung": b.hauptleistung,
-        },
-        "business_case": dataclasses.asdict(bc),
-        "benchmarks": bm,
-        "sections": sections,
-        "live_addins": live,
-        "compliance_playbook_html": playbook_html,
-        "palette": palette,
-    }
-    return payload
-
-
-def analyze_briefing(form_data: Dict[str, Any], lang: str = DEFAULT_LANG) -> str:
-    """Render a complete HTML report for the given questionnaire.
-
-    This function is the entry point used by the FastAPI endpoint
-    ``/briefing``.  It assembles the report payload from the raw
-    user input and formats it into a self‑contained HTML document
-    suitable for conversion to PDF.
-
-    :param form_data: dictionary of answers from the client
-    :param lang: language code (currently only 'de' supported)
-    :return: HTML string representing the report
-    """
-    # ensure the language is respected
-    if lang:
-        form_data = dict(form_data)
-        form_data["lang"] = lang
-    payload = generate_report_payload_from_dict(form_data)
-
-    meta = payload.get("meta", {})
-    sections = payload.get("sections", {})
-    live = payload.get("live_addins", {})
-    bc = payload.get("business_case", {})
-
-    # Build a minimal but semantic HTML document
-    parts: List[str] = []
-    parts.append(f"<!DOCTYPE html><html lang='{html.escape(meta.get('lang', 'de'))}'>")
-    parts.append("<head><meta charset='utf-8'>")
-    parts.append(f"<title>{html.escape(meta.get('title', 'Report'))}</title>")
-    # basic inline styles for readability
-    parts.append(
-        "<style>"
-        "body{font-family:Arial,Helvetica,sans-serif;margin:20px;}"
-        "h1{color:#0B5FFF;} h2{color:#FB8C00;} .section{margin-bottom:20px;}"
-        ".business p{margin:0 0 10px;} .card{border:1px solid #ddd;padding:10px;margin-bottom:10px;}"
-        ".card h4{margin:0 0 5px;} .card .fine{font-size:0.8em;color:#666;}"
-        ".meta, .stand{font-size:0.8em;color:#666;margin-top:10px;}"
-        "table.compact{border-collapse:collapse;width:100%;}"
-        "table.compact th,table.compact td{border:1px solid #ddd;padding:4px;font-size:0.9em;}"
-        "table.compact thead th{background-color:#f5f7fb;}"
-        "</style></head><body>"
-    )
-    parts.append(f"<h1>{html.escape(meta.get('title', 'KI‑Report'))}</h1>")
-
-    # Render generated sections
-    for key, content in sections.items():
-        if not content:
-            continue
-        human_title = key.replace("_", " ").title()
-        parts.append(f"<div class='section'><h2>{html.escape(human_title)}</h2>")
-        parts.append(content)
-        parts.append("</div>")
-
-    # Business case summary
-    if bc:
-        parts.append("<div class='section business'>")
-        parts.append("<h2>Business‑Case Kennzahlen</h2>")
-        parts.append(
-            f"<p>Investition: {bc.get('invest_eur', '')} €<br>"
-            f"Einsparung p.a.: {bc.get('annual_saving_eur', '')} €<br>"
-            f"ROI (Jahr 1): {bc.get('roi_year1_pct', '')}%<br>"
-            f"Amortisation (Monate): {bc.get('payback_months', '')}<br>"
-            f"3‑Jahres‑Gewinn: {bc.get('three_year_profit', '')} €<br>"
-            f"Gesparte Stunden/Monat: {bc.get('time_saved_hours_per_month', '')}</p>"
-        )
-        parts.append("</div>")
-
-    # Append live sections (already HTML fragments)
-    parts.append(live.get("news_html", ""))
-    parts.append(live.get("tools_rich_html", ""))
-    parts.append(live.get("funding_rich_html", ""))
-    parts.append(live.get("funding_deadlines_html", ""))
-
-    # Append compliance playbook
-    parts.append(payload.get("compliance_playbook_html", ""))
-    parts.append("</body></html>")
-    return "".join(parts)
-
-
-def analyze_briefing_enhanced(form_data: Dict[str, Any], lang: str = DEFAULT_LANG) -> Dict[str, Any]:
-    """Generate a detailed report context for enhanced processing.
-
-    This variant returns a structured dictionary suitable for quality
-    control and iterative improvement (as used in ``enhanced_main_integration.py``).
-    Live sections are delivered as lists of dictionaries via
-    ``query_live_items``, and meta information includes basic statistics.
-
-    :param form_data: raw questionnaire data
-    :param lang: report language
-    :return: context dictionary with keys meta, sections, live, business_case, benchmarks, compliance_playbook
-    """
-    if lang:
-        form_data = dict(form_data)
-        form_data["lang"] = lang
-    b = _create_briefing_from_dict(form_data)
-
-    # business case
-    invest = invest_from_bucket(b.investitionsbudget)
-    annual_saving = 24000.0
-    bc_obj = BusinessCase(invest_eur=invest, annual_saving_eur=annual_saving, efficiency_gain_frac=0.40)
-    bc_dict = dataclasses.asdict(bc_obj)
-
-    # benchmarks
-    bm = load_benchmarks(b.branche)
-
-    # generate LLM sections
-    ctx_vars: Dict[str, Any] = {
-        "heute": now_iso(),
-        "branche": b.branche,
-        "unternehmensgroesse": b.unternehmensgroesse,
-        "bundesland": b.bundesland,
-        "hauptleistung": b.hauptleistung,
-        "invest_eur": f"{bc_obj.invest_eur:.0f}",
-        "annual_saving_eur": f"{bc_obj.annual_saving_eur:.0f}",
-        "payback_months": f"{bc_obj.payback_months:.1f}",
-        "roi_year1_pct": f"{bc_obj.roi_year1_pct}",
-        "three_year_profit": f"{bc_obj.three_year_profit}",
-        "time_saved_hours_per_month": f"{bc_obj.time_saved_hours_per_month}",
-        "bench_digitalisierung": f"{bm.get('digitalisierung', 0):.2f}",
-        "bench_automatisierung": f"{bm.get('automatisierung', 0):.2f}",
-        "bench_compliance": f"{bm.get('compliance', 0):.2f}",
-        "bench_prozessreife": f"{bm.get('prozessreife', 0):.2f}",
-        "bench_innovation": f"{bm.get('innovation', 0):.2f}",
-    }
-    llm = OpenAIChat()
-    sections: Dict[str, str] = {}
-    if ENABLE_LLM_SECTIONS:
-        for sec in SECTION_FILES:
-            sections[sec] = render_section_text(sec, b.lang, ctx_vars, llm)
-    else:
-        sections = {sec: "" for sec in SECTION_FILES}
-
-    # live data as dicts
-    live = query_live_items(
-        industry=b.branche or "",
-        size=b.unternehmensgroesse or "",
-        main_service=b.hauptleistung or "",
-        region=map_region_code(b.bundesland),
-        days_news=SEARCH_DAYS,
-        days_tools=SEARCH_DAYS_TOOLS,
-        days_funding=SEARCH_DAYS_FUNDING,
-        max_results=SEARCH_MAX_RESULTS,
-    )
-
-    # assemble meta with counts
-    sources_count = {
-        "news": len(live.get("news", [])),
-        "tools": len(live.get("tools", [])),
-        "funding": len(live.get("funding", [])),
-        "publications": len(live.get("publications", [])),
-    }
-    meta = {
-        "title": "Mehrwert im Wettbewerb durch KI",
-        "generated_at": datetime.now().isoformat(),
-        "lang": b.lang,
-        "branche": b.branche,
-        "unternehmensgroesse": b.unternehmensgroesse,
-        "bundesland": b.bundesland,
-        "hauptleistung": b.hauptleistung,
-        "benchmarks_loaded": bool(bm),
-        "sources_count": sources_count,
-    }
-
-    return {
-        "meta": meta,
-        "sections": sections,
-        "live": live,
-        "business_case": bc_dict,
-        "benchmarks": bm,
-        "compliance_playbook": render_compliance_playbook(),
-    }
 
 
 # Optional: manuelles Testen lokal
