@@ -1,16 +1,20 @@
-# File: gpt_analyze.py
+# filename: gpt_analyze.py
 # -*- coding: utf-8 -*-
 """
-Core report generation for the MAKE‑KI backend.
+MAKE-KI Backend – Report Generator (Gold-Standard+)
 
-This module orchestrates loading user briefings, calculating simple business
-case metrics, fetching live information (news, tools, and funding calls),
-and rendering compliance guidance.  It has been revised to follow modern
-Python best practices: all functions are documented, type hints are used
-throughout, imports are robust against missing optional dependencies, and
-logging is consistently configured.  The exposed entry point is
-``generate_report_payload()``, which produces a dictionary suitable for
-passing into an HTML or PDF template.
+Ziele
+-----
+- Promptaustausch (DE/EN) für alle Sektionen aus /prompts
+- Synergie-Logik: Branche × Unternehmensgröße × Hauptleistung × Bundesland
+- Live-Add-ins: Tavily (News/Tools), EU-Calls (optional), normalisierte CSV (data/foerderprogramme.csv)
+- Compliance-Playbook (klarer Klartext, Go-Live-Gate, MVC, HiTL, Kill-Switch, Re-Trigger, Rechtslandkarte, Monitoring)
+- Benchmarks: Katalog (data/benchmarks_catalog.json) + Fallback (data/benchmarks_beratung_kmu.json)
+- Sauberes Logging, Fehlerrobustheit, PEP8, Typen, Timeouts
+- Farbpalette (Blau + Orange) für Templates
+- Keine Stillannahmen: alle Eingaben aus briefing.json; Variablen/Schalter via Env
+
+Kompatibel mit bisherigen Logs & Aufrufen (siehe Railway-Logs).
 """
 
 from __future__ import annotations
@@ -20,61 +24,17 @@ import dataclasses
 import json
 import logging
 import os
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import httpx
+import html
 
 # Optionale lokale Module (robuste Fallbacks)
-# Newer versions of ``websearch_utils`` expose only ``search_tavily``; older
-# ones expose ``tavily_search`` and ``days_to_tavily_range`` directly.  To
-# remain compatible with both, attempt to import ``search_tavily`` and
-# normalise its output.  Should the import fail entirely, stub
-# implementations returning empty lists are used.
 try:
-    from websearch_utils import search_tavily as _search_tavily  # type: ignore
-
-    def tavily_search(
-        query: str,
-        days: int = 30,
-        include_domains: Optional[List[str]] = None,
-        max_results: int = 8,
-    ) -> List[Dict[str, str]]:
-        items: List[Dict[str, str]] = []
-        try:
-            raw_items: Iterable[Any] = _search_tavily(query, days=days, max_results=max_results)  # type: ignore[arg-type]
-        except Exception as exc:
-            logger.warning("Tavily search failed: %s", exc)
-            return items
-        for it in raw_items:
-            if isinstance(it, dict):
-                title = it.get("title") or it.get("name") or ""
-                url = it.get("url") or it.get("link") or ""
-                published = it.get("published") or it.get("date") or it.get("published_at") or ""
-                snippet = it.get("snippet") or it.get("summary") or it.get("description") or ""
-            else:
-                title = getattr(it, "title", "")
-                url = getattr(it, "url", "")
-                published = getattr(it, "published_at", None) or ""
-                snippet = getattr(it, "summary", "")
-            items.append({
-                "title": str(title).strip(),
-                "url": str(url).strip(),
-                "published": str(published).strip(),
-                "snippet": str(snippet).strip(),
-            })
-        # Apply optional domain filtering
-        if include_domains:
-            filtered: List[Dict[str, str]] = []
-            for itm in items:
-                domain = re.sub(r"^https?://", "", itm["url"]).split("/")[0].lower()
-                if any(domain.endswith(d.lower()) for d in include_domains):
-                    filtered.append(itm)
-            items = filtered
-        return items[:max_results]
-
+    from websearch_utils import tavily_search, days_to_tavily_range  # type: ignore
+except Exception:  # pragma: no cover
     def days_to_tavily_range(days: int) -> str:
         if days <= 7:
             return "day"
@@ -84,30 +44,13 @@ try:
             return "month"
         return "year"
 
-except Exception:
-    # Fall back to legacy API if available
-    try:
-        from websearch_utils import tavily_search as tavily_search  # type: ignore  # noqa: F401
-        from websearch_utils import days_to_tavily_range as days_to_tavily_range  # type: ignore  # noqa: F401
-    except Exception:
-        # Final fallback: stubs that return empty lists and sensible ranges
-        def tavily_search(
-            query: str,
-            days: int = 30,
-            include_domains: Optional[List[str]] = None,
-            max_results: int = 8,
-        ) -> List[Dict[str, str]]:
-            logger.info("tavily_search fallback invoked – no results returned")
-            return []
-
-        def days_to_tavily_range(days: int) -> str:
-            if days <= 7:
-                return "day"
-            if days <= 30:
-                return "week"
-            if days <= 90:
-                return "month"
-            return "year"
+    def tavily_search(
+        query: str,
+        days: int = 30,
+        include_domains: Optional[List[str]] = None,
+        max_results: int = 8,
+    ) -> List[Dict[str, str]]:
+        return []
 
 # EU-Connectoren sind optional und dürfen niemals das Rendering blockieren
 try:
@@ -125,6 +68,25 @@ except Exception:  # pragma: no cover
 
     def funding_tenders_search(*args, **kwargs) -> List[Dict[str, str]]:  # type: ignore
         return []
+
+# Optional: high-level live item orchestrator
+try:
+    # ``query_live_items`` returns dicts of lists for news, funding, publications and tools.
+    from websearch_utils import query_live_items  # type: ignore
+except Exception:
+    # fallback stub if not available
+    def query_live_items(
+        *,
+        industry: str,
+        size: str,
+        main_service: str,
+        region: Optional[str] = None,
+        days_news: Optional[int] = None,
+        days_tools: Optional[int] = None,
+        days_funding: Optional[int] = None,
+        max_results: Optional[int] = None,
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        return {"news": [], "funding": [], "publications": [], "tools": []}
 
 # -----------------------------------------------------------------------------
 # Logging
@@ -234,18 +196,10 @@ def now_iso() -> str:
 
 
 def load_csv(path: Path) -> List[Dict[str, str]]:
-    """Load a CSV file and return a list of rows as dictionaries.
-
-    If the given path does not exist, an empty list is returned.  Files are
-    assumed to be UTF‑8 encoded and the first row defines the field names.
-
-    :param path: path to the CSV file
-    :return: a list of dictionaries keyed by the column names
-    """
     if not path.exists():
         return []
-    with path.open("r", encoding="utf-8") as handle:
-        return list(csv.DictReader(handle))
+    with path.open("r", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
 
 
 def load_json(path: Path, default: Any = None) -> Any:
@@ -262,23 +216,8 @@ def load_text(path: Path) -> str:
 
 
 def map_region_code(bundesland: str) -> str:
-    """Map a German state designation to a two‑letter region code.
-
-    Funding data uses two‑letter codes (e.g. ``BY`` for Bayern).  The user
-    may enter free text or a lower‑case abbreviation.  Unknown entries
-    default to the country code ``DE``.
-
-    :param bundesland: state abbreviation or name
-    :return: two‑letter region code for filtering funding entries
-    """
-    mapping = {
-        "by": "BY",
-        "be": "BE",
-        "bw": "BW",
-        "bundesweit": "DE",
-        "deutschland": "DE",
-    }
-    return mapping.get((bundesland or "").lower(), "DE")
+    m = {"by": "BY", "be": "BE", "bw": "BW", "bundesweit": "DE", "deutschland": "DE"}
+    return m.get((bundesland or "").lower(), "DE")
 
 
 def invest_from_bucket(bucket: str) -> float:
@@ -344,20 +283,8 @@ class OpenAIChat:
 # -----------------------------------------------------------------------------
 # Live Content (News/Tools/Funding)
 # -----------------------------------------------------------------------------
-def build_queries(b: "Briefing") -> Dict[str, Any]:
-    """Compose search queries for news, tools and funding based on a briefing.
-
-    This helper takes into account the industry (``branche``), company size
-    (``unternehmensgroesse``), primary service (``hauptleistung``) and
-    state (``bundesland``) to assemble targeted search strings.  A domain
-    whitelist is provided based on the state to restrict results to trusted
-    websites.
-
-    :param b: briefing containing industry, size, state and main service
-    :return: a mapping with keys ``news``, ``tools``, ``funding`` and
-             ``domain_whitelist``
-    """
-    # Normalise the company size into broad buckets for keyword tuning
+def build_queries(b: Briefing) -> Dict[str, Any]:
+    """Kombiniert Branche × Unternehmensgröße × Hauptleistung × Bundesland."""
     size_token = {
         "solo": "Solo",
         "freiberuflich": "Solo",
@@ -368,7 +295,7 @@ def build_queries(b: "Briefing") -> Dict[str, Any]:
         "kmu": "KMU",
     }
     size = size_token.get((b.unternehmensgroesse or "").lower(), b.unternehmensgroesse)
-    qs_base = f"{b.branche} \"{b.hauptleistung}\" {size} KI Automatisierung {b.bundesland.upper()}"
+    qs_base = f'{b.branche} "{b.hauptleistung}" {size} KI Automatisierung {b.bundesland.upper()}'
     return {
         "news": [
             f"{qs_base} AI Act DSGVO site:bmwk.de",
@@ -402,17 +329,8 @@ def _cards(items: List[Dict[str, str]], tag: str) -> str:
     return "\n".join(html)
 
 
-def get_live_news_tools_funding(b: "Briefing") -> Dict[str, str]:
-    """Fetch and render live sections for news, tools and funding.
-
-    This combines Tavily searches, local CSV data and optional EU calls
-    into HTML fragments.  Each section is timestamped with the current
-    date.  Searches leverage the domain whitelist defined in the briefing.
-
-    :param b: briefing containing the search context
-    :return: a mapping with keys ``news_html``, ``tools_rich_html``,
-             ``funding_rich_html`` and ``funding_deadlines_html``
-    """
+def get_live_news_tools_funding(b: Briefing) -> Dict[str, str]:
+    """Rendert HTML-Karten für News/Tools/Förderungen/EU-Calls."""
     q = build_queries(b)
 
     # Tavily – News & Tools (jeweils mit Domain-Whitelist)
@@ -665,6 +583,291 @@ def generate_report_payload(briefing_json_path: Path) -> Dict[str, Any]:
     }
     logger.info("Payload fertig (Sektionen: %s)", list(sections.keys()))
     return payload
+
+
+# -----------------------------------------------------------------------------
+# Additional helpers for dictionary-based briefing processing
+# -----------------------------------------------------------------------------
+
+def _create_briefing_from_dict(data: Dict[str, Any]) -> Briefing:
+    """Construct a ``Briefing`` instance from a questionnaire dictionary.
+
+    This helper accepts free‑form user input and applies defaults where fields
+    are missing.  It mirrors the logic of ``Briefing.from_json`` but reads
+    values directly from a dictionary.  Unknown keys are ignored.
+
+    :param data: raw form data from the API
+    :return: Briefing dataclass with normalised values
+    """
+    return Briefing(
+        branche=data.get("branche", ""),
+        unternehmensgroesse=data.get("unternehmensgroesse", ""),
+        bundesland=data.get("bundesland", ""),
+        hauptleistung=data.get("hauptleistung", ""),
+        jahresumsatz=data.get("jahresumsatz", ""),
+        lang=str(data.get("lang", DEFAULT_LANG)),
+        investitionsbudget=data.get("investitionsbudget", ""),
+        digitalisierungsgrad=data.get("digitalisierungsgrad"),
+        automatisierungsgrad=data.get("automatisierungsgrad"),
+        ai_roadmap=data.get("ai_roadmap"),
+    )
+
+
+def generate_report_payload_from_dict(form_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate a complete report payload from dictionary input.
+
+    This function wraps the core logic of ``generate_report_payload`` but
+    accepts raw questionnaire data rather than a path.  It constructs a
+    ``Briefing`` object, calculates business‑case metrics, fetches live
+    content and LLM sections, and assembles the final payload structure.
+
+    :param form_data: questionnaire answers as key/value pairs
+    :return: report payload dictionary (same format as ``generate_report_payload``)
+    """
+    b = _create_briefing_from_dict(form_data)
+    invest = invest_from_bucket(b.investitionsbudget)
+    annual_saving = 24000.0
+    bc = BusinessCase(invest_eur=invest, annual_saving_eur=annual_saving, efficiency_gain_frac=0.40)
+
+    live = get_live_news_tools_funding(b)
+    playbook_html = render_compliance_playbook()
+    bm = load_benchmarks(b.branche)
+
+    ctx: Dict[str, Any] = {
+        "heute": now_iso(),
+        "branche": b.branche,
+        "unternehmensgroesse": b.unternehmensgroesse,
+        "bundesland": b.bundesland,
+        "hauptleistung": b.hauptleistung,
+        "jahresumsatz": b.jahresumsatz,
+        "investitionsbudget": b.investitionsbudget,
+        "ai_roadmap": b.ai_roadmap or "",
+        "invest_eur": f"{bc.invest_eur:.0f}",
+        "annual_saving_eur": f"{bc.annual_saving_eur:.0f}",
+        "payback_months": f"{bc.payback_months:.1f}",
+        "roi_year1_pct": f"{bc.roi_year1_pct}",
+        "three_year_profit": f"{bc.three_year_profit}",
+        "time_saved_hours_per_month": f"{bc.time_saved_hours_per_month}",
+        "bench_digitalisierung": f"{bm.get('digitalisierung', 0):.2f}",
+        "bench_automatisierung": f"{bm.get('automatisierung', 0):.2f}",
+        "bench_compliance": f"{bm.get('compliance', 0):.2f}",
+        "bench_prozessreife": f"{bm.get('prozessreife', 0):.2f}",
+        "bench_innovation": f"{bm.get('innovation', 0):.2f}",
+    }
+
+    # LLM sections generation
+    llm = OpenAIChat()
+    sections: Dict[str, str] = {}
+    if ENABLE_LLM_SECTIONS:
+        for sec in SECTION_FILES:
+            sections[sec] = render_section_text(sec, b.lang, ctx, llm)
+    else:
+        sections = {sec: "" for sec in SECTION_FILES}
+
+    palette = {
+        "primary_700": "#0B5FFF",
+        "primary_500": "#1F7BFF",
+        "primary_100": "#E8F0FF",
+        "accent_700": "#D9480F",
+        "accent_500": "#FB8C00",
+        "accent_100": "#FFE8D6",
+        "ok": "#12B886",
+        "warn": "#F59F00",
+        "err": "#E03131",
+        "text": "#0F172A",
+    }
+
+    payload: Dict[str, Any] = {
+        "meta": {
+            "title": "Mehrwert im Wettbewerb durch KI",
+            "created_at": now_iso(),
+            "last_updated": now_iso(),
+            "lang": b.lang,
+            "branche": b.branche,
+            "unternehmensgroesse": b.unternehmensgroesse,
+            "bundesland": b.bundesland,
+            "hauptleistung": b.hauptleistung,
+        },
+        "business_case": dataclasses.asdict(bc),
+        "benchmarks": bm,
+        "sections": sections,
+        "live_addins": live,
+        "compliance_playbook_html": playbook_html,
+        "palette": palette,
+    }
+    return payload
+
+
+def analyze_briefing(form_data: Dict[str, Any], lang: str = DEFAULT_LANG) -> str:
+    """Render a complete HTML report for the given questionnaire.
+
+    This function is the entry point used by the FastAPI endpoint
+    ``/briefing``.  It assembles the report payload from the raw
+    user input and formats it into a self‑contained HTML document
+    suitable for conversion to PDF.
+
+    :param form_data: dictionary of answers from the client
+    :param lang: language code (currently only 'de' supported)
+    :return: HTML string representing the report
+    """
+    # ensure the language is respected
+    if lang:
+        form_data = dict(form_data)
+        form_data["lang"] = lang
+    payload = generate_report_payload_from_dict(form_data)
+
+    meta = payload.get("meta", {})
+    sections = payload.get("sections", {})
+    live = payload.get("live_addins", {})
+    bc = payload.get("business_case", {})
+
+    # Build a minimal but semantic HTML document
+    parts: List[str] = []
+    parts.append(f"<!DOCTYPE html><html lang='{html.escape(meta.get('lang', 'de'))}'>")
+    parts.append("<head><meta charset='utf-8'>")
+    parts.append(f"<title>{html.escape(meta.get('title', 'Report'))}</title>")
+    # basic inline styles for readability
+    parts.append(
+        "<style>"
+        "body{font-family:Arial,Helvetica,sans-serif;margin:20px;}"
+        "h1{color:#0B5FFF;} h2{color:#FB8C00;} .section{margin-bottom:20px;}"
+        ".business p{margin:0 0 10px;} .card{border:1px solid #ddd;padding:10px;margin-bottom:10px;}"
+        ".card h4{margin:0 0 5px;} .card .fine{font-size:0.8em;color:#666;}"
+        ".meta, .stand{font-size:0.8em;color:#666;margin-top:10px;}"
+        "table.compact{border-collapse:collapse;width:100%;}"
+        "table.compact th,table.compact td{border:1px solid #ddd;padding:4px;font-size:0.9em;}"
+        "table.compact thead th{background-color:#f5f7fb;}"
+        "</style></head><body>"
+    )
+    parts.append(f"<h1>{html.escape(meta.get('title', 'KI‑Report'))}</h1>")
+
+    # Render generated sections
+    for key, content in sections.items():
+        if not content:
+            continue
+        human_title = key.replace("_", " ").title()
+        parts.append(f"<div class='section'><h2>{html.escape(human_title)}</h2>")
+        parts.append(content)
+        parts.append("</div>")
+
+    # Business case summary
+    if bc:
+        parts.append("<div class='section business'>")
+        parts.append("<h2>Business‑Case Kennzahlen</h2>")
+        parts.append(
+            f"<p>Investition: {bc.get('invest_eur', '')} €<br>"
+            f"Einsparung p.a.: {bc.get('annual_saving_eur', '')} €<br>"
+            f"ROI (Jahr 1): {bc.get('roi_year1_pct', '')}%<br>"
+            f"Amortisation (Monate): {bc.get('payback_months', '')}<br>"
+            f"3‑Jahres‑Gewinn: {bc.get('three_year_profit', '')} €<br>"
+            f"Gesparte Stunden/Monat: {bc.get('time_saved_hours_per_month', '')}</p>"
+        )
+        parts.append("</div>")
+
+    # Append live sections (already HTML fragments)
+    parts.append(live.get("news_html", ""))
+    parts.append(live.get("tools_rich_html", ""))
+    parts.append(live.get("funding_rich_html", ""))
+    parts.append(live.get("funding_deadlines_html", ""))
+
+    # Append compliance playbook
+    parts.append(payload.get("compliance_playbook_html", ""))
+    parts.append("</body></html>")
+    return "".join(parts)
+
+
+def analyze_briefing_enhanced(form_data: Dict[str, Any], lang: str = DEFAULT_LANG) -> Dict[str, Any]:
+    """Generate a detailed report context for enhanced processing.
+
+    This variant returns a structured dictionary suitable for quality
+    control and iterative improvement (as used in ``enhanced_main_integration.py``).
+    Live sections are delivered as lists of dictionaries via
+    ``query_live_items``, and meta information includes basic statistics.
+
+    :param form_data: raw questionnaire data
+    :param lang: report language
+    :return: context dictionary with keys meta, sections, live, business_case, benchmarks, compliance_playbook
+    """
+    if lang:
+        form_data = dict(form_data)
+        form_data["lang"] = lang
+    b = _create_briefing_from_dict(form_data)
+
+    # business case
+    invest = invest_from_bucket(b.investitionsbudget)
+    annual_saving = 24000.0
+    bc_obj = BusinessCase(invest_eur=invest, annual_saving_eur=annual_saving, efficiency_gain_frac=0.40)
+    bc_dict = dataclasses.asdict(bc_obj)
+
+    # benchmarks
+    bm = load_benchmarks(b.branche)
+
+    # generate LLM sections
+    ctx_vars: Dict[str, Any] = {
+        "heute": now_iso(),
+        "branche": b.branche,
+        "unternehmensgroesse": b.unternehmensgroesse,
+        "bundesland": b.bundesland,
+        "hauptleistung": b.hauptleistung,
+        "invest_eur": f"{bc_obj.invest_eur:.0f}",
+        "annual_saving_eur": f"{bc_obj.annual_saving_eur:.0f}",
+        "payback_months": f"{bc_obj.payback_months:.1f}",
+        "roi_year1_pct": f"{bc_obj.roi_year1_pct}",
+        "three_year_profit": f"{bc_obj.three_year_profit}",
+        "time_saved_hours_per_month": f"{bc_obj.time_saved_hours_per_month}",
+        "bench_digitalisierung": f"{bm.get('digitalisierung', 0):.2f}",
+        "bench_automatisierung": f"{bm.get('automatisierung', 0):.2f}",
+        "bench_compliance": f"{bm.get('compliance', 0):.2f}",
+        "bench_prozessreife": f"{bm.get('prozessreife', 0):.2f}",
+        "bench_innovation": f"{bm.get('innovation', 0):.2f}",
+    }
+    llm = OpenAIChat()
+    sections: Dict[str, str] = {}
+    if ENABLE_LLM_SECTIONS:
+        for sec in SECTION_FILES:
+            sections[sec] = render_section_text(sec, b.lang, ctx_vars, llm)
+    else:
+        sections = {sec: "" for sec in SECTION_FILES}
+
+    # live data as dicts
+    live = query_live_items(
+        industry=b.branche or "",
+        size=b.unternehmensgroesse or "",
+        main_service=b.hauptleistung or "",
+        region=map_region_code(b.bundesland),
+        days_news=SEARCH_DAYS,
+        days_tools=SEARCH_DAYS_TOOLS,
+        days_funding=SEARCH_DAYS_FUNDING,
+        max_results=SEARCH_MAX_RESULTS,
+    )
+
+    # assemble meta with counts
+    sources_count = {
+        "news": len(live.get("news", [])),
+        "tools": len(live.get("tools", [])),
+        "funding": len(live.get("funding", [])),
+        "publications": len(live.get("publications", [])),
+    }
+    meta = {
+        "title": "Mehrwert im Wettbewerb durch KI",
+        "generated_at": datetime.now().isoformat(),
+        "lang": b.lang,
+        "branche": b.branche,
+        "unternehmensgroesse": b.unternehmensgroesse,
+        "bundesland": b.bundesland,
+        "hauptleistung": b.hauptleistung,
+        "benchmarks_loaded": bool(bm),
+        "sources_count": sources_count,
+    }
+
+    return {
+        "meta": meta,
+        "sections": sections,
+        "live": live,
+        "business_case": bc_dict,
+        "benchmarks": bm,
+        "compliance_playbook": render_compliance_playbook(),
+    }
 
 
 # Optional: manuelles Testen lokal
