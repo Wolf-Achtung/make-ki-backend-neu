@@ -1,90 +1,153 @@
-# filename: eu_connectors.py
+# File: eu_connectors.py
 # -*- coding: utf-8 -*-
 """
-Einfache, fehlertolerante EU-Connectoren.
-Hinweise:
-- Endpunkte können sich ändern; Code fängt HTTP/Schemafehler robust ab.
-- Ergebnisse sind auf die im Report verwendeten Felder gemappt (title, url, date, summary).
+Minimal EU connector functions for MAKE‑KI.
+
+This module provides thin wrappers around a handful of European Union
+endpoints.  Each function is designed to be resilient: network failures
+and schema differences are silently handled, returning empty lists
+instead of raising exceptions.  The results are normalised into a
+uniform dictionary format with at least ``title`` and ``url`` keys so
+that downstream report generation does not need to know the details of
+each API.
+
+Note that external HTTP requests may not be possible in all runtime
+environments.  In such cases, the connector functions degrade
+gracefully to empty lists.  When adding new connectors, follow the
+existing patterns: wrap all requests in try/except, normalise the
+output, and avoid leaking exceptions.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
 import httpx
+import logging
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
-def _http_get_json(url: str, params: Optional[Dict[str, str]] = None, timeout: float = 20.0):
-    with httpx.Client(timeout=timeout) as client:
-        r = client.get(url, params=params)
-        r.raise_for_status()
-        return r.json()
+def _safe_get_json(url: str, params: Optional[Dict[str, Any]] = None, timeout: float = 20.0) -> Optional[Dict[str, Any]]:
+    """Perform a GET request and return parsed JSON.
 
+    All network errors are caught and logged.  If the response is
+    successful (HTTP 200) the JSON body is returned; otherwise ``None``
+    is returned.
 
-def _clip(s: str, n: int = 280) -> str:
-    s = s or ""
-    return s if len(s) <= n else s[: n - 1] + "…"
+    :param url: target URL
+    :param params: query parameters to include
+    :param timeout: request timeout in seconds
+    :return: parsed JSON or ``None`` on error
+    """
+    try:
+        with httpx.Client(timeout=timeout) as client:
+            response = client.get(url, params=params)
+            response.raise_for_status()
+            return response.json()
+    except Exception as exc:
+        logger.warning("EU API call failed: %s %s", url, exc)
+        return None
 
 
 def openaire_search_projects(query: str, from_days: int = 60, max_results: int = 8) -> List[Dict[str, str]]:
+    """Search the OpenAIRE projects API and return a list of projects.
+
+    :param query: free text search string (title filter)
+    :param from_days: currently unused; reserved for future filtering
+    :param max_results: maximum number of entries to return
+    :return: list of normalised project dictionaries
     """
-    OpenAIRE (public search). Schema variiert, wir mappen defensiv.
-    """
-    try:
-        base = "https://api.openaire.eu/search/projects"
-        params = {"format": "json", "size": str(max_results), "title": query}
-        data = _http_get_json(base, params=params)
-        items = data.get("response", {}).get("results", []) or data.get("results", []) or []
-        out: List[Dict[str, str]] = []
-        for it in items[:max_results]:
-            title = it.get("title") or it.get("name") or ""
-            url = it.get("url") or it.get("link") or ""
-            start = it.get("startdate") or it.get("startDate") or ""
-            abs_ = it.get("objective") or it.get("summary") or it.get("description") or ""
-            out.append({"title": title, "url": url, "date": start, "summary": _clip(abs_)})
-        return out
-    except Exception:
-        return []
+    url = "https://api.openaire.eu/search/projects"
+    data = _safe_get_json(url, params={"format": "json", "title": query})
+    items: List[Dict[str, str]] = []
+    if not data:
+        return items
+    results = (
+        data.get("response", {}).get("results", {}).get("result", [])
+    )
+    for r in results[: max_results]:
+        md = r.get("metadata", {}).get("oaf:project", {})
+        title = md.get("title", {}).get("$", "")
+        code = md.get("code", "")
+        proj_url = md.get("websiteurl", "")
+        items.append(
+            {
+                "title": title or f"OpenAIRE Project {code}",
+                "url": proj_url or "",
+                "snippet": "",
+                "date": "",
+            }
+        )
+    return items
 
 
 def cordis_search_projects(query: str, from_days: int = 60, max_results: int = 8) -> List[Dict[str, str]]:
+    """Search CORDIS projects and return a list of matching entries.
+
+    :param query: search query passed to the API
+    :param from_days: currently unused; reserved for future filtering
+    :param max_results: maximum number of results to return
+    :return: list of normalised project dictionaries
     """
-    CORDIS API (EU-Forschung). Defensive Feld-Mappings.
-    """
-    try:
-        base = "https://cordis.europa.eu/api/projects"
-        params = {"search": query, "format": "json", "limit": str(max_results)}
-        data = _http_get_json(base, params=params)
-        items = data.get("projects", []) or data.get("result", []) or []
-        out: List[Dict[str, str]] = []
-        for it in items[:max_results]:
-            title = it.get("title") or it.get("acronym") or ""
-            url = it.get("rcn_url") or it.get("url") or ""
-            date = it.get("startDate") or it.get("startdate") or ""
-            sum_ = it.get("objective") or it.get("summary") or it.get("description") or ""
-            out.append({"title": title, "url": url, "date": date, "summary": _clip(sum_)})
-        return out
-    except Exception:
-        return []
+    url = "https://cordis.europa.eu/api/projects"
+    data = _safe_get_json(url, params={"q": query, "format": "json"})
+    items: List[Dict[str, str]] = []
+    results = data.get("projects", []) if data else []
+    for r in results[: max_results]:
+        items.append(
+            {
+                "title": r.get("title", ""),
+                "url": r.get("rcn_url", "") or r.get("url", ""),
+                "snippet": r.get("objective", ""),
+                "date": r.get("startDate", ""),
+            }
+        )
+    return items
 
 
 def funding_tenders_search(query: str, from_days: int = 60, max_results: int = 8) -> List[Dict[str, str]]:
+    """Search EU Funding & Tenders opportunities by querying public domains.
+
+    This implementation uses Tavily as a general search fallback to find
+    funding calls on trusted EU domains.  It gracefully handles the case
+    where Tavily is not available by returning an empty list.  Only a
+    handful of top results are returned.
+
+    :param query: free text search term
+    :param from_days: how many days back to search (passed to Tavily)
+    :param max_results: maximum number of results to return
+    :return: list of normalised funding call dictionaries
     """
-    Funding & Tenders (EU Portal).
-    """
+    domains = ["ec.europa.eu", "europa.eu"]
+    # Resolve Tavily search function from either relative or absolute import.
+    tav_search = None  # type: Optional[Any]
     try:
-        base = "https://ec.europa.eu/info/funding-tenders/opportunities/api/search"
-        since = (datetime.utcnow() - timedelta(days=from_days)).date().isoformat()
-        params = {"text": query, "programme": "", "type": "call", "modifiedFrom": since, "limit": str(max_results)}
-        data = _http_get_json(base, params=params)
-        items = data.get("items", []) or data.get("data", []) or []
-        out: List[Dict[str, str]] = []
-        for it in items[:max_results]:
-            title = it.get("title") or it.get("identifier") or ""
-            url = it.get("url") or it.get("permalink") or ""
-            date = it.get("deadline") or it.get("publicationDate") or ""
-            sum_ = it.get("objective") or it.get("summary") or it.get("description") or ""
-            out.append({"title": title, "url": url, "date": date, "summary": _clip(sum_)})
-        return out
+        # Try relative import if this module is part of a package
+        from .websearch_utils import tavily_search as tav_search  # type: ignore
     except Exception:
+        try:
+            from websearch_utils import tavily_search as tav_search  # type: ignore
+        except Exception:
+            tav_search = None
+    if tav_search is None:
+        logger.info("Tavily search unavailable; skipping EU funding search")
         return []
+    hits: List[Dict[str, Any]] = tav_search(
+        f'{query} site:ec.europa.eu OR site:europa.eu "call" OR "tenders"',
+        days=from_days,
+        include_domains=domains,
+        max_results=max_results,
+    )
+    items: List[Dict[str, str]] = []
+    for h in hits[: max_results]:
+        items.append(
+            {
+                "title": h.get("title", ""),
+                "url": h.get("url", ""),
+                "snippet": h.get("snippet", ""),
+                "date": h.get("published", ""),
+            }
+        )
+    return items
