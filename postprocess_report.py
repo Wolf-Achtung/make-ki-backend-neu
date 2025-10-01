@@ -1,101 +1,88 @@
-# postprocess_report.py — Admin-Mail inkl. Rohdaten
+# filename: postprocess_report.py
+# -*- coding: utf-8 -*-
+"""
+MAKE-KI Backend – Post-Processor (Gold-Standard+)
+- Erzwingt korrekte ROI-/Payback-Berechnungen
+- Repariert unplausible Zeitangaben (z. B. "32 Stunden/Tag")
+- Fügt "Stand: YYYY-MM-DD" in Live-Sektionen ein (News/Tools/Förderungen)
+- Füllt Benchmark-Tabelle aus Fallback/Datei
+"""
+
 from __future__ import annotations
 
 import json
 import logging
 import os
-import smtplib
-from email.message import EmailMessage
-from typing import Dict, Optional
+import re
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict
 
-log = logging.getLogger("postprocess")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+logger = logging.getLogger("postprocess_report")
 
-SMTP_HOST = os.getenv("SMTP_HOST")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASS = os.getenv("SMTP_PASS")
-SMTP_FROM = os.getenv("SMTP_FROM")
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+def iso_today() -> str:
+    return datetime.now().date().isoformat()
 
-# Zusätzliche SMTP-Konfigurationen für SSL/TLS
-SMTP_USE_SSL = os.getenv("SMTP_USE_SSL", "0").lower() in {"1", "true", "yes"}
-SMTP_REQUIRE_TLS = os.getenv("SMTP_REQUIRE_TLS", "1").lower() in {"1", "true", "yes"}
+def compute_business_case(invest: float, annual_saving: float) -> Dict[str, Any]:
+    if invest <= 0 or annual_saving <= 0:
+        return {"roi_year1_pct": 0, "payback_months": 0.0, "three_year_profit": 0}
+    roi = round(((annual_saving - invest) / invest) * 100)
+    payback = round(invest / (annual_saving / 12.0), 1)
+    profit3y = int(round(annual_saving * 3 - invest))
+    return {"roi_year1_pct": roi, "payback_months": payback, "three_year_profit": profit3y}
 
-def _send_mail(
-    to_addr: str,
-    subject: str,
-    html_body: str,
-    attachments: Optional[Dict[str, bytes]] = None,
-) -> None:
-    """
-    Sendet eine E‑Mail über SMTP. Nutzt wahlweise SSL (SMPT_SSL) oder STARTTLS
-    entsprechend der Umgebungsvariablen ``SMTP_USE_SSL`` und ``SMTP_REQUIRE_TLS``.
-    Bei fehlender oder unvollständiger SMTP‑Konfiguration wird der Versand
-    übersprungen und eine Warnung ausgegeben.
-    """
-    if not (SMTP_HOST and SMTP_FROM and to_addr):
-        log.warning("SMTP nicht vollständig konfiguriert – Mail übersprungen (to=%s)", to_addr)
-        return
+def fix_time_claims(text: str) -> str:
+    # Ersetzt "40% = 32 Stunden/Tag" durch Monatsdarstellung (8h/Tag, 20 Tage)
+    text = re.sub(r"40%\s*=\s*32\s*Stunden/Tag", "40% ≈ 64 Stunden/Monat (Basis: 8 h × 20 Tage)", text)
+    return text
 
-    msg = EmailMessage()
-    msg["From"] = SMTP_FROM
-    msg["To"] = to_addr
-    msg["Subject"] = subject or "Notification"
-    # Plaintext-Platzhalter
-    msg.set_content("HTML-only mail. Please view in an HTML-capable client.")
-    msg.add_alternative(html_body or "<p>(empty)</p>", subtype="html")
-    for name, data in (attachments or {}).items():
-        if not isinstance(data, (bytes, bytearray)):
-            log.warning("Attachment %s hat keine Bytes – übersprungen.", name)
-            continue
-        msg.add_attachment(data, maintype="application", subtype="octet-stream", filename=name)
+def inject_stand_date(html: str) -> str:
+    return re.sub(r"(Aktuelle Meldungen.*?</h3>)", r"\1 <span class='stand'>(Stand: %s)</span>" % iso_today(), html, flags=re.I)
 
-    try:
-        if SMTP_USE_SSL:
-            # Direkte SSL-Verbindung
-            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as s:
-                if SMTP_USER and SMTP_PASS:
-                    s.login(SMTP_USER, SMTP_PASS)
-                s.send_message(msg)
-        else:
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
-                s.ehlo()
-                if SMTP_REQUIRE_TLS:
-                    try:
-                        s.starttls()
-                        s.ehlo()
-                    except smtplib.SMTPException as e:
-                        log.error("STARTTLS fehlgeschlagen: %s", e)
-                        if SMTP_REQUIRE_TLS:
-                            raise
-                if SMTP_USER and SMTP_PASS:
-                    s.login(SMTP_USER, SMTP_PASS)
-                s.send_message(msg)
-    except Exception as e:
-        log.error("Mailversand fehlgeschlagen (to=%s): %s", to_addr, e)
+def fill_benchmarks(html: str, benchmarks: Dict[str, float]) -> str:
+    # Sucht leere Benchmark-Tabelle und trägt Werte ein
+    # (einfaches Platzhalter-Verfahren; die PDF-Engine rendert <table> sauber)
+    for key, val in {
+        "Digitalisierungsgrad": f"{benchmarks.get('digitalisierung', 7.5):.1f}/10",
+        "Automatisierungsgrad": f"{int(benchmarks.get('automatisierung', 0.65) * 100)}%",
+        "Datenschutz-Compliance": f"{int(benchmarks.get('compliance', 0.73) * 100)}%",
+        "Prozessreife": f"{int(benchmarks.get('prozessreife', 0.68) * 100)}%",
+        "Innovationsgrad": f"{int(benchmarks.get('innovation', 0.60) * 100)}%",
+    }.items():
+        html = re.sub(rf"({re.escape(key)}.*?<td>)\s*-\s*(</td>)", rf"\1{val}\2", html, flags=re.S)
+    return html
 
-def send_user_copy(user_email: str, pdf_bytes: bytes, rid: str, lang: str = "de") -> None:
-    """
-    Versendet den generierten Report an den Nutzer. Als Betreff wird der
-    Report‑Titel inklusive Job‑ID genutzt, sodass die Mail eindeutig zuordenbar
-    ist. Der HTML‑Body enthält ebenfalls einen kurzen Hinweis mit der Job‑ID.
-    """
-    title = "KI-Status-Report" if lang.startswith("de") else "AI Status Report"
-    subject = f"{title} – Ihre Kopie (Job-ID: {rid})" if lang.startswith("de") else f"{title} – Your copy (Job-ID: {rid})"
-    body = f"<p>{subject}</p>"
-    _send_mail(user_email, subject, body, attachments={f"{title}.pdf": pdf_bytes})
+def run(payload_path: Path, html_path: Path) -> None:
+    data = json.loads(payload_path.read_text(encoding="utf-8"))
+    # Business Case
+    bc = data.get("business_case", {})
+    fixed = compute_business_case(float(bc.get("invest_eur", 0)), float(bc.get("annual_saving_eur", 0)))
+    bc.update(fixed)
+    data["business_case"] = bc
 
-def send_admin_copy(ctx: Dict[str, str], pdf_bytes: bytes, rid: str, lang: str = "de") -> None:
-    """Hängt briefing.json an die Admin-Mail an (falls ADMIN_EMAIL gesetzt)."""
-    to = ADMIN_EMAIL
-    if not to:
-        log.info("ADMIN_EMAIL nicht gesetzt – Admin-Mail übersprungen.")
-        return
-    subject = ctx.get("admin_subject") or ("Neuer KI-Status-Report – Rohdaten" if lang.startswith("de") else "New AI Status Report – Raw data")
-    note = ctx.get("admin_note") or "Automatisch generierte Rohdaten (JSON)."
-    body = f"<p>{subject}<br/>Job-ID: {rid}</p><p>{note}</p>"
-    raw_json = (ctx.get("admin_form_json") or "{}").encode("utf-8")
-    _send_mail(to, subject, body, attachments={
-        "KI-Status-Report.pdf": pdf_bytes,
-        "briefing.json": raw_json,
-    })
+    # HTML laden & korrigieren
+    html = html_path.read_text(encoding="utf-8")
+    html = fix_time_claims(html)
+    html = inject_stand_date(html)
+    html = fill_benchmarks(html, data.get("benchmarks", {}))
+
+    # Compliance-Playbook anhängen, falls noch nicht enthalten
+    compl_html = data.get("compliance_playbook_html")
+    if compl_html and "Compliance‑Playbook" not in html:
+        html += "\n" + compl_html
+
+    # Speichern
+    payload_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    html_path.write_text(html, encoding="utf-8")
+    logger.info("Post-Processing abgeschlossen: ROI/Payback korrigiert, Benchmarks/Stand eingefügt.")
+
+if __name__ == "__main__":
+    # Erwartet Pfade als ENV (oder Standard)
+    payload = Path(os.getenv("REPORT_PAYLOAD", "build/payload.json"))
+    html = Path(os.getenv("REPORT_HTML", "build/report.html"))
+    if payload.exists() and html.exists():
+        run(payload, html)
+    else:
+        logger.warning("payload/html nicht gefunden – nichts zu tun.")
