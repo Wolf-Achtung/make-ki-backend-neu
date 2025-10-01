@@ -1,6 +1,7 @@
-# Förderprogramme (kuratiert)
-
-Zeige 4–6 Programme aus der übergebenen Liste (vorfiltern auf {{bundesland}}/{{unternehmensgroesse}}/{{branche}}):
-- **Name (Link)** · **Quote %** · **Deadline** · **Status** · 1‑Satz‑Nutzen
-- **Kombinationen** nur nennen, wenn rechtlich zulässig; keine Doppelförderung desselben Vorhabens.
-- Abschluss: „Stand: {{last_updated}}“.
+# filename: prompts/foerderprogramme_de.md
+Fasse die wichtigsten Programme zusammen für {{bundesland}} / {{unternehmensgroesse}} / {{branche}}:
+- Priorisiere aus {{FUNDING_HTML}} (CSV) + {{EU_CALLS_HTML}} (EU‑Portal).
+- Gliedere in „Zuschuss“, „Beratung“, „Kredite/EFRE“.
+- Für jedes Programm: Kurzbeschreibung (1 Satz), Fördersatz/Max, Deadline, Link (nur aus den gelieferten Quellen).
+- Schluss: 3 Hinweise zu Kombinierbarkeit/Fristen.
+„Stand: {{date}}“.

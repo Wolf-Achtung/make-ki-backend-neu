@@ -1,20 +1,17 @@
-# Executive Summary – „Mehrwert im Wettbewerb durch KI“
+# filename: prompts/executive_summary_de.md
+Kontext:
+- Branche: {{branche}}, Bundesland: {{bundesland}}, Größe: {{unternehmensgroesse}}
+- Hauptleistung: {{hauptleistung}}
+- Benchmarks (Auszug): {{benchmarks_json}}
+- Business Case: {{business_case_json}}
 
-Schreibe eine prägnante Executive Summary für ein **{{branche}}**, **{{unternehmensgroesse}}** in **{{bundesland}}** mit der **Hauptleistung: {{hauptleistung}}**. 
-Halte den Ton sachlich und motivierend, ohne Marketing-Sprech.
+Aufgabe:
+Schreibe eine prägnante Executive Summary (max. 180 Wörter) mit:
+1) Ausgangslage & Chancen (1–2 Sätze).
+2) Werthebel (Stichpunkte: Effizienz, Qualität, Kundenerlebnis, Risiko).
+3) Kennzahlen (ROI Jahr 1, Payback in Monaten, 3‑Jahres‑Gewinn, Zeitersparnis/Monat) auf Basis des Business Case.
+4) Erster Schritt (konkret, innerhalb 14 Tagen).
 
-## Ausgangslage
-- KI‑Reifegrad, Stärken/Schwächen in 2–3 Sätzen.
-- Größte Chance für {{branche}} in {{bundesland}} (konkret, 1 Satz).
-
-## Erfolgsweg (90 Tage)
-- 3 Etappen mit Ziel, Owner und KPI (0–30/31–60/61–90).
-
-## Business Value (Zahlen sauber!)
-- Investition: **{{business_case.invest_eur}} €**
-- Jährliche Einsparung: **{{business_case.annual_saving_eur}} €**
-- **ROI (Jahr 1): {{business_case.roi_year1_pct}} %** · **Payback: {{business_case.payback_months}} Monate**
-- Zeitgewinn: **≈ {{business_case.time_saved_hours_per_month}} Std/Monat** (Basis: 8 h × 20 Tage)
-
-> Gib keine widersprüchlichen Werte aus. Verwende ausschließlich die übergebenen Zahlen.
-> Füge „Stand: {{last_updated}}“ hinzu.
+Format:
+- 3 kurze Absätze + 1 Bullet‑Liste „Nächster Schritt“.
+- Abschlusszeile „Stand: {{date}}“.

@@ -1,13 +1,8 @@
-# Compliance‑Playbook (Go‑Live‑Gate & Betrieb)
+# filename: prompts/compliance_de.md
+Baue einen umsetzbaren Maßnahmenblock auf Basis des gelieferten HTML:
+{{COMPLIANCE_HTML}}
 
-In {{bundesland}} für ein {{unternehmensgroesse}} in der Branche {{branche}}, Hauptleistung {{hauptleistung}}.
-
-1. **Go‑Live‑Gate + MVC**: Vor Produktivbetrieb Checkliste (Risikoklasse, DPA/AVV, Rechtekette, Tests: Performance/Drift/Bias, Rollen, Doku).
-2. **Human‑in‑the‑Loop & Kill‑Switch**: Mensch entscheidet bei kritischen Schritten; dokumentierter Not‑Aus.
-3. **Input‑/Output‑Gates**: Rechte an Daten prüfen; Ausgaben gegen Halluzination/IP/DSGVO/Policy validieren.
-4. **Re‑Klassifizierungs‑Trigger**: Fine‑Tuning, Zweckwechsel, White‑Label/Markenwechsel, Agenten → neue Pflichten.
-5. **Rechtslandkarte**: KI‑VO + Produktrecht/Sektorrecht, CRA, DSA, Data Act; Verantwortliche & Nachweise.
-6. **AI‑Literacy**: Pflichttrainings mit jährlicher Auffrischung; Zugriffe an Lernstand knüpfen.
-7. **Monitoring & Re‑Tests**: Technologieradar; periodische Re‑Tests; Findings zurück in Standards/Modelle.
-
-Schließe mit **„Stand: {{last_updated}}“**.
+Zusatz:
+- Liste 5 prüfbare Artefakte für das Go‑Live‑Gate (z. B. DSFA, AVV, Log‑Nachweise, Rollenmatrix, Testprotokolle).
+- Füge 3 Re‑Klassifizierungs‑Trigger an (Fine‑Tuning, Zweckwechsel, Agenten).
+- Endzeile „Stand: {{date}}“.
