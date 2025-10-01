@@ -1,11 +1,64 @@
-name,region,what,target,amount,info_url,industry,company_size,last_checked
-go-digital (BMWK),Deutschland,Beratung & Umsetzung KMU,KMU bis 100 MA,"bis 50% Förderung",https://www.bmwi-go-digital.de,*,*,2025-09-17
-go-inno (BMWK),Deutschland,Innovationsgutscheine,KMU,"bis 50% Beratung",https://www.innovation-beratung-foerderung.de,*,*,2025-09-17
-DIGITAL.JETZT,Deutschland,Investitionen & Qualifizierung,KMU,"bis 70% abhängig Region",https://www.bmwi.de,*,*,2025-09-17
-Mittelstand-Digital,Deutschland,Wissens- & Transferangebote,KMU,Kostenfrei,https://www.mittelstand-digital.de,*,*,2025-09-17
-INVEST BW,Baden-Württemberg,FuE & KI‑Projekte,Unternehmen in BW,"je nach Projekt",https://www.invest-bw.de,*,*,2025-09-17
-PROFIT,Brandenburg,FuE/KMU/Startups,Unternehmen in BB,"variabel",https://www.ilb.de,*,*,2025-09-17
-EFRE NRW,NRW,Digitale Transformation,NRW KMU,"variabel",https://www.efre.nrw,*,*,2025-09-17
-Horizon Europe,EU,FuE‑Verbundprojekte,Unternehmen/Hochschulen EU,"variabel",https://research-and-innovation.ec.europa.eu,*,*,2025-09-17
-EIC Accelerator,EU,Skalierung DeepTech,Startups/SME,"bis 2,5 Mio. + Equity",https://eic.ec.europa.eu,*,*,2025-09-17
-Innovationskredit (KfW),Deutschland,Invest & Betrieb,KMU,"zinsgünstig",https://www.kfw.de,*,*,2025-09-17
+Programmname,Fördergeber,Bundesland,Förderbereich,Zielgruppe,Förderart,Förderhöhe,Kurzbeschreibung,Website
+KOMPASS,BAFA,Bundesweit,Digitalisierung/Beratung,"KMU, Freiberufler",Zuschuss,Bis 80% (max. 4.800 EUR),Förderung von Beratungsleistungen zur Digitalisierung und Unternehmensentwicklung,https://www.bafa.de
+Digital Jetzt,BMWK,Bundesweit,Digitalisierung,"KMU (3-499 MA), Freiberufler",Zuschuss,"Bis 50%, max. 100.000 EUR",Förderung von Investitionen in digitale Technologien und Qualifizierung von Mitarbeitenden,https://www.digitaljetzt-portal.de
+go-digital,BMWK,Bundesweit,Digitalisierung,"KMU, Freiberufler, Handwerk",Zuschuss,"Bis 16.500 EUR (50-90%)",Förderung für IT-Sicherheit, digitale Markterschließung und digitalisierte Geschäftsprozesse,https://www.bmwk-go-digital.de
+KI-Lighthouse,BMBF,Bundesweit,KI,Unternehmen aller Größen,Zuschuss,Variabel,"Förderung von KI-Leuchtturmprojekten in verschiedenen Anwendungsfeldern (Gesundheit, Umwelt, Mobilität)",https://www.softwaresysteme.pt-dlr.de
+ZIM - Zentrales Innovationsprogramm Mittelstand,BMWK,Bundesweit,Innovation,"KMU, Forschungseinrichtungen",Zuschuss,"Bis 550.000 EUR pro Projekt",Förderung innovativer FuE-Projekte für KMU,https://www.zim.de
+ERP-Digitalisierungs- und Innovationskredit,KfW,Bundesweit,"Digitalisierung, Innovation","KMU, Freiberufler",Zinsgünstiges Darlehen,Bis 25 Mio. EUR,"Langfristige, zinsgünstige Finanzierung von Digitalisierungs- und Innovationsvorhaben",https://www.kfw.de
+ERP-Gründerkredit - StartGeld,KfW,Bundesweit,Gründung,"Start-ups, Gründer, Freiberufler",Zinsgünstiges Darlehen,Bis 125.000 EUR,Finanzierung für Gründungen und Unternehmensnachfolgen in den ersten 5 Jahren,https://www.kfw.de
+INVEST - Zuschuss für Wagniskapital,BAFA,Bundesweit,Start-up-Finanzierung,Business Angels und Start-ups,Zuschuss,"20% Erwerbszuschuss, 25% Exitzuschuss",Förderung von privatem Wagniskapital für junge innovative Unternehmen,https://www.bafa.de
+EXIST-Gründerstipendium,BMBF,Bundesweit,Gründung,"Hochschulabsolventen, Wissenschaftler",Stipendium,"Bis 3.000 EUR/Monat, max. 1 Jahr",Förderung innovativer technologieorientierter und wissensbasierter Gründungsvorhaben,https://www.exist.de
+EXIST-Forschungstransfer,BMBF,Bundesweit,"Gründung, Innovation","Hochschulabsolventen, Wissenschaftler",Zuschuss,Bis 250.000 EUR für Phase I,Förderung aufwendiger Entwicklungsarbeiten vor der Gründung,https://www.exist.de
+Digitalprämie Berlin,IBB,Berlin,Digitalisierung,"KMU, Freiberufler, Start-ups",Zuschuss,"Bis 17.000 EUR (50-70%)",Förderung von Investitionen in Hard- und Software sowie Beratungsleistungen zur Digitalisierung,https://www.ibb.de
+Coaching BONUS Berlin,IBB,Berlin,Beratung,"KMU, Gründer, Freiberufler",Zuschuss,"Bis 80%, max. 3.000 EUR",Förderung von Coachings und Beratungen zu betriebswirtschaftlichen Themen,https://www.ibb.de
+Berlin Innovativ,IBB,Berlin,Innovation,KMU,Zuschuss,Bis 50%,Förderung innovativer Produkte und Dienstleistungen,https://www.ibb.de
+Innovationsassistent Berlin,Senatsverwaltung Berlin,Berlin,Innovation,"KMU, Start-ups",Zuschuss,"Bis 50%, max. 30.000 EUR/Jahr",Förderung der Beschäftigung von Hochschulabsolventen für Innovationsprojekte,https://www.berlin.de
+Invest BW,L-Bank,Baden-Württemberg,"Innovation, Digitalisierung, Nachhaltigkeit","KMU, Freiberufler",Zuschuss,"Bis 100.000 EUR (bis 40%)",Förderung von Investitionen in Innovation und Transformation,https://www.l-bank.de
+Digitalisierungsprämie BW,Ministerium für Wirtschaft BW,Baden-Württemberg,Digitalisierung,"KMU, Freiberufler, Handwerk",Zuschuss,"Bis 10.000 EUR (40%)",Förderung von Investitionen in Hard- und Software zur Digitalisierung,https://www.rwp-bw.de
+Technologieförderung BW,L-Bank,Baden-Württemberg,"Innovation, Technologie",KMU,Zuschuss/Darlehen,Variabel,Förderung innovativer Technologieprojekte,https://www.l-bank.de
+Bayern Digital,Bayern Innovativ,Bayern,Digitalisierung,"KMU, Start-ups",Zuschuss/Beratung,Variabel,Unterstützung bei der digitalen Transformation,https://www.bayern-innovativ.de
+Digitalbonus Bayern,Bayerisches Staatsministerium,Bayern,Digitalisierung,"KMU, Freiberufler, Handwerk",Zuschuss,"Bis 10.000 EUR (50%)",Förderung von IT-Sicherheit und digitalen Prozessen,https://www.digitalbonus.bayern
+Innovationsgutschein Bayern,Bayern Innovativ,Bayern,Innovation,"KMU, Start-ups",Gutschein,"Bis 10.000 EUR",Finanzierung von Beratungsleistungen und Machbarkeitsstudien,https://www.bayern-innovativ.de
+BayTP - Technologieförderung,LfA Bayern,Bayern,"Innovation, Technologie","KMU, Start-ups",Zinsgünstiges Darlehen,Bis 3 Mio. EUR,Förderung von Entwicklung und Markteinführung innovativer Produkte,https://www.lfa.de
+Gründerland Bayern,Bayerisches Staatsministerium,Bayern,Gründung,"Start-ups, Gründer",Verschiedene Programme,Variabel,Bündelung verschiedener Unterstützungsangebote für Gründer,https://www.gruenderland.bayern
+MicroDigital Brandenburg,ILB,Brandenburg,Digitalisierung,"Kleinstunternehmen, Freiberufler",Zuschuss,"Bis 5.000 EUR (80%)",Förderung kleiner Digitalisierungsprojekte,https://www.ilb.de
+Innovationsgutschein Brandenburg,ILB,Brandenburg,Innovation,"KMU, Start-ups",Gutschein,"Bis 15.000 EUR",Förderung von Beratung und Machbarkeitsstudien,https://www.ilb.de
+Brandenburg-Kredit Mikro,ILB,Brandenburg,"Gründung, Investition","KMU, Gründer, Freiberufler",Zinsgünstiges Darlehen,Bis 25.000 EUR,Finanzierung von Gründungen und kleineren Investitionen,https://www.ilb.de
+Bremer Innovationsfonds,BAB,Bremen,Innovation,"KMU, Start-ups",Zuschuss,Bis 200.000 EUR,Förderung innovativer Projekte,https://www.bab-bremen.de
+Digitalisierungsberatung Bremen,BAB,Bremen,Digitalisierung,KMU,Zuschuss,"Bis 4.000 EUR (50%)",Förderung von Beratungsleistungen zur Digitalisierung,https://www.bab-bremen.de
+IFB Innovationsstarter Hamburg,IFB Hamburg,Hamburg,"Innovation, Gründung","Start-ups, innovative Gründer",Zuschuss,"Bis 150.000 EUR (50%)",Förderung innovativer Gründungsvorhaben,https://www.ifbhh.de
+Digital.Plus Hamburg,IFB Hamburg,Hamburg,Digitalisierung,KMU,Zuschuss,"Bis 20.000 EUR (50%)",Förderung von Digitalisierungsprojekten,https://www.ifbhh.de
+Distr@l - Digitalisierung und Strategie,WIBank Hessen,Hessen,Digitalisierung,"KMU, Freiberufler",Zuschuss,"Bis 20.000 EUR (50%)",Förderung von Digitalisierungsberatung und -investitionen,https://www.wibank.de
+Hessen Digital,WIBank Hessen,Hessen,Digitalisierung,KMU,Zuschuss,"Bis 50%, max. 500.000 EUR",Förderung größerer Digitalisierungsprojekte,https://www.wibank.de
+Innovationsförderung Hessen,WIBank Hessen,Hessen,Innovation,"KMU, Start-ups",Zuschuss/Darlehen,Variabel,Förderung von FuE-Projekten,https://www.wibank.de
+Gründungszuschuss Hessen,WIBank Hessen,Hessen,Gründung,"Gründer, Start-ups",Zuschuss,"Bis 8.000 EUR",Unterstützung von Gründungsvorhaben,https://www.wibank.de
+Digitalisierungshilfe MV,LFI-MV,Mecklenburg-Vorpommern,Digitalisierung,"KMU, Freiberufler",Zuschuss,"Bis 25.000 EUR (50%)",Förderung von Digitalisierungsinvestitionen,https://www.lfi-mv.de
+Innovationsassistent MV,LFI-MV,Mecklenburg-Vorpommern,Innovation,KMU,Zuschuss,"Bis 50%, max. 25.000 EUR/Jahr",Förderung der Einstellung von Hochschulabsolventen für Innovationsprojekte,https://www.lfi-mv.de
+Niedersachsen Digital,NBank,Niedersachsen,Digitalisierung,"KMU, Freiberufler",Zuschuss,"Bis 20.000 EUR (50%)",Förderung von Digitalisierungsinvestitionen,https://www.nbank.de
+Niedersachsen Innovation,NBank,Niedersachsen,Innovation,KMU,Zuschuss/Darlehen,Variabel,Förderung innovativer Projekte,https://www.nbank.de
+Gründungsförderung Niedersachsen,NBank,Niedersachsen,Gründung,"Start-ups, Gründer",Verschiedene Programme,Variabel,Verschiedene Unterstützungsangebote für Gründer,https://www.nbank.de
+Potentialberatung NRW,MAGS NRW,Nordrhein-Westfalen,"Beratung, Digitalisierung","KMU, Freiberufler",Zuschuss,"Bis 80%, max. 3.200 EUR",Förderung von Beratungen zur Digitalisierung und Organisationsentwicklung,https://www.mags.nrw
+Digitalisierungsprämie NRW,MWIDE NRW,Nordrhein-Westfalen,Digitalisierung,"KMU, Freiberufler, Handwerk",Zuschuss,"Bis 12.000 EUR (50%)",Förderung von Hard- und Software zur Digitalisierung,https://www.wirtschaft.nrw
+Innovationsgutschein NRW,NRW.Bank,Nordrhein-Westfalen,Innovation,"KMU, Start-ups",Gutschein,"Bis 25.000 EUR",Förderung von Beratung und FuE-Dienstleistungen,https://www.nrwbank.de
+NRW.Bank.Mittelstandskredit,NRW.Bank,Nordrhein-Westfalen,"Digitalisierung, Innovation",KMU,Zinsgünstiges Darlehen,Bis 10 Mio. EUR,Langfristige Finanzierung von Investitionen,https://www.nrwbank.de
+Gründungs- und Wachstumsfinanzierung NRW,NRW.Bank,Nordrhein-Westfalen,"Gründung, Wachstum","Start-ups, junge Unternehmen",Darlehen/Beteiligung,Variabel,Verschiedene Finanzierungsinstrumente für Gründer,https://www.nrwbank.de
+Innovationsförderung Rheinland-Pfalz,ISB,Rheinland-Pfalz,Innovation,"KMU, Start-ups",Zuschuss,Bis 500.000 EUR,Förderung von FuE-Projekten,https://www.isb.rlp.de
+Digitalisierungsprogramm RLP,ISB,Rheinland-Pfalz,Digitalisierung,KMU,Zuschuss,"Bis 50%, max. 100.000 EUR",Förderung von Digitalisierungsprojekten,https://www.isb.rlp.de
+Gründercoaching RLP,ISB,Rheinland-Pfalz,"Gründung, Beratung","Gründer, junge Unternehmen",Zuschuss,"Bis 75%, max. 6.000 EUR",Förderung von Coachings für Gründer,https://www.isb.rlp.de
+Innovationsprämie Saarland,SIKB,Saarland,Innovation,"KMU, Freiberufler",Zuschuss,"Bis 50%, max. 50.000 EUR",Förderung innovativer Projekte,https://www.sikb.de
+Digitalisierungsoffensive Saarland,SIKB,Saarland,Digitalisierung,KMU,Zuschuss,"Bis 40%, max. 20.000 EUR",Förderung von Digitalisierungsinvestitionen,https://www.sikb.de
+Innovationsassistent Sachsen,SAB,Sachsen,Innovation,"KMU, Start-ups",Zuschuss,"Bis 75%, max. 40.000 EUR/Jahr",Förderung der Beschäftigung von Hochschulabsolventen,https://www.sab.sachsen.de
+Technologieförderung Sachsen,SAB,Sachsen,"Innovation, Technologie",KMU,Zuschuss/Darlehen,Variabel,Förderung von FuE und Innovation,https://www.sab.sachsen.de
+Digitalisierung Sachsen,SAB,Sachsen,Digitalisierung,"KMU, Freiberufler",Zuschuss,"Bis 50%, max. 100.000 EUR",Förderung von Digitalisierungsprojekten,https://www.sab.sachsen.de
+Innovationsassistent Sachsen-Anhalt,IB Sachsen-Anhalt,Sachsen-Anhalt,Innovation,KMU,Zuschuss,"Bis 50%, max. 30.000 EUR/Jahr",Förderung von Hochschulabsolventen in Innovationsprojekten,https://www.ib-sachsen-anhalt.de
+Digitalisierung Sachsen-Anhalt,IB Sachsen-Anhalt,Sachsen-Anhalt,Digitalisierung,KMU,Zuschuss,"Bis 50%, max. 50.000 EUR",Förderung digitaler Technologien,https://www.ib-sachsen-anhalt.de
+Innovationsförderung Schleswig-Holstein,IB.SH,Schleswig-Holstein,Innovation,"KMU, Start-ups",Zuschuss/Darlehen,Variabel,Förderung von FuE-Projekten,https://www.ib-sh.de
+Digitalisierungsprogramm SH,IB.SH,Schleswig-Holstein,Digitalisierung,KMU,Zuschuss,"Bis 50%, max. 50.000 EUR",Förderung von Digitalisierungsvorhaben,https://www.ib-sh.de
+Gründungsoffensive Schleswig-Holstein,IB.SH,Schleswig-Holstein,Gründung,"Start-ups, Gründer",Verschiedene Programme,Variabel,Bündel von Gründungsförderungen,https://www.ib-sh.de
+Innovationsassistent Thüringen,TAB,Thüringen,Innovation,KMU,Zuschuss,"Bis 50%, max. 35.000 EUR/Jahr",Förderung von Hochschulabsolventen für Innovationsprojekte,https://www.aufbaubank.de
+Digitalisierung Thüringen,TAB,Thüringen,Digitalisierung,"KMU, Freiberufler",Zuschuss,"Bis 50%, max. 100.000 EUR",Förderung digitaler Transformationsprojekte,https://www.aufbaubank.de
+Technologieförderung Thüringen,TAB,Thüringen,"Innovation, Technologie",KMU,Zuschuss/Darlehen,Variabel,Förderung von FuE und Technologieentwicklung,https://www.aufbaubank.de
+ERP-Gründerkredit - Universell,KfW,Bundesweit,"Gründung, Investition","Start-ups, KMU, Freiberufler",Zinsgünstiges Darlehen,Bis 25 Mio. EUR,Langfristige Finanzierung für Gründungen und Wachstum,https://www.kfw.de
+WIPANO,BMBF/DPMA,Bundesweit,Innovation/Patente,"KMU, Freiberufler, Forschungseinrichtungen",Zuschuss,"Bis 50.000 EUR (verschiedene Module)",Förderung von Schutzrechtsanmeldungen und -verwertung,https://www.wipano.de
+KI-Fortschrittszentren,BMBF,Bundesweit,KI,"Forschung, Unternehmen",Zuschuss,Variabel,Förderung von KI-Kompetenzzentren und Transferprojekten,https://www.ki-fortschrittszentrum.de
+Technologietransfer-Programm,BMWK,Bundesweit,"Innovation, Transfer","KMU, Forschungseinrichtungen",Zuschuss,Variabel,Förderung des Transfers von Forschungsergebnissen in die Wirtschaft,https://www.bmwk.de
