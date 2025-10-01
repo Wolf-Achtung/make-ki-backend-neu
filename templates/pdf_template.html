@@ -8,12 +8,24 @@
   <style>
     /* ---------- Farbpalette (nur Blautöne) ---------- */
     :root{
+      /*
+       * Farbpalette für den Report.  Die Farben sind so gewählt, dass sie
+       * ausreichend Kontrast bieten und sowohl auf dem Bildschirm als auch
+       * im Druck gut lesbar sind.  Die primären Blautöne bilden die Basis
+       * des Layouts; Orange‑Töne setzen Akzente für Überschriften und
+       * wichtige Elemente.  Für Barrierenfreiheit werden keine exakten
+       * Farbcodes vorausgesetzt, sondern lediglich harmonische Töne.
+       */
       --c-bg:#f7fbff;
       --c-text:#0b2239;
       --c-muted:#5a6d85;
-      --c-primary:#0f5fb3;
-      --c-primary-2:#1b78d1;
-      --c-accent:#0a3d62;
+      /* Primärfarben (Blautöne) */
+      --c-primary:#1F7BFF;       /* Basisblau, kräftig für Überschriften */
+      --c-primary-2:#377DFF;     /* Hellere Variante für Verläufe */
+      /* Akzentfarben (Orange) */
+      --c-accent:#FB8C00;        /* Hauptakzent für Titel und Tags */
+      --c-accent-2:#D9480F;      /* Dunkler Orange‑Ton für Hervorhebungen */
+      /* Rahmen- und Kartenfarben */
       --c-border:#d6e3f5;
       --c-card:#ffffff;
     }
