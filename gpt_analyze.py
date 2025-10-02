@@ -122,6 +122,10 @@ PROMPTS_DIR = Path(os.getenv("PROMPTS_DIR", "prompts"))
 TEMPLATE_DIR = Path(os.getenv("TEMPLATE_DIR", "templates"))
 DEFAULT_LANG = os.getenv("DEFAULT_LANG", "de")
 
+# Template-Dateien (für HTML/PDF-Rendering)
+TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
+TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
+
 SEARCH_DAYS = int(os.getenv("SEARCH_DAYS", "30"))
 SEARCH_DAYS_TOOLS = int(os.getenv("SEARCH_DAYS_TOOLS", str(max(30, SEARCH_DAYS))))
 SEARCH_DAYS_FUNDING = int(os.getenv("SEARCH_DAYS_FUNDING", str(max(60, SEARCH_DAYS))))
@@ -795,6 +799,67 @@ def generate_report_payload(briefing_json_path: Path) -> Dict[str, Any]:
     }
     logger.info("Payload erstellt (Sektionen: %s)", list(sections.keys()))
     return payload
+
+
+# -----------------------------------------------------------------------------
+# Kompatibilitätsfunktionen für das FastAPI‑Backend
+#
+# Einige Versionen des Backends erwarten Funktionen ``analyze_briefing`` und
+# ``analyze_briefing_enhanced`` in diesem Modul.  Diese Funktionen sind
+# hier als Wrapper implementiert.  Sie nutzen intern ``generate_report_payload``
+# und rendern das Ergebnis via Jinja2 in ein HTML oder liefern das
+# strukturierte Payload zurück.
+
+try:
+    from jinja2 import Environment, FileSystemLoader, select_autoescape  # type: ignore
+except Exception:  # pragma: no cover
+    Environment = None  # type: ignore
+
+
+def analyze_briefing(briefing_json_path: str) -> str:
+    """
+    Kompatibilitätsfunktion: generiert einen vollständigen Report (HTML) aus
+    einem Briefing‑JSON‑Pfad.  Wenn Jinja2 verfügbar ist und das Template
+    gefunden wird, wird das Report‑Payload in das entsprechende HTML
+    gerendert.  Andernfalls wird ein rudimentäres HTML ausgegeben.
+
+    :param briefing_json_path: Pfad zur Briefing‑JSON-Datei
+    :return: gerenderte HTML‑Seite oder rudimentärer Platzhalter
+    """
+    path = Path(briefing_json_path)
+    payload = generate_report_payload(path)
+    # Lade Jinja‑Template, falls möglich
+    if Environment is not None and TEMPLATE_DIR and TEMPLATE_DE:
+        try:
+            env = Environment(
+                loader=FileSystemLoader(str(TEMPLATE_DIR)),
+                autoescape=select_autoescape(["html", "xml"]),
+            )
+            # Sprachenaufschlüsselung
+            lang = payload.get("meta", {}).get("lang", "de")
+            template_name = TEMPLATE_DE if lang.startswith("de") else TEMPLATE_EN
+            template = env.get_template(template_name)
+            # Payload flach rendern; Template erwartet möglicherweise
+            # direkte Schlüssel (z. B. {{ sections.executive_summary }})
+            html = template.render(payload)
+            return html
+        except Exception as e:
+            logger.error("Jinja-Rendering fehlgeschlagen: %s", e)
+    # Fallback: rudimentäres HTML ausgeben
+    return f"<html><body><pre>{json.dumps(payload, indent=2, ensure_ascii=False)}</pre></body></html>"
+
+
+def analyze_briefing_enhanced(briefing_json_path: str) -> Dict[str, Any]:
+    """
+    Kompatibilitätsfunktion: liefert das strukturierte Report‑Payload
+    (Dictionary) zurück.  Dieser Wrapper wird von einigen Qualitätstools
+    oder API‑Endpunkten verwendet.
+
+    :param briefing_json_path: Pfad zur Briefing‑JSON-Datei
+    :return: strukturierter Report‑Payload
+    """
+    path = Path(briefing_json_path)
+    return generate_report_payload(path)
 
 
 if __name__ == "__main__":  # pragma: no cover
