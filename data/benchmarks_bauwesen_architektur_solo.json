@@ -1,0 +1,36 @@
+{
+  "version": "2025-10-02",
+  "notes": "Seedwerte für Bauwesen & Architektur – SOLO. Werte basieren auf Branchenstudien und Digitalisierungsindex; für kleine Teams (-5 %) und Solo-Selbstständige (-10 %) adaptiert.",
+  "kpis": [
+    {
+      "name": "digitalisierung",
+      "value": 0.495,
+      "source": "IW Köln Digitalisierungsindex 2024 (Unternehmen bis 249 MA)【177306825617†L417-L437】",
+      "direction": "higher_is_better"
+    },
+    {
+      "name": "automatisierung",
+      "value": 0.405,
+      "source": "Schätzung basierend auf Automatisierungsgrad und Branchenstudien",
+      "direction": "higher_is_better"
+    },
+    {
+      "name": "compliance",
+      "value": 0.45,
+      "source": "Schätzung basierend auf DSGVO, Regulierungen und Branchenreife",
+      "direction": "higher_is_better"
+    },
+    {
+      "name": "prozessreife",
+      "value": 0.45,
+      "source": "Schätzung basierend auf Prozessreife-Analysen",
+      "direction": "higher_is_better"
+    },
+    {
+      "name": "innovation",
+      "value": 0.54,
+      "source": "Innovationsrankings und Branchenreports",
+      "direction": "higher_is_better"
+    }
+  ]
+}

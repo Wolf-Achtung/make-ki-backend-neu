@@ -1,0 +1,11 @@
+{
+  "version": "2025-10-02",
+  "notes": "Seedwerte für Beratung & Dienstleistungen (KMU). Hier liegt der Digitalisierungsgrad über dem Branchenmittel, jedoch unterhalb des IKT-Sektors. Die Digitalisierungsindex-Werte werden zur Skalierung verwendet【579060561542318†L480-L485】.",
+  "kpis": [
+    {"name": "digitalisierung", "value": 0.75, "source": "Schätzung basierend auf Beratungs- und Dienstleistungsstudien", "direction": "higher_is_better"},
+    {"name": "automatisierung", "value": 0.65, "source": "Schätzung basierend auf Automatisierung in Dienstleistungsbranchen", "direction": "higher_is_better"},
+    {"name": "compliance", "value": 0.70, "source": "Schätzung basierend auf DSGVO-Compliance in der Beratung", "direction": "higher_is_better"},
+    {"name": "prozessreife", "value": 0.68, "source": "Schätzung basierend auf Prozessreife-Modellen", "direction": "higher_is_better"},
+    {"name": "innovation", "value": 0.70, "source": "Schätzung basierend auf Innovationsdaten", "direction": "higher_is_better"}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "version": "2025-10-02",
+  "notes": "Seedwerte für IT & Software – kleines Team (2–10). Die Werte sind 5 % niedriger als bei KMU. Die Branche ist digitaler Spitzenreiter【579060561542318†L480-L485】.",
+  "kpis": [
+    {"name": "digitalisierung", "value": 0.855, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "automatisierung", "value": 0.76, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "compliance", "value": 0.7125, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "prozessreife", "value": 0.741, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "innovation", "value": 0.8075, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "version": "2025-10-02",
+  "notes": "Seedwerte für Finanzen & Versicherungen – kleines Team (2–10). Werte wurden 5 % unter dem KMU-Level angesetzt, um kleinere Strukturen abzubilden. Referenzen stammen aus Digitalisierungsindizes【579060561542318†L480-L485】.",
+  "kpis": [
+    {"name": "digitalisierung", "value": 0.76, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "automatisierung", "value": 0.7125, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "compliance", "value": 0.8075, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "prozessreife", "value": 0.779, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "innovation", "value": 0.665, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"}
+  ]
+}

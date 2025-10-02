@@ -1,0 +1,11 @@
+{
+  "version": "2025-10-02",
+  "notes": "Seedwerte für IT & Software (KMU). Der IKT-Sektor führt das Digitalisierungsranking mit 273,5 Indexpunkten an【579060561542318†L480-L485】, weshalb die Digitalisierungs- und Automatisierungswerte besonders hoch angesetzt sind.",
+  "kpis": [
+    {"name": "digitalisierung", "value": 0.90, "source": "IT-Sektor mit höchstem Digitalisierungsindex【579060561542318†L480-L485】", "direction": "higher_is_better"},
+    {"name": "automatisierung", "value": 0.80, "source": "Schätzung basierend auf Softwareentwicklungsautomatisierung", "direction": "higher_is_better"},
+    {"name": "compliance", "value": 0.75, "source": "Schätzung basierend auf IT-Compliance-Standards", "direction": "higher_is_better"},
+    {"name": "prozessreife", "value": 0.78, "source": "Schätzung basierend auf Prozessreife-Modellen in der IT", "direction": "higher_is_better"},
+    {"name": "innovation", "value": 0.85, "source": "Schätzung basierend auf Innovationsgrad in der Softwarebranche", "direction": "higher_is_better"}
+  ]
+}

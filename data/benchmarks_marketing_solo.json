@@ -1,0 +1,11 @@
+{
+  "version": "2025-10-02",
+  "notes": "Seedwerte für Marketing & Werbung – Solo-Selbstständige. Werte wurden gegenüber der KMU-Referenz um ca. 10 % reduziert, um begrenzte Ressourcen und Prozesse abzubilden. Die digitale Führungsrolle des IKT-Sektors【579060561542318†L480-L485】 dient als Benchmark.",
+  "kpis": [
+    {"name": "digitalisierung", "value": 0.765, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "automatisierung", "value": 0.63, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "compliance", "value": 0.612, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "prozessreife", "value": 0.648, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "innovation", "value": 0.675, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"}
+  ]
+}

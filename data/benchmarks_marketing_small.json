@@ -1,0 +1,11 @@
+{
+  "version": "2025-10-02",
+  "notes": "Seedwerte für Marketing & Werbung – kleines Team (2–10 Mitarbeitende). Werte wurden gegenüber der KMU-Referenz um ca. 5 % reduziert, um geringere Skaleneffekte kleiner Teams abzubilden. Die Digitalisierung im IKT-Sektor ist führend【579060561542318†L480-L485】 und dient als Vergleichsmaßstab.",
+  "kpis": [
+    {"name": "digitalisierung", "value": 0.81, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "automatisierung", "value": 0.665, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "compliance", "value": 0.646, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "prozessreife", "value": 0.684, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"},
+    {"name": "innovation", "value": 0.712, "source": "Schätzung: 5 % unter KMU-Level", "direction": "higher_is_better"}
+  ]
+}

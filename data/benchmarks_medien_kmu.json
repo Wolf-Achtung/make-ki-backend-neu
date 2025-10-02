@@ -1,0 +1,36 @@
+{
+  "version": "2025-10-02",
+  "notes": "Seedwerte für Medien-KMU. Der Digitalisierungsindex für kleine Unternehmen (1-49 MA) liegt laut IW-Digitalisierungsindex 2024 bei 101,7 Punkten【177306825617†L417-L437】.\nDiese Werte werden auf eine 0-1-Skala übertragen.",
+  "kpis": [
+    {
+      "name": "digitalisierung",
+      "value": 0.80,
+      "source": "IW Köln Digitalisierungsindex 2024 (kleine Unternehmen ≈ 101,7 Punkte)【177306825617†L417-L437】",
+      "direction": "higher_is_better"
+    },
+    {
+      "name": "automatisierung",
+      "value": 0.60,
+      "source": "Schätzung basierend auf Branchenstudien und Expert:innenbewertung",
+      "direction": "higher_is_better"
+    },
+    {
+      "name": "compliance",
+      "value": 0.70,
+      "source": "Schätzung basierend auf branchenspezifischem Reifegrad",
+      "direction": "higher_is_better"
+    },
+    {
+      "name": "prozessreife",
+      "value": 0.65,
+      "source": "Schätzung basierend auf einschlägigen Reports",
+      "direction": "higher_is_better"
+    },
+    {
+      "name": "innovation",
+      "value": 0.72,
+      "source": "Schätzung basierend auf Innovationsrankings für Medien-KMU",
+      "direction": "higher_is_better"
+    }
+  ]
+}
