@@ -1,872 +1,733 @@
+# File: gpt_analyze.py
 # -*- coding: utf-8 -*-
 """
-MAKE‑KI Backend – Report Generator (Gold‑Standard+)
+MAKE-KI Backend – Report Generator (Gold‑Standard+)
 
-Dieses Modul erzeugt den vollständigen Payload für den KI‑Status‑Report.  Es
-kombiniert Informationen aus dem Fragebogen (Briefing), berechnet einen
-Business‑Case, lädt branchenspezifische Benchmarks, ruft Live‑Add‑ins (News,
-Tools und Förderprogramme) ab und generiert alle inhaltlichen Sektionen via
-LLM‑Prompts oder heuristische Fallbacks.  Es erfüllt folgende Ziele:
-
-* **Immer LLM‑Sektionen:** Wenn ein gültiger OpenAI‑API‑Key vorhanden ist, werden
-  alle Sektionen (Executive Summary, Business, Persona, Quick Wins, Risks,
-  Recommendations, Roadmap, Praxisbeispiel, Coach, Vision, Gamechanger,
-  Compliance, Förderprogramme, Tools) aus den entsprechenden Prompt‑Dateien
-  generiert.  Fallback‑Heuristiken stellen sicher, dass der Report nie leer
-  bleibt.
-* **Korrekte Business‑Case‑Berechnungen:** Investition und Einsparung werden
-  dynamisch aus dem Fragebogen abgeleitet.  Der ROI (Jahr 1), Payback in
-  Monaten und der kumulierte Gewinn über drei Jahre werden transparent
-  berechnet.  Zur Vereinfachung wird von einer Effizienzsteigerung von 40 %
-  ausgegangen; der jährliche Nutzen entspricht dem Vierfachen der Investition
-  (ROI ≈ 300 %).
-* **Realistische KPI‑Berechnung:** Digitalisierungs‑ und Automatisierungsgrad
-  werden aus den Textfeldern des Fragebogens abgeleitet und auf eine Skala
-  von 0–100 normalisiert.  Daraus werden Readiness‑ und Effizienzscores
-  berechnet.  Benchmarks werden aus einer branchenspezifischen JSON‑Datei
-  geladen und dienen dem Vergleich.
-* **Umfangreiche Live‑Add‑ins:** Die Tavily‑Suche wird genutzt, um aktuelle
-  Meldungen, Tools und EU‑Förderungen aus zuverlässigen Quellen zu sammeln.
-  Förderprogramme aus der CSV werden nach Bundesland gefiltert und mit
-  Quoten und Deadlines dargestellt.  Die Live‑Abschnitte enthalten immer
-  einen Zeitstempel (Stand: heute).
-* **Compliance‑Playbook und Governance:** Ein statischer Abschnitt mit klaren
-  Regeln (Go‑Live‑Gate, Minimal Viable Compliance, Human‑in‑the‑Loop,
-  Kill‑Switch, Re‑Trigger, Rechtslandkarte, AI‑Literacy, Monitoring).
-* **PEP8‑Konformität, Typannotationen, Logging:** Alle Funktionen sind
-  dokumentiert, typisiert und verfügen über robustes Fehlerhandling.  Das
-  Logging ist strukturiert und informative Warnungen helfen bei der
-  Fehlersuche.
-
-Diese Datei ersetzt ältere Implementierungen von ``gpt_analyze.py``.  Sie
-ist kompatibel mit den vorhandenen Templates und wird vom FastAPI‑Endpoint
-``/briefing_async`` importiert.
+- LLM‑Sektionen (Executive Summary, Quick Wins, Roadmap, Risiken) + Fallback
+- EU‑Live‑Quellen über websearch_utils (CORDIS/OpenAIRE/F&T) mit Cache/Throttle
+- QC‑Hook (quality_control.py) – optional, fehlertolerant
+- Kompatible Public API: analyze_briefing(..., lang=...), analyze_briefing_enhanced(...)
 """
 
 from __future__ import annotations
 
-import csv
-import dataclasses
 import json
 import logging
 import os
 import re
+import time
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
-
-import httpx
-
-# -----------------------------------------------------------------------------
-# Optionale lokale Module (robuste Fallbacks)
-# -----------------------------------------------------------------------------
-try:
-    # Die Tavily‑Funktionen können je nach Version unterschiedlich heißen.  Wir
-    # versuchen ``tavily_search`` direkt zu importieren, andernfalls wird ein
-    # Fallback definiert.
-    from websearch_utils import tavily_search, days_to_tavily_range  # type: ignore
-except Exception:  # pragma: no cover
-    def days_to_tavily_range(days: int) -> str:
-        if days <= 7:
-            return "day"
-        if days <= 30:
-            return "week"
-        if days <= 90:
-            return "month"
-        return "year"
-
-    def tavily_search(
-        query: str,
-        days: int = 30,
-        include_domains: Optional[List[str]] = None,
-        max_results: int = 8,
-    ) -> List[Dict[str, str]]:
-        logging.getLogger("gpt_analyze").warning(
-            "Tavily search fallback verwendet – es werden keine Ergebnisse geliefert"
-        )
-        return []
-
-# EU‑Connectoren sind optional und dürfen niemals das Rendering blockieren.  Bei
-# fehlender Importmöglichkeit werden leere Listen zurückgegeben.
-try:  # pragma: no cover
-    from eu_connectors import (
-        openaire_search_projects,
-        cordis_search_projects,
-        funding_tenders_search,
-    )  # type: ignore
-except Exception:  # pragma: no cover
-    def openaire_search_projects(*args, **kwargs) -> List[Dict[str, str]]:  # type: ignore
-        return []
-
-    def cordis_search_projects(*args, **kwargs) -> List[Dict[str, str]]:  # type: ignore
-        return []
-
-    def funding_tenders_search(*args, **kwargs) -> List[Dict[str, str]]:  # type: ignore
-        return []
-
-# -----------------------------------------------------------------------------
-# Logging
-# -----------------------------------------------------------------------------
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(
-    level=LOG_LEVEL,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-)
-logger = logging.getLogger("gpt_analyze")
-
-# -----------------------------------------------------------------------------
-# Konfiguration
-# -----------------------------------------------------------------------------
-DATA_DIR = Path(os.getenv("DATA_DIR", "data"))
-PROMPTS_DIR = Path(os.getenv("PROMPTS_DIR", "prompts"))
-TEMPLATE_DIR = Path(os.getenv("TEMPLATE_DIR", "templates"))
-DEFAULT_LANG = os.getenv("DEFAULT_LANG", "de")
-
-# Template-Dateien (für HTML/PDF-Rendering)
-TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
-TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
-
-SEARCH_DAYS = int(os.getenv("SEARCH_DAYS", "30"))
-SEARCH_DAYS_TOOLS = int(os.getenv("SEARCH_DAYS_TOOLS", str(max(30, SEARCH_DAYS))))
-SEARCH_DAYS_FUNDING = int(os.getenv("SEARCH_DAYS_FUNDING", str(max(60, SEARCH_DAYS))))
-SEARCH_MAX_RESULTS = int(os.getenv("SEARCH_MAX_RESULTS", "8"))
-
-# LLM‑Konfiguration
-ENABLE_LLM_SECTIONS = os.getenv("ENABLE_LLM_SECTIONS", "true").lower() != "false"
-GPT_MODEL_NAME = os.getenv("GPT_MODEL_NAME", "gpt-4o-mini")
-OPENAI_FALLBACK_MODEL = os.getenv("OPENAI_FALLBACK_MODEL", "gpt-4o")
-GPT_TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", "0.25"))
-
-# Bundesland → Domain‑Whitelist (reduziert SEO‑Spam)
-DOMAIN_WHITELIST_BY = [
-    "bayern.de",
-    "stmwi.bayern.de",
-    "l-bank.de",
-    "ihk.de",
-    "europa.eu",
-    "eur-lex.europa.eu",
-    "bmwk.de",
-]
-DOMAIN_WHITELIST_BE = ["berlin.de", "ibb.de", "ihk.de", "europa.eu", "bmwk.de"]
-DOMAIN_WHITELIST_BW = ["baden-wuerttemberg.de", "l-bank.de", "ihk.de", "europa.eu", "bmwk.de"]
-BUNDESLAND_DOMAIN_WHITELIST: Dict[str, List[str]] = {
-    "by": DOMAIN_WHITELIST_BY,
-    "be": DOMAIN_WHITELIST_BE,
-    "bw": DOMAIN_WHITELIST_BW,
-}
-
-# -----------------------------------------------------------------------------
-# Datenstrukturen
-# -----------------------------------------------------------------------------
-@dataclasses.dataclass
-class Briefing:
-    """Strukturierte Darstellung des Fragebogens.
-
-    :param branche: Branchenbezeichnung (z. B. "Medien")
-    :param unternehmensgroesse: Größe (z. B. "kmu")
-    :param bundesland: Bundesland (z. B. "BY")
-    :param hauptleistung: Hauptleistung bzw. Dienstleistungsbereich
-    :param jahresumsatz: Optionaler Jahresumsatz (zur ROI‑Feinabstimmung)
-    :param lang: Sprache ("de" oder "en")
-    :param investitionsbudget: Budget im Fragebogen (Bucket)
-    :param digitalisierungsgrad: Selbstangabe ("0-3", "3-7", "7-10" oder Zahl)
-    :param automatisierungsgrad: Selbstangabe (analog)
-    :param ai_roadmap: Optionales Textfeld zur geplanten KI‑Nutzung
-    """
-
-    branche: str
-    unternehmensgroesse: str
-    bundesland: str
-    hauptleistung: str
-    jahresumsatz: str = ""
-    lang: str = DEFAULT_LANG
-    investitionsbudget: str = ""
-    digitalisierungsgrad: Optional[str] = None
-    automatisierungsgrad: Optional[str] = None
-    ai_roadmap: Optional[str] = None
-
-    @staticmethod
-    def from_json(path: Path) -> "Briefing":
-        """Liest einen JSON‑Briefing und erzeugt ein ``Briefing``‑Objekt."""
-        data = json.loads(path.read_text(encoding="utf-8"))
-        return Briefing(
-            branche=data.get("branche", ""),
-            unternehmensgroesse=data.get("unternehmensgroesse", ""),
-            bundesland=data.get("bundesland", ""),
-            hauptleistung=data.get("hauptleistung", ""),
-            jahresumsatz=data.get("jahresumsatz", ""),
-            lang=data.get("lang", DEFAULT_LANG),
-            investitionsbudget=data.get("investitionsbudget", ""),
-            digitalisierungsgrad=data.get("digitalisierungsgrad"),
-            automatisierungsgrad=data.get("automatisierungsgrad"),
-            ai_roadmap=data.get("ai_roadmap"),
-        )
-
-
-@dataclasses.dataclass
-class BusinessCase:
-    """Repräsentiert die betriebswirtschaftliche Analyse einer KI‑Einführung."""
-
-    invest_eur: float
-    annual_saving_eur: float
-    efficiency_gain_frac: float = 0.40  # 40 %
-    base_hours_per_day: float = 8.0
-
-    @property
-    def roi_year1_pct(self) -> int:
-        """Return on Investment nach Jahr 1 in Prozent."""
-        if self.invest_eur <= 0:
-            return 0
-        return round(((self.annual_saving_eur - self.invest_eur) / self.invest_eur) * 100)
-
-    @property
-    def payback_months(self) -> float:
-        """Monate bis zur Amortisation."""
-        if self.annual_saving_eur <= 0:
-            return 0.0
-        monthly = self.annual_saving_eur / 12.0
-        if monthly <= 0:
-            return 0.0
-        return round(self.invest_eur / monthly, 1)
-
-    @property
-    def three_year_profit(self) -> int:
-        """Kumuliertes Ergebnis nach drei Jahren (Ersparnis × 3 – Investition)."""
-        return int(round(self.annual_saving_eur * 3 - self.invest_eur))
-
-    @property
-    def time_saved_hours_per_month(self) -> int:
-        """Durch Effizienzgewinn eingesparte Stunden pro Monat pro FTE."""
-        return int(round(self.efficiency_gain_frac * self.base_hours_per_day * 20))
-
-
-# -----------------------------------------------------------------------------
-# Utility‑Funktionen
-# -----------------------------------------------------------------------------
-def now_iso() -> str:
-    """Gibt das aktuelle Datum im ISO‑Format zurück (YYYY‑MM‑DD)."""
-    return datetime.now().date().isoformat()
-
-
-def load_csv(path: Path) -> List[Dict[str, str]]:
-    """Lädt eine CSV‑Datei als Liste von Dictionarys oder gibt eine leere Liste zurück."""
-    if not path.exists():
-        return []
-    with path.open("r", encoding="utf-8") as handle:
-        return list(csv.DictReader(handle))
-
-
-def load_json(path: Path, default: Any = None) -> Any:
-    """Lädt JSON‑Daten aus einer Datei und gibt im Fehlerfall einen Default zurück."""
-    if not path.exists():
-        return default
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return default
-
-
-def map_region_code(bundesland: str) -> str:
-    """Mappt ein Bundesland auf einen zweibuchstabigen Region‑Code."""
-    m = {
-        "by": "BY",
-        "be": "BE",
-        "bw": "BW",
-        "bundesweit": "DE",
-        "deutschland": "DE",
-    }
-    return m.get((bundesland or "").lower(), "DE")
-
-
-def invest_from_bucket(bucket: str) -> float:
-    """Leitet aus dem investitionsbudget (Bucket) einen Mittelwert ab."""
-    # Die Buckets entsprechen den Formularoptionen; Mittelwerte definieren den
-    # Durchschnitt der jeweiligen Spannbreite.
-    mapping = {
-        "unter_1000": 500.0,
-        "1000_2000": 1500.0,
-        "2000_10000": 6000.0,
-        "ueber_10000": 12000.0,
-    }
-    return mapping.get((bucket or "").lower(), 6000.0)
-
-
-def parse_grade(value: Optional[str]) -> float:
-    """Wandelt einen Digitalisierungs‑ oder Automatisierungsgrad in einen Prozentwert um.
-
-    Die Eingaben im Briefing können z. B. "0-3", "3-7", "7-10" oder eine
-    einzelne Zahl (z. B. "8") sein.  Der Rückgabewert liegt zwischen 0 und 100.
-    """
-    if value is None:
-        return 0.0
-    value = value.strip()
-    # Bereichsangaben (z. B. "0-3")
-    m_range = re.match(r"^(\d+)[^\d]?(\d+)$", value)
-    if m_range:
-        start = float(m_range.group(1))
-        end = float(m_range.group(2))
-        return (start + end) / 2.0 * 10.0  # mittlerer Wert, in Prozent
-    # Einzelwerte (z. B. "8")
-    try:
-        num = float(value)
-        # Werte können schon als 0–100 oder 0–10 angegeben sein
-        return num if num > 10.0 else num * 10.0
-    except Exception:
-        return 0.0
-
-
-def compute_kpi_scores(b: Briefing, benchmarks: Dict[str, float]) -> Dict[str, float]:
-    """Berechnet KPI‑Scores aus dem Briefing und Benchmarks.
-
-    :return: Dictionary mit ``score_percent`` (Readiness), ``kpi_efficiency``,
-        ``kpi_compliance``, ``kpi_innovation``.
-    """
-    digi = parse_grade(b.digitalisierungsgrad)
-    auto = parse_grade(b.automatisierungsgrad)
-    # Readiness Score: Mittelwert beider Grade
-    readiness = (digi + auto) / 2.0
-    # Effizienzpotenzial: Automatisierungsgrad + optionaler Faktor aus der AI‑Roadmap
-    eff = auto
-    # Compliance‑Reife: Benchmark‑Wert * 100; falls kein Benchmark: 70
-    comp = benchmarks.get("compliance", 0.7) * 100.0
-    # Innovationskraft: Benchmark‑Wert * 100; falls kein Benchmark: 65
-    innov = benchmarks.get("innovation", 0.65) * 100.0
-    return {
-        "score_percent": max(0.0, min(100.0, readiness)),
-        "kpi_efficiency": max(0.0, min(100.0, eff)),
-        "kpi_compliance": max(0.0, min(100.0, comp)),
-        "kpi_innovation": max(0.0, min(100.0, innov)),
-    }
-
-
-def flatten(d: Dict[str, Any], prefix: str = "", sep: str = ".") -> Dict[str, Any]:
-    """Flacht verschachtelte Dictionarys zu einem Key‑Path ab (für Templates)."""
-    out: Dict[str, Any] = {}
-    for k, v in d.items():
-        key = f"{prefix}{sep}{k}" if prefix else k
-        if isinstance(v, dict):
-            out.update(flatten(v, key, sep))
-        else:
-            out[key] = v
-    return out
-
-
-def fill_placeholders(tpl: str, ctx: Dict[str, Any]) -> str:
-    """Ersetzt einfache ``{{var}}``‑Platzhalter durch Werte aus dem Kontext."""
-    for k, v in ctx.items():
-        tpl = tpl.replace("{{" + k + "}}", str(v))
-    return tpl
-
-
-# -----------------------------------------------------------------------------
-# LLM‑Client
-# -----------------------------------------------------------------------------
-class OpenAIChat:
-    """Ein sehr einfacher HTTP‑Client für OpenAI Chat API.
-
-    Da diese Abhängigkeit optional ist, schlägt der Aufruf fehl, wenn kein
-    API‑Key gesetzt ist, und gibt in diesem Fall eine leere Zeichenkette
-    zurück.  Das Modell und die Temperatur können über Umgebungsvariablen
-    konfiguriert werden.
-    """
-
-    def __init__(self, api_key: Optional[str] = None, model: str = GPT_MODEL_NAME):
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")
-        self.model = model
-
-    def chat(self, system: str, user: str, temperature: float = GPT_TEMPERATURE) -> str:
-        if not self.api_key:
-            logger.warning("OPENAI_API_KEY fehlt – LLM‑Aufruf wird übersprungen.")
-            return ""
-        url = "https://api.openai.com/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        body = {
-            "model": self.model,
-            "temperature": max(0.0, min(1.0, float(temperature))),
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-        }
-        try:
-            with httpx.Client(timeout=30.0) as client:
-                resp = client.post(url, headers=headers, json=body)
-                resp.raise_for_status()
-                data = resp.json()
-                return data["choices"][0]["message"]["content"]
-        except Exception as ex:  # pragma: no cover
-            logger.error("OpenAI chat failed (%s)", ex)
-            if OPENAI_FALLBACK_MODEL and OPENAI_FALLBACK_MODEL != self.model:
-                self.model = OPENAI_FALLBACK_MODEL
-                return self.chat(system, user, temperature)
-            return ""
-
-
-# -----------------------------------------------------------------------------
-# Live‑Content (News/Tools/Funding)
-# -----------------------------------------------------------------------------
-def build_queries(b: Briefing) -> Dict[str, Any]:
-    """Erzeugt eine Query‑Map für News, Tools und Funding basierend auf dem Briefing."""
-    size = b.unternehmensgroesse
-    qs_base = f"{b.branche} \"{b.hauptleistung}\" KI Automatisierung {b.bundesland.upper()}"
-    return {
-        "news": [
-            f"{qs_base} KI‑VO DSGVO site:bmwk.de",
-            f"{qs_base} Förderung Deadline",
-            f"{b.branche} KMU KI Best Practice {b.bundesland.upper()}",
-        ],
-        "tools": [
-            f"Tools {b.branche} KI Automatisierung DSGVO DPA {b.bundesland.upper()}",
-            f"Open‑Source KI Automatisierung {b.branche} self‑hosted",
-        ],
-        "funding": [
-            f"Förderung Digitalisierung {b.bundesland.upper()} {b.branche} {size}",
-            f"Förderprogramm KI {b.bundesland.upper()} Deadline {b.branche}",
-        ],
-        "domain_whitelist": BUNDESLAND_DOMAIN_WHITELIST.get((b.bundesland or "").lower(), ["bmwk.de", "europa.eu", "ihk.de"]),
-    }
-
-
-def _cards(items: List[Dict[str, str]], tag: str) -> str:
-    """Formatiert eine Liste von Items als HTML‑Karten."""
-    html: List[str] = []
-    for it in items[:SEARCH_MAX_RESULTS]:
-        title = it.get("title") or it.get("name") or "Unbenannter Eintrag"
-        url = it.get("url") or it.get("link") or "#"
-        date = it.get("published") or it.get("date") or ""
-        snippet = (it.get("snippet") or it.get("summary") or it.get("description") or "").strip()
-        html.append(
-            f'<div class="card"><div class="card-tag">{tag}</div>'
-            f'<div class="card-title"><a href="{url}" target="_blank" rel="noopener">{title}</a></div>'
-            f'<div class="card-meta">{date}</div><div class="card-body">{snippet}</div></div>'
-        )
-    return "\n".join(html)
-
-
-def get_live_news_tools_funding(b: Briefing) -> Dict[str, str]:
-    """Sammelt Live‑Informationen und liefert HTML‑Fragmente zurück."""
-    q = build_queries(b)
-    # Tavily – News & Tools (jeweils mit Domain‑Whitelist)
-    news_hits: List[Dict[str, str]] = []
-    for qn in q["news"]:
-        news_hits += tavily_search(
-            qn,
-            days=max(7, SEARCH_DAYS),
-            include_domains=q["domain_whitelist"],
-            max_results=SEARCH_MAX_RESULTS,
-        )
-    tools_hits: List[Dict[str, str]] = []
-    for qt in q["tools"]:
-        tools_hits += tavily_search(
-            qt,
-            days=max(30, SEARCH_DAYS_TOOLS),
-            include_domains=q["domain_whitelist"],
-            max_results=SEARCH_MAX_RESULTS,
-        )
-    # Förderprogramme – CSV
-    funding_rows = load_csv(DATA_DIR / "foerderprogramme.csv")
-    region_code = map_region_code(b.bundesland)
-    funding_rows = [r for r in funding_rows if r.get("Region_Code", "DE") in (region_code, "DE")]
-    funding_cards: List[str] = []
-    for r in funding_rows[: SEARCH_MAX_RESULTS]:
-        title = r.get("Programmname", "Programm")
-        url = r.get("Website", "#")
-        quote = r.get("Foerderquote_prozent", "")
-        if isinstance(quote, str) and quote.endswith("%"):
-            quote = quote[:-1]
-        deadline = r.get("Deadline", "rolling")
-        status = r.get("Status", "offen")
-        funding_cards.append(
-            f'<div class="card"><div class="card-tag">Förderung</div>'
-            f'<div class="card-title"><a href="{url}" target="_blank" rel="noopener">{title}</a></div>'
-            f'<div class="card-meta">Quote: {quote}% · Deadline: {deadline} · Status: {status}</div></div>'
-        )
-    # EU‑Calls via Funding & Tenders
-    eu_calls: List[Dict[str, str]] = []
-    try:  # pragma: no cover
-        eu_calls = funding_tenders_search(
-            f'AI OR "artificial intelligence" {b.branche}',
-            from_days=max(60, SEARCH_DAYS_FUNDING),
-            max_results=SEARCH_MAX_RESULTS,
-        )
-    except Exception as e:
-        logger.warning("EU funding_tenders_search failed: %s", e)
-    return {
-        "news_html": f'<section><h3>Aktuelle Meldungen (Stand: {now_iso()})</h3>{_cards(news_hits, "News")}</section>',
-        "tools_rich_html": f'<section><h3>Neue Tools & Releases (Stand: {now_iso()})</h3>{_cards(tools_hits, "Tool/Release")}</section>',
-        "funding_rich_html": f'<section><h3>Förderprogramme (Stand: {now_iso()})</h3>{"".join(funding_cards)}</section>',
-        "funding_deadlines_html": f'<section><h3>EU‑Calls (letzte 60 Tage)</h3>{_cards(eu_calls, "EU‑Call")}</section>',
-    }
-
-
-# -----------------------------------------------------------------------------
-# Compliance‑Playbook
-# -----------------------------------------------------------------------------
-def render_compliance_playbook() -> str:
-    """Gibt das Compliance‑Playbook als HTML‑String zurück."""
-    return f"""
-<section>
-  <h3>Compliance‑Playbook (Go‑Live‑Gate & Betrieb)</h3>
-  <ol>
-    <li><strong>Go‑Live‑Gate & Minimal Viable Compliance (MVC):</strong> Vor der
-        Produktivsetzung Nachweise zu Risikoklasse, DPA/AVV,
-        Rechtekette, Tests (Performance/Drift/Bias) sowie klare Rollen und
-        Verantwortlichkeiten.</li>
-    <li><strong>Human‑in‑the‑Loop & Kill‑Switch:</strong> Kritische Entscheidungen
-        bleiben beim Menschen; ein dokumentierter Not‑Aus sorgt für eine
-        sichere Rückfallebene.</li>
-    <li><strong>Input‑/Output‑Gates:</strong> Rechtekette & Datenbasis (Input)
-        prüfen; Ausgaben auf Halluzinationen/IP/DSGVO/Policy (Output)
-        überprüfen; beide Prüfungen sind Prozess‑Gateways.</li>
-    <li><strong>Re‑Klassifizierungs‑Trigger:</strong> Fine‑Tuning, Zweck‑ oder
-        Markenwechsel, autonome Agenten → Pflichten und Dokumentationspflichten
-        neu bewerten.</li>
-    <li><strong>Rechtslandkarte:</strong> Neben KI‑VO auch Produkt‑ und
-        Sektorrecht, Cyber Resilience Act, Digital Services Act und Data
-        Act integrieren; Verantwortliche & Nachweise benennen.</li>
-    <li><strong>AI‑Literacy:</strong> Pflichttrainings mit jährlicher
-        Auffrischung; Zugriffsrechte werden an den Schulungsstand gekoppelt.</li>
-    <li><strong>Monitoring & Re‑Tests:</strong> Technologieradar;
-        periodische Re‑Tests (Performance/Drift/Bias); Ergebnisse fließen in
-        Standards und Modelle zurück.</li>
-  </ol>
-  <p class="stand">Stand: {now_iso()}</p>
-</section>"""
-
-
-# -----------------------------------------------------------------------------
-# Benchmarks
-# -----------------------------------------------------------------------------
-DEFAULT_BENCHMARKS_BERATUNG = {
-    "digitalisierung": 7.5,
-    "automatisierung": 0.65,
-    "compliance": 0.73,
-    "prozessreife": 0.68,
-    "innovation": 0.60,
-}
-
-
-def load_benchmarks(branche: str, size: str = "kmu") -> Dict[str, float]:
-    """Lädt Benchmarks für eine Branche und Unternehmensgröße.
-
-    Es wird nach ``benchmarks_<branche>_<size>.json`` gesucht, wobei
-    ``<size>`` ``solo``, ``small`` oder ``kmu`` sein kann.  Existiert diese
-    Datei nicht, versucht die Funktion einen Katalog zu nutzen; schließlich
-    erfolgt ein Fallback auf "Beratung".  Wird nichts gefunden, werden
-    Default‑Werte zurückgegeben.  Die Rückgabewerte sind ungefiltert
-    (0–1‑Skala), d. h. sie sollten später ggf. zu Prozenten skaliert werden.
-    """
-    # Formatieren des Dateinamens
-    # Zuerst den Rohwert auf Kleinbuchstaben trimmen
-    branch_key_raw = (branche or "").strip().lower()
-    # Ersetze alle nicht alphanumerischen Zeichen (inkl. Leerzeichen, &,
-    # Schrägstriche usw.) durch Unterstriche.  Dadurch können Branchennamen
-    # wie "Finanzen & Versicherungen" oder "IT & Software" korrekt auf
-    # Datei-Namen abgebildet werden.
-    branch_key = re.sub(r"[^a-z0-9]+", "_", branch_key_raw)
-    # Reduziere aufeinanderfolgende Unterstriche auf einen einzelnen und
-    # entferne führende oder nachgestellte Unterstriche.
-    branch_key = re.sub(r"_+", "_", branch_key).strip("_")
-    size_key = (size or "kmu").strip().lower()
-    # Normiere größe: solo/freiberuflich → solo; kleines team → small
-    if re.search(r"solo|freiberuf", size_key):
-        size_key = "solo"
-    elif re.search(r"2\-?10|kleines", size_key):
-        size_key = "small"
-    else:
-        size_key = "kmu"
-    specific = DATA_DIR / f"benchmarks_{branch_key}_{size_key}.json"
-    if specific.exists():
-        try:
-            data = json.loads(specific.read_text(encoding="utf-8"))
-            if isinstance(data, dict):
-                if "kpis" in data and isinstance(data["kpis"], list):
-                    out: Dict[str, float] = {}
-                    for kpi in data["kpis"]:
-                        name = (kpi.get("name") or "").lower()
-                        val = kpi.get("value")
-                        if name and isinstance(val, (int, float)):
-                            out[name] = float(val)
-                    return out
-                return {k: float(v) for k, v in data.items() if isinstance(v, (int, float))}
-        except Exception:
-            pass
-    # Katalog (gruppiert nach Branche; Größe wird ignoriert)
-    catalog = load_json(DATA_DIR / "benchmarks_catalog.json", default=None)
-    if isinstance(catalog, dict):
-        if branch_key in catalog and isinstance(catalog[branch_key], dict):
-            return {k: float(v) for k, v in catalog[branch_key].items() if isinstance(v, (int, float))}
-    # Fallback auf Beratung (größe berücksichtigen)
-    fallback_file = DATA_DIR / f"benchmarks_beratung_{size_key}.json"
-    fb = load_json(fallback_file, default=None)
-    if isinstance(fb, dict):
-        if "kpis" in fb and isinstance(fb["kpis"], list):
-            out_f: Dict[str, float] = {}
-            for kpi in fb["kpis"]:
-                name = (kpi.get("name") or "").lower()
-                val = kpi.get("value")
-                if name and isinstance(val, (int, float)):
-                    out_f[name] = float(val)
-            return out_f
-        return {k: float(v) for k, v in fb.items() if isinstance(v, (int, float))}
-    # Letzter Fallback
-    return DEFAULT_BENCHMARKS_BERATUNG
-
-
-# -----------------------------------------------------------------------------
-# Prompt‑Engine
-# -----------------------------------------------------------------------------
-SECTION_FILES = [
-    "executive_summary",
-    "business",
-    "persona",
-    "quick_wins",
-    "risks",
-    "recommendations",
-    "roadmap",
-    "praxisbeispiel",
-    "coach",
-    "vision",
-    "gamechanger",
-    "compliance",
-    "foerderprogramme",
-    "tools",
-]
-
-SYSTEM_PROMPT = (
-    "You are a senior management consultant & AI governance expert. "
-    "Write concise, evidence-based, implementation-ready content. "
-    "Be motivating but never salesy. Use clear German if lang=de, otherwise clear English. "
-    "Use only the given context; if unsure, say so. Keep tables narrow; include explicit source links. "
-    "Always include an 'Letzte Aktualisierung' line with ISO date."
-)
-
-
-def render_section_text(section: str, lang: str, ctx: Dict[str, Any], llm: OpenAIChat) -> str:
-    """Lädt eine Promptdatei und generiert den Abschnittstext via LLM."""
-    prompt_file = PROMPTS_DIR / f"{section}_{lang}.md"
-    # Fallback auf Englisch
-    if not prompt_file.exists():
-        alt = PROMPTS_DIR / f"{section}_en.md"
-        prompt_file = alt if alt.exists() else prompt_file
-    prompt_raw = prompt_file.read_text(encoding="utf-8") if prompt_file.exists() else ""
-    if not prompt_raw:
-        logger.warning("Promptdatei fehlt: %s", prompt_file)
-        return ""
-    # Platzhalter ersetzen
-    prompt_str = fill_placeholders(prompt_raw, ctx)
-    logger.info("Prompt aufgelöst: %s -> %s", section, prompt_file.name)
-    return llm.chat(SYSTEM_PROMPT, prompt_str, GPT_TEMPERATURE)
-
-
-# -----------------------------------------------------------------------------
-# Hauptfunktion
-# -----------------------------------------------------------------------------
-def generate_report_payload(briefing_json_path: Path) -> Dict[str, Any]:
-    """Erzeugt das vollständige Payload für einen Report.
-
-    Dieser Entry‑Point wird vom FastAPI‑Controller aufgerufen.  Er verarbeitet
-    das Briefing, berechnet Business‑Case und KPI‑Scores, lädt Benchmarks,
-    ruft Live‑Add‑ins ab, generiert LLM‑Sektionen (wenn aktiviert) und gibt
-    ein strukturiertes Dictionary zurück.  Dieses Dictionary kann von der
-    ``postprocess_report.py`` oder einem Jinja‑Template gerendert werden.
-    """
-    # Briefing laden
-    b = Briefing.from_json(briefing_json_path)
-    logger.info("Briefing geladen: %s", b)
-
-    # Investition ermitteln & jährliche Einsparung berechnen
-    invest = invest_from_bucket(b.investitionsbudget)
-    annual_saving = invest * 4.0  # konservativer ROI‑Faktor (4× Investition)
-    bc = BusinessCase(invest_eur=invest, annual_saving_eur=annual_saving, efficiency_gain_frac=0.40)
-
-    # Benchmarks laden (abhängig von Branche und Unternehmensgröße)
-    bm = load_benchmarks(b.branche, b.unternehmensgroesse)
-    logger.info("Benchmarks geladen: %s", bm)
-
-    # KPI‑Scores berechnen
-    kpi_scores = compute_kpi_scores(b, bm)
-
-    # Live‑Add‑ins laden
-    live = get_live_news_tools_funding(b)
-    logger.info("Live‑Add‑ins gesammelt: %s", list(live.keys()))
-
-    # Business Case JSON (für Prompts)
-    business_case_json = {
-        "Investition": f"{bc.invest_eur:.0f}",
-        "Einsparung_Jahr_1": f"{bc.annual_saving_eur:.0f}",
-        "ROI_Jahr_1": f"{bc.roi_year1_pct}%",
-        "Payback": f"{bc.payback_months:.1f} Monate",
-        "Gewinn_3_Jahre": f"{bc.three_year_profit}",
-        "Zeitersparnis_Stunden_Monat": f"{bc.time_saved_hours_per_month}",
-    }
-
-    # Benchmarks JSON (für Prompts)
-    benchmarks_json = {
-        "digitalisierung": bm.get("digitalisierung", 0),
-        "automatisierung": bm.get("automatisierung", 0),
-        "compliance": bm.get("compliance", 0),
-        "prozessreife": bm.get("prozessreife", 0),
-        "innovation": bm.get("innovation", 0),
-    }
-
-    # Kontext für Prompt‑Placeholders
-    # Um potenzielle Probleme mit f‑Strings und verschachtelten Anführungszeichen zu vermeiden, werden
-    # die KPI‑Werte vorab in Variablen gespeichert.  Dadurch wird ein Syntaxfehler wie
-    # "unmatched '['" im f‑String vermieden.
-    score_percent_val = kpi_scores.get("score_percent", 0.0)
-    kpi_efficiency_val = kpi_scores.get("kpi_efficiency", 0.0)
-    kpi_compliance_val = kpi_scores.get("kpi_compliance", 0.0)
-    kpi_innovation_val = kpi_scores.get("kpi_innovation", 0.0)
-
-    ctx = {
-        "branche": b.branche,
-        "unternehmensgroesse": b.unternehmensgroesse,
-        "bundesland": b.bundesland,
-        "hauptleistung": b.hauptleistung,
-        "invest_eur": f"{bc.invest_eur:.0f}",
-        "annual_saving_eur": f"{bc.annual_saving_eur:.0f}",
-        "roi_year1_pct": f"{bc.roi_year1_pct}",
-        "payback_months": f"{bc.payback_months:.1f}",
-        "three_year_profit": f"{bc.three_year_profit}",
-        "time_saved_hours_per_month": f"{bc.time_saved_hours_per_month}",
-        # KPI-Werte aus Variablen, um Probleme mit Anführungszeichen in f-Strings zu vermeiden
-        "score_percent": f"{score_percent_val:.1f}",
-        "kpi_efficiency": f"{kpi_efficiency_val:.1f}",
-        "kpi_compliance": f"{kpi_compliance_val:.1f}",
-        "kpi_innovation": f"{kpi_innovation_val:.1f}",
-        "business_case_json": json.dumps(business_case_json, ensure_ascii=False),
-        "benchmarks_json": json.dumps(benchmarks_json, ensure_ascii=False),
-        "date": now_iso(),
-        "NEWS_HTML": live.get("news_html", "") + live.get("tools_rich_html", ""),
-    }
-
-    # LLM‑Client initialisieren
-    llm = OpenAIChat()
-
-    # Sektionen generieren (LLM oder Fallback)
-    sections: Dict[str, str] = {}
-    if ENABLE_LLM_SECTIONS:
-        for sec in SECTION_FILES:
-            try:
-                sections[sec] = render_section_text(sec, b.lang, ctx, llm)
-            except Exception as e:
-                logger.error("Fehler beim Rendern der Sektion %s: %s", sec, e)
-                sections[sec] = ""
-    else:
-        # Minimaler Fallback: leere Sektionen
-        sections = {sec: "" for sec in SECTION_FILES}
-
-    # Farbpalette (wird von Templates verwendet)
-    palette = {
-        "primary_700": "#0B5FFF",
-        "primary_500": "#1F7BFF",
-        "primary_100": "#E8F0FF",
-        "accent_700": "#D9480F",
-        "accent_500": "#FB8C00",
-        "accent_100": "#FFE8D6",
-        "ok": "#12B886",
-        "warn": "#F59F00",
-        "err": "#E03131",
-        "text": "#0F172A",
-    }
-
-    payload: Dict[str, Any] = {
-        "meta": {
-            "title": "Mehrwert im Wettbewerb durch KI",
-            "subtitle": f"Status‑Report für {b.branche} (KMU)",
-            "created_at": now_iso(),
-            "last_updated": now_iso(),
-            "lang": b.lang,
-            "branche": b.branche,
-            "unternehmensgroesse": b.unternehmensgroesse,
-            "bundesland": b.bundesland,
-            "hauptleistung": b.hauptleistung,
-        },
-        "business_case": dataclasses.asdict(bc),
-        "benchmarks": bm,
-        "kpi_scores": kpi_scores,
-        "sections": sections,
-        "live_addins": live,
-        "compliance_playbook_html": render_compliance_playbook(),
-        "palette": palette,
-        # Kontextobjekte (optional für Post‑Processing oder Qualitätssicherung)
-        "business_case_json": business_case_json,
-        "benchmarks_json": benchmarks_json,
-    }
-    logger.info("Payload erstellt (Sektionen: %s)", list(sections.keys()))
-    return payload
-
-
-# -----------------------------------------------------------------------------
-# Kompatibilitätsfunktionen für das FastAPI‑Backend
-#
-# Einige Versionen des Backends erwarten Funktionen ``analyze_briefing`` und
-# ``analyze_briefing_enhanced`` in diesem Modul.  Diese Funktionen sind
-# hier als Wrapper implementiert.  Sie nutzen intern ``generate_report_payload``
-# und rendern das Ergebnis via Jinja2 in ein HTML oder liefern das
-# strukturierte Payload zurück.
+from typing import Any, Dict, Optional, Tuple
 
 try:
     from jinja2 import Environment, FileSystemLoader, select_autoescape  # type: ignore
 except Exception:  # pragma: no cover
     Environment = None  # type: ignore
 
+# -----------------------------------------------------------------------------
+# ENV & Logging
+# -----------------------------------------------------------------------------
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = Path(os.getenv("DATA_DIR", str(BASE_DIR / "data")))
+PROMPTS_DIR = Path(os.getenv("PROMPTS_DIR", str(BASE_DIR / "prompts")))
+TEMPLATE_DIR = Path(os.getenv("TEMPLATE_DIR", str(BASE_DIR / "templates")))
+TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
+TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
 
-def analyze_briefing(briefing_json_path: str) -> str:
-    """
-    Kompatibilitätsfunktion: generiert einen vollständigen Report (HTML) aus
-    einem Briefing‑JSON‑Pfad.  Wenn Jinja2 verfügbar ist und das Template
-    gefunden wird, wird das Report‑Payload in das entsprechende HTML
-    gerendert.  Andernfalls wird ein rudimentäres HTML ausgegeben.
+DEFAULT_LANG = os.getenv("DEFAULT_LANG", "de")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+ENABLE_LLM_SECTIONS = os.getenv("ENABLE_LLM_SECTIONS", "true").lower() == "true"
+OFFICIAL_API_ENABLED = os.getenv("OFFICIAL_API_ENABLED", "false").lower() == "true"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+EXEC_SUMMARY_MODEL = os.getenv("EXEC_SUMMARY_MODEL", "gpt-4o")
+OPENAI_FALLBACK_MODEL = os.getenv("OPENAI_FALLBACK_MODEL", "gpt-4o-mini")
+OPENAI_TIMEOUT = int(os.getenv("OPENAI_TIMEOUT", "30"))
+OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", "900"))
+OPENAI_TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", "0.2"))
+LLM_MODE = os.getenv("LLM_MODE", "hybrid").lower()
 
-    :param briefing_json_path: Pfad zur Briefing‑JSON-Datei
-    :return: gerenderte HTML‑Seite oder rudimentärer Platzhalter
-    """
-    path = Path(briefing_json_path)
-    payload = generate_report_payload(path)
-    # Lade Jinja‑Template, falls möglich
-    if Environment is not None and TEMPLATE_DIR and TEMPLATE_DE:
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger("gpt_analyze")
+
+COLOR_PRIMARY = "#0B5FFF"
+COLOR_ACCENT = "#FB8C00"
+
+# -----------------------------------------------------------------------------
+# Modelle
+# -----------------------------------------------------------------------------
+@dataclass
+class Briefing:
+    branche: str
+    unternehmensgroesse: str
+    bundesland: str
+    hauptleistung: str
+    investitionsbudget: Optional[str] = None
+    ziel: Optional[str] = None
+    digitalisierung: Optional[float] = None
+    automatisierung: Optional[float] = None
+    compliance: Optional[float] = None
+    prozessreife: Optional[float] = None
+    innovation: Optional[float] = None
+
+# -----------------------------------------------------------------------------
+# Helpers
+# -----------------------------------------------------------------------------
+def _now_iso() -> str:
+    return datetime.now().strftime("%Y-%m-%d")
+
+def _s(x: Any) -> str:
+    return str(x) if x is not None else ""
+
+def _safe_float(x: Any, default: float = 0.0) -> float:
+    try:
+        return float(x)
+    except Exception:
+        return default
+
+def _sanitize_branch(name: str) -> str:
+    s = (name or "").strip().lower()
+    s = s.replace("&", " und ")
+    s = re.sub(r"[^a-z0-9]+", "_", s)
+    s = re.sub(r"_+", "_", s).strip("_")
+    return s or "allgemein"
+
+def _sanitize_size(size: str) -> str:
+    s = (size or "").strip().lower()
+    if any(k in s for k in ["solo", "einzel", "freelance", "freiberuf"]):
+        return "solo"
+    if any(k in s for k in ["klein", "2", "3", "4", "5", "6", "7", "8", "9", "10"]):
+        return "small"
+    return "kmu"
+
+def _read_json(path: Path) -> Dict[str, Any]:
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+# -----------------------------------------------------------------------------
+# Benchmarks & Business Case
+# -----------------------------------------------------------------------------
+def load_benchmarks(branch: str, size: str) -> Dict[str, float]:
+    b = _sanitize_branch(branch)
+    s = _sanitize_size(size)
+    candidates = [
+        DATA_DIR / f"benchmarks_{b}_{s}.json",
+        DATA_DIR / f"benchmarks_{b}_kmu.json",
+        DATA_DIR / f"benchmarks_medien_kreativwirtschaft_{s}.json",
+        DATA_DIR / f"benchmarks_medien_kmu.json",
+    ]
+    for p in candidates:
+        if p.exists():
+            try:
+                raw = _read_json(p)
+                kpis = {it["name"]: float(it["value"]) for it in raw.get("kpis", []) if "name" in it}
+                if kpis:
+                    logger.info("Benchmarks geladen: %s", p.name)
+                    return kpis
+            except Exception as exc:
+                logger.warning("Benchmarks‑Laden fehlgeschlagen (%s): %s", p, exc)
+    logger.warning("Benchmarks: Fallback‑Defaults aktiv.")
+    return {
+        "digitalisierung": 0.70,
+        "automatisierung": 0.55,
+        "compliance": 0.65,
+        "prozessreife": 0.60,
+        "innovation": 0.60,
+    }
+
+@dataclass
+class BusinessCase:
+    invest_eur: float
+    annual_saving_eur: float
+
+    @property
+    def payback_months(self) -> float:
+        if self.annual_saving_eur <= 0:
+            return 0.0
+        return (self.invest_eur / self.annual_saving_eur) * 12.0
+
+    @property
+    def roi_year1_pct(self) -> float:
+        if self.invest_eur <= 0:
+            return 0.0
+        return (self.annual_saving_eur - self.invest_eur) / self.invest_eur * 100.0
+
+def invest_from_bucket(bucket: Optional[str]) -> float:
+    if not bucket:
+        return 6000.0
+    b = bucket.lower()
+    if "bis" in b and "2000" in b:
+        return 1500.0
+    if "2000" in b and ("10000" in b or "10.000" in b):
+        return 6000.0
+    if "10000" in b and ("50000" in b or "50.000" in b):
+        return 30000.0
+    if "50000" in b or "50.000" in b:
+        return 75000.0
+    return 6000.0
+
+def compute_business_case(briefing: Dict[str, Any], bm: Dict[str, float]) -> BusinessCase:
+    invest = invest_from_bucket(_s(briefing.get("investitionsbudget")))
+    auto = bm.get("automatisierung", 0.55)
+    proc = bm.get("prozessreife", 0.60)
+    scale = 40000.0
+    annual_saving = max(12000.0, (0.6 * auto + 0.4 * proc) * scale)
+    return BusinessCase(invest_eur=invest, annual_saving_eur=annual_saving)
+
+# -----------------------------------------------------------------------------
+# Live‑Suche (Adapter → HTML)
+# -----------------------------------------------------------------------------
+def _items_to_cards(items: list[dict], show_deadline: bool = False) -> str:
+    if not items:
+        return "<p>Keine Einträge gefunden.</p>"
+    out = ["<ul>"]
+    for it in items[:8]:
+        t = (it.get("title") or "").strip()
+        u = (it.get("url") or "").strip()
+        snip = (it.get("summary") or it.get("snippet") or "").strip()
+        date = (it.get("published_at") or it.get("date") or "").strip()
+        tail = f" – <small>{date}</small>" if date else ""
+        out.append(f"<li><a href=\"{u}\">{t}</a>{tail}<br><small>{snip}</small></li>")
+    out.append("</ul>")
+    return "".join(out)
+
+def _funding_to_cards(items: list[dict]) -> str:
+    if not items:
+        return "<p>Keine passenden Förderprogramme gefunden.</p>"
+    head = "<div>"
+    body = []
+    for it in items[:8]:
+        t = (it.get("title") or "").strip()
+        u = (it.get("url") or "").strip()
+        dl = (it.get("deadline") or it.get("date") or "").strip()
+        prog = (it.get("extra", {}) or {}).get("programme") or it.get("program") or ""
+        meta = " · ".join(x for x in [prog, ("Deadline: " + dl) if dl else None] if x)
+        body.append(
+            "<section style='border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin:8px 0;background:#fff'>"
+            f"<div><a href=\"{u}\"><strong>{t}</strong></a></div>"
+            f"<div style='color:#334155;font-size:12px'>{meta}</div>"
+            "</section>"
+        )
+    tail = "</div>"
+    return head + "".join(body) + tail
+
+def query_live_items(briefing: Dict[str, Any], lang: str) -> Tuple[str, str, str]:
+    """Wrapper: ruft websearch_utils.query_live_items auf und rendert HTML."""
+    try:
+        from websearch_utils import query_live_items as _ql  # type: ignore
+    except Exception:
+        logger.info("websearch_utils nicht verfügbar – Live‑Sektionen leer.")
+        return ("", "", "")
+
+    # Robust gegen beide Signaturen
+    try:
+        res = _ql(
+            industry=_s(briefing.get("branche")),
+            size=_s(briefing.get("unternehmensgroesse")),
+            main_service=_s(briefing.get("hauptleistung")),
+            region=_s(briefing.get("bundesland")),
+            days_news=int(os.getenv("SEARCH_DAYS_NEWS", "7")),
+            days_tools=int(os.getenv("SEARCH_DAYS_TOOLS", "30")),
+            days_funding=int(os.getenv("SEARCH_DAYS_FUNDING", "60")),
+            max_results=int(os.getenv("SEARCH_MAX_RESULTS", "8")),
+        )
+    except TypeError:
+        # ältere Form
+        res = _ql(
+            branche=_s(briefing.get("branche")),
+            size=_s(briefing.get("unternehmensgroesse")),
+            leistung=_s(briefing.get("hauptleistung")),
+            bundesland=_s(briefing.get("bundesland")),
+            lang=lang,
+            days_news=int(os.getenv("SEARCH_DAYS_NEWS", "7")),
+            days_tools=int(os.getenv("SEARCH_DAYS_TOOLS", "30")),
+            days_funding=int(os.getenv("SEARCH_DAYS_FUNDING", "60")),
+            max_results=int(os.getenv("SEARCH_MAX_RESULTS", "8")),
+        )
+
+    if isinstance(res, dict):
+        news_html = _items_to_cards(res.get("news", []))
+        tools_html = _items_to_cards(res.get("tools", []))
+        funding_html = _funding_to_cards(res.get("funding", []))
+        return news_html, tools_html, funding_html
+
+    # Fallback: tuple oder unbekannte Form
+    try:
+        a, b, c = res  # type: ignore
+        return str(a), str(b), str(c)
+    except Exception:
+        return ("", "", "")
+
+# -----------------------------------------------------------------------------
+# KPI
+# -----------------------------------------------------------------------------
+def _kpi_from_briefing(briefing: Dict[str, Any]) -> Dict[str, float]:
+    def norm(v: Any) -> float:
+        f = _safe_float(v, -1.0)
+        return f / 10.0 if f >= 0 else -1.0
+    return {
+        "digitalisierung": norm(briefing.get("digitalisierung")),
+        "automatisierung": norm(briefing.get("automatisierung")),
+        "compliance": norm(briefing.get("compliance")),
+        "prozessreife": norm(briefing.get("prozessreife")),
+        "innovation": norm(briefing.get("innovation")),
+    }
+
+def _merge_kpis(raw_kpi: Dict[str, float], bm: Dict[str, float]) -> Dict[str, float]:
+    return {k: (v if v >= 0 else bm.get(k, 0.6)) for k, v in raw_kpi.items()}
+
+# -----------------------------------------------------------------------------
+# Prompts & LLM
+# -----------------------------------------------------------------------------
+DEFAULT_PROMPTS: Dict[str, Dict[str, str]] = {
+    "executive_summary": {
+        "de": (
+            "Du bist Strategy‑Consultant. Erstelle eine prägnante Executive Summary für einen KI‑Status‑Report.\n"
+            "Branche={branche}, Größe={unternehmensgroesse}, Region={bundesland}, Leistung={hauptleistung}.\n"
+            "Kennzahlen: Score={score_percent:.1f}%, ROI Jahr1={roi_year1_pct:.1f}%, Payback={payback_months:.1f} Monate.\n"
+            "3–5 Sätze, aktiv, ohne Floskeln. HTML‑Ausgabe mit <p>…</p>."
+        ),
+        "en": (
+            "You are a strategy consultant. Write a crisp executive summary for an AI status report.\n"
+            "industry={branche}, size={unternehmensgroesse}, region={bundesland}, service={hauptleistung}.\n"
+            "KPIs: score={score_percent:.1f}%, ROI year1={roi_year1_pct:.1f}%, payback={payback_months:.1f} months.\n"
+            "3–5 sentences, active voice. Output HTML with <p>…</p>."
+        ),
+    },
+    "quick_wins": {
+        "de": (
+            "Liste 5 sofort umsetzbare Quick Wins (konkret; Aufwand in Tagen; Nutzen; Owner‑Rolle).\n"
+            "Kontext: Branche={branche}, Größe={unternehmensgroesse}, Leistung={hauptleistung}.\n"
+            "HTML als <ul><li>…</li></ul>."
+        ),
+        "en": (
+            "List 5 actionable quick wins (concrete; effort in days; benefit; owner role).\n"
+            "Context: industry={branche}, size={unternehmensgroesse}, service={hauptleistung}.\n"
+            "HTML as <ul><li>…</li></ul>."
+        ),
+    },
+    "roadmap": {
+        "de": (
+            "Erstelle eine 90‑Tage‑Roadmap (Wochen 1–2, 3–4, 5–8, 9–12) mit Meilensteinen & Deliverables.\n"
+            "HTML als <ol><li>…</li></ol>."
+        ),
+        "en": (
+            "Create a 90‑day roadmap (weeks 1–2, 3–4, 5–8, 9–12) with milestones & deliverables.\n"
+            "HTML as <ol><li>…</li></ol>."
+        ),
+    },
+    "risks": {
+        "de": (
+            "Erstelle eine Top‑5‑Risikomatrix mit Wahrscheinlichkeit, Auswirkung, Mitigation.\n"
+            "Beziehe AI‑VO/DSA/CRA/Data Act, Bias/Drift, Betrieb ein. HTML‑Tabelle."
+        ),
+        "en": (
+            "Create a Top‑5 risk matrix including probability, impact, mitigation.\n"
+            "Include EU AI Act/DSA/CRA/Data Act, bias/drift, ops. HTML table."
+        ),
+    },
+}
+
+def _load_prompt(name: str, lang: str) -> str:
+    candidates = [
+        PROMPTS_DIR / f"{name}_{lang}.md",
+        PROMPTS_DIR / f"{name}_{lang}.txt",
+    ]
+    for p in candidates:
+        if p.exists():
+            try:
+                return p.read_text(encoding="utf-8")
+            except Exception as exc:
+                logger.warning("Prompt‑Datei %s konnte nicht gelesen werden: %s", p, exc)
+    return DEFAULT_PROMPTS.get(name, {}).get(lang, DEFAULT_PROMPTS[name]["de"])
+
+def _format_prompt(tpl: str, ctx: Dict[str, Any]) -> str:
+    class _D(dict):
+        def __missing__(self, key):  # toleriert fehlende Keys
+            return "{" + key + "}"
+    return tpl.format_map(_D(ctx))
+
+def _openai_chat(prompt: str, lang: str) -> str:
+    if not (OFFICIAL_API_ENABLED and OPENAI_API_KEY and LLM_MODE in ("on", "hybrid") and ENABLE_LLM_SECTIONS):
+        raise RuntimeError("LLM disabled by configuration")
+    last_exc: Optional[Exception] = None
+    for attempt in range(2):
         try:
-            env = Environment(
-                loader=FileSystemLoader(str(TEMPLATE_DIR)),
-                autoescape=select_autoescape(["html", "xml"]),
-            )
-            # Sprachenaufschlüsselung
-            lang = payload.get("meta", {}).get("lang", "de")
-            template_name = TEMPLATE_DE if lang.startswith("de") else TEMPLATE_EN
-            template = env.get_template(template_name)
-            # Payload flach rendern; Template erwartet möglicherweise
-            # direkte Schlüssel (z. B. {{ sections.executive_summary }})
-            html = template.render(payload)
-            return html
-        except Exception as e:
-            logger.error("Jinja-Rendering fehlgeschlagen: %s", e)
-    # Fallback: rudimentäres HTML ausgeben
-    return f"<html><body><pre>{json.dumps(payload, indent=2, ensure_ascii=False)}</pre></body></html>"
+            try:
+                from openai import OpenAI  # type: ignore
+                client = OpenAI(api_key=OPENAI_API_KEY, timeout=OPENAI_TIMEOUT)
+                resp = client.chat.completions.create(
+                    model=EXEC_SUMMARY_MODEL,
+                    temperature=float(os.getenv("GPT_TEMPERATURE", "0.2")),
+                    max_tokens=int(os.getenv("OPENAI_MAX_TOKENS", "900")),
+                    messages=[
+                        {"role": "system", "content": "You are a concise, senior AI and strategy consultant."},
+                        {"role": "user", "content": prompt},
+                    ],
+                )
+                return (resp.choices[0].message.content or "").strip()
+            except ImportError:
+                import openai  # type: ignore
+                openai.api_key = OPENAI_API_KEY
+                resp = openai.ChatCompletion.create(
+                    model=EXEC_SUMMARY_MODEL,
+                    temperature=float(os.getenv("GPT_TEMPERATURE", "0.2")),
+                    max_tokens=int(os.getenv("OPENAI_MAX_TOKENS", "900")),
+                    messages=[
+                        {"role": "system", "content": "You are a concise, senior AI and strategy consultant."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    timeout=int(os.getenv("OPENAI_TIMEOUT", "30")),
+                )
+                return (resp["choices"][0]["message"]["content"] or "").strip()
+        except Exception as exc:
+            last_exc = exc
+            logger.warning("OpenAI‑Call fehlgeschlagen (Versuch %s/2): %s", attempt + 1, exc)
+            time.sleep(1.0 + attempt)
+            if attempt == 0:
+                os.environ["EXEC_SUMMARY_MODEL"] = OPENAI_FALLBACK_MODEL
+    raise RuntimeError(f"OpenAI failed: {last_exc}")
 
+def _fallback_exec_summary(ctx: Dict[str, Any]) -> str:
+    return (
+        "<p>Ihre Organisation weist ein hohes KI‑Potenzial auf. "
+        f"Score: <b>{ctx['score_percent']:.1f}%</b>, "
+        f"ROI Jahr 1: <b>{ctx['business_case']['roi_year1_pct']:.1f}%</b>, "
+        f"Payback: <b>{ctx['business_case']['payback_months']:.1f} Monate</b>. "
+        "Priorisieren Sie Automatisierung in Kernprozessen und ein Minimum‑Viable‑Compliance‑Set.</p>"
+    )
 
-def analyze_briefing_enhanced(briefing_json_path: str) -> Dict[str, Any]:
-    """
-    Kompatibilitätsfunktion: liefert das strukturierte Report‑Payload
-    (Dictionary) zurück.  Dieser Wrapper wird von einigen Qualitätstools
-    oder API‑Endpunkten verwendet.
+def _fallback_quick_wins(ctx: Dict[str, Any]) -> str:
+    return (
+        "<ul>"
+        "<li>E‑Mail‑/Angebotsvorlagen automatisieren (2–3 Tage, Owner: Vertrieb/Marketing).</li>"
+        "<li>Meeting‑Zusammenfassungen mit KI (1 Tag, Owner: PMO).</li>"
+        "<li>Interner FAQ‑/Wissensbot (3–5 Tage, Owner: IT).</li>"
+        "<li>Lead‑Qualifizierung halbautomatisieren (3–5 Tage, Owner: Marketing).</li>"
+        "<li>Compliance‑Go‑Live‑Gate & Checkliste (1–2 Tage, Owner: Legal/IT).</li>"
+        "</ul>"
+    )
 
-    :param briefing_json_path: Pfad zur Briefing‑JSON-Datei
-    :return: strukturierter Report‑Payload
-    """
-    path = Path(briefing_json_path)
-    return generate_report_payload(path)
+def _fallback_roadmap(ctx: Dict[str, Any]) -> str:
+    return (
+        "<ol>"
+        "<li>W1–2: Zielbild/KPI‑Baseline, Quick‑Wins priorisieren, MVC‑Checkliste.</li>"
+        "<li>W3–4: Daten/Tools auswählen, Pilot automatisierter Prozess.</li>"
+        "<li>W5–8: Rollout Kern‑Use‑Case, Schulung, Monitoring & Drift‑Checks.</li>"
+        "<li>W9–12: Skalierung, Controlling, ROI‑Review, nächste Welle planen.</li>"
+        "</ol>"
+    )
 
+def _fallback_risks(ctx: Dict[str, Any]) -> str:
+    return (
+        "<table role='table' style='width:100%;border-collapse:collapse'>"
+        "<thead><tr><th>Risiko</th><th>Wahrsch.</th><th>Auswirkung</th><th>Mitigation</th></tr></thead>"
+        "<tbody>"
+        "<tr><td>Compliance (AI‑VO/DSA/CRA)</td><td>mittel</td><td>hoch</td><td>MVC, HiTL, Go‑Live‑Gate</td></tr>"
+        "<tr><td>Bias/Drift</td><td>mittel</td><td>mittel</td><td>Monitoring, Re‑Tests</td></tr>"
+        "<tr><td>Datenleck/DLP</td><td>niedrig</td><td>hoch</td><td>Pseudonymisierung, Rollen</td></tr>"
+        "<tr><td>Vendor‑Lock‑in</td><td>mittel</td><td>mittel</td><td>Multi‑Vendor, Exit‑Pfad</td></tr>"
+        "<tr><td>Change/Adoption</td><td>mittel</td><td>mittel</td><td>Enablement, Leitplanken</td></tr>"
+        "</tbody></table>"
+    )
+
+def _load_prompt(name: str, lang: str) -> str:
+    candidates = [PROMPTS_DIR / f"{name}_{lang}.md", PROMPTS_DIR / f"{name}_{lang}.txt"]
+    for p in candidates:
+        if p.exists():
+            try:
+                return p.read_text(encoding="utf-8")
+            except Exception as exc:
+                logger.warning("Prompt‑Datei %s konnte nicht gelesen werden: %s", p, exc)
+    return {
+        "executive_summary": {"de": _fallback_exec_summary, "en": _fallback_exec_summary},
+        "quick_wins": {"de": _fallback_quick_wins, "en": _fallback_quick_wins},
+        "roadmap": {"de": _fallback_roadmap, "en": _fallback_roadmap},
+        "risks": {"de": _fallback_risks, "en": _fallback_risks},
+    }.get(name, {}).get(lang, "")
+
+def _format_prompt(tpl: str, ctx: Dict[str, Any]) -> str:
+    class _D(dict):
+        def __missing__(self, key):  # toleriert fehlende Keys
+            return "{" + key + "}"
+    return tpl.format_map(_D(ctx))
+
+def _gen_llm_sections(context: Dict[str, Any], lang: str) -> Dict[str, str]:
+    small = {
+        "branche": context["briefing"]["branche"],
+        "unternehmensgroesse": context["briefing"]["unternehmensgroesse"],
+        "bundesland": context["briefing"]["bundesland"],
+        "hauptleistung": context["briefing"]["hauptleistung"],
+        "score_percent": context["score_percent"],
+        "roi_year1_pct": context["business_case"]["roi_year1_pct"],
+        "payback_months": context["business_case"]["payback_months"],
+    }
+    sections: Dict[str, str] = {}
+    for key, fb in [
+        ("executive_summary", _fallback_exec_summary),
+        ("quick_wins", _fallback_quick_wins),
+        ("roadmap", _fallback_roadmap),
+        ("risks", _fallback_risks),
+    ]:
+        try:
+            tpl = _load_prompt(key, lang)
+            if callable(tpl):
+                sections[key] = tpl(context)  # eingebauter Fallback
+                continue
+            prompt = _format_prompt(tpl, small)
+            sections[key] = _openai_chat(prompt, lang=lang)
+        except Exception as exc:
+            logger.info("LLM‑Sektion %s – Fallback (%s)", key, exc)
+            sections[key] = fb(context)
+    return sections
+
+# -----------------------------------------------------------------------------
+# Kontext & QC
+# -----------------------------------------------------------------------------
+def _kpi_from_briefing(briefing: Dict[str, Any]) -> Dict[str, float]:
+    def norm(v: Any) -> float:
+        f = _safe_float(v, -1.0)
+        return f / 10.0 if f >= 0 else -1.0
+    return {
+        "digitalisierung": norm(briefing.get("digitalisierung")),
+        "automatisierung": norm(briefing.get("automatisierung")),
+        "compliance": norm(briefing.get("compliance")),
+        "prozessreife": norm(briefing.get("prozessreife")),
+        "innovation": norm(briefing.get("innovation")),
+    }
+
+def _merge_kpis(raw_kpi: Dict[str, float], bm: Dict[str, float]) -> Dict[str, float]:
+    return {k: (v if v >= 0 else bm.get(k, 0.6)) for k, v in raw_kpi.items()}
+
+def build_context(form_data: Dict[str, Any], lang: str) -> Dict[str, Any]:
+    now = _now_iso()
+    branch = _s(form_data.get("branche"))
+    size = _s(form_data.get("unternehmensgroesse"))
+    bm = load_benchmarks(branch, size)
+    kpi = _merge_kpis(_kpi_from_briefing(form_data), bm)
+    score = (kpi["digitalisierung"] + kpi["automatisierung"] + kpi["compliance"] +
+             kpi["prozessreife"] + kpi["innovation"]) / 5.0
+    bc = compute_business_case(form_data, bm)
+    news_html, tools_html, funding_html = query_live_items(form_data, lang)
+
+    ctx: Dict[str, Any] = {
+        "meta": {"title": "KI‑Status‑Report", "date": now, "lang": lang},
+        "briefing": {
+            "branche": branch,
+            "unternehmensgroesse": size,
+            "bundesland": _s(form_data.get("bundesland")),
+            "hauptleistung": _s(form_data.get("hauptleistung")),
+            "investitionsbudget": _s(form_data.get("investitionsbudget")),
+            "ziel": _s(form_data.get("ziel")),
+        },
+        "kpis": kpi,
+        "kpis_benchmark": bm,
+        "score_percent": round(score * 100.0, 1),
+        "business_case": {
+            "invest_eur": round(bc.invest_eur, 2),
+            "annual_saving_eur": round(bc.annual_saving_eur, 2),
+            "payback_months": round(bc.payback_months, 1),
+            "roi_year1_pct": round(bc.roi_year1_pct, 1),
+        },
+        "live": {
+            "news_html": news_html,
+            "tools_html": tools_html,
+            "funding_html": funding_html,
+            "stand": now,
+        },
+        "sections": {
+            "executive_summary_html": "",
+            "quick_wins_html": "",
+            "roadmap_html": "",
+            "risks_html": "",
+        },
+        "quality": None,
+        "quality_badge": "",
+    }
+
+    # LLM‑Sektionen
+    if ENABLE_LLM_SECTIONS and LLM_MODE in ("on", "hybrid"):
+        try:
+            sec = _gen_llm_sections(ctx, lang)
+            ctx["sections"]["executive_summary_html"] = sec["executive_summary"]
+            ctx["sections"]["quick_wins_html"] = sec["quick_wins"]
+            ctx["sections"]["roadmap_html"] = sec["roadmap"]
+            ctx["sections"]["risks_html"] = sec["risks"]
+        except Exception as exc:
+            logger.info("LLM‑Sektionen globaler Fallback: %s", exc)
+            ctx["sections"]["executive_summary_html"] = _fallback_exec_summary(ctx)
+            ctx["sections"]["quick_wins_html"] = _fallback_quick_wins(ctx)
+            ctx["sections"]["roadmap_html"] = _fallback_roadmap(ctx)
+            ctx["sections"]["risks_html"] = _fallback_risks(ctx)
+    else:
+        ctx["sections"]["executive_summary_html"] = _fallback_exec_summary(ctx)
+        ctx["sections"]["quick_wins_html"] = _fallback_quick_wins(ctx)
+        ctx["sections"]["roadmap_html"] = _fallback_roadmap(ctx)
+        ctx["sections"]["risks_html"] = _fallback_risks(ctx)
+
+    # QC‑Hook (optional)
+    try:
+        from quality_control import ReportQualityController  # type: ignore
+        qc_payload = {
+            "exec_summary_html": ctx["sections"]["executive_summary_html"],
+            "quick_wins_html": ctx["sections"]["quick_wins_html"],
+            "roadmap_html": ctx["sections"]["roadmap_html"],
+            "risks_html": ctx["sections"]["risks_html"],
+            "score_percent": ctx["score_percent"],
+            "roi_investment": ctx["business_case"]["invest_eur"],
+            "roi_annual_saving": ctx["business_case"]["annual_saving_eur"],
+            "kpi_roi_months": ctx["business_case"]["payback_months"],
+            "kpi_efficiency": round(ctx["kpis"]["automatisierung"] * 100),
+            "kpi_compliance": round(ctx["kpis"]["compliance"] * 100),
+        }
+        qc = ReportQualityController()
+        qc_result = qc.validate_complete_report(qc_payload, lang=lang)  # type: ignore[attr-defined]
+        ctx["quality"] = {k: v for k, v in qc_result.items() if k != "report_card"}
+        ctx["quality_badge"] = qc_result.get("report_card", "")
+    except Exception as exc:
+        logger.info("QC‑Hook nicht aktiv/übersprungen: %s", exc)
+
+    return ctx
+
+# -----------------------------------------------------------------------------
+# Rendering (Jinja oder Fallback)
+# -----------------------------------------------------------------------------
+def _render_jinja(ctx: Dict[str, Any], lang: str, template: Optional[str]) -> str:
+    if Environment is None:
+        raise RuntimeError("Jinja2 nicht installiert")
+    tpl_name = template or (TEMPLATE_DE if lang.startswith("de") else TEMPLATE_EN)
+    env = Environment(
+        loader=FileSystemLoader(str(TEMPLATE_DIR)),
+        autoescape=select_autoescape(["html", "xml"]),
+        enable_async=False,
+    )
+    tpl = env.get_template(tpl_name)
+    return tpl.render(**ctx)
+
+def _progress_bar(label: str, value: float) -> str:
+    pct = max(0, min(100, int(round(value * 100))))
+    return (
+        f"<div style='margin:6px 0'>"
+        f"<div style='display:flex;justify-content:space-between;font:14px/1.4 system-ui,Arial'>"
+        f"<span>{label}</span><span>{pct}%</span></div>"
+        f"<div style='width:100%;height:8px;background:#eee;border-radius:4px'>"
+        f"<div style='width:{pct}%;height:8px;background:{COLOR_PRIMARY};border-radius:4px'></div>"
+        f"</div></div>"
+    )
+
+def _card(title: str, body: str) -> str:
+    return (
+        f"<section style='border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:14px 0;background:#fff'>"
+        f"<h2 style='margin:0 0 8px;color:{COLOR_ACCENT};font:600 18px/1.3 system-ui,Arial'>{title}</h2>"
+        f"{body}</section>"
+    )
+
+def render_html(ctx: Dict[str, Any]) -> str:
+    k = ctx["kpis"]; bc = ctx["business_case"]; live = ctx["live"]; s = ctx["sections"]
+
+    kpi_html = "".join([
+        _progress_bar("Digitalisierung", k["digitalisierung"]),
+        _progress_bar("Automatisierung", k["automatisierung"]),
+        _progress_bar("Compliance", k["compliance"]),
+        _progress_bar("Prozessreife", k["prozessreife"]),
+        _progress_bar("Innovation", k["innovation"]),
+    ])
+
+    bench = ctx["kpis_benchmark"]
+    rows = []
+    for key, label in [("digitalisierung","Digitalisierung"),("automatisierung","Automatisierung"),
+                       ("compliance","Compliance"),("prozessreife","Prozessreife"),("innovation","Innovation")]:
+        v = k[key] * 100.0; b = bench.get(key, 0) * 100.0
+        rows.append(
+            f"<tr><td>{label}</td><td style='text-align:right'>{v:.1f}%</td>"
+            f"<td style='text-align:right'>{b:.1f}%</td><td style='text-align:right'>{(v-b):+.1f} pp</td></tr>"
+        )
+    bench_html = (
+        "<table role='table' style='width:100%;border-collapse:collapse;font:14px/1.5 system-ui,Arial'>"
+        "<thead><tr><th>Kennzahl</th><th style='text-align:right'>Unser Wert</th>"
+        "<th style='text-align:right'>Benchmark</th><th style='text-align:right'>Δ</th></tr></thead>"
+        "<tbody>" + "".join(rows) + "</tbody></table>"
+    )
+
+    bc_html = (
+        "<ul style='margin:0 0 0 18px;padding:0;font:14px/1.5 system-ui,Arial'>"
+        f"<li>Investition: <b>{bc['invest_eur']:.0f} €</b></li>"
+        f"<li>Jährliche Einsparung: <b>{bc['annual_saving_eur']:.0f} €</b></li>"
+        f"<li>Payback: <b>{bc['payback_months']:.1f} Monate</b></li>"
+        f"<li>ROI Jahr 1: <b>{bc['roi_year1_pct']:.1f}%</b></li>"
+        "</ul>"
+    )
+
+    qc_card = ""
+    if ctx.get("quality_badge"):
+        qc_card = _card("Quality‑Check", ctx["quality_badge"])
+
+    news_block = live.get("news_html") or "<p>Keine aktuellen Meldungen gefunden.</p>"
+    tools_block = live.get("tools_html") or "<p>Keine neuen Tools/Versionen gefunden.</p>"
+    fund_block = live.get("funding_html") or "<p>Keine passenden Förderprogramme gefunden.</p>"
+
+    html = (
+        "<!doctype html><html lang='de'><head><meta charset='utf-8'/>"
+        "<meta name='viewport' content='width=device-width, initial-scale=1'/>"
+        "<title>KI‑Status‑Report</title></head><body style='background:#f7fbff;margin:0'>"
+        f"<header style='background:{COLOR_PRIMARY};color:#fff;padding:16px 20px'>"
+        "<h1 style='margin:0;font:600 22px/1.3 system-ui,Arial'>KI‑Status‑Report</h1>"
+        f"<p style='margin:6px 0 0;font:14px/1.5 system-ui,Arial'>Stand: {ctx['meta']['date']}</p>"
+        "</header>"
+        "<main style='max-width:980px;margin:0 auto;padding:16px 20px'>"
+        f"{_card('Executive Summary', s['executive_summary_html'])}"
+        f"{_card('KPI‑Übersicht', kpi_html)}"
+        f"{_card('Business Case', bc_html)}"
+        f"{_card('Benchmark‑Vergleich', bench_html)}"
+        f"{_card('Quick Wins', s['quick_wins_html'])}"
+        f"{_card('90‑Tage‑Roadmap', s['roadmap_html'])}"
+        f"{_card('Risikomatrix & Mitigation', s['risks_html'])}"
+        f"{qc_card}"
+        f"{_card('Aktuelle Meldungen (Stand: ' + live['stand'] + ')', news_block)}"
+        f"{_card('Neue Tools & Releases (Stand: ' + live['stand'] + ')', tools_block)}"
+        f"{_card('Förderprogramme (Stand: ' + live['stand'] + ')', fund_block)}"
+        "</main></body></html>"
+    )
+    return html
+
+# -----------------------------------------------------------------------------
+# Öffentliche API
+# -----------------------------------------------------------------------------
+def analyze_briefing(form_data: Optional[Dict[str, Any]] = None,
+                     lang: Optional[str] = None,
+                     template: Optional[str] = None,
+                     **kwargs: Any) -> str:
+    if not form_data:
+        form_data = {}
+    language = (lang or form_data.get("lang") or DEFAULT_LANG)[:5]
+    ctx = build_context(form_data, language)
+    if template or Environment is not None:
+        try:
+            return _render_jinja(ctx, language, template)
+        except Exception as exc:
+            logger.warning("Template‑Rendering fehlgeschlagen, Fallback‑Renderer: %s", exc)
+    return render_html(ctx)
+
+def analyze_briefing_enhanced(form_data: Optional[Dict[str, Any]] = None,
+                              lang: Optional[str] = None,
+                              **kwargs: Any) -> Dict[str, Any]:
+    if not form_data:
+        form_data = {}
+    language = (lang or form_data.get("lang") or DEFAULT_LANG)[:5]
+    return build_context(form_data, language)
 
 if __name__ == "__main__":  # pragma: no cover
-    example = Path("briefing.json")
-    if example.exists():
-        import pprint
-
-        pprint.pprint(generate_report_payload(example))
-    else:
-        logger.warning("briefing.json nicht gefunden – Testlauf übersprungen.")
+    sample = {
+        "branche": "Medien & Kreativwirtschaft",
+        "unternehmensgroesse": "KMU",
+        "bundesland": "BY",
+        "hauptleistung": "Beratung",
+        "investitionsbudget": "2.000–10.000 €",
+        "ziel": "Automatisierung & Innovation",
+        "digitalisierung": 8, "automatisierung": 6, "compliance": 7, "prozessreife": 6, "innovation": 7,
+    }
+    print(analyze_briefing(sample, lang="de")[:600])
