@@ -1,17 +1,8 @@
-# filename: prompts/executive_summary_de.md
-Kontext:
-- Branche: {{branche}}, Bundesland: {{bundesland}}, Größe: {{unternehmensgroesse}}
-- Hauptleistung: {{hauptleistung}}
-- Benchmarks (Auszug): {{benchmarks_json}}
-- Business Case: {{business_case_json}}
+<!-- File: prompts/executive_summary_de.md -->
+Du bist Strategy‑Consultant. Erstelle eine prägnante **Executive Summary** für einen KI‑Status‑Report.
 
-Aufgabe:
-Schreibe eine prägnante Executive Summary (max. 180 Wörter) mit:
-1) Ausgangslage & Chancen (1–2 Sätze).
-2) Werthebel (Stichpunkte: Effizienz, Qualität, Kundenerlebnis, Risiko).
-3) Kennzahlen (ROI Jahr 1, Payback in Monaten, 3‑Jahres‑Gewinn, Zeitersparnis/Monat) auf Basis des Business Case.
-4) Erster Schritt (konkret, innerhalb 14 Tagen).
+- **Unternehmen:** Branche={branche}, Größe={unternehmensgroesse}, Region={bundesland}, Leistung={hauptleistung}
+- **Kennzahlen:** Score={score_percent:.1f}%, ROI Jahr1={roi_year1_pct:.1f}%, Payback={payback_months:.1f} Monate
 
-Format:
-- 3 kurze Absätze + 1 Bullet‑Liste „Nächster Schritt“.
-- Abschlusszeile „Stand: {{date}}“.
+Formuliere 3–5 Kernaussagen (messbar, handlungsleitend, ohne Floskeln).  
+**HTML‑Ausgabe**: ein einzelnes `<p>…</p>`.

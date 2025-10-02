@@ -1,4 +1,3 @@
-# filename: prompts/roadmap_de.md
-Erstelle eine 4‑Phasen‑Roadmap (Quick Wins 0–30, Skalierung 31–90, Integration 91–180, Innovation 180+).
-Je Phase: Budget grob, Fokus, 3 Meilensteine, 2 KPI, Owner, Risiko (1 Satz).
-„Stand: {{date}}“.
+<!-- File: prompts/roadmap_de.md -->
+Erstelle eine **90‑Tage‑Roadmap**: **W1–2**, **W3–4**, **W5–8**, **W9–12** mit Meilensteinen/Deliverables.
+Beziehe Reifegrad/Größe ein. **HTML** als `<ol><li>…</li></ol>`.

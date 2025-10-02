@@ -1,6 +1,4 @@
-# filename: prompts/risks_en.md
-Provide a compact AI risk matrix (table) + plan:
-Columns: Risk | Rating | Likelihood | Impact | Mitigation | Cost | Owner.
-List 3–5 risks (GDPR, skill gap, change, budget, vendor lock‑in).
-Add a week‑by‑week plan (1–2 / 3–4 / 5–8).
-“As of: {{date}}”.
+<!-- File: prompts/risks_en.md -->
+Create a **Top‑5 risk matrix** with **probability**, **impact**, **mitigation**.  
+Include **EU AI Act/DSA/CRA/Data Act**, **bias/drift**, **ops**.  
+**HTML** as `<table>…</table>`.
