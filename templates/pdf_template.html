@@ -1,232 +1,85 @@
+<!-- File: templates/pdf_template.html -->
 <!doctype html>
-<html lang="de" dir="ltr">
+<html lang="de">
 <head>
   <meta charset="utf-8" />
-  <title>{{ meta.title }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>{{ meta.title }}</title>
   <style>
-    /* ---------- Farbpalette (nur Blautöne) ---------- */
-    :root{
-      /*
-       * Farbpalette für den Report.  Die Farben sind so gewählt, dass sie
-       * ausreichend Kontrast bieten und sowohl auf dem Bildschirm als auch
-       * im Druck gut lesbar sind.  Die primären Blautöne bilden die Basis
-       * des Layouts; Orange‑Töne setzen Akzente für Überschriften und
-       * wichtige Elemente.  Für Barrierenfreiheit werden keine exakten
-       * Farbcodes vorausgesetzt, sondern lediglich harmonische Töne.
-       */
-      --c-bg:#f7fbff;
-      --c-text:#0b2239;
-      --c-muted:#5a6d85;
-      /* Primärfarben (Blautöne) */
-      --c-primary:#1F7BFF;       /* Basisblau, kräftig für Überschriften */
-      --c-primary-2:#377DFF;     /* Hellere Variante für Verläufe */
-      /* Akzentfarben (Orange) */
-      --c-accent:#FB8C00;        /* Hauptakzent für Titel und Tags */
-      --c-accent-2:#D9480F;      /* Dunkler Orange‑Ton für Hervorhebungen */
-      /* Rahmen- und Kartenfarben */
-      --c-border:#d6e3f5;
-      --c-card:#ffffff;
-    }
-
-    /* ---------- Grundlayout ---------- */
-    html,body{
-      margin:0; padding:0; background:var(--c-bg); color:var(--c-text);
-      font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    }
-    @page { size: A4; margin: 20mm 16mm; }
-    *{ box-sizing:border-box }
-    a{ color:var(--c-primary); text-decoration:none; word-break:break-all }
-    img{ max-width:100%; height:auto }
-
-    .container{ width:100% }
-    .header{
-      display:flex; align-items:center; justify-content:space-between;
-      border-bottom:2px solid var(--c-border);
-      padding:8px 0 10px; margin-bottom:10px;
-    }
-    .header .logos-left img{ height:34px; margin-right:10px }
-    .header .logos-right img{ height:22px; margin-left:8px }
-
-    .title{ margin:10px 0 4px; font-size:22px; font-weight:700; color:var(--c-accent) }
-    .subtitle{ margin:0 0 8px; color:var(--c-muted) }
-    .meta{ font-size:12px; color:var(--c-muted) }
-
-    h2{ color:var(--c-primary); font-size:18px; margin:18px 0 8px }
-    h3{ color:var(--c-primary); font-size:15px; margin:14px 0 6px }
-    p{ margin:8px 0 }
-
-    .card{
-      background:var(--c-card); border:1px solid var(--c-border);
-      border-radius:8px; padding:12px;
-    }
-    .avoid-break{ break-inside:avoid; page-break-inside:avoid; -webkit-region-break-inside:avoid }
-
-    /* ---------- KPI/Progress ---------- */
-    .kpi{ display:grid; grid-template-columns:170px 1fr; gap:10px; align-items:center; margin:6px 0 }
-    .kpi-label{ font-weight:600 }
-    .meter{ position:relative; height:10px; background:#eaf2fb; border-radius:6px; overflow:hidden }
-    .meter>div{ height:10px; background:linear-gradient(90deg,var(--c-primary),var(--c-primary-2)) }
-
-    /* ---------- Tabellen robust ---------- */
-    table{ width:100%; border-collapse:collapse; table-layout:fixed; margin:8px 0 }
-    th,td{
-      border:1px solid var(--c-border); padding:6px 8px; text-align:left; vertical-align:top;
-      word-break:break-word; overflow-wrap:anywhere; hyphens:auto;
-    }
-    thead th{ background:#f0f7ff }
-    tr.avoid-break{ break-inside:avoid }
-
-    /* ---------- Live-/Info-Boxen ---------- */
-    .info-box{ border:1px solid var(--c-border); border-radius:8px; padding:10px; margin:10px 0; background:#fbfdff }
-    .info-box-title{ font-weight:700; margin-bottom:6px; color:var(--c-accent) }
-    .live-group{ margin:8px 0 }
-    .live-title-group{ font-weight:700; color:var(--c-accent); margin-bottom:6px }
-    .live-card{ border:1px solid var(--c-border); border-radius:6px; padding:8px; margin:6px 0; background:#fff }
-    .live-title{ font-weight:600 }
-    .live-meta{ font-size:12px; color:var(--c-muted) }
-
-    /* ---------- Seitenumbruch-Steuerung ---------- */
-    .page-break{ display:block; height:0; }
-    @media print{
-      .page-break{ break-before:page; page-break-before:always }
-      a{ text-decoration:underline }
-      h2{ page-break-after:avoid }
-      .card{ page-break-inside:avoid }
-      thead{ display:table-header-group }
-      tr{ page-break-inside:avoid }
-      p{ orphans:3; widows:3 }
-    }
-
-    /* ---------- Footer ---------- */
-    .footer{ margin-top:14px; border-top:1px solid var(--c-border); padding-top:8px; font-size:11px; color:var(--c-muted) }
-    .logos-footer img{ height:20px; margin-right:8px }
+    :root { --primary:#0B5FFF; --accent:#FB8C00; --muted:#e5e7eb; }
+    body { margin:0; background:#f7fbff; font:14px/1.5 system-ui, Arial, sans-serif; color:#0f172a; }
+    header { background:var(--primary); color:#fff; padding:16px 20px; }
+    h1 { margin:0; font:600 22px/1.3 system-ui, Arial, sans-serif; }
+    h2 { margin:0 0 8px; color:var(--accent); font:600 18px/1.3 system-ui, Arial, sans-serif; }
+    main { max-width:980px; margin:0 auto; padding:16px 20px; }
+    section.card { border:1px solid var(--muted); border-radius:8px; padding:16px; margin:14px 0; background:#fff; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { padding:6px; border-bottom:1px solid var(--muted); text-align:left; }
+    .bar { width:100%; height:8px; background:#eee; border-radius:4px; }
+    .fill { height:8px; background:var(--primary); border-radius:4px; }
+    .meta { margin:6px 0 0; }
   </style>
 </head>
 <body>
-  {% set page_breaks = page_breaks|default('per_section') %}
-  {% macro pb(id='') -%}
-    {%- if page_breaks in ['per_section','always','on','true','1'] -%}
-      <div class="page-break" aria-hidden="true" data-break="{{ id }}"></div>
-    {%- endif -%}
-  {%- endmacro %}
-
-  <!-- Use semantic structure: header, main, footer for better accessibility -->
-  <header class="header">
-    <div class="logos-left" aria-label="Logos">
-      <img src="tuev-logo.webp" alt="TÜV Logo" />
-      <img src="ki-sicherheit-logo.webp" alt="KI‑Sicherheit.jetzt Logo" />
-    </div>
-    <div class="logos-right">
-      <img src="eu-ai.svg" alt="EU AI" />
-      <img src="dsgvo.svg" alt="DSGVO" />
-      <img src="ki-ready-2025.webp" alt="KI Ready 2025" />
-    </div>
+  <header>
+    <h1>{{ meta.title }}</h1>
+    <p class="meta">Stand: {{ meta.date }}</p>
   </header>
 
-  <main class="container">
+  <main>
+    <section class="card"><h2>Executive Summary</h2>{{ sections.executive_summary_html | safe }}</section>
 
-    <!-- Hauptinhalte -->
-
-    <!-- Titel & Meta -->
-    <div class="title">{{ meta.title }}</div>
-    <div class="subtitle">{{ meta.subtitle }}</div>
-    <div class="meta">
-      Erstellt am {{ generation_date }}{% if last_updated %} · Letzte Aktualisierung: {{ last_updated }}{% endif %}
-      · Branche: {{ branche }} · Größe: {{ company_size_label }}
-    </div>
-
-    <!-- Executive Summary (Startseite) -->
-    <h2>Executive Summary</h2>
-    <div class="card avoid-break">{{ exec_summary_html|safe }}</div>
-
-    {{ pb('readiness') }}
-    <h2>Readiness‑Profil</h2>
-    <div class="card avoid-break">
-      <div class="kpi">
-        <div class="kpi-label">KI‑Readiness</div>
-        <div class="meter" role="progressbar" aria-label="KI‑Readiness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ score_percent }}"><div style="width: {{ score_percent }}%"></div></div>
+    <section class="card">
+      <h2>KPI‑Übersicht</h2>
+      {% for label, key in [("Digitalisierung","digitalisierung"),("Automatisierung","automatisierung"),("Compliance","compliance"),("Prozessreife","prozessreife"),("Innovation","innovation")] %}
+      {% set pct = (kpis[key] * 100) | round(0, 'floor') %}
+      <div style="margin:6px 0">
+        <div style="display:flex;justify-content:space-between"><span>{{ label }}</span><span>{{ pct }}%</span></div>
+        <div class="bar"><div class="fill" style="width: {{ pct }}%"></div></div>
       </div>
-      <div class="kpi">
-        <div class="kpi-label">Effizienzpotenzial</div>
-        <div class="meter" role="progressbar" aria-label="Effizienzpotenzial" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ kpi_efficiency }}"><div style="width: {{ kpi_efficiency }}%"></div></div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">Compliance‑Reife</div>
-        <div class="meter" role="progressbar" aria-label="Compliance‑Reife" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ kpi_compliance }}"><div style="width: {{ kpi_compliance }}%"></div></div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">Innovationskraft</div>
-        <div class="meter" role="progressbar" aria-label="Innovationskraft" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ kpi_innovation }}"><div style="width: {{ kpi_innovation }}%"></div></div>
-      </div>
-      {{ persona_html|safe }}
-      {% if benchmarks_compact_html %}{{ benchmarks_compact_html|safe }}{% endif %}
-    </div>
+      {% endfor %}
+    </section>
 
-    {{ pb('business') }}
-    <h2>Business Case</h2>
-    <div class="card avoid-break">{{ business_html|safe }}</div>
+    <section class="card">
+      <h2>Business Case</h2>
+      <ul>
+        <li>Investition: <b>{{ business_case.invest_eur | int }} €</b></li>
+        <li>Jährliche Einsparung: <b>{{ business_case.annual_saving_eur | int }} €</b></li>
+        <li>Payback: <b>{{ business_case.payback_months }} Monate</b></li>
+        <li>ROI Jahr&nbsp;1: <b>{{ business_case.roi_year1_pct }}%</b></li>
+      </ul>
+    </section>
 
-    {{ pb('recommendations') }}
-    <h2>Strategische Empfehlungen</h2>
-    <div class="card avoid-break">{{ recommendations_html|safe }}</div>
+    <section class="card">
+      <h2>Benchmark‑Vergleich</h2>
+      <table role="table">
+        <thead><tr><th>Kennzahl</th><th style="text-align:right">Unser Wert</th><th style="text-align:right">Benchmark</th><th style="text-align:right">Δ</th></tr></thead>
+        <tbody>
+          {% for label, key in [("Digitalisierung","digitalisierung"),("Automatisierung","automatisierung"),("Compliance","compliance"),("Prozessreife","prozessreife"),("Innovation","innovation")] %}
+          {% set our = (kpis[key] * 100) %}
+          {% set bm  = (kpis_benchmark[key] * 100) if kpis_benchmark.get(key) else 0 %}
+          <tr>
+            <td>{{ label }}</td>
+            <td style="text-align:right">{{ "%.1f"|format(our) }}%</td>
+            <td style="text-align:right">{{ "%.1f"|format(bm) }}%</td>
+            <td style="text-align:right">{{ "%+.1f"|format(our - bm) }} pp</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
 
-    {{ pb('praxis') }}
-    <h2>Praxisbeispiele</h2>
-    <div class="card avoid-break">{{ praxisbeispiel_html|safe }}</div>
+    <section class="card"><h2>Quick Wins</h2>{{ sections.quick_wins_html | safe }}</section>
+    <section class="card"><h2>90‑Tage‑Roadmap</h2>{{ sections.roadmap_html | safe }}</section>
+    <section class="card"><h2>Risikomatrix & Mitigation</h2>{{ sections.risks_html | safe }}</section>
 
-    {{ pb('coach') }}
-    <h2>Coaching & Reflexion</h2>
-    <div class="card avoid-break">{{ coach_html|safe }}</div>
+    {% if quality_badge %}
+      <section class="card"><h2>Quality‑Check</h2>{{ quality_badge | safe }}</section>
+    {% endif %}
 
-    {{ pb('vision') }}
-    <h2>Leitidee</h2>
-    <div class="card avoid-break">{{ vision_html|safe }}</div>
-
-    {{ pb('gamechanger') }}
-    <h2>Gamechanger</h2>
-    <div class="card avoid-break">{{ gamechanger_html|safe }}</div>
-
-    {{ pb('risks') }}
-    <h2>Risikomanagement</h2>
-    <div class="card avoid-break">{{ risks_html|safe }}</div>
-
-    {{ pb('roadmap') }}
-    <h2>Roadmap</h2>
-    <div class="card avoid-break">{{ roadmap_html|safe }}</div>
-
-    {{ pb('compliance') }}
-    <h2>Compliance</h2>
-    <div class="card avoid-break">{{ compliance_html|safe }}</div>
-
-    {{ pb('live') }}
-    <h2>Aktuelle Meldungen & Releases</h2>
-    <div class="card avoid-break">
-      {% if news_html %}{{ news_html|safe }}{% endif %}
-      {% if tools_rich_html %}{{ tools_rich_html|safe }}{% endif %}
-    </div>
-
-    {{ pb('funding') }}
-    <h2>Förderprogramme</h2>
-    <div class="card avoid-break">
-      {% if funding_rich_html %}{{ funding_rich_html|safe }}{% endif %}
-      {% if funding_deadlines_html %}{{ funding_deadlines_html|safe }}{% endif %}
-      {{ foerderprogramme_html|safe }}
-    </div>
-
-    {{ pb('tools') }}
-    <h2>Tools & Empfehlungen</h2>
-    <div class="card avoid-break">{{ tools_html|safe }}</div>
-
-    </main>
-
-    <footer class="footer">
-      <div class="logos-footer" aria-label="Partnerlogos">
-        <img src="tuev-logo-transparent.webp" alt="TÜV" />
-        <img src="ki-sicherheit-logo.webp" alt="KI‑Sicherheit.jetzt" />
-      </div>
-      © {{ copyright_year }} · ki‑sicherheit.jetzt · <a href="{{ feedback_link }}">Feedback geben</a>
-    </footer>
-  </body>
+    <section class="card"><h2>Aktuelle Meldungen (Stand: {{ live.stand }})</h2>{{ live.news_html | safe }}</section>
+    <section class="card"><h2>Neue Tools & Releases (Stand: {{ live.stand }})</h2>{{ live.tools_html | safe }}</section>
+    <section class="card"><h2>Förderprogramme (Stand: {{ live.stand }})</h2>{{ live.funding_html | safe }}</section>
+  </main>
+</body>
 </html>
