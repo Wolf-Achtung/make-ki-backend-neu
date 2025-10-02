@@ -545,22 +545,40 @@ DEFAULT_BENCHMARKS_BERATUNG = {
 }
 
 
-def load_benchmarks(branche: str) -> Dict[str, float]:
-    """Lädt branchenspezifische Benchmarks aus der Datenbank.
+def load_benchmarks(branche: str, size: str = "kmu") -> Dict[str, float]:
+    """Lädt Benchmarks für eine Branche und Unternehmensgröße.
 
-    Es wird zunächst versucht, ``data/benchmarks_<branche>_kmu.json`` zu laden.
-    Falls nicht vorhanden, wird ``data/benchmarks_catalog.json`` durchsucht.
-    Schließlich erfolgt ein Fallback auf ``data/benchmarks_beratung_kmu.json``
-    oder einen internen Default.
+    Es wird nach ``benchmarks_<branche>_<size>.json`` gesucht, wobei
+    ``<size>`` ``solo``, ``small`` oder ``kmu`` sein kann.  Existiert diese
+    Datei nicht, versucht die Funktion einen Katalog zu nutzen; schließlich
+    erfolgt ein Fallback auf "Beratung".  Wird nichts gefunden, werden
+    Default‑Werte zurückgegeben.  Die Rückgabewerte sind ungefiltert
+    (0–1‑Skala), d. h. sie sollten später ggf. zu Prozenten skaliert werden.
     """
-    # branchenspezifische Datei
-    key = (branche or "").strip().lower().replace(" ", "_")
-    specific = DATA_DIR / f"benchmarks_{key}_kmu.json"
+    # Formatieren des Dateinamens
+    # Zuerst den Rohwert auf Kleinbuchstaben trimmen
+    branch_key_raw = (branche or "").strip().lower()
+    # Ersetze alle nicht alphanumerischen Zeichen (inkl. Leerzeichen, &,
+    # Schrägstriche usw.) durch Unterstriche.  Dadurch können Branchennamen
+    # wie "Finanzen & Versicherungen" oder "IT & Software" korrekt auf
+    # Datei-Namen abgebildet werden.
+    branch_key = re.sub(r"[^a-z0-9]+", "_", branch_key_raw)
+    # Reduziere aufeinanderfolgende Unterstriche auf einen einzelnen und
+    # entferne führende oder nachgestellte Unterstriche.
+    branch_key = re.sub(r"_+", "_", branch_key).strip("_")
+    size_key = (size or "kmu").strip().lower()
+    # Normiere größe: solo/freiberuflich → solo; kleines team → small
+    if re.search(r"solo|freiberuf", size_key):
+        size_key = "solo"
+    elif re.search(r"2\-?10|kleines", size_key):
+        size_key = "small"
+    else:
+        size_key = "kmu"
+    specific = DATA_DIR / f"benchmarks_{branch_key}_{size_key}.json"
     if specific.exists():
         try:
             data = json.loads(specific.read_text(encoding="utf-8"))
             if isinstance(data, dict):
-                # falls Datei im neuen Format (kpis‑Liste)
                 if "kpis" in data and isinstance(data["kpis"], list):
                     out: Dict[str, float] = {}
                     for kpi in data["kpis"]:
@@ -569,28 +587,28 @@ def load_benchmarks(branche: str) -> Dict[str, float]:
                         if name and isinstance(val, (int, float)):
                             out[name] = float(val)
                     return out
-                # falls altes Format
                 return {k: float(v) for k, v in data.items() if isinstance(v, (int, float))}
         except Exception:
             pass
-    # Katalog
+    # Katalog (gruppiert nach Branche; Größe wird ignoriert)
     catalog = load_json(DATA_DIR / "benchmarks_catalog.json", default=None)
     if isinstance(catalog, dict):
-        if key in catalog and isinstance(catalog[key], dict):
-            return {k: float(v) for k, v in catalog[key].items() if isinstance(v, (int, float))}
-    # Beratung Fallback
-    fallback = load_json(DATA_DIR / "benchmarks_beratung_kmu.json", default=None)
-    if isinstance(fallback, dict):
-        # falls Fallback im Format mit kpis-Liste vorliegt
-        if "kpis" in fallback and isinstance(fallback["kpis"], list):
+        if branch_key in catalog and isinstance(catalog[branch_key], dict):
+            return {k: float(v) for k, v in catalog[branch_key].items() if isinstance(v, (int, float))}
+    # Fallback auf Beratung (größe berücksichtigen)
+    fallback_file = DATA_DIR / f"benchmarks_beratung_{size_key}.json"
+    fb = load_json(fallback_file, default=None)
+    if isinstance(fb, dict):
+        if "kpis" in fb and isinstance(fb["kpis"], list):
             out_f: Dict[str, float] = {}
-            for kpi in fallback["kpis"]:
+            for kpi in fb["kpis"]:
                 name = (kpi.get("name") or "").lower()
                 val = kpi.get("value")
                 if name and isinstance(val, (int, float)):
                     out_f[name] = float(val)
             return out_f
-        return {k: float(v) for k, v in fallback.items() if isinstance(v, (int, float))}
+        return {k: float(v) for k, v in fb.items() if isinstance(v, (int, float))}
+    # Letzter Fallback
     return DEFAULT_BENCHMARKS_BERATUNG
 
 
@@ -661,8 +679,8 @@ def generate_report_payload(briefing_json_path: Path) -> Dict[str, Any]:
     annual_saving = invest * 4.0  # konservativer ROI‑Faktor (4× Investition)
     bc = BusinessCase(invest_eur=invest, annual_saving_eur=annual_saving, efficiency_gain_frac=0.40)
 
-    # Benchmarks laden
-    bm = load_benchmarks(b.branche)
+    # Benchmarks laden (abhängig von Branche und Unternehmensgröße)
+    bm = load_benchmarks(b.branche, b.unternehmensgroesse)
     logger.info("Benchmarks geladen: %s", bm)
 
     # KPI‑Scores berechnen
@@ -692,6 +710,14 @@ def generate_report_payload(briefing_json_path: Path) -> Dict[str, Any]:
     }
 
     # Kontext für Prompt‑Placeholders
+    # Um potenzielle Probleme mit f‑Strings und verschachtelten Anführungszeichen zu vermeiden, werden
+    # die KPI‑Werte vorab in Variablen gespeichert.  Dadurch wird ein Syntaxfehler wie
+    # "unmatched '['" im f‑String vermieden.
+    score_percent_val = kpi_scores.get("score_percent", 0.0)
+    kpi_efficiency_val = kpi_scores.get("kpi_efficiency", 0.0)
+    kpi_compliance_val = kpi_scores.get("kpi_compliance", 0.0)
+    kpi_innovation_val = kpi_scores.get("kpi_innovation", 0.0)
+
     ctx = {
         "branche": b.branche,
         "unternehmensgroesse": b.unternehmensgroesse,
@@ -703,10 +729,11 @@ def generate_report_payload(briefing_json_path: Path) -> Dict[str, Any]:
         "payback_months": f"{bc.payback_months:.1f}",
         "three_year_profit": f"{bc.three_year_profit}",
         "time_saved_hours_per_month": f"{bc.time_saved_hours_per_month}",
-        "score_percent": f"{kpi_scores["score_percent"]:.1f}",
-        "kpi_efficiency": f"{kpi_scores["kpi_efficiency"]:.1f}",
-        "kpi_compliance": f"{kpi_scores["kpi_compliance"]:.1f}",
-        "kpi_innovation": f"{kpi_scores["kpi_innovation"]:.1f}",
+        # KPI-Werte aus Variablen, um Probleme mit Anführungszeichen in f-Strings zu vermeiden
+        "score_percent": f"{score_percent_val:.1f}",
+        "kpi_efficiency": f"{kpi_efficiency_val:.1f}",
+        "kpi_compliance": f"{kpi_compliance_val:.1f}",
+        "kpi_innovation": f"{kpi_innovation_val:.1f}",
         "business_case_json": json.dumps(business_case_json, ensure_ascii=False),
         "benchmarks_json": json.dumps(benchmarks_json, ensure_ascii=False),
         "date": now_iso(),
