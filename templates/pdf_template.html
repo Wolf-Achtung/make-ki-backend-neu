@@ -6,11 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{ meta.title }}</title>
   <style>
-    :root { --primary:#0B5FFF; --accent:#FB8C00; --muted:#e5e7eb; }
-    body { margin:0; background:#f7fbff; font:14px/1.5 system-ui, Arial, sans-serif; color:#0f172a; }
+    :root { --primary:#0B5FFF; --accent:#FB8C00; --muted:#e5e7eb; --ink:#0f172a; }
+    body { margin:0; background:#f7fbff; font:14px/1.5 system-ui, Arial, sans-serif; color:var(--ink); }
     header { background:var(--primary); color:#fff; padding:16px 20px; }
     h1 { margin:0; font:600 22px/1.3 system-ui, Arial, sans-serif; }
     h2 { margin:0 0 8px; color:var(--accent); font:600 18px/1.3 system-ui, Arial, sans-serif; }
+    h3 { margin:10px 0 6px; font:600 16px/1.3 system-ui, Arial, sans-serif; }
     main { max-width:980px; margin:0 auto; padding:16px 20px; }
     section.card { border:1px solid var(--muted); border-radius:8px; padding:16px; margin:14px 0; background:#fff; }
     table { width:100%; border-collapse:collapse; }
@@ -18,6 +19,9 @@
     .bar { width:100%; height:8px; background:#eee; border-radius:4px; }
     .fill { height:8px; background:var(--primary); border-radius:4px; }
     .meta { margin:6px 0 0; }
+    a { color:#0b5fff; text-decoration:none; }
+    nav.toc { border:1px dashed #cbd5e1; border-radius:8px; padding:12px; background:#fff; }
+    footer { text-align:center; color:#475569; font:12px/1.5 system-ui, Arial, sans-serif; padding:16px 8px; }
   </style>
 </head>
 <body>
@@ -27,30 +31,52 @@
   </header>
 
   <main>
-    <section class="card"><h2>Executive Summary</h2>{{ sections.executive_summary_html | safe }}</section>
+    <nav class="toc">
+      <h3>Inhalt</h3>
+      <ol>
+        <li><a href="#exec">Executive Summary</a></li>
+        <li><a href="#digest">Knowledge Digest</a></li>
+        <li><a href="#kpis">KPI‑Übersicht</a></li>
+        <li><a href="#bc">Business Case</a></li>
+        <li><a href="#bench">Benchmark‑Vergleich</a></li>
+        <li><a href="#qw">Quick Wins</a></li>
+        <li><a href="#roadmap">90‑Tage‑Roadmap</a></li>
+        <li><a href="#risks">Risikomatrix</a></li>
+        <li><a href="#guides">Guides & Frameworks</a></li>
+        <li><a href="#news">Aktuelle Meldungen</a></li>
+        <li><a href="#tools">Neue Tools & Releases</a></li>
+        <li><a href="#funding">Förderprogramme</a></li>
+        <li><a href="#appendix-a">Anhang A</a></li>
+        <li><a href="#appendix-b">Anhang B</a></li>
+        <li><a href="#appendix-c">Anhang C</a></li>
+      </ol>
+    </nav>
 
-    <section class="card">
+    <section class="card" id="exec"><h2>Executive Summary</h2>{{ sections.executive_summary_html | safe }}</section>
+    <section class="card" id="digest"><h2>Knowledge Digest</h2>{{ sections.doc_digest_html | safe }}</section>
+
+    <section class="card" id="kpis">
       <h2>KPI‑Übersicht</h2>
       {% for label, key in [("Digitalisierung","digitalisierung"),("Automatisierung","automatisierung"),("Compliance","compliance"),("Prozessreife","prozessreife"),("Innovation","innovation")] %}
-      {% set pct = (kpis[key] * 100) | round(0, 'floor') %}
-      <div style="margin:6px 0">
-        <div style="display:flex;justify-content:space-between"><span>{{ label }}</span><span>{{ pct }}%</span></div>
-        <div class="bar"><div class="fill" style="width: {{ pct }}%"></div></div>
-      </div>
+        {% set pct = (kpis[key] * 100) | round(0, 'floor') %}
+        <div style="margin:6px 0">
+          <div style="display:flex;justify-content:space-between"><span>{{ label }}</span><span>{{ pct }}%</span></div>
+          <div class="bar"><div class="fill" style="width: {{ pct }}%"></div></div>
+        </div>
       {% endfor %}
     </section>
 
-    <section class="card">
+    <section class="card" id="bc">
       <h2>Business Case</h2>
       <ul>
         <li>Investition: <b>{{ business_case.invest_eur | int }} €</b></li>
         <li>Jährliche Einsparung: <b>{{ business_case.annual_saving_eur | int }} €</b></li>
-        <li>Payback: <b>{{ business_case.payback_months }} Monate</b></li>
+        <li>Payback: <b>{{ business_case.payback_months }}</b> Monate</li>
         <li>ROI Jahr&nbsp;1: <b>{{ business_case.roi_year1_pct }}%</b></li>
       </ul>
     </section>
 
-    <section class="card">
+    <section class="card" id="bench">
       <h2>Benchmark‑Vergleich</h2>
       <table role="table">
         <thead><tr><th>Kennzahl</th><th style="text-align:right">Unser Wert</th><th style="text-align:right">Benchmark</th><th style="text-align:right">Δ</th></tr></thead>
@@ -69,17 +95,57 @@
       </table>
     </section>
 
-    <section class="card"><h2>Quick Wins</h2>{{ sections.quick_wins_html | safe }}</section>
-    <section class="card"><h2>90‑Tage‑Roadmap</h2>{{ sections.roadmap_html | safe }}</section>
-    <section class="card"><h2>Risikomatrix & Mitigation</h2>{{ sections.risks_html | safe }}</section>
+    <section class="card" id="qw"><h2>Quick Wins</h2>{{ sections.quick_wins_html | safe }}</section>
+    <section class="card" id="roadmap"><h2>90‑Tage‑Roadmap</h2>{{ sections.roadmap_html | safe }}</section>
+    <section class="card" id="risks"><h2>Risikomatrix & Mitigation</h2>{{ sections.risks_html | safe }}</section>
 
     {% if quality_badge %}
       <section class="card"><h2>Quality‑Check</h2>{{ quality_badge | safe }}</section>
     {% endif %}
 
-    <section class="card"><h2>Aktuelle Meldungen (Stand: {{ live.stand }})</h2>{{ live.news_html | safe }}</section>
-    <section class="card"><h2>Neue Tools & Releases (Stand: {{ live.stand }})</h2>{{ live.tools_html | safe }}</section>
-    <section class="card"><h2>Förderprogramme (Stand: {{ live.stand }})</h2>{{ live.funding_html | safe }}</section>
+    <section class="card" id="guides">
+      <h2>Guides & Frameworks</h2>
+      <section style="border:1px solid var(--muted);border-radius:8px;padding:12px;margin:10px 0;background:#fff">
+        <h3>4 Säulen der KI‑Readiness</h3>
+        {{ knowledge.summaries.readiness_html | safe }}
+        <div style="font-size:12px;color:#334155">Siehe <a href="#appendix-a">Anhang A</a></div>
+      </section>
+      <section style="border:1px solid var(--muted);border-radius:8px;padding:12px;margin:10px 0;background:#fff">
+        <h3>Rechtliche Stolpersteine</h3>
+        {{ knowledge.summaries.legal_html | safe }}
+        <div style="font-size:12px;color:#334155">Siehe <a href="#appendix-b">Anhang B</a></div>
+      </section>
+      <section style="border:1px solid var(--muted);border-radius:8px;padding:12px;margin:10px 0;background:#fff">
+        <h3>Formel für Transformation (10‑20‑70)</h3>
+        {{ knowledge.summaries.transform_html | safe }}
+        <div style="font-size:12px;color:#334155">Siehe <a href="#appendix-c">Anhang C</a></div>
+      </section>
+    </section>
+
+    <section class="card" id="news"><h2>Aktuelle Meldungen (Stand: {{ live.stand }})</h2>{{ live.news_html | safe }}</section>
+    <section class="card" id="tools"><h2>Neue Tools & Releases (Stand: {{ live.stand }})</h2>{{ live.tools_html | safe }}</section>
+    <section class="card" id="funding"><h2>Förderprogramme (Stand: {{ live.stand }})</h2>{{ live.funding_html | safe }}</section>
+
+    <!-- Anhang -->
+    <section class="card" id="appendix-a">
+      <h2>{{ knowledge.appendix.readiness.title }}</h2>
+      <p><small>Stand: {{ knowledge.appendix.readiness.stand }}</small></p>
+      {{ knowledge.appendix.readiness.html | safe }}
+    </section>
+
+    <section class="card" id="appendix-b">
+      <h2>{{ knowledge.appendix.legal.title }}</h2>
+      <p><small>Stand: {{ knowledge.appendix.legal.stand }}</small></p>
+      {{ knowledge.appendix.legal.html | safe }}
+    </section>
+
+    <section class="card" id="appendix-c">
+      <h2>{{ knowledge.appendix.transform.title }}</h2>
+      <p><small>Stand: {{ knowledge.appendix.transform.stand }}</small></p>
+      {{ knowledge.appendix.transform.html | safe }}
+    </section>
   </main>
+
+  <footer>{{ owner_footer }}</footer>
 </body>
 </html>
