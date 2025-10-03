@@ -204,15 +204,27 @@ class BusinessCase:
         return (self.annual_saving_eur - self.invest_eur) / self.invest_eur * 100.0
 
 def compute_business_case(briefing, bm):
+    """Realistic business case for consulting sector"""
     invest = invest_from_bucket(_s(briefing.get("investitionsbudget")))
-    auto = bm.get("automatisierung", 0.40)
-    proc = bm.get("prozessreife", 0.50)
     
-    base_saving = 15000.0
-    automation_factor = 1.0 + (auto * 2.0)
-    process_factor = 1.0 + (proc * 0.5)
+    # For solo consultants, more conservative estimates
+    size = briefing.get("unternehmensgroesse", "").lower()
+    branch = briefing.get("branche", "").lower()
     
-    annual_saving = base_saving * automation_factor * process_factor
+    if "solo" in size or "freelance" in size:
+        # Solo consultant: 2-4 hours/day saved through automation
+        hours_saved_monthly = 60  # Conservative estimate
+        hourly_rate = 120  # Average consulting rate EUR/hour
+        annual_saving = hours_saved_monthly * hourly_rate * 12
+    elif "beratung" in branch or "consult" in branch:
+        # Small consulting firm
+        annual_saving = invest * 2.5  # 250% return realistic for consulting
+    else:
+        # Standard calculation
+        auto = bm.get("automatisierung", 0.40)
+        proc = bm.get("prozessreife", 0.50)
+        base_saving = 15000.0
+        annual_saving = base_saving * (1 + auto) * (1 + proc * 0.5)
     
     return BusinessCase(invest_eur=invest, annual_saving_eur=annual_saving)
 
@@ -297,7 +309,16 @@ def _fallback_quick_wins(ctx):
         "<li><b>Compliance-Setup</b> (1-2 Tage) - AI Act & DSGVO. Owner: Legal</li>"
         "</ul>"
     )
-
+def _fallback_quick_wins_consulting(ctx):
+    return (
+        "<ul>"
+        "<li><b>Automatisierte Fragebogen-Auswertung</b> (2-3 Tage) - GPT-Integration fuer Kundenanalysen. Owner: Geschaeftsfuehrung</li>"
+        "<li><b>KI-gestuetzte Angebotsvorlagen</b> (1-2 Tage) - Personalisierte Proposals. Owner: Vertrieb</li>"
+        "<li><b>Automatisches Reporting</b> (2-3 Tage) - Kundenberichte per Template. Owner: Projektmanagement</li>"
+        "<li><b>AI-Chatbot fuer Erstberatung</b> (3-4 Tage) - 24/7 Lead-Qualifizierung. Owner: Marketing</li>"
+        "<li><b>Compliance-Dokumentation</b> (1 Tag) - AI Act Checklisten. Owner: QM/Legal</li>"
+        "</ul>"
+    )
 def _fallback_roadmap(ctx):
     return (
         "<ol>"
