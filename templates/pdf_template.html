@@ -1,471 +1,113 @@
-<!DOCTYPE html>
-<html lang="de">
+<!-- File: templates/pdf_template.html -->
+<!doctype html>
+<html lang="{{ meta.lang|default('de') }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="KI-Status-Report - Professionelle Analyse Ihrer KI-Readiness">
-    <title>{{ meta.title or "KI-Status-Report" }}</title>
-    <style>
-        :root {
-            --primary: #0B5FFF;
-            --accent: #FB8C00;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --danger: #EF4444;
-            --muted: #6B7280;
-            --light: #F3F4F6;
-            --dark: #111827;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font: 14px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            color: var(--dark);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1024px;
-            margin: 0 auto;
-            background: white;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        
-        header {
-            background: linear-gradient(135deg, var(--primary) 0%, #0847d4 100%);
-            color: white;
-            padding: 32px 24px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 50%;
-            height: 200%;
-            background: rgba(255,255,255,0.05);
-            transform: rotate(35deg);
-        }
-        
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            position: relative;
-        }
-        
-        .header-meta {
-            font-size: 14px;
-            opacity: 0.9;
-            position: relative;
-        }
-        
-        main {
-            padding: 32px 24px;
-        }
-        
-        .card {
-            background: white;
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-        
-        .card:hover {
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .card h2 {
-            color: var(--accent);
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .card h2::before {
-            content: '';
-            width: 4px;
-            height: 24px;
-            background: var(--accent);
-            border-radius: 2px;
-        }
-        
-        .progress-bar {
-            margin: 12px 0;
-        }
-        
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-            font-size: 13px;
-        }
-        
-        .progress-track {
-            height: 8px;
-            background: var(--light);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin: 16px 0;
-        }
-        
-        thead th {
-            background: var(--light);
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--muted);
-            border-bottom: 2px solid #E5E7EB;
-        }
-        
-        tbody td {
-            padding: 12px;
-            border-bottom: 1px solid #F3F4F6;
-        }
-        
-        tbody tr:hover {
-            background: #FAFAFA;
-        }
-        
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin: 16px 0;
-        }
-        
-        .metric-card {
-            background: var(--light);
-            padding: 16px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .metric-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .metric-label {
-            font-size: 12px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .badge-success {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-        
-        .badge-warning {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-        }
-        
-        .badge-danger {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-        }
-        
-        ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        
-        ul li {
-            padding: 8px 0 8px 24px;
-            position: relative;
-        }
-        
-        ul li::before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: var(--success);
-            font-weight: bold;
-        }
-        
-        a {
-            color: var(--primary);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        
-        a:hover {
-            color: var(--accent);
-            text-decoration: underline;
-        }
-        
-        footer {
-            background: var(--light);
-            padding: 24px;
-            text-align: center;
-            color: var(--muted);
-            font-size: 12px;
-            border-top: 1px solid #E5E7EB;
-        }
-        
-        @media print {
-            body {
-                background: white;
-            }
-            .container {
-                box-shadow: none;
-            }
-            .card {
-                page-break-inside: avoid;
-            }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ meta.title }} – {{ briefing.branche }}</title>
+  <style>
+    :root { --primary:#0B5FFF; --accent:#FB8C00; }
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;
+         color:#0a0a0a;margin:0;padding:2rem;max-width:980px}
+    h1,h2{line-height:1.2;margin:1.2rem 0 .6rem}
+    h1{font-size:1.8rem}
+    h2{font-size:1.3rem;color:#222}
+    .meta{color:#555;font-size:.9rem;margin-bottom:1rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+    .card{border:1px solid #e5e7eb;border-radius:.6rem;padding:1rem;background:#fff}
+    .badge{display:inline-block;border-radius:999px;padding:.25rem .6rem;background:var(--primary);color:#fff;font-weight:600}
+    table{width:100%;border-collapse:collapse}
+    th,td{border:1px solid #e5e7eb;padding:.5rem;text-align:left}
+    a{color:var(--primary);text-decoration:none}
+    a:hover{text-decoration:underline}
+    @media print{a{color:inherit;text-decoration:none}}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>{{ meta.title or "KI-Status-Report" }}</h1>
-            <div class="header-meta">
-                Stand: {{ meta.date }} | {{ briefing.branche }} | {{ briefing.unternehmensgroesse }}
-            </div>
-        </header>
-        
-        <main>
-            <!-- Executive Summary -->
-            <div class="card">
-                <h2>Executive Summary</h2>
-                {{ sections.executive_summary_html | safe }}
-                <div class="metric-grid">
-                    <div class="metric-card">
-                        <div class="metric-value">{{ score_percent }}%</div>
-                        <div class="metric-label">KI-Score</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-value">{{ business_case.roi_year1_pct }}%</div>
-                        <div class="metric-label">ROI Jahr 1</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-value">{{ business_case.payback_months }} Mo.</div>
-                        <div class="metric-label">Payback</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Quality Check -->
-            {% if quality_badge %}
-            <div class="card">
-                <h2>Quality Check</h2>
-                <div class="metric-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Grade</div>
-                        <div class="metric-value">
-                            <span class="badge badge-{{ 'success' if quality_badge.grade == 'EXCELLENT' else 'warning' }}">
-                                {{ quality_badge.grade }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Score</div>
-                        <div class="metric-value">{{ quality_badge.score }}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Checks</div>
-                        <div class="metric-value">{{ quality_badge.passed_checks }}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Issues</div>
-                        <div class="metric-value">
-                            <span class="badge badge-{{ 'success' if quality_badge.critical_issues == 0 else 'danger' }}">
-                                {{ quality_badge.critical_issues }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- KPI Übersicht -->
-            <div class="card">
-                <h2>KPI-Übersicht</h2>
-                {% for key, label in [
-                    ("digitalisierung", "Digitalisierung"),
-                    ("automatisierung", "Automatisierung"),
-                    ("compliance", "Compliance"),
-                    ("prozessreife", "Prozessreife"),
-                    ("innovation", "Innovation")
-                ] %}
-                {% set value = (kpis[key] * 100) | round(0) %}
-                <div class="progress-bar">
-                    <div class="progress-header">
-                        <span>{{ label }}</span>
-                        <span>{{ value }}%</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" style="width: {{ value }}%"></div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            
-            <!-- Business Case -->
-            <div class="card">
-                <h2>Business Case</h2>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td>Investition</td>
-                            <td style="text-align: right; font-weight: 600;">{{ business_case.invest_eur | round(0) }} €</td>
-                        </tr>
-                        <tr>
-                            <td>Jährliche Einsparung</td>
-                            <td style="text-align: right; font-weight: 600;">{{ business_case.annual_saving_eur | round(0) }} €</td>
-                        </tr>
-                        <tr>
-                            <td>Amortisationsdauer</td>
-                            <td style="text-align: right; font-weight: 600;">{{ business_case.payback_months }} Monate</td>
-                        </tr>
-                        <tr>
-                            <td>ROI Jahr 1</td>
-                            <td style="text-align: right; font-weight: 600; color: var(--success);">{{ business_case.roi_year1_pct }}%</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Benchmark-Vergleich -->
-            <div class="card">
-                <h2>Benchmark-Vergleich</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Kennzahl</th>
-                            <th style="text-align: right;">Unser Wert</th>
-                            <th style="text-align: right;">Branche</th>
-                            <th style="text-align: right;">Delta</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for key, label in [
-                            ("digitalisierung", "Digitalisierung"),
-                            ("automatisierung", "Automatisierung"),
-                            ("compliance", "Compliance"),
-                            ("prozessreife", "Prozessreife"),
-                            ("innovation", "Innovation")
-                        ] %}
-                        {% set our_value = (kpis[key] * 100) | round(1) %}
-                        {% set bench_value = ((kpis_benchmark.get(key, 0) or 0) * 100) | round(1) %}
-                        {% set delta = (our_value - bench_value) | round(1) %}
-                        <tr>
-                            <td>{{ label }}</td>
-                            <td style="text-align: right;">{{ our_value }}%</td>
-                            <td style="text-align: right;">{{ bench_value }}%</td>
-                            <td style="text-align: right;">
-                                <span class="badge badge-{{ 'success' if delta > 0 else 'warning' if delta == 0 else 'danger' }}">
-                                    {{ '+' if delta > 0 }}{{ delta }} pp
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Quick Wins -->
-            <div class="card">
-                <h2>Quick Wins</h2>
-                {{ sections.quick_wins_html | safe }}
-            </div>
-            
-            <!-- 90-Tage-Roadmap -->
-            <div class="card">
-                <h2>90-Tage-Roadmap</h2>
-                {{ sections.roadmap_html | safe }}
-            </div>
-            
-            <!-- Risikomatrix -->
-            <div class="card">
-                <h2>Risikomatrix & Mitigation</h2>
-                {{ sections.risks_html | safe }}
-            </div>
-            
-            <!-- Compliance -->
-            <div class="card">
-                <h2>Compliance (MVC) – Go-Live-Gate</h2>
-                {{ sections.compliance_html | safe }}
-            </div>
-            
-            <!-- Executive Knowledge Digest -->
-            <div class="card">
-                <h2>Executive Knowledge Digest</h2>
-                {{ sections.doc_digest_html | safe }}
-            </div>
-            
-            <!-- Live Data: News -->
-            <div class="card">
-                <h2>Aktuelle Meldungen</h2>
-                <small style="color: var(--muted);">Stand: {{ live.stand }}</small>
-                {{ live.news_html | safe }}
-            </div>
-            
-            <!-- Live Data: Tools -->
-            <div class="card">
-                <h2>Neue Tools & Releases</h2>
-                <small style="color: var(--muted);">Stand: {{ live.stand }}</small>
-                {{ live.tools_html | safe }}
-            </div>
-            
-            <!-- Live Data: Funding -->
-            <div class="card">
-                <h2>Förderprogramme</h2>
-                <small style="color: var(--muted);">Stand: {{ live.stand }}</small>
-                {{ live.funding_html | safe }}
-            </div>
-        </main>
-        
-        <footer>
-            <p>© 2025 TÜV-zertifiziertes KI-Management</p>
-            <p>Wolf Hohl | Trailerhaus GmbH | ki-sicherheit.jetzt</p>
-        </footer>
+  <header>
+    <h1>{{ meta.title }}</h1>
+    <div class="meta">
+      Branche: <b>{{ briefing.branche }}</b> · Größe: <b>{{ briefing.unternehmensgroesse }}</b>
+      {% if briefing.bundesland %} · Bundesland: <b>{{ briefing.bundesland }}</b>{% endif %}
+      · Stand: {{ meta.date }}
     </div>
+  </header>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Score</h2>
+      <div class="badge">{{ score_percent }}%</div>
+      <p>Digitalisierung: {{ (kpis.digitalisierung*100)|round(0) }}% ·
+         Automatisierung: {{ (kpis.automatisierung*100)|round(0) }}% ·
+         Compliance: {{ (kpis.compliance*100)|round(0) }}%</p>
+    </div>
+    <div class="card">
+      <h2>Business Case</h2>
+      <p>Investition: ~ {{ business_case.invest_eur|round(0) }} €</p>
+      <p>Einsparung/Jahr: ~ {{ business_case.annual_saving_eur|round(0) }} €</p>
+      <p>Payback: {{ business_case.payback_months }} Monate ·
+         ROI (J1): {{ business_case.roi_year1_pct }}%</p>
+    </div>
+    <div class="card">
+      <h2>Qualität</h2>
+      <p>Badge: {{ quality_badge.grade }} ({{ quality_badge.score }})</p>
+      <p>Checks: {{ quality_badge.passed_checks }} · Kritische Issues: {{ quality_badge.critical_issues }}</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Executive Summary</h2>
+    <div>{{ sections.executive_summary_html|safe }}</div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Quick Wins</h2>
+      <div>{{ sections.quick_wins_html|safe }}</div>
+    </div>
+    <div class="card">
+      <h2>Roadmap (12 Wochen)</h2>
+      <div>{{ sections.roadmap_html|safe }}</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Risiken & Mitigation</h2>
+    <div>{{ sections.risks_html|safe }}</div>
+  </section>
+
+  <section>
+    <h2>Compliance</h2>
+    <div>{{ sections.compliance_html|safe }}</div>
+  </section>
+
+  <section>
+    <h2>Executive Knowledge Digest</h2>
+    <div>{{ sections.doc_digest_html|safe }}</div>
+  </section>
+
+  {% if sections_extra and sections_extra|length > 0 %}
+    {% for sec in sections_extra %}
+      <section>
+        <h2>{{ sec.title }}</h2>
+        <div>{{ sec.html|safe }}</div>
+      </section>
+    {% endfor %}
+  {% endif %}
+
+  <section class="grid">
+    <div class="card">
+      <h2>Aktuelle News</h2>
+      <div>{{ live.news_html|safe }}</div>
+    </div>
+    <div class="card">
+      <h2>Tools</h2>
+      <div>{{ live.tools_html|safe }}</div>
+    </div>
+    <div class="card">
+      <h2>Förderungen</h2>
+      <div>{{ live.funding_html|safe }}</div>
+    </div>
+  </section>
 </body>
 </html>
