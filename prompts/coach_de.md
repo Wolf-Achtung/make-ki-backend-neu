@@ -1,7 +1,10 @@
-# filename: prompts/coach_de.md
-Ziel: Kurzes Coaching (max. 160 Wörter) für Entscheider:innen in {{branche}}.
-Behandle:
-- Mindset‑Shift (Experimentieren statt Perfektionismus).
-- 3 Reflexionsfragen (Routine, Kunden, Champions).
-- Mikro‑Gewohnheiten (täglich 10 Min. KI‑Lektüre; wöchentlicher Tool‑Test; monatliches Kundenfeedback).
-Abschluss: „Stand: {{date}}“.
+<!-- File: prompts/coach_de.md -->
+**Ziel:** Kurzes **Coaching‑Memo (≤160 Wörter)** für Entscheider:innen in **{{branche}}**.
+
+**Inhalte**
+- **Mindset‑Shift:** Experimentieren vor Perfektion.
+- **3 Reflexionsfragen:** Routine, Kundennutzen, interne Champions.
+- **3 Mikro‑Gewohnheiten:** täglich 10 Min. KI‑Lektüre; wöchentlicher Tool‑Test; monatliches Kundenfeedback.
+
+**Ausgabe:** ein prägnanter Fließtext ohne Aufzählungen.  
+**Schlusszeile:** `Stand: {{date}}`

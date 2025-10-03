@@ -1,7 +1,13 @@
-# filename: prompts/foerderprogramme_de.md
-Fasse die wichtigsten Programme zusammen für {{bundesland}} / {{unternehmensgroesse}} / {{branche}}:
-- Priorisiere aus {{FUNDING_HTML}} (CSV) + {{EU_CALLS_HTML}} (EU‑Portal).
-- Gliedere in „Zuschuss“, „Beratung“, „Kredite/EFRE“.
-- Für jedes Programm: Kurzbeschreibung (1 Satz), Fördersatz/Max, Deadline, Link (nur aus den gelieferten Quellen).
-- Schluss: 3 Hinweise zu Kombinierbarkeit/Fristen.
-„Stand: {{date}}“.
+<!-- File: prompts/foerderprogramme_de.md -->
+**Aufgabe:** Fasse Förderprogramme für **{{bundesland}} / {{unternehmensgroesse}} / {{branche}}** zusammen.
+
+**Quellen**
+- **{{FUNDING_HTML}}** (CSV/Portal) und **{{EU_CALLS_HTML}}** (EU‑Portal). Keine externen Quellen.
+
+**Ausgabe**
+- **3 Gruppen:** „Zuschuss“, „Beratung“, „Kredite/EFRE“.
+- **Pro Programm:** 1‑Satz‑Beschreibung, **Fördersatz/Max**, **Deadline**, **Link** (nur aus den Quellen).
+- **Format:** **HTML‑Tabelle** mit Spalten `Programm | Kategorie | Satz/Max | Deadline | Link`.
+
+**Abschluss:** 3 Hinweise zu **Kombinierbarkeit** und **Fristen**.  
+**Schlusszeile:** `Stand: {{date}}`

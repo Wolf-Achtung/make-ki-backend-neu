@@ -1,8 +1,10 @@
-# filename: prompts/compliance_de.md
-Baue einen umsetzbaren Maßnahmenblock auf Basis des gelieferten HTML:
+<!-- File: prompts/compliance_de.md -->
+**Aufgabe:** Baue einen **umsetzbaren Compliance‑Block** auf Basis des gelieferten HTML:
 {{COMPLIANCE_HTML}}
 
-Zusatz:
-- Liste 5 prüfbare Artefakte für das Go‑Live‑Gate (z. B. DSFA, AVV, Log‑Nachweise, Rollenmatrix, Testprotokolle).
-- Füge 3 Re‑Klassifizierungs‑Trigger an (Fine‑Tuning, Zweckwechsel, Agenten).
-- Endzeile „Stand: {{date}}“.
+**Ergänze zwingend**
+- **5 prüfbare Artefakte** für das Go‑Live‑Gate (z. B. DSFA, AVV, Log‑Nachweise, RACI, Testprotokolle).
+- **3 Re‑Klassifizierungs‑Trigger** (Fine‑Tuning, Zweckwechsel, Agenten).
+
+**Ausgabe:** sauber gegliederte Liste (Markdown oder HTML).  
+**Schlusszeile:** `Stand: {{date}}`
