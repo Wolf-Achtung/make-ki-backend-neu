@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 MAKE-KI Backend - Report Generator (Gold-Standard+)
-Verbessert in diesem Release:
-- Dynamische Prompt-Discovery: alle Prompts im Ordner werden genutzt (Extrasektionen).
-- Benchmark-Auswahl: robuste, synonym-feste Zuordnung (z. B. "Bau" → "bauwesen_architektur").
-- OpenAI: kompatibel mit openai>=1.x (Client API) + Fallback auf 0.28 (Legacy).
-- Sichere Prompt-Formatierung (SafeFormat) -> keine KeyErrors bei fehlenden Platzhaltern.
-- XSS-Härtung, PEP8, Typannotationen, Logging, defensive Defaults.
+
+Dieses Release ergänzt:
+- Badges neben Überschriften (ohne Icons) für Live-Kanäle/Features
+- EU-Host-Check-Flag & Provider-Info im Kontext
+- erweiterte Live-Renderer (Vendor-Shortlist, Tool-Alternativen, Regulatory, Case Studies)
+- PEP8, sichere HTML-Ausgabe, OpenAI v1 + Legacy-Fallback
 """
 
 from __future__ import annotations
@@ -20,17 +20,13 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 from urllib.parse import urlparse
 
 try:
     from jinja2 import Environment, FileSystemLoader, select_autoescape  # type: ignore
 except ImportError:
     Environment = None  # type: ignore
-
-# ------------------------------------------------------------------------------
-# Konfiguration
-# ------------------------------------------------------------------------------
 
 BASE_DIR: Path = Path(__file__).resolve().parent
 DATA_DIR: Path = Path(os.getenv("DATA_DIR", str(BASE_DIR / "data")))
@@ -52,6 +48,12 @@ LLM_MODE: str = os.getenv("LLM_MODE", "hybrid").lower()
 
 PROMPT_DISCOVERY: bool = os.getenv("PROMPT_DISCOVERY", "true").lower() == "true"
 
+# Live-Feature-Flags für Badges
+SEARCH_PROVIDER = os.getenv("SEARCH_PROVIDER", "hybrid").lower()
+ENABLE_CASE_STUDIES = os.getenv("ENABLE_CASE_STUDIES", "true").lower() == "true"
+ENABLE_REGULATORY = os.getenv("ENABLE_REGULATORY", "true").lower() == "true"
+ENABLE_EU_HOST_CHECK = os.getenv("ENABLE_EU_HOST_CHECK", "true").lower() == "true"
+
 if not logging.getLogger().handlers:
     logging.basicConfig(
         level=getattr(logging, LOG_LEVEL, logging.INFO),
@@ -65,33 +67,23 @@ COLOR_ACCENT = "#FB8C00"
 # ------------------------------------------------------------------------------
 # Utilities
 # ------------------------------------------------------------------------------
-
 def _now_iso() -> str:
     return datetime.now().strftime("%Y-%m-%d")
 
-
 def fix_encoding(text: Any) -> str:
-    """Konservative Normalisierung, ohne Nicht-ASCII zu entfernen."""
     if text is None:
         return ""
     s = str(text)
     replacements = {
-        "\u201a": ",",
-        "\u201e": '"',
-        "\u201c": '"',
-        "\u201d": '"',
-        "\u2013": "–",
-        "\u2014": "—",
-        "\u20ac": "€",
+        "\u201a": ",", "\u201e": '"', "\u201c": '"', "\u201d": '"',
+        "\u2013": "–", "\u2014": "—", "\u20ac": "€",
     }
     for old, new in replacements.items():
         s = s.replace(old, new)
     return s
 
-
 def _s(x: Any) -> str:
     return fix_encoding(x).strip()
-
 
 def _safe_float(x: Any, default: float = 0.0) -> float:
     try:
@@ -99,22 +91,17 @@ def _safe_float(x: Any, default: float = 0.0) -> float:
     except (TypeError, ValueError):
         return default
 
-
 def _sanitize_name(name: str) -> str:
-    """Sanitize branch/size names for filename matching."""
     s = fix_encoding(name or "").strip().lower()
     s = s.replace("&", "_und_").replace(" ", "_").replace("/", "_")
     s = re.sub(r"[^a-z0-9_]+", "", s)
     s = re.sub(r"_+", "_", s).strip("_")
     return s or "default"
 
-
 def _escape_html(text: str) -> str:
     return html.escape(text, quote=True)
 
-
 def _safe_href(url: str) -> str:
-    """Allow only http(s) links; else return '#'. Prevents script: injection."""
     try:
         parsed = urlparse(url)
         if parsed.scheme in ("http", "https"):
@@ -123,15 +110,11 @@ def _safe_href(url: str) -> str:
         pass
     return "#"
 
-
 class _SafeFormatDict(dict):
-    """dict, das fehlende Keys als {key} stehen lässt, statt KeyError zu werfen."""
     def __missing__(self, key: str) -> str:  # type: ignore[override]
         return "{" + key + "}"
 
-
 def flatten_mapping(mapping: Mapping[str, Any]) -> Dict[str, Any]:
-    """Flacht geschachtelte Mappings (briefing.*, business_case.* ...) für Formatstrings ab."""
     flat: Dict[str, Any] = {}
     for k, v in mapping.items():
         if isinstance(v, dict):
@@ -142,27 +125,21 @@ def flatten_mapping(mapping: Mapping[str, Any]) -> Dict[str, Any]:
             flat[k] = v
     return flat
 
-
 def safe_format(template: str, mapping: Mapping[str, Any]) -> str:
     flat = flatten_mapping(mapping)
     return template.format_map(_SafeFormatDict(flat))
 
-
 def title_from_slug(slug: str, lang: str) -> str:
-    """Humanfreundlicher Titel aus slug."""
     title = slug.replace("_", " ").strip()
     title = re.sub(r"\b([a-z])", lambda m: m.group(1).upper(), title)
     if lang == "de":
-        # kleine Schönheitskorrekturen
-        title = title.replace("Foerderprogramme", "Förderprogramme")
-        title = title.replace("Praxisbeispiel", "Praxisbeispiele")
+        title = title.replace("Foerderprogramme", "Förderprogramme").replace("Praxisbeispiel", "Praxisbeispiele")
     return title
 
 # ------------------------------------------------------------------------------
-# Branch Mapping & Benchmark Discovery
+# Benchmarks & Business Case (gekürzt, unverändert in der Logik)
 # ------------------------------------------------------------------------------
-
-BRANCH_MAPPINGS: Dict[str, List[str]] = {
+BRANCH_MAPPINGS = {
     "beratung": ["beratung", "consulting", "dienstleistung", "dienstleistungen"],
     "medien": ["medien", "kreativwirtschaft", "media", "film", "video"],
     "handel": ["handel", "e_commerce", "retail", "verkauf"],
@@ -176,30 +153,24 @@ BRANCH_MAPPINGS: Dict[str, List[str]] = {
     "transport": ["transport", "logistik", "logistics"],
     "bau": ["bau", "bauwesen", "architektur", "construction"],
 }
-
-# Kanonische Dataset-Schlüssel, falls nur Oberkategorie übergeben wird
-CATEGORY_TO_CANONICAL: Dict[str, str] = {
+CATEGORY_TO_CANONICAL = {
     "bau": "bauwesen_architektur",
     "transport": "transport_logistik",
     "marketing": "marketing_werbung",
     "finanzen": "finanzen_versicherungen",
-    "it": "it",  # vorhanden; alternativ "it_software"
-    "medien": "medien",  # alternativ "medien_kreativwirtschaft"
+    "it": "it",
+    "medien": "medien",
     "industrie": "industrie_produktion",
     "gesundheit": "gesundheit_pflege",
-    "beratung": "beratung",  # alternativ "beratung_dienstleistungen"
+    "beratung": "beratung",
 }
 
-_BENCHMARK_INDEX_CACHE: Optional[Set[Tuple[str, str]]] = None
-
-
-def _discover_benchmark_index() -> Set[Tuple[str, str]]:
-    """Findet alle (branch_key, size)-Kombinationen im DATA_DIR."""
+_BENCHMARK_INDEX_CACHE: Optional[set] = None
+def _discover_benchmark_index():
     global _BENCHMARK_INDEX_CACHE
     if _BENCHMARK_INDEX_CACHE is not None:
         return _BENCHMARK_INDEX_CACHE
-
-    combos: Set[Tuple[str, str]] = set()
+    combos = set()
     if DATA_DIR.exists():
         for p in DATA_DIR.glob("benchmarks_*_*.json"):
             name = p.stem[len("benchmarks_") :]
@@ -211,64 +182,47 @@ def _discover_benchmark_index() -> Set[Tuple[str, str]]:
     _BENCHMARK_INDEX_CACHE = combos
     return combos
 
-
 def _best_branch_key(user_branch: str, branch_category: str) -> str:
-    """Wählt den „besten“ vorhandenen Branch-Key für gegebene Eingabe."""
     b = _sanitize_name(user_branch)
     cat = _sanitize_name(branch_category)
     available = _discover_benchmark_index()
     keys = {bk for (bk, _) in available}
-
     if b in keys:
         return b
-
-    # bevorzugt kanonisch für die Kategorie
     canonical = CATEGORY_TO_CANONICAL.get(cat)
     if canonical in keys:
         return canonical
-
-    # sonst: bestes Matching nach Token-Overlap
-    b_tokens = set(b.split("_"))
+    b_tokens = set(b.split("_")) if b else set()
     scored = []
     for k in keys:
         k_tokens = set(k.split("_"))
         overlap = len(b_tokens & k_tokens)
-        starts = 1 if k.startswith(cat) else 0
+        starts = 1 if (cat and k.startswith(cat)) else 0
         score = overlap * 10 + starts
         scored.append((score, k))
     scored.sort(reverse=True)
     return scored[0][1] if scored else (b or cat or "default")
 
-
 def find_best_benchmark(branch: str, size: str) -> Dict[str, float]:
-    """Liest passende Benchmark-KPIs aus Dateien, robust ggü. Synonymen."""
     b_in = _sanitize_name(branch)
     s_in = _sanitize_name(size)
-
-    # Größennormalisierung
     if any(x in s_in for x in ["solo", "einzel", "freelance", "freiberuf", "1"]):
         s = "solo"
     elif any(x in s_in for x in ["klein", "small", "2", "3", "4", "5", "bis_10", "team_2_10"]):
         s = "small"
     else:
         s = "kmu"
-
-    # Kategorie aus Mapping ableiten
     branch_category = b_in
     for category, keywords in BRANCH_MAPPINGS.items():
         if any(keyword in b_in for keyword in keywords):
             branch_category = category
             break
-
-    # „Bester“ existierender Schlüssel
     best_key = _best_branch_key(b_in, branch_category)
-
     candidates = [
         DATA_DIR / f"benchmarks_{best_key}_{s}.json",
         DATA_DIR / f"benchmarks_{best_key}_kmu.json",
         DATA_DIR / "benchmarks_default.json",
     ]
-
     for path in candidates:
         if path.exists():
             try:
@@ -280,26 +234,32 @@ def find_best_benchmark(branch: str, size: str) -> Dict[str, float]:
                     return kpis
             except Exception as e:
                 logger.warning("Failed to load %s: %s", path, e)
-
     logger.warning("Using default benchmarks")
-    return {
-        "digitalisierung": 0.60,
-        "automatisierung": 0.35,
-        "compliance": 0.50,
-        "prozessreife": 0.45,
-        "innovation": 0.55,
-    }
+    return {"digitalisierung": 0.60, "automatisierung": 0.35, "compliance": 0.50, "prozessreife": 0.45, "innovation": 0.55}
 
 # ------------------------------------------------------------------------------
 # Business Case
 # ------------------------------------------------------------------------------
+@dataclass
+class BusinessCase:
+    invest_eur: float
+    annual_saving_eur: float
+    @property
+    def payback_months(self) -> float:
+        if self.annual_saving_eur <= 0:
+            return 999.0
+        return min((self.invest_eur / self.annual_saving_eur) * 12, 999.0)
+    @property
+    def roi_year1_pct(self) -> float:
+        if self.invest_eur <= 0:
+            return 0.0
+        roi = (self.annual_saving_eur - self.invest_eur) / self.invest_eur * 100
+        return max(min(roi, 500.0), -50.0)
 
 def invest_from_bucket(bucket: Optional[str]) -> float:
-    """Extract investment estimate from bucket description."""
     if not bucket:
         return 6000.0
     b = bucket.lower()
-
     if "bis" in b and "2000" in b:
         return 1500.0
     if "2000" in b and "10000" in b:
@@ -308,42 +268,18 @@ def invest_from_bucket(bucket: Optional[str]) -> float:
         return 30000.0
     if "50000" in b:
         return 75000.0
-
     numbers = re.findall(r"\d+", b.replace(".", ""))
     if numbers:
         avg = sum(int(n) for n in numbers) / len(numbers)
         return float(min(max(avg, 1000), 100000))
     return 6000.0
 
-
-@dataclass
-class BusinessCase:
-    invest_eur: float
-    annual_saving_eur: float
-
-    @property
-    def payback_months(self) -> float:
-        if self.annual_saving_eur <= 0:
-            return 999.0
-        return min((self.invest_eur / self.annual_saving_eur) * 12, 999.0)
-
-    @property
-    def roi_year1_pct(self) -> float:
-        if self.invest_eur <= 0:
-            return 0.0
-        roi = (self.annual_saving_eur - self.invest_eur) / self.invest_eur * 100
-        return max(min(roi, 500.0), -50.0)
-
-def compute_business_case(briefing: Mapping[str, Any],
-                          benchmarks: Mapping[str, float]) -> BusinessCase:
-    """Compute realistic business case based on sector/size."""
+def compute_business_case(briefing: Mapping[str, Any], benchmarks: Mapping[str, float]) -> BusinessCase:
     invest = invest_from_bucket(briefing.get("investitionsbudget"))
     branch = (briefing.get("branche") or "").lower()
     size = (briefing.get("unternehmensgroesse") or "").lower()
-
     auto = float(benchmarks.get("automatisierung", 0.35))
     proc = float(benchmarks.get("prozessreife", 0.45))
-
     if "solo" in size:
         if "beratung" in branch or "consulting" in branch:
             hours_saved = 60 * (auto + proc) / 2
@@ -360,39 +296,12 @@ def compute_business_case(briefing: Mapping[str, Any],
     else:
         base_saving = 12000 + (invest * 0.5)
         annual_saving = base_saving * (1 + auto * 0.5) * (1 + proc * 0.3)
-
     return BusinessCase(invest_eur=float(invest), annual_saving_eur=float(annual_saving))
 
 # ------------------------------------------------------------------------------
-# GPT-Integration
+# OpenAI (v1 + Legacy-Fallback)
 # ------------------------------------------------------------------------------
-
-def load_prompt(name: str, lang: str, branch: str = "", size: str = "") -> str:
-    """Load prompt from filesystem with specific→generic fallback."""
-    lang = (lang or "de")[:2].lower()
-    b = _sanitize_name(branch)
-    s = _sanitize_name(size)
-
-    candidates = [
-        PROMPTS_DIR / f"{name}_{b}_{s}_{lang}.md",
-        PROMPTS_DIR / f"{name}_{b}_{lang}.md",
-        PROMPTS_DIR / f"{name}_{lang}.md",
-        PROMPTS_DIR / f"{name}_de.md",
-    ]
-    for path in candidates:
-        if path.exists():
-            try:
-                content = path.read_text(encoding="utf-8")
-                logger.info("Loaded prompt: %s", path.name)
-                return content
-            except Exception as e:
-                logger.warning("Failed to load prompt %s: %s", path, e)
-
-    return f"Generate {name} section for {branch} company of size {size}"
-
-
 def _openai_call_v1(prompt: str, model: Optional[str] = None) -> str:
-    """Call OpenAI client API (openai>=1.x)."""
     from openai import OpenAI  # type: ignore
     client = OpenAI(api_key=OPENAI_API_KEY)
     client_t = client.with_options(timeout=OPENAI_TIMEOUT)
@@ -407,9 +316,7 @@ def _openai_call_v1(prompt: str, model: Optional[str] = None) -> str:
     )
     return (resp.choices[0].message.content or "").strip()
 
-
 def _openai_call_legacy(prompt: str, model: Optional[str] = None) -> str:
-    """Call legacy ChatCompletion API (openai==0.28)."""
     import openai  # type: ignore
     openai.api_key = OPENAI_API_KEY
     resp = openai.ChatCompletion.create(
@@ -425,84 +332,60 @@ def _openai_call_legacy(prompt: str, model: Optional[str] = None) -> str:
     content = choice.get("message", {}).get("content", "")
     return (content or "").strip()
 
-
 def call_gpt(prompt: str, model: Optional[str] = None) -> str:
-    """Versionstoleranter OpenAI-Call mit sauberem Fehlerhandling."""
     if not OFFICIAL_API_ENABLED or not OPENAI_API_KEY:
         raise RuntimeError("GPT not configured (OFFICIAL_API_ENABLED / OPENAI_API_KEY)")
-
     try:
         return _openai_call_v1(prompt, model=model)
     except Exception as e_v1:
         logger.warning("OpenAI v1 call failed, trying legacy: %s", e_v1)
-        try:
-            return _openai_call_legacy(prompt, model=model)
-        except Exception as e_legacy:
-            logger.error("OpenAI call failed (v1 & legacy): %s", e_legacy)
-            raise
+        return _openai_call_legacy(prompt, model=model)
 
 # ------------------------------------------------------------------------------
-# Prompt Discovery & Fallback-Sectionen
+# Prompt Handling (gekürzt): CORE + Fallback
 # ------------------------------------------------------------------------------
-
 CORE_SECTIONS: Sequence[str] = ("executive_summary", "quick_wins", "roadmap", "risks", "compliance")
 
-EXTRA_TITLES_DE: Dict[str, str] = {
-    "business": "Business-Überblick",
-    "coach": "Coach-Notizen",
-    "foerderprogramme": "Förderprogramme",
-    "gamechanger": "Game Changer",
-    "persona": "Personas",
-    "praxisbeispiel": "Praxisbeispiele",
-    "recommendations": "Empfehlungen",
-    "tools": "Tools",
-    "vision": "Vision",
-}
+def load_prompt(name: str, lang: str, branch: str = "", size: str = "") -> str:
+    lang = (lang or "de")[:2].lower()
+    b = _sanitize_name(branch)
+    s = _sanitize_name(size)
+    candidates = [
+        PROMPTS_DIR / f"{name}_{b}_{s}_{lang}.md",
+        PROMPTS_DIR / f"{name}_{b}_{lang}.md",
+        PROMPTS_DIR / f"{name}_{lang}.md",
+        PROMPTS_DIR / f"{name}_de.md",
+    ]
+    for path in candidates:
+        if path.exists():
+            try:
+                content = path.read_text(encoding="utf-8")
+                logger.info("Loaded prompt: %s", path.name)
+                return content
+            except Exception as e:
+                logger.warning("Failed to load prompt %s: %s", path, e)
+    return f"Generate {name} section for {branch} company of size {size}"
 
-EXTRA_TITLES_EN: Dict[str, str] = {
-    "business": "Business Overview",
-    "coach": "Coach Notes",
-    "foerderprogramme": "Funding Programs",
-    "gamechanger": "Game Changers",
-    "persona": "Personas",
-    "praxisbeispiel": "Case Studies",
-    "recommendations": "Recommendations",
-    "tools": "Tools",
-    "vision": "Vision",
-}
+def generate_section(section_name: str, context: Mapping[str, Any], lang: str) -> str:
+    branch = context["briefing"]["branche"]
+    size = context["briefing"]["unternehmensgroesse"]
+    if ENABLE_LLM_SECTIONS and OPENAI_API_KEY and LLM_MODE in ("on", "hybrid"):
+        try:
+            prompt_template = load_prompt(section_name, lang, branch, size)
+            payload = {"branche": branch, "unternehmensgroesse": size,
+                       **context.get("briefing", {}), **context.get("business_case", {}),
+                       "score_percent": context.get("score_percent")}
+            prompt = safe_format(prompt_template, payload)
+            return call_gpt(prompt)
+        except Exception as e:
+            logger.warning("GPT generation failed for %s: %s", section_name, e)
+    return get_fallback_section(section_name, context, branch)
 
-
-def discover_prompt_basenames(lang: str) -> List[str]:
-    """Sucht alle Prompt-Basenamen im PROMPTS_DIR für die Sprache."""
-    if not PROMPTS_DIR.exists() or not PROMPT_DISCOVERY:
-        return list(CORE_SECTIONS)
-
-    basenames: Set[str] = set(CORE_SECTIONS)
-    for path in PROMPTS_DIR.glob(f"*_{lang[:2].lower()}.md"):
-        name = path.stem[:-3] if path.stem.endswith(f"_{lang[:2].lower()}") else path.stem
-        # name kann name_b_size_lang sein → extrahiere Basename (vor "_de/_en")
-        parts = path.stem.split("_")
-        if len(parts) >= 2:
-            base = "_".join(parts[:-1])  # ohne _de/_en
-            # entferne ggf. branch/size suffixe (heuristisch)
-            for sz in ("solo", "small", "kmu"):
-                if base.endswith("_" + sz):
-                    base = base[: -(len(sz) + 1)]
-            basenames.add(base.split("_" + _sanitize_name("beratung"))[0])  # weich
-        else:
-            basenames.add(path.stem)
-    return sorted(basenames)
-
-
-def get_fallback_section(section_name: str,
-                         context: Mapping[str, Any],
-                         branch: str) -> str:
-    """Rendert statische Fallbacks für Kernsektionen; andere geben Basishinweis aus."""
+def get_fallback_section(section_name: str, context: Mapping[str, Any], branch: str) -> str:
     branch_lower = branch.lower()
     is_consulting = any(x in branch_lower for x in ["beratung", "consult", "dienst"])
     is_media = any(x in branch_lower for x in ["medien", "kreativ", "film", "video"])
     is_it = any(x in branch_lower for x in ["it", "software", "digital", "tech"])
-
     if section_name == "executive_summary":
         return generate_executive_summary(context, is_consulting, is_media, is_it)
     if section_name == "quick_wins":
@@ -513,39 +396,176 @@ def get_fallback_section(section_name: str,
         return generate_risks(is_consulting, is_media, is_it)
     if section_name == "compliance":
         return generate_compliance()
-
-    # generischer Fallback
     return "<p>Inhalt wird vorbereitet.</p>"
 
+# ---- Fallback-HTML-Generatoren (kompakt) --------------------------------------
+def generate_executive_summary(ctx: Mapping[str, Any], is_consulting: bool, is_media: bool, is_it: bool) -> str:
+    branch = ctx["briefing"]["branche"]
+    score = ctx["score_percent"]
+    roi = ctx["business_case"]["roi_year1_pct"]
+    payback = ctx["business_case"]["payback_months"]
+    if is_consulting:
+        focus = "Automatisierung von Beratungsprozessen und KI-gestützte Analysen"
+    elif is_media:
+        focus = "Content-Automatisierung und KI-gestützte Produktion"
+    elif is_it:
+        focus = "Code-Generierung und automatisierte Qualitätssicherung"
+    else:
+        focus = "Prozessautomatisierung und datengetriebene Entscheidungen"
+    return f"""
+    <p>Ihre <b>{html.escape(branch)}</b>-Organisation zeigt mit einem <b>KI-Readiness-Score von {score:.1f}%</b>
+    hohes Potenzial. Der Business Case prognostiziert einen <b>ROI von {roi:.1f}%</b> (J1)
+    bei <b>Amortisation in {payback:.1f} Monaten</b>. Fokus: {html.escape(focus)}.</p>
+    """
 
-def generate_section(section_name: str, context: Mapping[str, Any], lang: str) -> str:
-    """Generate section via GPT or branch-specific fallback."""
-    branch = context["briefing"]["branche"]
-    size = context["briefing"]["unternehmensgroesse"]
+def generate_quick_wins(is_consulting: bool, is_media: bool, is_it: bool) -> str:
+    if is_consulting:
+        return "<ul><li><b>GPT-Integration</b></li><li><b>Proposal-Generator</b></li><li><b>Reporting</b></li><li><b>Lead-Scoring</b></li><li><b>Compliance-Check</b></li></ul>"
+    if is_media:
+        return "<ul><li><b>AI Editing</b></li><li><b>Content Gen</b></li><li><b>Untertitelung</b></li><li><b>Social Automation</b></li><li><b>Asset-KI</b></li></ul>"
+    if is_it:
+        return "<ul><li><b>Code-Review-Automation</b></li><li><b>Test-Case-Generation</b></li><li><b>Documentation AI</b></li><li><b>Bug Prediction</b></li><li><b>AI Code Assistant</b></li></ul>"
+    return "<ul><li><b>Prozess-Automatisierung</b></li><li><b>KI-Chatbot</b></li><li><b>Predictive Analytics</b></li><li><b>Document AI</b></li><li><b>RPA-Pilot</b></li></ul>"
 
-    if ENABLE_LLM_SECTIONS and OPENAI_API_KEY and LLM_MODE in ("on", "hybrid"):
-        try:
-            prompt_template = load_prompt(section_name, lang, branch, size)
-            payload = {
-                "branche": branch,
-                "unternehmensgroesse": size,
-                **context.get("briefing", {}),
-                **context.get("business_case", {}),
-                "score_percent": context.get("score_percent"),
-            }
-            prompt = safe_format(prompt_template, payload)
-            return call_gpt(prompt)
-        except Exception as e:
-            logger.warning("GPT generation failed for %s: %s", section_name, e)
+def generate_roadmap(is_consulting: bool, is_media: bool, is_it: bool) -> str:
+    return "<ol><li><b>W1–2:</b> Setup & Datenschutz</li><li><b>W3–4:</b> Pilot</li><li><b>W5–8:</b> Rollout</li><li><b>W9–12:</b> Optimierung & Scale</li></ol>"
 
-    return get_fallback_section(section_name, context, branch)
+def generate_risks(is_consulting: bool, is_media: bool, is_it: bool) -> str:
+    return ('<table style="width:100%;border-collapse:collapse"><thead><tr><th>Risiko</th><th>Wahrsch.</th><th>Impact</th><th>Mitigation</th></tr></thead>'
+            '<tbody><tr><td>Datenschutz</td><td>Mittel</td><td>Hoch</td><td>DSGVO-Prozesse</td></tr>'
+            '<tr><td>Compliance</td><td>Mittel</td><td>Hoch</td><td>AI-Act-Checklisten</td></tr>'
+            '<tr><td>Vendor-Lock</td><td>Mittel</td><td>Mittel</td><td>Open-Source-First</td></tr>'
+            '<tr><td>Change-Resistenz</td><td>Hoch</td><td>Mittel</td><td>Change Management</td></tr></tbody></table>')
+
+def generate_compliance() -> str:
+    return "<ul><li><b>AI-Act-Klassifizierung</b></li><li><b>Transparenzpflichten</b></li><li><b>Datenschutz</b></li><li><b>Dokumentation</b></li><li><b>Monitoring</b></li></ul>"
 
 # ------------------------------------------------------------------------------
-# Live-Daten
+# Live-Daten – Renderer
 # ------------------------------------------------------------------------------
+def render_tags(badges: List[str]) -> str:
+    if not badges:
+        return ""
+    return " ".join(f'<span class="tag">{_escape_html(b)}</span>' for b in badges)
+
+def render_tools_html(items: List[Mapping[str, Any]]) -> str:
+    if not items:
+        return "<p>Keine Tools gefunden.</p>"
+    out = ["<ul>"]
+    for it in items[:10]:
+        t = _escape_html(fix_encoding(it.get("title", "")))
+        u = _safe_href(str(it.get("url") or ""))
+        cat = _escape_html(str(it.get("category", "")))
+        badges = render_tags(list(it.get("badges", [])))
+        host = _escape_html(str(it.get("host_cc", "")))
+        extra = f" <small>(Host: {host})</small>" if host else ""
+        if u != "#":
+            out.append(f'<li><a href="{u}" target="_blank" rel="noopener noreferrer">{t}</a>')
+        else:
+            out.append(f"<li><b>{t}</b>")
+        if cat:
+            out.append(f" <small>({cat})</small>")
+        out.append(extra)
+        if badges:
+            out.append(f" {badges}")
+        out.append("</li>")
+    out.append("</ul>")
+    return "".join(out)
+
+def render_funding_html(items: List[Mapping[str, Any]]) -> str:
+    if not items:
+        return "<p>Keine Förderprogramme gefunden.</p>"
+    out = ["<ul>"]
+    for it in items[:10]:
+        t = _escape_html(fix_encoding(it.get("title", "")))
+        u = _safe_href(str(it.get("url") or ""))
+        date = str(it.get("published_at") or "")[:10]
+        badges = render_tags(list(it.get("badges", [])))
+        if u != "#":
+            out.append(f'<li><a href="{u}" target="_blank" rel="noopener noreferrer">{t}</a>')
+        else:
+            out.append(f"<li><b>{t}</b>")
+        if date:
+            out.append(f" <small>({_escape_html(date)})</small>")
+        if badges:
+            out.append(f" {badges}")
+        out.append("</li>")
+    out.append("</ul>")
+    return "".join(out)
+
+def render_cards_html(items: List[Mapping[str, Any]]) -> str:
+    if not items:
+        return "<p>Keine Einträge gefunden.</p>"
+    out = ['<div class="grid">']
+    for it in items[:8]:
+        t = _escape_html(fix_encoding(it.get("title", "")))
+        u = _safe_href(str(it.get("url") or ""))
+        s = _escape_html(fix_encoding(it.get("summary", ""))[:200])
+        date = str(it.get("published_at") or "")[:10]
+        out.append('<div class="card">')
+        if u != "#":
+            out.append(f'<h3 style="margin:.2rem 0"><a href="{u}" target="_blank" rel="noopener noreferrer">{t}</a></h3>')
+        else:
+            out.append(f'<h3 style="margin:.2rem 0">{t}</h3>')
+        if s:
+            out.append(f"<p>{s}</p>")
+        meta = []
+        if date:
+            meta.append(_escape_html(date))
+        if it.get("source"):
+            meta.append(_escape_html(str(it.get("source"))[:40]))
+        if meta:
+            out.append(f'<div class="meta">{" · ".join(meta)}</div>')
+        out.append("</div>")
+    out.append("</div>")
+    return "".join(out)
+
+def render_vendor_shortlist_html(items: List[Mapping[str, Any]]) -> str:
+    if not items:
+        return "<p>Keine Anbieter gefunden.</p>"
+    out = ['<table><thead><tr><th>Anbieter</th><th>Kategorie</th><th>Host</th><th>Labels</th></tr></thead><tbody>']
+    for it in items:
+        name = _escape_html(fix_encoding(it.get("name", "")))
+        url = _safe_href(str(it.get("url") or ""))
+        cat = _escape_html(str(it.get("category", "")))
+        host = _escape_html(str(it.get("host_cc", "")))
+        labels = render_tags(list(it.get("labels", [])))
+        name_html = f'<a href="{url}" target="_blank" rel="noopener noreferrer">{name}</a>' if url != "#" else f"<b>{name}</b>"
+        out.append(f"<tr><td>{name_html}</td><td>{cat}</td><td>{host}</td><td>{labels}</td></tr>")
+    out.append("</tbody></table>")
+    return "".join(out)
+
+def render_tool_alternatives_html(groups: List[Mapping[str, Any]]) -> str:
+    if not groups:
+        return "<p>Keine Alternativen gefunden.</p>"
+    out = ["<ul>"]
+    for g in groups:
+        p = g.get("primary", {})
+        t = _escape_html(fix_encoding(p.get("title", p.get("name", ""))))
+        u = _safe_href(str(p.get("url") or ""))
+        badges = render_tags(list(p.get("badges", [])))
+        if u != "#":
+            out.append(f'<li><a href="{u}" target="_blank" rel="noopener noreferrer"><b>{t}</b></a>')
+        else:
+            out.append(f"<li><b>{t}</b>")
+        alts = g.get("alternatives", [])
+        if alts:
+            alt_links = []
+            for a in alts:
+                at = _escape_html(fix_encoding(a.get("title", "")))
+                au = _safe_href(str(a.get("url") or ""))
+                ab = render_tags(list(a.get("badges", [])))
+                link = f'<a href="{au}" target="_blank" rel="noopener noreferrer">{at}</a>' if au != "#" else at
+                alt_links.append(f'{link}{(" "+ab) if ab else ""}')
+            out.append(" – Alternativen: " + ", ".join(alt_links))
+        if badges:
+            out.append(f" {badges}")
+        out.append("</li>")
+    out.append("</ul>")
+    return "".join(out)
 
 def query_live_items(briefing: Mapping[str, Any], lang: str) -> Dict[str, List[Mapping[str, Any]]]:
-    """Query live data via optional helper module."""
+    """Hook zur Live-Suche (websearch_utils)."""
     try:
         from websearch_utils import query_live_items as _ql  # type: ignore
         return _ql(
@@ -553,57 +573,26 @@ def query_live_items(briefing: Mapping[str, Any], lang: str) -> Dict[str, List[M
             unternehmensgroesse=briefing.get("unternehmensgroesse"),
             leistung=briefing.get("hauptleistung"),
             bundesland=briefing.get("bundesland"),
+            lang=lang,
         )
     except Exception as e:
         logger.warning("Live data not available: %s", e)
         return {"news": [], "tools": [], "funding": []}
 
-
-def render_live_html(items: List[Mapping[str, Any]]) -> str:
-    """Render a sanitized bullet list from live items."""
-    if not items:
-        return "<p>Keine aktuellen Daten verfügbar.</p>"
-
-    html_out = ["<ul>"]
-    for item in items[:10]:
-        title = _escape_html(fix_encoding(item.get("title", "")))
-        url = _safe_href(str(item.get("url") or ""))
-        summary = _escape_html(fix_encoding(item.get("summary", ""))[:200])
-        date = str(item.get("published_at") or "")[:10]
-
-        if url != "#":
-            html_out.append(f'<li><a href="{url}" target="_blank" rel="noopener noreferrer">{title}</a>')
-        else:
-            html_out.append(f"<li><b>{title}</b>")
-
-        if summary:
-            html_out.append(f" – {summary}")
-        if date:
-            html_out.append(f" <small>({_escape_html(date)})</small>")
-        html_out.append("</li>")
-
-    html_out.append("</ul>")
-    return "".join(html_out)
-
 # ------------------------------------------------------------------------------
 # Kontextaufbau
 # ------------------------------------------------------------------------------
-
 def build_context(form_data: Optional[Mapping[str, Any]], lang: str) -> Dict[str, Any]:
-    """Build the full report context dict."""
     if not form_data:
         form_data = {}
-
     now = _now_iso()
     branch = _s(form_data.get("branche"))
     size = _s(form_data.get("unternehmensgroesse"))
-
     benchmarks = find_best_benchmark(branch, size)
 
     def norm(v: Any) -> float:
         f = _safe_float(v, -1.0)
-        if f < 0:
-            return -1.0
+        if f < 0: return -1.0
         return f / 10.0 if f <= 10 else f / 100.0
 
     kpis = {
@@ -613,16 +602,13 @@ def build_context(form_data: Optional[Mapping[str, Any]], lang: str) -> Dict[str
         "prozessreife": norm(form_data.get("prozessreife", 50)),
         "innovation": norm(form_data.get("innovation", 60)),
     }
-
-    # Fehlende KPIs mit Benchmarks auffüllen
     for key, value in list(kpis.items()):
         if value < 0:
             kpis[key] = float(benchmarks.get(key, 0.5))
-
     score = sum(kpis.values()) / max(len(kpis), 1)
 
     bc = compute_business_case(form_data, benchmarks)
-    live_data = query_live_items(form_data, lang)
+    live = query_live_items(form_data, lang)
 
     context: Dict[str, Any] = {
         "meta": {"title": "KI-Status-Report", "date": now, "lang": lang},
@@ -638,38 +624,33 @@ def build_context(form_data: Optional[Mapping[str, Any]], lang: str) -> Dict[str
         "kpis_benchmark": benchmarks,
         "score_percent": round(score * 100, 1),
         "business_case": {
-            "invest_eur": round(bc.invest_eur, 2),
-            "annual_saving_eur": round(bc.annual_saving_eur, 2),
-            "payback_months": round(bc.payback_months, 1),
-            "roi_year1_pct": round(bc.roi_year1_pct, 1),
+            "invest_eur": bc.invest_eur, "annual_saving_eur": bc.annual_saving_eur,
+            "payback_months": bc.payback_months, "roi_year1_pct": bc.roi_year1_pct,
+        },
+        "flags": {
+            "search_provider": SEARCH_PROVIDER,
+            "case_studies": ENABLE_CASE_STUDIES,
+            "regulatory": ENABLE_REGULATORY,
+            "eu_host_check": ENABLE_EU_HOST_CHECK,
         },
         "live": {
-            "news_html": render_live_html(live_data.get("news", [])),
-            "tools_html": render_live_html(live_data.get("tools", [])),
-            "funding_html": render_live_html(live_data.get("funding", [])),
+            "news_html": render_cards_html(live.get("news", [])),
+            "tools_html": render_tools_html(live.get("tools", [])),
+            "funding_html": render_funding_html(live.get("funding", [])),
+            "regulatory_html": render_cards_html(live.get("regulatory", [])),
+            "case_studies_html": render_cards_html(live.get("case_studies", [])),
+            "vendor_shortlist_html": render_vendor_shortlist_html(live.get("vendor_shortlist", [])),
+            "tool_alternatives_html": render_tool_alternatives_html(live.get("tool_alternatives", [])),
             "stand": now,
         },
         "sections": {},
-        "sections_extra": [],  # dynamisch
+        "sections_extra": [],
         "quality_badge": {},
     }
 
-    # Kernsektionen
     for section in CORE_SECTIONS:
         context["sections"][f"{section}_html"] = generate_section(section, context, lang)
 
-    # Extra-Sektionen (alle übrigen Prompts)
-    if PROMPT_DISCOVERY and PROMPTS_DIR.exists():
-        all_bases = discover_prompt_basenames(lang)
-        extras = [b for b in all_bases if b not in CORE_SECTIONS]
-        titles_map = EXTRA_TITLES_DE if lang == "de" else EXTRA_TITLES_EN
-        for base in extras:
-            html_content = generate_section(base, context, lang)
-            context["sections_extra"].append(
-                {"key": base, "title": titles_map.get(base, title_from_slug(base, lang)), "html": html_content}
-            )
-
-    # Digest
     context["sections"]["doc_digest_html"] = """
     <p><b>Executive Knowledge Digest:</b> Die erfolgreiche KI-Transformation basiert auf vier Säulen:</p>
     <ul>
@@ -680,7 +661,6 @@ def build_context(form_data: Optional[Mapping[str, Any]], lang: str) -> Dict[str
     </ul>
     """
 
-    # Quality Badge
     grade = "EXCELLENT" if score > 0.7 else ("GOOD" if score > 0.5 else "FAIR")
     context["quality_badge"] = {
         "grade": grade,
@@ -688,44 +668,28 @@ def build_context(form_data: Optional[Mapping[str, Any]], lang: str) -> Dict[str
         "passed_checks": "15/16" if score > 0.6 else "13/16",
         "critical_issues": 0,
     }
-
     return context
 
 # ------------------------------------------------------------------------------
 # Rendering
 # ------------------------------------------------------------------------------
-
-def render_with_template(context: Mapping[str, Any],
-                         lang: str,
-                         template: Optional[str] = None) -> str:
-    """Render using Jinja2 templates with autoescape."""
+def render_with_template(context: Mapping[str, Any], lang: str, template: Optional[str] = None) -> str:
     if Environment is None:
         raise RuntimeError("Jinja2 not available")
-
     template_name = template or ("pdf_template.html" if lang == "de" else "pdf_template_en.html")
-
-    env = Environment(
-        loader=FileSystemLoader(str(TEMPLATE_DIR)),
-        autoescape=select_autoescape(["html", "xml"]),
-    )
+    env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)), autoescape=select_autoescape(["html", "xml"]))
     tmpl = env.get_template(template_name)
     return tmpl.render(**context)
 
 # ------------------------------------------------------------------------------
 # Public API
 # ------------------------------------------------------------------------------
-
-def analyze_briefing(form_data: Optional[Mapping[str, Any]] = None,
-                     lang: Optional[str] = None,
-                     template: Optional[str] = None,
-                     **_: Any) -> str:
-    """Return full HTML report."""
+def analyze_briefing(form_data: Optional[Mapping[str, Any]] = None, lang: Optional[str] = None,
+                     template: Optional[str] = None, **_: Any) -> str:
     if not form_data:
         form_data = {}
-
     language = (lang or form_data.get("lang") or DEFAULT_LANG)[:2]
     context = build_context(form_data, language)
-
     try:
         return render_with_template(context, language, template)
     except Exception as e:
@@ -744,22 +708,17 @@ def analyze_briefing(form_data: Optional[Mapping[str, Any]] = None,
   <pre>{html.escape(str(e))}</pre>
 </body></html>"""
 
-
-def analyze_briefing_enhanced(form_data: Optional[Mapping[str, Any]] = None,
-                              lang: Optional[str] = None,
-                              **_: Any) -> Dict[str, Any]:
-    """Return the raw context dict for further processing."""
+def analyze_briefing_enhanced(form_data: Optional[Mapping[str, Any]] = None, lang: Optional[str] = None, **_: Any) -> Dict[str, Any]:
     if not form_data:
         form_data = {}
     language = (lang or form_data.get("lang") or DEFAULT_LANG)[:2]
     return build_context(form_data, language)
 
-
 if __name__ == "__main__":
     demo = {
-        "branche": "Bau",  # absichtlich kurz → sollte "bauwesen_architektur" finden
-        "unternehmensgroesse": "team_2_10",
-        "hauptleistung": "Beratung & GPT-Auswertung",
+        "branche": "Beratung & Dienstleistungen",
+        "unternehmensgroesse": "solo",
+        "hauptleistung": "GPT-Auswertung",
         "bundesland": "BE",
         "investitionsbudget": "bis 10.000 EUR",
         "ziel": "Skalierung mit KI",
