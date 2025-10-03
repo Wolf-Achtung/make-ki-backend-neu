@@ -6,25 +6,44 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{{ meta.title }} – {{ briefing.branche }}</title>
   <style>
-    :root { --primary:#0B5FFF; --accent:#FB8C00; }
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;
-         color:#0a0a0a;margin:0;padding:2rem;max-width:980px}
-    h1,h2{line-height:1.2;margin:1.2rem 0 .6rem}
+    :root { --primary:#0B5FFF; --accent:#FB8C00; --muted:#6b7280; --border:#e5e7eb; }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;color:#0a0a0a;margin:0;padding:2rem;max-width:980px}
+    h1,h2,h3{line-height:1.25;margin:1.2rem 0 .6rem}
     h1{font-size:1.8rem}
-    h2{font-size:1.3rem;color:#222}
+    h2{font-size:1.25rem;color:#222;display:flex;align-items:center;gap:.5rem}
+    h3{font-size:1.05rem;color:#222;margin:.4rem 0}
+    .hdr-badge{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:.1rem .5rem;font-size:.78rem;color:#111;background:#f8fafc}
     .meta{color:#555;font-size:.9rem;margin-bottom:1rem}
+    .brandbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+    .brandbar img{height:36px;object-fit:contain}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
-    .card{border:1px solid #e5e7eb;border-radius:.6rem;padding:1rem;background:#fff}
+    .card{border:1px solid var(--border);border-radius:.6rem;padding:1rem;background:#fff}
     .badge{display:inline-block;border-radius:999px;padding:.25rem .6rem;background:var(--primary);color:#fff;font-weight:600}
+    .tag{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:.1rem .5rem;font-size:.78rem;color:#111;background:#f8fafc;margin-left:.35rem}
     table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid #e5e7eb;padding:.5rem;text-align:left}
+    th,td{border:1px solid var(--border);padding:.5rem;text-align:left;vertical-align:top}
     a{color:var(--primary);text-decoration:none}
     a:hover{text-decoration:underline}
+    footer{margin-top:2rem;color:#555;font-size:.85rem}
+    .logos{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
+    .logos img{height:28px;object-fit:contain}
     @media print{a{color:inherit;text-decoration:none}}
   </style>
 </head>
 <body>
   <header>
+    <div class="brandbar">
+      <div class="logos">
+        <img src="ki-sicherheit-logo.webp" alt="KI-Sicherheit.jetzt">
+        <img src="ki-ready-2025.webp" alt="KI-Ready 2025">
+      </div>
+      <div class="logos">
+        <img src="tuev-logo-transparent.webp" alt="TÜV Austria certified">
+        <img src="eu-ai.svg" alt="EU AI">
+        <img src="dsgvo.svg" alt="GDPR">
+      </div>
+    </div>
     <h1>{{ meta.title }}</h1>
     <div class="meta">
       Sector: <b>{{ briefing.branche }}</b> · Size: <b>{{ briefing.unternehmensgroesse }}</b>
@@ -86,28 +105,57 @@
     <div>{{ sections.doc_digest_html|safe }}</div>
   </section>
 
-  {% if sections_extra and sections_extra|length > 0 %}
-    {% for sec in sections_extra %}
-      <section>
-        <h2>{{ sec.title }}</h2>
-        <div>{{ sec.html|safe }}</div>
-      </section>
-    {% endfor %}
-  {% endif %}
-
+  <!-- Live: News/Tools/Funding -->
   <section class="grid">
     <div class="card">
-      <h2>News</h2>
+      <h2>News <span class="hdr-badge">Live</span></h2>
       <div>{{ live.news_html|safe }}</div>
     </div>
     <div class="card">
-      <h2>Tools</h2>
+      <h2>Tools
+        <span class="hdr-badge">Vendor shortlist</span>
+        {% if flags.eu_host_check %}<span class="hdr-badge">EU host check</span>{% endif %}
+      </h2>
       <div>{{ live.tools_html|safe }}</div>
     </div>
     <div class="card">
-      <h2>Funding</h2>
+      <h2>Funding <span class="hdr-badge">Deadline alert</span></h2>
       <div>{{ live.funding_html|safe }}</div>
     </div>
   </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Regulatory ticker {% if flags.regulatory %}<span class="hdr-badge">enabled</span>{% endif %}</h2>
+      <div>{{ live.regulatory_html|safe }}</div>
+    </div>
+    <div class="card">
+      <h2>Case studies {% if flags.case_studies %}<span class="hdr-badge">enabled</span>{% endif %}</h2>
+      <div>{{ live.case_studies_html|safe }}</div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Vendor shortlist (Top 5)</h2>
+      <div>{{ live.vendor_shortlist_html|safe }}</div>
+    </div>
+    <div class="card">
+      <h2>Tool alternatives</h2>
+      <div>{{ live.tool_alternatives_html|safe }}</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="logos">
+      <img src="tuev-logo.webp" alt="TÜV Austria">
+      <span> · </span>
+      <img src="ki-ready-2025.webp" alt="KI-Ready 2025">
+      <span> · </span>
+      <img src="eu-ai.svg" alt="EU AI">
+      <span> · </span>
+      <img src="dsgvo.svg" alt="GDPR">
+    </div>
+  </footer>
 </body>
 </html>
