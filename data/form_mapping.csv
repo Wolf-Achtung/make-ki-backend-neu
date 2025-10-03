@@ -1,0 +1,226 @@
+key;type;label_de;label_en;option_value;option_label_de;option_label_en
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;it;IT & Software;IT & software
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;beratung;Beratung & Dienstleistungen;Consulting & services
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;gesundheit;Gesundheit & Pflege;Health & care
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;bau;Bauwesen & Architektur;Construction & architecture
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;industrie;Industrie & Produktion;Industry & production
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;medien;Medien & Kreativwirtschaft;Media & creative industries
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;logistik;Transport & Logistik;Transport & logistics
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;handel;Handel & E-Commerce;Retail & e-commerce
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;verwaltung;Verwaltung;Administration
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;marketing;Marketing & Werbung;Marketing & advertising
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;finanzen;Finanzen & Versicherungen;Finance & insurance
+branche;select;In welcher Branche ist Ihr Unternehmen tätig?;In which industry is your company active?;bildung;Bildung;Education
+unternehmensgroesse;select;Wie groß ist Ihr Unternehmen?;How large is your company (number of employees)?;kmu;11–100 (KMU);11–100 (SME)
+unternehmensgroesse;select;Wie groß ist Ihr Unternehmen?;How large is your company (number of employees)?;solo;1 (Solo-Selbstständig/Freiberuflich);1 (sole proprietor / freelancer)
+unternehmensgroesse;select;Wie groß ist Ihr Unternehmen?;How large is your company (number of employees)?;team;2–10 (Kleines Team);2–10 (small team)
+selbststaendig;select;Unternehmensform bei 1 Person;Legal form for a single person;einzelunternehmer;Einzelunternehmer (mit Gewerbe);Sole proprietorship (with trade licence)
+selbststaendig;select;Unternehmensform bei 1 Person;Legal form for a single person;freiberufler;Freiberuflich/Selbstständig;Freelancer / self-employed
+selbststaendig;select;Unternehmensform bei 1 Person;Legal form for a single person;kapitalgesellschaft;1-Personen-Kapitalgesellschaft (GmbH/UG);Single-member corporation (GmbH/UG)
+selbststaendig;select;Unternehmensform bei 1 Person;Legal form for a single person;sonstiges;Sonstiges;Other
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);bw;Baden-Württemberg;Baden-Württemberg
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);bb;Brandenburg;Brandenburg
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);ni;Niedersachsen;Niedersachsen
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);st;Sachsen-Anhalt;Sachsen-Anhalt
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);nw;Nordrhein-Westfalen;Nordrhein-Westfalen
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);mv;Mecklenburg-Vorpommern;Mecklenburg-Vorpommern
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);hb;Bremen;Bremen
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);be;Berlin;Berlin
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);sl;Saarland;Saarland
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);sn;Sachsen;Sachsen
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);by;Bayern;Bayern
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);he;Hessen;Hessen
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);hh;Hamburg;Hamburg
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);sh;Schleswig-Holstein;Schleswig-Holstein
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);rp;Rheinland-Pfalz;Rheinland-Pfalz
+bundesland;select;Bundesland (regionale Fördermöglichkeiten);State (regional funding opportunities);th;Thüringen;Thüringen
+hauptleistung;textarea;Was ist Ihre Hauptdienstleistung oder Ihr wichtigstes Produkt?;What's your company's main product or core service?;;;
+zielgruppen;checkbox;Welche Zielgruppen bedienen Sie?;Which target groups or customer segments do you serve?;b2b;B2B (Geschäftskunden);B2B (business customers)
+zielgruppen;checkbox;Welche Zielgruppen bedienen Sie?;Which target groups or customer segments do you serve?;b2c;B2C (Endverbraucher);B2C (consumers)
+zielgruppen;checkbox;Welche Zielgruppen bedienen Sie?;Which target groups or customer segments do you serve?;andere;Andere;Other
+zielgruppen;checkbox;Welche Zielgruppen bedienen Sie?;Which target groups or customer segments do you serve?;grossunternehmen;Großunternehmen;Large enterprises
+zielgruppen;checkbox;Welche Zielgruppen bedienen Sie?;Which target groups or customer segments do you serve?;startups;Startups;Startups
+zielgruppen;checkbox;Welche Zielgruppen bedienen Sie?;Which target groups or customer segments do you serve?;oeffentliche_hand;Öffentliche Hand;Public sector
+zielgruppen;checkbox;Welche Zielgruppen bedienen Sie?;Which target groups or customer segments do you serve?;kmu;KMU;SMEs (small & medium enterprises)
+zielgruppen;checkbox;Welche Zielgruppen bedienen Sie?;Which target groups or customer segments do you serve?;selbststaendige;Selbstständige/Freiberufler;Self-employed / freelancers
+zielgruppen;checkbox;Welche Zielgruppen bedienen Sie?;Which target groups or customer segments do you serve?;privatpersonen;Privatpersonen;Private individuals
+jahresumsatz;select;Jahresumsatz (Schätzung);Annual revenue (estimate);keine_angabe;Keine Angabe;Prefer not to say
+jahresumsatz;select;Jahresumsatz (Schätzung);Annual revenue (estimate);2m_10m;2–10 Mio. €;€2–10 million
+jahresumsatz;select;Jahresumsatz (Schätzung);Annual revenue (estimate);unter_100k;Bis 100.000 €;Up to €100,000
+jahresumsatz;select;Jahresumsatz (Schätzung);Annual revenue (estimate);ueber_10m;Über 10 Mio. €;Over €10 million
+jahresumsatz;select;Jahresumsatz (Schätzung);Annual revenue (estimate);500k_2m;500.000–2 Mio. €;€500,000–2 million
+jahresumsatz;select;Jahresumsatz (Schätzung);Annual revenue (estimate);100k_500k;100.000–500.000 €;€100,000–500,000
+it_infrastruktur;select;Wie ist Ihre IT-Infrastruktur organisiert?;How is your IT infrastructure organized?;unklar;Unklar / noch offen;Unclear / not decided yet
+it_infrastruktur;select;Wie ist Ihre IT-Infrastruktur organisiert?;How is your IT infrastructure organized?;hybrid;Hybrid (Cloud + eigene Server);Hybrid (cloud + own servers)
+it_infrastruktur;select;Wie ist Ihre IT-Infrastruktur organisiert?;How is your IT infrastructure organized?;cloud;Cloud-basiert (z.B. Microsoft 365, Google Cloud);Cloud-based (e.g. Microsoft 365, Google Cloud)
+it_infrastruktur;select;Wie ist Ihre IT-Infrastruktur organisiert?;How is your IT infrastructure organized?;on_premise;Eigenes Rechenzentrum (On-Premises);Own data centre (on-premises)
+interne_ki_kompetenzen;select;Gibt es ein internes KI-/Digitalisierungsteam?;Do you have an internal AI/digitalisation team?;in_planung;In Planung;In planning
+interne_ki_kompetenzen;select;Gibt es ein internes KI-/Digitalisierungsteam?;Do you have an internal AI/digitalisation team?;nein;Nein;No
+interne_ki_kompetenzen;select;Gibt es ein internes KI-/Digitalisierungsteam?;Do you have an internal AI/digitalisation team?;ja;Ja;Yes
+datenquellen;checkbox;Welche Datentypen stehen für KI-Projekte zur Verfügung?;Which types of data are available for AI projects?;verkaufsdaten;Verkaufs-/Bestelldaten;Sales and order data
+datenquellen;checkbox;Welche Datentypen stehen für KI-Projekte zur Verfügung?;Which types of data are available for AI projects?;kundendaten;Kundendaten (CRM, Service);Customer data (CRM, service, history)
+datenquellen;checkbox;Welche Datentypen stehen für KI-Projekte zur Verfügung?;Which types of data are available for AI projects?;produktionsdaten;Produktions-/Betriebsdaten;Production or operational data
+datenquellen;checkbox;Welche Datentypen stehen für KI-Projekte zur Verfügung?;Which types of data are available for AI projects?;marketingdaten;Marketing-/Kampagnendaten;Marketing and campaign data
+datenquellen;checkbox;Welche Datentypen stehen für KI-Projekte zur Verfügung?;Which types of data are available for AI projects?;personaldaten;Personal-/HR-Daten;Personnel or HR data
+datenquellen;checkbox;Welche Datentypen stehen für KI-Projekte zur Verfügung?;Which types of data are available for AI projects?;sonstige;Sonstige Datenquellen;Other data sources
+digitalisierungsgrad;slider;Wie digital sind Ihre internen Prozesse? (1–10);How digital are your internal processes? (1-10);;;
+prozesse_papierlos;select;Anteil papierloser Prozesse;What proportion of processes are paperless?;21-50;21–50%;21–50%
+prozesse_papierlos;select;Anteil papierloser Prozesse;What proportion of processes are paperless?;51-80;51–80%;51–80%
+prozesse_papierlos;select;Anteil papierloser Prozesse;What proportion of processes are paperless?;81-100;81–100%;81–100%
+prozesse_papierlos;select;Anteil papierloser Prozesse;What proportion of processes are paperless?;0-20;0–20%;0–20%
+automatisierungsgrad;select;Automatisierungsgrad;Degree of automation in workflows;mittel;Mittel;Medium
+automatisierungsgrad;select;Automatisierungsgrad;Degree of automation in workflows;eher_hoch;Eher hoch;Rather high
+automatisierungsgrad;select;Automatisierungsgrad;Degree of automation in workflows;eher_niedrig;Eher niedrig;Rather low
+automatisierungsgrad;select;Automatisierungsgrad;Degree of automation in workflows;sehr_niedrig;Sehr niedrig;Very low
+automatisierungsgrad;select;Automatisierungsgrad;Degree of automation in workflows;sehr_hoch;Sehr hoch;Very high
+ki_einsatz;checkbox;Wo wird KI bereits eingesetzt?;Where is AI already being used?;it;IT;IT
+ki_einsatz;checkbox;Wo wird KI bereits eingesetzt?;Where is AI already being used?;vertrieb;Vertrieb;Sales
+ki_einsatz;checkbox;Wo wird KI bereits eingesetzt?;Where is AI already being used?;forschung;Forschung & Entwicklung;Research & development
+ki_einsatz;checkbox;Wo wird KI bereits eingesetzt?;Where is AI already being used?;sonstiges;Sonstiges;Other
+ki_einsatz;checkbox;Wo wird KI bereits eingesetzt?;Where is AI already being used?;kundenservice;Kundenservice;Customer service
+ki_einsatz;checkbox;Wo wird KI bereits eingesetzt?;Where is AI already being used?;buchhaltung;Buchhaltung;Accounting
+ki_einsatz;checkbox;Wo wird KI bereits eingesetzt?;Where is AI already being used?;personal;Personal;Human resources
+ki_einsatz;checkbox;Wo wird KI bereits eingesetzt?;Where is AI already being used?;marketing;Marketing;Marketing
+ki_einsatz;checkbox;Wo wird KI bereits eingesetzt?;Where is AI already being used?;keine;Noch keine Nutzung;No usage yet
+ki_einsatz;checkbox;Wo wird KI bereits eingesetzt?;Where is AI already being used?;produktion;Produktion;Production
+ki_knowhow;select;KI-Know-how im Team;Team's internal AI know-how;mittel;Mittel;Medium
+ki_knowhow;select;KI-Know-how im Team;Team's internal AI know-how;expertenwissen;Expertenwissen;Expert knowledge
+ki_knowhow;select;KI-Know-how im Team;Team's internal AI know-how;grundkenntnisse;Grundkenntnisse;Basic knowledge
+ki_knowhow;select;KI-Know-how im Team;Team's internal AI know-how;keine;Keine Erfahrung;No experience
+ki_knowhow;select;KI-Know-how im Team;Team's internal AI know-how;fortgeschritten;Fortgeschritten;Advanced
+projektziel;checkbox;Ziel des nächsten KI-/Digitalisierungsprojekts;Main objective of next AI project;markterschliessung;Markterschließung;Market expansion
+projektziel;checkbox;Ziel des nächsten KI-/Digitalisierungsprojekts;Main objective of next AI project;kundenservice;Kundenservice verbessern;Improve customer service
+projektziel;checkbox;Ziel des nächsten KI-/Digitalisierungsprojekts;Main objective of next AI project;andere;Andere;Other
+projektziel;checkbox;Ziel des nächsten KI-/Digitalisierungsprojekts;Main objective of next AI project;produktinnovation;Produktinnovation;Product innovation
+projektziel;checkbox;Ziel des nächsten KI-/Digitalisierungsprojekts;Main objective of next AI project;compliance;Compliance/Datenschutz;Compliance/data protection
+projektziel;checkbox;Ziel des nächsten KI-/Digitalisierungsprojekts;Main objective of next AI project;kostensenkung;Kostensenkung;Cost reduction
+projektziel;checkbox;Ziel des nächsten KI-/Digitalisierungsprojekts;Main objective of next AI project;personalentlastung;Personalentlastung;Relieve staff
+projektziel;checkbox;Ziel des nächsten KI-/Digitalisierungsprojekts;Main objective of next AI project;foerdermittel;Fördermittel beantragen;Apply for funding
+projektziel;checkbox;Ziel des nächsten KI-/Digitalisierungsprojekts;Main objective of next AI project;prozessautomatisierung;Prozessautomatisierung;Process automation
+ki_projekte;textarea;Laufende/geplante KI-Projekte;Ongoing or planned AI projects;;;
+ki_usecases;checkbox;Besonders interessante KI-Use-Cases;AI use cases of interest;kundensupport;Kundensupport;Customer support
+ki_usecases;checkbox;Besonders interessante KI-Use-Cases;AI use cases of interest;wissensmanagement;Wissensmanagement;Knowledge management
+ki_usecases;checkbox;Besonders interessante KI-Use-Cases;AI use cases of interest;datenanalyse;Datenanalyse & Prognose;Data analysis & forecasting
+ki_usecases;checkbox;Besonders interessante KI-Use-Cases;AI use cases of interest;marketing;Marketing-Optimierung;Marketing optimization
+ki_usecases;checkbox;Besonders interessante KI-Use-Cases;AI use cases of interest;texterstellung;Texterstellung;Text generation
+ki_usecases;checkbox;Besonders interessante KI-Use-Cases;AI use cases of interest;sonstiges;Sonstiges;Other
+ki_usecases;checkbox;Besonders interessante KI-Use-Cases;AI use cases of interest;bildgenerierung;Bildgenerierung;Image generation
+ki_usecases;checkbox;Besonders interessante KI-Use-Cases;AI use cases of interest;spracherkennung;Spracherkennung;Speech recognition
+ki_usecases;checkbox;Besonders interessante KI-Use-Cases;AI use cases of interest;prozessautomatisierung;Prozessautomatisierung;Process automation
+ki_potenzial;textarea;Größtes KI-Potenzial im Unternehmen;Greatest potential for AI in your company;;;
+usecase_priority;select;Bereich mit höchster Priorität;Where should AI be introduced first?;kundenservice;Kundenservice;Customer service
+usecase_priority;select;Bereich mit höchster Priorität;Where should AI be introduced first?;it;IT;IT
+usecase_priority;select;Bereich mit höchster Priorität;Where should AI be introduced first?;unbekannt;Noch unklar;Still unclear
+usecase_priority;select;Bereich mit höchster Priorität;Where should AI be introduced first?;vertrieb;Vertrieb;Sales
+usecase_priority;select;Bereich mit höchster Priorität;Where should AI be introduced first?;buchhaltung;Buchhaltung;Accounting
+usecase_priority;select;Bereich mit höchster Priorität;Where should AI be introduced first?;personal;Personal;Human resources
+usecase_priority;select;Bereich mit höchster Priorität;Where should AI be introduced first?;marketing;Marketing;Marketing
+usecase_priority;select;Bereich mit höchster Priorität;Where should AI be introduced first?;forschung;Forschung & Entwicklung;Research & development
+usecase_priority;select;Bereich mit höchster Priorität;Where should AI be introduced first?;produktion;Produktion;Production
+ki_geschaeftsmodell_vision;textarea;Wie kann KI Ihr Geschäftsmodell verändern?;How could AI change your business model?;;;
+moonshot;textarea;Ihre mutige 3-Jahres-Vision;Your bold AI vision in 3 years;;;
+strategic_goals;textarea;;Specific goals with AI;;;
+data_quality;select;;Quality of your data;low;;Low (unstructured, gaps)
+data_quality;select;;Quality of your data;high;;High (complete, structured, current)
+data_quality;select;;Quality of your data;medium;;Medium (partly structured)
+ai_roadmap;select;KI-Roadmap oder Strategie;AI roadmap or strategy;no;;Not yet available
+ai_roadmap;select;KI-Roadmap oder Strategie;AI roadmap or strategy;planning;;In planning
+ai_roadmap;select;KI-Roadmap oder Strategie;AI roadmap or strategy;yes;;Yes - implemented
+ai_roadmap;select;KI-Roadmap oder Strategie;AI roadmap or strategy;in_planung;In Planung;
+ai_roadmap;select;KI-Roadmap oder Strategie;AI roadmap or strategy;nein;Noch nicht vorhanden;
+ai_roadmap;select;KI-Roadmap oder Strategie;AI roadmap or strategy;ja;Ja - implementiert;
+governance;select;Richtlinien für Daten-/KI-Governance;Data and AI governance guidelines;no;;No
+governance;select;Richtlinien für Daten-/KI-Governance;Data and AI governance guidelines;partial;;Partial
+governance;select;Richtlinien für Daten-/KI-Governance;Data and AI governance guidelines;teilweise;Teilweise;
+governance;select;Richtlinien für Daten-/KI-Governance;Data and AI governance guidelines;yes;;Yes
+governance;select;Richtlinien für Daten-/KI-Governance;Data and AI governance guidelines;nein;Nein;
+governance;select;Richtlinien für Daten-/KI-Governance;Data and AI governance guidelines;ja;Ja;
+innovation_culture;select;;Openness to innovation;very_open;;Very open
+innovation_culture;select;;Openness to innovation;neutral;;Neutral
+innovation_culture;select;;Openness to innovation;very_reluctant;;Very reluctant
+innovation_culture;select;;Openness to innovation;rather_open;;Rather open
+innovation_culture;select;;Openness to innovation;rather_reluctant;;Rather reluctant
+time_capacity;select;;Time per week for AI projects;over_10;;More than 10 hours
+time_capacity;select;;Time per week for AI projects;under_2;;Under 2 hours
+time_capacity;select;;Time per week for AI projects;5_10;;5–10 hours
+time_capacity;select;;Time per week for AI projects;2_5;;2–5 hours
+existing_tools;checkbox;;Systems already in use;none;;None / other
+existing_tools;checkbox;;Systems already in use;project_management;;Project management (Asana, Trello)
+existing_tools;checkbox;;Systems already in use;crm;;CRM systems (HubSpot, Salesforce)
+existing_tools;checkbox;;Systems already in use;accounting;;Accounting software
+existing_tools;checkbox;;Systems already in use;marketing_automation;;Marketing automation
+existing_tools;checkbox;;Systems already in use;erp;;ERP systems (SAP, Odoo)
+regulated_industry;checkbox;;Regulated industry;none;;None of these
+regulated_industry;checkbox;;Regulated industry;public;;Public sector
+regulated_industry;checkbox;;Regulated industry;finance;;Finance & insurance
+regulated_industry;checkbox;;Regulated industry;healthcare;;Health & medicine
+regulated_industry;checkbox;;Regulated industry;legal;;Legal services
+training_interests;checkbox;;AI training topics of interest;llm_basics;;LLM basics
+training_interests;checkbox;;AI training topics of interest;none;;None / not sure
+training_interests;checkbox;;AI training topics of interest;automation_scripts;;Automation & scripts
+training_interests;checkbox;;AI training topics of interest;prompt_engineering;;Prompt engineering
+training_interests;checkbox;;AI training topics of interest;data_quality_governance;;Data quality & governance
+training_interests;checkbox;;AI training topics of interest;ethics_regulation;;Ethical & legal foundations
+vision_priority;select;;Most important vision aspect;customer_service;;Improve customer service
+vision_priority;select;;Most important vision aspect;market_leadership;;Achieve market leadership
+vision_priority;select;;Most important vision aspect;data_products;;New data-driven products
+vision_priority;select;;Most important vision aspect;gpt_services;;GPT-based services
+vision_priority;select;;Most important vision aspect;process_automation;;Automate processes
+vision_priority;select;;Most important vision aspect;unspecified;;No preference
+datenschutzbeauftragter;select;Datenschutzbeauftragter vorhanden?;Data protection officer;teilweise;Teilweise (extern/Planung);Partially (external/planning)
+datenschutzbeauftragter;select;Datenschutzbeauftragter vorhanden?;Data protection officer;nein;Nein;No
+datenschutzbeauftragter;select;Datenschutzbeauftragter vorhanden?;Data protection officer;ja;Ja;Yes
+technische_massnahmen;select;Technische Schutzmaßnahmen;Technical data protection measures;teilweise;Teilweise vorhanden;Partially in place
+technische_massnahmen;select;Technische Schutzmaßnahmen;Technical data protection measures;keine;Noch keine;None yet
+technische_massnahmen;select;Technische Schutzmaßnahmen;Technical data protection measures;alle;Alle relevanten Maßnahmen;All relevant measures
+folgenabschaetzung;select;Datenschutz-Folgenabschätzung (DSFA);Data protection impact assessment (DPIA);teilweise;Teilweise;Partially
+folgenabschaetzung;select;Datenschutz-Folgenabschätzung (DSFA);Data protection impact assessment (DPIA);nein;Nein;No
+folgenabschaetzung;select;Datenschutz-Folgenabschätzung (DSFA);Data protection impact assessment (DPIA);ja;Ja;Yes
+meldewege;select;Meldewege bei Vorfällen;Reporting procedures for incidents;teilweise;Teilweise geregelt;Partially regulated
+meldewege;select;Meldewege bei Vorfällen;Reporting procedures for incidents;nein;Nein;No
+meldewege;select;Meldewege bei Vorfällen;Reporting procedures for incidents;ja;Ja, klar geregelt;Yes, clear processes
+loeschregeln;select;Regeln für Datenlöschung/-anonymisierung;Rules for data deletion/anonymization;teilweise;Teilweise;Partially
+loeschregeln;select;Regeln für Datenlöschung/-anonymisierung;Rules for data deletion/anonymization;nein;Nein;No
+loeschregeln;select;Regeln für Datenlöschung/-anonymisierung;Rules for data deletion/anonymization;ja;Ja;Yes
+ai_act_kenntnis;select;Kenntnis EU AI Act;Knowledge of EU AI Act;gehoert;Schon mal gehört;Heard of it
+ai_act_kenntnis;select;Kenntnis EU AI Act;Knowledge of EU AI Act;gut;Gut;Well
+ai_act_kenntnis;select;Kenntnis EU AI Act;Knowledge of EU AI Act;unbekannt;Noch nicht bekannt;Not yet familiar
+ai_act_kenntnis;select;Kenntnis EU AI Act;Knowledge of EU AI Act;sehr_gut;Sehr gut;Very well
+ki_hemmnisse;checkbox;Hemmnisse beim KI-Einsatz;Obstacles to AI adoption;andere;Andere;Other
+ki_hemmnisse;checkbox;Hemmnisse beim KI-Einsatz;Obstacles to AI adoption;it_integration;IT-Integration;IT integration
+ki_hemmnisse;checkbox;Hemmnisse beim KI-Einsatz;Obstacles to AI adoption;zeitmangel;Zeitmangel;Lack of time
+ki_hemmnisse;checkbox;Hemmnisse beim KI-Einsatz;Obstacles to AI adoption;rechtsunsicherheit;Rechtsunsicherheit;Legal uncertainty
+ki_hemmnisse;checkbox;Hemmnisse beim KI-Einsatz;Obstacles to AI adoption;datenschutz;Datenschutz;Data protection
+ki_hemmnisse;checkbox;Hemmnisse beim KI-Einsatz;Obstacles to AI adoption;budget;Begrenztes Budget;Limited budget
+ki_hemmnisse;checkbox;Hemmnisse beim KI-Einsatz;Obstacles to AI adoption;knowhow;Fehlendes Know-how;Lack of know-how
+ki_hemmnisse;checkbox;Hemmnisse beim KI-Einsatz;Obstacles to AI adoption;keine;Keine Hemmnisse;No obstacles
+ki_hemmnisse;checkbox;Hemmnisse beim KI-Einsatz;Obstacles to AI adoption;teamakzeptanz;Teamakzeptanz;Team acceptance
+bisherige_foerdermittel;select;Bereits Fördermittel erhalten?;Previous funding received;nein;Nein;No
+bisherige_foerdermittel;select;Bereits Fördermittel erhalten?;Previous funding received;ja;Ja;Yes
+interesse_foerderung;select;Interesse an Fördermöglichkeiten;Interest in funding opportunities;unklar;Unklar, bitte beraten;Unsure, please advise
+interesse_foerderung;select;Interesse an Fördermöglichkeiten;Interest in funding opportunities;nein;Kein Bedarf;No need
+interesse_foerderung;select;Interesse an Fördermöglichkeiten;Interest in funding opportunities;ja;Ja, Programme vorschlagen;Yes, suggest programs
+erfahrung_beratung;select;Bisherige Beratung zu Digitalisierung/KI;Previous consulting on digitalization/AI;unklar;Unklar;Unclear
+erfahrung_beratung;select;Bisherige Beratung zu Digitalisierung/KI;Previous consulting on digitalization/AI;nein;Nein;No
+erfahrung_beratung;select;Bisherige Beratung zu Digitalisierung/KI;Previous consulting on digitalization/AI;ja;Ja;Yes
+investitionsbudget;select;Budget für KI/Digitalisierung nächstes Jahr;Budget for AI/digitalization next year;unklar;Noch unklar;Still unclear
+investitionsbudget;select;Budget für KI/Digitalisierung nächstes Jahr;Budget for AI/digitalization next year;2000_10000;2.000–10.000 €;€2,000–10,000
+investitionsbudget;select;Budget für KI/Digitalisierung nächstes Jahr;Budget for AI/digitalization next year;unter_2000;Unter 2.000 €;Under €2,000
+investitionsbudget;select;Budget für KI/Digitalisierung nächstes Jahr;Budget for AI/digitalization next year;ueber_50000;Über 50.000 €;More than €50,000
+investitionsbudget;select;Budget für KI/Digitalisierung nächstes Jahr;Budget for AI/digitalization next year;10000_50000;10.000–50.000 €;€10,000–50,000
+marktposition;select;Marktposition;Market position;marktfuehrer;Marktführer;Market leader
+marktposition;select;Marktposition;Market position;nachzuegler;Nachzügler;Laggard
+marktposition;select;Marktposition;Market position;unsicher;Schwer einzuschätzen;Hard to assess
+marktposition;select;Marktposition;Market position;oberes_drittel;Oberes Drittel;Top third
+marktposition;select;Marktposition;Market position;mittelfeld;Mittelfeld;Middle field
+benchmark_wettbewerb;select;Vergleich mit Wettbewerbern;Compare with competitors;selten;Selten;Rarely
+benchmark_wettbewerb;select;Vergleich mit Wettbewerbern;Compare with competitors;nein;Nein;No
+benchmark_wettbewerb;select;Vergleich mit Wettbewerbern;Compare with competitors;ja;Ja, regelmäßig;Yes, regularly
+innovationsprozess;select;Wie entstehen Innovationen?;How innovations arise;innovationsteam;Innovationsteam;Innovation team
+innovationsprozess;select;Wie entstehen Innovationen?;How innovations arise;unbekannt;Keine klare Strategie;No clear strategy
+innovationsprozess;select;Wie entstehen Innovationen?;How innovations arise;berater;Externe Berater;External consultants
+innovationsprozess;select;Wie entstehen Innovationen?;How innovations arise;zufall;Zufällig;By chance
+innovationsprozess;select;Wie entstehen Innovationen?;How innovations arise;kunden;Mit Kunden;With customers
+innovationsprozess;select;Wie entstehen Innovationen?;How innovations arise;mitarbeitende;Durch Mitarbeitende;Through employees
+risikofreude;slider;Risikofreude bei Innovation (1–5);Risk-taking with innovation (1-5);;;
+datenschutz;privacy;Ich habe die <a href='datenschutz.html' onclick='window.open(this.href, \;I have read the <a href='privacy.html' onclick='window.open(this.href, \;;;

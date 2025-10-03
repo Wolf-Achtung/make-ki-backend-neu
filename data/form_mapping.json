@@ -1,0 +1,1193 @@
+{
+  "branche": {
+    "type": "select",
+    "label_de": "In welcher Branche ist Ihr Unternehmen tätig?",
+    "label_en": "In which industry is your company active?",
+    "options": {
+      "it": {
+        "label_de": "IT & Software",
+        "label_en": "IT & software"
+      },
+      "beratung": {
+        "label_de": "Beratung & Dienstleistungen",
+        "label_en": "Consulting & services"
+      },
+      "gesundheit": {
+        "label_de": "Gesundheit & Pflege",
+        "label_en": "Health & care"
+      },
+      "bau": {
+        "label_de": "Bauwesen & Architektur",
+        "label_en": "Construction & architecture"
+      },
+      "industrie": {
+        "label_de": "Industrie & Produktion",
+        "label_en": "Industry & production"
+      },
+      "medien": {
+        "label_de": "Medien & Kreativwirtschaft",
+        "label_en": "Media & creative industries"
+      },
+      "logistik": {
+        "label_de": "Transport & Logistik",
+        "label_en": "Transport & logistics"
+      },
+      "handel": {
+        "label_de": "Handel & E-Commerce",
+        "label_en": "Retail & e-commerce"
+      },
+      "verwaltung": {
+        "label_de": "Verwaltung",
+        "label_en": "Administration"
+      },
+      "marketing": {
+        "label_de": "Marketing & Werbung",
+        "label_en": "Marketing & advertising"
+      },
+      "finanzen": {
+        "label_de": "Finanzen & Versicherungen",
+        "label_en": "Finance & insurance"
+      },
+      "bildung": {
+        "label_de": "Bildung",
+        "label_en": "Education"
+      }
+    }
+  },
+  "unternehmensgroesse": {
+    "type": "select",
+    "label_de": "Wie groß ist Ihr Unternehmen?",
+    "label_en": "How large is your company (number of employees)?",
+    "options": {
+      "kmu": {
+        "label_de": "11–100 (KMU)",
+        "label_en": "11–100 (SME)"
+      },
+      "solo": {
+        "label_de": "1 (Solo-Selbstständig/Freiberuflich)",
+        "label_en": "1 (sole proprietor / freelancer)"
+      },
+      "team": {
+        "label_de": "2–10 (Kleines Team)",
+        "label_en": "2–10 (small team)"
+      }
+    }
+  },
+  "selbststaendig": {
+    "type": "select",
+    "label_de": "Unternehmensform bei 1 Person",
+    "label_en": "Legal form for a single person",
+    "options": {
+      "einzelunternehmer": {
+        "label_de": "Einzelunternehmer (mit Gewerbe)",
+        "label_en": "Sole proprietorship (with trade licence)"
+      },
+      "freiberufler": {
+        "label_de": "Freiberuflich/Selbstständig",
+        "label_en": "Freelancer / self-employed"
+      },
+      "kapitalgesellschaft": {
+        "label_de": "1-Personen-Kapitalgesellschaft (GmbH/UG)",
+        "label_en": "Single-member corporation (GmbH/UG)"
+      },
+      "sonstiges": {
+        "label_de": "Sonstiges",
+        "label_en": "Other"
+      }
+    }
+  },
+  "bundesland": {
+    "type": "select",
+    "label_de": "Bundesland (regionale Fördermöglichkeiten)",
+    "label_en": "State (regional funding opportunities)",
+    "options": {
+      "bw": {
+        "label_de": "Baden-Württemberg",
+        "label_en": "Baden-Württemberg"
+      },
+      "bb": {
+        "label_de": "Brandenburg",
+        "label_en": "Brandenburg"
+      },
+      "ni": {
+        "label_de": "Niedersachsen",
+        "label_en": "Niedersachsen"
+      },
+      "st": {
+        "label_de": "Sachsen-Anhalt",
+        "label_en": "Sachsen-Anhalt"
+      },
+      "nw": {
+        "label_de": "Nordrhein-Westfalen",
+        "label_en": "Nordrhein-Westfalen"
+      },
+      "mv": {
+        "label_de": "Mecklenburg-Vorpommern",
+        "label_en": "Mecklenburg-Vorpommern"
+      },
+      "hb": {
+        "label_de": "Bremen",
+        "label_en": "Bremen"
+      },
+      "be": {
+        "label_de": "Berlin",
+        "label_en": "Berlin"
+      },
+      "sl": {
+        "label_de": "Saarland",
+        "label_en": "Saarland"
+      },
+      "sn": {
+        "label_de": "Sachsen",
+        "label_en": "Sachsen"
+      },
+      "by": {
+        "label_de": "Bayern",
+        "label_en": "Bayern"
+      },
+      "he": {
+        "label_de": "Hessen",
+        "label_en": "Hessen"
+      },
+      "hh": {
+        "label_de": "Hamburg",
+        "label_en": "Hamburg"
+      },
+      "sh": {
+        "label_de": "Schleswig-Holstein",
+        "label_en": "Schleswig-Holstein"
+      },
+      "rp": {
+        "label_de": "Rheinland-Pfalz",
+        "label_en": "Rheinland-Pfalz"
+      },
+      "th": {
+        "label_de": "Thüringen",
+        "label_en": "Thüringen"
+      }
+    }
+  },
+  "hauptleistung": {
+    "type": "textarea",
+    "label_de": "Was ist Ihre Hauptdienstleistung oder Ihr wichtigstes Produkt?",
+    "label_en": "What's your company's main product or core service?",
+    "options": {}
+  },
+  "zielgruppen": {
+    "type": "checkbox",
+    "label_de": "Welche Zielgruppen bedienen Sie?",
+    "label_en": "Which target groups or customer segments do you serve?",
+    "options": {
+      "b2b": {
+        "label_de": "B2B (Geschäftskunden)",
+        "label_en": "B2B (business customers)"
+      },
+      "b2c": {
+        "label_de": "B2C (Endverbraucher)",
+        "label_en": "B2C (consumers)"
+      },
+      "andere": {
+        "label_de": "Andere",
+        "label_en": "Other"
+      },
+      "grossunternehmen": {
+        "label_de": "Großunternehmen",
+        "label_en": "Large enterprises"
+      },
+      "startups": {
+        "label_de": "Startups",
+        "label_en": "Startups"
+      },
+      "oeffentliche_hand": {
+        "label_de": "Öffentliche Hand",
+        "label_en": "Public sector"
+      },
+      "kmu": {
+        "label_de": "KMU",
+        "label_en": "SMEs (small & medium enterprises)"
+      },
+      "selbststaendige": {
+        "label_de": "Selbstständige/Freiberufler",
+        "label_en": "Self-employed / freelancers"
+      },
+      "privatpersonen": {
+        "label_de": "Privatpersonen",
+        "label_en": "Private individuals"
+      }
+    }
+  },
+  "jahresumsatz": {
+    "type": "select",
+    "label_de": "Jahresumsatz (Schätzung)",
+    "label_en": "Annual revenue (estimate)",
+    "options": {
+      "keine_angabe": {
+        "label_de": "Keine Angabe",
+        "label_en": "Prefer not to say"
+      },
+      "2m_10m": {
+        "label_de": "2–10 Mio. €",
+        "label_en": "€2–10 million"
+      },
+      "unter_100k": {
+        "label_de": "Bis 100.000 €",
+        "label_en": "Up to €100,000"
+      },
+      "ueber_10m": {
+        "label_de": "Über 10 Mio. €",
+        "label_en": "Over €10 million"
+      },
+      "500k_2m": {
+        "label_de": "500.000–2 Mio. €",
+        "label_en": "€500,000–2 million"
+      },
+      "100k_500k": {
+        "label_de": "100.000–500.000 €",
+        "label_en": "€100,000–500,000"
+      }
+    }
+  },
+  "it_infrastruktur": {
+    "type": "select",
+    "label_de": "Wie ist Ihre IT-Infrastruktur organisiert?",
+    "label_en": "How is your IT infrastructure organized?",
+    "options": {
+      "unklar": {
+        "label_de": "Unklar / noch offen",
+        "label_en": "Unclear / not decided yet"
+      },
+      "hybrid": {
+        "label_de": "Hybrid (Cloud + eigene Server)",
+        "label_en": "Hybrid (cloud + own servers)"
+      },
+      "cloud": {
+        "label_de": "Cloud-basiert (z.B. Microsoft 365, Google Cloud)",
+        "label_en": "Cloud-based (e.g. Microsoft 365, Google Cloud)"
+      },
+      "on_premise": {
+        "label_de": "Eigenes Rechenzentrum (On-Premises)",
+        "label_en": "Own data centre (on-premises)"
+      }
+    }
+  },
+  "interne_ki_kompetenzen": {
+    "type": "select",
+    "label_de": "Gibt es ein internes KI-/Digitalisierungsteam?",
+    "label_en": "Do you have an internal AI/digitalisation team?",
+    "options": {
+      "in_planung": {
+        "label_de": "In Planung",
+        "label_en": "In planning"
+      },
+      "nein": {
+        "label_de": "Nein",
+        "label_en": "No"
+      },
+      "ja": {
+        "label_de": "Ja",
+        "label_en": "Yes"
+      }
+    }
+  },
+  "datenquellen": {
+    "type": "checkbox",
+    "label_de": "Welche Datentypen stehen für KI-Projekte zur Verfügung?",
+    "label_en": "Which types of data are available for AI projects?",
+    "options": {
+      "verkaufsdaten": {
+        "label_de": "Verkaufs-/Bestelldaten",
+        "label_en": "Sales and order data"
+      },
+      "kundendaten": {
+        "label_de": "Kundendaten (CRM, Service)",
+        "label_en": "Customer data (CRM, service, history)"
+      },
+      "produktionsdaten": {
+        "label_de": "Produktions-/Betriebsdaten",
+        "label_en": "Production or operational data"
+      },
+      "marketingdaten": {
+        "label_de": "Marketing-/Kampagnendaten",
+        "label_en": "Marketing and campaign data"
+      },
+      "personaldaten": {
+        "label_de": "Personal-/HR-Daten",
+        "label_en": "Personnel or HR data"
+      },
+      "sonstige": {
+        "label_de": "Sonstige Datenquellen",
+        "label_en": "Other data sources"
+      }
+    }
+  },
+  "digitalisierungsgrad": {
+    "type": "slider",
+    "label_de": "Wie digital sind Ihre internen Prozesse? (1–10)",
+    "label_en": "How digital are your internal processes? (1-10)",
+    "options": {}
+  },
+  "prozesse_papierlos": {
+    "type": "select",
+    "label_de": "Anteil papierloser Prozesse",
+    "label_en": "What proportion of processes are paperless?",
+    "options": {
+      "21-50": {
+        "label_de": "21–50%",
+        "label_en": "21–50%"
+      },
+      "51-80": {
+        "label_de": "51–80%",
+        "label_en": "51–80%"
+      },
+      "81-100": {
+        "label_de": "81–100%",
+        "label_en": "81–100%"
+      },
+      "0-20": {
+        "label_de": "0–20%",
+        "label_en": "0–20%"
+      }
+    }
+  },
+  "automatisierungsgrad": {
+    "type": "select",
+    "label_de": "Automatisierungsgrad",
+    "label_en": "Degree of automation in workflows",
+    "options": {
+      "mittel": {
+        "label_de": "Mittel",
+        "label_en": "Medium"
+      },
+      "eher_hoch": {
+        "label_de": "Eher hoch",
+        "label_en": "Rather high"
+      },
+      "eher_niedrig": {
+        "label_de": "Eher niedrig",
+        "label_en": "Rather low"
+      },
+      "sehr_niedrig": {
+        "label_de": "Sehr niedrig",
+        "label_en": "Very low"
+      },
+      "sehr_hoch": {
+        "label_de": "Sehr hoch",
+        "label_en": "Very high"
+      }
+    }
+  },
+  "ki_einsatz": {
+    "type": "checkbox",
+    "label_de": "Wo wird KI bereits eingesetzt?",
+    "label_en": "Where is AI already being used?",
+    "options": {
+      "it": {
+        "label_de": "IT",
+        "label_en": "IT"
+      },
+      "vertrieb": {
+        "label_de": "Vertrieb",
+        "label_en": "Sales"
+      },
+      "forschung": {
+        "label_de": "Forschung & Entwicklung",
+        "label_en": "Research & development"
+      },
+      "sonstiges": {
+        "label_de": "Sonstiges",
+        "label_en": "Other"
+      },
+      "kundenservice": {
+        "label_de": "Kundenservice",
+        "label_en": "Customer service"
+      },
+      "buchhaltung": {
+        "label_de": "Buchhaltung",
+        "label_en": "Accounting"
+      },
+      "personal": {
+        "label_de": "Personal",
+        "label_en": "Human resources"
+      },
+      "marketing": {
+        "label_de": "Marketing",
+        "label_en": "Marketing"
+      },
+      "keine": {
+        "label_de": "Noch keine Nutzung",
+        "label_en": "No usage yet"
+      },
+      "produktion": {
+        "label_de": "Produktion",
+        "label_en": "Production"
+      }
+    }
+  },
+  "ki_knowhow": {
+    "type": "select",
+    "label_de": "KI-Know-how im Team",
+    "label_en": "Team's internal AI know-how",
+    "options": {
+      "mittel": {
+        "label_de": "Mittel",
+        "label_en": "Medium"
+      },
+      "expertenwissen": {
+        "label_de": "Expertenwissen",
+        "label_en": "Expert knowledge"
+      },
+      "grundkenntnisse": {
+        "label_de": "Grundkenntnisse",
+        "label_en": "Basic knowledge"
+      },
+      "keine": {
+        "label_de": "Keine Erfahrung",
+        "label_en": "No experience"
+      },
+      "fortgeschritten": {
+        "label_de": "Fortgeschritten",
+        "label_en": "Advanced"
+      }
+    }
+  },
+  "projektziel": {
+    "type": "checkbox",
+    "label_de": "Ziel des nächsten KI-/Digitalisierungsprojekts",
+    "label_en": "Main objective of next AI project",
+    "options": {
+      "markterschliessung": {
+        "label_de": "Markterschließung",
+        "label_en": "Market expansion"
+      },
+      "kundenservice": {
+        "label_de": "Kundenservice verbessern",
+        "label_en": "Improve customer service"
+      },
+      "andere": {
+        "label_de": "Andere",
+        "label_en": "Other"
+      },
+      "produktinnovation": {
+        "label_de": "Produktinnovation",
+        "label_en": "Product innovation"
+      },
+      "compliance": {
+        "label_de": "Compliance/Datenschutz",
+        "label_en": "Compliance/data protection"
+      },
+      "kostensenkung": {
+        "label_de": "Kostensenkung",
+        "label_en": "Cost reduction"
+      },
+      "personalentlastung": {
+        "label_de": "Personalentlastung",
+        "label_en": "Relieve staff"
+      },
+      "foerdermittel": {
+        "label_de": "Fördermittel beantragen",
+        "label_en": "Apply for funding"
+      },
+      "prozessautomatisierung": {
+        "label_de": "Prozessautomatisierung",
+        "label_en": "Process automation"
+      }
+    }
+  },
+  "ki_projekte": {
+    "type": "textarea",
+    "label_de": "Laufende/geplante KI-Projekte",
+    "label_en": "Ongoing or planned AI projects",
+    "options": {}
+  },
+  "ki_usecases": {
+    "type": "checkbox",
+    "label_de": "Besonders interessante KI-Use-Cases",
+    "label_en": "AI use cases of interest",
+    "options": {
+      "kundensupport": {
+        "label_de": "Kundensupport",
+        "label_en": "Customer support"
+      },
+      "wissensmanagement": {
+        "label_de": "Wissensmanagement",
+        "label_en": "Knowledge management"
+      },
+      "datenanalyse": {
+        "label_de": "Datenanalyse & Prognose",
+        "label_en": "Data analysis & forecasting"
+      },
+      "marketing": {
+        "label_de": "Marketing-Optimierung",
+        "label_en": "Marketing optimization"
+      },
+      "texterstellung": {
+        "label_de": "Texterstellung",
+        "label_en": "Text generation"
+      },
+      "sonstiges": {
+        "label_de": "Sonstiges",
+        "label_en": "Other"
+      },
+      "bildgenerierung": {
+        "label_de": "Bildgenerierung",
+        "label_en": "Image generation"
+      },
+      "spracherkennung": {
+        "label_de": "Spracherkennung",
+        "label_en": "Speech recognition"
+      },
+      "prozessautomatisierung": {
+        "label_de": "Prozessautomatisierung",
+        "label_en": "Process automation"
+      }
+    }
+  },
+  "ki_potenzial": {
+    "type": "textarea",
+    "label_de": "Größtes KI-Potenzial im Unternehmen",
+    "label_en": "Greatest potential for AI in your company",
+    "options": {}
+  },
+  "usecase_priority": {
+    "type": "select",
+    "label_de": "Bereich mit höchster Priorität",
+    "label_en": "Where should AI be introduced first?",
+    "options": {
+      "kundenservice": {
+        "label_de": "Kundenservice",
+        "label_en": "Customer service"
+      },
+      "it": {
+        "label_de": "IT",
+        "label_en": "IT"
+      },
+      "unbekannt": {
+        "label_de": "Noch unklar",
+        "label_en": "Still unclear"
+      },
+      "vertrieb": {
+        "label_de": "Vertrieb",
+        "label_en": "Sales"
+      },
+      "buchhaltung": {
+        "label_de": "Buchhaltung",
+        "label_en": "Accounting"
+      },
+      "personal": {
+        "label_de": "Personal",
+        "label_en": "Human resources"
+      },
+      "marketing": {
+        "label_de": "Marketing",
+        "label_en": "Marketing"
+      },
+      "forschung": {
+        "label_de": "Forschung & Entwicklung",
+        "label_en": "Research & development"
+      },
+      "produktion": {
+        "label_de": "Produktion",
+        "label_en": "Production"
+      }
+    }
+  },
+  "ki_geschaeftsmodell_vision": {
+    "type": "textarea",
+    "label_de": "Wie kann KI Ihr Geschäftsmodell verändern?",
+    "label_en": "How could AI change your business model?",
+    "options": {}
+  },
+  "moonshot": {
+    "type": "textarea",
+    "label_de": "Ihre mutige 3-Jahres-Vision",
+    "label_en": "Your bold AI vision in 3 years",
+    "options": {}
+  },
+  "strategic_goals": {
+    "type": "textarea",
+    "label_de": null,
+    "label_en": "Specific goals with AI",
+    "options": {}
+  },
+  "data_quality": {
+    "type": "select",
+    "label_de": null,
+    "label_en": "Quality of your data",
+    "options": {
+      "low": {
+        "label_de": null,
+        "label_en": "Low (unstructured, gaps)"
+      },
+      "high": {
+        "label_de": null,
+        "label_en": "High (complete, structured, current)"
+      },
+      "medium": {
+        "label_de": null,
+        "label_en": "Medium (partly structured)"
+      }
+    }
+  },
+  "ai_roadmap": {
+    "type": "select",
+    "label_de": "KI-Roadmap oder Strategie",
+    "label_en": "AI roadmap or strategy",
+    "options": {
+      "no": {
+        "label_de": null,
+        "label_en": "Not yet available"
+      },
+      "planning": {
+        "label_de": null,
+        "label_en": "In planning"
+      },
+      "yes": {
+        "label_de": null,
+        "label_en": "Yes - implemented"
+      },
+      "in_planung": {
+        "label_de": "In Planung",
+        "label_en": null
+      },
+      "nein": {
+        "label_de": "Noch nicht vorhanden",
+        "label_en": null
+      },
+      "ja": {
+        "label_de": "Ja - implementiert",
+        "label_en": null
+      }
+    }
+  },
+  "governance": {
+    "type": "select",
+    "label_de": "Richtlinien für Daten-/KI-Governance",
+    "label_en": "Data and AI governance guidelines",
+    "options": {
+      "no": {
+        "label_de": null,
+        "label_en": "No"
+      },
+      "partial": {
+        "label_de": null,
+        "label_en": "Partial"
+      },
+      "teilweise": {
+        "label_de": "Teilweise",
+        "label_en": null
+      },
+      "yes": {
+        "label_de": null,
+        "label_en": "Yes"
+      },
+      "nein": {
+        "label_de": "Nein",
+        "label_en": null
+      },
+      "ja": {
+        "label_de": "Ja",
+        "label_en": null
+      }
+    }
+  },
+  "innovation_culture": {
+    "type": "select",
+    "label_de": null,
+    "label_en": "Openness to innovation",
+    "options": {
+      "very_open": {
+        "label_de": null,
+        "label_en": "Very open"
+      },
+      "neutral": {
+        "label_de": null,
+        "label_en": "Neutral"
+      },
+      "very_reluctant": {
+        "label_de": null,
+        "label_en": "Very reluctant"
+      },
+      "rather_open": {
+        "label_de": null,
+        "label_en": "Rather open"
+      },
+      "rather_reluctant": {
+        "label_de": null,
+        "label_en": "Rather reluctant"
+      }
+    }
+  },
+  "time_capacity": {
+    "type": "select",
+    "label_de": null,
+    "label_en": "Time per week for AI projects",
+    "options": {
+      "over_10": {
+        "label_de": null,
+        "label_en": "More than 10 hours"
+      },
+      "under_2": {
+        "label_de": null,
+        "label_en": "Under 2 hours"
+      },
+      "5_10": {
+        "label_de": null,
+        "label_en": "5–10 hours"
+      },
+      "2_5": {
+        "label_de": null,
+        "label_en": "2–5 hours"
+      }
+    }
+  },
+  "existing_tools": {
+    "type": "checkbox",
+    "label_de": null,
+    "label_en": "Systems already in use",
+    "options": {
+      "none": {
+        "label_de": null,
+        "label_en": "None / other"
+      },
+      "project_management": {
+        "label_de": null,
+        "label_en": "Project management (Asana, Trello)"
+      },
+      "crm": {
+        "label_de": null,
+        "label_en": "CRM systems (HubSpot, Salesforce)"
+      },
+      "accounting": {
+        "label_de": null,
+        "label_en": "Accounting software"
+      },
+      "marketing_automation": {
+        "label_de": null,
+        "label_en": "Marketing automation"
+      },
+      "erp": {
+        "label_de": null,
+        "label_en": "ERP systems (SAP, Odoo)"
+      }
+    }
+  },
+  "regulated_industry": {
+    "type": "checkbox",
+    "label_de": null,
+    "label_en": "Regulated industry",
+    "options": {
+      "none": {
+        "label_de": null,
+        "label_en": "None of these"
+      },
+      "public": {
+        "label_de": null,
+        "label_en": "Public sector"
+      },
+      "finance": {
+        "label_de": null,
+        "label_en": "Finance & insurance"
+      },
+      "healthcare": {
+        "label_de": null,
+        "label_en": "Health & medicine"
+      },
+      "legal": {
+        "label_de": null,
+        "label_en": "Legal services"
+      }
+    }
+  },
+  "training_interests": {
+    "type": "checkbox",
+    "label_de": null,
+    "label_en": "AI training topics of interest",
+    "options": {
+      "llm_basics": {
+        "label_de": null,
+        "label_en": "LLM basics"
+      },
+      "none": {
+        "label_de": null,
+        "label_en": "None / not sure"
+      },
+      "automation_scripts": {
+        "label_de": null,
+        "label_en": "Automation & scripts"
+      },
+      "prompt_engineering": {
+        "label_de": null,
+        "label_en": "Prompt engineering"
+      },
+      "data_quality_governance": {
+        "label_de": null,
+        "label_en": "Data quality & governance"
+      },
+      "ethics_regulation": {
+        "label_de": null,
+        "label_en": "Ethical & legal foundations"
+      }
+    }
+  },
+  "vision_priority": {
+    "type": "select",
+    "label_de": null,
+    "label_en": "Most important vision aspect",
+    "options": {
+      "customer_service": {
+        "label_de": null,
+        "label_en": "Improve customer service"
+      },
+      "market_leadership": {
+        "label_de": null,
+        "label_en": "Achieve market leadership"
+      },
+      "data_products": {
+        "label_de": null,
+        "label_en": "New data-driven products"
+      },
+      "gpt_services": {
+        "label_de": null,
+        "label_en": "GPT-based services"
+      },
+      "process_automation": {
+        "label_de": null,
+        "label_en": "Automate processes"
+      },
+      "unspecified": {
+        "label_de": null,
+        "label_en": "No preference"
+      }
+    }
+  },
+  "datenschutzbeauftragter": {
+    "type": "select",
+    "label_de": "Datenschutzbeauftragter vorhanden?",
+    "label_en": "Data protection officer",
+    "options": {
+      "teilweise": {
+        "label_de": "Teilweise (extern/Planung)",
+        "label_en": "Partially (external/planning)"
+      },
+      "nein": {
+        "label_de": "Nein",
+        "label_en": "No"
+      },
+      "ja": {
+        "label_de": "Ja",
+        "label_en": "Yes"
+      }
+    }
+  },
+  "technische_massnahmen": {
+    "type": "select",
+    "label_de": "Technische Schutzmaßnahmen",
+    "label_en": "Technical data protection measures",
+    "options": {
+      "teilweise": {
+        "label_de": "Teilweise vorhanden",
+        "label_en": "Partially in place"
+      },
+      "keine": {
+        "label_de": "Noch keine",
+        "label_en": "None yet"
+      },
+      "alle": {
+        "label_de": "Alle relevanten Maßnahmen",
+        "label_en": "All relevant measures"
+      }
+    }
+  },
+  "folgenabschaetzung": {
+    "type": "select",
+    "label_de": "Datenschutz-Folgenabschätzung (DSFA)",
+    "label_en": "Data protection impact assessment (DPIA)",
+    "options": {
+      "teilweise": {
+        "label_de": "Teilweise",
+        "label_en": "Partially"
+      },
+      "nein": {
+        "label_de": "Nein",
+        "label_en": "No"
+      },
+      "ja": {
+        "label_de": "Ja",
+        "label_en": "Yes"
+      }
+    }
+  },
+  "meldewege": {
+    "type": "select",
+    "label_de": "Meldewege bei Vorfällen",
+    "label_en": "Reporting procedures for incidents",
+    "options": {
+      "teilweise": {
+        "label_de": "Teilweise geregelt",
+        "label_en": "Partially regulated"
+      },
+      "nein": {
+        "label_de": "Nein",
+        "label_en": "No"
+      },
+      "ja": {
+        "label_de": "Ja, klar geregelt",
+        "label_en": "Yes, clear processes"
+      }
+    }
+  },
+  "loeschregeln": {
+    "type": "select",
+    "label_de": "Regeln für Datenlöschung/-anonymisierung",
+    "label_en": "Rules for data deletion/anonymization",
+    "options": {
+      "teilweise": {
+        "label_de": "Teilweise",
+        "label_en": "Partially"
+      },
+      "nein": {
+        "label_de": "Nein",
+        "label_en": "No"
+      },
+      "ja": {
+        "label_de": "Ja",
+        "label_en": "Yes"
+      }
+    }
+  },
+  "ai_act_kenntnis": {
+    "type": "select",
+    "label_de": "Kenntnis EU AI Act",
+    "label_en": "Knowledge of EU AI Act",
+    "options": {
+      "gehoert": {
+        "label_de": "Schon mal gehört",
+        "label_en": "Heard of it"
+      },
+      "gut": {
+        "label_de": "Gut",
+        "label_en": "Well"
+      },
+      "unbekannt": {
+        "label_de": "Noch nicht bekannt",
+        "label_en": "Not yet familiar"
+      },
+      "sehr_gut": {
+        "label_de": "Sehr gut",
+        "label_en": "Very well"
+      }
+    }
+  },
+  "ki_hemmnisse": {
+    "type": "checkbox",
+    "label_de": "Hemmnisse beim KI-Einsatz",
+    "label_en": "Obstacles to AI adoption",
+    "options": {
+      "andere": {
+        "label_de": "Andere",
+        "label_en": "Other"
+      },
+      "it_integration": {
+        "label_de": "IT-Integration",
+        "label_en": "IT integration"
+      },
+      "zeitmangel": {
+        "label_de": "Zeitmangel",
+        "label_en": "Lack of time"
+      },
+      "rechtsunsicherheit": {
+        "label_de": "Rechtsunsicherheit",
+        "label_en": "Legal uncertainty"
+      },
+      "datenschutz": {
+        "label_de": "Datenschutz",
+        "label_en": "Data protection"
+      },
+      "budget": {
+        "label_de": "Begrenztes Budget",
+        "label_en": "Limited budget"
+      },
+      "knowhow": {
+        "label_de": "Fehlendes Know-how",
+        "label_en": "Lack of know-how"
+      },
+      "keine": {
+        "label_de": "Keine Hemmnisse",
+        "label_en": "No obstacles"
+      },
+      "teamakzeptanz": {
+        "label_de": "Teamakzeptanz",
+        "label_en": "Team acceptance"
+      }
+    }
+  },
+  "bisherige_foerdermittel": {
+    "type": "select",
+    "label_de": "Bereits Fördermittel erhalten?",
+    "label_en": "Previous funding received",
+    "options": {
+      "nein": {
+        "label_de": "Nein",
+        "label_en": "No"
+      },
+      "ja": {
+        "label_de": "Ja",
+        "label_en": "Yes"
+      }
+    }
+  },
+  "interesse_foerderung": {
+    "type": "select",
+    "label_de": "Interesse an Fördermöglichkeiten",
+    "label_en": "Interest in funding opportunities",
+    "options": {
+      "unklar": {
+        "label_de": "Unklar, bitte beraten",
+        "label_en": "Unsure, please advise"
+      },
+      "nein": {
+        "label_de": "Kein Bedarf",
+        "label_en": "No need"
+      },
+      "ja": {
+        "label_de": "Ja, Programme vorschlagen",
+        "label_en": "Yes, suggest programs"
+      }
+    }
+  },
+  "erfahrung_beratung": {
+    "type": "select",
+    "label_de": "Bisherige Beratung zu Digitalisierung/KI",
+    "label_en": "Previous consulting on digitalization/AI",
+    "options": {
+      "unklar": {
+        "label_de": "Unklar",
+        "label_en": "Unclear"
+      },
+      "nein": {
+        "label_de": "Nein",
+        "label_en": "No"
+      },
+      "ja": {
+        "label_de": "Ja",
+        "label_en": "Yes"
+      }
+    }
+  },
+  "investitionsbudget": {
+    "type": "select",
+    "label_de": "Budget für KI/Digitalisierung nächstes Jahr",
+    "label_en": "Budget for AI/digitalization next year",
+    "options": {
+      "unklar": {
+        "label_de": "Noch unklar",
+        "label_en": "Still unclear"
+      },
+      "2000_10000": {
+        "label_de": "2.000–10.000 €",
+        "label_en": "€2,000–10,000"
+      },
+      "unter_2000": {
+        "label_de": "Unter 2.000 €",
+        "label_en": "Under €2,000"
+      },
+      "ueber_50000": {
+        "label_de": "Über 50.000 €",
+        "label_en": "More than €50,000"
+      },
+      "10000_50000": {
+        "label_de": "10.000–50.000 €",
+        "label_en": "€10,000–50,000"
+      }
+    }
+  },
+  "marktposition": {
+    "type": "select",
+    "label_de": "Marktposition",
+    "label_en": "Market position",
+    "options": {
+      "marktfuehrer": {
+        "label_de": "Marktführer",
+        "label_en": "Market leader"
+      },
+      "nachzuegler": {
+        "label_de": "Nachzügler",
+        "label_en": "Laggard"
+      },
+      "unsicher": {
+        "label_de": "Schwer einzuschätzen",
+        "label_en": "Hard to assess"
+      },
+      "oberes_drittel": {
+        "label_de": "Oberes Drittel",
+        "label_en": "Top third"
+      },
+      "mittelfeld": {
+        "label_de": "Mittelfeld",
+        "label_en": "Middle field"
+      }
+    }
+  },
+  "benchmark_wettbewerb": {
+    "type": "select",
+    "label_de": "Vergleich mit Wettbewerbern",
+    "label_en": "Compare with competitors",
+    "options": {
+      "selten": {
+        "label_de": "Selten",
+        "label_en": "Rarely"
+      },
+      "nein": {
+        "label_de": "Nein",
+        "label_en": "No"
+      },
+      "ja": {
+        "label_de": "Ja, regelmäßig",
+        "label_en": "Yes, regularly"
+      }
+    }
+  },
+  "innovationsprozess": {
+    "type": "select",
+    "label_de": "Wie entstehen Innovationen?",
+    "label_en": "How innovations arise",
+    "options": {
+      "innovationsteam": {
+        "label_de": "Innovationsteam",
+        "label_en": "Innovation team"
+      },
+      "unbekannt": {
+        "label_de": "Keine klare Strategie",
+        "label_en": "No clear strategy"
+      },
+      "berater": {
+        "label_de": "Externe Berater",
+        "label_en": "External consultants"
+      },
+      "zufall": {
+        "label_de": "Zufällig",
+        "label_en": "By chance"
+      },
+      "kunden": {
+        "label_de": "Mit Kunden",
+        "label_en": "With customers"
+      },
+      "mitarbeitende": {
+        "label_de": "Durch Mitarbeitende",
+        "label_en": "Through employees"
+      }
+    }
+  },
+  "risikofreude": {
+    "type": "slider",
+    "label_de": "Risikofreude bei Innovation (1–5)",
+    "label_en": "Risk-taking with innovation (1-5)",
+    "options": {}
+  },
+  "datenschutz": {
+    "type": "privacy",
+    "label_de": "Ich habe die <a href='datenschutz.html' onclick='window.open(this.href, \\",
+    "label_en": "I have read the <a href='privacy.html' onclick='window.open(this.href, \\",
+    "options": {}
+  }
+}

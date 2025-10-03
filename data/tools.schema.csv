@@ -1,1 +1,13 @@
-Tool-Name,Branche,Branche-Slugs,Unternehmensgröße,Funktion/Zweck,Link/Website,Kostenkategorie,Kurze Beschreibung,Kompatibilität/Integration,Datensitz,Tags
+field,required,description,example
+tool_name,yes,Tool name as used in marketing,"ChatGPT Plus"
+industry,yes,Human-friendly industry label,"Marketing & Werbung"
+industry_slugs,yes,Semicolon-separated slugs aligned to form 'branche' values,"marketing"
+company_size,yes,"one of: solo|team|kmu|any","kmu"
+function_purpose,yes,Primary function or use case,"Textgenerierung"
+short_description,yes,One-line tangible value,"Schnelle Content-Erstellung für Kampagnen"
+compatibility_integrations,no,Key integrations or ecosystems,"Zapier;HubSpot;Microsoft 365"
+data_residency,no,Primary data residency or tenant options,"EU;DE;US"
+tags,no,Semicolon-separated tokens,"genai;content;saas"
+pricing,no,Short price model,"from €20/mo"
+url,yes,Official landing page or docs,"https://example.com"
+dpa_available,no,"AVV/DPA available? yes|no|unknown","yes"

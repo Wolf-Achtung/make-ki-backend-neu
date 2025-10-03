@@ -1,0 +1,11 @@
+field,required,description,example
+name,yes,Programme name,"Digital Jetzt"
+region,yes,Region/state or 'Bund/EU',"Bund"
+target_group,yes,Who can apply,"kmu"
+industry_slugs,no,Semicolon slugs relevant for targeting,"marketing;it"
+rate_percent,yes,Funding rate in percent as number,"50"
+max_amount_eur,yes,Maximum amount in EUR as integer,"50000"
+deadline,yes,Deadline ISO date or 'laufend',"laufend"
+type,yes,Type of programme,"Zuschuss"
+link,yes,Official page,"https://example.com"
+notes,no,Concise constraints,"SME with 3+ years"

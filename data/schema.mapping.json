@@ -1,17 +1,45 @@
 {
+  "description": "Mapping & normalisation for data build process. Aligns form fields with data tables.",
+  "version": "1.1.0",
+  "updated": "2025-10-03",
   "tools.csv": {
-    "industry_slugs_col": "Branche-Slugs",
-    "size_col": "Unternehmensgröße",
+    "industry_slugs_col": "industry_slugs",
+    "size_col": "company_size",
     "region_col": null
   },
   "foerdermittel.csv": {
-    "industry_slugs_col": null,
-    "size_col": "Zielgruppe",
-    "region_col": "Region"
+    "industry_slugs_col": "industry_slugs",
+    "size_col": "target_group",
+    "region_col": "region"
   },
   "size_buckets": [
     "solo",
     "team_2_10",
     "kmu_11_100"
+  ],
+  "form_size_to_bucket": {
+    "solo": "solo",
+    "team": "team_2_10",
+    "kmu": "kmu_11_100"
+  },
+  "acceptable_company_size_values": [
+    "solo",
+    "team",
+    "kmu",
+    "any"
+  ],
+  "industry_slug_examples": [
+    "marketing",
+    "beratung",
+    "it",
+    "finanzen",
+    "handel",
+    "bildung",
+    "verwaltung",
+    "gesundheit",
+    "bau",
+    "medien",
+    "industrie",
+    "logistik"
   ]
 }
