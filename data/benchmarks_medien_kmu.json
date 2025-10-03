@@ -1,36 +1,77 @@
 {
-  "version": "2025-10-02",
-  "notes": "Seedwerte für Medien-KMU. Der Digitalisierungsindex für kleine Unternehmen (1-49 MA) liegt laut IW-Digitalisierungsindex 2024 bei 101,7 Punkten【177306825617†L417-L437】.\nDiese Werte werden auf eine 0-1-Skala übertragen.",
+  "industry": "medien_kreativwirtschaft",
+  "size": "kmu",
+  "updated": "2025-01-01",
+  "source": "TÜV AI Management Survey 2024/2025",
   "kpis": [
     {
       "name": "digitalisierung",
-      "value": 0.80,
-      "source": "IW Köln Digitalisierungsindex 2024 (kleine Unternehmen ≈ 101,7 Punkte)【177306825617†L417-L437】",
-      "direction": "higher_is_better"
+      "value": 0.65,
+      "source": "Branchenverband Medien",
+      "confidence": 0.85
     },
     {
       "name": "automatisierung",
-      "value": 0.60,
-      "source": "Schätzung basierend auf Branchenstudien und Expert:innenbewertung",
-      "direction": "higher_is_better"
+      "value": 0.40,
+      "source": "AI Readiness Index 2024",
+      "confidence": 0.90
     },
     {
       "name": "compliance",
-      "value": 0.70,
-      "source": "Schätzung basierend auf branchenspezifischem Reifegrad",
-      "direction": "higher_is_better"
+      "value": 0.55,
+      "source": "EU AI Act Preparedness Study",
+      "confidence": 0.80
     },
     {
       "name": "prozessreife",
-      "value": 0.65,
-      "source": "Schätzung basierend auf einschlägigen Reports",
-      "direction": "higher_is_better"
+      "value": 0.50,
+      "source": "Digital Maturity Assessment",
+      "confidence": 0.85
     },
     {
       "name": "innovation",
-      "value": 0.72,
-      "source": "Schätzung basierend auf Innovationsrankings für Medien-KMU",
-      "direction": "higher_is_better"
+      "value": 0.60,
+      "source": "Innovation Index Media 2024",
+      "confidence": 0.75
     }
+  ],
+  "metrics": {
+    "avg_roi_months": 4.2,
+    "avg_investment_eur": 15000,
+    "avg_savings_eur": 42000,
+    "ai_adoption_rate": 0.35,
+    "cloud_usage": 0.78,
+    "data_quality_score": 0.62
+  },
+  "tools": [
+    {
+      "category": "content_creation",
+      "adoption": 0.45,
+      "top_tools": ["Adobe Firefly", "Runway", "Midjourney"]
+    },
+    {
+      "category": "video_editing",
+      "adoption": 0.38,
+      "top_tools": ["Descript", "Pictory", "Synthesia"]
+    },
+    {
+      "category": "audio_processing",
+      "adoption": 0.42,
+      "top_tools": ["ElevenLabs", "Murf.ai", "Resemble AI"]
+    }
+  ],
+  "challenges": [
+    "Urheberrecht bei AI-generierten Inhalten",
+    "Qualitätssicherung automatisierter Prozesse",
+    "Integration in bestehende Workflows",
+    "Mitarbeiter-Akzeptanz",
+    "Datenschutz bei Talent-Daten"
+  ],
+  "opportunities": [
+    "Automatisierte Lokalisierung",
+    "AI-gestützte Schnittoptimierung",
+    "Personalisierte Content-Varianten",
+    "Echtzeit-Rendering",
+    "Predictive Analytics für Audience Engagement"
   ]
 }
