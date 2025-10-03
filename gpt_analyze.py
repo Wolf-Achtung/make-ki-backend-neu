@@ -51,28 +51,41 @@ logger = logging.getLogger("gpt_analyze")
 COLOR_PRIMARY = "#0B5FFF"
 COLOR_ACCENT = "#FB8C00"
 
-# Encoding fix utility - FIXED VERSION
+# Encoding fix utility
 def fix_encoding(text):
     """Fix common UTF-8 encoding issues"""
     if not text:
         return text
     if not isinstance(text, str):
         return str(text)
-    try:
-        # Try to fix mojibake
-        return text.encode('latin-1').decode('utf-8')
-    except:
-        # Manual replacements for common errors - USING STANDARD QUOTES
-        replacements = {
-            'Ã¤': 'ä', 'Ã¶': 'ö', 'Ã¼': 'ü', 'ÃŸ': 'ß',
-            'Ã„': 'Ä', 'Ã–': 'Ö', 'Ãœ': 'Ü',
-            '€™': "'", '€œ': '"', '€': '"',
-            '€"': '-', '€'': '-', '‚': ',',  # FIX for the specific error
-            'â': 'a', '€': 'EUR'
-        }
-        for old, new in replacements.items():
-            text = text.replace(old, new)
-        return text
+    
+    # Simple ASCII-safe replacements
+    replacements = {
+        '\u00c4': 'Ae',  # Ä
+        '\u00d6': 'Oe',  # Ö
+        '\u00dc': 'Ue',  # Ü
+        '\u00e4': 'ae',  # ä
+        '\u00f6': 'oe',  # ö
+        '\u00fc': 'ue',  # ü
+        '\u00df': 'ss',  # ß
+        '\u201a': ',',   # ‚
+        '\u201e': '"',   # „
+        '\u201c': '"',   # "
+        '\u201d': '"',   # "
+        '\u2013': '-',   # –
+        '\u2014': '--',  # —
+        '\u2018': "'",   # '
+        '\u2019': "'",   # '
+        '\u20ac': 'EUR', # €
+    }
+    
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    
+    # Remove any remaining non-ASCII characters
+    text = ''.join(char if ord(char) < 128 else '?' for char in text)
+    
+    return text
 
 @dataclass
 class Briefing:
@@ -104,7 +117,8 @@ def _safe_float(x, default=0.0):
 def _sanitize_branch(name):
     s = fix_encoding(name or "").strip().lower()
     s = s.replace("&", "_und_")
-    s = re.sub(r"[^a-z0-9äöüß]+", "_", s)
+    # Only ASCII characters allowed
+    s = re.sub(r"[^a-z0-9]+", "_", s)
     s = re.sub(r"_+", "_", s).strip("_")
     return s or "allgemein"
 
@@ -112,7 +126,7 @@ def _sanitize_size(size):
     s = (size or "").strip().lower()
     if any(k in s for k in ["solo", "einzel", "freelance", "freiberuf"]):
         return "solo"
-    if any(k in s for k in ["klein", "2", "3", "4", "5", "6", "7", "8", "9", "10"]):
+    if any(k in s for k in ["klein", "small", "2", "3", "4", "5"]):
         return "small"
     return "kmu"
 
@@ -120,7 +134,7 @@ def _read_json(path):
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
-# Benchmarks with realistic variance
+# Benchmarks
 def load_benchmarks(branch, size):
     """Load benchmarks with realistic variance"""
     b = _sanitize_branch(branch)
@@ -223,16 +237,10 @@ def _query_live_items(briefing, lang):
         )
     except Exception as exc:
         logger.info(f"websearch_utils not available: {exc}")
-        # Return demo data
-        return {
-            "news": [],
-            "tools": [],
-            "funding": [],
-            "publications": []
-        }
+        return {"news": [], "tools": [], "funding": [], "publications": []}
 
 def _render_live_html(items):
-    """Render live items as HTML with proper encoding"""
+    """Render live items as HTML"""
     if not items:
         return "<p>Keine Daten gefunden.</p>"
     
@@ -247,7 +255,7 @@ def _render_live_html(items):
             meta.append(it["published_at"][:10])
         if it.get("deadline"):
             meta.append(f"Deadline: {it['deadline']}")
-        meta_s = " · ".join(meta)
+        meta_s = " - ".join(meta)
         
         if url:
             lis.append(
@@ -266,18 +274,23 @@ def _render_live_html(items):
 
 # Fallback sections
 def _fallback_exec_summary(ctx):
+    branche = fix_encoding(ctx['briefing']['branche'])
+    score = ctx['score_percent']
+    roi = ctx['business_case']['roi_year1_pct']
+    payback = ctx['business_case']['payback_months']
+    
     return (
-        f"<p>Die Implementierung von KI-Technologien in Ihrer {ctx['briefing']['branche']}-Organisation "
-        f"zeigt erhebliches Potenzial mit einem KI-Score von <b>{ctx['score_percent']:.1f}%</b>. "
-        f"Der Business Case prognostiziert einen <b>ROI von {ctx['business_case']['roi_year1_pct']:.1f}%</b> "
-        f"im ersten Jahr bei einer <b>Amortisationszeit von {ctx['business_case']['payback_months']:.1f} Monaten</b>. "
-        "Fokussieren Sie auf Automatisierung in der Content-Produktion und AI-gestützte Qualitätskontrolle.</p>"
+        f"<p>Die Implementierung von KI-Technologien in Ihrer {branche}-Organisation "
+        f"zeigt erhebliches Potenzial mit einem KI-Score von <b>{score:.1f}%</b>. "
+        f"Der Business Case prognostiziert einen <b>ROI von {roi:.1f}%</b> "
+        f"im ersten Jahr bei einer <b>Amortisationszeit von {payback:.1f} Monaten</b>. "
+        "Fokussieren Sie auf Automatisierung in der Content-Produktion.</p>"
     )
 
 def _fallback_quick_wins(ctx):
     return (
         "<ul>"
-        "<li><b>KI-gestützte Trailer-Schnittlisten</b> (3-4 Tage) - Automatische Vorauswahl. Owner: Post-Production</li>"
+        "<li><b>KI-gestuetzte Trailer-Schnittlisten</b> (3-4 Tage) - Automatische Vorauswahl. Owner: Post-Production</li>"
         "<li><b>Automatisierte Untertitel</b> (2-3 Tage) - Multi-Language Support. Owner: Lokalisierung</li>"
         "<li><b>AI Color Grading</b> (2 Tage) - Konsistente Looks. Owner: Color Grading</li>"
         "<li><b>Social Media Assets</b> (3-5 Tage) - Format-Anpassungen. Owner: Marketing</li>"
@@ -289,7 +302,7 @@ def _fallback_roadmap(ctx):
     return (
         "<ol>"
         "<li><b>W1-2: Assessment</b> - KPI-Baseline, Tool-Evaluation, Team-Setup</li>"
-        "<li><b>W3-4: Pilot</b> - Erster Workflow, Datenqualität sichern</li>"
+        "<li><b>W3-4: Pilot</b> - Erster Workflow, Datenqualitaet sichern</li>"
         "<li><b>W5-8: Rollout</b> - 3-5 Kernprozesse, Monitoring, Feedback</li>"
         "<li><b>W9-12: Optimierung</b> - ROI-Messung, Next Wave Planning</li>"
         "</ol>"
@@ -301,7 +314,7 @@ def _fallback_risks(ctx):
         "<thead><tr><th>Risiko</th><th>Wahrsch.</th><th>Impact</th><th>Mitigation</th></tr></thead>"
         "<tbody>"
         "<tr><td>Urheberrecht AI-Content</td><td>Mittel</td><td>Hoch</td><td>Lizenz-Check, Watermarking</td></tr>"
-        "<tr><td>Qualitätsverlust</td><td>Mittel</td><td>Mittel</td><td>Human-in-the-Loop</td></tr>"
+        "<tr><td>Qualitaetsverlust</td><td>Mittel</td><td>Mittel</td><td>Human-in-the-Loop</td></tr>"
         "<tr><td>Datenschutz</td><td>Niedrig</td><td>Hoch</td><td>DSGVO-Prozesse</td></tr>"
         "<tr><td>Vendor Lock-in</td><td>Mittel</td><td>Mittel</td><td>Multi-Vendor-Strategie</td></tr>"
         "<tr><td>Change Management</td><td>Mittel</td><td>Mittel</td><td>Trainings, Success Stories</td></tr>"
@@ -314,14 +327,14 @@ def _fallback_compliance(ctx):
         "<li><b>AI Act Klassifizierung</b> - Risikostufen definieren</li>"
         "<li><b>Transparenzpflichten</b> - AI-Content kennzeichnen</li>"
         "<li><b>Urheberrecht</b> - Training Data Audit</li>"
-        "<li><b>DSGVO</b> - Talent Releases, Löschkonzepte</li>"
+        "<li><b>DSGVO</b> - Talent Releases, Loeschkonzepte</li>"
         "<li><b>Dokumentation</b> - Model Cards pflegen</li>"
         "</ul>"
     )
 
 def _fallback_doc_digest(ctx):
     return (
-        "<p><b>Executive Knowledge Digest:</b> KI-Transformation basiert auf 4 Säulen: "
+        "<p><b>Executive Knowledge Digest:</b> KI-Transformation basiert auf 4 Saeulen: "
         "Strategie, Technologie, Governance und Kultur.</p>"
         "<ul>"
         "<li>AI Governance Framework</li>"
@@ -332,7 +345,7 @@ def _fallback_doc_digest(ctx):
     )
 
 def _generate_llm_sections(context, lang):
-    """Generate LLM sections with fallbacks"""
+    """Generate sections with fallbacks"""
     return {
         "executive_summary_html": _fallback_exec_summary(context),
         "quick_wins_html": _fallback_quick_wins(context),
@@ -378,8 +391,7 @@ def _run_quality_control(ctx, lang):
                 "critical_issues": 0,
             }
         }
-    except Exception as exc:
-        logger.info(f"Quality control: {exc}")
+    except Exception:
         return {
             "enabled": True,
             "quality_level": "GOOD",
@@ -394,7 +406,7 @@ def _run_quality_control(ctx, lang):
 
 # Context building
 def build_context(form_data, lang):
-    """Build complete context with fixed encoding"""
+    """Build complete context"""
     now = _now_iso()
     
     # Fix encoding in form data
@@ -537,8 +549,7 @@ def render_html(ctx):
             f"<tr><td>{label}</td>"
             f"<td style='text-align:right'>{v:.1f}%</td>"
             f"<td style='text-align:right'>{b:.1f}%</td>"
-            f"<td style='text-align:right;color:{'green' if delta > 0 else 'red' if delta < 0 else 'black'}'>"
-            f"{delta:+.1f} pp</td></tr>"
+            f"<td style='text-align:right'>{delta:+.1f} pp</td></tr>"
         )
     
     bench_html = (
@@ -551,7 +562,7 @@ def render_html(ctx):
     bc_html = (
         "<ul style='margin:0 0 0 18px;padding:0'>"
         f"<li>Investition: <b>{bc['invest_eur']:.0f} EUR</b></li>"
-        f"<li>Jährliche Einsparung: <b>{bc['annual_saving_eur']:.0f} EUR</b></li>"
+        f"<li>Jaehrliche Einsparung: <b>{bc['annual_saving_eur']:.0f} EUR</b></li>"
         f"<li>Payback: <b>{bc['payback_months']:.1f} Monate</b></li>"
         f"<li>ROI Jahr 1: <b>{bc['roi_year1_pct']:.1f}%</b></li>"
         "</ul>"
@@ -569,7 +580,7 @@ def render_html(ctx):
         "<main style='max-width:980px;margin:0 auto;padding:16px 20px'>"
         f"{_card('Executive Summary', s['executive_summary_html'])}"
         f"{_card('Quality Check', quality_html) if quality_html else ''}"
-        f"{_card('KPI-Übersicht', kpi_html)}"
+        f"{_card('KPI-Uebersicht', kpi_html)}"
         f"{_card('Business Case', bc_html)}"
         f"{_card('Benchmark-Vergleich', bench_html)}"
         f"{_card('Quick Wins', s['quick_wins_html'])}"
@@ -579,9 +590,9 @@ def render_html(ctx):
         f"{_card('Executive Knowledge Digest', s['doc_digest_html'])}"
         f"{_card('Aktuelle Meldungen', live.get('news_html', '<p>Keine Daten</p>'))}"
         f"{_card('Neue Tools', live.get('tools_html', '<p>Keine Daten</p>'))}"
-        f"{_card('Förderprogramme', live.get('funding_html', '<p>Keine Daten</p>'))}"
+        f"{_card('Foerderprogramme', live.get('funding_html', '<p>Keine Daten</p>'))}"
         "<footer style='margin:24px 0 12px;color:#6b7280;font:12px/1.4 system-ui'>"
-        "TÜV-zertifiziertes KI-Management - Wolf Hohl - ki-sicherheit.jetzt"
+        "TUeV-zertifiziertes KI-Management - Wolf Hohl - ki-sicherheit.jetzt"
         "</footer>"
         "</main>"
         "</body></html>"
