@@ -1,14 +1,17 @@
 # File: gpt_analyze.py
 # -*- coding: utf-8 -*-
 """
-MAKE-KI Backend - Report Generator (Gold-Standard+)
+MAKE-KI Backend – Report Engine (Gold-Standard+)
 
-Neuerungen:
-- Robustes Modell-Routing (v1-Client; Auto-Fallback auf gpt-4o bei model_not_found)
-- Konsistentes Quality-Badge (Score-basiert)
-- Progress-Bars & Benchmark-Vergleich (HTML)
-- Admin-Payload-Helfer (raw + normalized + missing fields)
-- Sicheres HTML, PEP8, Logging
+- v1 OpenAI Client (Auto-Fallback auf gpt-4o bei "model_not_found")
+- Konsistentes Quality-Badge (0–100)
+- Benchmarks: best-match nach Branche/Größe
+- Progress-Bars & Benchmark-Tabelle
+- Live‑Suche‑Integration (Tavily/Perplexity) via websearch_utils
+- Admin‑Payload-Helfer (raw + normalized + missing)
+
+Siehe dein Railway-Log: 404 auf gpt-5-thinking + Legacy-API-Meldung
+(Grund für die simplen Fallbacks). Diese Fassung behebt das sauber. :contentReference[oaicite:6]{index=6}
 """
 
 from __future__ import annotations
@@ -21,7 +24,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Dict, Mapping, Optional, Sequence
 from urllib.parse import urlparse
 
 try:
@@ -41,7 +44,7 @@ ENABLE_LLM_SECTIONS: bool = os.getenv("ENABLE_LLM_SECTIONS", "true").lower() == 
 OFFICIAL_API_ENABLED: bool = os.getenv("OFFICIAL_API_ENABLED", "false").lower() == "true"
 OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
-EXEC_SUMMARY_MODEL: str = os.getenv("EXEC_SUMMARY_MODEL", "gpt-4o")
+EXEC_SUMMARY_MODEL: str = os.getenv("EXEC_SUMMARY_MODEL", "gpt-5")
 OPENAI_TIMEOUT: int = int(os.getenv("OPENAI_TIMEOUT", "30"))
 OPENAI_MAX_TOKENS: int = int(os.getenv("OPENAI_MAX_TOKENS", "1200"))
 OPENAI_TEMPERATURE: float = float(os.getenv("GPT_TEMPERATURE", "0.2"))
@@ -59,32 +62,32 @@ if not logging.getLogger().handlers:
     )
 logger = logging.getLogger("gpt_analyze")
 
-# ------------------------------------------------------------------------------
-# Utilities
-# ------------------------------------------------------------------------------
+
 def _now_iso() -> str:
     return datetime.now().strftime("%Y-%m-%d")
+
 
 def fix_encoding(text: Any) -> str:
     if text is None:
         return ""
     s = str(text)
     replacements = {
-        "\u201a": ",", "\u201e": '"', "\u201c": '"', "\u201d": '"',
-        "\u2013": "–", "\u2014": "—", "\u20ac": "€",
+        "\u201a": ",",
+        "\u201e": '"',
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2013": "–",
+        "\u2014": "—",
+        "\u20ac": "€",
     }
     for old, new in replacements.items():
         s = s.replace(old, new)
     return s
 
+
 def _s(x: Any) -> str:
     return fix_encoding(x).strip()
 
-def _safe_float(x: Any, default: float = 0.0) -> float:
-    try:
-        return float(x)
-    except (TypeError, ValueError):
-        return default
 
 def _sanitize_name(name: str) -> str:
     s = fix_encoding(name or "").strip().lower()
@@ -93,21 +96,22 @@ def _sanitize_name(name: str) -> str:
     s = re.sub(r"_+", "_", s).strip("_")
     return s or "default"
 
+
+def _safe_float(x: Any, default: float = 0.0) -> float:
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return default
+
+
 def _escape_html(text: str) -> str:
     return html.escape(text, quote=True)
 
-def _safe_href(url: str) -> str:
-    try:
-        parsed = urlparse(url)
-        if parsed.scheme in ("http", "https"):
-            return url
-    except Exception:
-        pass
-    return "#"
 
 class _SafeFormatDict(dict):
     def __missing__(self, key: str) -> str:  # type: ignore[override]
         return "{" + key + "}"
+
 
 def flatten_mapping(mapping: Mapping[str, Any]) -> Dict[str, Any]:
     flat: Dict[str, Any] = {}
@@ -120,13 +124,14 @@ def flatten_mapping(mapping: Mapping[str, Any]) -> Dict[str, Any]:
             flat[k] = v
     return flat
 
+
 def safe_format(template: str, mapping: Mapping[str, Any]) -> str:
     flat = flatten_mapping(mapping)
     return template.format_map(_SafeFormatDict(flat))
 
-# ------------------------------------------------------------------------------
-# Benchmarks (wie bisher, gekürzt)
-# ------------------------------------------------------------------------------
+
+# --- Benchmarks ---------------------------------------------------------------
+
 BRANCH_MAPPINGS = {
     "beratung": ["beratung", "consulting", "dienstleistung", "dienstleistungen"],
     "medien": ["medien", "kreativwirtschaft", "media", "film", "video"],
@@ -155,7 +160,9 @@ CATEGORY_TO_CANONICAL = {
 
 _BENCHMARK_INDEX_CACHE: Optional[set] = None
 
+
 def _discover_benchmark_index():
+    """Erkennt vorhandene benchmark_*.json Dateien und cached die Kombis."""
     global _BENCHMARK_INDEX_CACHE
     if _BENCHMARK_INDEX_CACHE is not None:
         return _BENCHMARK_INDEX_CACHE
@@ -171,6 +178,7 @@ def _discover_benchmark_index():
     _BENCHMARK_INDEX_CACHE = combos
     return combos
 
+
 def _best_branch_key(user_branch: str, branch_category: str) -> str:
     b = _sanitize_name(user_branch)
     cat = _sanitize_name(branch_category)
@@ -181,8 +189,9 @@ def _best_branch_key(user_branch: str, branch_category: str) -> str:
     canonical = CATEGORY_TO_CANONICAL.get(cat)
     if canonical in keys:
         return canonical
-    # Fallback: erste Datei (stabil), kein Zufall
-    return "verwaltung_kmu" if ("verwaltung_kmu" in {f"{a}_{s}" for a, s in available}) else next(iter(keys), "default")
+    # Fallback stabil
+    return next(iter(keys), "beratung")
+
 
 def find_best_benchmark(branch: str, size: str) -> Dict[str, float]:
     b_in = _sanitize_name(branch)
@@ -212,20 +221,28 @@ def find_best_benchmark(branch: str, size: str) -> Dict[str, float]:
             except Exception as e:
                 logger.warning("Failed to load %s: %s", path, e)
     logger.warning("Using default benchmarks")
-    return {"digitalisierung": 0.60, "automatisierung": 0.35, "compliance": 0.50, "prozessreife": 0.45, "innovation": 0.55}
+    return {
+        "digitalisierung": 0.60,
+        "automatisierung": 0.35,
+        "compliance": 0.50,
+        "prozessreife": 0.45,
+        "innovation": 0.55,
+    }
 
-# ------------------------------------------------------------------------------
-# Business Case
-# ------------------------------------------------------------------------------
+
+# --- Business Case ------------------------------------------------------------
+
 @dataclass
 class BusinessCase:
     invest_eur: float
     annual_saving_eur: float
+
     @property
     def payback_months(self) -> float:
         if self.annual_saving_eur <= 0:
             return 999.0
         return min((self.invest_eur / self.annual_saving_eur) * 12, 999.0)
+
     @property
     def roi_year1_pct(self) -> float:
         if self.invest_eur <= 0:
@@ -233,19 +250,25 @@ class BusinessCase:
         roi = (self.annual_saving_eur - self.invest_eur) / self.invest_eur * 100
         return max(min(roi, 500.0), -50.0)
 
+
 def invest_from_bucket(bucket: Optional[str]) -> float:
     if not bucket:
         return 6000.0
     b = bucket.lower()
-    if "bis" in b and "2000" in b: return 1500.0
-    if "2000" in b and "10000" in b: return 6000.0
-    if "10000" in b and "50000" in b: return 30000.0
-    if "50000" in b: return 75000.0
+    if "bis" in b and "2000" in b:
+        return 1500.0
+    if "2000" in b and "10000" in b:
+        return 6000.0
+    if "10000" in b and "50000" in b:
+        return 30000.0
+    if "50000" in b:
+        return 75000.0
     numbers = re.findall(r"\d+", b.replace(".", ""))
     if numbers:
         avg = sum(int(n) for n in numbers) / len(numbers)
         return float(min(max(avg, 1000), 100000))
     return 6000.0
+
 
 def compute_business_case(briefing: Mapping[str, Any], benchmarks: Mapping[str, float]) -> BusinessCase:
     invest = invest_from_bucket(briefing.get("investitionsbudget"))
@@ -253,6 +276,7 @@ def compute_business_case(briefing: Mapping[str, Any], benchmarks: Mapping[str, 
     size = (briefing.get("unternehmensgroesse") or "").lower()
     auto = float(benchmarks.get("automatisierung", 0.35))
     proc = float(benchmarks.get("prozessreife", 0.45))
+
     if "solo" in size:
         if "beratung" in branch or "consulting" in branch:
             hours_saved = 60 * (auto + proc) / 2
@@ -269,14 +293,15 @@ def compute_business_case(briefing: Mapping[str, Any], benchmarks: Mapping[str, 
     else:
         base_saving = 12000 + (invest * 0.5)
         annual_saving = base_saving * (1 + auto * 0.5) * (1 + proc * 0.3)
+
     return BusinessCase(invest_eur=float(invest), annual_saving_eur=float(annual_saving))
 
-# ------------------------------------------------------------------------------
-# OpenAI (v1 + sicheres Fallback, kein Legacy-Spam)
-# ------------------------------------------------------------------------------
+
+# --- OpenAI (v1) --------------------------------------------------------------
+
 def _openai_call_v1(prompt: str, model: Optional[str] = None) -> str:
     from openai import OpenAI  # type: ignore
-    client = OpenAI(api_key=OPENAI_API_KEY)
+    client = OpenAI(api_key=OPENAI_API_KEY).with_options(timeout=OPENAI_TIMEOUT)
     resp = client.chat.completions.create(
         model=model or EXEC_SUMMARY_MODEL,
         messages=[
@@ -285,15 +310,13 @@ def _openai_call_v1(prompt: str, model: Optional[str] = None) -> str:
         ],
         temperature=OPENAI_TEMPERATURE,
         max_tokens=OPENAI_MAX_TOKENS,
-        timeout=OPENAI_TIMEOUT,
     )
     return (resp.choices[0].message.content or "").strip()
 
+
 def call_gpt(prompt: str, model: Optional[str] = None) -> str:
     """
-    Verwendet v1-Client. Wenn das Modell nicht verfügbar ist, wird
-    automatisch auf gpt-4o zurückgeschaltet. Kein Legacy-Fallback,
-    damit keine ChatCompletion-Warnungen erscheinen.
+    v1-Client. Bei model_not_found: Auto-Fallback auf gpt-4o.
     """
     if not OFFICIAL_API_ENABLED or not OPENAI_API_KEY:
         raise RuntimeError("GPT not configured (OFFICIAL_API_ENABLED / OPENAI_API_KEY)")
@@ -306,14 +329,16 @@ def call_gpt(prompt: str, model: Optional[str] = None) -> str:
         logger.warning("OpenAI call failed: %s", e_v1)
         raise
 
-# ------------------------------------------------------------------------------
-# Prompt Handling
-# ------------------------------------------------------------------------------
-CORE_SECTIONS: Sequence[str] = ("executive_summary", "quick_wins", "roadmap", "risks", "compliance")
+
+# --- Prompts / Sections -------------------------------------------------------
+
+CORE_SECTIONS: Sequence[str] = ("executive_summary", "quick_wins", "roadmap", "risks", "compliance", "doc_digest")
+
 
 def load_prompt(name: str, lang: str, branch: str = "", size: str = "") -> str:
     lang = (lang or "de")[:2].lower()
-    b = _sanitize_name(branch); s = _sanitize_name(size)
+    b = _sanitize_name(branch)
+    s = _sanitize_name(size)
     candidates = [
         PROMPTS_DIR / f"{name}_{b}_{s}_{lang}.md",
         PROMPTS_DIR / f"{name}_{b}_{lang}.md",
@@ -330,14 +355,18 @@ def load_prompt(name: str, lang: str, branch: str = "", size: str = "") -> str:
                 logger.warning("Failed to load prompt %s: %s", path, e)
     return f"Generate {name} section for {branch} company of size {size}"
 
+
 def generate_section(section_name: str, context: Mapping[str, Any], lang: str) -> str:
-    branch = context["briefing"]["branche"]; size = context["briefing"]["unternehmensgroesse"]
+    branch = context["briefing"]["branche"]
+    size = context["briefing"]["unternehmensgroesse"]
     if ENABLE_LLM_SECTIONS and OPENAI_API_KEY and LLM_MODE in ("on", "hybrid"):
         try:
             prompt_template = load_prompt(section_name, lang, branch, size)
             payload = {
-                "branche": branch, "unternehmensgroesse": size,
-                **context.get("briefing", {}), **context.get("business_case", {}),
+                "branche": branch,
+                "unternehmensgroesse": size,
+                **context.get("briefing", {}),
+                **context.get("business_case", {}),
                 "score_percent": context.get("score_percent"),
             }
             prompt = safe_format(prompt_template, payload)
@@ -346,82 +375,115 @@ def generate_section(section_name: str, context: Mapping[str, Any], lang: str) -
             logger.warning("GPT generation failed for %s: %s", section_name, e)
     return get_fallback_section(section_name, context, branch)
 
+
 def get_fallback_section(section_name: str, context: Mapping[str, Any], branch: str) -> str:
-    branch_lower = branch.lower()
+    branch_lower = (branch or "").lower()
     is_consulting = any(x in branch_lower for x in ["beratung", "consult", "dienst"])
     is_media = any(x in branch_lower for x in ["medien", "kreativ", "film", "video"])
     is_it = any(x in branch_lower for x in ["it", "software", "digital", "tech"])
+
     if section_name == "executive_summary":
-        score = context["score_percent"]; roi = context["business_case"]["roi_year1_pct"]; payback = context["business_case"]["payback_months"]
-        focus = ("Automatisierung von Beratungsprozessen" if is_consulting else
-                 "Content-Automatisierung" if is_media else
-                 "Code-Qualität & Dev-Automation" if is_it else
-                 "Prozessautomatisierung & Daten")
-        return (f"<p><b>Key Takeaways:</b> 1) Readiness {score:.1f} %, 2) ROI Jahr 1 {roi:.1f} %, "
-                f"3) Amortisation ~{payback:.1f} Monate. Fokus: {html.escape(focus)}.</p>")
+        score = context["score_percent"]
+        roi = context["business_case"]["roi_year1_pct"]
+        payback = context["business_case"]["payback_months"]
+        focus = (
+            "Automatisierung von Beratungsprozessen"
+            if is_consulting
+            else "Content-Automatisierung"
+            if is_media
+            else "Code-Qualität & Dev-Automation"
+            if is_it
+            else "Prozessautomatisierung & Daten"
+        )
+        return (
+            f"<p><b>Key Takeaways:</b> 1) Readiness {score:.1f} %, "
+            f"2) ROI Jahr 1 {roi:.1f} %, 3) Amortisation ~{payback:.1f} Monate. "
+            f"Fokus: {html.escape(focus)}.</p>"
+        )
+
     if section_name == "quick_wins":
-        return "<ul><li>Automatisierte Prozesse</li><li>KI‑Chatbot</li><li>Document AI</li><li>Predictive Analytics</li><li>RPA‑Pilot</li></ul>"
+        return (
+            "<ul><li>Automatisierte Prozesse</li><li>KI‑Chatbot</li>"
+            "<li>Document AI</li><li>Predictive Analytics</li><li>RPA‑Pilot</li></ul>"
+        )
+
     if section_name == "roadmap":
         return "<ol><li>W1–2: Setup & Datenschutz</li><li>W3–4: Pilot</li><li>W5–8: Rollout</li><li>W9–12: Optimierung & Scale</li></ol>"
+
     if section_name == "risks":
-        return ('<table style="width:100%;border-collapse:collapse"><thead><tr><th>Risiko</th><th>Wahrsch.</th><th>Impact</th><th>Mitigation</th></tr></thead>'
-                '<tbody><tr><td>Datenschutz</td><td>Mittel</td><td>Hoch</td><td>DSGVO-Prozesse</td></tr>'
-                '<tr><td>Compliance</td><td>Mittel</td><td>Hoch</td><td>AI-Act-Checklisten</td></tr>'
-                '<tr><td>Vendor-Lock</td><td>Mittel</td><td>Mittel</td><td>Open-Source-First</td></tr>'
-                '<tr><td>Change-Resistenz</td><td>Hoch</td><td>Mittel</td><td>Change Management</td></tr></tbody></table>')
+        return (
+            '<table style="width:100%;border-collapse:collapse"><thead>'
+            "<tr><th>Risiko</th><th>Wahrsch.</th><th>Impact</th><th>Mitigation</th></tr>"
+            "</thead><tbody>"
+            "<tr><td>Datenschutz</td><td>Mittel</td><td>Hoch</td><td>DSGVO-Prozesse</td></tr>"
+            "<tr><td>Compliance</td><td>Mittel</td><td>Hoch</td><td>AI-Act-Checklisten</td></tr>"
+            "<tr><td>Vendor-Lock</td><td>Mittel</td><td>Mittel</td><td>Open-Source-First</td></tr>"
+            "<tr><td>Change-Resistenz</td><td>Hoch</td><td>Mittel</td><td>Change Management</td></tr>"
+            "</tbody></table>"
+        )
+
     if section_name == "compliance":
         return "<ul><li>AI-Act-Klassifizierung</li><li>Transparenzpflichten</li><li>Datenschutz</li><li>Dokumentation</li><li>Monitoring</li></ul>"
+
+    if section_name == "doc_digest":
+        return (
+            "<p><b>Executive Knowledge Digest:</b> Strategie (Vision & KPIs), "
+            "Technologie (Tools/Infra), Governance (Compliance & Risiko), "
+            "Kultur (Change & Enablement).</p>"
+        )
+
     return "<p>Inhalt wird vorbereitet.</p>"
 
-# ------------------------------------------------------------------------------
-# Live-Daten – Rendering
-# ------------------------------------------------------------------------------
-def render_tags(badges: List[str]) -> str:
+
+# --- Live-Daten ---------------------------------------------------------------
+
+def render_tags(badges):
     return " ".join(f'<span class="tag">{_escape_html(b)}</span>' for b in (badges or []))
 
-def render_cards_html(items: List[Mapping[str, Any]]) -> str:
-    if not items: return "<p>Keine Einträge gefunden.</p>"
+
+def render_cards_html(items):
+    if not items:
+        return "<p>Keine Einträge gefunden.</p>"
     out = ['<div class="grid">']
     for it in items[:8]:
-        t = _escape_html(fix_encoding(it.get("title",""))); u = _safe_href(str(it.get("url") or ""))
-        s = _escape_html(fix_encoding(it.get("summary",""))[:200]); date = str(it.get("published_at") or "")[:10]
+        t = _escape_html(fix_encoding(it.get("title", "")))
+        u = str(it.get("url") or "")
+        s = _escape_html(fix_encoding(it.get("summary", ""))[:200])
+        date = str(it.get("published_at") or "")[:10]
         out.append('<div class="card">')
-        out.append(f'<h3 style="margin:.2rem 0">{f"<a href=\"{u}\" target=\"_blank\" rel=\"noopener noreferrer\">{t}</a>" if u!="#" else t}</h3>')
-        if s: out.append(f"<p>{s}</p>")
-        meta = " · ".join([x for x in [date, _escape_html(str(it.get("source",""))[:40])] if x])
-        if meta: out.append(f'<div class="meta">{meta}</div>')
+        link = f'<a href="{u}" target="_blank" rel="noopener noreferrer">{t}</a>' if u.startswith("http") else t
+        out.append(f'<h3 style="margin:.2rem 0">{link}</h3>')
+        if s:
+            out.append(f"<p>{s}</p>")
+        meta = " · ".join([x for x in [date, _escape_html(str(it.get("source", ""))[:40])] if x])
+        if meta:
+            out.append(f'<div class="meta">{meta}</div>')
         out.append("</div>")
-    out.append("</div>"); return "".join(out)
+    out.append("</div>")
+    return "".join(out)
 
-def render_tools_html(items: List[Mapping[str, Any]]) -> str:
-    if not items: return "<p>Keine Tools gefunden.</p>"
+
+def render_funding_html(items):
+    if not items:
+        return "<p>Keine Förderprogramme gefunden.</p>"
     out = ["<ul>"]
     for it in items[:10]:
-        t = _escape_html(fix_encoding(it.get("title",""))); u = _safe_href(str(it.get("url") or ""))
-        cat = _escape_html(str(it.get("category",""))); host = _escape_html(str(it.get("host_cc",""))); badges = render_tags(list(it.get("badges", [])))
-        li = f'<li>{f"<a href=\"{u}\" target=\"_blank\" rel=\"noopener noreferrer\">{t}</a>" if u!="#" else f"<b>{t}</b>"}'
-        if cat: li += f" <small>({cat})</small>"
-        if host: li += f" <small>(Host: {host})</small>"
-        if badges: li += f" {badges}"
+        t = _escape_html(fix_encoding(it.get("title", "")))
+        u = str(it.get("url") or "")
+        date = str(it.get("published_at") or "")[:10]
+        badges = render_tags(list(it.get("badges", [])))
+        link = f'<a href="{u}" target="_blank" rel="noopener noreferrer">{t}</a>' if u.startswith("http") else f"<b>{t}</b>"
+        li = f"<li>{link}"
+        if date:
+            li += f" <small>({ _escape_html(date) })</small>"
+        if badges:
+            li += f" {badges}"
         out.append(li + "</li>")
-    out.append("</ul>"); return "".join(out)
+    out.append("</ul>")
+    return "".join(out)
 
-def render_funding_html(items: List[Mapping[str, Any]]) -> str:
-    if not items: return "<p>Keine Förderprogramme gefunden.</p>"
-    out = ["<ul>"]
-    for it in items[:10]:
-        t = _escape_html(fix_encoding(it.get("title",""))); u = _safe_href(str(it.get("url") or ""))
-        date = str(it.get("published_at") or "")[:10]; badges = render_tags(list(it.get("badges", [])))
-        li = f'<li>{f"<a href=\"{u}\" target=\"_blank\" rel=\"noopener noreferrer\">{t}</a>" if u!="#" else f"<b>{t}</b>"}'
-        if date: li += f" <small>({ _escape_html(date) })</small>"
-        if badges: li += f" {badges}"
-        out.append(li + "</li>")
-    out.append("</ul>"); return "".join(out)
 
-# ------------------------------------------------------------------------------
-# Live-Hook
-# ------------------------------------------------------------------------------
-def query_live_items(briefing: Mapping[str, Any], lang: str) -> Dict[str, List[Mapping[str, Any]]]:
+def query_live_items(briefing: Mapping[str, Any], lang: str):
     try:
         from websearch_utils import query_live_items as _ql  # type: ignore
         return _ql(
@@ -435,14 +497,12 @@ def query_live_items(briefing: Mapping[str, Any], lang: str) -> Dict[str, List[M
         logger.warning("Live data not available: %s", e)
         return {"news": [], "tools": [], "funding": []}
 
-# ------------------------------------------------------------------------------
-# Kontextaufbau & Admin-Payload
-# ------------------------------------------------------------------------------
+
+# --- Kontextaufbau & Admin‑Payload -------------------------------------------
+
 def normalize_briefing_for_context(form_data: Mapping[str, Any]) -> Mapping[str, Any]:
-    """
-    Lässt Felder unangetastet (keine hartkodierten Defaults),
-    normalisiert nur Typen (z.B. 1→0.1 für KPI, falls 0..10).
-    """
+    """Normalize ohne harte Defaults (nur Typ-Korrekturen)."""
+
     def norm(v: Any) -> float:
         try:
             f = float(v)
@@ -464,8 +524,9 @@ def normalize_briefing_for_context(form_data: Mapping[str, Any]) -> Mapping[str,
         "innovation": norm(form_data.get("innovation", -1)),
     }
 
+
 def prepare_admin_payload(raw_form: Mapping[str, Any], normalized_for_context: Mapping[str, Any]) -> Dict[str, Any]:
-    """Erzeugt saubere Mail-Anhänge (raw + normalized + missing)."""
+    """Erzeugt Admin-Attachments (raw/normalized/missing)."""
     missing = [k for k, v in normalized_for_context.items() if isinstance(v, str) and not v]
     return {
         "attachments": {
@@ -475,6 +536,7 @@ def prepare_admin_payload(raw_form: Mapping[str, Any], normalized_for_context: M
         }
     }
 
+
 def build_context(form_data: Optional[Mapping[str, Any]], lang: str) -> Dict[str, Any]:
     form_data = form_data or {}
     now = _now_iso()
@@ -482,7 +544,7 @@ def build_context(form_data: Optional[Mapping[str, Any]], lang: str) -> Dict[str
     nrm = normalize_briefing_for_context(form_data)
     benchmarks = find_best_benchmark(nrm["branche"], nrm["unternehmensgroesse"])
 
-    # KPIs: leere Felder → Benchmark-Wert
+    # KPIs: leere → Benchmark
     kpis = {
         "digitalisierung": nrm["digitalisierung"] if nrm["digitalisierung"] >= 0 else float(benchmarks.get("digitalisierung", 0.6)),
         "automatisierung": nrm["automatisierung"] if nrm["automatisierung"] >= 0 else float(benchmarks.get("automatisierung", 0.35)),
@@ -501,22 +563,25 @@ def build_context(form_data: Optional[Mapping[str, Any]], lang: str) -> Dict[str
         lang,
     )
 
-    # Progress-HTML
+    # Progress-Bars
     def bar(label: str, value: float) -> str:
         pct = max(0, min(int(round(value * 100)), 100))
         return f'<div class="bar"><div class="bar__label">{_escape_html(label)}</div><div class="bar__track"><div class="bar__fill" style="width:{pct}%"></div></div><div class="bar__pct">{pct}%</div></div>'
 
-    progress_html = "".join([
-        bar("Digitalisierung", kpis["digitalisierung"]),
-        bar("Automatisierung", kpis["automatisierung"]),
-        bar("Compliance", kpis["compliance"]),
-        bar("Prozessreife", kpis["prozessreife"]),
-        bar("Innovation", kpis["innovation"]),
-    ])
+    progress_html = "".join(
+        [
+            bar("Digitalisierung", kpis["digitalisierung"]),
+            bar("Automatisierung", kpis["automatisierung"]),
+            bar("Compliance", kpis["compliance"]),
+            bar("Prozessreife", kpis["prozessreife"]),
+            bar("Innovation", kpis["innovation"]),
+        ]
+    )
 
-    # Benchmark-Vergleichstabelle (einfach)
+    # Benchmark-Tabelle
     def row(label: str, val: float, bm: float) -> str:
-        v = int(round(val * 100)); b = int(round(bm * 100))
+        v = int(round(val * 100))
+        b = int(round(bm * 100))
         return f"<tr><td>{_escape_html(label)}</td><td>{v}%</td><td>{b}%</td></tr>"
 
     benchmark_table_html = (
@@ -529,16 +594,19 @@ def build_context(form_data: Optional[Mapping[str, Any]], lang: str) -> Dict[str
         + "</tbody></table>"
     )
 
-    # Quality Badge: konsistent (0–100)
+    # Score & Badge
     score_pct = round(score * 100, 1)
     grade = "EXCELLENT" if score_pct >= 80 else "GOOD" if score_pct >= 60 else "FAIR" if score_pct >= 40 else "POOR"
 
     context: Dict[str, Any] = {
         "meta": {"title": "KI-Status-Report", "date": now, "lang": lang},
         "briefing": {
-            "branche": nrm["branche"], "unternehmensgroesse": nrm["unternehmensgroesse"],
-            "bundesland": nrm["bundesland"], "hauptleistung": nrm["hauptleistung"],
-            "investitionsbudget": nrm["investitionsbudget"], "ziel": nrm["ziel"],
+            "branche": nrm["branche"],
+            "unternehmensgroesse": nrm["unternehmensgroesse"],
+            "bundesland": nrm["bundesland"],
+            "hauptleistung": nrm["hauptleistung"],
+            "investitionsbudget": nrm["investitionsbudget"],
+            "ziel": nrm["ziel"],
         },
         "kpis": kpis,
         "kpis_progress_html": progress_html,
@@ -575,9 +643,7 @@ def build_context(form_data: Optional[Mapping[str, Any]], lang: str) -> Dict[str
         context["sections"][f"{section}_html"] = generate_section(section, context, lang)
     return context
 
-# ------------------------------------------------------------------------------
-# Rendering
-# ------------------------------------------------------------------------------
+
 def render_with_template(context: Mapping[str, Any], lang: str, template: Optional[str] = None) -> str:
     if Environment is None:
         raise RuntimeError("Jinja2 not available")
@@ -586,11 +652,8 @@ def render_with_template(context: Mapping[str, Any], lang: str, template: Option
     tmpl = env.get_template(template_name)
     return tmpl.render(**context)
 
-# ------------------------------------------------------------------------------
-# Public API
-# ------------------------------------------------------------------------------
-def analyze_briefing(form_data: Optional[Mapping[str, Any]] = None, lang: Optional[str] = None,
-                     template: Optional[str] = None, **_: Any) -> str:
+
+def analyze_briefing(form_data: Optional[Mapping[str, Any]] = None, lang: Optional[str] = None, template: Optional[str] = None, **_: Any) -> str:
     form_data = form_data or {}
     language = (lang or form_data.get("lang") or DEFAULT_LANG)[:2]
     context = build_context(form_data, language)
@@ -603,22 +666,38 @@ def analyze_briefing(form_data: Optional[Mapping[str, Any]] = None, lang: Option
 <title>KI-Status-Report</title><style>body{{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:920px;margin:2rem auto;padding:1rem}}</style></head>
 <body><h1>KI-Status-Report</h1><p>Report generation failed. Please check configuration.</p><pre>{html.escape(str(e))}</pre></body></html>"""
 
+
 def analyze_briefing_enhanced(form_data: Optional[Mapping[str, Any]] = None, lang: Optional[str] = None, **_: Any) -> Dict[str, Any]:
     form_data = form_data or {}
     language = (lang or form_data.get("lang") or DEFAULT_LANG)[:2]
     return build_context(form_data, language)
 
-# Convenience für Admin-Mailer (Backend-Route):
+
 def produce_admin_attachments(form_data: Mapping[str, Any]) -> Dict[str, str]:
     nrm = normalize_briefing_for_context(form_data)
-    pkg = prepare_admin_payload(form_data, {"branche": nrm["branche"], "unternehmensgroesse": nrm["unternehmensgroesse"],
-                                            "bundesland": nrm["bundesland"], "hauptleistung": nrm["hauptleistung"],
-                                            "investitionsbudget": nrm["investitionsbudget"]})
+    pkg = prepare_admin_payload(
+        form_data,
+        {
+            "branche": nrm["branche"],
+            "unternehmensgroesse": nrm["unternehmensgroesse"],
+            "bundesland": nrm["bundesland"],
+            "hauptleistung": nrm["hauptleistung"],
+            "investitionsbudget": nrm["investitionsbudget"],
+        },
+    )
     return pkg["attachments"]
 
+
 if __name__ == "__main__":
-    demo = {"branche": "Beratung", "unternehmensgroesse": "solo", "hauptleistung": "GPT-Auswertung", "bundesland": "BE",
-            "investitionsbudget": "bis 10.000 EUR", "digitalisierungsgrad": 7, "automatisierungsgrad": 4}
+    demo = {
+        "branche": "Beratung",
+        "unternehmensgroesse": "solo",
+        "hauptleistung": "GPT-Auswertung",
+        "bundesland": "BE",
+        "investitionsbudget": "bis 10.000 EUR",
+        "digitalisierungsgrad": 7,
+        "automatisierungsgrad": 4,
+    }
     html_report = analyze_briefing(demo, lang="de")
     (BASE_DIR / "demo_report.html").write_text(html_report, encoding="utf-8")
     print("Demo-Report geschrieben.")
