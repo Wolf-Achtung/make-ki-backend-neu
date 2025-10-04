@@ -1,3 +1,4 @@
+<!-- File: templates/pdf_template.html -->
 <!doctype html>
 <html lang="{{ meta.lang|default('de') }}">
 <head>
@@ -76,6 +77,13 @@
     </div>
   </section>
 
+  {% if sections.industry_context_html %}
+  <section>
+    <h2>Branchenkontext <span class="hdr-badge">kurz</span></h2>
+    <div>{{ sections.industry_context_html|safe }}</div>
+  </section>
+  {% endif %}
+
   <section>
     <h2>Benchmark‑Vergleich</h2>
     <div>{{ kpis_benchmark_table_html|safe }}</div>
@@ -116,19 +124,19 @@
     <div class="card">
       <h2>Aktuelle News <span class="hdr-badge">Live</span></h2>
       <div>{{ live.news_html|safe }}</div>
-      <div class="meta">Letztes Live‑Update: {{ live.stand }}</div>
+      <div class="meta">Letztes Live‑Update: {{ live.stand }} · Quellen: {{ live.counts.news }}</div>
     </div>
     <div class="card">
-      <h2>Tools <span class="hdr-badge">Qualitätsfilter</span>{% if flags.eu_host_check %}<span class="hdr-badge">EU‑Host‑Check</span>{% endif %}</h2>
+      <h2>Tools <span class="hdr-badge">Qualitätsfilter</span><span class="hdr-badge">EU‑Host‑Check</span></h2>
       {% if sections.tools_html %}<div>{{ sections.tools_html|safe }}</div><hr>{% endif %}
       <div>{{ live.tools_html|safe }}</div>
-      <div class="meta">Letztes Live‑Update: {{ live.stand }}</div>
+      <div class="meta">Letztes Live‑Update: {{ live.stand }} · Quellen: {{ live.counts.tools }}</div>
     </div>
     <div class="card">
       <h2>Förderprogramme <span class="hdr-badge">Deadline‑Alarm</span></h2>
       {% if sections.foerderprogramme_html %}<div>{{ sections.foerderprogramme_html|safe }}</div><hr>{% endif %}
       <div>{{ live.funding_html|safe }}</div>
-      <div class="meta">Letztes Live‑Update: {{ live.stand }}</div>
+      <div class="meta">Letztes Live‑Update: {{ live.stand }} · Quellen: {{ live.counts.funding }}</div>
     </div>
   </section>
 
@@ -143,6 +151,13 @@
       {% if sections.praxisbeispiel_html %}<div class="card"><h3>Praxisbeispiel</h3><div>{{ sections.praxisbeispiel_html|safe }}</div></div>{% endif %}
       {% if sections.coach_html %}<div class="card"><h3>Enablement</h3><div>{{ sections.coach_html|safe }}</div></div>{% endif %}
     </div>
+  </section>
+  {% endif %}
+
+  {% if sections.appendix_checklists_html %}
+  <section>
+    <h2>Appendix – Checklisten</h2>
+    <div>{{ sections.appendix_checklists_html|safe }}</div>
   </section>
   {% endif %}
 
