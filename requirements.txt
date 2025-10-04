@@ -18,7 +18,7 @@ orjson>=3.10,<4.0
 # Auth (JWT)
 python-jose[cryptography]==3.3.0
 
-# OpenAI v1 SDK (Report-Generierung; mit Fallback in gpt_analyze.py)
+# OpenAI v1 SDK (Report-Generierung; robuster Wrapper in gpt_analyze.py)
 openai>=1.41.0,<2.0
 
 # Live-Suche & EU-Host-Check
