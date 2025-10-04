@@ -3,13 +3,13 @@
 """
 Analyse & Rendering für den KI-Status-Report (Gold-Standard+)
 
-- Robust: OpenAI v1 Wrapper (max_completion_tokens / Fallback max_tokens)
-- normalize_briefing(): Alias-Mapping (DE/EN) -> konsistente Felder
-- Benchmarks: deterministische JSON-Auswahl mit Synonym-Fallbacks; CSV-Fallback
-- ROI: nutzt data/config_roi.json (größenabhängig, plausibel)
-- Live-Intro / optionale Prompt-Addons bleiben wie zuvor (prompts/)
-- analyze_briefing(): rendert vollständiges HTML (DE/EN Templates)
-- produce_admin_attachments(): raw/normalized/missing als JSON (für Admin-Mail)
+Neu:
+- Appendix "Checklisten" aus data/check_*.md / data/content/checklist_*.md (optional via ENV)
+- Branchenkontext aus data/branchenkontext/<branche>_{de|en}.md
+- Content-Intros (tools/foerderungen) aus data/content/*
+- ROI mit config_roi.json
+- Benchmarks JSON + CSV-Fallback; synonyme Branchen-Slugs
+- Robuster OpenAI-Wrapper (max_completion_tokens / Fallback max_tokens)
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ import csv
 import json
 import logging
 import os
+import re
 from typing import Any, Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -40,12 +41,17 @@ BASE_DIR = os.path.abspath(os.getenv("APP_BASE", os.getcwd()))
 TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", os.path.join(BASE_DIR, "templates"))
 PROMPTS_DIR = os.getenv("PROMPTS_DIR", os.path.join(BASE_DIR, "prompts"))
 DATA_DIR = os.getenv("DATA_DIR", os.path.join(BASE_DIR, "data"))
+BRANCHEN_DIR = os.path.join(DATA_DIR, "branchenkontext")
+CONTENT_DIR = os.path.join(DATA_DIR, "content")
 
 EXEC_SUMMARY_MODEL = os.getenv("EXEC_SUMMARY_MODEL", os.getenv("GPT_MODEL_NAME", "gpt-4o"))
 DEFAULT_MODEL = os.getenv("GPT_MODEL_NAME", "gpt-4o-mini")
 
+APPENDIX_CHECKLISTS = os.getenv("APPENDIX_CHECKLISTS", "true").strip().lower() in {"1", "true", "yes", "on"}
+APPENDIX_MAX_DOCS = int(os.getenv("APPENDIX_MAX_DOCS", "6"))
 
-# ------------------------------ Helpers -------------------------------------
+
+# ------------------------------ Helfer ---------------------------------------
 
 def _read_text(path: str) -> str:
     try:
@@ -55,8 +61,48 @@ def _read_text(path: str) -> str:
         return ""
 
 
+def _md_to_html(md: str) -> str:
+    """
+    Sehr schlanker Markdown->HTML Konverter (ohne externe Abhängigkeit).
+    Unterstützt Überschriften (#,##), Listen (-,*), einfache Absätze, Links.
+    """
+    if not md:
+        return ""
+    html_lines: List[str] = []
+    for line in md.splitlines():
+        s = line.rstrip()
+        if not s:
+            html_lines.append("<p></p>")
+            continue
+        if s.startswith("### "):
+            html_lines.append(f"<h3>{s[4:].strip()}</h3>")
+        elif s.startswith("## "):
+            html_lines.append(f"<h2>{s[3:].strip()}</h2>")
+        elif s.startswith("# "):
+            html_lines.append(f"<h1>{s[2:].strip()}</h1>")
+        elif s.lstrip().startswith(("- ", "* ")):
+            html_lines.append(f"<li>{s.lstrip()[2:].strip()}</li>")
+        else:
+            # rudimentäre Link-Ersetzung
+            s = re.sub(r"\[(.*?)\]\((https?://[^\s)]+)\)", r"<a href='\2' target='_blank' rel='noopener noreferrer'>\1</a>", s)
+            html_lines.append(f"<p>{s}</p>")
+    # List-Items gruppieren
+    out: List[str] = []
+    in_list = False
+    for l in html_lines:
+        if l.startswith("<li>") and not in_list:
+            out.append("<ul>")
+            in_list = True
+        if not l.startswith("<li>") and in_list:
+            out.append("</ul>")
+            in_list = False
+        out.append(l)
+    if in_list:
+        out.append("</ul>")
+    return "\n".join(out)
+
+
 def _to_percent(value: Any, max_value: float) -> float:
-    """Konvertiert einen Rohwert (0..max_value) in Prozent (0..100)."""
     try:
         v = float(str(value).replace(",", "."))
         if max_value <= 0:
@@ -91,7 +137,6 @@ CANON_KEYS = {
     "loeschregeln": ["loeschregeln", "deletion_rules"],
 }
 
-# Slug-Synonyme zu Datei-Slugs im data/-Ordner
 BR_SLUGS = {
     "beratung": ["beratung", "beratung_dienstleistungen"],
     "it": ["it", "it_software"],
@@ -109,7 +154,36 @@ BR_SLUGS = {
 SIZE_ALIASES = {
     "solo": ["solo"],
     "small": ["small", "team", "team_2_10", "klein"],
-    "kmu": ["kmu", "kmu_11_100", "mittel", "konzern"],  # wir fallen auf kmu zurück, wenn größer
+    "kmu": ["kmu", "kmu_11_100", "mittel", "konzern"],  # große fallen auf kmu zurück
+}
+BR_LABEL = {
+    "beratung": "Beratung & Dienstleistungen", "it": "IT & Software",
+    "marketing": "Marketing & Werbung", "medien": "Medien & Kreativwirtschaft",
+    "handel": "Handel & E‑Commerce", "industrie": "Industrie & Produktion",
+    "gesundheit": "Gesundheit & Pflege", "bau": "Bauwesen & Architektur",
+    "logistik": "Transport & Logistik", "verwaltung": "Verwaltung",
+    "bildung": "Bildung", "finanzen": "Finanzen & Versicherungen",
+}
+SIZE_LABEL = {"solo": "1", "small": "2‑10", "kmu": "11‑100+"}
+
+BL_MAP = {
+    # Name/Abkürzung -> Code
+    "berlin": "BE", "be": "BE",
+    "bayern": "BY", "by": "BY",
+    "baden-württemberg": "BW", "bw": "BW",
+    "brandenburg": "BB", "bb": "BB",
+    "bremen": "HB", "hb": "HB",
+    "hamburg": "HH", "hh": "HH",
+    "hessen": "HE", "he": "HE",
+    "mecklenburg-vorpommern": "MV", "mv": "MV",
+    "niedersachsen": "NI", "ni": "NI",
+    "nordrhein-westfalen": "NW", "nrw": "NW", "nw": "NW",
+    "rheinland-pfalz": "RP", "rp": "RP",
+    "saarland": "SL", "sl": "SL",
+    "sachsen": "SN", "sn": "SN",
+    "sachsen-anhalt": "ST", "st": "ST",
+    "schleswig-holstein": "SH", "sh": "SH",
+    "thüringen": "TH", "thueringen": "TH", "th": "TH",
 }
 
 
@@ -131,28 +205,17 @@ def normalize_briefing(raw: Dict[str, Any]) -> Dict[str, Any]:
 
     br_key = (norm.get("branche") or "").lower()
     size_key = (norm.get("unternehmensgroesse") or "").lower()
-    # Label (menschlich)
-    BR_LABEL = {
-        "beratung": "Beratung & Dienstleistungen", "it": "IT & Software",
-        "marketing": "Marketing & Werbung", "medien": "Medien & Kreativwirtschaft",
-        "handel": "Handel & E‑Commerce", "industrie": "Industrie & Produktion",
-        "gesundheit": "Gesundheit & Pflege", "bau": "Bauwesen & Architektur",
-        "logistik": "Transport & Logistik", "verwaltung": "Verwaltung",
-        "bildung": "Bildung", "finanzen": "Finanzen & Versicherungen",
-    }
-    SIZE_LABEL = {"solo": "1", "small": "2‑10", "kmu": "11‑100+"}
-
-    # Heuristik: wenn size nicht solo/kmu ist, als small behandeln
     if size_key not in ("solo", "small", "kmu"):
-        if size_key in ("konzern", "enterprise"):
-            size_key = "kmu"
-        else:
-            size_key = "small"
+        size_key = "small" if size_key not in ("konzern", "enterprise") else "kmu"
 
-    norm["branche_label"] = BR_LABEL.get(br_key, norm.get("branche"))
-    norm["unternehmensgroesse_label"] = SIZE_LABEL.get(size_key, norm.get("unternehmensgroesse"))
     norm["branche"] = br_key
     norm["unternehmensgroesse"] = size_key
+    norm["branche_label"] = BR_LABEL.get(br_key, norm.get("branche"))
+    norm["unternehmensgroesse_label"] = SIZE_LABEL.get(size_key, norm.get("unternehmensgroesse"))
+
+    # Bundesland-Code
+    bl_raw = (norm.get("bundesland") or "").strip().lower()
+    norm["bundesland_code"] = BL_MAP.get(bl_raw, BL_MAP.get(bl_raw.replace(" ", "-"), "")) or bl_raw.upper()
     return norm
 
 
@@ -164,7 +227,6 @@ def missing_fields(norm: Dict[str, Any]) -> List[str]:
 # ------------------------------ Benchmarks -----------------------------------
 
 def _bench_json_path_candidates(br: str, sz: str) -> List[str]:
-    # erst alle Slugs zur Branche abarbeiten, dann Size-Aliase
     br_variants = [br] + BR_SLUGS.get(br, [])
     size_variants = []
     for key, aliases in SIZE_ALIASES.items():
@@ -180,8 +242,7 @@ def _bench_json_path_candidates(br: str, sz: str) -> List[str]:
 
 
 def pick_benchmark_file(branche_key: str, size_key: str) -> str:
-    candidates = _bench_json_path_candidates(branche_key, size_key)
-    for name in candidates:
+    for name in _bench_json_path_candidates(branche_key, size_key):
         path = os.path.join(DATA_DIR, name)
         if os.path.exists(path):
             log.info("Loaded benchmark: %s", name)
@@ -190,15 +251,7 @@ def pick_benchmark_file(branche_key: str, size_key: str) -> str:
 
 
 def _load_benchmarks_from_csv(br: str, sz: str) -> Dict[str, float]:
-    """
-    Fallback: benchmark_{slug}.csv ODER benchmark_default.csv
-    Erwartete Formen:
-      - Spalten: Kategorie, Wert_Durchschnitt (0..10) -> *10
-      - Alternativ: Kriterium + Spalten Solo/Klein/KMU (teils bereits in %)
-    Mapping auf unsere KPIs:
-      Digitalisierung, Automatisierung, Compliance, Prozessreife, Innovation
-    """
-    # 1) branchenspezifische CSV
+    # 1) branchenspezifisch
     csv_name = f"benchmark_{br}.csv"
     path = os.path.join(DATA_DIR, csv_name)
     if not os.path.exists(path):
@@ -207,42 +260,33 @@ def _load_benchmarks_from_csv(br: str, sz: str) -> Dict[str, float]:
             return {}
     try:
         with open(path, "r", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            rows = list(reader)
+            rows = list(csv.DictReader(f))
     except Exception:
         return {}
 
     result: Dict[str, float] = {}
-    # Form 1: Kategorie/Wert_Durchschnitt
     if rows and "Kategorie" in rows[0] and "Wert_Durchschnitt" in rows[0]:
         mapping = {
             "digitalisierungsgrad": "digitalisierung",
             "automatisierungsgrad": "automatisierung",
-            "datenschutz-compliance": "compliance",
             "datenschutzkonformität": "compliance",
-            "innovationsgrad": "innovation",
+            "datenschutz-compliance": "compliance",
             "innovationsindex": "innovation",
             "papierloser anteil (%)": "prozessreife",
         }
         for r in rows:
             k = (r["Kategorie"] or "").strip().lower()
             v = r.get("Wert_Durchschnitt")
-            if v is None or str(v).strip() == "":
+            if not v:
                 continue
             key = mapping.get(k)
             if not key:
                 continue
             vv = float(str(v).replace(",", "."))
-            if vv <= 10.0:
-                vv = vv * 10.0
+            vv = vv * 10.0 if vv <= 10.0 else vv
             result[key] = round(vv, 1)
-    # Form 2: Kriterium + Solo/Klein/KMU
     elif rows and "Kriterium" in rows[0]:
-        col = "KMU"
-        if sz == "solo":
-            col = "Solo"
-        elif sz in ("small",):
-            col = "Klein"
+        col = "KMU" if sz == "kmu" else ("Klein" if sz == "small" else "Solo")
         mapping = {
             "digitalisierungsgrad": "digitalisierung",
             "automatisierungsgrad": "automatisierung",
@@ -253,20 +297,15 @@ def _load_benchmarks_from_csv(br: str, sz: str) -> Dict[str, float]:
         for r in rows:
             k = (r["Kriterium"] or "").strip().lower()
             v = r.get(col)
-            if v is None or str(v).strip() == "":
+            if not v:
                 continue
             key = mapping.get(k)
             if not key:
                 continue
-            try:
-                vv = float(str(v).replace(",", "."))
-            except Exception:
-                continue
-            # Werte sind teils 0..10, teils schon %
+            vv = float(str(v).replace(",", "."))
             vv = vv * 10.0 if vv <= 10.0 else vv
             result[key] = round(vv, 1)
 
-    # Mindestmenge absichern
     if result:
         for need in ("digitalisierung", "automatisierung", "compliance", "prozessreife", "innovation"):
             result.setdefault(need, 60.0)
@@ -274,8 +313,8 @@ def _load_benchmarks_from_csv(br: str, sz: str) -> Dict[str, float]:
 
 
 def load_benchmarks(norm: Dict[str, Any]) -> Dict[str, float]:
-    br = (norm.get("branche") or "").lower() or "beratung"
-    sz = (norm.get("unternehmensgroesse") or "").lower() or "small"
+    br = (norm.get("branche") or "beratung").lower()
+    sz = (norm.get("unternehmensgroesse") or "small").lower()
     path = pick_benchmark_file(br, sz)
     if path and os.path.exists(path):
         try:
@@ -284,21 +323,17 @@ def load_benchmarks(norm: Dict[str, Any]) -> Dict[str, float]:
                 return {k.lower(): float(v) for k, v in data.items()}
         except Exception:
             pass
-    # CSV-Fallback
     csv_bm = _load_benchmarks_from_csv(br, sz)
     if csv_bm:
         log.info("Loaded benchmark fallback from CSV for %s/%s", br, sz)
         return csv_bm
-    # Letzte Rettung (konservativ)
     return {"digitalisierung": 72.0, "automatisierung": 64.0, "compliance": 70.0, "prozessreife": 68.0, "innovation": 69.0}
 
 
 # --------------------------- KPIs / Business Case ----------------------------
 
 def calculate_kpis(norm: Dict[str, Any]) -> Dict[str, float]:
-    # Digitalisierung (0..10 -> %)
     digi = _to_percent(norm.get("digitalisierungsgrad") or 0, 10.0)
-
     auto_map = {"sehr_hoch": 85, "hoch": 75, "eher_hoch": 65, "mittel": 50, "eher_niedrig": 35, "niedrig": 20}
     auto = float(auto_map.get(str(norm.get("automatisierungsgrad") or "").lower(), 40))
 
@@ -364,15 +399,10 @@ def _size_to_roi_bucket(size_key: str) -> str:
         return "solo"
     if s in ("small", "team", "team_2_10", "klein"):
         return "team_2_10"
-    return "kmu_11_100"  # kmu/konzern u.ä. -> kmu_11_100
+    return "kmu_11_100"
 
 
 def business_case(norm: Dict[str, Any], score: float) -> Dict[str, float]:
-    """
-    Nutzt config_roi.json (falls vorhanden) für realistischere Annual Savings.
-    Investitionsbudget aus Survey-Kategorien bleibt als Investitionssumme.
-    """
-    # Invest aus Survey
     invest_map = {
         "unter_1000": 1000,
         "1000_2000": 1500,
@@ -382,7 +412,6 @@ def business_case(norm: Dict[str, Any], score: float) -> Dict[str, float]:
     }
     invest = float(invest_map.get(str(norm.get("investitionsbudget") or "").lower(), 6000))
 
-    # ROI-Konfig
     cfg = _load_roi_config()
     bucket = _size_to_roi_bucket(norm.get("unternehmensgroesse") or "small")
     roi = cfg.get(bucket, {})
@@ -390,12 +419,10 @@ def business_case(norm: Dict[str, Any], score: float) -> Dict[str, float]:
         hrs = (float(roi["hours_saved_per_week_range"][0]) + float(roi["hours_saved_per_week_range"][1])) / 2.0
         rate = (float(roi["hourly_rate_range_eur"][0]) + float(roi["hourly_rate_range_eur"][1])) / 2.0
         tool_pm = float(roi.get("tool_cost_per_user_month_eur", 40))
-        # Sitzanzahl heuristisch (Median des Buckets)
         seats = {"solo": 1, "team_2_10": 6, "kmu_11_100": 30}.get(bucket, 6)
         per_user_month = max(0.0, hrs * rate * 4.33 - tool_pm)
         annual_saving = max(0.0, per_user_month * 12 * seats)
     else:
-        # Fallback: konservativ – an Score gekoppelt
         annual_saving = invest * 4.0
 
     payback_months = max(0.5, round(invest / (annual_saving / 12.0), 1)) if annual_saving > 0 else 12.0
@@ -408,7 +435,51 @@ def business_case(norm: Dict[str, Any], score: float) -> Dict[str, float]:
     }
 
 
-# ----------------------------- HTML‑Fragmente --------------------------------
+# ------------------------- Branchenkontext / Appendix ------------------------
+
+def _industry_context_html(branche_key: str, lang: str) -> str:
+    """Lädt data/branchenkontext/<branche>_{de|en}.md"""
+    fn = f"{branche_key}_{'de' if lang.startswith('de') else 'en'}.md"
+    path = os.path.join(BRANCHEN_DIR, fn)
+    md = _read_text(path)
+    return _md_to_html(md) if md else ""
+
+
+def _appendix_checklists_html(lang: str) -> str:
+    """Sammelt check_*.md aus data/ und data/content/ (max APPENDIX_MAX_DOCS)."""
+    if not APPENDIX_CHECKLISTS:
+        return ""
+    paths: List[str] = []
+    for base in (DATA_DIR, CONTENT_DIR):
+        try:
+            for name in sorted(os.listdir(base)):
+                if name.lower().startswith("check_") and name.lower().endswith(".md"):
+                    paths.append(os.path.join(base, name))
+        except Exception:
+            continue
+    if not paths:
+        return ""
+    html_parts: List[str] = []
+    for p in paths[:APPENDIX_MAX_DOCS]:
+        title = os.path.splitext(os.path.basename(p))[0].replace("_", " ").title()
+        html_parts.append(f"<h3>{title}</h3>")
+        html_parts.append(_md_to_html(_read_text(p)))
+    return "\n".join(html_parts)
+
+
+def _content_intro(name: str, lang: str) -> str:
+    """
+    Lädt optionale Kurz-Intros wie:
+      data/content/tools_intro_{de|en}.md
+      data/content/foerder_intro_{de|en}.md
+    """
+    fn = f"{name}_intro_{'de' if lang.startswith('de') else 'en'}.md"
+    path = os.path.join(CONTENT_DIR, fn)
+    md = _read_text(path)
+    return _md_to_html(md) if md else ""
+
+
+# ------------------------------ HTML-Fragmente -------------------------------
 
 def render_progress_bars(kpis: Dict[str, float]) -> str:
     order = [("Digitalisierung", "digitalisierung"), ("Automatisierung", "automatisierung"),
@@ -435,11 +506,7 @@ def render_benchmark_table(kpis: Dict[str, float], bm: Dict[str, float]) -> str:
 # ------------------------------ OpenAI Wrapper -------------------------------
 
 def _chat_once(model: str, messages: List[Dict[str, str]], temperature: float = 0.2, tokens: int = 800) -> str:
-    """
-    Robust gegenüber neuen/alten Parametern:
-    - versucht 'max_completion_tokens' (neue Modelle, z. B. gpt‑4o/gpt‑5)
-    - fällt auf 'max_tokens' zurück (ältere Pfade)
-    """
+    """Robust gegenüber neuen/alten Parametern."""
     if not _openai_available:
         raise RuntimeError("OpenAI SDK not available")
 
@@ -466,7 +533,6 @@ def _chat_once(model: str, messages: List[Dict[str, str]], temperature: float = 
 
 
 def _prompt(name: str, lang: str) -> str:
-    # lädt z. B. "executive_summary_de.md"
     file_name = f"{name}_{'de' if lang.startswith('de') else 'en'}.md"
     path = os.path.join(PROMPTS_DIR, file_name)
     txt = _read_text(path)
@@ -521,7 +587,7 @@ def build_live_sections(context: Dict[str, Any]) -> Dict[str, Any]:
     return _build(context)
 
 
-# ------------------------------- Rendering -----------------------------------
+# -------------------------------- Rendering ----------------------------------
 
 def _env() -> Environment:
     return Environment(
@@ -568,17 +634,22 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
         "doc_digest_html": _gpt_section("doc_digest", lang, gpt_ctx),
     }
 
-    # Optionale Add‑ons (nur wenn Prompts vorhanden sind)
+    # Optionale Add‑ons
     for extra in ["business", "recommendations", "gamechanger", "vision", "persona", "praxisbeispiel", "coach", "tools", "foerderprogramme"]:
         html = _gpt_section(extra, lang, gpt_ctx)
         if html.strip():
             sections[f"{extra}_html"] = html
 
-    # Live-Kacheln (unabhängig)
+    # Branchenkontext & Appendix
+    sections["industry_context_html"] = _industry_context_html(norm.get("branche") or "", lang)
+    sections["appendix_checklists_html"] = _appendix_checklists_html(lang)
+
+    # Live-Kacheln mit Bundesland-Filter
     live = build_live_sections({
         "branche": norm.get("branche_label") or norm.get("branche"),
         "size": norm.get("unternehmensgroesse_label") or norm.get("unternehmensgroesse"),
         "country": "DE",
+        "region_code": norm.get("bundesland_code") or "",
     })
     flags = {"eu_host_check": True, "regulatory": True, "case_studies": True}
 

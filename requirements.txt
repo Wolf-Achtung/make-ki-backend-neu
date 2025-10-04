@@ -14,6 +14,8 @@ python-multipart>=0.0.9,<0.1
 python-dotenv>=1.0,<2.0
 pyyaml>=6.0,<7.0
 orjson>=3.10,<4.0
+tldextract>=3.6,<4.0
+
 
 # Auth (JWT)
 python-jose[cryptography]==3.3.0
