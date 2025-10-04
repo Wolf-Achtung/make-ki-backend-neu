@@ -116,14 +116,17 @@
     <div class="card">
       <h2>Aktuelle News <span class="hdr-badge">Live</span></h2>
       <div>{{ live.news_html|safe }}</div>
+      <div class="meta">Letztes Live‑Update: {{ live.stand }}</div>
     </div>
     <div class="card">
       <h2>Tools <span class="hdr-badge">Qualitätsfilter</span>{% if flags.eu_host_check %}<span class="hdr-badge">EU‑Host‑Check</span>{% endif %}</h2>
       <div>{{ live.tools_html|safe }}</div>
+      <div class="meta">Letztes Live‑Update: {{ live.stand }}</div>
     </div>
     <div class="card">
       <h2>Förderprogramme <span class="hdr-badge">Deadline‑Alarm</span></h2>
       <div>{{ live.funding_html|safe }}</div>
+      <div class="meta">Letztes Live‑Update: {{ live.stand }}</div>
     </div>
   </section>
 
