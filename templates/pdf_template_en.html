@@ -28,7 +28,6 @@
     footer{margin-top:2rem;color:#555;font-size:.85rem}
     .logos{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
     .logos img{height:28px;object-fit:contain}
-    /* Progress Bars */
     .bar{display:grid;grid-template-columns:140px 1fr 60px;gap:.5rem;align-items:center;margin:.35rem 0}
     .bar__track{height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden}
     .bar__fill{height:100%;background:linear-gradient(90deg,var(--primary),#3b82f6)}
@@ -52,7 +51,8 @@
     </div>
     <h1>{{ meta.title }}</h1>
     <div class="meta">
-      Industry: <b>{{ briefing.branche or '—' }}</b> · Size: <b>{{ briefing.unternehmensgroesse or '—' }}</b>
+      Industry: <b>{{ briefing.branche_label or briefing.branche or '—' }}</b> ·
+      Size: <b>{{ briefing.unternehmensgroesse_label or briefing.unternehmensgroesse or '—' }}</b>
       {% if briefing.bundesland %} · Region: <b>{{ briefing.bundesland }}</b>{% endif %}
       · As of: {{ meta.date }}
     </div>
