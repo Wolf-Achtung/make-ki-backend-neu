@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{ meta.title }} – {{ briefing.branche }}</title>
+  <title>{{ meta.title }} – {{ briefing.branche or '—' }}</title>
   <style>
     :root { --primary:#0B5FFF; --accent:#FB8C00; --muted:#6b7280; --border:#e5e7eb; }
     *{box-sizing:border-box}
@@ -28,6 +28,12 @@
     footer{margin-top:2rem;color:#555;font-size:.85rem}
     .logos{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
     .logos img{height:28px;object-fit:contain}
+    /* Progress Bars */
+    .bar{display:grid;grid-template-columns:140px 1fr 60px;gap:.5rem;align-items:center;margin:.35rem 0}
+    .bar__track{height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden}
+    .bar__fill{height:100%;background:linear-gradient(90deg,var(--primary),#3b82f6)}
+    .bar__label{color:#1f2937}
+    .bar__pct{color:#111;text-align:right}
     @media print{a{color:inherit;text-decoration:none}}
   </style>
 </head>
@@ -46,7 +52,7 @@
     </div>
     <h1>{{ meta.title }}</h1>
     <div class="meta">
-      Branche: <b>{{ briefing.branche }}</b> · Größe: <b>{{ briefing.unternehmensgroesse }}</b>
+      Branche: <b>{{ briefing.branche or '—' }}</b> · Größe: <b>{{ briefing.unternehmensgroesse or '—' }}</b>
       {% if briefing.bundesland %} · Bundesland: <b>{{ briefing.bundesland }}</b>{% endif %}
       · Stand: {{ meta.date }}
     </div>
@@ -56,22 +62,23 @@
     <div class="card">
       <h2>Score</h2>
       <div class="badge">{{ score_percent }}%</div>
-      <p>Digitalisierung: {{ (kpis.digitalisierung*100)|round(0) }}% ·
-         Automatisierung: {{ (kpis.automatisierung*100)|round(0) }}% ·
-         Compliance: {{ (kpis.compliance*100)|round(0) }}%</p>
+      <div style="margin-top:.6rem">{{ kpis_progress_html|safe }}</div>
     </div>
     <div class="card">
       <h2>Business Case</h2>
       <p>Investition: ~ {{ business_case.invest_eur|round(0) }} €</p>
       <p>Einsparung/Jahr: ~ {{ business_case.annual_saving_eur|round(0) }} €</p>
-      <p>Payback: {{ business_case.payback_months }} Monate ·
-         ROI (J1): {{ business_case.roi_year1_pct }}%</p>
+      <p>Payback: {{ business_case.payback_months }} Monate · ROI (J1): {{ business_case.roi_year1_pct }}%</p>
     </div>
     <div class="card">
       <h2>Qualität</h2>
       <p>Badge: {{ quality_badge.grade }} ({{ quality_badge.score }})</p>
-      <p>Checks: {{ quality_badge.passed_checks }} · Kritische Issues: {{ quality_badge.critical_issues }}</p>
     </div>
+  </section>
+
+  <section>
+    <h2>Benchmark‑Vergleich</h2>
+    <div>{{ kpis_benchmark_table_html|safe }}</div>
   </section>
 
   <section>
@@ -105,17 +112,13 @@
     <div>{{ sections.doc_digest_html|safe }}</div>
   </section>
 
-  <!-- Live: News/Tools/Funding -->
   <section class="grid">
     <div class="card">
       <h2>Aktuelle News <span class="hdr-badge">Live</span></h2>
       <div>{{ live.news_html|safe }}</div>
     </div>
     <div class="card">
-      <h2>Tools
-        <span class="hdr-badge">Vendor‑Shortlist aktiv</span>
-        {% if flags.eu_host_check %}<span class="hdr-badge">EU‑Host‑Check</span>{% endif %}
-      </h2>
+      <h2>Tools <span class="hdr-badge">Qualitätsfilter</span>{% if flags.eu_host_check %}<span class="hdr-badge">EU‑Host‑Check</span>{% endif %}</h2>
       <div>{{ live.tools_html|safe }}</div>
     </div>
     <div class="card">
@@ -124,7 +127,6 @@
     </div>
   </section>
 
-  <!-- Neue Blöcke: Regulatory & Case Studies -->
   <section class="grid">
     <div class="card">
       <h2>Regulatory‑Ticker {% if flags.regulatory %}<span class="hdr-badge">aktiv</span>{% endif %}</h2>
@@ -133,18 +135,6 @@
     <div class="card">
       <h2>Case‑Study‑Kacheln {% if flags.case_studies %}<span class="hdr-badge">aktiv</span>{% endif %}</h2>
       <div>{{ live.case_studies_html|safe }}</div>
-    </div>
-  </section>
-
-  <!-- Vendor‑Shortlist & Tool‑Alternativen -->
-  <section class="grid">
-    <div class="card">
-      <h2>Vendor‑Shortlist (Top 5)</h2>
-      <div>{{ live.vendor_shortlist_html|safe }}</div>
-    </div>
-    <div class="card">
-      <h2>Tool‑Alternativen</h2>
-      <div>{{ live.tool_alternatives_html|safe }}</div>
     </div>
   </section>
 
