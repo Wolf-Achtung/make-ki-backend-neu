@@ -1,12 +1,11 @@
-<!-- File: templates/pdf_template_en.html -->
 <!doctype html>
 <html lang="{{ meta.lang|default('en') }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{ meta.title }} – {{ briefing.branche or '—' }}</title>
+  <title>{{ meta.title }} – {{ briefing.branche_label or briefing.branche or '—' }}</title>
   <style>
-    :root { --primary:#0B5FFF; --accent:#FB8C00; --muted:#6b7280; --border:#e5e7eb; }
+    :root{--primary:#0B5FFF;--accent:#FB8C00;--muted:#6b7280;--border:#e5e7eb}
     *{box-sizing:border-box}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;color:#0a0a0a;margin:0;padding:2rem;max-width:980px}
     h1,h2,h3{line-height:1.25;margin:1.2rem 0 .6rem}
@@ -20,7 +19,6 @@
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
     .card{border:1px solid var(--border);border-radius:.6rem;padding:1rem;background:#fff}
     .badge{display:inline-block;border-radius:999px;padding:.25rem .6rem;background:var(--primary);color:#fff;font-weight:600}
-    .tag{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:.1rem .5rem;font-size:.78rem;color:#111;background:#f8fafc;margin-left:.35rem}
     table{width:100%;border-collapse:collapse}
     th,td{border:1px solid var(--border);padding:.5rem;text-align:left;vertical-align:top}
     a{color:var(--primary);text-decoration:none}
@@ -33,6 +31,7 @@
     .bar__fill{height:100%;background:linear-gradient(90deg,var(--primary),#3b82f6)}
     .bar__label{color:#1f2937}
     .bar__pct{color:#111;text-align:right}
+    hr{border:none;border-top:1px solid var(--border);margin:.8rem 0}
     @media print{a{color:inherit;text-decoration:none}}
   </style>
 </head>
@@ -69,6 +68,7 @@
       <p>Investment: ~ {{ business_case.invest_eur|round(0) }} €</p>
       <p>Savings / year: ~ {{ business_case.annual_saving_eur|round(0) }} €</p>
       <p>Payback: {{ business_case.payback_months }} months · ROI (Y1): {{ business_case.roi_year1_pct }}%</p>
+      {% if sections.business_html %}<hr><div>{{ sections.business_html|safe }}</div>{% endif %}
     </div>
     <div class="card">
       <h2>Quality</h2>
@@ -120,35 +120,37 @@
     </div>
     <div class="card">
       <h2>Tools <span class="hdr-badge">Quality filter</span>{% if flags.eu_host_check %}<span class="hdr-badge">EU‑host check</span>{% endif %}</h2>
+      {% if sections.tools_html %}<div>{{ sections.tools_html|safe }}</div><hr>{% endif %}
       <div>{{ live.tools_html|safe }}</div>
       <div class="meta">Last live update: {{ live.stand }}</div>
     </div>
     <div class="card">
       <h2>Funding Programs <span class="hdr-badge">Deadline alert</span></h2>
+      {% if sections.foerderprogramme_html %}<div>{{ sections.foerderprogramme_html|safe }}</div><hr>{% endif %}
       <div>{{ live.funding_html|safe }}</div>
       <div class="meta">Last live update: {{ live.stand }}</div>
     </div>
   </section>
 
-  <section class="grid">
-    <div class="card">
-      <h2>Regulatory Ticker {% if flags.regulatory %}<span class="hdr-badge">active</span>{% endif %}</h2>
-      <div>{{ live.regulatory_html|safe }}</div>
-    </div>
-    <div class="card">
-      <h2>Case Study Tiles {% if flags.case_studies %}<span class="hdr-badge">active</span>{% endif %}</h2>
-      <div>{{ live.case_studies_html|safe }}</div>
+  {% if sections.recommendations_html or sections.gamechanger_html or sections.vision_html or sections.persona_html or sections.praxisbeispiel_html or sections.coach_html %}
+  <section>
+    <h2>Strategic add‑ons <span class="hdr-badge">optional</span></h2>
+    <div class="grid">
+      {% if sections.recommendations_html %}<div class="card"><h3>Recommendations</h3><div>{{ sections.recommendations_html|safe }}</div></div>{% endif %}
+      {% if sections.gamechanger_html %}<div class="card"><h3>Game Changers</h3><div>{{ sections.gamechanger_html|safe }}</div></div>{% endif %}
+      {% if sections.vision_html %}<div class="card"><h3>Vision</h3><div>{{ sections.vision_html|safe }}</div></div>{% endif %}
+      {% if sections.persona_html %}<div class="card"><h3>Buyer Persona</h3><div>{{ sections.persona_html|safe }}</div></div>{% endif %}
+      {% if sections.praxisbeispiel_html %}<div class="card"><h3>Case example</h3><div>{{ sections.praxisbeispiel_html|safe }}</div></div>{% endif %}
+      {% if sections.coach_html %}<div class="card"><h3>Enablement</h3><div>{{ sections.coach_html|safe }}</div></div>{% endif %}
     </div>
   </section>
+  {% endif %}
 
   <footer>
     <div class="logos">
-      <img src="tuev-logo.webp" alt="TÜV Austria">
-      <span> · </span>
-      <img src="ki-ready-2025.webp" alt="KI‑Ready 2025">
-      <span> · </span>
-      <img src="eu-ai.svg" alt="EU AI">
-      <span> · </span>
+      <img src="tuev-logo.webp" alt="TÜV Austria"><span> · </span>
+      <img src="ki-ready-2025.webp" alt="KI‑Ready 2025"><span> · </span>
+      <img src="eu-ai.svg" alt="EU AI"><span> · </span>
       <img src="dsgvo.svg" alt="GDPR">
     </div>
   </footer>
