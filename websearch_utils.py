@@ -2,14 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 Live-Sektionen (News/Tools/Förderungen) mit Tavily/Perplexity (optional).
-- P0/P1: saubere Deaktivierung ohne Widerspruch; getrennte Quellen pro Karte
-- Fallback: News 7 Tage -> wenn leer, auf 30 Tage erweitern (User-Wunsch)
+- Saubere Deaktivierung ohne Widerspruch; getrennte Quellen pro Karte
+- News: 7 Tage -> Fallback 30 Tage
 - Region-Priorisierung: Förder-Domains pro Bundesland (z. B. BE -> ibb.de) werden nach oben sortiert
+- NEU: Region-Badge "Land Berlin" für Förderungen bei BE
 """
 
 from __future__ import annotations
 import os, time, re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 try:
     import httpx  # type: ignore
@@ -69,7 +70,6 @@ def _filter_items(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 def _prio_sort(items: List[Dict[str, Any]], prio_domains: List[str]) -> List[Dict[str, Any]]:
     if not prio_domains:
         return items
-    # Score-Bonus für Prioritätsdomains
     def score(it: Dict[str, Any]) -> float:
         base = float(it.get("score") or 0.0)
         return base + (5.0 if it.get("domain") in prio_domains else 0.0)
@@ -91,14 +91,15 @@ def _tavily_search(q: str, days: int) -> List[Dict[str, Any]]:
         results = data.get("results") or []
         out = []
         now = time.time()
-        cutoff = now - days * 86400
+        cutoff = now - days * 86400  # aktuell nicht strikt filternd (publish fehlt teils), behalten als weiches Limit
         for r in results:
             url = r.get("url") or ""
-            title = r.get("title") or ""
-            published = r.get("published_date") or ""
-            score = r.get("score") or 0.0
-            # Fallback: wenn published leer, lassen wir durch, rely on days filter optional
-            out.append({"title": title, "url": url, "published": published, "score": score})
+            out.append({
+                "title": r.get("title") or "",
+                "url": url,
+                "published": r.get("published_date") or "",
+                "score": r.get("score") or 0.0
+            })
         return _filter_items(out)
     except Exception:
         return []
@@ -116,40 +117,58 @@ def _static_funding(region_code: str) -> List[Dict[str, Any]]:
         {"name": "Förderdatenbank", "desc": "Bund/Land EU‑Programme", "url": "https://www.foerderdatenbank.de", "domain": "foerderdatenbank.de"},
         {"name": "BAFA", "desc": "Beratung & Finanzierung", "url": "https://www.bafa.de", "domain": "bafa.de"},
     ]
-    # Regionale Anreicherung
-    prio = BL_PRIORITY_DOMAINS.get(region_code.upper(), [])
-    if "BE" == region_code.upper():
+    prio = BL_PRIORITY_DOMAINS.get((region_code or "").upper(), [])
+    if (region_code or "").upper() == "BE":
         base.insert(0, {"name": "Investitionsbank Berlin (IBB)", "desc": "Landesprogramme Berlin", "url": "https://www.ibb.de", "domain": "ibb.de"})
-    # Prioritäten oben
     base = _prio_sort(base, prio)
-    return base
+    # Badge anwenden
+    return _apply_region_badge(base, region_code)
+
+def _apply_region_badge(items: List[Dict[str, Any]], region_code: Optional[str]) -> List[Dict[str, Any]]:
+    rc = (region_code or "").upper()
+    if not rc:
+        return items
+    if rc == "BE":
+        be_domains = set(BL_PRIORITY_DOMAINS.get("BE", []))
+        be_domains.update({"berlin.de", "efre.berlin.de"})
+        out = []
+        for it in items:
+            dom = it.get("domain") or _domain(it.get("url", ""))
+            if dom in be_domains:
+                it = {**it, "region_badge": "Land Berlin"}
+            out.append(it)
+        return out
+    return items
 
 def build_live_sections(context: Dict[str, Any]) -> Dict[str, Any]:
+    region = (context.get("region_code") or "").upper()
     if SEARCH_PROVIDER in {"off", "none"} or (not TAVILY_API_KEY and not PERPLEXITY_API_KEY):
         return {
             "enabled": False,
             "note": "Live‑Updates deaktiviert (API‑Keys nicht gesetzt).",
-            "news": [], "tools": _static_tools(), "funding": _static_funding(context.get("region_code") or ""),
-            "news_sources": [], "tools_sources": [], "funding_sources": [],
+            "news": [],
+            "tools": _static_tools(),
+            "funding": _static_funding(region),
+            "news_sources": [],
+            "tools_sources": [],
+            "funding_sources": [],
         }
 
     q_base = f"{context.get('branche') or ''} {context.get('size') or ''} Deutschland"
-    region = (context.get("region_code") or "").upper()
     prio_domains = BL_PRIORITY_DOMAINS.get(region, [])
 
-    # News (7 Tage, sonst Fallback 30)
     news = _tavily_search(f'news {q_base}', SEARCH_DAYS_NEWS)
     if not news:
         news = _tavily_search(f'news {q_base}', SEARCH_DAYS_NEWS_FALLBACK)
 
-    # Tools
     tools = _tavily_search(f'tools {q_base}', SEARCH_DAYS_TOOLS)
 
-    # Funding (Region priorisieren)
     funding = _tavily_search(f'Förderung {q_base}', SEARCH_DAYS_FUNDING)
     funding = _prio_sort(funding, prio_domains)
     if not funding:
         funding = _static_funding(region)
+    else:
+        funding = _apply_region_badge(funding, region)
 
     def make_sources(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         out = []

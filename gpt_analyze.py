@@ -13,6 +13,7 @@ Analyse & Rendering für den KI-Status-Report (Gold-Standard+)
 - P2: KPI-Balken mit Median-Haarlinie + Δ(pp)
 - NEU: "Unternehmensprofil & Ziele" aus Freitextfeldern sichtbar im Report
 - NEU: Pull-KPIs als Badges (Top-Use-Case, Zeitbudget, Umsatzklasse)
+- NEU: Benchmark-Tabelle mit Δ(pp)-Spalte (analog zu KPI-Bars)
 """
 
 from __future__ import annotations
@@ -351,7 +352,6 @@ def load_benchmarks(norm: Dict[str, Any]) -> Dict[str, float]:
             # Vollständigkeit erzwingen, sonst Median
             for need in _BENCH_KEYS:
                 out.setdefault(need, 60.0)
-            # Log: Anzahl der gefundenen Keys
             log.info("Bench keys present: %s/5", sum(1 for k in _BENCH_KEYS if k in out))
             return out
         except Exception as e:
@@ -475,7 +475,6 @@ def business_case(norm: Dict[str, Any], score: float) -> Dict[str, float]:
 
 def _industry_context_html(branche_key: str, lang: str) -> str:
     fn = f"{branche_key}_{'de' if lang.startswith('de') else 'en'}.md"
-    # Fallback-Pfade prüfen
     for base in (BRANCHEN_DIR_DEFAULT, BRANCHEN_DIR_ALT):
         path = os.path.join(base, fn)
         if os.path.exists(path):
@@ -588,10 +587,8 @@ def _prompt(name: str, lang: str) -> str:
 def _sanitize_gpt_html(html: str) -> str:
     if not html:
         return ""
-    # Entferne DOCTYPE & HTML-Wrapper
     html = re.sub(r"(?is)<!DOCTYPE.*?>", "", html)
     html = re.sub(r"(?is)</?(html|head|body|title)[^>]*>", "", html)
-    # Entferne Script/Style
     html = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", "", html)
     return html.strip()
 
@@ -599,7 +596,6 @@ def _sanitize_gpt_html(html: str) -> str:
 def _normalize_dates_in_html(html: str, today: str) -> str:
     if not html:
         return html
-    # "Stand: YYYY-MM-DD" oder "Stand: Monat YYYY" -> heute
     html = re.sub(r"Stand:\s*(\d{4}-\d{2}-\d{2}|[A-Za-zÄÖÜäöü]+ \d{4})", f"Stand: {today}", html)
     return html
 
@@ -634,7 +630,6 @@ def _gpt_section(section: str, lang: str, context: Dict[str, Any], model: Option
         "Avoid generic examples from unrelated industries."
     )
 
-    # Prompt-Kontext
     ctx = dict(context)
     user = prompt.format(**ctx)
     try:
@@ -669,13 +664,9 @@ def build_live_sections(context: Dict[str, Any]) -> Dict[str, Any]:
 # ------------------------------ Postprocessing --------------------------------
 
 def _replace_placeholders(html: str, ctx: Dict[str, Any]) -> str:
-    """
-    Ersetzt verbleibende Platzhalter inkl. Formatspz. {var:.1f}
-    """
     if not html:
         return html
 
-    # Direkte Mappings
     direct = {
         "date": ctx.get("date") or _today(),
         "branche": ctx.get("branche") or "",
@@ -689,7 +680,6 @@ def _replace_placeholders(html: str, ctx: Dict[str, Any]) -> str:
         "hours_saved_pm": ctx.get("hours_saved_pm", "n/a"),
     }
 
-    # {var} & {var:.1f}
     def repl(m: re.Match) -> str:
         var = m.group("var")
         fmt = m.group("fmt")
@@ -702,7 +692,6 @@ def _replace_placeholders(html: str, ctx: Dict[str, Any]) -> str:
         return str(val)
 
     html = re.sub(r"\{(?P<var>[a-zA-Z0-9_]+)(?::(?P<fmt>[^}]+))?\}", repl, html)
-
     return html
 
 
@@ -732,10 +721,8 @@ def _format_zeitbudget(bucket: str) -> Optional[str]:
 
 
 def _pull_kpi_badges(raw: Dict[str, Any]) -> List[str]:
-    """Erzeugt bis zu 3 Pull-KPIs aus dem Freitext/Mehrfachfeldern."""
     badges: List[str] = []
 
-    # 1) Top-Use-Case
     prio_map = {
         "produktion": "Prozessautomatisierung",
         "vertrieb": "Vertrieb/Lead-Gen",
@@ -755,17 +742,14 @@ def _pull_kpi_badges(raw: Dict[str, Any]) -> List[str]:
     if usecase:
         badges.append(f"Top‑Use‑Case: {usecase}")
 
-    # 2) Zeitbudget
     zb = _format_zeitbudget(str(raw.get("zeitbudget") or (raw.get("answers", {}) if isinstance(raw.get("answers"), dict) else {}).get("zeitbudget") or ""))
     if zb:
         badges.append(f"Zeitbudget: {zb}")
 
-    # 3) Umsatzklasse
     rev = _format_revenue_bucket(str(raw.get("jahresumsatz") or (raw.get("answers", {}) if isinstance(raw.get("answers"), dict) else {}).get("jahresumsatz") or ""))
     if rev:
         badges.append(f"Umsatzklasse: {rev}")
 
-    # Falls weniger als 2–3, ergänzen wir strategisches Ziel (kurz)
     if len(badges) < 3:
         strat = raw.get("strategische_ziele") or (raw.get("answers", {}) if isinstance(raw.get("answers"), dict) else {}).get("strategische_ziele")
         if strat and str(strat).strip():
@@ -781,11 +765,9 @@ def _env() -> Environment:
 
 
 def _extract_profile_html(raw: Dict[str, Any], norm: Dict[str, Any]) -> str:
-    """Baut das 'Unternehmensprofil & Ziele' aus Freitextfeldern."""
     if not raw:
         return ""
     bullets: List[str] = []
-    # Harte Priorität
     if norm.get("hauptleistung"):
         bullets.append(f"<b>Hauptleistung</b>: {norm['hauptleistung']}")
     for key, label in [
@@ -796,7 +778,6 @@ def _extract_profile_html(raw: Dict[str, Any], norm: Dict[str, Any]) -> str:
         val = raw.get(key) or (raw.get("answers", {}) if isinstance(raw.get("answers"), dict) else {}).get(key)
         if val and str(val).strip():
             bullets.append(f"<b>{label}</b>: {str(val).strip()}")
-    # Listen
     for key, label in [
         ("projektziel", "Projektziele"),
         ("ki_usecases", "Fokus‑Use‑Cases"),
@@ -805,7 +786,6 @@ def _extract_profile_html(raw: Dict[str, Any], norm: Dict[str, Any]) -> str:
         arr = raw.get(key) or (raw.get("answers", {}) if isinstance(raw.get("answers"), dict) else {}).get(key)
         if isinstance(arr, list) and arr:
             bullets.append(f"<b>{label}</b>: " + ", ".join(str(x) for x in arr))
-
     if not bullets:
         return ""
     return "<ul>" + "".join(f"<li>{b}</li>" for b in bullets) + "</ul>"
@@ -830,13 +810,11 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
     profile_html = _extract_profile_html(raw, norm)
     profile_kpi_badges = _pull_kpi_badges(raw)
 
-    # ROI-Stunden (aus config) für Platzhalter
     roi_cfg = _load_roi_config()
     bucket = _size_to_roi_bucket(norm.get("unternehmensgroesse") or "small")
     hours_range = (roi_cfg.get(bucket, {}).get("hours_saved_per_week_range") or [0, 0])
     avg_hours_week = (float(hours_range[0]) + float(hours_range[1])) / 2.0 if hours_range else 0.0
 
-    # Kontext für GPT/Platzhalter
     gpt_ctx = {
         "briefing": norm,
         "briefing_raw": raw,
@@ -852,7 +830,6 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
         "profile_text": re.sub(r"<.*?>", "", profile_html).strip(),
     }
 
-    # GPT-Abschnitte
     sections = {
         "executive_summary_html": _gpt_section("executive_summary", lang, gpt_ctx, model=EXEC_SUMMARY_MODEL),
         "quick_wins_html": _gpt_section("quick_wins", lang, gpt_ctx),
@@ -873,7 +850,6 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
         "profile_kpi_badges": profile_kpi_badges,
     }
 
-    # Platzhalter-Replacement & Datumsnormalisierung
     post_ctx = {
         "date": today,
         "branche": gpt_ctx["branche"],
@@ -893,11 +869,9 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
             v = _normalize_dates_in_html(v, today)
             sections[k] = v
 
-    # Branchenkontext & Appendix
     sections["industry_context_html"] = _industry_context_html(norm.get("branche") or "", lang)
     sections["appendix_checklists_html"] = _appendix_checklists_html(lang)
 
-    # Live-Sektionen
     live = build_live_sections({
         "branche": gpt_ctx["branche"],
         "size": norm.get("unternehmensgroesse_label") or norm.get("unternehmensgroesse"),
@@ -937,9 +911,13 @@ def render_benchmark_table(kpis: Dict[str, float], bm: Dict[str, float], lang: s
         pairs = [("digitalisierung", "Digitisation"), ("automatisierung", "Automation"),
                  ("compliance", "Compliance"), ("prozessreife", "Process maturity"), ("innovation", "Innovation")]
     for key, label in pairs:
-        rows.append(f"<tr><td>{label}</td><td>{int(round(kpis.get(key, 0)))}%</td><td>{int(round(bm.get(key, 0)))}%</td></tr>")
-    head = "<tr><th>KPI</th><th>Ihr Wert</th><th>Branchen‑Benchmark</th></tr>" if lang.startswith("de") \
-           else "<tr><th>KPI</th><th>Your value</th><th>Industry benchmark</th></tr>"
+        val = int(round(kpis.get(key, 0)))
+        bm_val = int(round(bm.get(key, 0)))
+        delta = val - bm_val
+        sign = "+" if delta >= 0 else ""
+        rows.append(f"<tr><td>{label}</td><td>{val}%</td><td>{bm_val}%</td><td>{sign}{delta} pp</td></tr>")
+    head = "<tr><th>KPI</th><th>Ihr Wert</th><th>Branchen‑Benchmark</th><th>Δ (pp)</th></tr>" if lang.startswith("de") \
+           else "<tr><th>KPI</th><th>Your value</th><th>Industry benchmark</th><th>Δ (pp)</th></tr>"
     return "<table class='bm'><thead>" + head + "</thead><tbody>" + "".join(rows) + "</tbody></table>"
 
 
