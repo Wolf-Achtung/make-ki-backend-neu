@@ -31,6 +31,8 @@
     .badge.EXCELLENT{background:#e0f2fe;color:#075985}
     .muted{color:#64748b}
     .note{background:#fff7ed;border:1px solid #fdba74;color:#7c2d12;padding:12px;border-radius:10px}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#f1f5f9;color:#0f172a;font-size:12px}
+    .badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
     footer{margin-top:24px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:12px;color:#475569}
   </style>
 </head>
@@ -75,6 +77,13 @@
     <h2>Company Profile & Goals (from your briefing)</h2>
     <div class="muted">These points personalise the Executive Summary, Quick Wins, Recommendations & Roadmap.</div>
     {{ sections.profile_html | safe }}
+    {% if sections.profile_kpi_badges %}
+    <div class="badge-row">
+      {% for b in sections.profile_kpi_badges %}
+        <span class="pill">{{ b }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
   </section>
   {% endif %}
 

@@ -39,6 +39,7 @@
     .table{width:100%;border-collapse:collapse}
     .table th,.table td{border-bottom:1px solid #e2e8f0;padding:8px 10px;font-size:13px;text-align:left}
     .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#f1f5f9;color:#0f172a;font-size:12px}
+    .badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
     .num{font-variant-numeric:tabular-nums}
   </style>
 </head>
@@ -85,6 +86,13 @@
     <h2>Unternehmensprofil &amp; Ziele (aus Ihrem Fragebogen)</h2>
     <div class="muted">Die folgenden Punkte personalisieren Executive Summary, Quick Wins, Empfehlungen &amp; Roadmap.</div>
     {{ sections.profile_html | safe }}
+    {% if sections.profile_kpi_badges %}
+    <div class="badge-row">
+      {% for b in sections.profile_kpi_badges %}
+        <span class="pill">{{ b }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
   </section>
   {% endif %}
 
