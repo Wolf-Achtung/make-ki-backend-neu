@@ -3,13 +3,11 @@
 """
 Analyse & Rendering für den KI-Status-Report (Gold-Standard+)
 
-Neu:
-- Appendix "Checklisten" aus data/check_*.md / data/content/checklist_*.md (optional via ENV)
-- Branchenkontext aus data/branchenkontext/<branche>_{de|en}.md
-- Content-Intros (tools/foerderungen) aus data/content/*
-- ROI mit config_roi.json
-- Benchmarks JSON + CSV-Fallback; synonyme Branchen-Slugs
-- Robuster OpenAI-Wrapper (max_completion_tokens / Fallback max_tokens)
+Neu (dieser Patch):
+- Locale-aware Prompt Loader (prompts/de|en → Root-Fallback) [bereits geliefert].
+- Δ-Spalte im Benchmark-Table; Median-Marker in KPI-Bars.
+- Logging: geladene Benchmark-Datei + Key-Abdeckung.
+- Live-Layer: unveränderte Signatur; implementiert in websearch_utils.py.
 """
 
 from __future__ import annotations
@@ -62,10 +60,7 @@ def _read_text(path: str) -> str:
 
 
 def _md_to_html(md: str) -> str:
-    """
-    Sehr schlanker Markdown->HTML Konverter (ohne externe Abhängigkeit).
-    Unterstützt Überschriften (#,##), Listen (-,*), einfache Absätze, Links.
-    """
+    """Schlanker Markdown→HTML Konverter für Checklisten/Branchenkontext."""
     if not md:
         return ""
     html_lines: List[str] = []
@@ -82,10 +77,9 @@ def _md_to_html(md: str) -> str:
         elif s.lstrip().startswith(("- ", "* ")):
             html_lines.append(f"<li>{s.lstrip()[2:].strip()}</li>")
         else:
-            # rudimentäre Link-Ersetzung
             s = re.sub(r"\[(.*?)\]\((https?://[^\s)]+)\)", r"<a href='\2' target='_blank' rel='noopener noreferrer'>\1</a>", s)
             html_lines.append(f"<p>{s}</p>")
-    # List-Items gruppieren
+    # Gruppiere <li> in <ul>
     out: List[str] = []
     in_list = False
     for l in html_lines:
@@ -153,7 +147,7 @@ BR_SLUGS = {
 SIZE_ALIASES = {
     "solo": ["solo"],
     "small": ["small", "team", "team_2_10", "klein"],
-    "kmu": ["kmu", "kmu_11_100", "mittel", "konzern"],  # große fallen auf kmu zurück
+    "kmu": ["kmu", "kmu_11_100", "mittel", "konzern"],
 }
 BR_LABEL = {
     "beratung": "Beratung & Dienstleistungen", "it": "IT & Software",
@@ -166,7 +160,6 @@ BR_LABEL = {
 SIZE_LABEL = {"solo": "1", "small": "2‑10", "kmu": "11‑100+"}
 
 BL_MAP = {
-    # Name/Abkürzung -> Code
     "berlin": "BE", "be": "BE",
     "bayern": "BY", "by": "BY",
     "baden-württemberg": "BW", "bw": "BW",
@@ -249,7 +242,6 @@ def _bench_json_path_candidates(br: str, sz: str) -> List[str]:
 
 
 def _load_benchmarks_from_csv(br: str, sz: str) -> Dict[str, float]:
-    # CSV-Fallback: data/benchmarks.csv mit Spalten: branche, size, dig, auto, comp, proc, inno
     csv_path = os.path.join(DATA_DIR, "benchmarks.csv")
     if not os.path.exists(csv_path):
         return {}
@@ -285,14 +277,19 @@ def load_benchmarks(norm: Dict[str, Any]) -> Dict[str, float]:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                return {k.lower(): float(v) for k, v in data.items()}
-        except Exception:
-            pass
+                bm = {k.lower(): float(v) for k, v in data.items()}
+                log.info("Loaded benchmark: %s", os.path.basename(path))
+                have = sum(1 for k in ("digitalisierung","automatisierung","compliance","prozessreife","innovation") if k in bm)
+                log.info("Bench keys present: %s/5", have)
+                return bm
+        except Exception as e:
+            log.warning("Benchmark JSON read failed: %s", e)
     csv_bm = _load_benchmarks_from_csv(br, sz)
     if csv_bm:
         log.info("Loaded benchmark fallback from CSV for %s/%s", br, sz)
         return csv_bm
-    return {"digitalisierung": 72.0, "automatisierung": 64.0, "compliance": 70.0, "prozessreife": 68.0, "innovation": 69.0}
+    # Safe defaults
+    return {"digitalisierung": 60.0, "automatisierung": 60.0, "compliance": 60.0, "prozessreife": 60.0, "innovation": 60.0}
 
 
 # --------------------------- KPIs / Business Case ----------------------------
@@ -343,13 +340,11 @@ def quality_badge(score: float) -> str:
 def business_case(norm: Dict[str, Any], score: float) -> Dict[str, float]:
     budget_map = {"unter_2000": 1500.0, "2000_10000": 6000.0, "10000_50000": 20000.0, "ueber_50000": 60000.0}
     invest = float(budget_map.get(str(norm.get("investitionsbudget") or "").lower(), 6000.0))
-    # Baseline auf 4 Monate trimmen
     seats = 1 if (str(norm.get("unternehmensgroesse")) == "solo") else 5
     per_user_month = 300.0 if score >= 70 else 200.0
     annual_saving = max(0.0, per_user_month * 12 * seats)
     if annual_saving <= 0:
         annual_saving = invest * 4.0
-
     payback_months = max(0.5, round(invest / (annual_saving / 12.0), 1)) if annual_saving > 0 else 12.0
     roi_y1_pct = round(((annual_saving - invest) / invest) * 100.0, 1) if invest > 0 else 0.0
     return {
@@ -363,7 +358,6 @@ def business_case(norm: Dict[str, Any], score: float) -> Dict[str, float]:
 # ------------------------- Branchenkontext / Appendix ------------------------
 
 def _industry_context_html(branche_key: str, lang: str) -> str:
-    """Lädt data/branchenkontext/<branche>_{de|en}.md"""
     fn = f"{branche_key}_{'de' if lang.startswith('de') else 'en'}.md"
     path = os.path.join(BRANCHEN_DIR, fn)
     md = _read_text(path)
@@ -371,7 +365,6 @@ def _industry_context_html(branche_key: str, lang: str) -> str:
 
 
 def _appendix_checklists_html(lang: str) -> str:
-    """Sammelt check_*.md aus data/ und data/content/ (max APPENDIX_MAX_DOCS)."""
     if not APPENDIX_CHECKLISTS:
         return ""
     paths: List[str] = []
@@ -390,10 +383,8 @@ def _appendix_checklists_html(lang: str) -> str:
 # ------------------------------ OpenAI Wrapper -------------------------------
 
 def _chat_once(model: str, messages: List[Dict[str, str]], temperature: float = 0.2, tokens: int = 800) -> str:
-    """Robust gegenüber neuen/alten Parametern."""
     if not _openai_available:
         raise RuntimeError("OpenAI SDK not available")
-
     client = OpenAI()
     try:
         resp = client.chat.completions.create(
@@ -419,15 +410,7 @@ def _chat_once(model: str, messages: List[Dict[str, str]], temperature: float = 
 # ------------------------------ Prompt Loader --------------------------------
 
 def _prompt_candidates(name: str, lang: str) -> List[str]:
-    """Return ordered candidate paths for a prompt file (locale-aware with graceful fallbacks).
-    Search order (examples for name="executive_summary", lang="de"):
-      1) <PROMPTS_DIR>/de/executive_summary_de.md
-      2) <PROMPTS_DIR>/de/executive_summary.md
-      3) <PROMPTS_DIR>/executive_summary_de.md
-      4) <PROMPTS_DIR>/executive_summary.md
-    """
-    lang = (lang or "").lower()
-    loc = "de" if lang.startswith("de") else "en"
+    loc = "de" if (lang or "").lower().startswith("de") else "en"
     suffix = "de" if loc == "de" else "en"
     return [
         os.path.join(PROMPTS_DIR, loc, f"{name}_{suffix}.md"),
@@ -438,7 +421,6 @@ def _prompt_candidates(name: str, lang: str) -> List[str]:
 
 
 def _prompt(name: str, lang: str) -> str:
-    """Load a prompt by name with locale-aware lookup and robust fallback."""
     for cand in _prompt_candidates(name, lang):
         txt = _read_text(cand)
         if txt:
@@ -488,26 +470,49 @@ def build_live_sections(context: Dict[str, Any]) -> Dict[str, Any]:
 
 # -------------------------------- Rendering ----------------------------------
 
-def render_progress_bars(kpis: Dict[str, float]) -> str:
-    order = [("Digitalisierung", "digitalisierung"), ("Automatisierung", "automatisierung"),
-             ("Compliance", "compliance"), ("Prozessreife", "prozessreife"), ("Innovation", "innovation")]
+def render_progress_bars(kpis: Dict[str, float], bm: Dict[str, float]) -> str:
+    order = [
+        ("Digitalisierung", "digitalisierung"),
+        ("Automatisierung", "automatisierung"),
+        ("Compliance", "compliance"),
+        ("Prozessreife", "prozessreife"),
+        ("Innovation", "innovation"),
+    ]
     parts = []
     for label, key in order:
         pct = int(round(kpis.get(key, 0.0)))
+        med = int(round(bm.get(key, 0.0)))
+        delta = pct - med
+        dstr = f"(Δ {'+' if delta>=0 else ''}{delta}\u202Fpp)"
         parts.append(
-            f"<div class='bar'><div class='bar__label'>{label}</div>"
-            f"<div class='bar__track'><div class='bar__fill' style='width:{pct}%'></div></div>"
-            f"<div class='bar__pct'>{pct}%</div></div>"
+            f"<div class='bar'>"
+            f"<div class='bar__label'>{label}</div>"
+            f"<div class='bar__track'><div class='bar__fill' style='width:{pct}%'></div>"
+            f"<div class='bar__median' style='left:{med}%'></div></div>"
+            f"<div class='bar__pct'>{pct}% <span class='bar__delta'>{dstr}</span></div>"
+            f"</div>"
         )
     return "".join(parts)
 
 
 def render_benchmark_table(kpis: Dict[str, float], bm: Dict[str, float]) -> str:
     rows = []
-    for key, label in [("digitalisierung", "Digitalisierung"), ("automatisierung", "Automatisierung"),
-                       ("compliance", "Compliance"), ("prozessreife", "Prozessreife"), ("innovation", "Innovation")]:
-        rows.append(f"<tr><td>{label}</td><td>{int(round(kpis.get(key, 0)))}%</td><td>{int(round(bm.get(key, 0)))}%</td></tr>")
-    return "<table><thead><tr><th>KPI</th><th>Ihr Wert</th><th>Branchen‑Benchmark</th></tr></thead><tbody>" + "".join(rows) + "</tbody></table>"
+    for key, label in [
+        ("digitalisierung", "Digitalisierung"),
+        ("automatisierung", "Automatisierung"),
+        ("compliance", "Compliance"),
+        ("prozessreife", "Prozessreife"),
+        ("innovation", "Innovation"),
+    ]:
+        v = int(round(kpis.get(key, 0)))
+        m = int(round(bm.get(key, 0)))
+        d = v - m
+        rows.append(f"<tr><td>{label}</td><td>{v}%</td><td>{m}%</td><td>{'+' if d>=0 else ''}{d}\u202Fpp</td></tr>")
+    return (
+        "<table class='bm'><thead><tr><th>KPI</th><th>Ihr Wert</th>"
+        "<th>Branchen‑Benchmark</th><th>Δ (pp)</th></tr></thead><tbody>"
+        + "".join(rows) + "</tbody></table>"
+    )
 
 
 def _env() -> Environment:
@@ -531,7 +536,7 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
     bm = load_benchmarks(norm)
 
     # Fragmente
-    kpis_progress_html = render_progress_bars(kpis)
+    kpis_progress_html = render_progress_bars(kpis, bm)
     kpis_benchmark_table_html = render_benchmark_table(kpis, bm)
     bc = business_case(norm, score)
 
