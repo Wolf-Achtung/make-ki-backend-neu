@@ -17,7 +17,7 @@
     .meta{font-size:12px;color:#475569}
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
     .card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px}
-    .kpi .bar{display:grid;grid-template-columns:160px 1fr 120px;align-items:center;margin:8px 0}
+    .kpi .bar{display:grid;grid-template-columns:160px 1fr 160px;align-items:center;margin:8px 0}
     .kpi .bar__track{position:relative;height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden}
     .kpi .bar__fill{height:10px;background:#3b82f6}
     .kpi .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:#0f172a;opacity:.35}
@@ -41,6 +41,7 @@
     .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#f1f5f9;color:#0f172a;font-size:12px}
     .badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
     .num{font-variant-numeric:tabular-nums}
+    .flag-berlin{display:inline-block;background:#e0f2fe;color:#075985;border:1px solid #bae6fd;border-radius:999px;padding:2px 8px;font-size:11px;margin-left:6px}
   </style>
 </head>
 <body>
@@ -49,12 +50,12 @@
     <div class="brand">
       <img src="assets/logo.svg" alt="KI‑Sicherheit.jetzt Logo" />
       <div>
-        <div class="hl">KI‑Status‑Report</div>
+        <div class="hl">{{ meta.title }}</div>
         <div class="meta">TÜV Austria zertifiziert · EU AI · DSGVO</div>
       </div>
     </div>
     <div class="meta">
-      Branche: {{ briefing.branche_label or briefing.branche or "—" }} · Größe: {{ briefing.unternehmensgroesse_label }} · Stand: {{ meta.date }}
+      Branche: {{ briefing.branche_label }} · Größe: {{ briefing.unternehmensgroesse_label }} · Stand: {{ meta.date }}
     </div>
   </header>
 
@@ -62,8 +63,8 @@
   <section class="grid">
     <div class="card" style="grid-column: span 4;">
       <h2>Score</h2>
-      <div style="font-size:32px;font-weight:800">{{ '%.1f'|format(score_percent) }}%</div>
-      <div class="label">Qualität: <span class="badge {{ quality_badge.grade }}">{{ quality_badge.grade }}</span></div>
+      <div style="font-size:32px;font-weight:800">{{ "%.1f"|format(score_percent) }}%</div>
+      <div class="label">Qualität: <span class="badge {{ quality_badge }}">{{ quality_badge }}</span></div>
     </div>
     <div class="card kpi" style="grid-column: span 5;">
       <h2>Kern‑KPIs</h2>
@@ -73,28 +74,32 @@
       <h2>Business Case</h2>
       <div class="label">Baseline Payback ≈ <b>4&nbsp;Monate</b></div>
       <ul style="margin:.3rem 0 0 1rem;padding:0">
-        <li>Investition: <span class="num">{{ business_case.invest_eur | int }} €</span></li>
-        <li>Einsparung/Jahr: <span class="num">{{ business_case.annual_saving_eur | int }} €</span></li>
-        <li>Payback: <span class="num">{{ business_case.payback_months }}</span> Monate · ROI Jahr 1: <span class="num">{{ business_case.roi_year1_pct }}%</span></li>
+        <li>Investition: <span class="num">{{ business_case.invest_eur }} €</span></li>
+        <li>Einsparung/Jahr: <span class="num">{{ business_case.annual_saving_eur }} €</span></li>
+        <li>Payback: <span class="num">{{ "%.1f"|format(business_case.payback_months) }}</span> Monate · ROI Jahr 1: <span class="num">{{ "%.1f"|format(business_case.roi_year1_pct) }}%</span></li>
       </ul>
     </div>
   </section>
 
-  <!-- Unternehmensprofil & Ziele (Freitextfelder) -->
-  {% if sections.profile_html %}
+  <!-- Unternehmensprofil & Ziele -->
   <section class="card" style="margin-top:12px">
     <h2>Unternehmensprofil &amp; Ziele (aus Ihrem Fragebogen)</h2>
     <div class="muted">Die folgenden Punkte personalisieren Executive Summary, Quick Wins, Empfehlungen &amp; Roadmap.</div>
-    {{ sections.profile_html | safe }}
-    {% if sections.profile_kpi_badges %}
+    <ul>
+      {% if briefing.hauptleistung %}<li><b>Hauptleistung</b>: {{ briefing.hauptleistung }}</li>{% endif %}
+      {% if briefing.ki_projekte %}<li><b>Aktuelle/Geplante KI‑Projekte</b>: {{ briefing.ki_projekte }}</li>{% endif %}
+      {% if briefing.ki_potenzial %}<li><b>KI‑Potenzial (Vision)</b>: {{ briefing.ki_potenzial }}</li>{% endif %}
+      {% if briefing.strategische_ziele %}<li><b>Strategische Ziele</b>: {{ briefing.strategische_ziele }}</li>{% endif %}
+      {% if briefing.projektziel %}<li><b>Projektziele</b>: {{ briefing.projektziel|join(", ") if briefing.projektziel is iterable else briefing.projektziel }}</li>{% endif %}
+      {% if briefing.ki_usecases %}<li><b>Fokus‑Use‑Cases</b>: {{ briefing.ki_usecases|join(", ") }}</li>{% endif %}
+      {% if briefing.zielgruppen %}<li><b>Zielgruppen</b>: {{ briefing.zielgruppen|join(", ") }}</li>{% endif %}
+    </ul>
     <div class="badge-row">
-      {% for b in sections.profile_kpi_badges %}
-        <span class="pill">{{ b }}</span>
-      {% endfor %}
+      {% if briefing.usecase_priority %}<span class="pill">Top‑Use‑Case: {{ briefing.usecase_priority|capitalize }}</span>{% endif %}
+      {% if briefing.zeitbudget %}<span class="pill">Zeitbudget: {{ ">" if "ueber" in briefing.zeitbudget else "" }}{{ "10 h/W" if "ueber_10" in briefing.zeitbudget else briefing.zeitbudget }}</span>{% endif %}
+      {% if briefing.jahresumsatz %}<span class="pill">Umsatzklasse: {{ "100–500 T€" if briefing.jahresumsatz=="100k_500k" else briefing.jahresumsatz }}</span>{% endif %}
     </div>
-    {% endif %}
   </section>
-  {% endif %}
 
   <!-- Benchmarks -->
   <section class="card" style="margin-top:12px">
@@ -116,7 +121,8 @@
     </div>
   </section>
 
-  <section class="card">
+  <!-- Roadmap -->
+  <section class="card" style="margin-top:12px">
     <h2>Roadmap (12 Wochen)</h2>
     {{ sections.roadmap_html | safe }}
     <div class="meta">Stand: {{ meta.date }}</div>
@@ -148,51 +154,33 @@
   <section class="grid" style="margin-top:12px">
     <div class="card" style="grid-column: span 6;">
       <h2>Aktuelle News (Live)</h2>
-      {% if not live.enabled %}
-        <div class="muted">{{ live.note }}</div>
-      {% elif not live.news %}
-        <div class="muted">Keine aktuellen News gefunden (Suche bis 30 Tage geprüft).</div>
-      {% else %}
+      {% if live.news %}
         <ul>
           {% for n in live.news %}
-            <li>{{ n.title }} <span class="muted">[{{ loop.index }}]</span></li>
+            <li>
+              <a href="{{ n.url }}" target="_blank" rel="noopener noreferrer">{{ n.title or n.source }}</a>
+              <span class="muted">– {{ n.source }} · {{ n.date }}</span>
+            </li>
           {% endfor %}
         </ul>
-      {% endif %}
-      {% if live.news and live.news_sources %}
-      <div class="footnotes">
-        <div><b>Quellen (News):</b></div>
-        <ol>
-          {% for s in live.news_sources %}
-            <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
-          {% endfor %}
-        </ol>
-      </div>
+      {% else %}
+        <div class="muted">Keine aktuellen News gefunden (Suche bis {{ live.window_days }} Tage geprüft).</div>
       {% endif %}
       <div class="muted">Letztes Live‑Update: {{ meta.date }}</div>
     </div>
 
     <div class="card" style="grid-column: span 6;">
       <h2>Tools (Live)</h2>
-      <div class="note"><b>Hinweis (Non‑EU‑Tools):</b> Einsatz nur mit AVV/SCC, Pseudonymisierung, keine personenbezogenen Daten/Geheimnisse, Log‑Einstellungen prüfen, Rollenkonzepte &amp; Fallback‑EU‑Alternative bereitstellen.</div>
-      {% if not live.enabled and not live.tools %}
-        <div class="muted">{{ live.note }}</div>
-      {% else %}
+      <div class="note"><b>Hinweis (Non‑EU‑Tools):</b> Einsatz nur mit AVV/SCC, Pseudonymisierung, keine Geheimnisse/PII, Logging prüfen, RBAC, EU‑Fallback bereitstellen.</div>
+      {% if live.tools %}
         <ul>
           {% for t in live.tools %}
-            <li><a href="{{ t.url }}" target="_blank" rel="noopener noreferrer">{{ t.title or t.name }}</a>{% if t.desc %} – {{ t.desc }}{% endif %}</li>
+            <li>
+              <a href="{{ t.url }}" target="_blank" rel="noopener noreferrer">{{ t.title or t.source }}</a>
+              <span class="muted">– {{ t.source }}{% if t.eu_hint %} · EU‑Hint{% endif %}</span>
+            </li>
           {% endfor %}
         </ul>
-      {% endif %}
-      {% if live.tools and live.tools_sources %}
-      <div class="footnotes">
-        <div><b>Quellen (Tools):</b></div>
-        <ol>
-          {% for s in live.tools_sources %}
-            <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
-          {% endfor %}
-        </ol>
-      </div>
       {% endif %}
       <div class="muted">Letztes Live‑Update: {{ meta.date }}</div>
     </div>
@@ -200,77 +188,34 @@
 
   <section class="card" style="margin-top:12px">
     <h2>Förderprogramme (Live)</h2>
-    {% if not live.enabled and not live.funding %}
-      <div class="muted">{{ live.note }}</div>
-    {% else %}
+    {% if live.funding %}
       <ul>
         {% for f in live.funding %}
           <li>
-            <a href="{{ f.url }}" target="_blank" rel="noopener noreferrer">{{ f.title or f.name }}</a>{% if f.desc %} – {{ f.desc }}{% endif %}
-            {% if f.region_badge %}<span class="pill">{{ f.region_badge }}</span>{% endif %}
+            <a href="{{ f.url }}" target="_blank" rel="noopener noreferrer">{{ f.title or f.source }}</a>
+            {% if f.berlin_badge %}<span class="flag-berlin">Land Berlin</span>{% endif %}
           </li>
         {% endfor %}
       </ul>
-    {% endif %}
-    {% if live.funding and live.funding_sources %}
-    <div class="footnotes">
-      <div><b>Quellen (Förderungen):</b></div>
-      <ol>
-        {% for s in live.funding_sources %}
-          <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
-        {% endfor %}
-      </ol>
-    </div>
+    {% else %}
+      <div class="muted">Keine aktuellen Einträge im Fenster ({{ live.window_days }} Tage).</div>
     {% endif %}
     <div class="meta">Stand: {{ meta.date }}</div>
   </section>
 
   <!-- Strategie-Add-ons -->
-  <section class="grid" style="margin-top:12px">
-    <div class="card" style="grid-column: span 6;">
-      <h2>Empfehlungen</h2>
-      {{ sections.recommendations_html | safe }}
-      <div class="meta">Stand: {{ meta.date }}</div>
-    </div>
-    <div class="card" style="grid-column: span 6;">
-      <h2>Game Changer</h2>
-      {{ sections.gamechanger_html | safe }}
-      <div class="meta">Stand: {{ meta.date }}</div>
-    </div>
-  </section>
-
-  <section class="grid" style="margin-top:12px">
-    <div class="card" style="grid-column: span 6;">
-      <h2>Vision</h2>
-      {{ sections.vision_html | safe }}
-      <div class="meta">Stand: {{ meta.date }}</div>
-    </div>
-    <div class="card" style="grid-column: span 6;">
-      <h2>Enablement (Coach)</h2>
-      {{ sections.coach_html | safe }}
-      <div class="meta">Stand: {{ meta.date }}</div>
-    </div>
-  </section>
-
-  {% if sections.praxisbeispiel_html or sections.persona_html %}
-  <section class="grid" style="margin-top:12px">
-    {% if sections.praxisbeispiel_html %}
-    <div class="card" style="grid-column: span 6;">
-      <h2>Praxisbeispiel</h2>
-      {{ sections.praxisbeispiel_html | safe }}
-      <div class="meta">Stand: {{ meta.date }}</div>
-    </div>
+  {% for key in ["recommendations","gamechanger","vision","persona","praxisbeispiel","coach","tools","foerderprogramme","business","doc_digest"] %}
+    {% set html = attribute(sections, key ~ "_html") if (key ~ "_html") in sections else "" %}
+    {% if html %}
+      <section class="card" style="margin-top:12px">
+        <h2>{{ key|replace("_"," ")|title }}</h2>
+        {{ html | safe }}
+        <div class="meta">Stand: {{ meta.date }}</div>
+      </section>
     {% endif %}
-    {% if sections.persona_html %}
-    <div class="card" style="grid-column: span 6;">
-      <h2>Buyer Persona</h2>
-      {{ sections.persona_html | safe }}
-      <div class="meta">Stand: {{ meta.date }}</div>
-    </div>
-    {% endif %}
-  </section>
-  {% endif %}
+  {% endfor %}
 
+  <!-- Appendix -->
   {% if sections.appendix_checklists_html %}
   <section class="card" style="margin-top:12px">
     <h2>Appendix – Checklisten</h2>
@@ -281,7 +226,7 @@
   {% endif %}
 
   <footer>
-    <div>{{ score_legend }}</div>
+    <div>Score 0–54 = Basic · 55–69 = Fair · 70–84 = Good · ≥ 85 = Excellent. Gewichtung: Digitalisierung/Automatisierung/Compliance/Prozessreife/Innovation je 20 %.</div>
     <div>TÜV Austria · KI‑Ready 2025 · EU AI · DSGVO · © KI‑Sicherheit.jetzt</div>
   </footer>
 </div>
