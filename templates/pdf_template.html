@@ -17,9 +17,11 @@
     .meta{font-size:12px;color:#475569}
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
     .card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px}
-    .kpi .bar{display:grid;grid-template-columns:160px 1fr 60px;align-items:center;margin:8px 0}
-    .kpi .bar__track{height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden}
+    .kpi .bar{display:grid;grid-template-columns:160px 1fr 120px;align-items:center;margin:8px 0}
+    .kpi .bar__track{position:relative;height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden}
     .kpi .bar__fill{height:10px;background:#3b82f6}
+    .kpi .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:#0f172a;opacity:.35}
+    .kpi .bar__delta{font-size:12px;color:#475569;margin-left:6px}
     .bm{width:100%;border-collapse:collapse}
     .bm th,.bm td{border-bottom:1px solid #e2e8f0;padding:8px 10px;text-align:left;font-size:13px}
     .badge{display:inline-block;border-radius:24px;padding:6px 10px;font-weight:700;font-size:12px}
@@ -77,17 +79,27 @@
     </div>
   </section>
 
+  <!-- Unternehmensprofil & Ziele (Freitextfelder) -->
+  {% if sections.profile_html %}
+  <section class="card" style="margin-top:12px">
+    <h2>Unternehmensprofil &amp; Ziele (aus Ihrem Fragebogen)</h2>
+    <div class="muted">Die folgenden Punkte personalisieren Executive Summary, Quick Wins, Empfehlungen &amp; Roadmap.</div>
+    {{ sections.profile_html | safe }}
+  </section>
+  {% endif %}
+
   <!-- Benchmarks -->
   <section class="card" style="margin-top:12px">
     <h2>Benchmark‑Vergleich</h2>
     {{ kpis_benchmark_table_html | safe }}
   </section>
 
-  <!-- Executive Summary + Quick Wins + Roadmap -->
+  <!-- Executive Summary + Quick Wins -->
   <section class="grid" style="margin-top:12px">
     <div class="card" style="grid-column: span 6;">
       <h2>Executive Summary</h2>
       {{ sections.executive_summary_html | safe }}
+      <div class="meta">Stand: {{ meta.date }}</div>
     </div>
     <div class="card" style="grid-column: span 6;">
       <h2>Quick Wins</h2>
@@ -131,7 +143,7 @@
       {% if not live.enabled %}
         <div class="muted">{{ live.note }}</div>
       {% elif not live.news %}
-        <div class="muted">Keine aktuellen News gefunden.</div>
+        <div class="muted">Keine aktuellen News gefunden (Suche bis 30 Tage geprüft).</div>
       {% else %}
         <ul>
           {% for n in live.news %}
@@ -139,17 +151,17 @@
           {% endfor %}
         </ul>
       {% endif %}
+      {% if live.news and live.news_sources %}
       <div class="footnotes">
-        {% if live.sources and live.enabled %}
-          <div><b>Quellen:</b></div>
-          <ol>
-            {% for s in live.sources %}
-              <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
-            {% endfor %}
-          </ol>
-        {% endif %}
-        <div class="muted">Letztes Live‑Update: {{ meta.date }}</div>
+        <div><b>Quellen (News):</b></div>
+        <ol>
+          {% for s in live.news_sources %}
+            <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
+          {% endfor %}
+        </ol>
       </div>
+      {% endif %}
+      <div class="muted">Letztes Live‑Update: {{ meta.date }}</div>
     </div>
 
     <div class="card" style="grid-column: span 6;">
@@ -164,7 +176,17 @@
           {% endfor %}
         </ul>
       {% endif %}
-      <div class="footnotes"><div class="muted">Letztes Live‑Update: {{ meta.date }}</div></div>
+      {% if live.tools and live.tools_sources %}
+      <div class="footnotes">
+        <div><b>Quellen (Tools):</b></div>
+        <ol>
+          {% for s in live.tools_sources %}
+            <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
+          {% endfor %}
+        </ol>
+      </div>
+      {% endif %}
+      <div class="muted">Letztes Live‑Update: {{ meta.date }}</div>
     </div>
   </section>
 
@@ -179,6 +201,16 @@
         {% endfor %}
       </ul>
     {% endif %}
+    {% if live.funding and live.funding_sources %}
+    <div class="footnotes">
+      <div><b>Quellen (Förderungen):</b></div>
+      <ol>
+        {% for s in live.funding_sources %}
+          <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% endif %}
     <div class="meta">Stand: {{ meta.date }}</div>
   </section>
 
@@ -187,10 +219,12 @@
     <div class="card" style="grid-column: span 6;">
       <h2>Empfehlungen</h2>
       {{ sections.recommendations_html | safe }}
+      <div class="meta">Stand: {{ meta.date }}</div>
     </div>
     <div class="card" style="grid-column: span 6;">
       <h2>Game Changer</h2>
       {{ sections.gamechanger_html | safe }}
+      <div class="meta">Stand: {{ meta.date }}</div>
     </div>
   </section>
 
@@ -198,10 +232,12 @@
     <div class="card" style="grid-column: span 6;">
       <h2>Vision</h2>
       {{ sections.vision_html | safe }}
+      <div class="meta">Stand: {{ meta.date }}</div>
     </div>
     <div class="card" style="grid-column: span 6;">
       <h2>Enablement (Coach)</h2>
       {{ sections.coach_html | safe }}
+      <div class="meta">Stand: {{ meta.date }}</div>
     </div>
   </section>
 
@@ -212,12 +248,14 @@
     <div class="card" style="grid-column: span 6;">
       <h2>Praxisbeispiel</h2>
       {{ sections.praxisbeispiel_html | safe }}
+      <div class="meta">Stand: {{ meta.date }}</div>
     </div>
     {% endif %}
     {% if sections.persona_html %}
     <div class="card" style="grid-column: span 6;">
       <h2>Buyer Persona</h2>
       {{ sections.persona_html | safe }}
+      <div class="meta">Stand: {{ meta.date }}</div>
     </div>
     {% endif %}
   </section>

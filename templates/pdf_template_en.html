@@ -17,9 +17,11 @@
     .meta{font-size:12px;color:#475569}
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
     .card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px}
-    .kpi .bar{display:grid;grid-template-columns:160px 1fr 60px;align-items:center;margin:8px 0}
-    .kpi .bar__track{height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden}
+    .kpi .bar{display:grid;grid-template-columns:160px 1fr 120px;align-items:center;margin:8px 0}
+    .kpi .bar__track{position:relative;height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden}
     .kpi .bar__fill{height:10px;background:#3b82f6}
+    .kpi .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:#0f172a;opacity:.35}
+    .kpi .bar__delta{font-size:12px;color:#475569;margin-left:6px}
     .bm{width:100%;border-collapse:collapse}
     .bm th,.bm td{border-bottom:1px solid #e2e8f0;padding:8px 10px;text-align:left;font-size:13px}
     .badge{display:inline-block;border-radius:24px;padding:6px 10px;font-weight:700;font-size:12px}
@@ -68,6 +70,14 @@
     </div>
   </section>
 
+  {% if sections.profile_html %}
+  <section class="card" style="margin-top:12px">
+    <h2>Company Profile & Goals (from your briefing)</h2>
+    <div class="muted">These points personalise the Executive Summary, Quick Wins, Recommendations & Roadmap.</div>
+    {{ sections.profile_html | safe }}
+  </section>
+  {% endif %}
+
   <section class="card" style="margin-top:12px">
     <h2>Benchmark comparison</h2>
     {{ kpis_benchmark_table_html | safe }}
@@ -77,6 +87,7 @@
     <div class="card" style="grid-column: span 6;">
       <h2>Executive Summary</h2>
       {{ sections.executive_summary_html | safe }}
+      <div class="meta">As of {{ meta.date }}</div>
     </div>
     <div class="card" style="grid-column: span 6;">
       <h2>Quick Wins</h2>
@@ -117,7 +128,7 @@
       {% if not live.enabled %}
         <div class="muted">{{ live.note }}</div>
       {% elif not live.news %}
-        <div class="muted">No recent items.</div>
+        <div class="muted">No recent items (searched up to 30 days).</div>
       {% else %}
         <ul>
           {% for n in live.news %}
@@ -125,14 +136,15 @@
           {% endfor %}
         </ul>
       {% endif %}
-      {% if live.sources and live.enabled %}
-      <div class="muted"><b>Sources</b></div>
+      {% if live.news and live.news_sources %}
+      <div class="muted"><b>Sources (news)</b></div>
       <ol>
-        {% for s in live.sources %}
+        {% for s in live.news_sources %}
           <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
         {% endfor %}
       </ol>
       {% endif %}
+      <div class="muted">Last live update: {{ meta.date }}</div>
     </div>
     <div class="card" style="grid-column: span 6;">
       <h2>Tools (live)</h2>
@@ -146,6 +158,15 @@
           {% endfor %}
         </ul>
       {% endif %}
+      {% if live.tools and live.tools_sources %}
+      <div class="muted"><b>Sources (tools)</b></div>
+      <ol>
+        {% for s in live.tools_sources %}
+          <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
+        {% endfor %}
+      </ol>
+      {% endif %}
+      <div class="muted">Last live update: {{ meta.date }}</div>
     </div>
   </section>
 
@@ -160,6 +181,14 @@
         {% endfor %}
       </ul>
     {% endif %}
+    {% if live.funding and live.funding_sources %}
+    <div class="muted"><b>Sources (funding)</b></div>
+    <ol>
+      {% for s in live.funding_sources %}
+        <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
+      {% endfor %}
+    </ol>
+    {% endif %}
     <div class="meta">As of {{ meta.date }}</div>
   </section>
 
@@ -167,10 +196,12 @@
     <div class="card" style="grid-column: span 6;">
       <h2>Recommendations</h2>
       {{ sections.recommendations_html | safe }}
+      <div class="meta">As of {{ meta.date }}</div>
     </div>
     <div class="card" style="grid-column: span 6;">
       <h2>Game Changer</h2>
       {{ sections.gamechanger_html | safe }}
+      <div class="meta">As of {{ meta.date }}</div>
     </div>
   </section>
 
@@ -178,10 +209,12 @@
     <div class="card" style="grid-column: span 6;">
       <h2>Vision</h2>
       {{ sections.vision_html | safe }}
+      <div class="meta">As of {{ meta.date }}</div>
     </div>
     <div class="card" style="grid-column: span 6;">
       <h2>Enablement (Coach)</h2>
       {{ sections.coach_html | safe }}
+      <div class="meta">As of {{ meta.date }}</div>
     </div>
   </section>
 
@@ -191,12 +224,14 @@
     <div class="card" style="grid-column: span 6;">
       <h2>Case</h2>
       {{ sections.praxisbeispiel_html | safe }}
+      <div class="meta">As of {{ meta.date }}</div>
     </div>
     {% endif %}
     {% if sections.persona_html %}
     <div class="card" style="grid-column: span 6;">
       <h2>Buyer Persona</h2>
       {{ sections.persona_html | safe }}
+      <div class="meta">As of {{ meta.date }}</div>
     </div>
     {% endif %}
   </section>
