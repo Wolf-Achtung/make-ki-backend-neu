@@ -1,35 +1,17 @@
 {
   "solo": {
-    "hours_saved_per_week_range": [
-      1.0,
-      2.0
-    ],
-    "hourly_rate_range_eur": [
-      35,
-      60
-    ],
-    "tool_cost_per_user_month_eur": 60
+    "hours_saved_per_week_range": [1.0, 3.0],
+    "hourly_rate_range_eur": [45.0, 80.0],
+    "tool_cost_per_user_month_eur": 35.0
   },
   "team_2_10": {
-    "hours_saved_per_week_range": [
-      0.75,
-      1.5
-    ],
-    "hourly_rate_range_eur": [
-      30,
-      55
-    ],
-    "tool_cost_per_user_month_eur": 40
+    "hours_saved_per_week_range": [1.5, 3.5],
+    "hourly_rate_range_eur": [55.0, 95.0],
+    "tool_cost_per_user_month_eur": 40.0
   },
   "kmu_11_100": {
-    "hours_saved_per_week_range": [
-      0.5,
-      1.25
-    ],
-    "hourly_rate_range_eur": [
-      30,
-      50
-    ],
-    "tool_cost_per_user_month_eur": 35
+    "hours_saved_per_week_range": [1.0, 2.5],
+    "hourly_rate_range_eur": [60.0, 110.0],
+    "tool_cost_per_user_month_eur": 45.0
   }
 }
