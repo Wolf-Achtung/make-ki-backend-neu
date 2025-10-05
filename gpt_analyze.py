@@ -12,6 +12,7 @@ Analyse & Rendering für den KI-Status-Report (Gold-Standard+)
 - P1: Branchenkontext mit Fallback-Pfaden
 - P2: KPI-Balken mit Median-Haarlinie + Δ(pp)
 - NEU: "Unternehmensprofil & Ziele" aus Freitextfeldern sichtbar im Report
+- NEU: Pull-KPIs als Badges (Top-Use-Case, Zeitbudget, Umsatzklasse)
 """
 
 from __future__ import annotations
@@ -44,7 +45,7 @@ if not log.handlers:
 BASE_DIR = os.path.abspath(os.getenv("APP_BASE", os.getcwd()))
 TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", os.path.join(BASE_DIR, "templates"))
 PROMPTS_DIR = os.getenv("PROMPTS_DIR", os.path.join(BASE_DIR, "prompts"))
-DATA_DIR = os.getenv("DATA_DIR", os.path.join(BASE_DIR, "data"))
+DATA_DIR = os.path.join(BASE_DIR, os.getenv("DATA_DIR", "data"))
 BRANCHEN_DIR_DEFAULT = os.path.join(DATA_DIR, "branchenkontext")
 BRANCHEN_DIR_ALT = os.path.join(BASE_DIR, "branchenkontext")
 CONTENT_DIR = os.path.join(DATA_DIR, "content")
@@ -705,6 +706,74 @@ def _replace_placeholders(html: str, ctx: Dict[str, Any]) -> str:
     return html
 
 
+# ------------------------------ Pull-KPIs (Badges) ---------------------------
+
+def _format_revenue_bucket(bucket: str) -> Optional[str]:
+    b = (bucket or "").lower()
+    mapping = {
+        "bis_100k": "≤100 T€",
+        "100k_500k": "100–500 T€",
+        "500k_2mio": "0.5–2 M€",
+        "2mio_10mio": "2–10 M€",
+        "ueber_10mio": ">10 M€",
+    }
+    return mapping.get(b)
+
+
+def _format_zeitbudget(bucket: str) -> Optional[str]:
+    b = (bucket or "").lower()
+    mapping = {
+        "unter_2": "≤2 h/W",
+        "2_5": "2–5 h/W",
+        "5_10": "5–10 h/W",
+        "ueber_10": ">10 h/W",
+    }
+    return mapping.get(b)
+
+
+def _pull_kpi_badges(raw: Dict[str, Any]) -> List[str]:
+    """Erzeugt bis zu 3 Pull-KPIs aus dem Freitext/Mehrfachfeldern."""
+    badges: List[str] = []
+
+    # 1) Top-Use-Case
+    prio_map = {
+        "produktion": "Prozessautomatisierung",
+        "vertrieb": "Vertrieb/Lead-Gen",
+        "marketing": "Marketing",
+        "support": "Kundensupport",
+        "finance": "Finanzen/Buchhaltung",
+        "hr": "HR/Talent",
+        "gpt_services": "GPT‑Services",
+    }
+    usecase = None
+    if isinstance(raw.get("usecase_priority"), str):
+        usecase = prio_map.get(raw["usecase_priority"].lower(), raw["usecase_priority"])
+    if not usecase:
+        arr = raw.get("ki_usecases") or (raw.get("answers", {}) if isinstance(raw.get("answers"), dict) else {}).get("ki_usecases")
+        if isinstance(arr, list) and arr:
+            usecase = str(arr[0]).replace("_", " ").title()
+    if usecase:
+        badges.append(f"Top‑Use‑Case: {usecase}")
+
+    # 2) Zeitbudget
+    zb = _format_zeitbudget(str(raw.get("zeitbudget") or (raw.get("answers", {}) if isinstance(raw.get("answers"), dict) else {}).get("zeitbudget") or ""))
+    if zb:
+        badges.append(f"Zeitbudget: {zb}")
+
+    # 3) Umsatzklasse
+    rev = _format_revenue_bucket(str(raw.get("jahresumsatz") or (raw.get("answers", {}) if isinstance(raw.get("answers"), dict) else {}).get("jahresumsatz") or ""))
+    if rev:
+        badges.append(f"Umsatzklasse: {rev}")
+
+    # Falls weniger als 2–3, ergänzen wir strategisches Ziel (kurz)
+    if len(badges) < 3:
+        strat = raw.get("strategische_ziele") or (raw.get("answers", {}) if isinstance(raw.get("answers"), dict) else {}).get("strategische_ziele")
+        if strat and str(strat).strip():
+            badges.append("Ziel: " + str(strat).strip())
+
+    return badges[:3]
+
+
 # -------------------------------- Rendering ----------------------------------
 
 def _env() -> Environment:
@@ -759,6 +828,7 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
 
     today = _today()
     profile_html = _extract_profile_html(raw, norm)
+    profile_kpi_badges = _pull_kpi_badges(raw)
 
     # ROI-Stunden (aus config) für Platzhalter
     roi_cfg = _load_roi_config()
@@ -800,6 +870,7 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
         "tools_html": _gpt_section("tools", lang, gpt_ctx),
         "foerderprogramme_html": _gpt_section("foerderprogramme", lang, gpt_ctx),
         "profile_html": profile_html,
+        "profile_kpi_badges": profile_kpi_badges,
     }
 
     # Platzhalter-Replacement & Datumsnormalisierung
@@ -817,9 +888,10 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
         "hours_saved_pm": round(avg_hours_week * 4.33, 1) if avg_hours_week else "n/a",
     }
     for k, v in list(sections.items()):
-        v = _replace_placeholders(v, post_ctx)
-        v = _normalize_dates_in_html(v, today)
-        sections[k] = v
+        if isinstance(v, str):
+            v = _replace_placeholders(v, post_ctx)
+            v = _normalize_dates_in_html(v, today)
+            sections[k] = v
 
     # Branchenkontext & Appendix
     sections["industry_context_html"] = _industry_context_html(norm.get("branche") or "", lang)
