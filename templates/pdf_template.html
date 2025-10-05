@@ -1,173 +1,242 @@
 <!-- File: templates/pdf_template.html -->
 <!doctype html>
-<html lang="{{ meta.lang|default('de') }}">
+<html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{ meta.title }} – {{ briefing.branche_label or briefing.branche or '—' }}</title>
+  <title>{{ meta.title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    :root{--primary:#0B5FFF;--accent:#FB8C00;--muted:#6b7280;--border:#e5e7eb}
-    *{box-sizing:border-box}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;color:#0a0a0a;margin:0;padding:2rem;max-width:980px}
-    h1,h2,h3{line-height:1.25;margin:1.2rem 0 .6rem}
-    h1{font-size:1.8rem}
-    h2{font-size:1.25rem;color:#222;display:flex;align-items:center;gap:.5rem}
-    h3{font-size:1.05rem;color:#222;margin:.4rem 0}
-    .hdr-badge{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:.1rem .5rem;font-size:.78rem;color:#111;background:#f8fafc}
-    .meta{color:#555;font-size:.9rem;margin-bottom:1rem}
-    .brandbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}
-    .brandbar img{height:36px;object-fit:contain}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
-    .card{border:1px solid var(--border);border-radius:.6rem;padding:1rem;background:#fff}
-    .badge{display:inline-block;border-radius:999px;padding:.25rem .6rem;background:var(--primary);color:#fff;font-weight:600}
-    table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid var(--border);padding:.5rem;text-align:left;vertical-align:top}
-    a{color:var(--primary);text-decoration:none}
-    a:hover{text-decoration:underline}
-    footer{margin-top:2rem;color:#555;font-size:.85rem}
-    .logos{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center}
-    .logos img{height:28px;object-fit:contain}
-    .bar{display:grid;grid-template-columns:140px 1fr 60px;gap:.5rem;align-items:center;margin:.35rem 0}
-    .bar__track{height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden}
-    .bar__fill{height:100%;background:linear-gradient(90deg,var(--primary),#3b82f6)}
-    .bar__label{color:#1f2937}
-    .bar__pct{color:#111;text-align:right}
-    hr{border:none;border-top:1px solid var(--border);margin:.8rem 0}
-    @media print{a{color:inherit;text-decoration:none}}
+    html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:#0f172a;background:#fff;line-height:1.45}
+    h1,h2,h3{color:#0f172a;margin:0 0 .4rem}
+    h1{font-size:26px} h2{font-size:20px} h3{font-size:16px}
+    p{margin:.35rem 0}
+    .wrap{max-width:1180px;margin:0 auto;padding:28px}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand img{height:38px}
+    .meta{font-size:12px;color:#475569}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+    .card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px}
+    .kpi .bar{display:grid;grid-template-columns:160px 1fr 60px;align-items:center;margin:8px 0}
+    .kpi .bar__track{height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden}
+    .kpi .bar__fill{height:10px;background:#3b82f6}
+    .bm{width:100%;border-collapse:collapse}
+    .bm th,.bm td{border-bottom:1px solid #e2e8f0;padding:8px 10px;text-align:left;font-size:13px}
+    .badge{display:inline-block;border-radius:24px;padding:6px 10px;font-weight:700;font-size:12px}
+    .badge.BASIC{background:#fee2e2;color:#991b1b}
+    .badge.FAIR{background:#fff7ed;color:#9a3412}
+    .badge.GOOD{background:#dcfce7;color:#166534}
+    .badge.EXCELLENT{background:#e0f2fe;color:#075985}
+    .muted{color:#64748b}
+    .hl{font-weight:700}
+    .note{background:#fff7ed;border:1px solid #fdba74;color:#7c2d12;padding:12px;border-radius:10px}
+    .columns{columns:2;column-gap:16px}
+    .footnotes{font-size:12px;color:#475569;margin-top:8px}
+    footer{margin-top:24px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:12px;color:#475569}
+    .label{font-size:12px;color:#475569}
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{border-bottom:1px solid #e2e8f0;padding:8px 10px;font-size:13px;text-align:left}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#f1f5f9;color:#0f172a;font-size:12px}
+    .num{font-variant-numeric:tabular-nums}
   </style>
 </head>
 <body>
+<div class="wrap">
   <header>
-    <div class="brandbar">
-      <div class="logos">
-        <img src="ki-sicherheit-logo.webp" alt="KI-Sicherheit.jetzt">
-        <img src="ki-ready-2025.webp" alt="KI-Ready 2025">
-      </div>
-      <div class="logos">
-        <img src="tuev-logo-transparent.webp" alt="TÜV Austria zertifiziert">
-        <img src="eu-ai.svg" alt="EU AI">
-        <img src="dsgvo.svg" alt="DSGVO">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="KI‑Sicherheit.jetzt Logo" />
+      <div>
+        <div class="hl">KI‑Status‑Report</div>
+        <div class="meta">TÜV Austria zertifiziert · EU AI · DSGVO</div>
       </div>
     </div>
-    <h1>{{ meta.title }}</h1>
     <div class="meta">
-      Branche: <b>{{ briefing.branche_label or briefing.branche or '—' }}</b> ·
-      Größe: <b>{{ briefing.unternehmensgroesse_label or briefing.unternehmensgroesse or '—' }}</b>
-      {% if briefing.bundesland %} · Bundesland: <b>{{ briefing.bundesland }}</b>{% endif %}
-      · Stand: {{ meta.date }}
+      Branche: {{ briefing.branche_label or briefing.branche or "—" }} · Größe: {{ briefing.unternehmensgroesse_label }} · Stand: {{ meta.date }}
     </div>
   </header>
 
+  <!-- Score + KPIs + Business Case -->
   <section class="grid">
-    <div class="card">
+    <div class="card" style="grid-column: span 4;">
       <h2>Score</h2>
-      <div class="badge">{{ score_percent }}%</div>
-      <div style="margin-top:.6rem">{{ kpis_progress_html|safe }}</div>
+      <div style="font-size:32px;font-weight:800">{{ '%.1f'|format(score_percent) }}%</div>
+      <div class="label">Qualität: <span class="badge {{ quality_badge.grade }}">{{ quality_badge.grade }}</span></div>
     </div>
-    <div class="card">
+    <div class="card kpi" style="grid-column: span 5;">
+      <h2>Kern‑KPIs</h2>
+      {{ kpis_progress_html | safe }}
+    </div>
+    <div class="card" style="grid-column: span 3;">
       <h2>Business Case</h2>
-      <p>Investition: ~ {{ business_case.invest_eur|round(0) }} €</p>
-      <p>Einsparung/Jahr: ~ {{ business_case.annual_saving_eur|round(0) }} €</p>
-      <p>Payback: {{ business_case.payback_months }} Monate · ROI (J1): {{ business_case.roi_year1_pct }}%</p>
-      {% if sections.business_html %}<hr><div>{{ sections.business_html|safe }}</div>{% endif %}
-    </div>
-    <div class="card">
-      <h2>Qualität</h2>
-      <p>Badge: {{ quality_badge.grade }} ({{ quality_badge.score }})</p>
+      <div class="label">Baseline Payback ≈ <b>4&nbsp;Monate</b></div>
+      <ul style="margin:.3rem 0 0 1rem;padding:0">
+        <li>Investition: <span class="num">{{ business_case.invest_eur | int }} €</span></li>
+        <li>Einsparung/Jahr: <span class="num">{{ business_case.annual_saving_eur | int }} €</span></li>
+        <li>Payback: <span class="num">{{ business_case.payback_months }}</span> Monate · ROI Jahr 1: <span class="num">{{ business_case.roi_year1_pct }}%</span></li>
+      </ul>
     </div>
   </section>
 
-  {% if sections.industry_context_html %}
-  <section>
-    <h2>Branchenkontext <span class="hdr-badge">kurz</span></h2>
-    <div>{{ sections.industry_context_html|safe }}</div>
-  </section>
-  {% endif %}
-
-  <section>
+  <!-- Benchmarks -->
+  <section class="card" style="margin-top:12px">
     <h2>Benchmark‑Vergleich</h2>
-    <div>{{ kpis_benchmark_table_html|safe }}</div>
+    {{ kpis_benchmark_table_html | safe }}
   </section>
 
-  <section>
-    <h2>Executive Summary</h2>
-    <div>{{ sections.executive_summary_html|safe }}</div>
-  </section>
-
-  <section class="grid">
-    <div class="card">
+  <!-- Executive Summary + Quick Wins + Roadmap -->
+  <section class="grid" style="margin-top:12px">
+    <div class="card" style="grid-column: span 6;">
+      <h2>Executive Summary</h2>
+      {{ sections.executive_summary_html | safe }}
+    </div>
+    <div class="card" style="grid-column: span 6;">
       <h2>Quick Wins</h2>
-      <div>{{ sections.quick_wins_html|safe }}</div>
-    </div>
-    <div class="card">
-      <h2>Roadmap (12 Wochen)</h2>
-      <div>{{ sections.roadmap_html|safe }}</div>
+      {{ sections.quick_wins_html | safe }}
+      <div class="meta">Stand: {{ meta.date }}</div>
     </div>
   </section>
 
-  <section>
-    <h2>Risiken & Mitigation</h2>
-    <div>{{ sections.risks_html|safe }}</div>
+  <section class="card">
+    <h2>Roadmap (12 Wochen)</h2>
+    {{ sections.roadmap_html | safe }}
+    <div class="meta">Stand: {{ meta.date }}</div>
   </section>
 
-  <section>
-    <h2>Compliance</h2>
-    <div>{{ sections.compliance_html|safe }}</div>
-  </section>
-
-  <section>
-    <h2>Executive Knowledge Digest</h2>
-    <div>{{ sections.doc_digest_html|safe }}</div>
-  </section>
-
-  <section class="grid">
-    <div class="card">
-      <h2>Aktuelle News <span class="hdr-badge">Live</span></h2>
-      <div>{{ live.news_html|safe }}</div>
-      <div class="meta">Letztes Live‑Update: {{ live.stand }} · Quellen: {{ live.counts.news }}</div>
+  <!-- Risiken & Compliance -->
+  <section class="grid" style="margin-top:12px">
+    <div class="card" style="grid-column: span 7;">
+      <h2>Risiken &amp; Mitigation</h2>
+      {{ sections.risks_html | safe }}
+      <div class="meta">Stand: {{ meta.date }}</div>
     </div>
-    <div class="card">
-      <h2>Tools <span class="hdr-badge">Qualitätsfilter</span><span class="hdr-badge">EU‑Host‑Check</span></h2>
-      {% if sections.tools_html %}<div>{{ sections.tools_html|safe }}</div><hr>{% endif %}
-      <div>{{ live.tools_html|safe }}</div>
-      <div class="meta">Letztes Live‑Update: {{ live.stand }} · Quellen: {{ live.counts.tools }}</div>
-    </div>
-    <div class="card">
-      <h2>Förderprogramme <span class="hdr-badge">Deadline‑Alarm</span></h2>
-      {% if sections.foerderprogramme_html %}<div>{{ sections.foerderprogramme_html|safe }}</div><hr>{% endif %}
-      <div>{{ live.funding_html|safe }}</div>
-      <div class="meta">Letztes Live‑Update: {{ live.stand }} · Quellen: {{ live.counts.funding }}</div>
+    <div class="card" style="grid-column: span 5;">
+      <h2>Compliance</h2>
+      {{ sections.compliance_html | safe }}
+      <div class="meta">Stand: {{ meta.date }}</div>
     </div>
   </section>
 
-  {% if sections.recommendations_html or sections.gamechanger_html or sections.vision_html or sections.persona_html or sections.praxisbeispiel_html or sections.coach_html %}
-  <section>
-    <h2>Strategie‑Add‑ons <span class="hdr-badge">optional</span></h2>
-    <div class="grid">
-      {% if sections.recommendations_html %}<div class="card"><h3>Empfehlungen</h3><div>{{ sections.recommendations_html|safe }}</div></div>{% endif %}
-      {% if sections.gamechanger_html %}<div class="card"><h3>Game Changer</h3><div>{{ sections.gamechanger_html|safe }}</div></div>{% endif %}
-      {% if sections.vision_html %}<div class="card"><h3>Vision</h3><div>{{ sections.vision_html|safe }}</div></div>{% endif %}
-      {% if sections.persona_html %}<div class="card"><h3>Buyer Persona</h3><div>{{ sections.persona_html|safe }}</div></div>{% endif %}
-      {% if sections.praxisbeispiel_html %}<div class="card"><h3>Praxisbeispiel</h3><div>{{ sections.praxisbeispiel_html|safe }}</div></div>{% endif %}
-      {% if sections.coach_html %}<div class="card"><h3>Enablement</h3><div>{{ sections.coach_html|safe }}</div></div>{% endif %}
-    </div>
+  <!-- Branchenkontext -->
+  {% if sections.industry_context_html %}
+  <section class="card" style="margin-top:12px">
+    <h2>Branchenkontext</h2>
+    {{ sections.industry_context_html | safe }}
   </section>
   {% endif %}
 
+  <!-- Live: News / Tools / Förderungen -->
+  <section class="grid" style="margin-top:12px">
+    <div class="card" style="grid-column: span 6;">
+      <h2>Aktuelle News (Live)</h2>
+      {% if not live.enabled %}
+        <div class="muted">{{ live.note }}</div>
+      {% elif not live.news %}
+        <div class="muted">Keine aktuellen News gefunden.</div>
+      {% else %}
+        <ul>
+          {% for n in live.news %}
+            <li>{{ n.title }} <span class="muted">[{{ loop.index }}]</span></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      <div class="footnotes">
+        {% if live.sources and live.enabled %}
+          <div><b>Quellen:</b></div>
+          <ol>
+            {% for s in live.sources %}
+              <li>[{{ s.id }}] {{ s.title }} – {{ s.domain }}{% if s.date %} ({{ s.date }}){% endif %}</li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+        <div class="muted">Letztes Live‑Update: {{ meta.date }}</div>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column: span 6;">
+      <h2>Tools (Live)</h2>
+      <div class="note"><b>Hinweis (Non‑EU‑Tools):</b> Einsatz nur mit AVV/SCC, Pseudonymisierung, keine personenbezogenen Daten/Geheimnisse, Log‑Einstellungen prüfen, Rollenkonzepte &amp; Fallback‑EU‑Alternative bereitstellen.</div>
+      {% if not live.enabled and not live.tools %}
+        <div class="muted">{{ live.note }}</div>
+      {% else %}
+        <ul>
+          {% for t in live.tools %}
+            <li><a href="{{ t.url }}" target="_blank" rel="noopener noreferrer">{{ t.title or t.name }}</a>{% if t.desc %} – {{ t.desc }}{% endif %}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      <div class="footnotes"><div class="muted">Letztes Live‑Update: {{ meta.date }}</div></div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:12px">
+    <h2>Förderprogramme (Live)</h2>
+    {% if not live.enabled and not live.funding %}
+      <div class="muted">{{ live.note }}</div>
+    {% else %}
+      <ul>
+        {% for f in live.funding %}
+          <li><a href="{{ f.url }}" target="_blank" rel="noopener noreferrer">{{ f.title or f.name }}</a>{% if f.desc %} – {{ f.desc }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <div class="meta">Stand: {{ meta.date }}</div>
+  </section>
+
+  <!-- Strategie-Add-ons -->
+  <section class="grid" style="margin-top:12px">
+    <div class="card" style="grid-column: span 6;">
+      <h2>Empfehlungen</h2>
+      {{ sections.recommendations_html | safe }}
+    </div>
+    <div class="card" style="grid-column: span 6;">
+      <h2>Game Changer</h2>
+      {{ sections.gamechanger_html | safe }}
+    </div>
+  </section>
+
+  <section class="grid" style="margin-top:12px">
+    <div class="card" style="grid-column: span 6;">
+      <h2>Vision</h2>
+      {{ sections.vision_html | safe }}
+    </div>
+    <div class="card" style="grid-column: span 6;">
+      <h2>Enablement (Coach)</h2>
+      {{ sections.coach_html | safe }}
+    </div>
+  </section>
+
+  <!-- Case & Persona optional -->
+  {% if sections.praxisbeispiel_html or sections.persona_html %}
+  <section class="grid" style="margin-top:12px">
+    {% if sections.praxisbeispiel_html %}
+    <div class="card" style="grid-column: span 6;">
+      <h2>Praxisbeispiel</h2>
+      {{ sections.praxisbeispiel_html | safe }}
+    </div>
+    {% endif %}
+    {% if sections.persona_html %}
+    <div class="card" style="grid-column: span 6;">
+      <h2>Buyer Persona</h2>
+      {{ sections.persona_html | safe }}
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <!-- Appendix -->
   {% if sections.appendix_checklists_html %}
-  <section>
+  <section class="card" style="margin-top:12px">
     <h2>Appendix – Checklisten</h2>
-    <div>{{ sections.appendix_checklists_html|safe }}</div>
+    <div class="columns">
+      {{ sections.appendix_checklists_html | safe }}
+    </div>
   </section>
   {% endif %}
 
   <footer>
-    <div class="logos">
-      <img src="tuev-logo.webp" alt="TÜV Austria"><span> · </span>
-      <img src="ki-ready-2025.webp" alt="KI-Ready 2025"><span> · </span>
-      <img src="eu-ai.svg" alt="EU AI"><span> · </span>
-      <img src="dsgvo.svg" alt="DSGVO">
-    </div>
+    <div>{{ score_legend }}</div>
+    <div>TÜV Austria · KI‑Ready 2025 · EU AI · DSGVO · © KI‑Sicherheit.jetzt</div>
   </footer>
+</div>
 </body>
 </html>
