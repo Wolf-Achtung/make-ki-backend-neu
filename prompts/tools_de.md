@@ -1,10 +1,19 @@
-<!-- PURPOSE: Fallback-Text, wenn Live-Layer leer wäre. Liste EU-tauglicher Basistools + Non-EU-Hinweis. -->
-<!-- OUTPUT: Nur HTML-Liste + Hinweis. Keine Datumsangaben. -->
+<!-- Datei: prompts/tools_de.md -->
+<!-- PURPOSE: Tools-Empfehlungen (DE) auf Basis lokaler Daten mit erweitertem Schema -->
+<!-- OUTPUT: Nur HTML-Fragment (ul/li, p, span). Keine <html>, kein DOCTYPE. -->
 
-<div class="note"><strong>Hinweis (Non‑EU‑Tools):</strong> Einsatz nur mit AVV/SCC, Pseudonymisierung, keine Geheimnisse/PII; Logging prüfen; RBAC; EU‑Fallback vorhalten.</div>
+<p><strong>Empfohlene Werkzeuge (angepasst an Branche & Größe)</strong></p>
 <ul>
-  <li><a href="https://nextcloud.com">Nextcloud</a> – Files/Collab, EU/On‑prem möglich</li>
-  <li><a href="https://matomo.org">Matomo</a> – Web‑Analytics, self‑hosted/EU</li>
-  <li><a href="https://jitsi.org">Jitsi</a> – Meetings, self‑hosted/EU möglich</li>
-  <li><a href="https://www.odoo.com">Odoo</a> – ERP/CRM, On‑prem möglich</li>
+  <!-- Erwartet: Backend ersetzt {{TOOLS_JSON}} durch JSON-Liste mit Feldern aus tools.csv -->
+  <!-- Beispiel-Rendering: Name (Link) – One-liner – Chips für Aufwand/Preis/Compliance -->
+  {{ for tool in TOOLS_JSON }}
+    <li>
+      <a href="{{ tool.homepage_url }}">{{ tool.name }}</a> – {{ tool.one_liner }}
+      <span class="pill">Aufwand {{ tool.integration_effort_1to5 }}/5</span>
+      <span class="pill">Preis {{ tool.pricing_tier }}</span>
+      <span class="pill">DSGVO/AI-Act: {{ tool.gdpr_ai_act | upper }}</span>
+    </li>
+  {{ endfor }}
 </ul>
+
+<p class="muted">Hinweis: Aufwand 1 = Plug&Play, 5 = Projekt. „Preis“: € bis €€€€.</p>
