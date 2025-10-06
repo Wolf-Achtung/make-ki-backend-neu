@@ -1,19 +1,29 @@
-# GUARD
-- Deutsch, HTML-Fragment.
+<!-- PURPOSE: 3 priorisierte Empfehlungen als Tabelle, Solo‑fit, mit erstem Schritt (0–14 Tage). -->
+<!-- OUTPUT: HTML-Tabelle + kurzer Begründungs-Absatz. -->
 
-# KONTEXT
-- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
-
-# PINS
-- Empfehlungen entlang Reifegrad/Score priorisieren; Abhängigkeiten explizit machen.
-
-# AUFGABE
-<h4>Empfehlungen (priorisiert)</h4>
 <table>
   <thead>
-    <tr><th>Maßnahme</th><th>Warum jetzt</th><th>Aufwand</th><th>Wirkung</th><th>Voraussetzungen</th><th>Owner</th><th>Nächster Schritt</th></tr>
+    <tr><th>#</th><th>Empfehlung</th><th>Erster Schritt (0–14 Tage)</th><th>KPI</th><th>Abhängigkeiten</th><th>ROI/Payback</th></tr>
   </thead>
   <tbody>
-    <!-- 5–7 Maßnahmen, klare Formulierungen, keine Allgemeinplätze. -->
+    <tr>
+      <td>1</td><td>Prompt‑Bibliothek für Angebotsentwürfe</td>
+      <td>Analysieren Sie 3 Ihrer besten Angebote und definieren Sie Variablen und Snippets</td>
+      <td>Angebotsdurchlaufzeit ↓, Win‑Rate ↑</td>
+      <td>Keine</td><td>Ziel: ≤ 4 Monate</td>
+    </tr>
+    <tr>
+      <td>2</td><td>Lead‑Intake &amp; Auto‑Qualifizierung</td>
+      <td>Erstellen Sie Formular und Scoring‑Regeln (ohne PII) und testen Sie mit 10 Leads</td>
+      <td>Time‑to‑Call ↓, Passungsquote ↑</td>
+      <td>Website‑Zugang</td><td>Ziel: ≤ 4 Monate</td>
+    </tr>
+    <tr>
+      <td>3</td><td>Wissensbibliothek &amp; Retrieval</td>
+      <td>Kuratieren Sie Ihre 20 wichtigsten Snippets/Fallstudien und aktivieren Sie eine Vektor‑Suche</td>
+      <td>Antwortzeit ↓, Reuse‑Quote ↑</td>
+      <td>Datei‑/Notizablage</td><td>Ziel: ≤ 4 Monate</td>
+    </tr>
   </tbody>
 </table>
+<p><em>Diese Reihenfolge ergibt sich aus unmittelbarem Umsatz‑/Zeiteffekt und geringem Solo‑Aufwand (2–3 Tage Setup pro Maßnahme).</em></p>

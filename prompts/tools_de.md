@@ -1,11 +1,8 @@
 <!-- Datei: prompts/tools_de.md -->
-<!-- PURPOSE: Tools-Empfehlungen (DE) auf Basis lokaler Daten mit erweitertem Schema -->
-<!-- OUTPUT: Nur HTML-Fragment (ul/li, p, span). Keine <html>, kein DOCTYPE. -->
+<!-- OUTPUT: Nur HTML-Fragment (ul/li, p, span). -->
 
-<p><strong>Empfohlene Werkzeuge (angepasst an Branche & Größe)</strong></p>
+<p><strong>Empfohlene Werkzeuge (angepasst an Branche &amp; Größe)</strong></p>
 <ul>
-  <!-- Erwartet: Backend ersetzt {{TOOLS_JSON}} durch JSON-Liste mit Feldern aus tools.csv -->
-  <!-- Beispiel-Rendering: Name (Link) – One-liner – Chips für Aufwand/Preis/Compliance -->
   {{ for tool in TOOLS_JSON }}
     <li>
       <a href="{{ tool.homepage_url }}">{{ tool.name }}</a> – {{ tool.one_liner }}
@@ -15,5 +12,4 @@
     </li>
   {{ endfor }}
 </ul>
-
-<p class="muted">Hinweis: Aufwand 1 = Plug&Play, 5 = Projekt. „Preis“: € bis €€€€.</p>
+<p class="muted">Hinweis: Aufwand 1 = Plug&amp;Play, 5 = Projekt. „Preis“: € bis €€€€.</p>

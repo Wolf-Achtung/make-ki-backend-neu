@@ -1,17 +1,12 @@
-# GUARD
-- English, HTML fragment.
+<!-- PURPOSE: Business argument without inventing numbers (baseline payback ~4 months comes from backend). -->
+<!-- OUTPUT: HTML paragraph(s)/list only. -->
 
-# CONTEXT
-- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+<p>The business case focuses on direct time savings in acquisition, offer drafting and delivery. Attention is placed on a handful of high‑leverage automations around {{ hauptleistung }}. Prioritisation follows the “≤ 4‑month payback” rule: start with measures that immediately impact revenue or time; follow up with quality and scaling improvements.</p>
 
-# PINS
-- Tie benefits to core offering & audience; scale by score/revenue band if available.
+<ul>
+  <li><strong>Lever 1:</strong> Standardised offer modules (prompt library) – shortens turnaround and increases the win rate.</li>
+  <li><strong>Lever 2:</strong> Knowledge library with semantic search – boosts reuse and reduces response time.</li>
+  <li><strong>Lever 3:</strong> Automated intake &amp; qualification – improves lead fit and cuts out blind pitches.</li>
+</ul>
 
-# TASK
-<h4>Business Impact & ROI</h4>
-<table>
-  <thead>
-    <tr><th>Use Case</th><th>Baseline</th><th>Assumption</th><th>Impact (Time/Cost/Revenue)</th><th>ROI Horizon</th></tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<p>Combining these levers delivers visible results within weeks without over‑taxing the resources of a solo practice.</p>

@@ -3,33 +3,33 @@
 <!-- DOMAIN PINS: Beratung & Dienstleistungen (Solo). Keine Beispiele aus Produktion/Automotive/etc. -->
 
 <ul>
-  <li><strong>Was:</strong> Lead‑Intake‑Formular + Auto‑Qualifizierung ({{ hauptleistung }}). 
-      <em>Warum:</em> Weniger Screening‑Zeit, bessere Passform. 
-      <em>Aufwand:</em> 1–2 Tage. 
-      <em>Owner:</em> Inhaber:in. 
-      <em>KPI:</em> Zeit bis Erstgespräch ↓, Qualifizierungsquote ↑.</li>
+  <li><strong>Lead‑Intake &amp; Auto‑Qualifizierung:</strong> Bauen Sie ein Formular mit automatischer Bewertung für {{ hauptleistung }}.<br>
+      <em>Warum:</em> Weniger Screening‑Zeit, bessere Passung.<br>
+      <em>Aufwand:</em> 1–2 Tage.<br>
+      <em>Owner:</em> Inhaber:in.<br>
+      <em>KPI:</em> Time‑to‑Call ↓, Qualifizierungsquote ↑.</li>
 
-  <li><strong>Was:</strong> Angebots‑Entwurf als Prompt‑Baustein (Templates + Variablen). 
-      <em>Warum:</em> 30–60 min je Angebot sparen. 
-      <em>Aufwand:</em> 1 Tag. 
-      <em>Owner:</em> Inhaber:in. 
+  <li><strong>Angebots‑Bibliothek:</strong> Erstellen Sie eine Prompt‑Bibliothek mit Bausteinen und Variablen zur Angebotsgenerierung.<br>
+      <em>Warum:</em> Spart 30–60 Minuten pro Angebot, sorgt für Konsistenz.<br>
+      <em>Aufwand:</em> 1 Tag.<br>
+      <em>Owner:</em> Inhaber:in.<br>
       <em>KPI:</em> Angebotsdurchlaufzeit ↓, Win‑Rate ↑.</li>
 
-  <li><strong>Was:</strong> Wissensbibliothek (FAQs, Cases, Snippets) mit Vektor‑Suche. 
-      <em>Warum:</em> Antworten schneller, konsistenter. 
-      <em>Aufwand:</em> 2–3 Tage. 
-      <em>Owner:</em> Inhaber:in. 
+  <li><strong>Wissensbibliothek &amp; Suche:</strong> Sammeln Sie FAQs, Fallstudien und Snippets und stellen Sie sie per Vektor‑Suche bereit.<br>
+      <em>Warum:</em> Schnellere Antworten, wiederverwendbare Inhalte.<br>
+      <em>Aufwand:</em> 2–3 Tage.<br>
+      <em>Owner:</em> Inhaber:in.<br>
       <em>KPI:</em> Antwortzeit ↓, Reuse‑Quote ↑.</li>
 
-  <li><strong>Was:</strong> Automatischer Projekt‑Kickoff‑Pack (Checkliste, RACI, Datenschutz‑Memo). 
-      <em>Warum:</em> Sauberer Start, weniger Reibung. 
-      <em>Aufwand:</em> 1 Tag. 
-      <em>Owner:</em> Inhaber:in. 
-      <em>KPI:</em> Nachfragen ↓, Startverzug ↓.</li>
+  <li><strong>Kickoff‑Pack Automatisierung:</strong> Entwickeln Sie ein Paket mit Checkliste, Rollenverteilung (RACI) und Datenschutz‑Memo für neue Projekte.<br>
+      <em>Warum:</em> Sorgt für einen strukturierten Start und weniger Reibung.<br>
+      <em>Aufwand:</em> 1 Tag.<br>
+      <em>Owner:</em> Inhaber:in.<br>
+      <em>KPI:</em> Nachfragen ↓, Verzögerungen beim Start ↓.</li>
 
-  <li><strong>Was:</strong> Social Proof‑Generator (Fallstudien‑Snippet aus Projektnotizen). 
-      <em>Warum:</em> Bessere Akquise, einheitliche Qualität. 
-      <em>Aufwand:</em> 1–2 Tage. 
-      <em>Owner:</em> Inhaber:in. 
+  <li><strong>Social‑Proof‑Generator:</strong> Extrahieren Sie aus Projektnotizen kurze Fallstudien‑Snippets für Marketing &amp; Akquise.<br>
+      <em>Warum:</em> Stärkt Vertrauen und steigert Pipeline‑Wert.<br>
+      <em>Aufwand:</em> 1–2 Tage.<br>
+      <em>Owner:</em> Inhaber:in.<br>
       <em>KPI:</em> Response‑Rate ↑, Pipeline‑Wert ↑.</li>
 </ul>

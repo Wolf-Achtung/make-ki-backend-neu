@@ -7,23 +7,23 @@
   </thead>
   <tbody>
     <tr>
-      <td>1</td><td>Prompt‑Library für Angebotsentwürfe</td>
-      <td>3 beste Angebote analysieren → Variablen &amp; Snippets definieren</td>
-      <td>Angebots‑Durchlaufzeit ↓, Win‑Rate ↑</td>
-      <td>Kein</td><td>Ziel ≤ 4 Monate</td>
+      <td>1</td><td>Prompt‑Bibliothek für Angebotsentwürfe</td>
+      <td>Analysieren Sie 3 Ihrer besten Angebote und definieren Sie Variablen und Snippets</td>
+      <td>Angebotsdurchlaufzeit ↓, Win‑Rate ↑</td>
+      <td>Keine</td><td>Ziel: ≤ 4 Monate</td>
     </tr>
     <tr>
-      <td>2</td><td>Lead‑Intake + Auto‑Qualifizierung</td>
-      <td>Form &amp; Score‑Regeln erstellen (No‑PII), Test mit 10 Leads</td>
+      <td>2</td><td>Lead‑Intake &amp; Auto‑Qualifizierung</td>
+      <td>Erstellen Sie Formular und Scoring‑Regeln (ohne PII) und testen Sie mit 10 Leads</td>
       <td>Time‑to‑Call ↓, Passungsquote ↑</td>
-      <td>Website‑Zugang</td><td>Ziel ≤ 4 Monate</td>
+      <td>Website‑Zugang</td><td>Ziel: ≤ 4 Monate</td>
     </tr>
     <tr>
-      <td>3</td><td>Wissensbibliothek + Retrieval</td>
-      <td>Top‑20 Snippets/Fallstudien kuratieren, Vektor‑Suche aktivieren</td>
+      <td>3</td><td>Wissensbibliothek &amp; Retrieval</td>
+      <td>Kuratieren Sie Ihre 20 wichtigsten Snippets/Fallstudien und aktivieren Sie eine Vektor‑Suche</td>
       <td>Antwortzeit ↓, Reuse‑Quote ↑</td>
-      <td>Datei‑/Notizablage</td><td>Ziel ≤ 4 Monate</td>
+      <td>Datei‑/Notizablage</td><td>Ziel: ≤ 4 Monate</td>
     </tr>
   </tbody>
 </table>
-<p><em>Priorisierung nach unmittelbarem Umsatz-/Zeiteffekt und Solo‑Aufwand (&lt;= 2–3 Tage Setup je Maßnahme).</em></p>
+<p><em>Diese Reihenfolge ergibt sich aus unmittelbarem Umsatz‑/Zeiteffekt und geringem Solo‑Aufwand (2–3 Tage Setup pro Maßnahme).</em></p>

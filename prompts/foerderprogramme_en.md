@@ -2,8 +2,8 @@
 <!-- OUTPUT: HTML list only. No dates. -->
 
 <ul>
-  <li><a href="https://www.foerderdatenbank.de/">Federal/EU funding database (DE)</a> – official overview.</li>
-  <li><a href="https://www.bafa.de/">BAFA</a> – selected programs for consulting/digitalization.</li>
-  <li><a href="https://www.exist.de/">EXIST</a> – founding/innovation (context dependent).</li>
+  <li><a href="https://www.foerderdatenbank.de/">Federal/EU funding database (DE)</a> – official overview of programmes.</li>
+  <li><a href="https://www.bafa.de/">BAFA</a> – selected programmes for consulting and digitalisation.</li>
+  <li><a href="https://www.exist.de/">EXIST</a> – programmes for start‑ups and innovation.</li>
 </ul>
-<p>When sources are from <em>Land Berlin</em> (e.g., <code>berlin.de</code>, <code>ibb.de</code>), the report automatically renders a Berlin‑badge.</p>
+<p>If sources originate from <em>Land Berlin</em> (e.g. <code>berlin.de</code>, <code>ibb.de</code>), the report automatically renders a Berlin badge.</p>

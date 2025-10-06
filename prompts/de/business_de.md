@@ -1,20 +1,12 @@
-# GUARD
-- Deutsch, HTML-Fragment. Keine Platzhalter im Output.
+<!-- PURPOSE: Business-Argumentation ohne eigene Zahlen zu erfinden (Baseline Payback ~4 Monate kommt aus Backend). -->
+<!-- OUTPUT: Nur HTML-Paragraf(e)/Liste. -->
 
-# KONTEXT
-- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+<p>Die Wirtschaftlichkeitsbetrachtung stützt sich auf direkte Zeiteinsparungen in Akquise, Angebotserstellung und Delivery. Der Fokus liegt auf einigen wenigen, wirkungsstarken Automatisierungen entlang der {{ hauptleistung }}. Die Priorisierung folgt dem "≤ 4‑Monate‑Payback"‑Prinzip: erst Maßnahmen mit unmittelbarem Umsatz- oder Zeiteffekt, dann Qualitäts- und Skalierungseffekte.</p>
 
-# PINS
-- Nutzenargumente strikt an Hauptleistung & Zielgruppen koppeln.
-- Falls Umsatzklasse/Score verfügbar: Effekte daran skalieren.
+<ul>
+  <li><strong>Hebel 1:</strong> Standardisierte Angebotsbausteine (Prompt‑Bibliothek) – verkürzt die Durchlaufzeit und steigert die Erfolgsrate.</li>
+  <li><strong>Hebel 2:</strong> Wissensbibliothek mit semantischer Suche – erhöht die Wiederverwendungsquote und senkt die Antwortzeit.</li>
+  <li><strong>Hebel 3:</strong> Automatisiertes Intake &amp; Qualifizierung – verbessert die Passung von Leads und reduziert Blindpitches.</li>
+</ul>
 
-# AUFGABE
-<h4>Business Impact & ROI</h4>
-<table>
-  <thead>
-    <tr><th>Use-Case</th><th>Baseline</th><th>Annahme</th><th>Impact (Zeit/Kosten/Umsatz)</th><th>ROI-Horizont</th></tr>
-  </thead>
-  <tbody>
-    <!-- 3–5 Zeilen, realistische Annahmen, kurze Begründung im Impact-Feld. -->
-  </tbody>
-</table>
+<p>Durch die Kombination dieser Hebel lassen sich sichtbare Ergebnisse bereits nach wenigen Wochen erzielen, ohne die Ressourcen einer Solo‑Praxis zu überlasten.</p>

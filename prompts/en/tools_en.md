@@ -1,8 +1,7 @@
 <!-- Datei: prompts/tools_en.md -->
-<!-- PURPOSE: Tools recommendations (EN) using local data with extended schema -->
-<!-- OUTPUT: HTML fragment only (ul/li, p, span). No <html> or DOCTYPE. -->
+<!-- OUTPUT: HTML fragment only. -->
 
-<p><strong>Recommended tools (matched to industry & size)</strong></p>
+<p><strong>Recommended tools (matched to industry &amp; size)</strong></p>
 <ul>
   {{ for tool in TOOLS_JSON }}
     <li>
@@ -13,5 +12,4 @@
     </li>
   {{ endfor }}
 </ul>
-
 <p class="muted">Note: Effort 1 = plug-and-play, 5 = project. “Price”: € to €€€€.</p>

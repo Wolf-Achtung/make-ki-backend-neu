@@ -6,18 +6,18 @@
 <!-- DATES: Do NOT print dates (renderer adds "As of:" stamp). -->
 <!-- ROI BASELINE: Payback ~4 months (provided by backend). Do not contradict or invent totals. -->
 
-<h3>Key Takeaways</h3>
+<h3>Summary</h3>
 <ul>
-  <li><strong>Strategic position:</strong> Focus on {{ hauptleistung }} within Consulting &amp; Professional Services (Solo, {{ bundesland_code }}).</li>
-  <li><strong>Main lever:</strong> Prioritized use case: {{ (ki_usecases|first) if ki_usecases else "process automation" }}; data base: {{ datenquellen|join(", ") if datenquellen else "client/project data" }}.</li>
-  <li><strong>Expected impact:</strong> Faster acquisition &amp; delivery, consistent outputs, better explainability.</li>
-  <li><strong>Economics:</strong> Target payback ~4 months (baseline). Prioritize initiatives with <em>direct</em> revenue/time impact.</li>
-  <li><strong>Risk &amp; maturity:</strong> GDPR/AI‑Act path exists; extend solo‑grade governance (roles, logging scope, deletion rules).</li>
+  <li><strong>Strategic focus:</strong> The core is {{ hauptleistung }} within Consulting &amp; Professional Services (Solo, {{ bundesland_code }}). Your positioning is clear and differentiated.</li>
+  <li><strong>Main lever:</strong> Key use case: {{ (ki_usecases|first) if ki_usecases else "process automation" }}. Data source: {{ datenquellen|join(", ") if datenquellen else "client and project data" }}.</li>
+  <li><strong>Expected benefits:</strong> Significant efficiency gains in acquisition, offer drafting and delivery with transparent, consistent outputs.</li>
+  <li><strong>Economics:</strong> Target payback is around 4 months. Prioritise initiatives that deliver immediate revenue or time savings.</li>
+  <li><strong>Risk &amp; maturity:</strong> GDPR and AI‑Act compliance is essentially in place. Expand a solo‑grade governance (roles, logging scope, deletion rules).</li>
 </ul>
 
-<h4>What to do next (0–14 days)</h4>
+<h4>Next 14 days</h4>
 <ul>
-  <li><strong>Hard discovery:</strong> Map 5–7 core processes, select 2 pilot flows (lead qualification, offer drafting, etc.).</li>
-  <li><strong>Lean tooling:</strong> EU‑ready base (e.g., Nextcloud/Matomo/Jitsi/Odoo on‑prem possible); Non‑EU only with DPA/SCC &amp; pseudonymization.</li>
-  <li><strong>Make it measurable:</strong> Define 3 KPIs (e.g., offer turnaround, acquisition conversion, consulting hours per project).</li>
+  <li><strong>Process mapping:</strong> Identify 5–7 core processes and select 2 pilot flows (e.g. lead qualification, offer drafting).</li>
+  <li><strong>Tool stack:</strong> Evaluate an EU‑compliant toolset (e.g. Nextcloud, Matomo, Jitsi, Odoo on‑prem). Use non‑EU providers only with DPA/SCC and pseudonymisation.</li>
+  <li><strong>Measurement:</strong> Define 3 KPIs (e.g. offer turnaround, conversion rate, consulting hours per project) and start tracking immediately.</li>
 </ul>
