@@ -1,0 +1,233 @@
+{
+  "default": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "bund.de",
+      "heise.de",
+      "golem.de"
+    ]
+  },
+  "beratung": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  }
+}
+{
+  "marketing": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "kultur-kreativ-wirtschaft.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  },
+  "it": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "bmbf.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  },
+  "finanzen": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  },
+  "handel": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  },
+  "bildung": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "bmbf.de",
+      "erasmusplus.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  },
+  "verwaltung": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  },
+  "gesundheit": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "bmbf.de",
+      "foerderinfo.bund.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  },
+  "bauwesen": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "bmwsb.bund.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  },
+  "medien": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "kultur-kreativ-wirtschaft.de",
+      "kreativ-bund.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  },
+  "industrie": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "bmbf.de",
+      "forschungszulage.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  },
+  "transport": {
+    "include_domains": [
+      "europa.eu",
+      "bmwk.de",
+      "bafa.de",
+      "exist.de",
+      "foerderdatenbank.de",
+      "ihk.de",
+      "kfw.de",
+      "bmv.de",
+      "balm.bund.de",
+      "berlin.de",
+      "ibb.de",
+      "nrwbank.de",
+      "nbank.de",
+      "l-bank.de",
+      "wirtschaft.sachsen.de"
+    ]
+  }
+}
+
