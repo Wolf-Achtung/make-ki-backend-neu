@@ -81,7 +81,6 @@
     <ul>
       {% if briefing.hauptleistung %}<li><b>Main service</b>: {{ briefing.hauptleistung }}</li>{% endif %}
       {% if briefing.ki_projekte %}<li><b>Current/planned AI projects</b>: {{ briefing.ki_projekte }}</li>{% endif %}
-      {% if briefing.ki_potenzial %}<li><b>AI potential</b>: {{ briefing.ki_potenzial }}</li>{% endif %}
       {% if briefing.strategische_ziele %}<li><b>Strategic goals</b>: {{ briefing.strategische_ziele }}</li>{% endif %}
       {% if briefing.ki_usecases %}<li><b>Use cases</b>: {{ briefing.ki_usecases|join(", ") }}</li>{% endif %}
     </ul>
@@ -123,6 +122,13 @@
       <div class="meta">As of: {{ meta.date }}</div>
     </div>
   </section>
+
+  {% if sections.industry_context_html %}
+  <section class="card" style="margin-top:12px">
+    <h2>Industry context</h2>
+    {{ sections.industry_context_html | safe }}
+  </section>
+  {% endif %}
 
   <section class="grid" style="margin-top:12px">
     <div class="card" style="grid-column: span 6;">
@@ -167,13 +173,16 @@
   </section>
 
   {% for key in ["recommendations","gamechanger","vision","persona","praxisbeispiel","coach","tools","foerderprogramme","business","doc_digest"] %}
-    {% set html = attribute(sections, key ~ "_html") if (key ~ "_html") in sections else "" %}
-    {% if html %}
-      <section class="card" style="margin-top:12px">
-        <h2>{{ key|replace("_"," ")|title }}</h2>
-        {{ html | safe }}
-        <div class="meta">As of: {{ meta.date }}</div>
-      </section>
+    {% set k = key ~ "_html" %}
+    {% if k in sections %}
+      {% set html = sections[k] %}
+      {% if html %}
+        <section class="card" style="margin-top:12px">
+          <h2>{{ key|replace("_"," ")|title }}</h2>
+          {{ html | safe }}
+          <div class="meta">As of: {{ meta.date }}</div>
+        </section>
+      {% endif %}
     {% endif %}
   {% endfor %}
 
