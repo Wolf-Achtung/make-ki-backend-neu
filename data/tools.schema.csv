@@ -1,13 +1,11 @@
 # Datei: data/tools.schema.csv
 # Beschreibung: Striktes Schema für KI-Tools (2025)
-# Hinweise:
-# - Alle Spalten sind required (wenn nicht explizit als optional gekennzeichnet)
-# - Wertebereiche:
-#   - gdpr_ai_act: yes|partial|unknown
-#   - hosting_model: SaaS|Self-Hosted|Hybrid|Open-Source
-#   - data_residency: EU|EEA|Global|Unknown
-#   - pricing_tier: €|€€|€€€|€€€€
-#   - integration_effort_1to5: 1..5 (1=Plug&Play, 5=Projekt)
-#   - company_size_fit: Solo|Team|KMU|Mid-Market|Enterprise (Mehrfachwerte per „/“)
-#   - vendor_region: EU|US|Global|Other
+# Wertebereiche:
+# gdpr_ai_act: yes|partial|unknown
+# hosting_model: SaaS|Self-Hosted|Hybrid|Open-Source
+# data_residency: EU|EEA|Global|Unknown
+# pricing_tier: €|€€|€€€|€€€€
+# integration_effort_1to5: 1..5 (1=Plug&Play, 5=Projekt)
+# company_size_fit: Solo|Team|KMU|Mid-Market|Enterprise (Mehrfachwerte per "/")
+# vendor_region: EU|US|Global|Other
 name,category,industry,target,use_case,gdpr_ai_act,hosting_model,data_residency,pricing_eur,pricing_tier,integration_effort_1to5,one_liner,homepage_url,vendor_region,company_size_fit,last_checked
