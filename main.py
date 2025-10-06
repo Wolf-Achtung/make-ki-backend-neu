@@ -3,12 +3,11 @@
 """
 Production API für KI‑Status‑Report (Gold‑Standard+)
 
-- /briefing_async: Report erzeugen, PDF via externem Service RENDERN,
+- /briefing_async: Report erzeugen, PDF via externem Service rendern,
   Versand per SMTP (1 Mail pro Empfänger) mit PDF+HTML im Anhang.
-- Projekt‑Prefix im Betreff via MAIL_SUBJECT_PREFIX (z. B. "KI‑Ready/CustomerX").
-- Kein doppeltes Admin‑Mailing mehr (PDF‑Service schickt keine Mails).
-- Fallback: Wenn PDF‑Bytes nicht verfügbar sind, schicken wir HTML
-  und können optional den PDF‑Service NUR für den USER als E‑Mail fallbacken.
+- Projekt‑Prefix im Betreff via MAIL_SUBJECT_PREFIX.
+- Robust: PDF‑Service unterstützt /render-pdf und /generate-pdf (Bytes/Base64).
+- Feedback‑Router: /feedback, /api/feedback, /v1/feedback, /feedback_email.
 """
 
 from __future__ import annotations
@@ -34,6 +33,12 @@ from jose import jwt
 from jose.exceptions import JWTError
 from pydantic import BaseModel
 
+# Feedback‑Router minimal-invasiv anhängen
+try:
+    from feedback_api import attach_to as attach_feedback  # noqa: F401
+except Exception:
+    attach_feedback = None
+
 # -----------------------------------------------------------------------------
 # Konfiguration (ENV)
 # -----------------------------------------------------------------------------
@@ -53,7 +58,7 @@ IDEMPOTENCY_DIR = os.getenv("IDEMPOTENCY_DIR", "/tmp/ki_idempotency")
 BASE_DIR = os.path.abspath(os.getenv("APP_BASE", os.getcwd()))
 TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", os.path.join(BASE_DIR, "templates"))
 
-# PDF‑Service: nur Rendern (Bytes holen), kein Mailversand
+# PDF‑Service
 PDF_SERVICE_URL = (os.getenv("PDF_SERVICE_URL") or "").rstrip("/")
 _pdf_timeout_raw = int(os.getenv("PDF_TIMEOUT", "45"))
 PDF_TIMEOUT = _pdf_timeout_raw / 1000 if _pdf_timeout_raw > 1000 else _pdf_timeout_raw
@@ -73,7 +78,6 @@ SMTP_PASS = os.getenv("SMTP_PASS")
 SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "noreply@example.com")
 SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "KI‑Sicherheit")
 
-# Betreff‑Prefix (Projekt/Client)
 MAIL_SUBJECT_PREFIX = os.getenv("MAIL_SUBJECT_PREFIX", "KI‑Ready")
 
 # CORS
@@ -178,7 +182,7 @@ def _safe_html_filename(display_name: str, lang: str) -> str:
 
 
 # -----------------------------------------------------------------------------
-# PDF-Service (Rendern – robust gegen verschiedene API-Varianten)
+# PDF-Service (Rendern – robust gegen Varianten)
 # -----------------------------------------------------------------------------
 
 async def _render_pdf_bytes(html: str, filename: str) -> Optional[bytes]:
@@ -235,7 +239,7 @@ async def _pdf_service_email(recipient: str, subject: str, html: str, lang: str,
 
 
 # -----------------------------------------------------------------------------
-# SMTP‑Versand (PDF+HTML, optional Admin‑JSON)
+# SMTP‑Versand
 # -----------------------------------------------------------------------------
 
 def _send_combined_email(
@@ -294,6 +298,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Feedback-Router nur dann anhängen, wenn Modul vorhanden
+if attach_feedback:
+    attach_feedback(app)
+
+# -------------------------------- Health / Login -----------------------------
 
 @app.get("/health")
 def health() -> dict:
@@ -325,7 +334,6 @@ async def briefing_async(
 ):
     """
     Erzeugt den Report und verschickt E‑Mails (User + Admin) mit PDF+HTML im Anhang.
-    Keine doppelten Admin‑Mails mehr; PDF‑Service wird nur für Rendering/Bytes genutzt.
     """
     lang = _lang_from_body(body)
     recipient_user = _recipient_from(body, fallback=ADMIN_EMAIL)
@@ -337,32 +345,49 @@ async def briefing_async(
     filename_pdf = _safe_pdf_filename(display_name, lang)
     filename_html = _safe_html_filename(display_name, lang)
 
-    nonce = str(body.get("nonce") or request.headers.get("x-request-id") or request.headers.get("x-idempotency-key") or "")
-    idem_key = _sha256(json.dumps({"body": body, "user": recipient_user, "lang": lang, "nonce": nonce}, sort_keys=True, ensure_ascii=False))
+    nonce = str(
+        body.get("nonce")
+        or request.headers.get("x-request-id")
+        or request.headers.get("x-idempotency-key")
+        or ""
+    )
+    idem_key = _sha256(json.dumps({"body": body, "user": recipient_user, "lang": lang, "nonce": nonce},
+                                  sort_keys=True, ensure_ascii=False))
     if _idem_seen(idem_key):
         log.info("[idem] duplicate (user=%s, lang=%s) – skipping", recipient_user, lang)
         return JSONResponse({"status": "duplicate", "job_id": _new_job_id()})
 
+    # Import hier, damit der Start schnell bleibt
     try:
         from gpt_analyze import analyze_briefing, produce_admin_attachments  # type: ignore
     except Exception as exc:
         log.error("gpt_analyze import failed: %s", exc)
         raise HTTPException(status_code=500, detail="analysis module not available")
 
+    # Formdaten zusammenführen
     form_data = dict(body.get("answers") or {})
     for k, v in body.items():
         form_data.setdefault(k, v)
 
     job_id = _new_job_id()
 
+    # HTML erzeugen
     try:
         html = analyze_briefing(form_data, lang=lang)
+        if not html or "<html" not in html.lower():
+            raise RuntimeError("empty html")
     except Exception as exc:
         log.error("analyze_briefing failed: %s", exc)
         raise HTTPException(status_code=500, detail="rendering failed")
 
-    pdf_bytes = await _render_pdf_bytes(html, filename_pdf)
+    # PDF rendern
+    pdf_bytes = None
+    try:
+        pdf_bytes = await _render_pdf_bytes(html, filename_pdf)
+    except Exception as exc:
+        log.warning("PDF render failed: %s", exc)
 
+    # Admin-Anhänge (JSON) bauen – best effort
     admin_json: Dict[str, bytes] = {}
     try:
         tri = produce_admin_attachments(form_data)  # -> dict[str,str]
@@ -370,13 +395,15 @@ async def briefing_async(
     except Exception:
         pass
 
+    # Mail an User (oder Fallback über PDF-Service)
     user_result = {"ok": False, "status": 0, "detail": "skipped"}
     if SEND_TO_USER:
         try:
             _send_combined_email(
                 to_address=recipient_user,
                 subject=subject,
-                html_body="<p>Ihr KI‑Status‑Report liegt im Anhang (PDF &amp; HTML).</p>" if lang == "de" else "<p>Your AI status report is attached (PDF &amp; HTML).</p>",
+                html_body="<p>Ihr KI‑Status‑Report liegt im Anhang (PDF &amp; HTML).</p>" if lang == "de"
+                else "<p>Your AI status report is attached (PDF &amp; HTML).</p>",
                 html_attachment=html.encode("utf-8"),
                 pdf_attachment=pdf_bytes,
             )
@@ -387,13 +414,15 @@ async def briefing_async(
                 fb = await _pdf_service_email(recipient_user, subject, html, lang, filename_pdf)
                 user_result = fb
 
+    # Mail an Admin
     admin_result = {"ok": False, "status": 0, "detail": "skipped"}
     if ADMIN_NOTIFY and ADMIN_EMAIL:
         try:
             _send_combined_email(
                 to_address=ADMIN_EMAIL,
                 subject=subject + (" (Admin‑Kopie)" if lang == "de" else " (Admin copy)"),
-                html_body="<p>Neuer Report erstellt. Anhänge: PDF, HTML sowie JSON‑Diagnosen.</p>" if lang == "de" else "<p>New report created. Attachments: PDF, HTML and JSON diagnostics.</p>",
+                html_body="<p>Neuer Report erstellt. Anhänge: PDF, HTML sowie JSON‑Diagnosen.</p>" if lang == "de"
+                else "<p>New report created. Attachments: PDF, HTML and JSON diagnostics.</p>",
                 html_attachment=html.encode("utf-8"),
                 pdf_attachment=pdf_bytes,
                 admin_json=admin_json,
@@ -403,7 +432,7 @@ async def briefing_async(
             log.error("[mail] admin SMTP failed: %s", exc)
 
     return JSONResponse(
-        {"status": "ok", "job_id": _new_job_id(), "user_mail": user_result, "admin_mail": admin_result}
+        {"status": "ok", "job_id": job_id, "user_mail": user_result, "admin_mail": admin_result}
     )
 
 
@@ -412,13 +441,7 @@ async def pdf_test(body: Dict[str, Any]) -> Dict[str, Any]:
     lang = _lang_from_body(body)
     html = body.get("html") or "<!doctype html><meta charset='utf-8'><h1>Ping</h1>"
     pdf = await _render_pdf_bytes(html, _safe_pdf_filename("test", lang))
-    return {"ok": bool(pdf), "bytes": len(pdf or b"0")}
-
-
-@app.post("/feedback")
-async def feedback(body: Dict[str, Any]) -> Dict[str, Any]:
-    log.info("[feedback] received: keys=%s", list(body.keys()))
-    return {"status": "ok", "received": True, "ts": _now_str()}
+    return {"ok": bool(pdf), "bytes": len(pdf or b'0')}
 
 
 @app.get("/")
