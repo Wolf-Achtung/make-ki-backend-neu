@@ -1,9 +1,17 @@
-<!-- PURPOSE: Enablement/coaching – micro‑habits & approach for a solo practice. -->
-<!-- OUTPUT: HTML only. -->
+# GUARD
+- English, HTML fragment.
 
-<ul>
-  <li><strong>10‑min daily:</strong> Test one prompt/tool; store the result as a snippet.</li>
-  <li><strong>Weekly sprint:</strong> One micro‑automation in intake/offer/delivery.</li>
-  <li><strong>Review &amp; cleanup:</strong> Prompt changelog, example library, deletion logs.</li>
-  <li><strong>Compliance routine:</strong> DPA/SCC check, DPIA triggers, keep logs up‑to‑date.</li>
-</ul>
+# CONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+
+# PINS
+- Training volume tied to time capacity & know‑how; modular build‑up.
+
+# TASK
+<h4>Coaching/Training Plan (4–8 hrs)</h4>
+<table>
+  <thead>
+    <tr><th>Module</th><th>Goal</th><th>Content</th><th>Duration</th><th>Outcome</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>

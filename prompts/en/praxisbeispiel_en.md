@@ -1,13 +1,17 @@
-<!-- PURPOSE: Short, plausible case study from consulting; no off‑domain examples. -->
-<!-- OUTPUT: HTML; indicative, traceable numbers. -->
+# GUARD
+- English, HTML fragment.
 
-<h3>Case: Automating intake &amp; offer drafting</h3>
-<p>A solo consultant standardized intake &amp; offer drafting with prompt blocks and knowledge snippets. After 6 weeks: offer turnaround ~40% faster, higher consistency, +15pp win rate thanks to clearer value arguments.</p>
+# CONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
 
-<table>
-  <thead><tr><th>Metric</th><th>Before</th><th>After</th><th>Δ</th><th>Period</th></tr></thead>
-  <tbody>
-    <tr><td>Offer turnaround</td><td>~120 min</td><td>~70 min</td><td>−42%</td><td>6 weeks</td></tr>
-    <tr><td>Win rate</td><td>~25%</td><td>~40%</td><td>+15 pp</td><td>6–8 weeks</td></tr>
-  </tbody>
-</table>
+# PINS
+- Mirror industry/core offering; include plausible metrics.
+
+# TASK
+<h4>Analogue Case Example</h4>
+<p>Short storyline (Context → Action → Result). 3–5 sentences.</p>
+<ul>
+  <li><strong>Context:</strong> …</li>
+  <li><strong>Action:</strong> …</li>
+  <li><strong>Result:</strong> …</li>
+</ul>

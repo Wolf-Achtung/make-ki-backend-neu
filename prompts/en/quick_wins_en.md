@@ -1,35 +1,22 @@
-<!-- PURPOSE: 5 highly concrete, solo‑friendly Quick Wins; immediate impact. -->
-<!-- OUTPUT: HTML list only. Role = Owner (solo). No department heads. -->
-<!-- DOMAIN PINS: Consulting & Professional Services (Solo). -->
+# GUARD
+- English, HTML fragment, semantic tags only.
 
+# CONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+
+# PINS
+- Prioritise high impact / low effort, anchored in industry/size/core offering.
+
+# TASK
+<h4>Quick Wins (≤ 14 days)</h4>
+<table>
+  <thead>
+    <tr><th>Quick Win</th><th>Value</th><th>Effort</th><th>Owner/Role</th><th>Next Step</th></tr>
+  </thead>
+  <tbody>
+    <!-- 4–6 rows; Effort S/M/L or 0.5–2d/1–3d/1w -->
+  </tbody>
+</table>
 <ul>
-  <li><strong>What:</strong> Lead‑intake form + auto‑qualification ({{ hauptleistung }}).
-      <em>Why:</em> Less screening, better fit.
-      <em>Effort:</em> 1–2 days.
-      <em>Owner:</em> Owner.
-      <em>KPI:</em> Time‑to‑first‑call ↓, qualification rate ↑.</li>
-
-  <li><strong>What:</strong> Offer‑draft prompt building blocks (templates + variables).
-      <em>Why:</em> Save 30–60 min per offer.
-      <em>Effort:</em> 1 day.
-      <em>Owner:</em> Owner.
-      <em>KPI:</em> Offer turnaround ↓, win rate ↑.</li>
-
-  <li><strong>What:</strong> Knowledge library (FAQs, cases, snippets) with vector search.
-      <em>Why:</em> Faster answers, consistent quality.
-      <em>Effort:</em> 2–3 days.
-      <em>Owner:</em> Owner.
-      <em>KPI:</em> Response time ↓, reuse rate ↑.</li>
-
-  <li><strong>What:</strong> Auto project‑kickoff pack (checklist, RACI, privacy memo).
-      <em>Why:</em> Smoother start, less friction.
-      <em>Effort:</em> 1 day.
-      <em>Owner:</em> Owner.
-      <em>KPI:</em> Follow‑up questions ↓, start delays ↓.</li>
-
-  <li><strong>What:</strong> Social‑proof generator (case‑snippet from project notes).
-      <em>Why:</em> Better acquisition, consistent messaging.
-      <em>Effort:</em> 1–2 days.
-      <em>Owner:</em> Owner.
-      <em>KPI:</em> Response rate ↑, pipeline value ↑.</li>
+  <li><strong>Priority:</strong> sorted by impact/low effort.</li>
 </ul>

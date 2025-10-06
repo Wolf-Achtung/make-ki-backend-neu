@@ -1,13 +1,17 @@
-<!-- PURPOSE: Kurzes, plausibles Praxisbeispiel aus Beratung & Dienstleistungen ohne Branchenfremdheit. -->
-<!-- OUTPUT: HTML; Zahlen indikativ und nachvollziehbar. -->
+# GUARD
+- Deutsch, HTML-Fragment.
 
-<h3>Case: Angebotserstellung &amp; Intake automatisieren</h3>
-<p>Ein:e Solo‑Berater:in standardisierte Intake &amp; Angebotsentwurf über Prompt‑Bausteine und Wissenssnippets. Ergebnis nach 6 Wochen: Angebots‑Durchlaufzeit um ~40 % reduziert, höhere Angebotskonsistenz, +15 % Win‑Rate durch klarere Nutzenargumente.</p>
+# KONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
 
-<table>
-  <thead><tr><th>Metrik</th><th>Vorher</th><th>Nachher</th><th>Δ</th><th>Zeitraum</th></tr></thead>
-  <tbody>
-    <tr><td>Angebots‑Durchlaufzeit</td><td>~120 min</td><td>~70 min</td><td>−42 %</td><td>6 Wochen</td></tr>
-    <tr><td>Win‑Rate</td><td>~25 %</td><td>~40 %</td><td>+15 pp</td><td>6–8 Wochen</td></tr>
-  </tbody>
-</table>
+# PINS
+- Beispiel an Branche/Hauptleistung spiegeln; konkrete Metriken nennen (soweit plausibel).
+
+# AUFGABE
+<h4>Praxisbeispiel (analog)</h4>
+<p>Kurze Fallbeschreibung (Ausgangslage → Maßnahme → Ergebnis). 3–5 Sätze, faktenorientiert.</p>
+<ul>
+  <li><strong>Ausgangslage:</strong> …</li>
+  <li><strong>Maßnahme:</strong> …</li>
+  <li><strong>Ergebnis:</strong> …</li>
+</ul>

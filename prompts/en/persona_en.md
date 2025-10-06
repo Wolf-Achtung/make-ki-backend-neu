@@ -1,9 +1,17 @@
-<!-- PURPOSE: Buyer persona for target segments in consulting. -->
-<!-- OUTPUT: HTML only. -->
+# GUARD
+- English, HTML fragment.
 
-<p><strong>Decision maker at SMB (Digital/General Management)</strong> – outcome‑driven, limited time, wants clear roadmaps rather than a tools zoo. Priorities: revenue growth, efficiency, compliance confidence.</p>
-<ul>
-  <li><strong>Triggers:</strong> More complex offers/processes, rising inquiries, funding opportunities.</li>
-  <li><strong>Hurdles:</strong> Legal uncertainty, budget, internal time.</li>
-  <li><strong>Buying criteria:</strong> References, quick initial results, simple care model.</li>
-</ul>
+# CONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+
+# PINS
+- Persona depends on audience & company size (owner/department lead/etc.).
+
+# TASK
+<h4>Core Persona</h4>
+<table>
+  <thead>
+    <tr><th>Role</th><th>Goals</th><th>Challenges</th><th>Triggers</th><th>Success Criteria</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>

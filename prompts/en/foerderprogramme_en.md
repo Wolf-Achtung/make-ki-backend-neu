@@ -1,9 +1,17 @@
-<!-- PURPOSE: Fallback text when the live layer has no funding items. Neutral baseline sources. -->
-<!-- OUTPUT: HTML list only. No dates. -->
+# GUARD
+- English, HTML fragment.
 
-<ul>
-  <li><a href="https://www.foerderdatenbank.de/">Federal/EU funding database (DE)</a> – official overview.</li>
-  <li><a href="https://www.bafa.de/">BAFA</a> – selected programs for consulting/digitalization.</li>
-  <li><a href="https://www.exist.de/">EXIST</a> – founding/innovation (context dependent).</li>
-</ul>
-<p>When sources are from <em>Land Berlin</em> (e.g., <code>berlin.de</code>, <code>ibb.de</code>), the report automatically renders a Berlin‑badge.</p>
+# CONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+
+# PINS
+- Consider state/region (for Germany) and company size/industry for eligibility.
+
+# TASK
+<h4>Funding Programs (Preselection)</h4>
+<table>
+  <thead>
+    <tr><th>Program</th><th>Level</th><th>Focus</th><th>Fit (short)</th><th>Next Step</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>

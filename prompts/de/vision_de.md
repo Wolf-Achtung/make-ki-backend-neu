@@ -1,9 +1,15 @@
-<!-- PURPOSE: Kurze, messbare Vision 2027 für Solo‑Beratung. -->
-<!-- OUTPUT: Nur HTML-Paragraf(e)/Liste. -->
+# GUARD
+- Deutsch, HTML-Fragment.
 
-<p>Bis 2027 positioniert sich die Praxis als führende:r Anbieter:in für {{ hauptleistung }} mit produktisierten GPT‑Services. Klare Kennzahlen: &ge; 40 % wiederkehrender Umsatz, Durchlaufzeiten halbiert, Kundenzufriedenheit ≥ 90 % (NPS). Die Marke steht für transparente Methoden, geprüfte Compliance und messbaren Nutzen.</p>
+# KONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+
+# PINS
+- Vision an „Moonshot“ und strategische Ziele koppeln; markt-/branchenrelevant formulieren.
+
+# AUFGABE
+<h4>AI‑Vision (3 Jahre)</h4>
+<p>Kurze, überprüfbare Zielbeschreibung mit 3–4 messbaren Leitsätzen (North-Star‑KPIs, Kundennutzen, operative Exzellenz).</p>
 <ul>
-  <li>Portfolio: 3–5 wiederverwendbare Services mit klaren Outcomes.</li>
-  <li>Exzellenz: Auditierbare Prompt‑Bibliothek, Versionierung, Case‑Belege.</li>
-  <li>Wachstum: Community/Partnernetz für Co‑Sales &amp; Upsell.</li>
+  <!-- 3–4 Leitsätze -->
 </ul>

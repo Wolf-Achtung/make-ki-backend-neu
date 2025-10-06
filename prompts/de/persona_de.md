@@ -1,9 +1,17 @@
-<!-- PURPOSE: Buyer Persona für Zielgruppe(n) im Beratungsumfeld. -->
-<!-- OUTPUT: Nur HTML. -->
+# GUARD
+- Deutsch, HTML-Fragment.
 
-<p><strong>Entscheider:in KMU (Digital‑/Geschäftsleitung)</strong> – ergebnisorientiert, begrenztes Zeitbudget, sucht klare Roadmaps statt Tools‑Zoo. Prioritäten: Umsatzwachstum, Effizienz, Compliance‑Sicherheit.</p>
-<ul>
-  <li><strong>Trigger:</strong> Komplexere Angebote/Prozesse, steigende Anfragen, Förderchancen.</li>
-  <li><strong>Hürden:</strong> Rechtsunsicherheit, Budget, interne Zeit.</li>
-  <li><strong>Kaufkriterien:</strong> Referenzen, schnelle Erstresultate, einfache Betreuung.</li>
-</ul>
+# KONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+
+# PINS
+- Persona abhängig von Zielgruppe(n) & Unternehmensgröße (z. B. Inhaberin KMU vs. Fachbereichsleitung).
+
+# AUFGABE
+<h4>Kern‑Persona</h4>
+<table>
+  <thead>
+    <tr><th>Rolle</th><th>Ziele</th><th>Herausforderungen</th><th>Trigger</th><th>Erfolgskriterien</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>

@@ -1,10 +1,17 @@
-<!-- PURPOSE: Fallback-Text, wenn Live-Layer leer wäre. Liste EU-tauglicher Basistools + Non-EU-Hinweis. -->
-<!-- OUTPUT: Nur HTML-Liste + Hinweis. Keine Datumsangaben. -->
+# GUARD
+- Deutsch, HTML-Fragment.
 
-<div class="note"><strong>Hinweis (Non‑EU‑Tools):</strong> Einsatz nur mit AVV/SCC, Pseudonymisierung, keine Geheimnisse/PII; Logging prüfen; RBAC; EU‑Fallback vorhalten.</div>
-<ul>
-  <li><a href="https://nextcloud.com">Nextcloud</a> – Files/Collab, EU/On‑prem möglich</li>
-  <li><a href="https://matomo.org">Matomo</a> – Web‑Analytics, self‑hosted/EU</li>
-  <li><a href="https://jitsi.org">Jitsi</a> – Meetings, self‑hosted/EU möglich</li>
-  <li><a href="https://www.odoo.com">Odoo</a> – ERP/CRM, On‑prem möglich</li>
-</ul>
+# KONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+
+# PINS
+- Tools an vorhandene Systeme, regulierte Branche und Teamgröße anpassen.
+
+# AUFGABE
+<h4>Tool‑Empfehlungen</h4>
+<table>
+  <thead>
+    <tr><th>Kategorie</th><th>Empfehlung</th><th>Warum passend</th><th>Datenschutz/Compliance</th><th>Kosten (grobe Spanne)</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>

@@ -1,9 +1,13 @@
-<!-- PURPOSE: Short, measurable 2027 vision for a solo consulting practice. -->
-<!-- OUTPUT: HTML paragraph(s)/list only. -->
+# GUARD
+- English, HTML fragment.
 
-<p>By 2027 the practice is a leading provider of {{ hauptleistung }} with productized GPT services. Headline metrics: &ge; 40% recurring revenue, turnaround times halved, client satisfaction ≥ 90% (NPS). The brand stands for transparent methods, verified compliance and measurable impact.</p>
-<ul>
-  <li>Portfolio: 3–5 reusable services with clear outcomes.</li>
-  <li>Excellence: Auditable prompt library, versioning, case evidence.</li>
-  <li>Growth: Community/partner network for co‑sales &amp; upsell.</li>
-</ul>
+# CONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+
+# PINS
+- Tie to “moonshot” and strategic goals; market‑relevant, testable.
+
+# TASK
+<h4>AI Vision (3 Years)</h4>
+<p>Short, testable vision with 3–4 guiding statements (north‑star KPIs, customer value, operational excellence).</p>
+<ul></ul>

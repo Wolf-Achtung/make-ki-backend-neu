@@ -1,16 +1,26 @@
-<!-- PURPOSE: Compact, auditable compliance block (EU AI Act + GDPR) for solo consulting. -->
-<!-- OUTPUT: HTML lists/text only. -->
+# GUARD
+- English, HTML fragment. Practical steps; not legal advice.
 
-<ul>
-  <li><strong>Go‑live artefacts:</strong>
-    <ul>
-      <li>Register: AI components &amp; purposes, data categories, legal basis.</li>
-      <li>DPA/SCC signed (for third parties); sub‑processor list documented.</li>
-      <li>DPIA triggers &amp; outcome records for sensitive use cases.</li>
-      <li>RACI for operations (Owner = controller), retention/deletion rules.</li>
-      <li>Monitoring: prompt/answer samples, hallucination review, incident path.</li>
-    </ul>
-  </li>
-  <li><strong>Re‑classification triggers:</strong> change of purpose, new data categories, new model/agent, misuse, third‑country transfer.</li>
-  <li><strong>Transparency:</strong> Label AI‑generated content; simple opt‑out channels.</li>
-</ul>
+# CONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+
+# PINS
+- GDPR topics (bases, DPA, data flows, retention). EU AI Act risk classification by use case.
+- Consider sector specifics (health/finance/public/legal) and company size.
+
+# TASK
+<h4>Compliance Check (GDPR & EU AI Act)</h4>
+<h5>GDPR – Focus Areas</h5>
+<table>
+  <thead>
+    <tr><th>Topic</th><th>Relevance</th><th>Status (if known)</th><th>Action (concrete)</th><th>Owner</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<h5>EU AI Act – Positioning</h5>
+<table>
+  <thead>
+    <tr><th>Area</th><th>Risk category</th><th>Requirement</th><th>Next Step</th><th>Owner</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>

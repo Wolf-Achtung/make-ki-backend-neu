@@ -1,10 +1,20 @@
-<!-- PURPOSE: Business-Argumentation ohne eigene Zahlen zu erfinden (Baseline Payback ~4 Monate kommt aus Backend). -->
-<!-- OUTPUT: Nur HTML-Paragraf(e)/Liste. -->
+# GUARD
+- Deutsch, HTML-Fragment. Keine Platzhalter im Output.
 
-<p>Die Wirtschaftlichkeitsbetrachtung stützt sich auf direkte Zeiteinsparungen in Akquise, Angebotserstellung und Delivery. Entscheidend sind wenige, hochwirksame Automatisierungen entlang der {{ hauptleistung }}. Die Priorisierung folgt dem „4‑Monate‑Payback“-Ziel: erst Maßnahmen, die unmittelbar auf Umsatz/Zeiteffizienz einzahlen; danach Qualitäts- und Skalierungseffekte.</p>
+# KONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
 
-<ul>
-  <li><strong>Hebel 1:</strong> Standardisierte Angebotsbausteine (Prompt‑Library) → Durchlaufzeit &amp; Win‑Rate.</li>
-  <li><strong>Hebel 2:</strong> Wissensbibliothek + Retrieval → Reuse‑Quote, Antwortzeit.</li>
-  <li><strong>Hebel 3:</strong> Intake‑/Qualifizierung → bessere Passung, weniger Blindpitches.</li>
-</ul>
+# PINS
+- Nutzenargumente strikt an Hauptleistung & Zielgruppen koppeln.
+- Falls Umsatzklasse/Score verfügbar: Effekte daran skalieren.
+
+# AUFGABE
+<h4>Business Impact & ROI</h4>
+<table>
+  <thead>
+    <tr><th>Use-Case</th><th>Baseline</th><th>Annahme</th><th>Impact (Zeit/Kosten/Umsatz)</th><th>ROI-Horizont</th></tr>
+  </thead>
+  <tbody>
+    <!-- 3–5 Zeilen, realistische Annahmen, kurze Begründung im Impact-Feld. -->
+  </tbody>
+</table>

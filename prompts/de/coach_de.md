@@ -1,9 +1,17 @@
-<!-- PURPOSE: Enablement/Coaching – Mikro‑Gewohnheiten & Vorgehen für Solo‑Beratung. -->
-<!-- OUTPUT: Nur HTML. -->
+# GUARD
+- Deutsch, HTML-Fragment.
 
-<ul>
-  <li><strong>10‑Min‑Daily:</strong> Ein Prompt/Tool testen, Ergebnis als Snippet ablegen.</li>
-  <li><strong>Weekly Sprint:</strong> 1 Mini‑Automatisierung von Intake/Angebot/Delivery.</li>
-  <li><strong>Review &amp; Cleanup:</strong> Prompt‑Changelog, Beispiel‑Bibliothek, Löschprotokolle.</li>
-  <li><strong>Compliance‑Routine:</strong> AVV/SCC‑Check, DPIA‑Trigger prüfen, Logs nachziehen.</li>
-</ul>
+# KONTEXT
+- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+
+# PINS
+- Trainingsumfang an Zeitbudget & Know-how koppeln; modular (Basics → Use‑Case → Governance).
+
+# AUFGABE
+<h4>Coaching‑/Trainingsplan (4–8 Std.)</h4>
+<table>
+  <thead>
+    <tr><th>Modul</th><th>Ziel</th><th>Inhalt</th><th>Dauer</th><th>Ergebnis</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
