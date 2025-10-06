@@ -1,17 +1,19 @@
-# GUARD
-- Deutsch, HTML-Fragment.
+<!-- Datei: prompts/tools_de.md -->
+<!-- PURPOSE: Tools-Empfehlungen (DE) auf Basis lokaler Daten mit erweitertem Schema -->
+<!-- OUTPUT: Nur HTML-Fragment (ul/li, p, span). Keine <html>, kein DOCTYPE. -->
 
-# KONTEXT
-- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+<p><strong>Empfohlene Werkzeuge (angepasst an Branche & Größe)</strong></p>
+<ul>
+  <!-- Erwartet: Backend ersetzt {{TOOLS_JSON}} durch JSON-Liste mit Feldern aus tools.csv -->
+  <!-- Beispiel-Rendering: Name (Link) – One-liner – Chips für Aufwand/Preis/Compliance -->
+  {{ for tool in TOOLS_JSON }}
+    <li>
+      <a href="{{ tool.homepage_url }}">{{ tool.name }}</a> – {{ tool.one_liner }}
+      <span class="pill">Aufwand {{ tool.integration_effort_1to5 }}/5</span>
+      <span class="pill">Preis {{ tool.pricing_tier }}</span>
+      <span class="pill">DSGVO/AI-Act: {{ tool.gdpr_ai_act | upper }}</span>
+    </li>
+  {{ endfor }}
+</ul>
 
-# PINS
-- Tools an vorhandene Systeme, regulierte Branche und Teamgröße anpassen.
-
-# AUFGABE
-<h4>Tool‑Empfehlungen</h4>
-<table>
-  <thead>
-    <tr><th>Kategorie</th><th>Empfehlung</th><th>Warum passend</th><th>Datenschutz/Compliance</th><th>Kosten (grobe Spanne)</th></tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<p class="muted">Hinweis: Aufwand 1 = Plug&Play, 5 = Projekt. „Preis“: € bis €€€€.</p>
