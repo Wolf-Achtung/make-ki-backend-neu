@@ -1,3 +1,4 @@
+// File: config/live_queries.json
 {
   "default": {
     "include_domains": [
@@ -26,9 +27,7 @@
       "l-bank.de",
       "wirtschaft.sachsen.de"
     ]
-  }
-}
-{
+  },
   "marketing": {
     "include_domains": [
       "europa.eu",
@@ -230,4 +229,3 @@
     ]
   }
 }
-
