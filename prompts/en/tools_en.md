@@ -1,17 +1,17 @@
-# GUARD
-- English, HTML fragment.
+<!-- Datei: prompts/tools_en.md -->
+<!-- PURPOSE: Tools recommendations (EN) using local data with extended schema -->
+<!-- OUTPUT: HTML fragment only (ul/li, p, span). No <html> or DOCTYPE. -->
 
-# CONTEXT
-- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
+<p><strong>Recommended tools (matched to industry & size)</strong></p>
+<ul>
+  {{ for tool in TOOLS_JSON }}
+    <li>
+      <a href="{{ tool.homepage_url }}">{{ tool.name }}</a> – {{ tool.one_liner }}
+      <span class="pill">Effort {{ tool.integration_effort_1to5 }}/5</span>
+      <span class="pill">Price {{ tool.pricing_tier }}</span>
+      <span class="pill">GDPR/AI-Act: {{ tool.gdpr_ai_act | upper }}</span>
+    </li>
+  {{ endfor }}
+</ul>
 
-# PINS
-- Align tools to existing stack, regulated industry and team size.
-
-# TASK
-<h4>Tooling Recommendations</h4>
-<table>
-  <thead>
-    <tr><th>Category</th><th>Candidate</th><th>Why Fit</th><th>Privacy/Compliance</th><th>Cost (range)</th></tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<p class="muted">Note: Effort 1 = plug-and-play, 5 = project. “Price”: € to €€€€.</p>
