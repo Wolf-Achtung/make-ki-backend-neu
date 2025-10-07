@@ -1,9 +1,14 @@
-<!-- PURPOSE: Fallback-Text, wenn Live-Layer leer wäre. Baseline-Förderquellen mit neutraler Formulierung. -->
-<!-- OUTPUT: Nur HTML-Liste. Keine Datumsangaben. -->
+<!-- Datei: prompts/foerderprogramme_de.md -->
+<!-- OUTPUT: Nur HTML-Fragment. Nutzt FUNDING_JSON (lokal oder live) -->
 
+<p><strong>Relevante Förderprogramme</strong></p>
 <ul>
-  <li><a href="https://www.foerderdatenbank.de/">Förderdatenbank (Bund/Länder/EU)</a> – offizieller Überblick.</li>
-  <li><a href="https://www.bafa.de/">BAFA</a> – Programme u. a. für Beratung/ Digitalisierung.</li>
-  <li><a href="https://www.exist.de/">EXIST</a> – Gründung/Innovation (Kontextabhängig).</li>
+  {{ for item in FUNDING_JSON }}
+    <li>
+      <a href="{{ item.url }}">{{ item.title }}</a>
+      <span class="pill">{{ item.region }}</span>
+      {{ if item.amount_hint }}<span class="pill">{{ item.amount_hint }}</span>{{ endif }}
+    </li>
+  {{ endfor }}
 </ul>
-<p>Bei <em>Land Berlin</em>‑Quellen (z. B. <code>berlin.de</code>, <code>ibb.de</code>) wird im Report automatisch eine Badge angezeigt.</p>
+<p class="muted">Tipp: Prüfen Sie Fristen und Voraussetzungen; kombinieren Sie Beratung, Qualifizierung und Implementierung.</p>
