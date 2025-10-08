@@ -1,8 +1,9 @@
 # filename: backend/tools_loader.py
 # -*- coding: utf-8 -*-
 """
-Robuster Loader für data/tools.csv (und .json), inklusive Filterung.
-Verhindert '.strip()' auf Listen und normalisiert Felder.
+Loader/Filter für data/tools.csv(.json) – robust gegen List/str-Mischformen.
+- 'industry' akzeptiert jetzt 'all', 'any', 'general', leer → Match-All
+- weiche Größenprüfung (kein harter Ausschluss)
 """
 
 from __future__ import annotations
@@ -11,7 +12,7 @@ import csv
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 log = logging.getLogger("tools_loader")
 if not log.handlers:
@@ -64,20 +65,25 @@ def load_tools() -> List[Dict[str, Any]]:
     return items
 
 
+def _industry_matches(industry_query: str, tool_industry: str) -> bool:
+    iq = (industry_query or "*").strip().lower()
+    ti = (tool_industry or "").strip().lower()
+    if iq in ("*", "", "all", "any", "general"):
+        return True
+    if not ti or ti in ("all", "any", "general"):
+        return True
+    return iq in ti
+
+
 def filter_tools(industry: str = "*", company_size: str = "", limit: int = 8) -> List[Dict[str, Any]]:
     all_items = load_tools()
-    industry = (industry or "*").lower()
     out: List[Dict[str, Any]] = []
     for it in all_items:
-        ind = _s(it.get("industry")).lower() or "*"
-        fit_size = _s(it.get("company_size_fit")).lower()
-        if industry != "*" and industry not in ind:
+        if not _industry_matches(industry, _s(it.get("industry"))):
             continue
-        if company_size and fit_size and company_size.lower() not in fit_size:
-            # we allow non-strict size if empty
-            pass
+        # Größen-Fit nur als Soft-Signal (kein Ausschluss)
         out.append(it)
-    # Sortierung: GDPR yes → partial → unknown, Region EU/DE → andere, Aufwand 1..5
+
     def _rank(t: Dict[str, Any]) -> tuple:
         gdpr = (_s(t.get("gdpr_ai_act")) or "unknown").lower()
         gdpr_rank = {"yes": 0, "partial": 1, "unknown": 2}.get(gdpr, 2)
@@ -88,5 +94,6 @@ def filter_tools(industry: str = "*", company_size: str = "", limit: int = 8) ->
         except Exception:
             effort = 3
         return (gdpr_rank, region_rank, effort)
+
     out.sort(key=_rank)
     return out[: max(1, int(limit))]

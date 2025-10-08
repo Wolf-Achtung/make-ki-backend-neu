@@ -1,8 +1,7 @@
 # filename: backend/funding_loader.py
 # -*- coding: utf-8 -*-
 """
-Loader für Förderprogramme aus data/foerdermittel.csv / foerderprogramme.csv.
-Gibt einfache Objekte (title, url, region, amount_hint) zurück + Filter nach Region.
+Loader für Förderprogramme – dedupliziert, filtert nach Region.
 """
 
 from __future__ import annotations
@@ -20,49 +19,45 @@ if not log.handlers:
 log.setLevel(logging.INFO)
 
 DATA_DIR = os.getenv("DATA_DIR", os.path.join(os.getcwd(), "data"))
-FM_FILES = ["foerdermittel.csv", "foerderprogramme.csv"]
+FILES = ["foerdermittel.csv", "foerderprogramme.csv"]
 
 
-def _load_csv(path: str) -> List[Dict[str, Any]]:
+def _load_csv(p: str) -> List[Dict[str, Any]]:
     items: List[Dict[str, Any]] = []
-    if not os.path.exists(path):
+    if not os.path.exists(p):
         return items
-    with open(path, "r", encoding="utf-8") as f:
+    with open(p, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for r in reader:
-            it = {
+            items.append({
                 "title": r.get("title") or r.get("name") or "",
                 "url": r.get("url") or r.get("link") or "",
                 "region": (r.get("region") or r.get("state") or "BUND").upper(),
                 "amount_hint": r.get("amount_hint") or "",
-            }
-            items.append(it)
+            })
     return items
 
 
 def load_funding() -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
-    for fn in FM_FILES:
-        out.extend(_load_csv(os.path.join(DATA_DIR, fn)))
-    # Dedupe by URL
+    arr: List[Dict[str, Any]] = []
+    for fn in FILES:
+        arr.extend(_load_csv(os.path.join(DATA_DIR, fn)))
     seen = set()
-    deduped: List[Dict[str, Any]] = []
-    for it in out:
+    out: List[Dict[str, Any]] = []
+    for it in arr:
         u = it.get("url")
         if u and u not in seen:
             seen.add(u)
-            deduped.append(it)
-    log.info("funding_loader: loaded %d items from csv", len(deduped))
-    return deduped
+            out.append(it)
+    log.info("funding_loader: loaded %d items from csv", len(out))
+    return out
 
 
 def filter_funding(region: str = "DE", limit: int = 10) -> List[Dict[str, Any]]:
     items = load_funding()
     region = (region or "DE").upper()
-    def _ok(it: Dict[str, Any]) -> bool:
+    def ok(it: Dict[str, Any]) -> bool:
         r = (it.get("region") or "BUND").upper()
-        if region in ("DE", "BUND"):
-            return True
-        return r == region or r.startswith(region)
-    out = [it for it in items if _ok(it)]
+        return True if region in ("DE", "BUND") else (r == region or r.startswith(region))
+    out = [it for it in items if ok(it)]
     return out[: max(1, int(limit))]

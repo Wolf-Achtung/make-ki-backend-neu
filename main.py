@@ -1,13 +1,16 @@
-# File: main.py
+# filename: main.py
 # -*- coding: utf-8 -*-
 """
 Production API für KI‑Status‑Report (Gold‑Standard+)
 
-- /briefing_async: Report erzeugen, PDF via externem Service rendern,
-  Versand per SMTP (1 Mail pro Empfänger) mit PDF+HTML im Anhang.
-- Projekt‑Prefix im Betreff via MAIL_SUBJECT_PREFIX.
-- Robust: PDF‑Service unterstützt /render-pdf und /generate-pdf (Bytes/Base64).
-- Feedback‑Router: /feedback, /api/feedback, /v1/feedback, /feedback_email.
+- /health: Konfiguration, Konnektivität, optionale Deep‑Probes (Tavily/Perplexity/OpenAI/PDF).
+- /briefing_async: Report erzeugen, PDF via externem Service rendern, Versand per SMTP (User+Admin).
+- /api/login: Minimal‑Auth (JWT).
+- /ready: Lightweight Readiness‑Ping.
+
+Best Practices:
+- Striktes Logging (keine Secrets), PEP8, Idempotency‑Key auf Body+Empfänger
+- PDF‑Service: bevorzugt /generate-pdf, Alt‑Route /render-pdf nur noch als Fallback-Pfad
 """
 
 from __future__ import annotations
@@ -23,17 +26,17 @@ import time
 import uuid
 from email.message import EmailMessage
 from email.utils import formataddr, parseaddr
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from jose import jwt
 from jose.exceptions import JWTError
 from pydantic import BaseModel
 
-# Feedback‑Router minimal-invasiv anhängen
+# Feedback‑Router minimal-invasiv anhängen (falls vorhanden)
 try:
     from feedback_api import attach_to as attach_feedback  # noqa: F401
 except Exception:
@@ -79,6 +82,12 @@ SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "noreply@example.com")
 SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "KI‑Sicherheit")
 
 MAIL_SUBJECT_PREFIX = os.getenv("MAIL_SUBJECT_PREFIX", "KI‑Ready")
+
+# External APIs
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_APIKEY") or ""
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
+PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY", "")
+PERPLEXITY_MODEL = os.getenv("PERPLEXITY_MODEL", "sonar-small")
 
 # CORS
 CORS_ALLOW = [o.strip() for o in (os.getenv("CORS_ALLOW_ORIGINS") or "*").split(",") if o.strip()]
@@ -190,7 +199,7 @@ async def _render_pdf_bytes(html: str, filename: str) -> Optional[bytes]:
         return None
     async with httpx.AsyncClient(timeout=PDF_TIMEOUT) as cli:
         payload = {"html": html, "fileName": filename, "stripScripts": PDF_STRIP_SCRIPTS, "maxBytes": PDF_MAX_BYTES}
-        # 1) /render-pdf → application/pdf
+        # 1) /render-pdf → application/pdf  (Alt; wird weiterhin als Fallback probiert)
         try:
             r = await cli.post(f"{PDF_SERVICE_URL}/render-pdf", json=payload)
             ct = (r.headers.get("content-type") or "").lower()
@@ -298,20 +307,207 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Feedback-Router nur dann anhängen, wenn Modul vorhanden
 if attach_feedback:
     attach_feedback(app)
 
 # -------------------------------- Health / Login -----------------------------
 
 @app.get("/health")
-def health() -> dict:
-    return {"ok": True}
+async def health(
+    deep: int = Query(0, ge=0, le=2, description="0=config only, 1=ping hosts, 2=mini test requests"),
+) -> JSONResponse:
+    """
+    Health-Report ohne Secrets:
+      - env: Keys/URLs vorhanden?
+      - pdf: Service erreichbar?
+      - apis: Tavily/Perplexity/OpenAI erreichbar (optional Deep‑Probe)
+      - data/prompts: Loader/CSV/Dateien vorhanden?
+    """
+    out: Dict[str, Any] = {
+        "ok": True,
+        "app": APP_NAME,
+        "ts": _now_str(),
+        "deep": deep,
+        "env": {
+            "OPENAI_API_KEY": bool(OPENAI_API_KEY),
+            "TAVILY_API_KEY": bool(TAVILY_API_KEY),
+            "PERPLEXITY_API_KEY": bool(PERPLEXITY_API_KEY),
+            "PDF_SERVICE_URL": bool(PDF_SERVICE_URL),
+            "SMTP_CONFIGURED": bool(SMTP_HOST and SMTP_FROM),
+        },
+        "pdf": {},
+        "apis": {},
+        "data": {},
+        "prompts": {},
+        "notes": [],
+    }
+
+    # --- PDF service
+    pdf_status = {"url": PDF_SERVICE_URL, "reachable": False, "detail": "not configured"}
+    if PDF_SERVICE_URL:
+        try:
+            # leichte Prüfung
+            async with httpx.AsyncClient(timeout=4.0) as cli:
+                # bevorzugt /health
+                try:
+                    r = await cli.get(f"{PDF_SERVICE_URL}/health")
+                    if r.status_code == 200:
+                        pdf_status.update({"reachable": True, "detail": "/health:200"})
+                except Exception:
+                    pass
+                # HEAD generate
+                if not pdf_status["reachable"]:
+                    try:
+                        r = await cli.request("HEAD", f"{PDF_SERVICE_URL}/generate-pdf")
+                        if 200 <= r.status_code < 500:
+                            pdf_status.update({"reachable": True, "detail": f"HEAD /generate-pdf:{r.status_code}"})
+                    except Exception:
+                        pass
+                # Deep Test (dry-run)
+                if deep >= 2 and not pdf_status["reachable"]:
+                    try:
+                        r = await cli.post(f"{PDF_SERVICE_URL}/generate-pdf",
+                                           json={"html": "<b>ping</b>", "return_pdf_bytes": False})
+                        if r.status_code == 200:
+                            pdf_status.update({"reachable": True, "detail": "POST /generate-pdf:200"})
+                    except Exception as exc:
+                        pdf_status["detail"] = f"POST /generate-pdf fail: {exc}"
+        except Exception as exc:
+            pdf_status["detail"] = str(exc)
+    out["pdf"] = pdf_status
+    out["ok"] &= pdf_status.get("reachable", False) or not PDF_SERVICE_URL
+
+    # --- APIs: Tavily
+    tav = {"key": bool(TAVILY_API_KEY), "host": "api.tavily.com", "reachable": False, "detail": "skipped"}
+    if deep >= 1:
+        try:
+            async with httpx.AsyncClient(timeout=4.0) as cli:
+                r = await cli.get("https://api.tavily.com")
+                tav["reachable"] = r.status_code in (200, 404, 405)
+                tav["detail"] = f"GET /: {r.status_code}"
+        except Exception as exc:
+            tav["detail"] = f"host ping failed: {exc}"
+    if deep >= 2 and TAVILY_API_KEY:
+        # Minimal korrekter Body, Query ≤ 400 Zeichen
+        payload = {"query": "KI Tools DSGVO EU AI Act Deutschland 2025",
+                   "max_results": 1, "time_range": "day", "include_answer": False}
+        headers_variants = [
+            {"Content-Type": "application/json", "x-api-key": TAVILY_API_KEY},
+            {"Content-Type": "application/json", "Authorization": f"Bearer {TAVILY_API_KEY}"},
+        ]
+        for h in headers_variants:
+            try:
+                async with httpx.AsyncClient(timeout=6.0) as cli:
+                    r = await cli.post("https://api.tavily.com/search", headers=h, json=payload)
+                    if r.status_code == 200:
+                        tav["reachable"] = True
+                        tav["detail"] = "POST /search:200"
+                        break
+                    tav["detail"] = f"POST /search:{r.status_code}"
+            except Exception as exc:
+                tav["detail"] = f"POST fail: {exc}"
+    out["apis"]["tavily"] = tav
+    out["ok"] &= tav["key"]
+
+    # --- APIs: Perplexity
+    pplx = {"key": bool(PERPLEXITY_API_KEY), "host": "api.perplexity.ai", "reachable": False, "detail": "skipped"}
+    if deep >= 1:
+        try:
+            async with httpx.AsyncClient(timeout=4.0) as cli:
+                r = await cli.get("https://api.perplexity.ai")
+                pplx["reachable"] = r.status_code in (200, 404, 405)
+                pplx["detail"] = f"GET /: {r.status_code}"
+        except Exception as exc:
+            pplx["detail"] = f"host ping failed: {exc}"
+    if deep >= 2 and PERPLEXITY_API_KEY:
+        payload = {
+            "model": PERPLEXITY_MODEL,
+            "messages": [{"role": "user", "content": "Return JSON array: [{\"title\":\"ok\",\"url\":\"https://example.com\",\"date\":\"\"}] only."}],
+            "max_tokens": 16,
+            "temperature": 0.0,
+        }
+        headers = {"Authorization": f"Bearer {PERPLEXITY_API_KEY}", "Content-Type": "application/json"}
+        try:
+            async with httpx.AsyncClient(timeout=6.0) as cli:
+                r = await cli.post("https://api.perplexity.ai/chat/completions", headers=headers, json=payload)
+                pplx["reachable"] = r.status_code == 200
+                pplx["detail"] = f"POST /chat/completions:{r.status_code}"
+        except Exception as exc:
+            pplx["detail"] = f"POST fail: {exc}"
+    out["apis"]["perplexity"] = pplx
+    out["ok"] &= pplx["key"]
+
+    # --- APIs: OpenAI (optional)
+    oai = {"key": bool(OPENAI_API_KEY), "reachable": False, "detail": "skipped"}
+    if deep >= 1 and OPENAI_API_KEY:
+        headers = {"Authorization": f"Bearer {OPENAI_API_KEY}"}
+        try:
+            async with httpx.AsyncClient(timeout=4.0) as cli:
+                r = await cli.get("https://api.openai.com/v1/models", headers=headers)
+                oai["reachable"] = r.status_code == 200
+                oai["detail"] = f"GET /v1/models:{r.status_code}"
+        except Exception as exc:
+            oai["detail"] = f"GET fail: {exc}"
+    out["apis"]["openai"] = oai
+
+    # --- Daten/Loader
+    tools_info = {"count": 0, "detail": "not loaded"}
+    try:
+        from tools_loader import filter_tools  # type: ignore
+        items = filter_tools(industry="all", company_size="solo", limit=32)
+        tools_info = {"count": len(items or []), "detail": "tools_loader"}
+    except Exception:
+        # Fallback: CSV grob zählen
+        try:
+            import csv
+            p = os.path.join(BASE_DIR, "data", "tools.csv")
+            with open(p, "r", encoding="utf-8") as f:
+                tools_info = {"count": sum(1 for _ in csv.DictReader(f)), "detail": "tools.csv"}
+        except Exception as exc:
+            tools_info = {"count": 0, "detail": f"unavailable: {exc}"}
+    out["data"]["tools"] = tools_info
+
+    funding_info = {"count": 0, "detail": "not loaded"}
+    try:
+        from funding_loader import filter_funding  # type: ignore
+        items = filter_funding(region="DE", limit=32)
+        funding_info = {"count": len(items or []), "detail": "funding_loader"}
+    except Exception:
+        try:
+            import csv
+            p = os.path.join(BASE_DIR, "data", "foerderprogramme.csv")
+            with open(p, "r", encoding="utf-8") as f:
+                funding_info = {"count": sum(1 for _ in csv.DictReader(f)), "detail": "foerderprogramme.csv"}
+        except Exception as exc:
+            funding_info = {"count": 0, "detail": f"unavailable: {exc}"}
+    out["data"]["funding"] = funding_info
+
+    # --- Prompts (Kernbestand)
+    def _exists(*parts: str) -> bool:
+        return os.path.exists(os.path.join(BASE_DIR, "prompts", *parts))
+    core_de = ["executive_summary_de.md", "quick_wins_de.md", "roadmap_de.md",
+               "risks_de.md", "compliance_de.md", "business_de.md", "recommendations_de.md"]
+    core_en = ["executive_summary_en.md", "quick_wins_en.md", "roadmap_en.md",
+               "risks_en.md", "compliance_en.md", "business_en.md", "recommendations_en.md"]
+    out["prompts"] = {
+        "de": {name: _exists("de", name) or _exists(name) for name in core_de},
+        "en": {name: _exists("en", name) or _exists(name) for name in core_en},
+    }
+
+    # Gesamtergebnis
+    out["ok"] &= all(out["prompts"]["de"].values()) and all(out["prompts"]["en"].values())
+
+    status = 200 if out["ok"] else 503
+    return JSONResponse(out, status_code=status)
 
 
 @app.get("/ready")
 def ready() -> dict:
     return {"ok": True, "ts": _now_str()}
+
+
+class LoginReq(BaseModel):
+    email: str
 
 
 @app.post("/api/login")
