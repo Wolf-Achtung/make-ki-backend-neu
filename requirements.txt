@@ -1,32 +1,7 @@
 # File: requirements.txt
-# Gold-Standard+ Backend Runtime (FastAPI + Jinja2 + OpenAI v1 + Live-Suche + SMTP)
-
-# API & Server
-fastapi>=0.114,<1.0
-uvicorn[standard]>=0.30,<1.0
-
-# HTTP & Templating
-httpx[http2]>=0.27,<1.0
-jinja2>=3.1,<4.0
-python-multipart>=0.0.9,<0.1
-
-# Config / Utils
-python-dotenv>=1.0,<2.0
-pyyaml>=6.0,<7.0
-orjson>=3.10,<4.0
-
-# Auth (JWT)
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+httpx==0.27.2
 python-jose[cryptography]==3.3.0
-
-# OpenAI v1 SDK (Report-Generierung; robuster Wrapper in gpt_analyze.py)
-openai>=1.41.0,<2.0
-
-# Live-Suche & EU-Host-Check
-dnspython>=2.4,<3.0
-ipwhois>=1.2,<2.0
-tavily-python>=0.5.0
-# Domain-Heuristik (Fix: breite Spanne, 3.6.0 ist yanked; 4.x/5.x erlaubt)
-tldextract>=3.5,<6.0
-
-# Optional/Tests
-pytest>=7.4,<9.0
+prometheus-client==0.20.0
+pydantic==2.8.2
