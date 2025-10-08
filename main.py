@@ -348,7 +348,7 @@ def health_html() -> HTMLResponse:
 <meta charset="utf-8">
 <title>{APP_NAME} /health</title>
 <style>
-body{{font:14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;max-width:880px;margin:2rem auto;line-height:1.4} 
+body{{font:14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;max-width:880px;margin:2rem auto;line-height:1.4}}
 .card{{border:1px solid #e5e7eb;border-radius:8px;padding:1rem;margin:.75rem 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}}
 .kv{{display:grid;grid-template-columns:180px 1fr;gap:.5rem .75rem}}
 .badge{{display:inline-block;padding:.15rem .5rem;border-radius:6px;background:#e6fffa;color:#065f46;font-weight:600}}
