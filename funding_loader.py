@@ -1,47 +1,68 @@
-# File: funding_loader.py
+# filename: backend/funding_loader.py
 # -*- coding: utf-8 -*-
 """
-Einfacher Loader für lokale Förderlisten:
-- data/foerdermittel.csv (oder) data/foerderprogramme.csv
-Erwartete Spalten (flexibel): title/name, url, region/bundesland, amount/budget, deadline (optional)
+Loader für Förderprogramme aus data/foerdermittel.csv / foerderprogramme.csv.
+Gibt einfache Objekte (title, url, region, amount_hint) zurück + Filter nach Region.
 """
+
 from __future__ import annotations
-import csv, os, logging
-from typing import List, Dict
 
-LOG = logging.getLogger("funding_loader")
-LOG.setLevel(logging.INFO)
+import csv
+import logging
+import os
+from typing import Any, Dict, List
 
-BASE_DIR = os.path.abspath(os.getenv("APP_BASE", os.getcwd()))
-DATA_DIR = os.getenv("DATA_DIR", os.path.join(BASE_DIR, "data"))
-CANDIDATES = [os.path.join(DATA_DIR, "foerdermittel.csv"),
-              os.path.join(DATA_DIR, "foerderprogramme.csv")]
+log = logging.getLogger("funding_loader")
+if not log.handlers:
+    import sys
+    h = logging.StreamHandler(sys.stdout)
+    log.addHandler(h)
+log.setLevel(logging.INFO)
 
-def _read_csv_any() -> List[Dict[str,str]]:
-    for path in CANDIDATES:
-        if os.path.exists(path):
-            with open(path, "r", encoding="utf-8") as f:
-                reader = csv.DictReader((line for line in f if not line.strip().startswith("#")))
-                rows = []
-                for row in reader:
-                    rows.append({k:(v or "").strip() for k,v in row.items()})
-                LOG.info("funding_loader: loaded %d items from %s", len(rows), os.path.basename(path))
-                return rows
-    LOG.warning("funding_loader: no local funding CSV found.")
-    return []
+DATA_DIR = os.getenv("DATA_DIR", os.path.join(os.getcwd(), "data"))
+FM_FILES = ["foerdermittel.csv", "foerderprogramme.csv"]
 
-def filter_funding(region: str = "DE", limit: int = 10) -> List[Dict[str,str]]:
-    rows = _read_csv_any()
-    if not rows: return []
-    r = region.upper()
-    items = []
-    for row in rows:
-        title = row.get("title") or row.get("name") or ""
-        url = row.get("url") or row.get("link") or ""
-        reg = (row.get("region") or row.get("bundesland") or "DE").upper()
-        amount = row.get("amount") or row.get("budget") or row.get("foerderquote") or ""
-        # Bevorzuge Regionstreffer, sonst DE-weit
-        score = 2 if reg == r else (1 if reg in ("DE","EU","EEA","BUND") else 0)
-        items.append({"title": title, "url": url, "region": reg, "amount_hint": amount, "_score": score})
-    items = sorted(items, key=lambda x: x["_score"], reverse=True)
-    return [{k:v for k,v in it.items() if not k.startswith("_")} for it in items[:limit]]
+
+def _load_csv(path: str) -> List[Dict[str, Any]]:
+    items: List[Dict[str, Any]] = []
+    if not os.path.exists(path):
+        return items
+    with open(path, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for r in reader:
+            it = {
+                "title": r.get("title") or r.get("name") or "",
+                "url": r.get("url") or r.get("link") or "",
+                "region": (r.get("region") or r.get("state") or "BUND").upper(),
+                "amount_hint": r.get("amount_hint") or "",
+            }
+            items.append(it)
+    return items
+
+
+def load_funding() -> List[Dict[str, Any]]:
+    out: List[Dict[str, Any]] = []
+    for fn in FM_FILES:
+        out.extend(_load_csv(os.path.join(DATA_DIR, fn)))
+    # Dedupe by URL
+    seen = set()
+    deduped: List[Dict[str, Any]] = []
+    for it in out:
+        u = it.get("url")
+        if u and u not in seen:
+            seen.add(u)
+            deduped.append(it)
+    log.info("funding_loader: loaded %d items from csv", len(deduped))
+    return deduped
+
+
+def filter_funding(region: str = "DE", limit: int = 10) -> List[Dict[str, Any]]:
+    items = load_funding()
+    region = (region or "DE").upper()
+    def _ok(it: Dict[str, Any]) -> bool:
+        r = (it.get("region") or "BUND").upper()
+        if region in ("DE", "BUND"):
+            return True
+        return r == region or r.startswith(region)
+    out = [it for it in items if _ok(it)]
+    return out[: max(1, int(limit))]
