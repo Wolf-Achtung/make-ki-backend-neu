@@ -3,10 +3,11 @@
 """
 Analyzer für KI-Status-Report (Gold-Standard+)
 
-Änderungen (GS+):
-- Backward-Compat-API: `produce_admin_attachments` + `analyze_briefing_enhanced`.
-- Gecleant: ungenutzte Dataclass entfernt, defensives Logging, __all__.
-- Robuste Prompts/Template-Ladung, LLM-Fallback ohne Crash.
+Änderungen (GS+ heute):
+- LLM-Output wird auf HTML-Fragment reduziert (_as_fragment), keine eingebetteten <html>/<head>/<body>.
+- Leichte HTML-Minify-Option für Section-HTMLs (_minify_html_soft) – standardmäßig an.
+- Normalizer setzt 'umsatzziel' als Top-Level (aus 'jahresumsatz'), vermeidet false positive in Missing-List.
+- Bestehende Backward-Compat: analyze_briefing_enhanced, produce_admin_attachments.
 """
 
 from __future__ import annotations
@@ -21,21 +22,6 @@ from datetime import date
 from typing import Any, Dict, List, Optional
 
 import httpx
-
-__all__ = [
-    "normalize_briefing",
-    "compute_scores",
-    "business_case",
-    "business_case_html",
-    "render_section",
-    "analyze_briefing",
-    "analyze_briefing_enhanced",
-    "produce_admin_attachments",
-]
-
-# --------------------------------------------------------------------------- #
-# Konfiguration / Logging
-# --------------------------------------------------------------------------- #
 
 log = logging.getLogger("gpt_analyze")
 if not log.handlers:
@@ -96,6 +82,31 @@ def _strip_llm(text: str) -> str:
         return ""
     text = re.sub(r"```[a-zA-Z0-9]*\s*", "", text).replace("```", "")
     return text.strip()
+
+
+def _as_fragment(html: str) -> str:
+    """Entfernt Doctype/HTML/HEAD/BODY/STYLE, so dass ein valider Fragment-Block übrig bleibt."""
+    if not html:
+        return ""
+    s = html
+    s = re.sub(r"(?is)<!doctype.*?>", "", s)
+    s = re.sub(r"(?is)<\s*html[^>]*>", "", s)
+    s = re.sub(r"(?is)</\s*html\s*>", "", s)
+    s = re.sub(r"(?is)<\s*head[^>]*>.*?</\s*head\s*>", "", s)
+    s = re.sub(r"(?is)<\s*body[^>]*>", "", s)
+    s = re.sub(r"(?is)</\s*body\s*>", "", s)
+    s = re.sub(r"(?is)<\s*style[^>]*>.*?</\s*style\s*>", "", s)
+    return s.strip()
+
+
+def _minify_html_soft(s: str) -> str:
+    """Einfache Minifizierung: Kommentare raus, Zwischenräume reduzieren. Collision-safe für HTML."""
+    if not s:
+        return s
+    s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
+    s = re.sub(r">\s+<", "><", s)
+    s = re.sub(r"\s{2,}", " ", s)
+    return s.strip()
 
 
 def _load_prompt(lang: str, name: str) -> str:
@@ -193,10 +204,13 @@ def normalize_briefing(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     b["bundesland_code"] = (b.get("bundesland_code") or b.get("bundesland") or "DE").upper()
     b["hauptleistung"] = b.get("hauptleistung") or "Beratung/Service"
 
-    # Pull-KPIs
+    # Pull-KPIs + Top-Level Korrektur
     top_use = str(b.get("usecase_priority") or "")
     if not top_use and isinstance(b.get("ki_usecases"), list) and b["ki_usecases"]:
         top_use = str(b["ki_usecases"][0])
+    # Top-Level 'umsatzziel' wenn leer → aus 'jahresumsatz'
+    if not b.get("umsatzziel") and b.get("jahresumsatz"):
+        b["umsatzziel"] = b["jahresumsatz"]
     b["pull_kpis"] = {
         "umsatzziel": b.get("umsatzziel") or b.get("jahresumsatz") or "",
         "top_use_case": top_use,
@@ -333,7 +347,6 @@ def _lede_html(score: ScorePack, case: BusinessCase, lang: str) -> str:
 
 
 def _openai_chat(messages: List[Dict[str, str]], model: Optional[str] = None, max_tokens: Optional[int] = None) -> str:
-    """Kleiner Wrapper für das Chat-Completions-API. Leise bei Fehlern."""
     if not OPENAI_API_KEY:
         return ""
     url = "https://api.openai.com/v1/chat/completions"
@@ -375,6 +388,8 @@ def render_section(name: str, lang: str, ctx: Dict[str, Any]) -> str:
         [{"role": "system", "content": system}, {"role": "user", "content": user}],
         model=EXEC_SUMMARY_MODEL if name == "executive_summary" else OPENAI_MODEL,
     )
+    # >>> NEU: Fragmentisieren + Soft-Minify
+    out = _minify_html_soft(_as_fragment(out))
     return out
 
 
@@ -603,69 +618,36 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
 # --------------------------------------------------------------------------- #
 
 def analyze_briefing_enhanced(raw: Dict[str, Any], lang: str = "de") -> str:
-    """
-    Kompatibilitäts-Wrapper: leitet aktuell auf analyze_briefing weiter.
-    Später kann hier eine erweiterte Pipeline eingehängt werden.
-    """
+    """Kompatibilitäts-Wrapper (derzeit = analyze_briefing)."""
     return analyze_briefing(raw, lang=lang)
 
 
 def produce_admin_attachments(raw: Dict[str, Any]) -> Dict[str, str]:
-    """
-    Liefert Diagnose-Anhänge (JSON) für Admin-Mails.
-    Rückgabe: Mapping filename -> JSON-String (utf-8).
-      - briefing_raw.json
-      - briefing_normalized.json
-      - briefing_missing_fields.json
-    """
-    import json as _jsonlib  # Lokaler Alias
-
-    # 1) Rohdaten robust übernehmen
+    """Diagnose-Anhänge (JSON) für Admin-Mails."""
+    import json as _jsonlib
     try:
         b = dict(raw or {})
     except Exception:
         b = {"_note": "non-dict raw payload"}
-
-    # 2) Normalisieren
     try:
         lang = str(b.get("lang") or b.get("language") or "de")
         norm = normalize_briefing(b, lang=lang)
     except Exception as exc:
         norm = {"_error": f"normalize_briefing failed: {exc}", "_raw_keys": list(b.keys())}
 
-    # 3) Fehlende Felder heuristisch ermitteln (für schnelles Debugging)
     required = [
-        "branche",
-        "branche_label",
-        "unternehmensgroesse",
-        "unternehmensgroesse_label",
-        "bundesland_code",
-        "hauptleistung",
-        "usecase_priority",
-        "ki_usecases",
-        "umsatzziel",
-        "jahresumsatz",
-        "zeitbudget",
-        "investitionsbudget",
-        "kpi_digitalisierung",
-        "kpi_automatisierung",
-        "kpi_compliance",
-        "kpi_prozessreife",
-        "kpi_innovation",
+        "branche","branche_label","unternehmensgroesse","unternehmensgroesse_label","bundesland_code",
+        "hauptleistung","usecase_priority","ki_usecases","umsatzziel","jahresumsatz","zeitbudget",
+        "investitionsbudget","kpi_digitalisierung","kpi_automatisierung","kpi_compliance","kpi_prozessreife","kpi_innovation",
     ]
-
     def _is_missing(v) -> bool:
-        if v is None:
-            return True
-        if isinstance(v, str):
-            return v.strip() == ""
-        if isinstance(v, (list, dict, tuple, set)):
-            return len(v) == 0
+        if v is None: return True
+        if isinstance(v, str): return v.strip() == ""
+        if isinstance(v, (list, dict, tuple, set)): return len(v) == 0
         return False
 
     missing = sorted([k for k in required if _is_missing(norm.get(k))])
 
-    # 4) Anhänge als JSON-Strings
     return {
         "briefing_raw.json": _jsonlib.dumps(b, ensure_ascii=False, indent=2),
         "briefing_normalized.json": _jsonlib.dumps(norm, ensure_ascii=False, indent=2),

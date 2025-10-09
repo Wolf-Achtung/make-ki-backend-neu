@@ -3,9 +3,10 @@
 """
 Production API für KI‑Status‑Report (Gold‑Standard+)
 
-Änderungen (GS+):
-- Anhang-Dateinamen für E-Mails dynamisch (html/pdf).
-- Unnötigen Import entfernt, Logging & CORS stabil.
+Änderungen (heute):
+- PDF-Render: zusätzliche HTML-Minifizierung (_minify_html) vor dem Versand an den PDF-Service.
+- Robuster Fallback: Wenn pdf_bytes None → optionaler PDF-E-Mail-Fallback (_pdf_service_email), auch wenn SMTP klappt.
+- Dateinamen für Anhänge dynamisch (PDF/HTML).
 """
 
 from __future__ import annotations
@@ -64,6 +65,7 @@ PDF_TIMEOUT = _pdf_timeout_raw / 1000 if _pdf_timeout_raw > 1000 else _pdf_timeo
 PDF_MAX_BYTES = int(os.getenv("PDF_MAX_BYTES", str(10 * 1024 * 1024)))
 PDF_STRIP_SCRIPTS = os.getenv("PDF_STRIP_SCRIPTS", "1").strip().lower() in {"1", "true", "yes"}
 PDF_EMAIL_FALLBACK_TO_USER = os.getenv("PDF_EMAIL_FALLBACK_TO_USER", "1").strip().lower() in {"1", "true", "yes"}
+PDF_MINIFY_HTML = os.getenv("PDF_MINIFY_HTML", "1").strip().lower() in {"1", "true", "yes"}
 
 # Versand / Empfänger
 SEND_TO_USER = os.getenv("SEND_TO_USER", "1").strip().lower() in {"1", "true", "yes"}
@@ -190,6 +192,14 @@ def _safe_html_filename(display_name: str, lang: str) -> str:
     return f"KI-Status-Report-{dn}-{lang}.html"
 
 
+def _minify_html(s: str) -> str:
+    if not s:
+        return s
+    s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
+    s = re.sub(r">\s+<", "><", s)
+    s = re.sub(r"\s{2,}", " ", s)
+    return s.strip()
+
 # ----------------------------------------------------------------------------
 # PDF-Service (Rendern)
 # ----------------------------------------------------------------------------
@@ -198,8 +208,9 @@ async def _render_pdf_bytes(html: str, filename: str) -> Optional[bytes]:
     if not (PDF_SERVICE_URL and html):
         return None
     start = time.time()
+    payload_html = _minify_html(html) if PDF_MINIFY_HTML else html
     async with httpx.AsyncClient(timeout=PDF_TIMEOUT) as cli:
-        payload = {"html": html, "fileName": filename, "stripScripts": PDF_STRIP_SCRIPTS, "maxBytes": PDF_MAX_BYTES}
+        payload = {"html": payload_html, "fileName": filename, "stripScripts": PDF_STRIP_SCRIPTS, "maxBytes": PDF_MAX_BYTES}
         # 1) /render-pdf → application/pdf
         try:
             r = await cli.post(f"{PDF_SERVICE_URL}/render-pdf", json=payload)
@@ -236,7 +247,7 @@ async def _pdf_service_email(recipient: str, subject: str, html: str, lang: str,
     try:
         async with httpx.AsyncClient(timeout=PDF_TIMEOUT) as cli:
             payload = {
-                "html": html,
+                "html": _minify_html(html) if PDF_MINIFY_HTML else html,
                 "lang": lang,
                 "subject": subject,
                 "recipient": recipient,
@@ -249,7 +260,6 @@ async def _pdf_service_email(recipient: str, subject: str, html: str, lang: str,
             return {"ok": r.status_code == 200, "status": r.status_code, "detail": r.text[:500]}
     except Exception as exc:
         return {"ok": False, "status": 0, "detail": str(exc)}
-
 
 # ----------------------------------------------------------------------------
 # SMTP‑Versand
@@ -277,7 +287,6 @@ def _send_combined_email(
     for name, data in (admin_json or {}).items():
         msg.add_attachment(data, maintype="application", subtype="json", filename=name)
     _smtp_send(msg)
-
 
 # ----------------------------------------------------------------------------
 # Auth / FastAPI
@@ -313,7 +322,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Feedback-Router nur dann anhängen, wenn Modul vorhanden
 if attach_feedback:
     attach_feedback(app)
 
@@ -323,7 +331,6 @@ if attach_feedback:
 async def _metrics_mw(request: Request, call_next):
     path = request.url.path
     if path == "/metrics":
-        # nicht zählen, sonst rekursiv
         return await call_next(request)
     start = time.time()
     try:
@@ -385,7 +392,6 @@ def api_login(req: LoginReq) -> Dict[str, Any]:
     token = _issue_token(email)
     return {"token": token, "email": email}
 
-
 # ------------------------------- Kern‑Endpoint -------------------------------
 
 @app.post("/briefing_async")
@@ -419,7 +425,7 @@ async def briefing_async(
         log.info("[idem] duplicate (user=%s, lang=%s) – skipping", recipient_user, lang)
         return JSONResponse({"status": "duplicate", "job_id": _new_job_id()})
 
-    # Import hier, damit der Start schnell bleibt
+    # Analyse importieren
     try:
         from gpt_analyze import analyze_briefing, produce_admin_attachments  # type: ignore
     except Exception as exc:  # pragma: no cover
@@ -457,26 +463,28 @@ async def briefing_async(
     except Exception:
         pass
 
-    # Mail an User (oder Fallback über PDF-Service)
+    # Mail an User
     user_result = {"ok": False, "status": 0, "detail": "skipped"}
-    if SEND_TO_USER:
-        try:
-            _send_combined_email(
-                to_address=recipient_user,
-                subject=subject,
-                html_body=("<p>Ihr KI‑Status‑Report liegt im Anhang (PDF &amp; HTML).</p>" if lang == "de"
-                           else "<p>Your AI status report is attached (PDF &amp; HTML).</p>"),
-                html_attachment=html.encode("utf-8"),
-                pdf_attachment=pdf_bytes,
-                html_filename=filename_html,
-                pdf_filename=filename_pdf,
-            )
-            user_result = {"ok": True, "status": 200, "detail": "SMTP"}
-        except Exception as exc:
-            log.error("[mail] user SMTP failed: %s", exc)
-            if PDF_EMAIL_FALLBACK_TO_USER:
-                fb = await _pdf_service_email(recipient_user, subject, html, lang, filename_pdf)
-                user_result = fb
+    try:
+        _send_combined_email(
+            to_address=recipient_user,
+            subject=subject,
+            html_body=("<p>Ihr KI‑Status‑Report liegt im Anhang (PDF &amp; HTML).</p>" if lang == "de"
+                       else "<p>Your AI status report is attached (PDF &amp; HTML).</p>"),
+            html_attachment=html.encode("utf-8"),
+            pdf_attachment=pdf_bytes,
+            html_filename=filename_html,
+            pdf_filename=filename_pdf,
+        )
+        user_result = {"ok": True, "status": 200, "detail": "SMTP"}
+    except Exception as exc:
+        log.error("[mail] user SMTP failed: %s", exc)
+
+    # Fallback per PDF-Service-Mail, wenn kein PDF erzeugt werden konnte
+    if (pdf_bytes is None) and PDF_EMAIL_FALLBACK_TO_USER and PDF_SERVICE_URL:
+        fb = await _pdf_service_email(recipient=recipient_user, subject=subject, html=html, lang=lang, filename=filename_pdf)
+        # NB: kann bei Service-413 weiterhin scheitern – wird aber zurückgegeben
+        user_result = fb
 
     # Mail an Admin
     admin_result = {"ok": False, "status": 0, "detail": "skipped"}
@@ -497,9 +505,7 @@ async def briefing_async(
         except Exception as exc:
             log.error("[mail] admin SMTP failed: %s", exc)
 
-    return JSONResponse(
-        {"status": "ok", "job_id": job_id, "user_mail": user_result, "admin_mail": admin_result}
-    )
+    return JSONResponse({"status": "ok", "job_id": job_id, "user_mail": user_result, "admin_mail": admin_result})
 
 
 @app.post("/pdf_test")
