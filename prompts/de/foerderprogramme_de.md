@@ -1,14 +1,29 @@
-<!-- Datei: prompts/foerderprogramme_de.md -->
-<!-- OUTPUT: Nur HTML-Fragment. Nutzt FUNDING_JSON (lokal oder live) -->
+<!-- Datei: prompts/de/foerderprogramme_de.md -->
+<!-- OUTPUT: Ausschließlich HTML-Fragment (kein <html>/<head>/<body>). Nutzt FUNDING_JSON. -->
 
-<p><strong>Relevante Förderprogramme</strong></p>
-<ul>
-  {{ for item in FUNDING_JSON }}
-    <li>
-      <a href="{{ item.url }}">{{ item.title }}</a>
-      <span class="pill">{{ item.region }}</span>
-      {{ if item.amount_hint }}<span class="pill">{{ item.amount_hint }}</span>{{ endif }}
-    </li>
-  {{ endfor }}
-</ul>
-<p class="muted">Tipp: Prüfen Sie Fristen und Voraussetzungen; kombinieren Sie Beratung, Qualifizierung und Implementierung.</p>
+<section class="card">
+  <h2>Relevante Förderprogramme (kuratiert)</h2>
+  <table class="bm">
+    <thead>
+      <tr>
+        <th>Programm</th>
+        <th>Träger</th>
+        <th>Quote/Budget</th>
+        <th>Stand</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ for item in FUNDING_JSON }}
+        <tr>
+          <td><a href="{{ item.url }}">{{ item.title }}</a></td>
+          <td>{{ item.source }}</td>
+          <td>{{ item.rate }} {{ if item.cap_eur }}· bis {{ item.cap_eur }} €{{ endif }}</td>
+          <td>{{ item.date }}</td>
+        </tr>
+      {{ endfor }}
+    </tbody>
+  </table>
+  <div class="muted" style="margin-top:8px">
+    Tipp: Fristen und Förderfähigkeit prüfen; bei Non-EU-Anbietern AVV/SCC & EU-Fallback beachten.
+  </div>
+</section>
