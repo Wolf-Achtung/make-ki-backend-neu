@@ -1,4 +1,3 @@
-<!-- File: templates/pdf_template_en.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,59 +5,102 @@
   <title>AI Status Report</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:#0f172a;background:#fff;line-height:1.45}
-    h1,h2,h3{color:#0f172a;margin:0 0 .4rem}
+    :root{
+      --text:#0b2540; --muted:#51637a; --bg:#ffffff; --card:#ffffff; --border:#d8e3f3;
+      --primary:#1e3a8a; --primary-2:#2563eb; --accent:#f97316; --accent-2:#fb923c;
+    }
+    @page { size: A4; margin: 18mm; }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;line-height:1.45}
+    h1,h2,h3{color:var(--primary);margin:0 0 .5rem}
     h1{font-size:26px} h2{font-size:20px} h3{font-size:16px}
     p{margin:.35rem 0}
-    a{color:#0f172a;text-decoration:underline}
+    a{color:var(--primary-2);text-decoration:underline}
+
     .wrap{max-width:1180px;margin:0 auto;padding:28px}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand img{height:38px}
-    .meta{font-size:12px;color:#475569}
+    header{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;margin-bottom:10px}
+    .brand{display:flex;align-items:center;gap:14px}
+    .brand picture img{height:42px}
+    .brand .title{font-size:22px;font-weight:800;color:var(--primary)}
+    .meta{font-size:12px;color:var(--muted)}
+
+    .badges{display:flex;align-items:center;gap:12px}
+    .badges img, .badges svg{height:28px}
+    .shield{height:46px}
+
+    .hero{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;
+      background:linear-gradient(135deg,#e0f2fe,#dbeafe);border:1px solid var(--border);border-radius:16px;padding:12px 16px;margin:10px 0}
+    .hero .kvs{font-size:13px;color:var(--muted)}
+    .hero .kvs b{color:var(--text)}
+
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
-    .card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;break-inside:avoid}
+
     .kpi .bar{display:grid;grid-template-columns:160px 1fr max-content;align-items:center;margin:8px 0}
+    .kpi .label{font-size:13px;color:var(--text)}
     .kpi .bar__track{position:relative;height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden}
-    .kpi .bar__fill{height:10px;background:#3b82f6}
-    .kpi .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:#0f172a;opacity:.35}
-    .kpi .bar__delta{font-size:12px;color:#475569;margin-left:6px}
+    .kpi .bar__fill{height:10px;background:var(--primary-2)}
+    .kpi .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--accent);opacity:.9}
+    .kpi .bar__delta{font-size:12px;color:var(--muted);margin-left:6px}
+
     .bm{width:100%;border-collapse:collapse}
-    .bm th,.bm td{border-bottom:1px solid #e2e8f0;padding:8px 10px;text-align:left;font-size:13px}
+    .bm th,.bm td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;font-size:13px}
     .badge{display:inline-block;border-radius:24px;padding:6px 10px;font-weight:700;font-size:12px}
     .badge.BASIC{background:#fee2e2;color:#991b1b}
     .badge.FAIR{background:#fff7ed;color:#9a3412}
     .badge.GOOD{background:#dcfce7;color:#166534}
     .badge.EXCELLENT{background:#e0f2fe;color:#075985}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#f1f5f9;color:#0f172a;font-size:12px}
-    .muted{color:#64748b}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef2ff;color:var(--primary);font-size:12px}
+    .muted{color:var(--muted)}
     .hl{font-weight:700}
+    
     .note{background:#fff7ed;border:1px solid #fdba74;color:#7c2d12;padding:12px;border-radius:10px}
-    .columns{columns:2;column-gap:16px}
-    .footnotes{font-size:12px;color:#475569;margin-top:8px}
-    .flag-berlin{display:inline-block;background:#111827;color:#fff;border-radius:6px;padding:2px 6px;font-size:11px;margin-left:6px}
-    footer{margin-top:24px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:12px;color:#475569}
-    .label{font-size:12px;color:#475569}
+    .footnotes{font-size:12px;color:var(--muted);margin-top:8px}
+
+    /* Chapter page breaks */
+    .chapter{break-before:page; page-break-before:always;}
+
+    footer{margin-top:22px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);display:grid;gap:6px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="brand">
-        <img src="{{ASSETS_BASE}}/logo.svg" alt="KI‑Sicherheit.jetzt" />
+        <picture>
+          <source srcset="{{ASSETS_BASE}}/ki-sicherheit-logo.webp" type="image/webp"/>
+          <img src="{{ASSETS_BASE}}/ki-sicherheit-logo.png" alt="KI‑Sicherheit.jetzt" />
+        </picture>
         <div>
-          <div class="hl">AI Status Report</div>
-          <div class="meta">TÜV Austria certified · EU AI · GDPR</div>
+          <div class="title">AI Status Report</div>
+          <div class="meta">TÜV Austria · EU‑AI · GDPR</div>
         </div>
       </div>
-      <div class="meta">Industry: {{BRANCHE_LABEL}} · Size: {{GROESSE_LABEL}} · As of: {{STAND_DATUM}}</div>
+      <div class="badges">
+        <img class="shield" src="{{ASSETS_BASE}}/ki-ready-2025.webp" alt="AI‑READY 2025" />
+        <img src="{{ASSETS_BASE}}/tuev-logo.webp" alt="TÜV Austria certified" />
+        <img src="{{ASSETS_BASE}}/eu-ai.svg" alt="EU‑AI" />
+        <img src="{{ASSETS_BASE}}/dsgvo.svg" alt="GDPR" />
+      </div>
     </header>
 
+    <section class="hero">
+      <div class="kvs">
+        <div><b>Industry:</b> {{BRANCHE_LABEL}} &nbsp;&nbsp; <b>Size:</b> {{GROESSE_LABEL}}</div>
+        <div class="muted">As of: {{STAND_DATUM}}</div>
+      </div>
+      <div class="kvs" style="text-align:right">
+        <span class="pill">Score: <b>{{SCORE_PERCENT}}</b></span>
+        <span class="pill">Badge: <b>{{SCORE_BADGE}}</b></span>
+      </div>
+    </section>
+
+    <!-- Score first page -->
     <section class="grid">
       <div class="card" style="grid-column: span 6;">
         <h2>Score</h2>
         <p class="hl" style="font-size:22px">{{SCORE_PERCENT}} <span class="badge {{SCORE_BADGE}}">{{SCORE_BADGE}}</span></p>
-        <div class="footnotes">Score 0–54 = Basic · 55–69 = Fair · 70–84 = Good · ≥ 85 = Excellent.</div>
+        <div class="footnotes">0–54 = Basic · 55–69 = Fair · 70–84 = Good · ≥ 85 = Excellent.</div>
       </div>
       <div class="card" style="grid-column: span 6;">
         <h2>Core KPIs</h2>
@@ -66,34 +108,34 @@
       </div>
     </section>
 
-    <section class="grid" style="margin-top:12px">
+    <section class="grid chapter" style="margin-top:12px">
       <div class="card" style="grid-column: span 12;">
         {{BUSINESS_CASE_HTML}}
       </div>
     </section>
 
-    <section class="grid" style="margin-top:12px">
+    <section class="grid chapter" style="margin-top:12px">
       <div class="card" style="grid-column: span 12;">
         <h2>Company Profile & Goals</h2>
         {{PROFILE_HTML}}
       </div>
     </section>
 
-    <section class="grid" style="margin-top:12px">
+    <section class="grid chapter" style="margin-top:12px">
       <div class="card" style="grid-column: span 12;">
         <h2>Benchmark Comparison</h2>
         {{BENCHMARK_TABLE_HTML}}
       </div>
     </section>
 
-    <section class="grid" style="margin-top:12px">
+    <section class="grid chapter" style="margin-top:12px">
       <div class="card" style="grid-column: span 12;">
         <h2>Executive Summary</h2>
         {{EXEC_SUMMARY_HTML}}
       </div>
     </section>
 
-    <section class="grid" style="margin-top:12px">
+    <section class="grid chapter" style="margin-top:12px">
       <div class="card" style="grid-column: span 6;">
         <h2>Quick Wins</h2>
         {{QUICK_WINS_HTML}}
@@ -104,7 +146,7 @@
       </div>
     </section>
 
-    <section class="grid" style="margin-top:12px">
+    <section class="grid chapter" style="margin-top:12px">
       <div class="card" style="grid-column: span 6;">
         <h2>Risks & Mitigation</h2>
         {{RISKS_HTML}}
@@ -115,7 +157,7 @@
       </div>
     </section>
 
-    <section class="grid" style="margin-top:12px">
+    <section class="grid chapter" style="margin-top:12px">
       <div class="card" style="grid-column: span 12;">
         <h2>Latest News (Live)</h2>
         {{NEWS_HTML}}
@@ -123,16 +165,16 @@
       </div>
     </section>
 
-    <section class="grid" style="margin-top:12px">
+    <section class="grid chapter" style="margin-top:12px">
       <div class="card" style="grid-column: span 12;">
         <h2>Tools (Live)</h2>
-        <p class="note">Non‑EU tools: use only with DPA/SCC, pseudonymization, no secrets/PII, proper logging & RBAC, and keep an EU fallback.</p>
+        <p class="note">Non‑EU tools: use only with DPA/SCC, pseudonymisation, no secrets/PII; verify logging & RBAC; keep an EU fallback.</p>
         {{TOOLS_HTML}}
         <div class="meta">Last update: {{STAND_DATUM}}</div>
       </div>
     </section>
 
-    <section class="grid" style="margin-top:12px">
+    <section class="grid chapter" style="margin-top:12px">
       <div class="card" style="grid-column: span 12;">
         <h2>Funding (Live)</h2>
         {{FUNDING_HTML}}
@@ -140,17 +182,18 @@
       </div>
     </section>
 
-    {{RECOMMENDATIONS_BLOCK}}
-    {{GAMECHANGER_BLOCK}}
-    {{VISION_BLOCK}}
-    {{PERSONA_BLOCK}}
-    {{PRAXIS_BLOCK}}
-    {{COACH_BLOCK}}
-    {{DOC_DIGEST_BLOCK}}
+    <!-- LLM blocks as stand-alone chapters -->
+    <div class="chapter">{{RECOMMENDATIONS_BLOCK}}</div>
+    <div class="chapter">{{GAMECHANGER_BLOCK}}</div>
+    <div class="chapter">{{VISION_BLOCK}}</div>
+    <div class="chapter">{{PERSONA_BLOCK}}</div>
+    <div class="chapter">{{PRAXIS_BLOCK}}</div>
+    <div class="chapter">{{COACH_BLOCK}}</div>
+    <div class="chapter">{{DOC_DIGEST_BLOCK}}</div>
 
     <footer>
-      <div>Score legend: weighted KPIs (Digitization/Automation/Compliance/Process Maturity/Innovation at 20 % each), scaled 0–100.</div>
-      <div>TÜV Austria · AI‑Ready 2025 · EU AI · GDPR · © KI‑Sicherheit.jetzt</div>
+      <div>Score legend (0–100): weighted KPIs (Digitization/Automation/Compliance/Process Maturity/Innovation at 20% each).</div>
+      <div>© KI‑Sicherheit.jetzt · TÜV Austria · AI‑Ready 2025 · EU‑AI · GDPR</div>
     </footer>
   </div>
 </body>
