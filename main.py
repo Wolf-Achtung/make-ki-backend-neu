@@ -1,13 +1,11 @@
-# File: main.py
+# main.py
 # -*- coding: utf-8 -*-
 """
 Production API für KI‑Status‑Report (Gold‑Standard+)
 
 Änderungen (GS+):
-- /health, /health/html und /metrics (Prometheus) für Monitoring & Uptime.
-- Stabiler PDF-Render-Fallback (/render-pdf → /generate-pdf → JSON/base64).
-- SMTP-Versand (User/Admin) + Idempotenzschutz + CORS.
-- Saubere ENV-Konfiguration; keine Secrets im Code.
+- Anhang-Dateinamen für E-Mails dynamisch (html/pdf).
+- Unnötigen Import entfernt, Logging & CORS stabil.
 """
 
 from __future__ import annotations
@@ -26,7 +24,7 @@ from email.utils import formataddr, parseaddr
 from typing import Any, Dict, Optional
 
 import httpx
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from jose import jwt
@@ -159,9 +157,11 @@ def _smtp_send(msg: EmailMessage) -> None:
 def _recipient_from(body: Dict[str, Any], fallback: str) -> str:
     answers = body.get("answers") or {}
     cand = (
-        answers.get("to") or answers.get("email") or
-        body.get("to") or body.get("email") or
-        fallback
+        answers.get("to")
+        or answers.get("email")
+        or body.get("to")
+        or body.get("email")
+        or fallback
     )
     return _sanitize_email(cand)
 
@@ -262,6 +262,8 @@ def _send_combined_email(
     html_attachment: bytes,
     pdf_attachment: Optional[bytes],
     admin_json: Optional[Dict[str, bytes]] = None,
+    html_filename: str = "report.html",
+    pdf_filename: str = "report.pdf",
 ) -> None:
     msg = EmailMessage()
     msg["Subject"] = subject
@@ -269,9 +271,9 @@ def _send_combined_email(
     msg["To"] = to_address
     msg.set_content("This is an HTML email. Please enable HTML view.")
     msg.add_alternative(html_body or "<p></p>", subtype="html")
-    msg.add_attachment(html_attachment, maintype="text", subtype="html", filename="report.html")
+    msg.add_attachment(html_attachment, maintype="text", subtype="html", filename=html_filename)
     if pdf_attachment:
-        msg.add_attachment(pdf_attachment, maintype="application", subtype="pdf", filename="report.pdf")
+        msg.add_attachment(pdf_attachment, maintype="application", subtype="pdf", filename=pdf_filename)
     for name, data in (admin_json or {}).items():
         msg.add_attachment(data, maintype="application", subtype="json", filename=name)
     _smtp_send(msg)
@@ -330,7 +332,7 @@ async def _metrics_mw(request: Request, call_next):
         REQUESTS.labels(request.method, path, str(status)).inc()
         LATENCY.labels(path).observe(time.time() - start)
         return resp
-    except Exception as exc:
+    except Exception:
         REQUESTS.labels(request.method, path, "500").inc()
         LATENCY.labels(path).observe(time.time() - start)
         raise
@@ -374,6 +376,7 @@ def metrics() -> PlainTextResponse:
     data = generate_latest()  # type: ignore
     return PlainTextResponse(data, media_type=CONTENT_TYPE_LATEST)
 
+
 @app.post("/api/login")
 def api_login(req: LoginReq) -> Dict[str, Any]:
     email = _sanitize_email(req.email)
@@ -389,7 +392,6 @@ def api_login(req: LoginReq) -> Dict[str, Any]:
 async def briefing_async(
     body: Dict[str, Any],
     request: Request,
-    tasks: BackgroundTasks,
     user=Depends(current_user),
 ):
     """
@@ -462,10 +464,12 @@ async def briefing_async(
             _send_combined_email(
                 to_address=recipient_user,
                 subject=subject,
-                html_body="<p>Ihr KI‑Status‑Report liegt im Anhang (PDF &amp; HTML).</p>" if lang == "de"
-                else "<p>Your AI status report is attached (PDF &amp; HTML).</p>",
+                html_body=("<p>Ihr KI‑Status‑Report liegt im Anhang (PDF &amp; HTML).</p>" if lang == "de"
+                           else "<p>Your AI status report is attached (PDF &amp; HTML).</p>"),
                 html_attachment=html.encode("utf-8"),
                 pdf_attachment=pdf_bytes,
+                html_filename=filename_html,
+                pdf_filename=filename_pdf,
             )
             user_result = {"ok": True, "status": 200, "detail": "SMTP"}
         except Exception as exc:
@@ -481,11 +485,13 @@ async def briefing_async(
             _send_combined_email(
                 to_address=ADMIN_EMAIL,
                 subject=subject + (" (Admin‑Kopie)" if lang == "de" else " (Admin copy)"),
-                html_body="<p>Neuer Report erstellt. Anhänge: PDF, HTML sowie JSON‑Diagnosen.</p>" if lang == "de"
-                else "<p>New report created. Attachments: PDF, HTML and JSON diagnostics.</p>",
+                html_body=("<p>Neuer Report erstellt. Anhänge: PDF, HTML sowie JSON‑Diagnosen.</p>" if lang == "de"
+                           else "<p>New report created. Attachments: PDF, HTML and JSON diagnostics.</p>"),
                 html_attachment=html.encode("utf-8"),
                 pdf_attachment=pdf_bytes,
                 admin_json=admin_json,
+                html_filename=filename_html,
+                pdf_filename=filename_pdf,
             )
             admin_result = {"ok": True, "status": 200, "detail": "SMTP"}
         except Exception as exc:
