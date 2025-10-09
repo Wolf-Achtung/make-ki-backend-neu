@@ -3,11 +3,12 @@
 """
 Analyzer für KI-Status-Report (Gold-Standard+)
 
-Neuerungen:
+Neuerungen in dieser Fassung:
 - Live-Layer: Tavily **und** Perplexity als zweite Quelle; Dedup & Ranking.
 - Benchmarks: flexible Suche in /data (branchenspezifisch + größenbasiert, CSV/JSON).
 - Platzhalter-Killer: füllt/entfernt übrig gebliebene Tokens ([Branche], {{…}}) sicher.
 - Listen/Links: Titel – Quelle, Datum (Domain) + Berlin-Badge.
+- **NEU:** Prompt-Override für „tools“ & „foerderprogramme“ (falls Prompts vorhanden); Fallback bleibt HTML-Listendarstellung.
 """
 
 from __future__ import annotations
@@ -534,6 +535,22 @@ def _merge_rank(items1: List[Dict[str, Any]], items2: List[Dict[str, Any]], limi
     out.sort(key=lambda x: parse_dt(str(x.get("date") or "")), reverse=True)
     return out[:limit]
 
+def _dedup_by_url(items: List[Dict[str, Any]], limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    """Einfache Deduplizierung nach URL (ohne Querystring) oder Titel."""
+    seen = set()
+    out: List[Dict[str, Any]] = []
+    for it in items or []:
+        url = (it.get("url") or "").split("?")[0].strip().lower()
+        title = (it.get("title") or it.get("name") or "").strip().lower()
+        key = url or title
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(it)
+    if limit is not None:
+        return out[:limit]
+    return out
+
 def _live_search(topic: str, b: Dict[str, Any], max_results: int, short_days: int, long_days: int) -> List[Dict[str, Any]]:
     """Sucht live Inhalte; kombiniert Tavily + Perplexity; dann Dedup/Ranking."""
     branche = b.get("branche_label") or b.get("branche") or ""
@@ -676,15 +693,20 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
         log.info("funding_loader not available: %s", exc)
         funding_local = []
 
+    # Kombinierte Listen (live + lokal) deduplizieren
+    tools_items = _dedup_by_url((tools_live or []) + (tools_local or []), limit=LIVE_MAX_ITEMS)
+    funding_items = _dedup_by_url((funding_live or []) + (funding_local or []), limit=max(LIVE_MAX_ITEMS, 10))
+
     ctx = {
         "briefing": b,
         "scoring": {"score_total": score.total, "badge": score.badge, "kpis": score.kpis, "weights": score.weights},
         "benchmarks": score.benchmarks,
-        "tools": tools_local,
-        "funding": funding_local,
+        "tools": tools_items,      # wichtig: an Prompts durchreichen
+        "funding": funding_items,  # wichtig: an Prompts durchreichen
         "business": case.__dict__,
     }
 
+    # LLM-Sections
     sec = lambda n: render_section(n, lang, ctx) or ""
     exec_llm = sec("executive_summary")
     quick = sec("quick_wins")
@@ -700,6 +722,15 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
     coach = sec("coach")
     digest = sec("doc_digest")
 
+    # **Prompt-Override für Tools/Förderungen** (wenn Prompt-Dateien vorhanden)
+    tools_block = render_section("tools", lang, ctx) or (
+        _list_html(tools_items, "Keine passenden Tools gefunden." if lang.startswith("de") else "No matching tools.")
+    )
+    funding_block = render_section("foerderprogramme", lang, ctx) or (
+        _list_html(funding_items, "Keine aktuellen Einträge." if lang.startswith("de") else "No current items.", berlin_badge=True)
+    )
+
+    # Template
     tpl = _template_for_lang(lang)
     report_date = os.getenv("REPORT_DATE_OVERRIDE") or date.today().isoformat()
 
@@ -720,48 +751,19 @@ def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
         .replace("{{ROADMAP_HTML}}", roadmap)
         .replace("{{RISKS_HTML}}", risks)
         .replace("{{COMPLIANCE_HTML}}", compliance)
-        .replace(
-            "{{NEWS_HTML}}",
-            _list_html(news_live, "Keine aktuellen News (30 Tage geprüft)." if lang.startswith("de") else "No recent news (30 days)."),
-        )
-        .replace(
-            "{{TOOLS_HTML}}",
-            _list_html(tools_live, "Keine passenden Tools gefunden." if lang.startswith("de") else "No matching tools.")
-            if tools_live
-            else _list_html(tools_local, "Keine passenden Tools (lokal)." if lang.startswith("de") else "No matching tools (local)."),
-        )
-        .replace(
-            "{{FUNDING_HTML}}",
-            _list_html(funding_live or funding_local, "Keine aktuellen Einträge." if lang.startswith("de") else "No current items.", berlin_badge=True),
-        )
-        .replace(
-            "{{RECOMMENDATIONS_BLOCK}}",
-            f"<section class='card'><h2>Recommendations</h2>{recs}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
-        )
-        .replace(
-            "{{GAMECHANGER_BLOCK}}",
-            f"<section class='card'><h2>Gamechanger</h2>{game}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
-        )
-        .replace(
-            "{{VISION_BLOCK}}",
-            f"<section class='card'><h2>Vision</h2>{vision}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
-        )
-        .replace(
-            "{{PERSONA_BLOCK}}",
-            f"<section class='card'><h2>Persona</h2>{persona}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
-        )
-        .replace(
-            "{{PRAXIS_BLOCK}}",
-            f"<section class='card'><h2>Praxisbeispiel</h2>{praxis}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
-        )
-        .replace(
-            "{{COACH_BLOCK}}",
-            f"<section class='card'><h2>Coach</h2>{coach}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
-        )
+        .replace("{{NEWS_HTML}}", _list_html(news_live, "Keine aktuellen News (30 Tage geprüft)." if lang.startswith("de") else "No recent news (30 days)."))
+        .replace("{{TOOLS_HTML}}", tools_block)          # ← Override wired in
+        .replace("{{FUNDING_HTML}}", funding_block)      # ← Override wired in
+        .replace("{{RECOMMENDATIONS_BLOCK}}", f"<section class='card'><h2>Recommendations</h2>{recs}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
+        .replace("{{GAMECHANGER_BLOCK}}", f"<section class='card'><h2>Gamechanger</h2>{game}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
+        .replace("{{VISION_BLOCK}}", f"<section class='card'><h2>Vision</h2>{vision}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
+        .replace("{{PERSONA_BLOCK}}", f"<section class='card'><h2>Persona</h2>{persona}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
+        .replace("{{PRAXIS_BLOCK}}", f"<section class='card'><h2>Praxisbeispiel</h2>{praxis}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
+        .replace("{{COACH_BLOCK}}", f"<section class='card'><h2>Coach</h2>{coach}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
         .replace("{{DOC_DIGEST_BLOCK}}", digest or "")
     )
 
-    # Platzhalter freundlich schließen
+    # >>> Platzhalter freundlich schließen
     filled = _fill_placeholders(filled, b)
     return filled
 
