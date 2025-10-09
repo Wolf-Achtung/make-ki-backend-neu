@@ -1,11 +1,7 @@
 {
-  "version": "2025-10-02",
-  "notes": "Seedwerte für IT & Software – Solo-Selbstständige. Die Werte sind 10 % niedriger als bei KMU. Als Referenz dient der IKT-Sektor mit 273,5 Digitalisierungsindexpunkten【579060561542318†L480-L485】.",
-  "kpis": [
-    {"name": "digitalisierung", "value": 0.81, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
-    {"name": "automatisierung", "value": 0.72, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
-    {"name": "compliance", "value": 0.675, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
-    {"name": "prozessreife", "value": 0.702, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
-    {"name": "innovation", "value": 0.765, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"}
-  ]
+  "digitalisierung": 70,
+  "automatisierung": 72,
+  "compliance": 62,
+  "prozessreife": 65,
+  "innovation": 74
 }

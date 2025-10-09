@@ -1,11 +1,7 @@
 {
-  "version": "2025-10-02",
-  "notes": "Seedwerte für Marketing & Werbung (KMU). Branchenspezifische Studien zeigen, dass Marketingunternehmen in der digitalen Transformation zu den Vorreitern zählen. Der IT- und Kommunikationssektor (IKT) weist laut einem Branchenranking 273,5 Indexpunkte auf【579060561542318†L480-L485】, was als Referenz für hohe Digitalisierungswerte dient.",
-  "kpis": [
-    {"name": "digitalisierung", "value": 0.85, "source": "Branchenranking: IKT-Bereich mit 273,5 Punkten【579060561542318†L480-L485】", "direction": "higher_is_better"},
-    {"name": "automatisierung", "value": 0.70, "source": "Schätzung basierend auf Marketing-Automation-Studien", "direction": "higher_is_better"},
-    {"name": "compliance", "value": 0.68, "source": "Schätzung basierend auf branchentypischer DSGVO-Implementierung", "direction": "higher_is_better"},
-    {"name": "prozessreife", "value": 0.72, "source": "Schätzung basierend auf Prozessreife in Marketingabteilungen", "direction": "higher_is_better"},
-    {"name": "innovation", "value": 0.75, "source": "Schätzung basierend auf Innovationsrankings im Werbesektor", "direction": "higher_is_better"}
-  ]
+  "digitalisierung": 65,
+  "automatisierung": 67,
+  "compliance": 65,
+  "prozessreife": 62,
+  "innovation": 72
 }

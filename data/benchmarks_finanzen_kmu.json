@@ -1,11 +1,7 @@
 {
-  "version": "2025-10-02",
-  "notes": "Seedwerte für Finanzen & Versicherungen (KMU). Diese Branche weist hohe Compliance-Anforderungen und fortgeschrittene Automatisierungsprozesse auf. Die Digitalisierungsindex-Studie bestätigt den Vorsprung des IKT-Sektors, dient jedoch hier lediglich als Benchmark【579060561542318†L480-L485】.",
-  "kpis": [
-    {"name": "digitalisierung", "value": 0.80, "source": "Schätzung basierend auf Digitalisierungsgrad im Finanzsektor", "direction": "higher_is_better"},
-    {"name": "automatisierung", "value": 0.75, "source": "Schätzung basierend auf Automatisierungsgrad in Versicherungen", "direction": "higher_is_better"},
-    {"name": "compliance", "value": 0.85, "source": "Schätzung basierend auf hohen Regulierungsstandards", "direction": "higher_is_better"},
-    {"name": "prozessreife", "value": 0.82, "source": "Schätzung basierend auf Prozessreife in Banken", "direction": "higher_is_better"},
-    {"name": "innovation", "value": 0.70, "source": "Schätzung basierend auf FinTech-Innovationen", "direction": "higher_is_better"}
-  ]
+  "digitalisierung": 69,
+  "automatisierung": 65,
+  "compliance": 82,
+  "prozessreife": 75,
+  "innovation": 62
 }
