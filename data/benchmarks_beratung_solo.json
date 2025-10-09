@@ -1,11 +1,7 @@
 {
-  "version": "2025-10-02",
-  "notes": "Seedwerte für Beratung & Dienstleistungen – Solo-Selbstständige. Werte wurden 10 % unter das KMU-Niveau reduziert. Orientierung an Digitalisierungsindex-Vergleichen【579060561542318†L480-L485】.",
-  "kpis": [
-    {"name": "digitalisierung", "value": 0.675, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
-    {"name": "automatisierung", "value": 0.585, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
-    {"name": "compliance", "value": 0.63, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
-    {"name": "prozessreife", "value": 0.612, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"},
-    {"name": "innovation", "value": 0.63, "source": "Schätzung: 10 % unter KMU-Level", "direction": "higher_is_better"}
-  ]
+  "digitalisierung": 55,
+  "automatisierung": 62,
+  "compliance": 64,
+  "prozessreife": 56,
+  "innovation": 60
 }
