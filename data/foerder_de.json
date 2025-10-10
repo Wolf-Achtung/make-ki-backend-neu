@@ -1,0 +1,57 @@
+[
+  {
+    "id": "BE-TransferBonus",
+    "title": "Transfer BONUS Berlin",
+    "agency": "Senatsverwaltung Berlin / IBB",
+    "states": [
+      "be"
+    ],
+    "deadline": null,
+    "status": "laufend",
+    "funding_rate": "bis 70%",
+    "budget_max": 15000,
+    "url": "https://www.transferbonus.de",
+    "tags": [
+      "digitalisierung",
+      "innovation",
+      "beratung"
+    ]
+  },
+  {
+    "id": "BY-Digitalbonus",
+    "title": "Digitalbonus Bayern",
+    "agency": "Bayerisches Staatsministerium für Wirtschaft",
+    "states": [
+      "by"
+    ],
+    "deadline": null,
+    "status": "laufend",
+    "funding_rate": "bis 50%",
+    "budget_max": 50000,
+    "url": "https://www.stmwi.bayern.de/foerderungen/digitalbonus",
+    "tags": [
+      "digitalisierung",
+      "it",
+      "hardware",
+      "software"
+    ]
+  },
+  {
+    "id": "BE-ProFIT",
+    "title": "Pro FIT (IKT/AI)",
+    "agency": "IBB / Investitionsbank Berlin",
+    "states": [
+      "be"
+    ],
+    "deadline": null,
+    "status": "calls",
+    "funding_rate": "Projektabhängig",
+    "budget_max": null,
+    "url": "https://www.ibb.de",
+    "tags": [
+      "forschung",
+      "entwicklung",
+      "ai"
+    ]
+  }
+]

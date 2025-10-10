@@ -1,0 +1,84 @@
+[
+  {
+    "name": "Microsoft Copilot (M365)",
+    "url": "https://www.microsoft.com/microsoft-copilot",
+    "eu_hosting": true,
+    "pricing_hint": "ab 30 €/Nutzer/Monat",
+    "tags": [
+      "office",
+      "productivity"
+    ],
+    "industries": [
+      "beratung",
+      "marketing",
+      "it",
+      "handel",
+      "bildung"
+    ]
+  },
+  {
+    "name": "Notion AI",
+    "url": "https://www.notion.so/product/ai",
+    "eu_hosting": false,
+    "pricing_hint": "ab 10 €/Nutzer/Monat",
+    "tags": [
+      "notes",
+      "docs",
+      "automation"
+    ],
+    "industries": [
+      "beratung",
+      "medien",
+      "it",
+      "bildung"
+    ]
+  },
+  {
+    "name": "Mistral Cloud",
+    "url": "https://mistral.ai",
+    "eu_hosting": true,
+    "pricing_hint": "usage-based",
+    "tags": [
+      "llm",
+      "api",
+      "eu"
+    ],
+    "industries": [
+      "it",
+      "industrie",
+      "forschung",
+      "beratung"
+    ]
+  },
+  {
+    "name": "Zapier",
+    "url": "https://zapier.com",
+    "eu_hosting": false,
+    "pricing_hint": "ab 20 €/Monat",
+    "tags": [
+      "automation",
+      "integration"
+    ],
+    "industries": [
+      "beratung",
+      "handel",
+      "marketing"
+    ]
+  },
+  {
+    "name": "Make (Integromat)",
+    "url": "https://www.make.com",
+    "eu_hosting": true,
+    "pricing_hint": "ab 10 €/Monat",
+    "tags": [
+      "automation",
+      "integration"
+    ],
+    "industries": [
+      "beratung",
+      "handel",
+      "marketing",
+      "it"
+    ]
+  }
+]
