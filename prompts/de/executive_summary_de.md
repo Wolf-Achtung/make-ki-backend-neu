@@ -9,3 +9,5 @@ Gib GENAU **3 Bullet-Points** mit je:
 - **Zeitrahmen** (kurz: 4–8 Wochen | mittel: 3–6 Monate | lang: 6–12 Monate)
 
 Keine Wiederholung. Keine generischen Floskeln. Ton: präzise, umsetzbar, C‑Level‑fähig.
+
+Pflicht: Jede Bullet enthält – wo sinnvoll – eine **Δ‑Referenz zum Branchen‑Benchmark** (z. B. „Δ +12 pp in Automatisierung“) auf Basis der gelieferten `{{SCORING_JSON}}`.
