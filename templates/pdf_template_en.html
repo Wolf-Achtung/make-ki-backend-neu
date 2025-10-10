@@ -1,199 +1,189 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>AI Status Report</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --text:#0b2540; --muted:#51637a; --bg:#ffffff; --card:#ffffff; --border:#d8e3f3;
-      --primary:#1e3a8a; --primary-2:#2563eb; --accent:#f97316; --accent-2:#fb923c;
-    }
-    @page { size: A4; margin: 18mm; }
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;line-height:1.45}
-    h1,h2,h3{color:var(--primary);margin:0 0 .5rem}
-    h1{font-size:26px} h2{font-size:20px} h3{font-size:16px}
-    p{margin:.35rem 0}
-    a{color:var(--primary-2);text-decoration:underline}
-
-    .wrap{max-width:1180px;margin:0 auto;padding:28px}
-    header{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;margin-bottom:10px}
-    .brand{display:flex;align-items:center;gap:14px}
-    .brand picture img{height:42px}
-    .brand .title{font-size:22px;font-weight:800;color:var(--primary)}
-    .meta{font-size:12px;color:var(--muted)}
-
-    .badges{display:flex;align-items:center;gap:12px}
-    .badges img, .badges svg{height:28px}
-    .shield{height:46px}
-
-    .hero{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;
-      background:linear-gradient(135deg,#e0f2fe,#dbeafe);border:1px solid var(--border);border-radius:16px;padding:12px 16px;margin:10px 0}
-    .hero .kvs{font-size:13px;color:var(--muted)}
-    .hero .kvs b{color:var(--text)}
-
-    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;break-inside:avoid}
-
-    .kpi .bar{display:grid;grid-template-columns:160px 1fr max-content;align-items:center;margin:8px 0}
-    .kpi .label{font-size:13px;color:var(--text)}
-    .kpi .bar__track{position:relative;height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden}
-    .kpi .bar__fill{height:10px;background:var(--primary-2)}
-    .kpi .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--accent);opacity:.9}
-    .kpi .bar__delta{font-size:12px;color:var(--muted);margin-left:6px}
-
-    .bm{width:100%;border-collapse:collapse}
-    .bm th,.bm td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;font-size:13px}
-    .badge{display:inline-block;border-radius:24px;padding:6px 10px;font-weight:700;font-size:12px}
-    .badge.BASIC{background:#fee2e2;color:#991b1b}
-    .badge.FAIR{background:#fff7ed;color:#9a3412}
-    .badge.GOOD{background:#dcfce7;color:#166534}
-    .badge.EXCELLENT{background:#e0f2fe;color:#075985}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef2ff;color:var(--primary);font-size:12px}
-    .muted{color:var(--muted)}
-    .hl{font-weight:700}
-    
-    .note{background:#fff7ed;border:1px solid #fdba74;color:#7c2d12;padding:12px;border-radius:10px}
-    .footnotes{font-size:12px;color:var(--muted);margin-top:8px}
-
-    /* Chapter page breaks */
-    .chapter{break-before:page; page-break-before:always;}
-
-    footer{margin-top:22px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);display:grid;gap:6px}
-  </style>
-</head>
+<html lang="{{LANG}}">
+<meta charset="utf-8">
+<title>AI Status Report</title>
+<style>
+:root{
+  --brand-blue:#0B4D9C;
+  --brand-blue-700:#083a76;
+  --brand-blue-50:#eef5ff;
+  --brand-orange:#FF6A00;
+  --ink:#0E2A4A;        /* dunkles Blau für Copy */
+  --muted:#667085;
+  --border:#E5E7EB;
+}
+*{box-sizing:border-box}
+html{font-size:16px}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.55}
+.wrapper{max-width:780px;margin:0 auto;padding:24px}
+.header{display:flex;align-items:center;gap:16px;margin:8px 0 16px 0}
+.header .brand{display:flex;align-items:center;gap:14px}
+.header .brand h1{font-size:1.35rem;margin:0;color:var(--brand-blue-700)}
+.header .badges{margin-left:auto;display:flex;gap:12px;align-items:center}
+.header img{height:36px;display:block}
+.kicker{font-size:.9rem;color:var(--muted);margin:.25rem 0 .5rem 0}
+.meta{font-size:.85rem;color:var(--muted)}
+hr{border:0;border-top:1px solid var(--border);margin:20px 0}
+.progress{height:10px;background:var(--brand-blue-50);border-radius:6px;overflow:hidden;margin:6px 0 0 0}
+.progress>span{display:block;height:10px;background:linear-gradient(90deg,var(--brand-blue) 0%,#1E7BF6 100%)}
+.badge{display:inline-block;background:var(--brand-blue-50);color:var(--brand-blue-700);padding:.15rem .5rem;border-radius:6px;font-weight:600}
+.pill{display:inline-block;padding:.25rem .5rem;border:1px solid var(--border);border-radius:999px;margin:.15rem .25rem 0 0;font-size:.85rem;color:var(--brand-blue-700)}
+.card{border:1px solid var(--border);border-radius:10px;padding:16px;margin:16px 0;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.card h2{margin:0 0 .4rem 0;color:var(--brand-blue-700)}
+h2.section{margin:0 0 .4rem 0;color:var(--brand-blue-700)}
+h3{margin:1rem 0 .35rem 0;color:var(--brand-blue-700)}
+.small{font-size:.9rem}
+.muted{color:var(--muted)}
+.lede .keyline{margin:.25rem 0}
+.kpi .bar{display:flex;align-items:center;gap:10px;margin:10px 0}
+.kpi .label{flex:0 0 180px}
+.kpi .bar__track{flex:1;position:relative;height:10px;border-radius:6px;background:#EFF1F5}
+.kpi .bar__fill{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--brand-orange) 0%,#ffb35a 100%)}
+.kpi .bar__median{position:absolute;top:-2px;width:2px;height:14px;background:var(--brand-blue-700);opacity:.5}
+.kpi .bar__delta{flex:0 0 70px;text-align:right;color:var(--brand-blue-700)}
+table{width:100%;border-collapse:collapse}
+table.bm th, table.bm td{border:1px solid var(--border);padding:8px 10px}
+table.bm thead th{background:#F8FAFF;text-align:left;color:var(--brand-blue-700)}
+ul{padding-left:1.2rem;margin:.2rem 0}
+.flag-berlin{background:#FCE7F3;color:#9D174D;padding:.1rem .4rem;border-radius:6px;margin-left:.35rem;font-size:.75rem}
+footer{margin:28px 0 8px 0;font-size:.8rem;color:var(--muted);display:flex;gap:8px;align-items:center}
+footer img{height:20px}
+.page-break{page-break-before:always;break-before:page}
+@media print{
+  a{color:inherit;text-decoration:none}
+  .no-print{display:none!important}
+}
+</style>
 <body>
-  <div class="wrap">
-    <header>
+  <div class="wrapper">
+    <header class="header">
       <div class="brand">
         <picture>
-          <source srcset="{{ASSETS_BASE}}/ki-sicherheit-logo.webp" type="image/webp"/>
-          <img src="{{ASSETS_BASE}}/ki-sicherheit-logo.png" alt="KI‑Sicherheit.jetzt" />
+          <source srcset="{{ASSETS_BASE}}/ki-sicherheit-logo.webp" type="image/webp">
+          <img src="{{ASSETS_BASE}}/ki-sicherheit-logo.png" alt="AI‑Security.now">
         </picture>
-        <div>
-          <div class="title">AI Status Report</div>
-          <div class="meta">TÜV Austria · EU‑AI · GDPR</div>
-        </div>
+        <h1>AI Checkup Report</h1>
       </div>
       <div class="badges">
-        <img class="shield" src="{{ASSETS_BASE}}/ki-ready-2025.webp" alt="AI‑READY 2025" />
-        <img src="{{ASSETS_BASE}}/tuev-logo.webp" alt="TÜV Austria certified" />
-        <img src="{{ASSETS_BASE}}/eu-ai.svg" alt="EU‑AI" />
-        <img src="{{ASSETS_BASE}}/dsgvo.svg" alt="GDPR" />
+        <img src="{{ASSETS_BASE}}/ki-ready-2025.webp" alt="AI‑Ready 2025" title="AI‑Ready 2025">
+        <img src="{{ASSETS_BASE}}/tuev-logo.webp" alt="TÜV Austria" title="TÜV Austria certified">
       </div>
     </header>
 
-    <section class="hero">
-      <div class="kvs">
-        <div><b>Industry:</b> {{BRANCHE_LABEL}} &nbsp;&nbsp; <b>Size:</b> {{GROESSE_LABEL}}</div>
-        <div class="muted">As of: {{STAND_DATUM}}</div>
-      </div>
-      <div class="kvs" style="text-align:right">
-        <span class="pill">Score: <b>{{SCORE_PERCENT}}</b></span>
-        <span class="pill">Badge: <b>{{SCORE_BADGE}}</b></span>
-      </div>
+    <div class="kicker">Industry: <strong>{{BRANCHE_LABEL}}</strong> · Size: <strong>{{GROESSE_LABEL}}</strong></div>
+    <div class="meta">As of: <strong>{{REPORT_DATE}}</strong><span class="muted"> · (Fallback field: {{STAND_DATUM}})</span></div>
+    <div class="card">
+      <h2 class="section">Overall score</h2>
+      <div><span class="badge">{{SCORE_BADGE}}</span> &nbsp; <strong>{{SCORE_PERCENT}}</strong></div>
+      <div class="progress" aria-label="Overall score"><span style="width: {{SCORE_PERCENT}};"></span></div>
+      <div style="margin-top:.5rem">{{KPI_BARS_HTML}}</div>
+    </div>
+
+    <div class="card">
+      <h2 class="section">Company profile</h2>
+      {{PROFILE_HTML}}
+    </div>
+
+    <div class="card">
+      <h2 class="section">Executive summary</h2>
+      <div class="lede small">Focused key takeaways and immediate levers for the next 4–12 weeks.</div>
+      {{EXEC_SUMMARY_HTML}}
+    </div>
+
+    <div class="card">
+      <h2 class="section">Benchmark comparison</h2>
+      {{BENCHMARK_TABLE_HTML}}
+    </div>
+
+    <div class="card">
+      <h2 class="section">ROI & payback</h2>
+      {{BUSINESS_CASE_HTML}}
+    </div>
+
+    <div class="page-break"></div>
+
+    <section class="card">
+      <h2 class="section">Quick wins (0–8 weeks)</h2>
+      {{QUICK_WINS_HTML}}
     </section>
 
-    <!-- Score first page -->
-    <section class="grid">
-      <div class="card" style="grid-column: span 6;">
-        <h2>Score</h2>
-        <p class="hl" style="font-size:22px">{{SCORE_PERCENT}} <span class="badge {{SCORE_BADGE}}">{{SCORE_BADGE}}</span></p>
-        <div class="footnotes">0–54 = Basic · 55–69 = Fair · 70–84 = Good · ≥ 85 = Excellent.</div>
-      </div>
-      <div class="card" style="grid-column: span 6;">
-        <h2>Core KPIs</h2>
-        {{KPI_BARS_HTML}}
-      </div>
+    <section class="card">
+      <h2 class="section">Roadmap (3–12 months)</h2>
+      {{ROADMAP_HTML}}
     </section>
 
-    <section class="grid chapter" style="margin-top:12px">
-      <div class="card" style="grid-column: span 12;">
-        {{BUSINESS_CASE_HTML}}
-      </div>
+    <section class="card">
+      <h2 class="section">Risks & mitigation</h2>
+      {{RISKS_HTML}}
     </section>
 
-    <section class="grid chapter" style="margin-top:12px">
-      <div class="card" style="grid-column: span 12;">
-        <h2>Company Profile & Goals</h2>
-        {{PROFILE_HTML}}
+    <section class="card">
+      <h2 class="section">Compliance (GDPR / EU AI Act pre‑check)</h2>
+      <div style="display:flex;gap:10px;align-items:center;margin:.25rem 0 0.5rem 0">
+        <img src="{{ASSETS_BASE}}/dsgvo.svg" alt="GDPR" style="height:22px">
+        <img src="{{ASSETS_BASE}}/eu-ai.svg" alt="EU AI Act" style="height:22px">
       </div>
+      {{COMPLIANCE_HTML}}
     </section>
 
-    <section class="grid chapter" style="margin-top:12px">
-      <div class="card" style="grid-column: span 12;">
-        <h2>Benchmark Comparison</h2>
-        {{BENCHMARK_TABLE_HTML}}
-      </div>
+    <div class="page-break"></div>
+
+    <section class="card">
+      <h2 class="section">Latest news</h2>
+      {{NEWS_HTML}}
+      <div class="meta">Note: 30–60 days window; sources and dates are shown.</div>
     </section>
 
-    <section class="grid chapter" style="margin-top:12px">
-      <div class="card" style="grid-column: span 12;">
-        <h2>Executive Summary</h2>
-        {{EXEC_SUMMARY_HTML}}
-      </div>
+    <section class="card">
+      <h2 class="section">Relevant tools</h2>
+      {{TOOLS_HTML}}
     </section>
 
-    <section class="grid chapter" style="margin-top:12px">
-      <div class="card" style="grid-column: span 6;">
-        <h2>Quick Wins</h2>
-        {{QUICK_WINS_HTML}}
-      </div>
-      <div class="card" style="grid-column: span 6;">
-        <h2>Roadmap (12 weeks)</h2>
-        {{ROADMAP_HTML}}
-      </div>
+    <section class="card">
+      <h2 class="section">Funding programmes</h2>
+      {{FUNDING_HTML}}
     </section>
 
-    <section class="grid chapter" style="margin-top:12px">
-      <div class="card" style="grid-column: span 6;">
-        <h2>Risks & Mitigation</h2>
-        {{RISKS_HTML}}
-      </div>
-      <div class="card" style="grid-column: span 6;">
-        <h2>Compliance</h2>
-        {{COMPLIANCE_HTML}}
-      </div>
+    <div class="page-break"></div>
+
+    <section class="card">
+      <h2 class="section">Recommendations</h2>
+      {{RECOMMENDATIONS_BLOCK}}
     </section>
 
-    <section class="grid chapter" style="margin-top:12px">
-      <div class="card" style="grid-column: span 12;">
-        <h2>Latest News (Live)</h2>
-        {{NEWS_HTML}}
-        <div class="meta">Last update: {{STAND_DATUM}}</div>
-      </div>
+    <section class="card">
+      <h2 class="section">Gamechangers</h2>
+      {{GAMECHANGER_BLOCK}}
     </section>
 
-    <section class="grid chapter" style="margin-top:12px">
-      <div class="card" style="grid-column: span 12;">
-        <h2>Tools (Live)</h2>
-        <p class="note">Non‑EU tools: use only with DPA/SCC, pseudonymisation, no secrets/PII; verify logging & RBAC; keep an EU fallback.</p>
-        {{TOOLS_HTML}}
-        <div class="meta">Last update: {{STAND_DATUM}}</div>
-      </div>
+    <section class="card">
+      <h2 class="section">Vision</h2>
+      {{VISION_BLOCK}}
     </section>
 
-    <section class="grid chapter" style="margin-top:12px">
-      <div class="card" style="grid-column: span 12;">
-        <h2>Funding (Live)</h2>
-        {{FUNDING_HTML}}
-        <div class="meta">As of: {{STAND_DATUM}}</div>
-      </div>
+    <section class="card">
+      <h2 class="section">Persona</h2>
+      {{PERSONA_BLOCK}}
     </section>
 
-    <!-- LLM blocks as stand-alone chapters -->
-    <div class="chapter">{{RECOMMENDATIONS_BLOCK}}</div>
-    <div class="chapter">{{GAMECHANGER_BLOCK}}</div>
-    <div class="chapter">{{VISION_BLOCK}}</div>
-    <div class="chapter">{{PERSONA_BLOCK}}</div>
-    <div class="chapter">{{PRAXIS_BLOCK}}</div>
-    <div class="chapter">{{COACH_BLOCK}}</div>
-    <div class="chapter">{{DOC_DIGEST_BLOCK}}</div>
+    <section class="card">
+      <h2 class="section">Case study</h2>
+      {{PRAXIS_BLOCK}}
+    </section>
 
-    <footer>
-      <div>Score legend (0–100): weighted KPIs (Digitization/Automation/Compliance/Process Maturity/Innovation at 20% each).</div>
-      <div>© KI‑Sicherheit.jetzt · TÜV Austria · AI‑Ready 2025 · EU‑AI · GDPR</div>
+    <section class="card">
+      <h2 class="section">Coach</h2>
+      {{COACH_BLOCK}}
+    </section>
+
+    {{DOC_DIGEST_BLOCK}}
+
+    <footer class="small">
+      <picture>
+        <source srcset="{{ASSETS_BASE}}/ki-sicherheit-logo.webp" type="image/webp">
+        <img src="{{ASSETS_BASE}}/ki-sicherheit-logo.png" alt="AI‑Security.now">
+      </picture>
+      <span>© AI‑Security.now – TÜV‑certified AI management</span>
     </footer>
   </div>
 </body>
