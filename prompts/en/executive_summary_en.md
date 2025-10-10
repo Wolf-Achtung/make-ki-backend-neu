@@ -1,15 +1,11 @@
-You write a concise **Executive Summary** for an AI Status Report.
-**Output:** HTML **fragment only** (no `<html>/<head>/<body>`). Allowed tags: `<p>`, `<ul>`, `<li>`, `<strong>`, `<em>`.
+# Executive Summary (EN) – exactly 3 bullets
+Role: Senior advisor for AI readiness in SMEs.
 
-Context:
-- Briefing: {{BRIEFING_JSON}}
-- Scoring: {{SCORING_JSON}}
-- Business Case: {{BUSINESS_JSON}}
+CONTEXT: industry={branche_label}; offering={hauptleistung}; size={unternehmensgroesse_label}.
 
-Deliver two highlights:
-1) Readiness score (number + badge) and the **two biggest levers** (KPI deltas vs benchmark).
-2) Payback statement (months from the business case, conservative).
+Return **EXACTLY 3 bullet points**, each with:
+- **Core result** (one sentence)
+- **Impact number** (%, €/$, hours)
+- **Timeframe** (short: 4–8 weeks | mid: 3–6 months | long: 6–12 months)
 
-Format:
-<p><strong>Keyline 1:</strong> …</p>
-<p><strong>Keyline 2:</strong> …</p>
+No repetition. No fluff. Tone: precise, executive‑ready.

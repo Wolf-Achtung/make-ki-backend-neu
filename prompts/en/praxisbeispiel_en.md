@@ -1,17 +1,7 @@
-# GUARD
-- English, HTML fragment.
-
-# CONTEXT
-- {{BRIEFING_JSON}} | {{SCORING_JSON}} | {{BENCHMARKS_JSON}}
-
-# PINS
-- Mirror industry/core offering; include plausible metrics.
-
-# TASK
-<h4>Analogue Case Example</h4>
-<p>Short storyline (Context → Action → Result). 3–5 sentences.</p>
-<ul>
-  <li><strong>Context:</strong> …</li>
-  <li><strong>Action:</strong> …</li>
-  <li><strong>Result:</strong> …</li>
-</ul>
+# Case study (EN) – industry/offer specific
+Pick **one** realistic case **in {branche_label}**, aligned to **{hauptleistung}** and size **{unternehmensgroesse_label}**.
+Structure:
+- Situation (1–2 sentences)
+- Implementation (3 steps, realistic tools)
+- Outcome (before/after with numbers, 1–2 KPIs)
+- Effort (time, people, rough cost)
