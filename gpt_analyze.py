@@ -29,6 +29,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
+# Optional hybrid live search
+try:
+    import websearch_utils  # type: ignore
+except Exception:
+    websearch_utils = None  # type: ignore
+
+
 # Optionales Schema-Modul (liefert /schema + Helper)
 try:
     import schema as schema_mod  # type: ignore
@@ -530,6 +537,12 @@ def _live_topic(topic: str, n: Normalized, max_results: int) -> List[Dict[str, A
     else:
         return []
 
+    if websearch_utils:
+        try:
+            res = websearch_utils.hybrid_live_search(q, briefing=n.raw, short_days=SEARCH_DAYS_NEWS, long_days=SEARCH_DAYS_TOOLS, max_results=max_results)
+            return res.get('items') or []
+        except Exception:
+            pass
     px = _perplexity(q, max_results)
     tv = _tavily(q, max_results)
     return _merge_rank(px, tv, limit=max_results)
@@ -667,6 +680,32 @@ def _list_html(items: List[Dict[str, Any]], empty_msg: str, berlin_badge: bool =
         lis.append(f"<li><a href='{url}'>{title}</a> – <span class='muted'>{src or dom} {when}</span>{extra}</li>")
     return "<ul>" + "".join(lis) + "</ul>"
 
+
+def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]], funding: List[Dict[str, Any]]) -> str:
+    def _mk(items, title):
+        if not items: 
+            return f"<div class='muted'>Keine {title}.</div>" if lang.startswith("de") else f"<div class='muted'>No {title}.</div>"
+        lis = []
+        seen = set()
+        for it in items:
+            url = (it.get("url") or "").split("#")[0]
+            if not url or url in seen: 
+                continue
+            seen.add(url)
+            title_ = it.get("title") or it.get("name") or it.get("url")
+            dom = it.get("domain") or (url.split("/")[2] if "://" in url else "")
+            when = (it.get("date") or "")[:10]
+            lis.append(f"<li><a href='{url}'>{title_}</a> – <span class='muted'>{dom} {when}</span></li>")
+        return "<ul>" + "".join(lis) + "</ul>"
+    return (
+        "<div class='grid'>" +
+        "<div><h4>News</h4>" + _mk(news, "News") + "</div>" +
+        "<div><h4>Tools</h4>" + _mk(tools, "Tools") + "</div>" +
+        "<div><h4>Förderungen</h4>" + _mk(funding, "Förderungen") + "</div>" +
+        "</div>"
+    )
+
+
 # -----------------------------------------------------------------------------
 # Zusammenbau
 # -----------------------------------------------------------------------------
@@ -783,6 +822,7 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
            .replace("{{PRAXIS_BLOCK}}", f"<section class='card'><h2>Praxisbeispiel</h2>{praxis}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
            .replace("{{COACH_BLOCK}}", f"<section class='card'><h2>Coach</h2>{coach}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
            .replace("{{DOC_DIGEST_BLOCK}}", digest or "")
+           .replace("{{SOURCES_FOOTER_HTML}}", _sources_footer_html(live_news, tools_items, funding_items))
     )
 
     html = _fill_placeholders(html, n)

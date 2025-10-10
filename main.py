@@ -34,7 +34,7 @@ from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTEN
 
 # NEW: Schema‑Router
 try:
-    from schema import get_router as get_schema_router  # type: ignore
+    from schema import get_router as get_schema_router, get_schema_info  # type: ignore
 except Exception:  # pragma: no cover
     def get_schema_router():
         from fastapi import APIRouter
@@ -303,6 +303,7 @@ def health() -> dict:
         "app": APP_NAME,
         "pdf_service": PDF_SERVICE_URL or "-",
         "live": {"tavily": LIVE_TAVILY, "perplexity": LIVE_PERPLEXITY},
+        "schema": get_schema_info(),
         "smtp": bool(SMTP_HOST),
     }
 

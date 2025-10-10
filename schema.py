@@ -89,3 +89,18 @@ def validate_enum(field_key: str, value: str) -> bool:
         return value in vals
     except Exception:
         return False
+
+
+
+def get_schema_info() -> Dict[str, Any]:
+    """Return minimal schema info for health endpoints (version/hash, field count)."""
+    try:
+        obj = _load_schema()
+        payload = json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        return {
+            "etag": _etag(payload),
+            "fields": len((obj or {}).get("fields", {})),
+            "version": (obj or {}).get("version") or None,
+        }
+    except Exception:
+        return {"etag": None, "fields": 0, "version": None}

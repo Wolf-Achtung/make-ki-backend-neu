@@ -1,33 +1,31 @@
-# 🚀 KI-Briefing (DSGVO & Fördercheck)
+# KI-Backend Gold-Standard+ Patch (Quellen-Footer, Risks-Tabelle, Health Schema, Δ/Exec-Summary)
 
-Dieses Projekt erstellt ein individuelles Executive-Briefing inkl. Compliance-Score, Badge und Fördertipps auf Basis deiner Unternehmensdaten.  
-Optimiert für kleine Unternehmen & Berater, DSGVO-konform, minimal aufgebaut.
+Dieses Paket enthält **vollständige Dateien** für die wichtigsten Änderungen (keine Snippets).  
+Stand: 2025-10-10
 
----
+## Enthaltene Dateien (Zielpfade relativ zum Backend-Root `make-ki-backend-neu-main/make-ki-backend-neu-main/`)
 
-## 🗂️ Struktur
+- `templates/pdf_template.html` – Quellen‑Footer & Print‑CSS.
+- `gpt_analyze.py` – Hybrid Live‑Search, Quellen‑Footer, Platzhalter‑Support.
+- `schema.py` – `get_schema_info()` für `/health`.
+- `main.py` – `/health` erweitert um Schema‑Infos.
+- `prompts/de/risks_de.md` – neue Spalten (Likelihood/Impact/Mitigation/Owner/Frist).
+- `prompts/en/risks_en.md` – englisches Pendant.
+- `prompts/de/executive_summary_de.md` – Pflicht: Δ‑Referenz zu Benchmarks.
+- `prompts/en/executive_summary_en.md` – Required: Δ vs. benchmark.
+- `tests/test_normalize_and_scores.py` – Unit‑Tests für Normalize & Scoring.
 
-| Datei               | Zweck                                       |
-|----------------------|--------------------------------------------|
-| `index.html`         | Dein Formular + JS, ruft `/briefing` auf   |
-| `main.py`            | Flask-API mit `/briefing`                  |
-| `gpt_analyze.py`     | GPT-Analyse inkl. Score & Badge            |
-| `requirements.txt`   | Python-Abhängigkeiten                      |
-| `Dockerfile`         | Für Railway oder lokalen Docker-Deploy     |
+## Installation
 
----
+1. Legen Sie ein Backup Ihres Backends an.
+2. Entpacken Sie dieses Paket **über** Ihr Backend (Dateien überschreiben).
+3. Optional: `pytest -q` in der Backend‑Root ausführen.
 
-## 🚀 Deployment auf Railway
+## Hinweise
 
-1. Repository bei GitHub erstellen, Dateien hochladen
-2. Railway öffnen → **„New Project“ → „Deploy from GitHub Repo“**
-3. Automatisch wird dein `Dockerfile` erkannt.  
-4. Done! Deine App läuft dann z. B. unter `https://make-ki-backend-neu-production.up.railway.app/`
+- Der Quellen‑Footer wird mit `{SOURCES_FOOTER_HTML}` in `pdf_template.html` gefüllt.  
+- `/health` liefert nun `schema.etag`, `schema.version` (falls im Schema) sowie `fields`.
+- Die Executive Summary bleibt LLM‑generiert, verweist aber klar auf die Δ‑Werte.
+- Die Risikomatrix ist nun tabellarisch harmonisiert (EU‑AI‑Act‑tauglich).
 
----
-
-## 🔥 Lokale Ausführung (Docker)
-
-```bash
-docker build -t ki-briefing .
-docker run -p 8000:8000 ki-briefing
+Viel Erfolg!
