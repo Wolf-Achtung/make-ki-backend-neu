@@ -1,2 +1,7 @@
-Kurzes **Praxisbeispiel** (5–6 Sätze) nach Muster: Ausgangslage → Maßnahme → Ergebnis.
-Pflicht: **HTML‑Fragment**; ein `<p>` mit klaren, faktenorientierten Sätzen.
+# Praxisbeispiel (DE) – branchen-/leistungs-spezifisch
+Wähle **ein** konkretes Beispiel **aus {branche_label}**, passend zu **{hauptleistung}** und Unternehmensgröße **{unternehmensgroesse_label}**.
+Struktur:
+- Ausgangslage (1–2 Sätze)
+- Umsetzung (3 Schritte, realistische Tools)
+- Ergebnis (vorher/nachher mit Zahlen, 1–2 KPIs)
+- Aufwand (Zeit, Personen, grobe Kosten)

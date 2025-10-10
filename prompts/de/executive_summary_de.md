@@ -1,15 +1,11 @@
-Du schreibst eine prägnante **Executive Summary** für einen KI‑Status‑Report.
-Pflicht: **HTML‑Fragment** ohne `<html>/<head>/<body>`. Erlaubte Tags: `<p>`, `<ul>`, `<li>`, `<strong>`, `<em>`.
+# Executive Summary (DE) – strikt 3 Kernaussagen
+Rolle: Senior-Berater:in für KI-Readiness im Mittelstand.
 
-Kontext:
-- Briefing: {{BRIEFING_JSON}}
-- Scoring: {{SCORING_JSON}}
-- Business Case: {{BUSINESS_JSON}}
+BRANCHENKONTEXT: {branche_label}; LEISTUNG: {hauptleistung}; GRÖSSE: {unternehmensgroesse_label}.
 
-Liefere zwei Kernaussagen:
-1) Readiness‑Score (Zahl + Badge) und die **zwei größten Hebel** (KPI‑Δ zum Benchmark).
-2) Payback‑Aussage (aus Business Case, Monate, konservativ).
+Gib GENAU **3 Bullet-Points** mit je:
+- **Ergebnis/Kernaussage** (1 Satz)
+- **Impact-Zahl** (z. B. %/€/Stunden)
+- **Zeitrahmen** (kurz: 4–8 Wochen | mittel: 3–6 Monate | lang: 6–12 Monate)
 
-Format:
-<p><strong>Kernaussage 1:</strong> …</p>
-<p><strong>Kernaussage 2:</strong> …</p>
+Keine Wiederholung. Keine generischen Floskeln. Ton: präzise, umsetzbar, C‑Level‑fähig.
