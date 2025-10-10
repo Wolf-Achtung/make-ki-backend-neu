@@ -1,0 +1,48 @@
+{
+  "version": "2025-10-10",
+  "fields": {
+    "branche": {
+      "enum": [
+        { "value": "marketing",  "label": { "de": "Marketing & Werbung",       "en": "Marketing & Advertising" } },
+        { "value": "beratung",   "label": { "de": "Beratung & Dienstleistungen", "en": "Consulting & Services" } },
+        { "value": "it",         "label": { "de": "IT & Software",              "en": "IT & Software" } },
+        { "value": "finanzen",   "label": { "de": "Finanzen & Versicherungen",  "en": "Finance & Insurance" } },
+        { "value": "handel",     "label": { "de": "Handel & E‑Commerce",        "en": "Retail & E‑Commerce" } },
+        { "value": "bildung",    "label": { "de": "Bildung",                    "en": "Education" } },
+        { "value": "verwaltung", "label": { "de": "Verwaltung",                 "en": "Public Sector" } },
+        { "value": "gesundheit", "label": { "de": "Gesundheit & Pflege",        "en": "Healthcare" } },
+        { "value": "bau",        "label": { "de": "Bauwesen & Architektur",     "en": "Construction & Architecture" } },
+        { "value": "medien",     "label": { "de": "Medien & Kreativwirtschaft", "en": "Media & Creative Industries" } },
+        { "value": "industrie",  "label": { "de": "Industrie & Produktion",     "en": "Manufacturing & Industry" } },
+        { "value": "logistik",   "label": { "de": "Transport & Logistik",       "en": "Transport & Logistics" } }
+      ]
+    },
+    "unternehmensgroesse": {
+      "enum": [
+        { "value": "solo", "label": { "de": "1 (Solo/Freiberuflich)", "en": "1 (Solo/Freelance)" } },
+        { "value": "team", "label": { "de": "2–10 (Kleines Team)",    "en": "2–10 (Small Team)" } },
+        { "value": "kmu",  "label": { "de": "11–100 (KMU)",           "en": "11–100 (SME)" } }
+      ]
+    },
+    "bundesland": {
+      "enum": [
+        { "value": "bw", "label": { "de": "Baden-Württemberg", "en": "Baden-Württemberg" } },
+        { "value": "by", "label": { "de": "Bayern",            "en": "Bavaria" } },
+        { "value": "be", "label": { "de": "Berlin",            "en": "Berlin" } },
+        { "value": "bb", "label": { "de": "Brandenburg",       "en": "Brandenburg" } },
+        { "value": "hb", "label": { "de": "Bremen",            "en": "Bremen" } },
+        { "value": "hh", "label": { "de": "Hamburg",           "en": "Hamburg" } },
+        { "value": "he", "label": { "de": "Hessen",            "en": "Hesse" } },
+        { "value": "mv", "label": { "de": "Mecklenburg-Vorpommern", "en": "Mecklenburg-Western Pomerania" } },
+        { "value": "ni", "label": { "de": "Niedersachsen",     "en": "Lower Saxony" } },
+        { "value": "nw", "label": { "de": "Nordrhein-Westfalen", "en": "North Rhine-Westphalia" } },
+        { "value": "rp", "label": { "de": "Rheinland-Pfalz",   "en": "Rhineland-Palatinate" } },
+        { "value": "sl", "label": { "de": "Saarland",          "en": "Saarland" } },
+        { "value": "sn", "label": { "de": "Sachsen",           "en": "Saxony" } },
+        { "value": "st", "label": { "de": "Sachsen-Anhalt",    "en": "Saxony-Anhalt" } },
+        { "value": "sh", "label": { "de": "Schleswig-Holstein","en": "Schleswig-Holstein" } },
+        { "value": "th", "label": { "de": "Thüringen",         "en": "Thuringia" } }
+      ]
+    }
+  }
+}
