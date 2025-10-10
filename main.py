@@ -1,11 +1,13 @@
-# main.py
+# filename: main.py
 # -*- coding: utf-8 -*-
 """
 Production API für KI‑Status‑Report (Gold‑Standard+)
 
-Upgrades:
-- /health zeigt Live-Quellen (Tavily/Perplexity) an.
-- PDF-Header-Logging (X-PDF-Bytes/X-PDF-Limit) zur Diagnose.
+Änderungen in dieser Version:
+- **Schema‑Endpoint** eingebunden (GET /schema) – hält Frontend/Backend synchron.
+- **Perplexity/Tavily Health** sichtbarer in /health.
+- **/briefing_async** robust gegenüber gpt_analyze‑Varianten (build_report/analyze_briefing).
+- PDF‑Header‑Logging (X-PDF-Bytes/X-PDF-Limit) zur Diagnose.
 """
 
 from __future__ import annotations
@@ -30,9 +32,21 @@ from jose import jwt
 from jose.exceptions import JWTError
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
+# NEW: Schema‑Router
+try:
+    from schema import get_router as get_schema_router  # type: ignore
+except Exception:  # pragma: no cover
+    def get_schema_router():
+        from fastapi import APIRouter
+        r = APIRouter()
+        @r.get("/schema")
+        def _noop():
+            return {"ok": False, "detail": "schema file not found"}
+        return r
+
 try:
     from feedback_api import attach_to as attach_feedback  # type: ignore
-except Exception:
+except Exception:  # pragma: no cover
     attach_feedback = None
 
 APP_NAME = os.getenv("APP_NAME", "make-ki-backend")
@@ -51,7 +65,8 @@ TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", os.path.join(BASE_DIR, "templates"))
 
 # Live flags (für /health)
 LIVE_TAVILY = bool(os.getenv("TAVILY_API_KEY"))
-LIVE_PERPLEXITY = bool(os.getenv("PERPLEXITY_API_KEY"))
+# akzeptiere beide Env‑Namen
+LIVE_PERPLEXITY = bool(os.getenv("PPLX_API_KEY") or os.getenv("PERPLEXITY_API_KEY"))
 
 # PDF service
 PDF_SERVICE_URL = (os.getenv("PDF_SERVICE_URL") or "").rstrip("/")
@@ -87,24 +102,30 @@ LATENCY = Histogram("app_request_latency_seconds", "Request latency", ["path"])
 PDF_RENDER = Histogram("app_pdf_render_seconds", "PDF render duration seconds")
 POOL_AVAILABLE = Gauge("app_pdf_pool_available", "PDF contexts available (reported by service)")
 
+
 def _now_str() -> str:
     import datetime as dt
-    return dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
 
 def _sanitize_email(value: str | None) -> str:
     _, addr = parseaddr(value or "")
     return addr or ""
 
+
 def _lang_from_body(body: Dict[str, Any]) -> str:
     lang = str(body.get("lang") or body.get("language") or "de").lower()
     return "de" if lang.startswith("de") else "en"
 
+
 def _new_job_id() -> str:
     return uuid.uuid4().hex
+
 
 def _sha256(s: str) -> str:
     import hashlib
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
 
 def _idem_seen(key: str) -> bool:
     path = os.path.join(IDEMPOTENCY_DIR, key)
@@ -127,6 +148,7 @@ def _idem_seen(key: str) -> bool:
         return False
     return False
 
+
 def _smtp_send(msg: EmailMessage) -> None:
     if not SMTP_HOST or not SMTP_FROM:
         log.info("[mail] SMTP deaktiviert oder unkonfiguriert")
@@ -140,10 +162,12 @@ def _smtp_send(msg: EmailMessage) -> None:
             s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
 
+
 def _recipient_from(body: Dict[str, Any], fallback: str) -> str:
     answers = body.get("answers") or {}
     cand = answers.get("to") or answers.get("email") or body.get("to") or body.get("email") or fallback
     return _sanitize_email(cand)
+
 
 def _display_name_from(body: Dict[str, Any]) -> str:
     for key in ("unternehmen", "firma", "company", "company_name", "organization"):
@@ -153,24 +177,28 @@ def _display_name_from(body: Dict[str, Any]) -> str:
     email = _recipient_from(body, ADMIN_EMAIL)
     return (email.split("@")[0] if email else "Customer").title()
 
+
 def _build_subject(prefix: str, lang: str, display_name: str) -> str:
     core = "KI‑Status Report" if lang == "de" else "AI Status Report"
     return f"{prefix}/{display_name} – {core}"
+
 
 def _safe_pdf_filename(display_name: str, lang: str) -> str:
     dn = re.sub(r"[^a-zA-Z0-9_.-]+", "_", display_name) or "user"
     return f"KI-Status-Report-{dn}-{lang}.pdf"
 
+
 def _safe_html_filename(display_name: str, lang: str) -> str:
     dn = re.sub(r"[^a-zA-Z0-9_.-]+", "_", display_name) or "user"
     return f"KI-Status-Report-{dn}-{lang}.html"
+
 
 def _minify_html(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\s+<", "><", s)
-    s = re.sub(r"\s{2,}", " ", s)
+    s = re.sub(r">\\s+<", "><", s)
+    s = re.sub(r"\\s{2,}", " ", s)
     return s.strip()
 
 # --------------------------- PDF service ------------------------------------
@@ -239,6 +267,7 @@ def _issue_token(email: str) -> str:
     payload = {"sub": email, "iat": int(time.time()), "exp": int(time.time() + 14 * 24 * 3600)}
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
+
 async def current_user(req: Request):
     auth = req.headers.get("authorization") or ""
     parts = auth.split()
@@ -249,6 +278,7 @@ async def current_user(req: Request):
         except JWTError:
             pass
     return {"sub": "anon", "email": ""}
+
 
 app = FastAPI(title=APP_NAME)
 app.add_middleware(
@@ -261,6 +291,10 @@ app.add_middleware(
 if attach_feedback:
     attach_feedback(app)
 
+# NEW: Schema‑Router aktiv
+app.include_router(get_schema_router())
+
+
 @app.get("/health")
 def health() -> dict:
     return {
@@ -271,6 +305,7 @@ def health() -> dict:
         "live": {"tavily": LIVE_TAVILY, "perplexity": LIVE_PERPLEXITY},
         "smtp": bool(SMTP_HOST),
     }
+
 
 @app.get("/health/html")
 def health_html() -> HTMLResponse:
@@ -293,10 +328,12 @@ body{{font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-ser
 <p><a href="/metrics">/metrics</a></p>"""
     return HTMLResponse(html)
 
+
 @app.get("/metrics")
 def metrics() -> PlainTextResponse:
     data = generate_latest()  # type: ignore
     return PlainTextResponse(data, media_type=CONTENT_TYPE_LATEST)
+
 
 @app.post("/api/login")
 def api_login(req: Dict[str, Any]) -> Dict[str, Any]:
@@ -310,13 +347,13 @@ def api_login(req: Dict[str, Any]) -> Dict[str, Any]:
 
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(current_user)):
-    lang = "de" if str(body.get("lang") or body.get("language") or "de").lower().startswith("de") else "en"
+    lang = _lang_from_body(body)
     recipient_user = _recipient_from(body, fallback=ADMIN_EMAIL)
     if not recipient_user:
         raise HTTPException(status_code=400, detail="recipient could not be resolved")
 
     display_name = _display_name_from(body)
-    subject = f"{MAIL_SUBJECT_PREFIX}/{display_name} – {'KI‑Status Report' if lang=='de' else 'AI Status Report'}"
+    subject = _build_subject(MAIL_SUBJECT_PREFIX, lang, display_name)
     filename_pdf = _safe_pdf_filename(display_name, lang)
     filename_html = _safe_html_filename(display_name, lang)
 
@@ -326,37 +363,39 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
         log.info("[idem] duplicate (user=%s, lang=%s) – skipping", recipient_user, lang)
         return JSONResponse({"status": "duplicate", "job_id": uuid.uuid4().hex})
 
-    try:
-        from gpt_analyze import analyze_briefing, produce_admin_attachments  # type: ignore
-    except Exception as exc:
-        log.error("gpt_analyze import failed: %s", exc)
-        raise HTTPException(status_code=500, detail="analysis module not available")
-
+    # Merge answers up one level
     form_data = dict(body.get("answers") or {})
     for k, v in body.items():
         form_data.setdefault(k, v)
 
+    # Import analyzer
+    html_content: str
+    admin_json: Dict[str, bytes] = {}
     try:
-        html = analyze_briefing(form_data, lang=lang)
-        if not html or "<html" not in html.lower():
-            raise RuntimeError("empty html")
+        # prefer build_report (new), fallback to analyze_briefing (old)
+        try:
+            from gpt_analyze import build_report, produce_admin_attachments  # type: ignore
+            result = build_report(form_data, lang=lang)
+            html_content = result["html"] if isinstance(result, dict) else str(result)
+            # optional admin attachments
+            if callable(produce_admin_attachments):
+                tri = produce_admin_attachments(form_data, lang=lang)
+                admin_json = {name: content.encode("utf-8") for name, content in tri.items()}
+        except Exception:  # pragma: no cover
+            from gpt_analyze import analyze_briefing  # type: ignore
+            html_content = analyze_briefing(form_data, lang=lang)
     except Exception as exc:
-        log.error("analyze_briefing failed: %s", exc)
-        raise HTTPException(status_code=500, detail="rendering failed")
+        log.error("gpt_analyze import/exec failed: %s", exc)
+        raise HTTPException(status_code=500, detail="analysis module not available")
+
+    if not html_content or "<html" not in html_content.lower():
+        raise HTTPException(status_code=500, detail="rendering failed (empty html)")
 
     pdf_bytes = None
     try:
-        pdf_bytes = await _render_pdf_bytes(html, filename_pdf)
+        pdf_bytes = await _render_pdf_bytes(html_content, filename_pdf)
     except Exception as exc:
         log.warning("PDF render failed: %s", exc)
-
-    # Admin-Diagnosen
-    admin_json: Dict[str, bytes] = {}
-    try:
-        tri = produce_admin_attachments(form_data)
-        admin_json = {name: content.encode("utf-8") for name, content in tri.items()}
-    except Exception:
-        pass
 
     # Mail an User
     try:
@@ -365,10 +404,11 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
             subject=subject,
             html_body=("<p>Ihr KI‑Status‑Report liegt im Anhang (PDF &amp; HTML).</p>" if lang == "de"
                        else "<p>Your AI status report is attached (PDF &amp; HTML).</p>"),
-            html_attachment=html.encode("utf-8"),
+            html_attachment=html_content.encode("utf-8"),
             pdf_attachment=pdf_bytes,
             html_filename=filename_html,
             pdf_filename=filename_pdf,
+            admin_json=admin_json if os.getenv("ADMIN_ATTACH_USER", "0") in {"1", "true"} else None,
         )
         user_result = {"ok": True, "status": 200, "detail": "SMTP"}
     except Exception as exc:
@@ -384,9 +424,9 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
                 subject=subject + (" (Admin‑Kopie)" if lang == "de" else " (Admin copy)"),
                 html_body=("<p>Neuer Report erstellt. Anhänge: PDF, HTML sowie JSON‑Diagnosen.</p>" if lang == "de"
                            else "<p>New report created. Attachments: PDF, HTML and JSON diagnostics.</p>"),
-                html_attachment=html.encode("utf-8"),
+                html_attachment=html_content.encode("utf-8"),
                 pdf_attachment=pdf_bytes,
-                admin_json=admin_json,
+                admin_json=admin_json or None,
                 html_filename=filename_html,
                 pdf_filename=filename_pdf,
             )
@@ -396,12 +436,14 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
 
     return JSONResponse({"status": "ok", "job_id": uuid.uuid4().hex, "user_mail": user_result, "admin_mail": admin_result})
 
+
 @app.post("/pdf_test")
 async def pdf_test(body: Dict[str, Any]) -> Dict[str, Any]:
-    lang = "de" if str(body.get("lang") or "de").lower().startswith("de") else "en"
+    lang = _lang_from_body(body)
     html = body.get("html") or "<!doctype html><meta charset='utf-8'><h1>Ping</h1>"
     pdf = await _render_pdf_bytes(html, _safe_pdf_filename("test", lang))
     return {"ok": bool(pdf), "bytes": len(pdf or b'0')}
+
 
 @app.get("/")
 def root() -> HTMLResponse:
