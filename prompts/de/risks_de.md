@@ -1,6 +1,5 @@
-Erzeuge eine **Risikomatrix** (5 Einträge) als HTML-Fragment.
 
-**Spalten (in genau dieser Reihenfolge):**
+Erzeuge eine **Risikomatrix** (5 Zeilen) als HTML-`<table class="compact risk">` mit `<thead>`/`<tbody>` und exakt diesen Spalten:
 - Risiko
 - Bereich
 - Likelihood (1–5)
@@ -9,7 +8,7 @@ Erzeuge eine **Risikomatrix** (5 Einträge) als HTML-Fragment.
 - Owner (Rolle/Funktion)
 - Frist (z. B. 30/90 Tage)
 
-**Hinweise:**
-- Kontext: KMU/Deutschland; typische Risiken: Prompt‑Leakage, Halluzinationen, Vendor‑Lock‑in, PII/DSGVO, Qualitätsfehler.
-- Liefere **kompaktes, semantisches** `<table>` mit `<thead>`/`<tbody>`; keine Floskeln, keine Erklärtexte.
-- Zahlen bitte nur 1–5 (keine Prozent).
+**Regeln:**
+- Zahlen nur 1–5 (keine Prozent). Keine Floskeln.
+- Typische Risiken: Prompt‑Leakage, Halluzinationen, Vendor‑Lock‑in, PII/DSGVO, Qualitätsfehler.
+- Kurze, klare Formulierungen ohne Zeilenumbruchs-Artefakte.
