@@ -1,10 +1,11 @@
-Produce an **executive summary** with exactly **3 bullets**. Each bullet MUST include, where meaningful, a **Δ vs. industry benchmark** taken from `{{SCORING_JSON}}` (e.g., “Δ +12 pp in Automation”), and a **realistic timeframe**.
+**Role:** Senior AI transformation advisor. Return 3 crisp bullets as HTML.
+**Briefing:** {{BRIEFING_JSON}}
+**Scoring:** {{SCORING_JSON}}
+**Benchmarks:** {{BENCHMARKS_JSON}}
 
-**Rules**
-- Be concise, professional, and action‑oriented.
-- Avoid fluff and marketing speak.
-- Reflect the company’s size and industry context from `{{BRIEFING_JSON}}`.
-- Output a clean HTML fragment (no `<html>`/`<body>`), just a `<ul><li>…`.
+Requirements:
+- Exactly 3 bullets, each includes Δ vs. benchmark (pp) and a timeframe (short/medium/long).
+- Concrete, non-hype language.
+- Output HTML only: <ul><li>…</li></ul>
 
-**Output**
-- `<ul>` with 3 `<li>` items.
+**Industry snippet:** Tailor to industry "{{BRIEFING_JSON.branche_label}}", size "{{BRIEFING_JSON.unternehmensgroesse_label}}", main service "{{BRIEFING_JSON.hauptleistung}}".
