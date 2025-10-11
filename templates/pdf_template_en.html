@@ -8,7 +8,7 @@
   --brand-blue-700:#083a76;
   --brand-blue-50:#eef5ff;
   --brand-orange:#FF6A00;
-  --ink:#0E2A4A;        /* dunkles Blau für Copy */
+  --ink:#0E2A4A;
   --muted:#667085;
   --border:#E5E7EB;
 }
@@ -52,6 +52,27 @@ footer img{height:20px}
 @media print{
   a{color:inherit;text-decoration:none}
   .no-print{display:none!important}
+}
+
+/* Sources footer + compact tables */
+.sources{border-top:1px solid var(--border);margin-top:24px;padding-top:12px}
+.sources h3{margin:.25rem 0 .25rem 0;color:var(--brand-blue-700)}
+.sources ul{margin:.25rem 0 0 1rem}
+.sources li{margin:.15rem 0}
+.meta{font-size:.85rem;color:var(--muted);margin-top:.25rem}
+table.compact{border-collapse:collapse;width:100%}
+table.compact th,table.compact td{border:1px solid var(--border);padding:.35rem .5rem;font-size:.92rem}
+table.compact th{background:#F8FAFC;color:var(--ink);text-align:left}
+table.compact td{word-break:normal;hyphens:none;overflow-wrap:anywhere}
+table.compact.risk .col--risk{width:22%}
+table.compact.risk .col--area{width:14%}
+table.compact.risk .col--like, table.compact.risk .col--impact{width:8%}
+table.compact.risk .col--miti{width:28%}
+table.compact.risk .col--owner{width:12%}
+table.compact.risk .col--due{width:8%}
+@media print{
+  .card{break-inside:avoid}
+  .page-break{page-break-before:always}
 }
 </style>
 <body>
@@ -184,6 +205,13 @@ footer img{height:20px}
         <img src="{{ASSETS_BASE}}/ki-sicherheit-logo.png" alt="AI‑Security.now">
       </picture>
       <span>© AI‑Security.now – TÜV‑certified AI management</span>
+
+      <section class="sources small">
+        <h3>Sources (News, Tools, Funding)</h3>
+        <div class="meta">As of: {{REPORT_DATE}} – deduplicated by domain/URL.</div>
+        {{SOURCES_FOOTER_HTML}}
+      </section>
+
     </footer>
   </div>
 </body>
