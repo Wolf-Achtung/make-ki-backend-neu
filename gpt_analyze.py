@@ -1,64 +1,58 @@
-
 # filename: gpt_analyze.py
 # -*- coding: utf-8 -*-
 """
-KI-Status-Report Analyzer – Gold-Standard+ (2025-10-11, hardened)
-
-- PEP8, Logging, defensive Fehlerbehandlung
-- Normalisierung via Schema (optional) + Fallback-Mappings
-- Benchmarks/Scoring + ROI (≤ 4 Monate Payback als Baseline)
-- Prompt-Overlays (Executive Summary, Vision, Praxisbeispiel, etc.)
-- Live-Layer: Perplexity (JSON-Schema) + Tavily (Bearer) + Hybrid via websearch_utils
-- Quellen-Footer mit Badges (Gov/EU/Fachpresse/Blog/Vendor/Funding)
-- Admin-Anhänge (raw/normalized/missing)
-
-Neu:
-- HYBRID_LIVE env-Flag (default 1)
-- Source-Klassifikation + Badges (classify_source)
-- Platzhalter-Fix ({{ hauptleistung }}, {branche_label} etc.)
-- Perplexity-Model-Guard im HTTP-Pfad (Retry ohne model)
+KI-Status-Report Analyzer – Gold-Standard+ (hardened)
+- Schema-tolerante Normalisierung
+- KPI-Scoring + Benchmarks + Δ
+- ROI/Payback (≤ 4 Monate baseline via ROI_BASELINE_MONTHS)
+- Prompt-Overlays (DE/EN), strikt HTML-Fragmente
+- Live-Layer: Tavily + Perplexity (Guards, Retry), optional Hybrid websearch_utils
+- Quellen-Badges (Gov/EU/Forschung/Fachpresse/Vendor/NGO/Blog/Web)
+- PDF-Template-Füllung inkl. Quellen-Footer (Stand: Datum)
 """
+
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 import json
 import logging
 import os
 import re
 import time
-from dataclasses import dataclass, field
-from datetime import date, datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 import httpx
 
-# Optional hybrid live search
-try:
-    import websearch_utils  # type: ignore
-except Exception:  # pragma: no cover
-    websearch_utils = None  # type: ignore
-
-# classify + helpers
-try:
-    from .utils_sources import classify_source, filter_and_rank, dedupe_items  # type: ignore
-except Exception:  # pragma: no cover
-    from utils_sources import classify_source, filter_and_rank, dedupe_items  # type: ignore
-
-# Optionales Schema-Modul
+# Optional schema module (tolerant if missing)
 try:
     import schema as schema_mod  # type: ignore
 except Exception:  # pragma: no cover
     schema_mod = None
 
-# Optionaler Perplexity-Adapter
+# Hybrid search optional
+try:
+    import websearch_utils  # type: ignore
+except Exception:  # pragma: no cover
+    websearch_utils = None  # type: ignore
+
+# Source classification
+try:
+    from .utils_sources import classify_source, filter_and_rank, dedupe_items  # type: ignore
+except Exception:  # pragma: no cover
+    from utils_sources import classify_source, filter_and_rank, dedupe_items  # type: ignore
+
+# Optional Perplexity adapter
 try:
     from perplexity_client import PerplexityClient  # type: ignore
 except Exception:  # pragma: no cover
     PerplexityClient = None  # type: ignore
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Logging
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
@@ -80,9 +74,10 @@ def _live_log(provider: str, status: str, latency_ms: float, count: int = 0, **e
     except Exception:
         log.info("live_search %s %s %sms %s %s", provider, status, int(round(latency_ms)), count, extra)
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # ENV / Pfade
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+
 BASE_DIR = Path(os.getenv("APP_BASE") or os.getcwd()).resolve()
 DATA_DIR = Path(os.getenv("DATA_DIR") or BASE_DIR / "data").resolve()
 PROMPTS_DIR = Path(os.getenv("PROMPTS_DIR") or BASE_DIR / "prompts").resolve()
@@ -90,10 +85,9 @@ TEMPLATES_DIR = Path(os.getenv("TEMPLATE_DIR") or BASE_DIR / "templates").resolv
 
 TEMPLATE_DE = os.getenv("TEMPLATE_DE", "pdf_template.html")
 TEMPLATE_EN = os.getenv("TEMPLATE_EN", "pdf_template_en.html")
-
 ASSETS_BASE_URL = os.getenv("ASSETS_BASE_URL", "/assets")
 
-# OpenAI (nur für Prosa-Overlays)
+# OpenAI for overlays
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_APIKEY") or ""
 OPENAI_MODEL = os.getenv("OPENAI_MODEL_DEFAULT", "gpt-4o")
 EXEC_SUMMARY_MODEL = os.getenv("EXEC_SUMMARY_MODEL", OPENAI_MODEL)
@@ -101,27 +95,26 @@ OPENAI_TIMEOUT = float(os.getenv("OPENAI_TIMEOUT", "45"))
 OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", "1200"))
 GPT_TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", "0.2"))
 
-# Tavily
+# Live providers
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
-
-# Perplexity
 PPLX_API_KEY = os.getenv("PPLX_API_KEY") or os.getenv("PERPLEXITY_API_KEY") or ""
 PPLX_MODEL_RAW = (os.getenv("PPLX_MODEL") or "").strip()
 PPLX_TIMEOUT = float(os.getenv("PPLX_TIMEOUT", "30.0"))
 
-# Business-Case-Baseline
+# ROI baseline
 ROI_BASELINE_MONTHS = float(os.getenv("ROI_BASELINE_MONTHS", "4"))
 
-# Live-Search Fenster/Limit
+# Live windows
 SEARCH_DAYS_NEWS = int(os.getenv("SEARCH_DAYS_NEWS", "30"))
-SEARCH_DAYS_TOOLS = int(os.getenv("SEARCH_DAYS_TOOLS", "30"))
+SEARCH_DAYS_TOOLS = int(os.getenv("SEARCH_DAYS_TOOLS", "60"))
 SEARCH_DAYS_FUNDING = int(os.getenv("SEARCH_DAYS_FUNDING", "60"))
-LIVE_MAX_ITEMS = int(os.getenv("LIVE_MAX_ITEMS", "6"))
+LIVE_MAX_ITEMS = int(os.getenv("LIVE_MAX_ITEMS", "8"))
 HYBRID_LIVE = os.getenv("HYBRID_LIVE", "1").strip().lower() in {"1", "true", "yes"}
 
-# -----------------------------------------------------------------------------
-# Utility: Dateien lesen/Template laden/Minify
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Template / IO helpers
+# ---------------------------------------------------------------------------
+
 def _read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
@@ -161,9 +154,10 @@ def _as_fragment(html: str) -> str:
     s = re.sub(r"(?is)<\s*style[^>]*>.*?</\s*style\s*>", "", s)
     return s.strip()
 
-# -----------------------------------------------------------------------------
-# Locale-Formatierung
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Locale
+# ---------------------------------------------------------------------------
+
 def _fmt_pct(v: float, lang: str) -> str:
     if lang.startswith("de"):
         return f"{v:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".").replace(".0", "") + " %"
@@ -176,16 +170,17 @@ def _fmt_money_eur(v: float, lang: str) -> str:
     return "€" + f"{v:,.0f}"
 
 def _nbsp(s: str) -> str:
-    return s.replace(" ", " ")  # NBSP
+    return s.replace(" ", " ")
 
-# -----------------------------------------------------------------------------
-# Schema-Resolver & Normalisierung
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Schema / Normalization
+# ---------------------------------------------------------------------------
+
 def _schema_label(field_key: str, value: str, lang: str) -> Optional[str]:
     try:
         if schema_mod:
             return schema_mod.resolve_label(field_key, value, lang)
-    except Exception:  # pragma: no cover
+    except Exception:
         pass
     return None
 
@@ -193,17 +188,29 @@ def _schema_valid(field_key: str, value: str) -> bool:
     try:
         if schema_mod:
             return schema_mod.validate_enum(field_key, value)
-    except Exception:  # pragma: no cover
+    except Exception:
         pass
-    return True  # tolerant
+    return True
 
 BRANCHE_FALLBACK = {
-    "marketing": "Marketing & Werbung", "beratung": "Beratung", "it": "IT & Software",
-    "finanzen": "Finanzen & Versicherungen", "handel": "Handel & E‑Commerce", "bildung": "Bildung",
-    "verwaltung": "Verwaltung", "gesundheit": "Gesundheit & Pflege", "bau": "Bauwesen & Architektur",
-    "medien": "Medien & Kreativwirtschaft", "industrie": "Industrie & Produktion", "logistik": "Transport & Logistik",
+    "marketing": "Marketing & Werbung",
+    "beratung": "Beratung",
+    "it": "IT & Software",
+    "finanzen": "Finanzen & Versicherungen",
+    "handel": "Handel & E‑Commerce",
+    "bildung": "Bildung",
+    "verwaltung": "Verwaltung",
+    "gesundheit": "Gesundheit & Pflege",
+    "bau": "Bauwesen & Architektur",
+    "medien": "Medien & Kreativwirtschaft",
+    "industrie": "Industrie & Produktion",
+    "logistik": "Transport & Logistik",
 }
-GROESSE_FALLBACK = {"solo": "1 (Solo/Freiberuflich)", "team": "2–10 (Kleines Team)", "kmu": "11–100 (KMU)"}
+GROESSE_FALLBACK = {
+    "solo": "1 (Solo/Freiberuflich)",
+    "team": "2–10 (Kleines Team)",
+    "kmu": "11–100 (KMU)",
+}
 
 @dataclass
 class Normalized:
@@ -214,13 +221,11 @@ class Normalized:
     bundesland_code: str = "DE"
     hauptleistung: str = "Beratung/Service"
     pull_kpis: Dict[str, Any] = field(default_factory=dict)
-    # abgeleitete KPIs:
     kpi_digitalisierung: int = 60
     kpi_automatisierung: int = 55
     kpi_compliance: int = 60
     kpi_prozessreife: int = 55
     kpi_innovation: int = 60
-    # Rohdaten zur Diagnose:
     raw: Dict[str, Any] = field(default_factory=dict)
 
 def _parse_percent_bucket(val: Any) -> int:
@@ -312,9 +317,10 @@ def normalize_briefing(raw: Dict[str, Any], lang: str = "de") -> Normalized:
         raw=b,
     )
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Benchmarks & Scoring
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+
 def _kpi_key_norm(k: str) -> str:
     s = k.strip().lower()
     mapping = {
@@ -337,12 +343,6 @@ def _bench_file_patterns(branche: str, groesse: str) -> List[str]:
         "benchmarks_default",
         "benchmarks",
     ]
-
-def _read_text(path: Path) -> str  # type: ignore[no-redef]
-    try:
-        return path.read_text(encoding="utf-8")
-    except Exception:
-        return ""
 
 def _load_benchmarks(branche: str, groesse: str) -> Dict[str, float]:
     for base in _bench_file_patterns(branche, groesse):
@@ -372,7 +372,7 @@ def _load_benchmarks(branche: str, groesse: str) -> Dict[str, float]:
                 if out:
                     return out
             except Exception as exc:  # pragma: no cover
-                log.warning("Benchmark-Import fehlgeschlagen (%s): %s", p, exc)
+                log.warning("Benchmark import failed (%s): %s", p, exc)
     return {k: 60.0 for k in ["digitalisierung", "automatisierung", "compliance", "prozessreife", "innovation"]}
 
 @dataclass
@@ -384,9 +384,12 @@ class ScorePack:
     benchmarks: Dict[str, float]
 
 def _badge(total: float) -> str:
-    if total >= 85: return "EXCELLENT"
-    if total >= 70: return "GOOD"
-    if total >= 55: return "FAIR"
+    if total >= 85:
+        return "EXCELLENT"
+    if total >= 70:
+        return "GOOD"
+    if total >= 55:
+        return "FAIR"
     return "BASIC"
 
 def compute_scores(n: Normalized) -> ScorePack:
@@ -409,10 +412,9 @@ def compute_scores(n: Normalized) -> ScorePack:
     t = int(round(total))
     return ScorePack(total=t, badge=_badge(t), kpis=kpis, weights=weights, benchmarks=bm)
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Business Case (ROI)
-# -----------------------------------------------------------------------------
-from dataclasses import dataclass  # re-import safe
+# ---------------------------------------------------------------------------
 
 @dataclass
 class BusinessCase:
@@ -441,9 +443,10 @@ def business_case(n: Normalized) -> BusinessCase:
     roi_y1 = (save_year - invest) / invest * 100.0
     return BusinessCase(round(invest, 2), round(save_year, 2), round(payback_m, 1), round(roi_y1, 1))
 
-# -----------------------------------------------------------------------------
-# LLM-Aufrufe (OpenAI) + Prompt-Overlays
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# LLM Overlays (OpenAI)
+# ---------------------------------------------------------------------------
+
 def _openai_chat(messages: List[Dict[str, str]], model: Optional[str] = None, max_tokens: Optional[int] = None) -> str:
     if not OPENAI_API_KEY:
         return ""
@@ -488,12 +491,13 @@ def render_overlay(name: str, lang: str, ctx: Dict[str, Any]) -> str:
     if not lang.startswith("de"):
         system = "You are precise and risk-aware. Answer as clean HTML fragment (no <html>/<head>/<body>)."
     user = (
-        prompt.replace("{{BRIEFING_JSON}}", json.dumps(ctx.get("briefing", {}), ensure_ascii=False))
-              .replace("{{SCORING_JSON}}", json.dumps(ctx.get("scoring", {}), ensure_ascii=False))
-              .replace("{{BENCHMARKS_JSON}}", json.dumps(ctx.get("benchmarks", {}), ensure_ascii=False))
-              .replace("{{TOOLS_JSON}}", json.dumps(ctx.get("tools", []), ensure_ascii=False))
-              .replace("{{FUNDING_JSON}}", json.dumps(ctx.get("funding", []), ensure_ascii=False))
-              .replace("{{BUSINESS_JSON}}", json.dumps(ctx.get("business", {}), ensure_ascii=False))
+        prompt
+        .replace("{{BRIEFING_JSON}}", json.dumps(ctx.get("briefing", {}), ensure_ascii=False))
+        .replace("{{SCORING_JSON}}", json.dumps(ctx.get("scoring", {}), ensure_ascii=False))
+        .replace("{{BENCHMARKS_JSON}}", json.dumps(ctx.get("benchmarks", {}), ensure_ascii=False))
+        .replace("{{TOOLS_JSON}}", json.dumps(ctx.get("tools", []), ensure_ascii=False))
+        .replace("{{FUNDING_JSON}}", json.dumps(ctx.get("funding", []), ensure_ascii=False))
+        .replace("{{BUSINESS_JSON}}", json.dumps(ctx.get("business", {}), ensure_ascii=False))
     )
     out = _openai_chat(
         [{"role": "system", "content": system}, {"role": "user", "content": user}],
@@ -501,15 +505,16 @@ def render_overlay(name: str, lang: str, ctx: Dict[str, Any]) -> str:
     )
     return _minify_html_soft(_as_fragment(out))
 
-# -----------------------------------------------------------------------------
-# Live-Suche: Tavily + Perplexity + Merge + Badges
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Live Layer (Tavily + Perplexity)
+# ---------------------------------------------------------------------------
+
 def _pplx_model_effective() -> Optional[str]:
     name = (PPLX_MODEL_RAW or "").strip()
     if not name or name.lower() in {"auto", "best", "default", "none"}:
         return None
     if "online" in name.lower():
-        log.warning("PPLX_MODEL '%s' veraltet – schalte auf Auto (ohne model-Feld).", name)
+        log.warning("PPLX_MODEL '%s' legacy – switching to Best-Mode (no model).", name)
         return None
     return name
 
@@ -630,10 +635,9 @@ def _live_topic(topic: str, n: Normalized, max_results: int) -> List[Dict[str, A
     else:
         return []
 
-    # Hybrid via external helper
     if HYBRID_LIVE and websearch_utils:
         try:  # pragma: no cover
-            res = websearch_utils.hybrid_live_search(q, briefing=n.raw, short_days=SEARCH_DAYS_NEWS, long_days=SEARCH_DAYS_TOOLS, max_results=max_results)
+            res = websearch_utils.hybrid_live_search(q, short_days=SEARCH_DAYS_NEWS, long_days=SEARCH_DAYS_TOOLS, max_results=max_results)
             items = (res.get("items") or []) + internal
         except Exception as exc:
             log.warning("hybrid_live_search failed: %s", exc)
@@ -641,12 +645,12 @@ def _live_topic(topic: str, n: Normalized, max_results: int) -> List[Dict[str, A
     else:
         items = internal
 
-    # add classification + sort
     return filter_and_rank(items)[:max_results]
 
-# -----------------------------------------------------------------------------
-# HTML-Render-Bausteine
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# HTML rendering & glue
+# ---------------------------------------------------------------------------
+
 def _kpi_bars_html(score: ScorePack) -> str:
     order = ["digitalisierung", "automatisierung", "compliance", "prozessreife", "innovation"]
     labels = {"digitalisierung": "Digitalisierung", "automatisierung": "Automatisierung", "compliance": "Compliance", "prozessreife": "Prozessreife", "innovation": "Innovation"}
@@ -728,9 +732,6 @@ def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]]
             + "<div><h4>" + ("Förderungen" if lang.startswith("de") else "Funding") + "</h4>" + _mk(funding, "Förderungen") + "</div>"
             + "</div>")
 
-# -----------------------------------------------------------------------------
-# Zusammenbau
-# -----------------------------------------------------------------------------
 def _business_case_block(case: BusinessCase, lang: str) -> str:
     payback = f"{case.payback_months:.1f}"
     roi = _fmt_pct(case.roi_year1_pct, lang)
@@ -764,12 +765,11 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     score = compute_scores(n)
     case = business_case(n)
 
-    # Live-Listen
+    # Live
     live_news = _live_topic("news", n, LIVE_MAX_ITEMS)
     live_tools = _live_topic("tools", n, LIVE_MAX_ITEMS)
     live_funding = _live_topic("funding", n, max(LIVE_MAX_ITEMS, 10))
 
-    # Whitelists (Merge)
     tools_items = filter_and_rank(live_tools)[:LIVE_MAX_ITEMS]
     funding_items = filter_and_rank(live_funding)[:max(LIVE_MAX_ITEMS, 10)]
 
@@ -782,7 +782,7 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
         "business": case.__dict__,
     }
 
-    # LLM-Overlays
+    # LLM sections
     sec = lambda n_: render_overlay(n_, lang, ctx) or ""
     exec_llm = sec("executive_summary")
     quick = sec("quick_wins")
@@ -834,9 +834,7 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     html = _fill_placeholders(html, n)
     return {"html": html, "meta": {"score": score.total, "badge": score.badge, "date": report_date,"branche": n.branche,"size": n.unternehmensgroesse,"bundesland": n.bundesland_code,"kpis": score.kpis,"benchmarks": score.benchmarks,"live_counts": {"news": len(live_news), "tools": len(tools_items), "funding": len(funding_items)}}, "normalized": n.__dict__, "raw": n.raw}
 
-# -----------------------------------------------------------------------------
-# Öffentliche API
-# -----------------------------------------------------------------------------
+# Public API
 def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
     return build_html_report(raw, lang)["html"]
 
