@@ -1,0 +1,21 @@
+
+/* _print_overrides.css – Gold-Standard+ Lesbarkeit für Tabellen, Balken & Footer */
+:root{
+  --border:#E5E7EB; --ink:#0F172A; --muted:#475569;
+}
+table.compact{border-collapse:collapse;width:100%; table-layout: fixed;}
+table.compact th, table.compact td{border:1px solid var(--border); padding:.4rem .55rem; font-size:.92rem; vertical-align: top;}
+table.compact th{background:#F8FAFC; color:var(--ink); text-align:left;}
+table.compact td{word-break: normal; hyphens: none; overflow-wrap: anywhere;}
+
+table.compact.risk .col--risk{width:22%}
+table.compact.risk .col--area{width:14%}
+table.compact.risk .col--like, table.compact.risk .col--impact{width:8%}
+table.compact.risk .col--miti{width:28%}
+table.compact.risk .col--owner{width:12%}
+table.compact.risk .col--due{width:8%}
+
+.small{font-size:.88rem}
+.muted{color:var(--muted)}
+.page-break{page-break-before:always}
+@media print{ .card{break-inside:avoid} }
