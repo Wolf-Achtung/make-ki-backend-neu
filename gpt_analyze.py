@@ -12,16 +12,21 @@ KI-Status-Report Analyzer – Gold-Standard+ (vereinheitlichte Superset-Version)
 - Quellen-Footer & Admin-Anhänge
 - Locale-korrekte Formatierung (DE/EN) für Zahlen/Prozent
 
+Neu (Guards & Härtung):
+- Perplexity: Modellparameter **optional** (AUTO), Retry ohne Modell bei `invalid_model`/400
+- Tavily: 400/422-Fallback mit Minimal-Payload; strukturierte Live-Logs (latency/count/status)
+- Meta erweitert um `kpis` für nachgelagerte Diffs
+
 Diese Datei ist **eigenständig lauffähig** – externe Module sind optional.
 """
 
 from __future__ import annotations
 
-import csv
 import json
 import logging
 import os
 import re
+import time
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
@@ -32,7 +37,7 @@ import httpx
 # Optional hybrid live search
 try:
     import websearch_utils  # type: ignore
-except Exception:
+except Exception:  # pragma: no cover
     websearch_utils = None  # type: ignore
 
 # Optionales Schema-Modul
@@ -56,6 +61,21 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
 log = logging.getLogger("gpt_analyze")
+
+def _live_log(provider: str, status: str, latency_ms: float, count: int = 0, **extra: Any) -> None:
+    """Strukturiertes JSON-Logging für Live-Layer-Ereignisse."""
+    payload: Dict[str, Any] = {
+        "evt": "live_search",
+        "provider": provider,
+        "status": status,
+        "latency_ms": int(round(latency_ms)),
+        "count": int(count),
+    }
+    payload.update(extra or {})
+    try:
+        log.info(json.dumps(payload, ensure_ascii=False))
+    except Exception:
+        log.info("live_search %s %s %sms %s %s", provider, status, int(round(latency_ms)), count, extra)
 
 # -----------------------------------------------------------------------------
 # ENV / Pfade
@@ -83,7 +103,7 @@ TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 
 # Perplexity
 PPLX_API_KEY = os.getenv("PPLX_API_KEY") or os.getenv("PERPLEXITY_API_KEY") or ""
-PPLX_MODEL = os.getenv("PPLX_MODEL", "sonar-medium-online")
+PPLX_MODEL_RAW = (os.getenv("PPLX_MODEL") or "").strip()
 PPLX_TIMEOUT = float(os.getenv("PPLX_TIMEOUT", "30.0"))
 
 # Business-Case-Baseline
@@ -101,7 +121,7 @@ LIVE_MAX_ITEMS = int(os.getenv("LIVE_MAX_ITEMS", "6"))
 def _read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         log.warning("read failed %s: %s", path, exc)
         return ""
 
@@ -161,7 +181,7 @@ def _schema_label(field_key: str, value: str, lang: str) -> Optional[str]:
     try:
         if schema_mod:
             return schema_mod.resolve_label(field_key, value, lang)
-    except Exception:
+    except Exception:  # pragma: no cover
         pass
     return None
 
@@ -169,7 +189,7 @@ def _schema_valid(field_key: str, value: str) -> bool:
     try:
         if schema_mod:
             return schema_mod.validate_enum(field_key, value)
-    except Exception:
+    except Exception:  # pragma: no cover
         pass
     return True  # tolerant
 
@@ -330,8 +350,8 @@ def _load_benchmarks(branche: str, groesse: str) -> Dict[str, float]:
                         except Exception:
                             pass
                 else:
+                    import csv as _csv
                     with p.open("r", encoding="utf-8") as f:
-                        import csv as _csv
                         for row in _csv.DictReader(f):
                             k = _kpi_key_norm((row.get("kpi") or row.get("name") or "").strip())
                             v = row.get("value") or row.get("pct") or row.get("percent") or ""
@@ -341,7 +361,7 @@ def _load_benchmarks(branche: str, groesse: str) -> Dict[str, float]:
                                 pass
                 if out:
                     return out
-            except Exception as exc:
+            except Exception as exc:  # pragma: no cover
                 log.warning("Benchmark-Import fehlgeschlagen (%s): %s", p, exc)
     return {k: 60.0 for k in ["digitalisierung", "automatisierung", "compliance", "prozessreife", "innovation"]}
 
@@ -382,6 +402,8 @@ def compute_scores(n: Normalized) -> ScorePack:
 # -----------------------------------------------------------------------------
 # Business Case (ROI)
 # -----------------------------------------------------------------------------
+from dataclasses import dataclass  # re-import safe in module scope
+
 @dataclass
 class BusinessCase:
     invest_eur: float
@@ -430,7 +452,7 @@ def _openai_chat(messages: List[Dict[str, str]], model: Optional[str] = None, ma
             r.raise_for_status()
             data = r.json()
             return _strip_llm(((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "")
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover (netzwerk)
         log.warning("LLM call failed: %s", exc)
         return ""
 
@@ -472,8 +494,23 @@ def render_overlay(name: str, lang: str, ctx: Dict[str, Any]) -> str:
 # -----------------------------------------------------------------------------
 # Live-Suche: Tavily (Header) + Perplexity (HTTP) + Merge
 # -----------------------------------------------------------------------------
+def _pplx_model_effective() -> Optional[str]:
+    """
+    Interpretiert ENV PPLX_MODEL:
+    - '', 'auto', 'best', 'default' -> None (Modellfeld wird nicht gesendet; Perplexity wählt Best-Mode)
+    - veraltete Suffixe '*-online' -> ignorieren (None)
+    - ansonsten: zurückgeben
+    """
+    name = (PPLX_MODEL_RAW or "").strip()
+    if not name or name.lower() in {"auto", "best", "default", "none"}:
+        return None
+    if "online" in name.lower():
+        log.warning("PPLX_MODEL '%s' wirkt veraltet – verwende Auto-Modus (ohne model-Feld).", name)
+        return None
+    return name
+
 def _tavily(query: str, max_results: int, days: int) -> List[Dict[str, Any]]:
-    """Tavily via Bearer Header (stabiler als 'api_key' im JSON)."""
+    """Tavily via Bearer Header (stabiler als 'api_key' im JSON) + Minimal-Payload-Retry."""
     if not TAVILY_API_KEY:
         return []
     headers = {
@@ -488,27 +525,36 @@ def _tavily(query: str, max_results: int, days: int) -> List[Dict[str, Any]]:
         "include_answer": False,
         "time_range": f"{days}d",
     }
+    t0 = time.monotonic()
     try:
         with httpx.Client(timeout=30) as cli:
             r = cli.post("https://api.tavily.com/search", headers=headers, json=payload)
+            if r.status_code == 400:
+                # Fallback auf Minimal-Payload
+                _live_log("tavily", "400_bad_request_retry_minimal", (time.monotonic()-t0)*1000, 0)
+                r = cli.post("https://api.tavily.com/search", headers=headers, json={"query": query})
             r.raise_for_status()
             data = r.json() or {}
-            out = []
+            items = []
             for it in (data.get("results") or [])[:max_results]:
                 url = it.get("url")
-                out.append({
+                items.append({
                     "title": it.get("title") or url,
                     "url": url,
                     "domain": (url or "").split("/")[2] if "://" in (url or "") else "",
                     "date": (it.get("published_date") or "")[:10],
                 })
-            return out
-    except Exception as exc:
-        log.warning("Tavily failed: %s", exc)
+            _live_log("tavily", "ok", (time.monotonic()-t0)*1000, len(items))
+            return items
+    except httpx.HTTPStatusError as exc:
+        _live_log("tavily", f"http_{exc.response.status_code}", (time.monotonic()-t0)*1000, 0, body=str(exc.response.text)[:300])
+        return []
+    except Exception as exc:  # pragma: no cover
+        _live_log("tavily", f"error_{type(exc).__name__}", (time.monotonic()-t0)*1000, 0, error=str(exc))
         return []
 
 def _perplexity_http(query: str, max_items: int, category_hint: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Perplexity Chat Completions mit JSON Schema (maschinelles Parsing)."""
+    """Perplexity Chat Completions mit JSON Schema (maschinelles Parsing) + Model-Guards/Retry."""
     if not PPLX_API_KEY:
         return []
     headers = {"Authorization": f"Bearer {PPLX_API_KEY}", "Content-Type": "application/json", "Accept": "application/json"}
@@ -539,53 +585,72 @@ def _perplexity_http(query: str, max_items: int, category_hint: Optional[str] = 
         "required": ["items"],
         "additionalProperties": False,
     }
-    body = {
-        "model": PPLX_MODEL,
+
+    base_body = {
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": 0.1,
         "max_tokens": 900,
         "response_format": {"type": "json_schema", "json_schema": {"schema": schema}},
     }
+    model = _pplx_model_effective()
+    if model:
+        body = {**base_body, "model": model}
+    else:
+        body = dict(base_body)  # ohne model -> Best-Mode
+
+    url = "https://api.perplexity.ai/chat/completions"
+    t0 = time.monotonic()
     try:
         with httpx.Client(timeout=PPLX_TIMEOUT) as cli:
-            r = cli.post("https://api.perplexity.ai/chat/completions", headers=headers, json=body)
+            r = cli.post(url, headers=headers, json=body)
+            if r.status_code == 400 and "invalid_model" in (r.text or "").lower():
+                # einmaliges Retry ohne "model"
+                _live_log("perplexity", "400_invalid_model_retry_auto", (time.monotonic()-t0)*1000, 0, model_sent=model)
+                body.pop("model", None)
+                r = cli.post(url, headers=headers, json=body)
             r.raise_for_status()
             data = r.json() or {}
             content = (data.get("choices") or [{}])[0].get("message", {}).get("content", "{}")
             parsed = json.loads(content) if isinstance(content, str) else content
-            out = []
+            items = []
             for it in (parsed.get("items") or [])[:max_items]:
-                url = it.get("url")
-                out.append({
-                    "title": it.get("title") or url,
-                    "url": url,
-                    "domain": (url or "").split("/")[2] if "://" in (url or "") else "",
+                url_i = it.get("url")
+                items.append({
+                    "title": it.get("title") or url_i,
+                    "url": url_i,
+                    "domain": (url_i or "").split("/")[2] if "://" in (url_i or "") else "",
                     "date": (it.get("date") or "")[:10],
                 })
-            return out
-    except Exception as exc:
-        log.warning("Perplexity HTTP failed: %s", exc)
+            _live_log("perplexity", "ok", (time.monotonic()-t0)*1000, len(items), model_used=model or "auto")
+            return items
+    except httpx.HTTPStatusError as exc:
+        _live_log("perplexity", f"http_{exc.response.status_code}", (time.monotonic()-t0)*1000, 0, body=str(exc.response.text)[:300])
+        return []
+    except Exception as exc:  # pragma: no cover
+        _live_log("perplexity", f"error_{type(exc).__name__}", (time.monotonic()-t0)*1000, 0, error=str(exc))
         return []
 
 def _perplexity(query: str, max_items: int) -> List[Dict[str, Any]]:
     # Prefer Adapter, fallback auf HTTP
     if PerplexityClient:
+        t0 = time.monotonic()
         try:
             client = PerplexityClient()
             schema = {"title": "string", "url": "string", "date": "string"}
             items = client.search_json(query, schema=schema, max_items=max_items) or []
             out = []
             for it in items[:max_items]:
-                url = it.get("url")
+                url_i = it.get("url")
                 out.append({
-                    "title": it.get("title") or url,
-                    "url": url,
-                    "domain": (url or "").split("/")[2] if "://" in (url or "") else "",
+                    "title": it.get("title") or url_i,
+                    "url": url_i,
+                    "domain": (url_i or "").split("/")[2] if "://" in (url_i or "") else "",
                     "date": (it.get("date") or "")[:10],
                 })
+            _live_log("perplexity_adapter", "ok", (time.monotonic()-t0)*1000, len(out))
             return out
-        except Exception as exc:
-            log.warning("Perplexity adapter failed: %s", exc)
+        except Exception as exc:  # pragma: no cover
+            _live_log("perplexity_adapter", f"error_{type(exc).__name__}", (time.monotonic()-t0)*1000, 0, error=str(exc))
     return _perplexity_http(query, max_items, category_hint="mixed")
 
 def _merge_rank(*arrays: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
@@ -638,11 +703,11 @@ def _live_topic(topic: str, n: Normalized, max_results: int) -> List[Dict[str, A
     else:
         return []
     # Hybrid (bevorzugt, wenn verfügbar)
-    try:
+    try:  # pragma: no cover
         if websearch_utils:
             res = websearch_utils.hybrid_live_search(q, briefing=n.raw, short_days=SEARCH_DAYS_NEWS, long_days=SEARCH_DAYS_TOOLS, max_results=max_results)
             return res.get("items") or []
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         log.warning("hybrid_live_search failed: %s", exc)
     return []
 
@@ -939,6 +1004,8 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
             "branche": n.branche,
             "size": n.unternehmensgroesse,
             "bundesland": n.bundesland_code,
+            "kpis": score.kpis,
+            "benchmarks": score.benchmarks,
             "live_counts": {"news": len(live_news), "tools": len(tools_items), "funding": len(funding_items)},
         },
         "normalized": n.__dict__,
@@ -957,7 +1024,7 @@ def build_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
 def produce_admin_attachments(raw: Dict[str, Any], lang: str = "de") -> Dict[str, str]:
     try:
         norm = normalize_briefing(raw, lang=lang)
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover
         norm = Normalized(raw={"_error": f"normalize failed: {exc}", "_raw_keys": list((raw or {}).keys())})
     required = [
         "branche","branche_label","unternehmensgroesse","unternehmensgroesse_label","bundesland_code",
