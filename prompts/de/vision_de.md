@@ -1,3 +1,2 @@
-Schreibe eine knappe Vision (max. 110 Wörter) für „{{BRIEFING_JSON.hauptleistung}}“ in der Branche „{{BRIEFING_JSON.branche_label}}“ (Größe {{BRIEFING_JSON.unternehmensgroesse_label}}).
-Ersetze Platzhalter mit echten Werten, keine eckigen Klammern.
-HTML‑Output erlaubt <p>, <ul>, <li>.
+Max. 110 Wörter Vision für „{{BRIEFING_JSON.hauptleistung}}“ ({{BRIEFING_JSON.branche_label}}, {{BRIEFING_JSON.unternehmensgroesse_label}}).
+Keine eckigen Klammern. HTML erlaubt: <p>, <ul>, <li>.

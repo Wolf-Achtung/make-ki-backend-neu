@@ -1,3 +1,3 @@
-Erzeuge eine tabellarische Risikomatrix (HTML‑Tabelle, class="compact risk") mit Spalten:
-Risiko, Bereich, Likelihood(1–5), Impact(1–5), Mitigation (konkret), Owner (Rolle), Frist (30/60/90 Tage).
-Mappe die Risiken auf EU‑AI‑Act‑Begriffe (Transparenz, Aufsicht, Logging) in der Mitigation.
+Erzeuge eine Risikomatrix als HTML‑Tabelle (class="compact risk").
+Spalten: Risiko, Bereich, Likelihood(1–5), Impact(1–5), Mitigation (konkret), Owner, Frist (30/60/90 Tage).
+Mappe Mitigation auf EU‑AI‑Act (Transparenz/Logging/Aufsicht).

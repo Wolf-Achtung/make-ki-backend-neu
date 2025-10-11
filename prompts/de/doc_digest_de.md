@@ -1,2 +1,1 @@
-Erzeuge einen **Dokumenten‑Digest** (1–2 Sätze): Erkläre kurz Score‑Logik, Zweck des Berichts und was als Nächstes folgt.
-Pflicht: **HTML‑Fragment**; ein `<p>`.
+Falls Dokumente vorhanden sind: kurze HTML‑Liste als Digest, sonst leere Zeichenkette.
