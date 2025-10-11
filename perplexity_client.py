@@ -1,17 +1,17 @@
+
 # filename: perplexity_client.py
 # -*- coding: utf-8 -*-
 """
-Perplexity API Client (Gold-Standard+, 2025-10-11)
+Perplexity API Client (Gold-Standard+)
 
 - Enforces JSON responses via `response_format = json_schema`
-- Clean headers, retries on 429/5xx, fail-fast on 401/403/404/422
-- Guard for invalid/legacy models: omit `model` field if PPLX_MODEL in {'', auto, best, default} or endswith '-online'
-- On HTTP 400 + "invalid_model" -> single retry WITHOUT model (Best‑Mode)
+- Clean headers, retries on 429/5xx, fail-fast on 400/422
 - Structured logging
+- **Model guard:** If PPLX_MODEL is "", "auto", "best", "default" or contains "-online", omit the model field (Best‑Mode).
 
 Env:
-  PPLX_API_KEY       : required
-  PPLX_MODEL         : optional (leave empty to use Best‑Mode)
+  PPLX_API_KEY       : required (or PERPLEXITY_API_KEY)
+  PPLX_MODEL         : optional; default AUTO (omit field)
   PPLX_TIMEOUT_SEC   : default 30
 """
 
@@ -28,19 +28,23 @@ import httpx
 
 log = logging.getLogger("perplexity")
 
-def _effective_model(name: Optional[str]) -> Optional[str]:
-    n = (name or "").strip()
-    if not n or n.lower() in {"auto", "best", "default", "none"}:
+def _model_effective() -> Optional[str]:
+    name = (os.getenv("PPLX_MODEL") or "").strip()
+    if not name:
         return None
-    if "online" in n.lower():
+    low = name.lower()
+    if low in {"auto", "best", "default", "none"}:
         return None
-    return n
+    if "online" in low:
+        # legacy names like sonar-medium-online are no longer valid
+        return None
+    return name
 
 @dataclass
 class PerplexityClient:
     api_key: Optional[str] = None
-    model: str = os.getenv("PPLX_MODEL", "")
-    timeout_sec: float = float(os.getenv("PPLX_TIMEOUT_SEC", "30"))
+    model: Optional[str] = _model_effective()
+    timeout_sec: float = float(os.getenv("PPLX_TIMEOUT_SEC", os.getenv("PPLX_TIMEOUT", "30")))
     base_url: str = "https://api.perplexity.ai/chat/completions"
     temperature: float = 0.3
     top_p: float = 0.9
@@ -84,18 +88,14 @@ class PerplexityClient:
                     "items": {
                         "type": "object",
                         "properties": {k: {"type": v} for k, v in schema.items()},
-                        "required": [k for k in schema.keys()],
-                        "additionalProperties": True,
                     },
                 }
             },
             "required": ["items"],
-            "additionalProperties": False,
         }
 
         system_msg = system or (
-            "Du bist ein präziser, faktenbasierter Recherche-Agent. "
-            "Antwort ausschließlich als JSON (keine Erklärtexte)."
+            "You are a precise research agent. Return ONLY JSON. No explanations."
         )
 
         payload: Dict[str, Any] = {
@@ -108,10 +108,9 @@ class PerplexityClient:
             "max_tokens": self.max_tokens,
             "response_format": {"type": "json_schema", "json_schema": {"schema": schema_obj}},
         }
-
-        model_eff = _effective_model(self.model)
-        if model_eff:
-            payload["model"] = model_eff  # only send if valid
+        # Model guard
+        if self.model:
+            payload["model"] = self.model
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -122,7 +121,6 @@ class PerplexityClient:
             headers.update({k: v for k, v in extra_headers.items() if isinstance(k, str)})
 
         backoff_delays = [0.5, 1.2, 2.0] if self.enable_backoff else [0.0]
-        attempted_without_model = False
 
         last_err: Optional[str] = None
         for attempt, delay in enumerate(backoff_delays, start=1):
@@ -131,11 +129,10 @@ class PerplexityClient:
             try:
                 with httpx.Client(timeout=self.timeout_sec) as client:
                     resp = client.post(self.base_url, headers=headers, json=payload)
-                # model guard: retry once without model on invalid_model
-                if resp.status_code == 400 and "invalid_model" in (resp.text or "").lower() and not attempted_without_model:
-                    attempted_without_model = True
+                # Retry without model if invalid
+                if resp.status_code == 400 and "invalid_model" in (resp.text or "").lower() and "model" in payload:
+                    log.warning("Perplexity invalid_model -> retrying without model")
                     payload.pop("model", None)
-                    log.info("Perplexity 400 invalid_model → retry without model (Best‑Mode)")
                     with httpx.Client(timeout=self.timeout_sec) as client:
                         resp = client.post(self.base_url, headers=headers, json=payload)
 
@@ -145,9 +142,9 @@ class PerplexityClient:
                     items = self._safe_parse_items(content)
                     if clamp_items and items:
                         items = items[:max_items]
-                    log.info("Perplexity ok [model=%s] items=%s", payload.get("model", "auto"), len(items))
+                    log.info("Perplexity ok [%s] items=%s", self.model or "auto", len(items))
                     return items
-                elif resp.status_code in (401, 403, 404, 422):
+                elif resp.status_code in (400, 401, 403, 404, 422):
                     log.warning("Perplexity %s on attempt %s: %s", resp.status_code, attempt, self._short(resp.text))
                     return []
                 else:
@@ -202,9 +199,9 @@ class PerplexityClient:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     client = PerplexityClient()
-    schema = {"title": "string", "url": "string", "date": "string"}
+    schema = {"title": "string", "source": "string", "url": "string", "date": "string"}
     res = client.search_json(
-        "Aktuelle KI-Förderprogramme in Berlin (letzte 60 Tage). Nenne Titel, URL, Datum.",
+        "Aktuelle KI-Förderprogramme in Berlin (letzte 60 Tage). Nenne Titel, Quelle, URL, Datum.",
         schema=schema,
         max_items=5,
     )

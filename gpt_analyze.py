@@ -1,24 +1,23 @@
+
 # filename: gpt_analyze.py
 # -*- coding: utf-8 -*-
 """
-KI-Status-Report Analyzer – Gold-Standard+ (hardened, 2025-10-11)
+KI-Status-Report Analyzer – Gold-Standard+ (2025-10-11, hardened)
 
 - PEP8, Logging, defensive Fehlerbehandlung
 - Normalisierung via Schema (optional) + Fallback-Mappings
 - Benchmarks/Scoring + ROI (≤ 4 Monate Payback als Baseline)
 - Prompt-Overlays (Executive Summary, Vision, Praxisbeispiel, etc.)
-- Live-Layer: Perplexity (Chat Completions JSON-Schema) + Tavily (Bearer)
-  * optional: websearch_utils.hybrid_live_search, via ENV HYBRID_LIVE
-- Quellen-Footer & Admin-Anhänge
-- Locale-korrekte Formatierung (DE/EN) für Zahlen/Prozent
+- Live-Layer: Perplexity (JSON-Schema) + Tavily (Bearer) + Hybrid via websearch_utils
+- Quellen-Footer mit Badges (Gov/EU/Fachpresse/Blog/Vendor/Funding)
+- Admin-Anhänge (raw/normalized/missing)
 
-Neu (Guards & Härtung):
-- Perplexity: Modellparameter **optional** (AUTO), Retry ohne Modell bei `invalid_model`/400
-- Tavily: 400/422-Fallback mit Minimal-Payload; strukturierte Live-Logs (latency/count/status)
-- Hybrid-Layer nur wenn HYBRID_LIVE=1 (sonst interner Weg mit Guards)
-- Platzhalter-Fix: ersetzt nun auch {branche_label}, {unternehmensgroesse_label}, {hauptleistung}
+Neu:
+- HYBRID_LIVE env-Flag (default 1)
+- Source-Klassifikation + Badges (classify_source)
+- Platzhalter-Fix ({{ hauptleistung }}, {branche_label} etc.)
+- Perplexity-Model-Guard im HTTP-Pfad (Retry ohne model)
 """
-
 from __future__ import annotations
 
 import json
@@ -34,12 +33,16 @@ from typing import Any, Dict, List, Optional
 import httpx
 
 # Optional hybrid live search
-HYBRID_LIVE = os.getenv("HYBRID_LIVE", "0").strip().lower() in {"1","true","yes"}
 try:
     import websearch_utils  # type: ignore
 except Exception:  # pragma: no cover
     websearch_utils = None  # type: ignore
-    HYBRID_LIVE = False
+
+# classify + helpers
+try:
+    from .utils_sources import classify_source, filter_and_rank, dedupe_items  # type: ignore
+except Exception:  # pragma: no cover
+    from utils_sources import classify_source, filter_and_rank, dedupe_items  # type: ignore
 
 # Optionales Schema-Modul
 try:
@@ -64,7 +67,6 @@ logging.basicConfig(
 log = logging.getLogger("gpt_analyze")
 
 def _live_log(provider: str, status: str, latency_ms: float, count: int = 0, **extra: Any) -> None:
-    """Strukturiertes JSON-Logging für Live-Layer-Ereignisse."""
     payload: Dict[str, Any] = {
         "evt": "live_search",
         "provider": provider,
@@ -115,6 +117,7 @@ SEARCH_DAYS_NEWS = int(os.getenv("SEARCH_DAYS_NEWS", "30"))
 SEARCH_DAYS_TOOLS = int(os.getenv("SEARCH_DAYS_TOOLS", "30"))
 SEARCH_DAYS_FUNDING = int(os.getenv("SEARCH_DAYS_FUNDING", "60"))
 LIVE_MAX_ITEMS = int(os.getenv("LIVE_MAX_ITEMS", "6"))
+HYBRID_LIVE = os.getenv("HYBRID_LIVE", "1").strip().lower() in {"1", "true", "yes"}
 
 # -----------------------------------------------------------------------------
 # Utility: Dateien lesen/Template laden/Minify
@@ -137,14 +140,14 @@ def _minify_html_soft(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\\s+<", "><", s)
-    s = re.sub(r"\\s{2,}", " ", s)
+    s = re.sub(r">\s+<", "><", s)
+    s = re.sub(r"\s{2,}", " ", s)
     return s.strip()
 
 def _strip_llm(text: str) -> str:
     if not text:
         return ""
-    text = re.sub(r"```[a-zA-Z0-9]*\\s*", "", text).replace("```", "")
+    text = re.sub(r"```[a-zA-Z0-9]*\s*", "", text).replace("```", "")
     return text.strip()
 
 def _as_fragment(html: str) -> str:
@@ -152,10 +155,10 @@ def _as_fragment(html: str) -> str:
         return ""
     s = html
     s = re.sub(r"(?is)<!doctype.*?>", "", s)
-    s = re.sub(r"(?is)<\\s*html[^>]*>|</\\s*html\\s*>", "", s)
-    s = re.sub(r"(?is)<\\s*head[^>]*>.*?</\\s*head\\s*>", "", s)
-    s = re.sub(r"(?is)<\\s*body[^>]*>|</\\s*body\\s*>", "", s)
-    s = re.sub(r"(?is)<\\s*style[^>]*>.*?</\\s*style\\s*>", "", s)
+    s = re.sub(r"(?is)<\s*html[^>]*>|</\s*html\s*>", "", s)
+    s = re.sub(r"(?is)<\s*head[^>]*>.*?</\s*head\s*>", "", s)
+    s = re.sub(r"(?is)<\s*body[^>]*>|</\s*body\s*>", "", s)
+    s = re.sub(r"(?is)<\s*style[^>]*>.*?</\s*style\s*>", "", s)
     return s.strip()
 
 # -----------------------------------------------------------------------------
@@ -173,7 +176,7 @@ def _fmt_money_eur(v: float, lang: str) -> str:
     return "€" + f"{v:,.0f}"
 
 def _nbsp(s: str) -> str:
-    return s.replace(" ", " ")  # NBSP für enge Bindung
+    return s.replace(" ", " ")  # NBSP
 
 # -----------------------------------------------------------------------------
 # Schema-Resolver & Normalisierung
@@ -335,6 +338,12 @@ def _bench_file_patterns(branche: str, groesse: str) -> List[str]:
         "benchmarks",
     ]
 
+def _read_text(path: Path) -> str  # type: ignore[no-redef]
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception:
+        return ""
+
 def _load_benchmarks(branche: str, groesse: str) -> Dict[str, float]:
     for base in _bench_file_patterns(branche, groesse):
         for ext in (".json", ".csv"):
@@ -403,7 +412,7 @@ def compute_scores(n: Normalized) -> ScorePack:
 # -----------------------------------------------------------------------------
 # Business Case (ROI)
 # -----------------------------------------------------------------------------
-from dataclasses import dataclass  # re-import safe in module scope
+from dataclasses import dataclass  # re-import safe
 
 @dataclass
 class BusinessCase:
@@ -416,7 +425,7 @@ def _parse_invest(val: Any, default: float = 6000.0) -> float:
     if isinstance(val, (int, float)):
         return float(val)
     s = str(val or "")
-    parts = re.split(r"[^\\d]", s)
+    parts = re.split(r"[^\d]", s)
     nums = [float(p) for p in parts if p.isdigit()]
     if len(nums) >= 2:
         return (nums[0] + nums[1]) / 2.0
@@ -453,7 +462,7 @@ def _openai_chat(messages: List[Dict[str, str]], model: Optional[str] = None, ma
             r.raise_for_status()
             data = r.json()
             return _strip_llm(((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "")
-    except Exception as exc:  # pragma: no cover (netzwerk)
+    except Exception as exc:  # pragma: no cover
         log.warning("LLM call failed: %s", exc)
         return ""
 
@@ -493,45 +502,27 @@ def render_overlay(name: str, lang: str, ctx: Dict[str, Any]) -> str:
     return _minify_html_soft(_as_fragment(out))
 
 # -----------------------------------------------------------------------------
-# Live-Suche: Tavily (Header) + Perplexity (HTTP) + Merge
+# Live-Suche: Tavily + Perplexity + Merge + Badges
 # -----------------------------------------------------------------------------
 def _pplx_model_effective() -> Optional[str]:
-    """
-    Interpretiert ENV PPLX_MODEL:
-    - '', 'auto', 'best', 'default' -> None (Modellfeld wird nicht gesendet; Perplexity wählt Best-Mode)
-    - veraltete Suffixe '*-online' -> ignorieren (None)
-    - ansonsten: zurückgeben
-    """
     name = (PPLX_MODEL_RAW or "").strip()
     if not name or name.lower() in {"auto", "best", "default", "none"}:
         return None
     if "online" in name.lower():
-        log.warning("PPLX_MODEL '%s' wirkt veraltet – verwende Auto-Modus (ohne model-Feld).", name)
+        log.warning("PPLX_MODEL '%s' veraltet – schalte auf Auto (ohne model-Feld).", name)
         return None
     return name
 
 def _tavily(query: str, max_results: int, days: int) -> List[Dict[str, Any]]:
-    """Tavily via Bearer Header (stabiler als 'api_key' im JSON) + Minimal-Payload-Retry."""
     if not TAVILY_API_KEY:
         return []
-    headers = {
-        "Authorization": f"Bearer {TAVILY_API_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-    payload = {
-        "query": query,
-        "search_depth": "advanced",
-        "max_results": max_results,
-        "include_answer": False,
-        "time_range": f"{days}d",
-    }
+    headers = {"Authorization": f"Bearer {TAVILY_API_KEY}", "Content-Type": "application/json", "Accept": "application/json"}
+    payload = {"query": query, "search_depth": "advanced", "max_results": max_results, "include_answer": False, "time_range": f"{days}d"}
     t0 = time.monotonic()
     try:
         with httpx.Client(timeout=30) as cli:
             r = cli.post("https://api.tavily.com/search", headers=headers, json=payload)
             if r.status_code == 400:
-                # Fallback auf Minimal-Payload
                 _live_log("tavily", "400_bad_request_retry_minimal", (time.monotonic()-t0)*1000, 0)
                 r = cli.post("https://api.tavily.com/search", headers=headers, json={"query": query})
             r.raise_for_status()
@@ -539,12 +530,7 @@ def _tavily(query: str, max_results: int, days: int) -> List[Dict[str, Any]]:
             items = []
             for it in (data.get("results") or [])[:max_results]:
                 url = it.get("url")
-                items.append({
-                    "title": it.get("title") or url,
-                    "url": url,
-                    "domain": (url or "").split("/")[2] if "://" in (url or "") else "",
-                    "date": (it.get("published_date") or "")[:10],
-                })
+                items.append({"title": it.get("title") or url, "url": url, "domain": (url or "").split("/")[2] if "://" in (url or "") else "", "date": (it.get("published_date") or "")[:10]})
             _live_log("tavily", "ok", (time.monotonic()-t0)*1000, len(items))
             return items
     except httpx.HTTPStatusError as exc:
@@ -555,49 +541,16 @@ def _tavily(query: str, max_results: int, days: int) -> List[Dict[str, Any]]:
         return []
 
 def _perplexity_http(query: str, max_items: int, category_hint: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Perplexity Chat Completions mit JSON Schema (maschinelles Parsing) + Model-Guards/Retry."""
     if not PPLX_API_KEY:
         return []
     headers = {"Authorization": f"Bearer {PPLX_API_KEY}", "Content-Type": "application/json", "Accept": "application/json"}
     system = "Be precise and return ONLY valid JSON matching the provided schema."
-    user = (
-        "Find recent, reliable web sources (title, url, date) for the following query. "
-        "Return strictly as JSON. "
-        f"Category hint: {category_hint or 'mixed'}. "
-        f"Query: {query}"
-    )
-    schema = {
-        "type": "object",
-        "properties": {
-            "items": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "title": {"type": "string"},
-                        "url": {"type": "string"},
-                        "date": {"type": "string"},
-                    },
-                    "required": ["title", "url"],
-                    "additionalProperties": True,
-                },
-            }
-        },
-        "required": ["items"],
-        "additionalProperties": False,
-    }
+    user = f"Find recent, reliable web sources (title, url, date). Return strictly as JSON. Category hint: {category_hint or 'mixed'}. Query: {query}"
+    schema = {"type": "object", "properties": {"items": {"type": "array","items": {"type": "object","properties": {"title": {"type": "string"},"url": {"type": "string"},"date": {"type": "string"}},"required": ["title", "url"],"additionalProperties": True}}}, "required": ["items"], "additionalProperties": False}
 
-    base_body = {
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        "temperature": 0.1,
-        "max_tokens": 900,
-        "response_format": {"type": "json_schema", "json_schema": {"schema": schema}},
-    }
+    base_body = {"messages": [{"role": "system", "content": system}, {"role": "user", "content": user}], "temperature": 0.1, "max_tokens": 900, "response_format": {"type": "json_schema", "json_schema": {"schema": schema}}}
     model = _pplx_model_effective()
-    if model:
-        body = {**base_body, "model": model}
-    else:
-        body = dict(base_body)  # ohne model -> Best-Mode
+    body = dict(base_body, **({"model": model} if model else {}))
 
     url = "https://api.perplexity.ai/chat/completions"
     t0 = time.monotonic()
@@ -605,7 +558,6 @@ def _perplexity_http(query: str, max_items: int, category_hint: Optional[str] = 
         with httpx.Client(timeout=PPLX_TIMEOUT) as cli:
             r = cli.post(url, headers=headers, json=body)
             if r.status_code == 400 and "invalid_model" in (r.text or "").lower():
-                # einmaliges Retry ohne "model"
                 _live_log("perplexity", "400_invalid_model_retry_auto", (time.monotonic()-t0)*1000, 0, model_sent=model)
                 body.pop("model", None)
                 r = cli.post(url, headers=headers, json=body)
@@ -616,12 +568,7 @@ def _perplexity_http(query: str, max_items: int, category_hint: Optional[str] = 
             items = []
             for it in (parsed.get("items") or [])[:max_items]:
                 url_i = it.get("url")
-                items.append({
-                    "title": it.get("title") or url_i,
-                    "url": url_i,
-                    "domain": (url_i or "").split("/")[2] if "://" in (url_i or "") else "",
-                    "date": (it.get("date") or "")[:10],
-                })
+                items.append({"title": it.get("title") or url_i, "url": url_i, "domain": (url_i or "").split("/")[2] if "://" in (url_i or "") else "", "date": (it.get("date") or "")[:10]})
             _live_log("perplexity", "ok", (time.monotonic()-t0)*1000, len(items), model_used=model or "auto")
             return items
     except httpx.HTTPStatusError as exc:
@@ -632,7 +579,6 @@ def _perplexity_http(query: str, max_items: int, category_hint: Optional[str] = 
         return []
 
 def _perplexity(query: str, max_items: int) -> List[Dict[str, Any]]:
-    # Prefer Adapter, fallback auf HTTP
     if PerplexityClient:
         t0 = time.monotonic()
         try:
@@ -642,12 +588,7 @@ def _perplexity(query: str, max_items: int) -> List[Dict[str, Any]]:
             out = []
             for it in items[:max_items]:
                 url_i = it.get("url")
-                out.append({
-                    "title": it.get("title") or url_i,
-                    "url": url_i,
-                    "domain": (url_i or "").split("/")[2] if "://" in (url_i or "") else "",
-                    "date": (it.get("date") or "")[:10],
-                })
+                out.append({"title": it.get("title") or url_i, "url": url_i, "domain": (url_i or "").split("/")[2] if "://" in (url_i or "") else "", "date": (it.get("date") or "")[:10]})
             _live_log("perplexity_adapter", "ok", (time.monotonic()-t0)*1000, len(out))
             return out
         except Exception as exc:  # pragma: no cover
@@ -677,111 +618,38 @@ def _merge_rank(*arrays: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any
 def _live_topic(topic: str, n: Normalized, max_results: int) -> List[Dict[str, Any]]:
     branche = n.branche_label
     region = n.bundesland_code
-    # Bevorzugt interner Weg (robust), Hybrid nur opt-in via ENV
     if topic == "news":
         q = f"Aktuelle KI-News in der Branche {branche} (letzte {SEARCH_DAYS_NEWS} Tage). Titel, Domain, URL, Datum."
-        if not HYBRID_LIVE or not websearch_utils:
-            return _merge_rank(
-                _perplexity(q, max_results),
-                _tavily(q, max_results, days=SEARCH_DAYS_NEWS),
-                limit=max_results,
-            )
+        internal = _merge_rank(_perplexity(q, max_results), _tavily(q, max_results, days=SEARCH_DAYS_NEWS), limit=max_results)
     elif topic == "tools":
         q = f"Relevante KI-Tools/Anbieter für {branche}, Größe {n.unternehmensgroesse_label}. Titel, Domain, URL, Datum."
-        if not HYBRID_LIVE or not websearch_utils:
-            return _merge_rank(
-                _perplexity(q, max_results),
-                _tavily(q, max_results, days=SEARCH_DAYS_TOOLS),
-                limit=max_results,
-            )
+        internal = _merge_rank(_perplexity(q, max_results), _tavily(q, max_results, days=SEARCH_DAYS_TOOLS), limit=max_results)
     elif topic == "funding":
         q = f"Förderprogramme in {region} (Digitalisierung/KI) – offen oder laufend, Fristen innerhalb {SEARCH_DAYS_FUNDING} Tagen. Titel, Domain, URL, Datum."
-        if not HYBRID_LIVE or not websearch_utils:
-            return _merge_rank(
-                _perplexity(q, max_results),
-                _tavily(q, max_results, days=SEARCH_DAYS_FUNDING),
-                limit=max_results,
-            )
+        internal = _merge_rank(_perplexity(q, max_results), _tavily(q, max_results, days=SEARCH_DAYS_FUNDING), limit=max_results)
     else:
         return []
-    # Hybrid (bevorzugt nur wenn explizit aktiviert)
-    try:  # pragma: no cover
-        if websearch_utils and HYBRID_LIVE:
+
+    # Hybrid via external helper
+    if HYBRID_LIVE and websearch_utils:
+        try:  # pragma: no cover
             res = websearch_utils.hybrid_live_search(q, briefing=n.raw, short_days=SEARCH_DAYS_NEWS, long_days=SEARCH_DAYS_TOOLS, max_results=max_results)
-            return (res or {}).get("items") or []
-    except Exception as exc:  # pragma: no cover
-        log.warning("hybrid_live_search failed: %s", exc)
-    return []
+            items = (res.get("items") or []) + internal
+        except Exception as exc:
+            log.warning("hybrid_live_search failed: %s", exc)
+            items = internal
+    else:
+        items = internal
 
-# -----------------------------------------------------------------------------
-# Whitelists (lokal) – Tools & Förderung
-# -----------------------------------------------------------------------------
-def _load_json(path: Path) -> List[Dict[str, Any]]:
-    if not path.exists():
-        return []
-    try:
-        return json.loads(_read_text(path) or "[]") or []
-    except Exception:
-        return []
-
-def _local_tools(n: Normalized, limit: int) -> List[Dict[str, Any]]:
-    try:
-        from tools_loader import filter_tools  # type: ignore
-        return filter_tools(industry=n.branche, company_size=n.unternehmensgroesse, limit=limit)
-    except Exception:
-        pass
-    items = _load_json(DATA_DIR / "tools_de.json")
-    out = []
-    for it in items:
-        if it.get("industries") and n.branche not in it["industries"]:
-            continue
-        out.append({
-            "title": it.get("name"),
-            "url": it.get("url"),
-            "domain": (it.get("url") or "").split("/")[2] if "://" in (it.get("url") or "") else "",
-            "date": "",
-        })
-    return out[:limit]
-
-def _local_funding(n: Normalized, limit: int) -> List[Dict[str, Any]]:
-    try:
-        from funding_loader import filter_funding  # type: ignore
-        return filter_funding(region=n.bundesland_code, limit=limit)
-    except Exception:
-        pass
-    items = _load_json(DATA_DIR / "foerder_de.json") or _load_json(DATA_DIR / "foerder.json")
-    out = []
-    for it in items:
-        states = it.get("states") or []
-        if states and n.bundesland_code.lower() not in [s.lower() for s in states]:
-            continue
-        out.append({
-            "title": it.get("title"),
-            "url": it.get("url"),
-            "domain": (it.get("url") or "").split("/")[2] if "://" in (it.get("url") or "") else "",
-            "date": it.get("deadline") or "",
-        })
-    return out[:limit]
-
-def _dedupe(items: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
-    seen, out = set(), []
-    for it in items:
-        key = (it.get("url") or "").split("?")[0].lower() or (it.get("title") or "").lower()
-        if not key or key in seen:
-            continue
-        seen.add(key)
-        out.append(it)
-    return out[:limit]
+    # add classification + sort
+    return filter_and_rank(items)[:max_results]
 
 # -----------------------------------------------------------------------------
 # HTML-Render-Bausteine
 # -----------------------------------------------------------------------------
 def _kpi_bars_html(score: ScorePack) -> str:
     order = ["digitalisierung", "automatisierung", "compliance", "prozessreife", "innovation"]
-    labels = {
-        "digitalisierung": "Digitalisierung", "automatisierung": "Automatisierung",
-        "compliance": "Compliance", "prozessreife": "Prozessreife", "innovation": "Innovation",
-    }
+    labels = {"digitalisierung": "Digitalisierung", "automatisierung": "Automatisierung", "compliance": "Compliance", "prozessreife": "Prozessreife", "innovation": "Innovation"}
     rows = []
     for k in order:
         v = score.kpis[k]["value"]
@@ -796,14 +664,8 @@ def _kpi_bars_html(score: ScorePack) -> str:
     return "<div class='kpi'>" + "".join(rows) + "</div>"
 
 def _benchmark_table_html(score: ScorePack) -> str:
-    head = "<table class='bm'><thead><tr><th>KPI</</th><th>Ihr Wert</th><th>Branchen‑Benchmark</th><th>Δ (pp)</th></tr></thead><tbody>"
-    labels = {
-        "digitalisierung": "Digitalisierung",
-        "automatisierung": "Automatisierung",
-        "compliance": "Compliance",
-        "prozessreife": "Prozessreife",
-        "innovation": "Innovation",
-    }
+    head = "<table class='bm'><thead><tr><th>KPI</th><th>Ihr Wert</th><th>Branchen‑Benchmark</th><th>Δ (pp)</th></tr></thead><tbody>"
+    labels = {"digitalisierung": "Digitalisierung", "automatisierung": "Automatisierung", "compliance": "Compliance", "prozessreife": "Prozessreife", "innovation": "Innovation"}
     rows = []
     for k, lab in labels.items():
         v = score.kpis[k]["value"]
@@ -819,13 +681,15 @@ def _profile_html(n: Normalized) -> str:
     if pl.get("top_use_case"): pills.append(f"<span class='pill'>Top‑Use‑Case: {pl['top_use_case']}</span>")
     if pl.get("zeitbudget"): pills.append(f"<span class='pill'>Zeitbudget: {pl['zeitbudget']}</span>")
     pills_html = " ".join(pills) if pills else "<span class='muted'>—</span>"
-    return (
-        "<div class='card'><h2>Unternehmensprofil & Ziele</h2>"
-        f"<p><span class='hl'>Hauptleistung:</span> {n.hauptleistung} "
-        f"<span class='muted'>&middot; Branche:</span> {n.branche_label} "
-        f"<span class='muted'>&middot; Größe:</span> {n.unternehmensgroesse_label}</p>"
-        f"<p>{pills_html}</p></div>"
-    )
+    return ("<div class='card'><h2>Unternehmensprofil & Ziele</h2>"
+            f"<p><span class='hl'>Hauptleistung:</span> {n.hauptleistung} "
+            f"<span class='muted'>&middot; Branche:</span> {n.branche_label} "
+            f"<span class='muted'>&middot; Größe:</span> {n.unternehmensgroesse_label}</p>"
+            f"<p>{pills_html}</p></div>")
+
+def _badge_html(url: str, domain: str) -> str:
+    cat, label, badge, _ = classify_source(url, domain)
+    return f"<span class='badge {badge}'>{label}</span>"
 
 def _list_html(items: List[Dict[str, Any]], empty_msg: str, berlin_badge: bool = False) -> str:
     if not items:
@@ -839,8 +703,8 @@ def _list_html(items: List[Dict[str, Any]], empty_msg: str, berlin_badge: bool =
         extra = ""
         if berlin_badge and any(d in (url or "") for d in ("berlin.de", "ibb.de")):
             extra = " <span class='flag-berlin'>Land Berlin</span>"
-        lis.append(f"<li><a href='{url}'>{title}</a> – <span class='muted'>{dom} {when}</span>{extra}</li>")
-    return "<ul>" + "".join(lis) + "</ul>"
+        lis.append(f"<li><a href='{url}'>{title}</a> – <span class='muted'>{dom} {when}</span> {_badge_html(url, dom)}{extra}</li>")
+    return "<ul class='source-list'>" + "".join(lis) + "</ul>"
 
 def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]], funding: List[Dict[str, Any]], lang: str) -> str:
     def _mk(items, title):
@@ -856,15 +720,13 @@ def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]]
             title_ = it.get("title") or it.get("name") or it.get("url")
             dom = it.get("domain") or (url.split('/')[2] if '://' in url else "")
             when = (it.get("date") or "")[:10]
-            lis.append(f"<li><a href='{url}'>{title_}</a> – <span class='muted'>{dom} {when}</span></li>")
-        return "<ul>" + "".join(lis) + "</ul>"
-    return (
-        "<div class='grid'>"
-        + "<div><h4>News</h4>" + _mk(news, "News") + "</div>"
-        + "<div><h4>Tools</h4>" + _mk(tools, "Tools") + "</div>"
-        + "<div><h4>" + ("Förderungen" if lang.startswith("de") else "Funding") + "</h4>" + _mk(funding, "Förderungen") + "</div>"
-        + "</div>"
-    )
+            lis.append(f"<li><a href='{url}'>{title_}</a> – <span class='muted'>{dom} {when}</span> {_badge_html(url, dom)}</li>")
+        return "<ul class='source-list'>" + "".join(lis) + "</ul>"
+    return ("<div class='grid'>"
+            + "<div><h4>News</h4>" + _mk(news, "News") + "</div>"
+            + "<div><h4>Tools</h4>" + _mk(tools, "Tools") + "</div>"
+            + "<div><h4>" + ("Förderungen" if lang.startswith("de") else "Funding") + "</h4>" + _mk(funding, "Förderungen") + "</div>"
+            + "</div>")
 
 # -----------------------------------------------------------------------------
 # Zusammenbau
@@ -878,32 +740,23 @@ def _business_case_block(case: BusinessCase, lang: str) -> str:
     label_save = "Ersparnis/Jahr" if lang.startswith("de") else "Savings/year"
     label_payback = "Payback" if not lang.startswith("de") else "Payback"
     label_roi = "ROI Jahr 1" if lang.startswith("de") else "ROI year 1"
-    return (
-        "<div class='card'><h2>ROI & Payback</h2>"
-        f"<p><b>{label_invest}:</b> ~{_nbsp(invest)} | <b>{label_save}:</b> ~{_nbsp(save)} | "
-        f"<b>{label_payback}:</b> ~{payback} Monate | <b>{label_roi}:</b> ~{roi}</p>"
-        "<div class='footnotes'>Formel: Invest/Monate × 12; konservative Annahmen.</div></div>"
-    )
+    return ("<div class='card'><h2>ROI & Payback</h2>"
+            f"<p><b>{label_invest}:</b> ~{_nbsp(invest)} | <b>{label_save}:</b> ~{_nbsp(save)} | "
+            f"<b>{label_payback}:</b> ~{payback} Monate | <b>{label_roi}:</b> ~{roi}</p>"
+            "<div class='footnotes'>Formel: Invest/Monate × 12; konservative Annahmen.</div></div>")
 
 def _fill_placeholders(html: str, n: Normalized) -> str:
-    """Ersetzt generische und geschweifte Platzhalter robust."""
     if not html:
         return html
-    repl = {
-        "[Branche]": n.branche_label,
-        "[Größe]": n.unternehmensgroesse_label,
-        "[Hauptleistung]": n.hauptleistung,
-        "{{ hauptleistung }}": n.hauptleistung,
-        "{branche_label}": n.branche_label,
-        "{unternehmensgroesse_label}": n.unternehmensgroesse_label,
-        "{hauptleistung}": n.hauptleistung,
-    }
+    kpis = {"digitalisierung": n.kpi_digitalisierung,"automatisierung": n.kpi_automatisierung,"compliance": n.kpi_compliance,"prozessreife": n.kpi_prozessreife,"innovation": n.kpi_innovation}
+    deltas = sorted(((k, abs(v - 60.0)) for k, v in kpis.items()), key=lambda x: x[1], reverse=True)
+    map_de = {"digitalisierung": "Digitalisierung","automatisierung": "Automatisierung","compliance": "Compliance","prozessreife": "Prozessreife","innovation": "Innovation"}
+    top2 = " & ".join([map_de.get(d[0], d[0].title()) for d in deltas[:2]]) or "Digitalisierung & Compliance"
+    repl = {"[Branche]": n.branche_label,"[Größe]": n.unternehmensgroesse_label,"[Hauptleistung]": n.hauptleistung,"[wichtigste Δ‑Hebel]": top2,"{{ hauptleistung }}": n.hauptleistung,"{branche_label}": n.branche_label,"{unternehmensgroesse_label}": n.unternehmensgroesse_label,"{hauptleistung}": n.hauptleistung}
     for k, v in repl.items():
         html = html.replace(k, v)
-    # generische Klammerreste entfernen
-    html = re.sub(r"\\[[^\\]]+\\]", "", html)
-    html = re.sub(r"\\{\\{[^}]+\\}\\}", "", html)
-    html = re.sub(r"\\{[^}]+\\}", "", html)
+    html = re.sub(r"\[[^\]]+\]", "", html)
+    html = re.sub(r"\{\{[^}]+\}\}", "", html)
     return html
 
 def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
@@ -917,18 +770,11 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     live_funding = _live_topic("funding", n, max(LIVE_MAX_ITEMS, 10))
 
     # Whitelists (Merge)
-    wl_tools = _local_tools(n, LIVE_MAX_ITEMS)
-    wl_funding = _local_funding(n, max(LIVE_MAX_ITEMS, 10))
-
-    tools_items = _dedupe((live_tools or []) + (wl_tools or []), LIVE_MAX_ITEMS)
-    funding_items = _dedupe((live_funding or []) + (wl_funding or []), max(LIVE_MAX_ITEMS, 10))
+    tools_items = filter_and_rank(live_tools)[:LIVE_MAX_ITEMS]
+    funding_items = filter_and_rank(live_funding)[:max(LIVE_MAX_ITEMS, 10)]
 
     ctx = {
-        "briefing": {
-            "branche": n.branche, "branche_label": n.branche_label,
-            "unternehmensgroesse": n.unternehmensgroesse, "unternehmensgroesse_label": n.unternehmensgroesse_label,
-            "bundesland_code": n.bundesland_code, "hauptleistung": n.hauptleistung, "pull_kpis": n.pull_kpis
-        },
+        "briefing": {"branche": n.branche, "branche_label": n.branche_label,"unternehmensgroesse": n.unternehmensgroesse, "unternehmensgroesse_label": n.unternehmensgroesse_label,"bundesland_code": n.bundesland_code, "hauptleistung": n.hauptleistung, "pull_kpis": n.pull_kpis},
         "scoring": {"score_total": score.total, "badge": score.badge, "kpis": score.kpis, "weights": score.weights},
         "benchmarks": score.benchmarks,
         "tools": tools_items,
@@ -936,7 +782,7 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
         "business": case.__dict__,
     }
 
-    # LLM-Overlays (nur wenn Prompts vorhanden)
+    # LLM-Overlays
     sec = lambda n_: render_overlay(n_, lang, ctx) or ""
     exec_llm = sec("executive_summary")
     quick = sec("quick_wins")
@@ -958,8 +804,7 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     tpl = _template(lang)
     report_date = os.getenv("REPORT_DATE_OVERRIDE") or date.today().isoformat()
 
-    html = (
-        tpl.replace("{{LANG}}", "de" if lang.startswith("de") else "en")
+    html = (tpl.replace("{{LANG}}", "de" if lang.startswith("de") else "en")
            .replace("{{ASSETS_BASE}}", ASSETS_BASE_URL)
            .replace("{{REPORT_DATE}}", report_date)
            .replace("{{STAND_DATUM}}", report_date)
@@ -974,7 +819,7 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
            .replace("{{ROADMAP_HTML}}", roadmap)
            .replace("{{RISKS_HTML}}", risks)
            .replace("{{COMPLIANCE_HTML}}", compliance)
-           .replace("{{NEWS_HTML}}", _list_html(live_news, "Keine aktuellen News (30 Tage geprüft)." if lang.startswith("de") else "No recent news (30 days)."))
+           .replace("{{NEWS_HTML}}", _list_html(live_news, "Keine aktuellen News (30–60 Tage geprüft)." if lang.startswith("de") else "No recent news (30–60 days)."))
            .replace("{{TOOLS_HTML}}", tools_block)
            .replace("{{FUNDING_HTML}}", funding_block)
            .replace("{{RECOMMENDATIONS_BLOCK}}", f"<section class='card'><h2>Recommendations</h2>{recs}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
@@ -986,25 +831,8 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
            .replace("{{DOC_DIGEST_BLOCK}}", digest or "")
            .replace("{{SOURCES_FOOTER_HTML}}", _sources_footer_html(live_news, tools_items, funding_items, lang))
     )
-
     html = _fill_placeholders(html, n)
-
-    return {
-        "html": html,
-        "meta": {
-            "score": score.total,
-            "badge": score.badge,
-            "date": report_date,
-            "branche": n.branche,
-            "size": n.unternehmensgroesse,
-            "bundesland": n.bundesland_code,
-            "kpis": score.kpis,
-            "benchmarks": score.benchmarks,
-            "live_counts": {"news": len(live_news), "tools": len(tools_items), "funding": len(funding_items)},
-        },
-        "normalized": n.__dict__,
-        "raw": n.raw,
-    }
+    return {"html": html, "meta": {"score": score.total, "badge": score.badge, "date": report_date,"branche": n.branche,"size": n.unternehmensgroesse,"bundesland": n.bundesland_code,"kpis": score.kpis,"benchmarks": score.benchmarks,"live_counts": {"news": len(live_news), "tools": len(tools_items), "funding": len(funding_items)}}, "normalized": n.__dict__, "raw": n.raw}
 
 # -----------------------------------------------------------------------------
 # Öffentliche API
@@ -1020,10 +848,7 @@ def produce_admin_attachments(raw: Dict[str, Any], lang: str = "de") -> Dict[str
         norm = normalize_briefing(raw, lang=lang)
     except Exception as exc:  # pragma: no cover
         norm = Normalized(raw={"_error": f"normalize failed: {exc}", "_raw_keys": list((raw or {}).keys())})
-    required = [
-        "branche","branche_label","unternehmensgroesse","unternehmensgroesse_label","bundesland_code",
-        "hauptleistung","kpi_digitalisierung","kpi_automatisierung","kpi_compliance","kpi_prozessreife","kpi_innovation",
-    ]
+    required = ["branche","branche_label","unternehmensgroesse","unternehmensgroesse_label","bundesland_code","hauptleistung","kpi_digitalisierung","kpi_automatisierung","kpi_compliance","kpi_prozessreife","kpi_innovation"]
     def _is_missing(v) -> bool:
         if v is None: return True
         if isinstance(v, str): return v.strip() == ""
@@ -1031,8 +856,4 @@ def produce_admin_attachments(raw: Dict[str, Any], lang: str = "de") -> Dict[str
         return False
     missing = sorted([k for k in required if _is_missing(getattr(norm, k, None))])
     payload_raw = raw if isinstance(raw, dict) else {"_note": "raw not dict"}
-    return {
-        "briefing_raw.json": json.dumps(payload_raw, ensure_ascii=False, indent=2),
-        "briefing_normalized.json": json.dumps(norm.__dict__, ensure_ascii=False, indent=2),
-        "briefing_missing_fields.json": json.dumps({"missing": missing}, ensure_ascii=False, indent=2),
-    }
+    return {"briefing_raw.json": json.dumps(payload_raw, ensure_ascii=False, indent=2),"briefing_normalized.json": json.dumps(norm.__dict__, ensure_ascii=False, indent=2),"briefing_missing_fields.json": json.dumps({"missing": missing}, ensure_ascii=False, indent=2)}

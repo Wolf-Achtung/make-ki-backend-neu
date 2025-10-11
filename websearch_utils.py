@@ -1,3 +1,4 @@
+
 # filename: websearch_utils.py
 # -*- coding: utf-8 -*-
 from __future__ import annotations
@@ -5,17 +6,11 @@ from typing import Any, Dict, List, Optional
 import os, time, json, httpx
 from datetime import datetime
 
-# optional local helpers
+# robust import for local utils
 try:
-    from .utils_sources import dedupe_items  # type: ignore
-except Exception:
-    def dedupe_items(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        seen, out = set(), []
-        for it in items:
-            key = (it.get("url") or "").split("?")[0].strip().lower() or (it.get("title") or "").strip().lower()
-            if key and key not in seen:
-                seen.add(key); out.append(it)
-        return out
+    from .utils_sources import dedupe_items, filter_and_rank  # type: ignore
+except Exception:  # pragma: no cover
+    from utils_sources import dedupe_items, filter_and_rank  # type: ignore
 
 from .live_logger import log_event  # type: ignore
 
@@ -44,6 +39,7 @@ def tavily_search(query: str, max_results: int = TAVILY_MAX, days: int = SEARCH_
         with httpx.Client(timeout=30.0) as client:
             resp = client.post(TAVILY_URL, headers=headers, json=payload)
         if resp.status_code == 400:
+            # Minimal retry
             log_event("tavily", None, "400_bad_request_retry_minimal", int((time.time()-ts)*1000), 0)
             with httpx.Client(timeout=30.0) as client:
                 resp = client.post(TAVILY_URL, headers=headers, json={"query": query})
@@ -94,6 +90,5 @@ def perplexity_search(query: str, max_results: int = 10, category_hint: Optional
 def hybrid_live_search(query: str, briefing: Optional[Dict[str, Any]] = None, short_days: int = SEARCH_DAYS_NEWS, long_days: int = SEARCH_DAYS_TOOLS, max_results: int = 12) -> Dict[str, Any]:
     tav = tavily_search(query, max_results=max_results, days=short_days)
     ppl = perplexity_search(query, max_results=max_results, category_hint="mixed")
-    deduped = dedupe_items(tav + ppl)
-    counts = {"news": 0, "tools": 0, "funding": 0, "other": len(deduped)}
-    return {"items": deduped, "counts": counts, "raw": {"tavily": tav, "perplexity": ppl}}
+    items = filter_and_rank(tav + ppl)
+    return {"items": items[:max_results], "counts": {"total": len(items)}, "raw": {"tavily": tav, "perplexity": ppl}}
