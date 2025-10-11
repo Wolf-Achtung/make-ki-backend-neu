@@ -1,23 +1,5 @@
-
-Erzeuge eine **Förderprogramme‑Tabelle** (Berlin **und** bundesweit) als HTML‑Fragment für KMU/Freiberufler.
-
-**Pflichtprogramme (immer aufführen):**
-- ZIM – Zentrales Innovationsprogramm Mittelstand (Bund)
-- BMBF – KMU‑innovativ: IKT (Bund, DLR‑PT)
-- Wenn Bundesland = BE: Pro FIT (Berlin), Transfer BONUS (IBB)
-
-**Spalten (genau diese, in dieser Reihenfolge):**
-- Programm
-- Träger
-- Quote/Budget
-- Bund/Land
-- Frist/Stand (Monat Jahr oder „laufend“)
-- Link
-
-**Regeln:**
-- Nur **echte Programme** (keine News/Artikel). **Jedes** Programm mit Link zur offiziellen Seite.
-- Keine Floskeln, keine Eigenwerbung. Kürze, aber **präzise**.
-- Wenn Fristen unklar: „laufend (bitte prüfen)“. Datum **TT.MM.JJJJ** falls bekannt.
-- Mindestens 4 Zeilen, dedupliziert.
-
-**Ausgabe:** Semantische `<table class="compact funding">` mit `<thead>`/`<tbody>`. Keine Zusatztexte.
+Gib 4–8 relevante Förderprogramme als HTML‑Tabelle aus (Programm, Träger, Quote/Budget, Bund/Land, Frist/Stand, Link).
+Immer inkludieren (falls nicht vorhanden, generiere trotzdem Platzhalter mit „bitte prüfen“):
+- ZIM (BMWK) – Bund
+- KMU‑innovativ: IKT (BMBF/DLR‑PT) – Bund
+- 2 passende Landesprogramme für {{BRIEFING_JSON.bundesland_code}}
