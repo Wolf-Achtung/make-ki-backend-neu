@@ -1,221 +1,39 @@
 <!doctype html>
 <html lang="{{LANG}}">
+<head>
 <meta charset="utf-8">
 <title>AI Status Report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 :root{
-  --brand-blue:#0B4D9C;
-  --brand-blue-700:#083a76;
-  --brand-blue-50:#eef5ff;
-  --brand-orange:#FF6A00;
-  --ink:#0E2A4A;
-  --muted:#667085;
-  --border:#E5E7EB;
+  --bg:#ffffff;--fg:#0f172a;--muted:#64748b;--brand:#0ea5e9;--accent:#fb923c;
+  --line:#e5e7eb;--good:#16a34a;--warn:#f59e0b;--bad:#dc2626;
+  --badge:#f3f4f6;--badge-fg:#374151;
 }
-*{box-sizing:border-box}
-html{font-size:16px}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.55}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font:400 12.5pt/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+h1,h2,h3{line-height:1.2;margin:0 0 .6rem}
+h1{font-size:1.6rem}h2{font-size:1.3rem}h3{font-size:1.15rem}
+p{margin:.4rem 0} .muted{color:var(--muted)} .hl{color:var(--brand)}
 .wrapper{max-width:780px;margin:0 auto;padding:24px}
-.header{display:flex;align-items:center;gap:16px;margin:8px 0 16px 0}
-.header .brand{display:flex;align-items:center;gap:14px}
-.header .brand h1{font-size:1.35rem;margin:0;color:var(--brand-blue-700)}
-.header .badges{margin-left:auto;display:flex;gap:12px;align-items:center}
-.header img{height:36px;display:block}
-.kicker{font-size:.9rem;color:var(--muted);margin:.25rem 0 .5rem 0}
-.meta{font-size:.85rem;color:var(--muted)}
-hr{border:0;border-top:1px solid var(--border);margin:20px 0}
-.progress{height:10px;background:var(--brand-blue-50);border-radius:6px;overflow:hidden;margin:6px 0 0 0}
-.progress>span{display:block;height:10px;background:linear-gradient(90deg,var(--brand-blue) 0%,#1E7BF6 100%)}
-.badge{display:inline-block;background:var(--brand-blue-50);color:var(--brand-blue-700);padding:.15rem .5rem;border-radius:6px;font-weight:600}
-.pill{display:inline-block;padding:.25rem .5rem;border:1px solid var(--border);border-radius:999px;margin:.15rem .25rem 0 0;font-size:.85rem;color:var(--brand-blue-700)}
-.card{border:1px solid var(--border);border-radius:10px;padding:16px;margin:16px 0;box-shadow:0 1px 2px rgba(16,24,40,.04)}
-.card h2{margin:0 0 .4rem 0;color:var(--brand-blue-700)}
-h2.section{margin:0 0 .4rem 0;color:var(--brand-blue-700)}
-h3{margin:1rem 0 .35rem 0;color:var(--brand-blue-700)}
-.small{font-size:.9rem}
-.muted{color:var(--muted)}
-.lede .keyline{margin:.25rem 0}
-.kpi .bar{display:flex;align-items:center;gap:10px;margin:10px 0}
-.kpi .label{flex:0 0 180px}
-.kpi .bar__track{flex:1;position:relative;height:10px;border-radius:6px;background:#EFF1F5}
-.kpi .bar__fill{height:10px;border-radius:6px;background:linear-gradient(90deg,var(--brand-orange) 0%,#ffb35a 100%)}
-.kpi .bar__median{position:absolute;top:-2px;width:2px;height:14px;background:var(--brand-blue-700);opacity:.5}
-.kpi .bar__delta{flex:0 0 70px;text-align:right;color:var(--brand-blue-700)}
-table{width:100%;border-collapse:collapse}
-table.bm th, table.bm td{border:1px solid var(--border);padding:8px 10px}
-table.bm thead th{background:#F8FAFF;text-align:left;color:var(--brand-blue-700)}
-ul{padding-left:1.2rem;margin:.2rem 0}
-.flag-berlin{background:#FCE7F3;color:#9D174D;padding:.1rem .4rem;border-radius:6px;margin-left:.35rem;font-size:.75rem}
-footer{margin:28px 0 8px 0;font-size:.8rem;color:var(--muted);display:flex;gap:8px;align-items:center}
-footer img{height:20px}
-.page-break{page-break-before:always;break-before:page}
-@media print{
-  a{color:inherit;text-decoration:none}
-  .no-print{display:none!important}
-}
+.kicker{margin:.2rem 0 .8rem;color:var(--muted)}
+.header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:.6rem;margin-bottom:1rem}
+.badge{display:inline-block;padding:.12rem .5rem;border-radius:6px;background:var(--badge);color:var(--badge-fg);font-size:.72rem;border:1px solid #e5e7eb}
+.flag-berlin{display:inline-block;margin-left:.4rem;padding:.05rem .35rem;border-radius:4px;background:#fef2f2;color:#991b1b;font-size:.68rem;border:1px solid #fee2e2}
+.card{border:1px solid var(--line);border-radius:10px;padding:.9rem;margin:0 0 1rem;background:#fff}
+.kpi .bar{margin:.45rem 0}
+.kpi .label{font-weight:600;margin-bottom:.15rem}
+.kpi .bar__track{position:relative;height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden}
+.kpi .bar__fill{position:absolute;left:0;top:0;bottom:0;background:var(--brand);opacity:.9}
+.kpi .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--accent);opacity:.8}
+.kpi .bar__delta{font-size:.8rem;color:var(--muted);margin-top:.1rem}
+.bm{width:100%;border-collapse:collapse}
+.bm th,.bm td{border:1px solid var(--line);padding:.35rem .45rem;font-size:.95rem;text-align:left}
+.pill{display:inline-block;padding:.1rem .5rem;border:1px solid var(--line);border-radius:999px;margin-right:.3rem}
+.small{font-size:.92rem}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:840px){.grid{grid-template-columns:1fr}}
+ul.source-list{padding-left:1.2rem}ul.source-list li{margin:.2rem 0}
 
-/* Sources footer + compact tables */
-.sources{border-top:1px solid var(--border);margin-top:24px;padding-top:12px}
-.sources h3{margin:.25rem 0 .25rem 0;color:var(--brand-blue-700)}
-.sources ul{margin:.25rem 0 0 1rem}
-.sources li{margin:.15rem 0}
-.meta{font-size:.85rem;color:var(--muted);margin-top:.25rem}
-table.compact{border-collapse:collapse;width:100%}
-table.compact th,table.compact td{border:1px solid var(--border);padding:.35rem .5rem;font-size:.92rem}
-table.compact th{background:#F8FAFC;color:var(--ink);text-align:left}
-table.compact td{word-break:normal;hyphens:none;overflow-wrap:anywhere}
-table.compact.risk .col--risk{width:22%}
-table.compact.risk .col--area{width:14%}
-table.compact.risk .col--like, table.compact.risk .col--impact{width:8%}
-table.compact.risk .col--miti{width:28%}
-table.compact.risk .col--owner{width:12%}
-table.compact.risk .col--due{width:8%}
-@media print{
-  .card{break-inside:avoid}
-  .page-break{page-break-before:always}
-}
-</style>
-<body>
-  <div class="wrapper">
-    <header class="header">
-      <div class="brand">
-        <picture>
-          <source srcset="{{ASSETS_BASE}}/ki-sicherheit-logo.webp" type="image/webp">
-          <img src="{{ASSETS_BASE}}/ki-sicherheit-logo.png" alt="AI‑Security.now">
-        </picture>
-        <h1>AI Checkup Report</h1>
-      </div>
-      <div class="badges">
-        <img src="{{ASSETS_BASE}}/ki-ready-2025.webp" alt="AI‑Ready 2025" title="AI‑Ready 2025">
-        <img src="{{ASSETS_BASE}}/tuev-logo.webp" alt="TÜV Austria" title="TÜV Austria certified">
-      </div>
-    </header>
-
-    <div class="kicker">Industry: <strong>{{BRANCHE_LABEL}}</strong> · Size: <strong>{{GROESSE_LABEL}}</strong></div>
-    <div class="meta">As of: <strong>{{REPORT_DATE}}</strong><span class="muted"> · (Fallback field: {{STAND_DATUM}})</span></div>
-    <div class="card">
-      <h2 class="section">Overall score</h2>
-      <div><span class="badge">{{SCORE_BADGE}}</span> &nbsp; <strong>{{SCORE_PERCENT}}</strong></div>
-      <div class="progress" aria-label="Overall score"><span style="width: {{SCORE_PERCENT}};"></span></div>
-      <div style="margin-top:.5rem">{{KPI_BARS_HTML}}</div>
-    </div>
-
-    <div class="card">
-      <h2 class="section">Company profile</h2>
-      {{PROFILE_HTML}}
-    </div>
-
-    <div class="card">
-      <h2 class="section">Executive summary</h2>
-      <div class="lede small">Focused key takeaways and immediate levers for the next 4–12 weeks.</div>
-      {{EXEC_SUMMARY_HTML}}
-    </div>
-
-    <div class="card">
-      <h2 class="section">Benchmark comparison</h2>
-      {{BENCHMARK_TABLE_HTML}}
-    </div>
-
-    <div class="card">
-      <h2 class="section">ROI & payback</h2>
-      {{BUSINESS_CASE_HTML}}
-    </div>
-
-    <div class="page-break"></div>
-
-    <section class="card">
-      <h2 class="section">Quick wins (0–8 weeks)</h2>
-      {{QUICK_WINS_HTML}}
-    </section>
-
-    <section class="card">
-      <h2 class="section">Roadmap (3–12 months)</h2>
-      {{ROADMAP_HTML}}
-    </section>
-
-    <section class="card">
-      <h2 class="section">Risks & mitigation</h2>
-      {{RISKS_HTML}}
-    </section>
-
-    <section class="card">
-      <h2 class="section">Compliance (GDPR / EU AI Act pre‑check)</h2>
-      <div style="display:flex;gap:10px;align-items:center;margin:.25rem 0 0.5rem 0">
-        <img src="{{ASSETS_BASE}}/dsgvo.svg" alt="GDPR" style="height:22px">
-        <img src="{{ASSETS_BASE}}/eu-ai.svg" alt="EU AI Act" style="height:22px">
-      </div>
-      {{COMPLIANCE_HTML}}
-    </section>
-
-    <div class="page-break"></div>
-
-    <section class="card">
-      <h2 class="section">Latest news</h2>
-      {{NEWS_HTML}}
-      <div class="meta">Note: 30–60 days window; sources and dates are shown.</div>
-    </section>
-
-    <section class="card">
-      <h2 class="section">Relevant tools</h2>
-      {{TOOLS_HTML}}
-    </section>
-
-    <section class="card">
-      <h2 class="section">Funding programmes</h2>
-      {{FUNDING_HTML}}
-    </section>
-
-    <div class="page-break"></div>
-
-    <section class="card">
-      <h2 class="section">Recommendations</h2>
-      {{RECOMMENDATIONS_BLOCK}}
-    </section>
-
-    <section class="card">
-      <h2 class="section">Gamechangers</h2>
-      {{GAMECHANGER_BLOCK}}
-    </section>
-
-    <section class="card">
-      <h2 class="section">Vision</h2>
-      {{VISION_BLOCK}}
-    </section>
-
-    <section class="card">
-      <h2 class="section">Persona</h2>
-      {{PERSONA_BLOCK}}
-    </section>
-
-    <section class="card">
-      <h2 class="section">Case study</h2>
-      {{PRAXIS_BLOCK}}
-    </section>
-
-    <section class="card">
-      <h2 class="section">Coach</h2>
-      {{COACH_BLOCK}}
-    </section>
-
-    {{DOC_DIGEST_BLOCK}}
-
-    <footer class="small">
-      <picture>
-        <source srcset="{{ASSETS_BASE}}/ki-sicherheit-logo.webp" type="image/webp">
-        <img src="{{ASSETS_BASE}}/ki-sicherheit-logo.png" alt="AI‑Security.now">
-      </picture>
-      <span>© AI‑Security.now – TÜV‑certified AI management</span>
-
-      <section class="sources small">
-        <h3>Sources (News, Tools, Funding)</h3>
-        <div class="meta">As of: {{REPORT_DATE}} – deduplicated by domain/URL.</div>
-        {{SOURCES_FOOTER_HTML}}
-      </section>
-
-    </footer>
-  </div>
-</body>
-</html>
 /* Source badges */
 .badge--gov{background:#e6f4ff;color:#0552a2}
 .badge--eu{background:#eefcf4;color:#046c4e}
@@ -226,6 +44,92 @@ table.compact.risk .col--due{width:8%}
 .badge--blog{background:#fdf2f8;color:#9d174d}
 .badge--ngo{background:#eff6ff;color:#1e40af}
 .badge--muted{background:#f5f5f5;color:#374151}
-ul.source-list{padding-left:1.2rem}
-ul.source-list li{margin:.2rem 0}
-    
+
+/* print */
+@media print{.wrapper{padding:0}a{color:inherit} .card{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header class="header">
+    <div>
+      <h1>AI Status Report</h1>
+      <div class="kicker">Industry: <strong>{{BRANCHE_LABEL}}</strong> · Size: <strong>{{GROESSE_LABEL}}</strong></div>
+      <div class="muted small">As of: {{REPORT_DATE}}</div>
+    </div>
+    <img src="{{ASSETS_BASE}}/logo_header.png" alt="Logo" style="height:40px">
+  </header>
+
+  <section class="card">
+    <h2>Executive Summary</h2>
+    {{EXEC_SUMMARY_HTML}}
+  </section>
+
+  <section class="card">
+    <h2>Score & Benchmarks</h2>
+    <p><b>Total score:</b> {{SCORE_PERCENT}} <span class="badge">{{SCORE_BADGE}}</span></p>
+    {{KPI_BARS_HTML}}
+    <div style="margin-top:.6rem">{{BENCHMARK_TABLE_HTML}}</div>
+  </section>
+
+  <section class="card">
+    <h2>Company profile</h2>
+    {{PROFILE_HTML}}
+  </section>
+
+  <section class="card">
+    <h2>ROI & Payback</h2>
+    {{BUSINESS_CASE_HTML}}
+  </section>
+
+  <section class="card">
+    <h2>Quick wins (0–8 weeks)</h2>
+    {{QUICK_WINS_HTML}}
+  </section>
+
+  <section class="card">
+    <h2>Roadmap (12 weeks)</h2>
+    {{ROADMAP_HTML}}
+  </section>
+
+  <section class="card">
+    <h2>Risk matrix</h2>
+    {{RISKS_HTML}}
+  </section>
+
+  <section class="card">
+    <h2>Compliance</h2>
+    {{COMPLIANCE_HTML}}
+  </section>
+
+  <section class="card">
+    <h2>News</h2>
+    {{NEWS_HTML}}
+  </section>
+
+  <section class="card">
+    <h2>Tools</h2>
+    {{TOOLS_HTML}}
+  </section>
+
+  <section class="card">
+    <h2>Funding</h2>
+    {{FUNDING_HTML}}
+  </section>
+
+  {{RECOMMENDATIONS_BLOCK}}
+  {{GAMECHANGER_BLOCK}}
+  {{VISION_BLOCK}}
+  {{PERSONA_BLOCK}}
+  {{PRAXIS_BLOCK}}
+  {{COACH_BLOCK}}
+  {{DOC_DIGEST_BLOCK}}
+
+  <section class="card small">
+    <h2>Sources (News, Tools, Funding)</h2>
+    {{SOURCES_FOOTER_HTML}}
+    <p class="muted">As of: {{REPORT_DATE}} · Deduplicated by domain/URL. Badges indicate trust tier.</p>
+  </section>
+</div>
+</body>
+</html>
