@@ -1,6 +1,4 @@
-Produce a **risk matrix** (5 rows) as an HTML fragment.
-
-**Columns (exact order):**
+Produce a **risk matrix** (5 rows) as an HTML `<table class="compact risk">` with `<thead>`/`<tbody>` and these exact columns:
 - Risk
 - Area
 - Likelihood (1–5)
@@ -9,7 +7,7 @@ Produce a **risk matrix** (5 rows) as an HTML fragment.
 - Owner (role/function)
 - Due (e.g., 30/90 days)
 
-**Notes:**
-- Context: SME/Germany; typical risks: prompt leakage, hallucinations, vendor lock‑in, PII/GDPR, quality defects.
-- Output must be a **compact, semantic** `<table>` with `<thead>`/`<tbody>`; no fluff/explanations.
-- Numbers only 1–5 (no percentages).
+**Rules**
+- Only numbers 1–5 for Likelihood/Impact; no percentages.
+- Short, specific phrasing; no fluff.
+- Typical risks: prompt leakage, hallucinations, vendor lock‑in, PII/GDPR, quality defects.
