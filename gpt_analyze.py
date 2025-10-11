@@ -3,16 +3,16 @@
 """
 KI-Status-Report Analyzer – Gold-Standard+ (vereinheitlichte Superset-Version)
 
-Inhalt:
-- Normalisierung via Schema (falls vorhanden) + Fallback-Mappings
-- Benchmarks aus /data (JSON/CSV) inkl. Branchen/Größen-Fallback
-- KPI/Score-Berechnung, ROI/Business-Case
+- PEP8, Logging, defensive Fehlerbehandlung
+- Normalisierung via Schema (optional) + Fallback-Mappings
+- Benchmarks/Scoring + ROI (≤ 4 Monate Payback als Baseline)
 - Prompt-Overlays (Executive Summary, Vision, Praxisbeispiel, etc.)
-- Live-Layer: Perplexity (JSON-Schema, Retries) + Tavily Fallback
-- Whitelists (Tools/Förderung) werden mit Live-Ergebnissen gemerged & dedupliziert
-- HTML-Bausteine (KPI-Bars, Benchmark-Tabelle, Profil, Listen)
-- Platzhalter-Entferner für übrig gebliebene Tokens
-- Kompatible Exporte: analyze_briefing(), produce_admin_attachments()
+- Live-Layer: Perplexity (Chat Completions JSON-Schema) + Tavily (Bearer)
+  * optional: websearch_utils.hybrid_live_search, sonst interner Fallback
+- Quellen-Footer & Admin-Anhänge
+- Locale-korrekte Formatierung (DE/EN) für Zahlen/Prozent
+
+Diese Datei ist **eigenständig lauffähig** – externe Module sind optional.
 """
 
 from __future__ import annotations
@@ -23,9 +23,9 @@ import logging
 import os
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import httpx
 
@@ -35,14 +35,13 @@ try:
 except Exception:
     websearch_utils = None  # type: ignore
 
-
-# Optionales Schema-Modul (liefert /schema + Helper)
+# Optionales Schema-Modul
 try:
     import schema as schema_mod  # type: ignore
 except Exception:  # pragma: no cover
     schema_mod = None
 
-# Perplexity-Adapter (JSON-Schema, Retries)
+# Optionaler Perplexity-Adapter
 try:
     from perplexity_client import PerplexityClient  # type: ignore
 except Exception:  # pragma: no cover
@@ -79,8 +78,13 @@ OPENAI_TIMEOUT = float(os.getenv("OPENAI_TIMEOUT", "45"))
 OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", "1200"))
 GPT_TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", "0.2"))
 
-# Tavily (Fallback & Ergänzung)
+# Tavily
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
+
+# Perplexity
+PPLX_API_KEY = os.getenv("PPLX_API_KEY") or os.getenv("PERPLEXITY_API_KEY") or ""
+PPLX_MODEL = os.getenv("PPLX_MODEL", "sonar-medium-online")
+PPLX_TIMEOUT = float(os.getenv("PPLX_TIMEOUT", "30.0"))
 
 # Business-Case-Baseline
 ROI_BASELINE_MONTHS = float(os.getenv("ROI_BASELINE_MONTHS", "4"))
@@ -104,7 +108,7 @@ def _read_text(path: Path) -> str:
 def _template(lang: str) -> str:
     fname = TEMPLATE_DE if lang.startswith("de") else TEMPLATE_EN
     p = TEMPLATES_DIR / fname
-    if not p.exists():  # Rückfall auf DE
+    if not p.exists():
         p = TEMPLATES_DIR / "pdf_template.html"
     return _read_text(p)
 
@@ -134,6 +138,23 @@ def _as_fragment(html: str) -> str:
     return s.strip()
 
 # -----------------------------------------------------------------------------
+# Locale-Formatierung
+# -----------------------------------------------------------------------------
+def _fmt_pct(v: float, lang: str) -> str:
+    if lang.startswith("de"):
+        return f"{v:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".").replace(".0", "") + " %"
+    return f"{v:,.1f}%".replace(".0", "")
+
+def _fmt_money_eur(v: float, lang: str) -> str:
+    if lang.startswith("de"):
+        s = f"{v:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return s + " €"
+    return "€" + f"{v:,.0f}"
+
+def _nbsp(s: str) -> str:
+    return s.replace(" ", " ")  # NBSP für enge Bindung
+
+# -----------------------------------------------------------------------------
 # Schema-Resolver & Normalisierung
 # -----------------------------------------------------------------------------
 def _schema_label(field_key: str, value: str, lang: str) -> Optional[str]:
@@ -150,7 +171,7 @@ def _schema_valid(field_key: str, value: str) -> bool:
             return schema_mod.validate_enum(field_key, value)
     except Exception:
         pass
-    return True  # tolerant, wenn Schema fehlt
+    return True  # tolerant
 
 BRANCHE_FALLBACK = {
     "marketing": "Marketing & Werbung", "beratung": "Beratung", "it": "IT & Software",
@@ -239,7 +260,6 @@ def normalize_briefing(raw: Dict[str, Any], lang: str = "de") -> Normalized:
     bundesland_code = str(b.get("bundesland") or b.get("bundesland_code") or "DE").upper()
     hl = b.get("hauptleistung") or b.get("produkt") or "Beratung/Service"
 
-    # Pull-KPIs
     top_use = str(b.get("usecase_priority") or "")
     if not top_use and isinstance(b.get("ki_usecases"), list) and b["ki_usecases"]:
         top_use = str(b["ki_usecases"][0])
@@ -250,7 +270,6 @@ def normalize_briefing(raw: Dict[str, Any], lang: str = "de") -> Normalized:
         "zeitbudget": b.get("zeitbudget") or "",
     }
 
-    # KPI-Ableitung
     k = _derive_kpis(b)
 
     return Normalized(
@@ -312,7 +331,8 @@ def _load_benchmarks(branche: str, groesse: str) -> Dict[str, float]:
                             pass
                 else:
                     with p.open("r", encoding="utf-8") as f:
-                        for row in csv.DictReader(f):
+                        import csv as _csv
+                        for row in _csv.DictReader(f):
                             k = _kpi_key_norm((row.get("kpi") or row.get("name") or "").strip())
                             v = row.get("value") or row.get("pct") or row.get("percent") or ""
                             try:
@@ -415,7 +435,6 @@ def _openai_chat(messages: List[Dict[str, str]], model: Optional[str] = None, ma
         return ""
 
 def _load_prompt(lang: str, name: str) -> str:
-    # Suchreihenfolge: prompts/<lang>/<name>_<lang>.md … dann prompts/<name>_<lang>.md …
     cand = [
         PROMPTS_DIR / lang / f"{name}_{lang}.md",
         PROMPTS_DIR / lang / f"{name}.md",
@@ -451,19 +470,28 @@ def render_overlay(name: str, lang: str, ctx: Dict[str, Any]) -> str:
     return _minify_html_soft(_as_fragment(out))
 
 # -----------------------------------------------------------------------------
-# Live-Suche: Perplexity (Adapter) + Tavily + Merge/Dedupe
+# Live-Suche: Tavily (Header) + Perplexity (HTTP) + Merge
 # -----------------------------------------------------------------------------
-def _tavily(query: str, max_results: int) -> List[Dict[str, Any]]:
+def _tavily(query: str, max_results: int, days: int) -> List[Dict[str, Any]]:
+    """Tavily via Bearer Header (stabiler als 'api_key' im JSON)."""
     if not TAVILY_API_KEY:
         return []
+    headers = {
+        "Authorization": f"Bearer {TAVILY_API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    payload = {
+        "query": query,
+        "search_depth": "advanced",
+        "max_results": max_results,
+        "include_answer": False,
+        "time_range": f"{days}d",
+    }
     try:
-        with httpx.Client(timeout=20) as cli:
-            r = cli.post("https://api.tavily.com/search", json={
-                "api_key": TAVILY_API_KEY, "query": query, "max_results": max_results, "include_answer": False
-            })
-            if r.status_code != 200:
-                log.warning("Tavily HTTP %s: %s", r.status_code, r.text[:200])
-                return []
+        with httpx.Client(timeout=30) as cli:
+            r = cli.post("https://api.tavily.com/search", headers=headers, json=payload)
+            r.raise_for_status()
             data = r.json() or {}
             out = []
             for it in (data.get("results") or [])[:max_results]:
@@ -471,7 +499,6 @@ def _tavily(query: str, max_results: int) -> List[Dict[str, Any]]:
                 out.append({
                     "title": it.get("title") or url,
                     "url": url,
-                    "source": it.get("source") or "",
                     "domain": (url or "").split("/")[2] if "://" in (url or "") else "",
                     "date": (it.get("published_date") or "")[:10],
                 })
@@ -480,40 +507,96 @@ def _tavily(query: str, max_results: int) -> List[Dict[str, Any]]:
         log.warning("Tavily failed: %s", exc)
         return []
 
-def _perplexity(query: str, max_items: int) -> List[Dict[str, Any]]:
-    if not PerplexityClient:
+def _perplexity_http(query: str, max_items: int, category_hint: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Perplexity Chat Completions mit JSON Schema (maschinelles Parsing)."""
+    if not PPLX_API_KEY:
         return []
-    client = PerplexityClient()
-    schema = {"title": "string", "url": "string", "source": "string", "date": "string"}
+    headers = {"Authorization": f"Bearer {PPLX_API_KEY}", "Content-Type": "application/json", "Accept": "application/json"}
+    system = "Be precise and return ONLY valid JSON matching the provided schema."
+    user = (
+        "Find recent, reliable web sources (title, url, date) for the following query. "
+        "Return strictly as JSON. "
+        f"Category hint: {category_hint or 'mixed'}. "
+        f"Query: {query}"
+    )
+    schema = {
+        "type": "object",
+        "properties": {
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "url": {"type": "string"},
+                        "date": {"type": "string"},
+                    },
+                    "required": ["title", "url"],
+                    "additionalProperties": True,
+                },
+            }
+        },
+        "required": ["items"],
+        "additionalProperties": False,
+    }
+    body = {
+        "model": PPLX_MODEL,
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+        "temperature": 0.1,
+        "max_tokens": 900,
+        "response_format": {"type": "json_schema", "json_schema": {"schema": schema}},
+    }
     try:
-        items = client.search_json(query, schema=schema, max_items=max_items) or []
-        # Normiere Schlüsselnamen
-        out = []
-        for it in items[:max_items]:
-            url = it.get("url")
-            out.append({
-                "title": it.get("title") or url,
-                "url": url,
-                "source": it.get("source") or "",
-                "domain": (url or "").split("/")[2] if "://" in (url or "") else "",
-                "date": (it.get("date") or "")[:10],
-            })
-        return out
+        with httpx.Client(timeout=PPLX_TIMEOUT) as cli:
+            r = cli.post("https://api.perplexity.ai/chat/completions", headers=headers, json=body)
+            r.raise_for_status()
+            data = r.json() or {}
+            content = (data.get("choices") or [{}])[0].get("message", {}).get("content", "{}")
+            parsed = json.loads(content) if isinstance(content, str) else content
+            out = []
+            for it in (parsed.get("items") or [])[:max_items]:
+                url = it.get("url")
+                out.append({
+                    "title": it.get("title") or url,
+                    "url": url,
+                    "domain": (url or "").split("/")[2] if "://" in (url or "") else "",
+                    "date": (it.get("date") or "")[:10],
+                })
+            return out
     except Exception as exc:
-        log.warning("Perplexity adapter failed: %s", exc)
+        log.warning("Perplexity HTTP failed: %s", exc)
         return []
+
+def _perplexity(query: str, max_items: int) -> List[Dict[str, Any]]:
+    # Prefer Adapter, fallback auf HTTP
+    if PerplexityClient:
+        try:
+            client = PerplexityClient()
+            schema = {"title": "string", "url": "string", "date": "string"}
+            items = client.search_json(query, schema=schema, max_items=max_items) or []
+            out = []
+            for it in items[:max_items]:
+                url = it.get("url")
+                out.append({
+                    "title": it.get("title") or url,
+                    "url": url,
+                    "domain": (url or "").split("/")[2] if "://" in (url or "") else "",
+                    "date": (it.get("date") or "")[:10],
+                })
+            return out
+        except Exception as exc:
+            log.warning("Perplexity adapter failed: %s", exc)
+    return _perplexity_http(query, max_items, category_hint="mixed")
 
 def _merge_rank(*arrays: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
     def key(it: Dict[str, Any]) -> str:
         u = (it.get("url") or "").split("?")[0].strip().lower()
         return u or (it.get("title") or "").strip().lower()
-
     def parse_dt(s: str) -> datetime:
         try:
             return datetime.fromisoformat(s.replace("Z", "")[:19])
         except Exception:
             return datetime.min
-
     seen, out = set(), []
     for arr in arrays:
         for it in arr:
@@ -529,23 +612,39 @@ def _live_topic(topic: str, n: Normalized, max_results: int) -> List[Dict[str, A
     branche = n.branche_label
     region = n.bundesland_code
     if topic == "news":
-        q = f"Aktuelle KI-News in der Branche {branche} (letzte {SEARCH_DAYS_NEWS} Tage). Titel, Quelle/Domain, URL, Datum."
+        q = f"Aktuelle KI-News in der Branche {branche} (letzte {SEARCH_DAYS_NEWS} Tage). Titel, Domain, URL, Datum."
+        if not websearch_utils:  # falls hybrid fehlt, nutze interne Fenstersteuerung via Tavily
+            return _merge_rank(
+                _perplexity(q, max_results),
+                _tavily(q, max_results, days=SEARCH_DAYS_NEWS),
+                limit=max_results,
+            )
     elif topic == "tools":
-        q = f"Relevante KI-Tools/Anbieter für {branche}, Größe {n.unternehmensgroesse_label}. Titel, Quelle/Domain, URL, Datum."
+        q = f"Relevante KI-Tools/Anbieter für {branche}, Größe {n.unternehmensgroesse_label}. Titel, Domain, URL, Datum."
+        if not websearch_utils:
+            return _merge_rank(
+                _perplexity(q, max_results),
+                _tavily(q, max_results, days=SEARCH_DAYS_TOOLS),
+                limit=max_results,
+            )
     elif topic == "funding":
-        q = f"Förderprogramme in {region} (Digitalisierung/KI) – aktuell offen, Fristen innerhalb {SEARCH_DAYS_FUNDING} Tagen. Titel, Träger/Quelle, URL, Datum."
+        q = f"Förderprogramme in {region} (Digitalisierung/KI) – offen oder laufend, Fristen innerhalb {SEARCH_DAYS_FUNDING} Tagen. Titel, Domain, URL, Datum."
+        if not websearch_utils:
+            return _merge_rank(
+                _perplexity(q, max_results),
+                _tavily(q, max_results, days=SEARCH_DAYS_FUNDING),
+                limit=max_results,
+            )
     else:
         return []
-
-    if websearch_utils:
-        try:
+    # Hybrid (bevorzugt, wenn verfügbar)
+    try:
+        if websearch_utils:
             res = websearch_utils.hybrid_live_search(q, briefing=n.raw, short_days=SEARCH_DAYS_NEWS, long_days=SEARCH_DAYS_TOOLS, max_results=max_results)
-            return res.get('items') or []
-        except Exception:
-            pass
-    px = _perplexity(q, max_results)
-    tv = _tavily(q, max_results)
-    return _merge_rank(px, tv, limit=max_results)
+            return res.get("items") or []
+    except Exception as exc:
+        log.warning("hybrid_live_search failed: %s", exc)
+    return []
 
 # -----------------------------------------------------------------------------
 # Whitelists (lokal) – Tools & Förderung
@@ -559,7 +658,6 @@ def _load_json(path: Path) -> List[Dict[str, Any]]:
         return []
 
 def _local_tools(n: Normalized, limit: int) -> List[Dict[str, Any]]:
-    # Optional: vorhandene Utilities bevorzugen
     try:
         from tools_loader import filter_tools  # type: ignore
         return filter_tools(industry=n.branche, company_size=n.unternehmensgroesse, limit=limit)
@@ -573,7 +671,6 @@ def _local_tools(n: Normalized, limit: int) -> List[Dict[str, Any]]:
         out.append({
             "title": it.get("name"),
             "url": it.get("url"),
-            "source": "Whitelist",
             "domain": (it.get("url") or "").split("/")[2] if "://" in (it.get("url") or "") else "",
             "date": "",
         })
@@ -585,7 +682,7 @@ def _local_funding(n: Normalized, limit: int) -> List[Dict[str, Any]]:
         return filter_funding(region=n.bundesland_code, limit=limit)
     except Exception:
         pass
-    items = _load_json(DATA_DIR / "foerder_de.json") or _load_json(DATA_DIR / "foerder_de.json".replace("foerder_", "foerder"))
+    items = _load_json(DATA_DIR / "foerder_de.json") or _load_json(DATA_DIR / "foerder.json")
     out = []
     for it in items:
         states = it.get("states") or []
@@ -594,7 +691,6 @@ def _local_funding(n: Normalized, limit: int) -> List[Dict[str, Any]]:
         out.append({
             "title": it.get("title"),
             "url": it.get("url"),
-            "source": it.get("agency") or "Whitelist",
             "domain": (it.get("url") or "").split("/")[2] if "://" in (it.get("url") or "") else "",
             "date": it.get("deadline") or "",
         })
@@ -671,19 +767,17 @@ def _list_html(items: List[Dict[str, Any]], empty_msg: str, berlin_badge: bool =
     for it in items:
         title = it.get("title") or it.get("name") or it.get("url")
         url = it.get("url") or "#"
-        src = it.get("source") or (it.get("domain") or "")
-        when = (it.get("date") or "")[:10]
         dom = it.get("domain") or (url.split('/')[2] if '://' in url else "")
+        when = (it.get("date") or "")[:10]
         extra = ""
         if berlin_badge and any(d in (url or "") for d in ("berlin.de", "ibb.de")):
             extra = " <span class='flag-berlin'>Land Berlin</span>"
-        lis.append(f"<li><a href='{url}'>{title}</a> – <span class='muted'>{src or dom} {when}</span>{extra}</li>")
+        lis.append(f"<li><a href='{url}'>{title}</a> – <span class='muted'>{dom} {when}</span>{extra}</li>")
     return "<ul>" + "".join(lis) + "</ul>"
 
-
-def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]], funding: List[Dict[str, Any]]) -> str:
+def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]], funding: List[Dict[str, Any]], lang: str) -> str:
     def _mk(items, title):
-        if not items: 
+        if not items:
             return f"<div class='muted'>Keine {title}.</div>" if lang.startswith("de") else f"<div class='muted'>No {title}.</div>"
         lis = []
         seen = set()
@@ -693,22 +787,37 @@ def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]]
                 continue
             seen.add(url)
             title_ = it.get("title") or it.get("name") or it.get("url")
-            dom = it.get("domain") or (url.split("/")[2] if "://" in url else "")
+            dom = it.get("domain") or (url.split('/')[2] if '://' in url else "")
             when = (it.get("date") or "")[:10]
             lis.append(f"<li><a href='{url}'>{title_}</a> – <span class='muted'>{dom} {when}</span></li>")
         return "<ul>" + "".join(lis) + "</ul>"
     return (
-        "<div class='grid'>" +
-        "<div><h4>News</h4>" + _mk(news, "News") + "</div>" +
-        "<div><h4>Tools</h4>" + _mk(tools, "Tools") + "</div>" +
-        "<div><h4>Förderungen</h4>" + _mk(funding, "Förderungen") + "</div>" +
-        "</div>"
+        "<div class='grid'>"
+        + "<div><h4>News</h4>" + _mk(news, "News") + "</div>"
+        + "<div><h4>Tools</h4>" + _mk(tools, "Tools") + "</div>"
+        + "<div><h4>" + ("Förderungen" if lang.startswith("de") else "Funding") + "</h4>" + _mk(funding, "Förderungen") + "</div>"
+        + "</div>"
     )
-
 
 # -----------------------------------------------------------------------------
 # Zusammenbau
 # -----------------------------------------------------------------------------
+def _business_case_block(case: BusinessCase, lang: str) -> str:
+    payback = f"{case.payback_months:.1f}"
+    roi = _fmt_pct(case.roi_year1_pct, lang)
+    invest = _fmt_money_eur(case.invest_eur, lang)
+    save = _fmt_money_eur(case.save_year_eur, lang)
+    label_invest = "Invest" if lang.startswith("de") else "Invest"
+    label_save = "Ersparnis/Jahr" if lang.startswith("de") else "Savings/year"
+    label_payback = "Payback" if not lang.startswith("de") else "Payback"
+    label_roi = "ROI Jahr 1" if lang.startswith("de") else "ROI year 1"
+    return (
+        "<div class='card'><h2>ROI & Payback</h2>"
+        f"<p><b>{label_invest}:</b> ~{_nbsp(invest)} | <b>{label_save}:</b> ~{_nbsp(save)} | "
+        f"<b>{label_payback}:</b> ~{payback} Monate | <b>{label_roi}:</b> ~{roi}</p>"
+        "<div class='footnotes'>Formel: Invest/Monate × 12; konservative Annahmen.</div></div>"
+    )
+
 def _fill_placeholders(html: str, n: Normalized) -> str:
     if not html:
         return html
@@ -748,7 +857,7 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     live_tools = _live_topic("tools", n, LIVE_MAX_ITEMS)
     live_funding = _live_topic("funding", n, max(LIVE_MAX_ITEMS, 10))
 
-    # Whitelists
+    # Whitelists (Merge)
     wl_tools = _local_tools(n, LIVE_MAX_ITEMS)
     wl_funding = _local_funding(n, max(LIVE_MAX_ITEMS, 10))
 
@@ -784,7 +893,6 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     coach = sec("coach")
     digest = sec("doc_digest")
 
-    # Tools/Förderung: Prompt-Override → sonst Standardliste
     tools_block = sec("tools") or _list_html(tools_items, "Keine passenden Tools gefunden." if lang.startswith("de") else "No matching tools.")
     funding_block = sec("foerderprogramme") or _list_html(funding_items, "Keine aktuellen Einträge." if lang.startswith("de") else "No current items.", berlin_badge=True)
 
@@ -794,18 +902,13 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     html = (
         tpl.replace("{{LANG}}", "de" if lang.startswith("de") else "en")
            .replace("{{ASSETS_BASE}}", ASSETS_BASE_URL)
-           .replace("{{REPORT_DATE}}", report_date)      # neue Templates
-           .replace("{{STAND_DATUM}}", report_date)      # ältere Templates
+           .replace("{{REPORT_DATE}}", report_date)
+           .replace("{{STAND_DATUM}}", report_date)
            .replace("{{SCORE_PERCENT}}", f"{score.total}%")
            .replace("{{SCORE_BADGE}}", score.badge)
            .replace("{{KPI_BARS_HTML}}", _kpi_bars_html(score))
            .replace("{{BENCHMARK_TABLE_HTML}}", _benchmark_table_html(score))
-           .replace("{{BUSINESS_CASE_HTML}}", (
-               "<div class='card'><h2>ROI & Payback</h2>"
-               f"<p><b>Invest:</b> ~{case.invest_eur:,.0f} € | <b>Ersparnis/Jahr:</b> ~{case.save_year_eur:,.0f} € | "
-               f"<b>Payback:</b> ~{case.payback_months} Monate | <b>ROI Jahr 1:</b> ~{case.roi_year1_pct}%</p>"
-               "<div class='footnotes'>Formel: Invest/Monate × 12; konservative Annahmen.</div></div>"
-           ))
+           .replace("{{BUSINESS_CASE_HTML}}", _business_case_block(case, lang))
            .replace("{{PROFILE_HTML}}", _profile_html(n))
            .replace("{{EXEC_SUMMARY_HTML}}", exec_llm)
            .replace("{{QUICK_WINS_HTML}}", quick)
@@ -822,7 +925,7 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
            .replace("{{PRAXIS_BLOCK}}", f"<section class='card'><h2>Praxisbeispiel</h2>{praxis}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
            .replace("{{COACH_BLOCK}}", f"<section class='card'><h2>Coach</h2>{coach}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
            .replace("{{DOC_DIGEST_BLOCK}}", digest or "")
-           .replace("{{SOURCES_FOOTER_HTML}}", _sources_footer_html(live_news, tools_items, funding_items))
+           .replace("{{SOURCES_FOOTER_HTML}}", _sources_footer_html(live_news, tools_items, funding_items, lang))
     )
 
     html = _fill_placeholders(html, n)
@@ -843,18 +946,15 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     }
 
 # -----------------------------------------------------------------------------
-# Öffentliche API (kompatibel)
+# Öffentliche API
 # -----------------------------------------------------------------------------
 def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
-    """Legacy-Signatur: HTML zurückgeben (für main.py kompatibel)."""
     return build_html_report(raw, lang)["html"]
 
 def build_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
-    """Strukturierte Rückgabe inkl. Meta/Normalized – für Tests/Debug."""
     return build_html_report(raw, lang)
 
 def produce_admin_attachments(raw: Dict[str, Any], lang: str = "de") -> Dict[str, str]:
-    """Diagnose-Anhänge (JSON) für Admin-Mails."""
     try:
         norm = normalize_briefing(raw, lang=lang)
     except Exception as exc:
