@@ -1,7 +1,7 @@
 # filename: gpt_analyze.py
 # -*- coding: utf-8 -*-
 """
-KI-Status-Report Analyzer – Gold-Standard+ (vereinheitlichte Superset-Version)
+KI-Status-Report Analyzer – Gold-Standard+ (mit Source-Trust-Badges)
 
 - PEP8, Logging, defensive Fehlerbehandlung
 - Normalisierung via Schema (optional) + Fallback-Mappings
@@ -11,6 +11,7 @@ KI-Status-Report Analyzer – Gold-Standard+ (vereinheitlichte Superset-Version)
   * optional: websearch_utils.hybrid_live_search, sonst interner Fallback
 - Quellen-Footer & Admin-Anhänge
 - Locale-korrekte Formatierung (DE/EN) für Zahlen/Prozent
+- **NEU:** classify_source(domain/url) + Badges in Listen & Footer
 
 Neu (Guards & Härtung):
 - Perplexity: Modellparameter **optional** (AUTO), Retry ohne Modell bei `invalid_model`/400
@@ -30,7 +31,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
@@ -62,6 +63,7 @@ logging.basicConfig(
 )
 log = logging.getLogger("gpt_analyze")
 
+
 def _live_log(provider: str, status: str, latency_ms: float, count: int = 0, **extra: Any) -> None:
     """Strukturiertes JSON-Logging für Live-Layer-Ereignisse."""
     payload: Dict[str, Any] = {
@@ -76,6 +78,7 @@ def _live_log(provider: str, status: str, latency_ms: float, count: int = 0, **e
         log.info(json.dumps(payload, ensure_ascii=False))
     except Exception:
         log.info("live_search %s %s %sms %s %s", provider, status, int(round(latency_ms)), count, extra)
+
 
 # -----------------------------------------------------------------------------
 # ENV / Pfade
@@ -125,6 +128,7 @@ def _read_text(path: Path) -> str:
         log.warning("read failed %s: %s", path, exc)
         return ""
 
+
 def _template(lang: str) -> str:
     fname = TEMPLATE_DE if lang.startswith("de") else TEMPLATE_EN
     p = TEMPLATES_DIR / fname
@@ -132,30 +136,34 @@ def _template(lang: str) -> str:
         p = TEMPLATES_DIR / "pdf_template.html"
     return _read_text(p)
 
+
 def _minify_html_soft(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\s+<", "><", s)
-    s = re.sub(r"\s{2,}", " ", s)
+    s = re.sub(r">\\s+<", "><", s)
+    s = re.sub(r"\\s{2,}", " ", s)
     return s.strip()
+
 
 def _strip_llm(text: str) -> str:
     if not text:
         return ""
-    text = re.sub(r"```[a-zA-Z0-9]*\s*", "", text).replace("```", "")
+    text = re.sub(r"```[a-zA-Z0-9]*\\s*", "", text).replace("```", "")
     return text.strip()
+
 
 def _as_fragment(html: str) -> str:
     if not html:
         return ""
     s = html
     s = re.sub(r"(?is)<!doctype.*?>", "", s)
-    s = re.sub(r"(?is)<\s*html[^>]*>|</\s*html\s*>", "", s)
-    s = re.sub(r"(?is)<\s*head[^>]*>.*?</\s*head\s*>", "", s)
-    s = re.sub(r"(?is)<\s*body[^>]*>|</\s*body\s*>", "", s)
-    s = re.sub(r"(?is)<\s*style[^>]*>.*?</\s*style\s*>", "", s)
+    s = re.sub(r"(?is)<\\s*html[^>]*>|</\\s*html\\s*>", "", s)
+    s = re.sub(r"(?is)<\\s*head[^>]*>.*?</\\s*head\\s*>", "", s)
+    s = re.sub(r"(?is)<\\s*body[^>]*>|</\\s*body\\s*>", "", s)
+    s = re.sub(r"(?is)<\\s*style[^>]*>.*?</\\s*style\\s*>", "", s)
     return s.strip()
+
 
 # -----------------------------------------------------------------------------
 # Locale-Formatierung
@@ -165,14 +173,17 @@ def _fmt_pct(v: float, lang: str) -> str:
         return f"{v:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".").replace(".0", "") + " %"
     return f"{v:,.1f}%".replace(".0", "")
 
+
 def _fmt_money_eur(v: float, lang: str) -> str:
     if lang.startswith("de"):
         s = f"{v:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
         return s + " €"
     return "€" + f"{v:,.0f}"
 
+
 def _nbsp(s: str) -> str:
     return s.replace(" ", " ")  # NBSP für enge Bindung
+
 
 # -----------------------------------------------------------------------------
 # Schema-Resolver & Normalisierung
@@ -185,6 +196,7 @@ def _schema_label(field_key: str, value: str, lang: str) -> Optional[str]:
         pass
     return None
 
+
 def _schema_valid(field_key: str, value: str) -> bool:
     try:
         if schema_mod:
@@ -193,13 +205,27 @@ def _schema_valid(field_key: str, value: str) -> bool:
         pass
     return True  # tolerant
 
+
 BRANCHE_FALLBACK = {
-    "marketing": "Marketing & Werbung", "beratung": "Beratung", "it": "IT & Software",
-    "finanzen": "Finanzen & Versicherungen", "handel": "Handel & E‑Commerce", "bildung": "Bildung",
-    "verwaltung": "Verwaltung", "gesundheit": "Gesundheit & Pflege", "bau": "Bauwesen & Architektur",
-    "medien": "Medien & Kreativwirtschaft", "industrie": "Industrie & Produktion", "logistik": "Transport & Logistik",
+    "marketing": "Marketing & Werbung",
+    "beratung": "Beratung",
+    "it": "IT & Software",
+    "finanzen": "Finanzen & Versicherungen",
+    "handel": "Handel & E‑Commerce",
+    "bildung": "Bildung",
+    "verwaltung": "Verwaltung",
+    "gesundheit": "Gesundheit & Pflege",
+    "bau": "Bauwesen & Architektur",
+    "medien": "Medien & Kreativwirtschaft",
+    "industrie": "Industrie & Produktion",
+    "logistik": "Transport & Logistik",
 }
-GROESSE_FALLBACK = {"solo": "1 (Solo/Freiberuflich)", "team": "2–10 (Kleines Team)", "kmu": "11–100 (KMU)"}
+GROESSE_FALLBACK = {
+    "solo": "1 (Solo/Freiberuflich)",
+    "team": "2–10 (Kleines Team)",
+    "kmu": "11–100 (KMU)",
+}
+
 
 @dataclass
 class Normalized:
@@ -219,17 +245,24 @@ class Normalized:
     # Rohdaten zur Diagnose:
     raw: Dict[str, Any] = field(default_factory=dict)
 
+
 def _parse_percent_bucket(val: Any) -> int:
     s = str(val or "").lower()
-    if "81" in s: return 90
-    if "61" in s: return 70
-    if "41" in s: return 50
-    if "21" in s: return 30
-    if "0" in s:  return 10
+    if "81" in s:
+        return 90
+    if "61" in s:
+        return 70
+    if "41" in s:
+        return 50
+    if "21" in s:
+        return 30
+    if "0" in s:
+        return 10
     try:
         return int(max(0, min(100, float(s))))
     except Exception:
         return 50
+
 
 def _derive_kpis(b: Dict[str, Any]) -> Dict[str, int]:
     digi = _parse_percent_bucket(b.get("digitalisierungsgrad"))
@@ -262,6 +295,7 @@ def _derive_kpis(b: Dict[str, Any]) -> Dict[str, int]:
         "innovation": inn,
     }
 
+
 def normalize_briefing(raw: Dict[str, Any], lang: str = "de") -> Normalized:
     b: Dict[str, Any] = dict(raw or {})
     if isinstance(raw, dict) and isinstance(raw.get("answers"), dict):
@@ -270,12 +304,16 @@ def normalize_briefing(raw: Dict[str, Any], lang: str = "de") -> Normalized:
     branche_code = str(b.get("branche") or "beratung").lower()
     if not _schema_valid("branche", branche_code):
         branche_code = "beratung"
-    branche_label = _schema_label("branche", branche_code, lang) or BRANCHE_FALLBACK.get(branche_code, branche_code.title())
+    branche_label = _schema_label("branche", branche_code, lang) or BRANCHE_FALLBACK.get(
+        branche_code, branche_code.title()
+    )
 
     size_code = str(b.get("unternehmensgroesse") or "solo").lower()
     if not _schema_valid("unternehmensgroesse", size_code):
         size_code = "solo"
-    size_label = _schema_label("unternehmensgroesse", size_code, lang) or GROESSE_FALLBACK.get(size_code, size_code)
+    size_label = _schema_label("unternehmensgroesse", size_code, lang) or GROESSE_FALLBACK.get(
+        size_code, size_code
+    )
 
     bundesland_code = str(b.get("bundesland") or b.get("bundesland_code") or "DE").upper()
     hl = b.get("hauptleistung") or b.get("produkt") or "Beratung/Service"
@@ -308,6 +346,7 @@ def normalize_briefing(raw: Dict[str, Any], lang: str = "de") -> Normalized:
         raw=b,
     )
 
+
 # -----------------------------------------------------------------------------
 # Benchmarks & Scoring
 # -----------------------------------------------------------------------------
@@ -324,6 +363,7 @@ def _kpi_key_norm(k: str) -> str:
     }
     return mapping.get(s, s)
 
+
 def _bench_file_patterns(branche: str, groesse: str) -> List[str]:
     return [
         f"benchmarks_{branche}_{groesse}",
@@ -333,6 +373,7 @@ def _bench_file_patterns(branche: str, groesse: str) -> List[str]:
         "benchmarks_default",
         "benchmarks",
     ]
+
 
 def _load_benchmarks(branche: str, groesse: str) -> Dict[str, float]:
     for base in _bench_file_patterns(branche, groesse):
@@ -365,6 +406,7 @@ def _load_benchmarks(branche: str, groesse: str) -> Dict[str, float]:
                 log.warning("Benchmark-Import fehlgeschlagen (%s): %s", p, exc)
     return {k: 60.0 for k in ["digitalisierung", "automatisierung", "compliance", "prozessreife", "innovation"]}
 
+
 @dataclass
 class ScorePack:
     total: int
@@ -373,11 +415,16 @@ class ScorePack:
     weights: Dict[str, float]
     benchmarks: Dict[str, float]
 
+
 def _badge(total: float) -> str:
-    if total >= 85: return "EXCELLENT"
-    if total >= 70: return "GOOD"
-    if total >= 55: return "FAIR"
+    if total >= 85:
+        return "EXCELLENT"
+    if total >= 70:
+        return "GOOD"
+    if total >= 55:
+        return "FAIR"
     return "BASIC"
+
 
 def compute_scores(n: Normalized) -> ScorePack:
     weights = {k: 0.2 for k in ("digitalisierung", "automatisierung", "compliance", "prozessreife", "innovation")}
@@ -399,10 +446,12 @@ def compute_scores(n: Normalized) -> ScorePack:
     t = int(round(total))
     return ScorePack(total=t, badge=_badge(t), kpis=kpis, weights=weights, benchmarks=bm)
 
+
 # -----------------------------------------------------------------------------
 # Business Case (ROI)
 # -----------------------------------------------------------------------------
 from dataclasses import dataclass  # re-import safe in module scope
+
 
 @dataclass
 class BusinessCase:
@@ -410,6 +459,7 @@ class BusinessCase:
     save_year_eur: float
     payback_months: float
     roi_year1_pct: float
+
 
 def _parse_invest(val: Any, default: float = 6000.0) -> float:
     if isinstance(val, (int, float)):
@@ -423,6 +473,7 @@ def _parse_invest(val: Any, default: float = 6000.0) -> float:
         return nums[0]
     return default
 
+
 def business_case(n: Normalized) -> BusinessCase:
     invest = _parse_invest(n.raw.get("investitionsbudget"), 6000.0)
     monthly = invest / max(1.0, ROI_BASELINE_MONTHS)
@@ -430,6 +481,7 @@ def business_case(n: Normalized) -> BusinessCase:
     payback_m = invest / max(1.0, monthly)
     roi_y1 = (save_year - invest) / invest * 100.0
     return BusinessCase(round(invest, 2), round(save_year, 2), round(payback_m, 1), round(roi_y1, 1))
+
 
 # -----------------------------------------------------------------------------
 # LLM-Aufrufe (OpenAI) + Prompt-Overlays
@@ -456,6 +508,7 @@ def _openai_chat(messages: List[Dict[str, str]], model: Optional[str] = None, ma
         log.warning("LLM call failed: %s", exc)
         return ""
 
+
 def _load_prompt(lang: str, name: str) -> str:
     cand = [
         PROMPTS_DIR / lang / f"{name}_{lang}.md",
@@ -470,6 +523,7 @@ def _load_prompt(lang: str, name: str) -> str:
     log.info("Prompt missing for '%s' (%s) – skipping section", name, lang)
     return ""
 
+
 def render_overlay(name: str, lang: str, ctx: Dict[str, Any]) -> str:
     prompt = _load_prompt(lang, name)
     if not prompt:
@@ -479,17 +533,18 @@ def render_overlay(name: str, lang: str, ctx: Dict[str, Any]) -> str:
         system = "You are precise and risk-aware. Answer as clean HTML fragment (no <html>/<head>/<body>)."
     user = (
         prompt.replace("{{BRIEFING_JSON}}", json.dumps(ctx.get("briefing", {}), ensure_ascii=False))
-              .replace("{{SCORING_JSON}}", json.dumps(ctx.get("scoring", {}), ensure_ascii=False))
-              .replace("{{BENCHMARKS_JSON}}", json.dumps(ctx.get("benchmarks", {}), ensure_ascii=False))
-              .replace("{{TOOLS_JSON}}", json.dumps(ctx.get("tools", []), ensure_ascii=False))
-              .replace("{{FUNDING_JSON}}", json.dumps(ctx.get("funding", []), ensure_ascii=False))
-              .replace("{{BUSINESS_JSON}}", json.dumps(ctx.get("business", {}), ensure_ascii=False))
+        .replace("{{SCORING_JSON}}", json.dumps(ctx.get("scoring", {}), ensure_ascii=False))
+        .replace("{{BENCHMARKS_JSON}}", json.dumps(ctx.get("benchmarks", {}), ensure_ascii=False))
+        .replace("{{TOOLS_JSON}}", json.dumps(ctx.get("tools", []), ensure_ascii=False))
+        .replace("{{FUNDING_JSON}}", json.dumps(ctx.get("funding", []), ensure_ascii=False))
+        .replace("{{BUSINESS_JSON}}", json.dumps(ctx.get("business", {}), ensure_ascii=False))
     )
     out = _openai_chat(
         [{"role": "system", "content": system}, {"role": "user", "content": user}],
         model=EXEC_SUMMARY_MODEL if name == "executive_summary" else OPENAI_MODEL,
     )
     return _minify_html_soft(_as_fragment(out))
+
 
 # -----------------------------------------------------------------------------
 # Live-Suche: Tavily (Header) + Perplexity (HTTP) + Merge
@@ -508,6 +563,7 @@ def _pplx_model_effective() -> Optional[str]:
         log.warning("PPLX_MODEL '%s' wirkt veraltet – verwende Auto-Modus (ohne model-Feld).", name)
         return None
     return name
+
 
 def _tavily(query: str, max_results: int, days: int) -> List[Dict[str, Any]]:
     """Tavily via Bearer Header (stabiler als 'api_key' im JSON) + Minimal-Payload-Retry."""
@@ -531,27 +587,30 @@ def _tavily(query: str, max_results: int, days: int) -> List[Dict[str, Any]]:
             r = cli.post("https://api.tavily.com/search", headers=headers, json=payload)
             if r.status_code == 400:
                 # Fallback auf Minimal-Payload
-                _live_log("tavily", "400_bad_request_retry_minimal", (time.monotonic()-t0)*1000, 0)
+                _live_log("tavily", "400_bad_request_retry_minimal", (time.monotonic() - t0) * 1000, 0)
                 r = cli.post("https://api.tavily.com/search", headers=headers, json={"query": query})
             r.raise_for_status()
             data = r.json() or {}
             items = []
             for it in (data.get("results") or [])[:max_results]:
                 url = it.get("url")
-                items.append({
-                    "title": it.get("title") or url,
-                    "url": url,
-                    "domain": (url or "").split("/")[2] if "://" in (url or "") else "",
-                    "date": (it.get("published_date") or "")[:10],
-                })
-            _live_log("tavily", "ok", (time.monotonic()-t0)*1000, len(items))
+                items.append(
+                    {
+                        "title": it.get("title") or url,
+                        "url": url,
+                        "domain": (url or "").split("/")[2] if "://" in (url or "") else "",
+                        "date": (it.get("published_date") or "")[:10],
+                    }
+                )
+            _live_log("tavily", "ok", (time.monotonic() - t0) * 1000, len(items))
             return items
     except httpx.HTTPStatusError as exc:
-        _live_log("tavily", f"http_{exc.response.status_code}", (time.monotonic()-t0)*1000, 0, body=str(exc.response.text)[:300])
+        _live_log("tavily", f"http_{exc.response.status_code}", (time.monotonic() - t0) * 1000, 0, body=str(exc.response.text)[:300])
         return []
     except Exception as exc:  # pragma: no cover
-        _live_log("tavily", f"error_{type(exc).__name__}", (time.monotonic()-t0)*1000, 0, error=str(exc))
+        _live_log("tavily", f"error_{type(exc).__name__}", (time.monotonic() - t0) * 1000, 0, error=str(exc))
         return []
+
 
 def _perplexity_http(query: str, max_items: int, category_hint: Optional[str] = None) -> List[Dict[str, Any]]:
     """Perplexity Chat Completions mit JSON Schema (maschinelles Parsing) + Model-Guards/Retry."""
@@ -605,7 +664,7 @@ def _perplexity_http(query: str, max_items: int, category_hint: Optional[str] = 
             r = cli.post(url, headers=headers, json=body)
             if r.status_code == 400 and "invalid_model" in (r.text or "").lower():
                 # einmaliges Retry ohne "model"
-                _live_log("perplexity", "400_invalid_model_retry_auto", (time.monotonic()-t0)*1000, 0, model_sent=model)
+                _live_log("perplexity", "400_invalid_model_retry_auto", (time.monotonic() - t0) * 1000, 0, model_sent=model)
                 body.pop("model", None)
                 r = cli.post(url, headers=headers, json=body)
             r.raise_for_status()
@@ -615,20 +674,23 @@ def _perplexity_http(query: str, max_items: int, category_hint: Optional[str] = 
             items = []
             for it in (parsed.get("items") or [])[:max_items]:
                 url_i = it.get("url")
-                items.append({
-                    "title": it.get("title") or url_i,
-                    "url": url_i,
-                    "domain": (url_i or "").split("/")[2] if "://" in (url_i or "") else "",
-                    "date": (it.get("date") or "")[:10],
-                })
-            _live_log("perplexity", "ok", (time.monotonic()-t0)*1000, len(items), model_used=model or "auto")
+                items.append(
+                    {
+                        "title": it.get("title") or url_i,
+                        "url": url_i,
+                        "domain": (url_i or "").split("/")[2] if "://" in (url_i or "") else "",
+                        "date": (it.get("date") or "")[:10],
+                    }
+                )
+            _live_log("perplexity", "ok", (time.monotonic() - t0) * 1000, len(items), model_used=model or "auto")
             return items
     except httpx.HTTPStatusError as exc:
-        _live_log("perplexity", f"http_{exc.response.status_code}", (time.monotonic()-t0)*1000, 0, body=str(exc.response.text)[:300])
+        _live_log("perplexity", f"http_{exc.response.status_code}", (time.monotonic() - t0) * 1000, 0, body=str(exc.response.text)[:300])
         return []
     except Exception as exc:  # pragma: no cover
-        _live_log("perplexity", f"error_{type(exc).__name__}", (time.monotonic()-t0)*1000, 0, error=str(exc))
+        _live_log("perplexity", f"error_{type(exc).__name__}", (time.monotonic() - t0) * 1000, 0, error=str(exc))
         return []
+
 
 def _perplexity(query: str, max_items: int) -> List[Dict[str, Any]]:
     # Prefer Adapter, fallback auf HTTP
@@ -641,27 +703,32 @@ def _perplexity(query: str, max_items: int) -> List[Dict[str, Any]]:
             out = []
             for it in items[:max_items]:
                 url_i = it.get("url")
-                out.append({
-                    "title": it.get("title") or url_i,
-                    "url": url_i,
-                    "domain": (url_i or "").split("/")[2] if "://" in (url_i or "") else "",
-                    "date": (it.get("date") or "")[:10],
-                })
-            _live_log("perplexity_adapter", "ok", (time.monotonic()-t0)*1000, len(out))
+                out.append(
+                    {
+                        "title": it.get("title") or url_i,
+                        "url": url_i,
+                        "domain": (url_i or "").split("/")[2] if "://" in (url_i or "") else "",
+                        "date": (it.get("date") or "")[:10],
+                    }
+                )
+            _live_log("perplexity_adapter", "ok", (time.monotonic() - t0) * 1000, len(out))
             return out
         except Exception as exc:  # pragma: no cover
-            _live_log("perplexity_adapter", f"error_{type(exc).__name__}", (time.monotonic()-t0)*1000, 0, error=str(exc))
+            _live_log("perplexity_adapter", f"error_{type(exc).__name__}", (time.monotonic() - t0) * 1000, 0, error=str(exc))
     return _perplexity_http(query, max_items, category_hint="mixed")
+
 
 def _merge_rank(*arrays: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
     def key(it: Dict[str, Any]) -> str:
         u = (it.get("url") or "").split("?")[0].strip().lower()
         return u or (it.get("title") or "").strip().lower()
+
     def parse_dt(s: str) -> datetime:
         try:
             return datetime.fromisoformat(s.replace("Z", "")[:19])
         except Exception:
             return datetime.min
+
     seen, out = set(), []
     for arr in arrays:
         for it in arr:
@@ -672,6 +739,7 @@ def _merge_rank(*arrays: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any
             out.append(it)
     out.sort(key=lambda x: parse_dt(str(x.get("date") or "")), reverse=True)
     return out[:limit]
+
 
 def _live_topic(topic: str, n: Normalized, max_results: int) -> List[Dict[str, Any]]:
     branche = n.branche_label
@@ -705,11 +773,110 @@ def _live_topic(topic: str, n: Normalized, max_results: int) -> List[Dict[str, A
     # Hybrid (bevorzugt, wenn verfügbar)
     try:  # pragma: no cover
         if websearch_utils:
-            res = websearch_utils.hybrid_live_search(q, briefing=n.raw, short_days=SEARCH_DAYS_NEWS, long_days=SEARCH_DAYS_TOOLS, max_results=max_results)
+            res = websearch_utils.hybrid_live_search(
+                q, briefing=n.raw, short_days=SEARCH_DAYS_NEWS, long_days=SEARCH_DAYS_TOOLS, max_results=max_results
+            )
             return res.get("items") or []
     except Exception as exc:  # pragma: no cover
         log.warning("hybrid_live_search failed: %s", exc)
     return []
+
+
+# -----------------------------------------------------------------------------
+# Source-Trust-Classification (Badges)
+# -----------------------------------------------------------------------------
+def _domain_from(value: str) -> str:
+    if not value:
+        return ""
+    if "://" in value:
+        try:
+            return value.split("/")[2].split("@")[-1].lower()
+        except Exception:
+            return value.lower()
+    return value.lower()
+
+
+_TRUST_NEWS = {
+    "reuters.com",
+    "bloomberg.com",
+    "ft.com",
+    "wsj.com",
+    "nytimes.com",
+    "bbc.com",
+    "theguardian.com",
+    "apnews.com",
+    "tagesschau.de",
+    "zeit.de",
+    "faz.net",
+    "sueddeutsche.de",
+    "heise.de",
+    "handelsblatt.com",
+}
+_TRUST_VENDOR = {
+    "openai.com",
+    "deepmind.google",
+    "ai.google",
+    "googleblog.com",
+    "microsoft.com",
+    "learn.microsoft.com",
+    "azure.microsoft.com",
+    "aws.amazon.com",
+    "cloud.google.com",
+    "ibm.com",
+    "oracle.com",
+    "sap.com",
+    "meta.com",
+}
+_TRUST_CODE = {"github.com", "arxiv.org", "huggingface.co", "pypi.org", "docs.python.org"}
+_TRUST_COMMUNITY = {"medium.com", "substack.com", "reddit.com", "quora.com", "x.com", "twitter.com", "linkedin.com", "youtube.com", "tiktok.com", "facebook.com"}
+
+
+def classify_source(domain_or_url: str) -> Dict[str, Any]:
+    """
+    Grobe Heuristik zur Vertrauensklasse einer Quelle.
+    Rückgabe: dict(label, css, score[1..3], category)
+    """
+    d = _domain_from(domain_or_url)
+    if not d:
+        return {"label": "Source", "css": "src-neutral", "score": 2, "category": "neutral"}
+
+    low = d.lower()
+
+    # Gov/EU
+    if low.endswith(".gov") or low.endswith(".mil") or low.endswith(".eu") or low.endswith(".gouv.fr") or any(
+        s in low for s in [".bund.de", "europa.eu", ".gv.at", "bmbf.de", "bmwk.de", "foerderdatenbank.de", "zim.de"]
+    ):
+        return {"label": "Gov/EU", "css": "src-gov", "score": 3, "category": "gov"}
+
+    # Education
+    if low.endswith(".edu") or ".ac." in low or low.startswith("uni-") or ".uni-" in low or low.endswith(".ac.uk") or low.endswith(".ac.de"):
+        return {"label": "Edu", "css": "src-edu", "score": 3, "category": "edu"}
+
+    # Code/Research docs
+    if any(low.endswith(d) for d in _TRUST_CODE):
+        return {"label": "Code/Research", "css": "src-code", "score": 2, "category": "code"}
+
+    # Major press
+    if any(low.endswith(d) for d in _TRUST_NEWS):
+        return {"label": "Pro Press", "css": "src-news", "score": 2, "category": "news"}
+
+    # Vendor/Produktseite
+    if any(low.endswith(d) for d in _TRUST_VENDOR):
+        return {"label": "Vendor", "css": "src-vendor", "score": 2, "category": "vendor"}
+
+    # Community/Meinung
+    if any(low.endswith(d) for d in _TRUST_COMMUNITY):
+        return {"label": "Community", "css": "src-community", "score": 1, "category": "community"}
+
+    # Default neutral
+    return {"label": "Source", "css": "src-neutral", "score": 2, "category": "neutral"}
+
+
+def _source_badge_html(domain_or_url: str) -> str:
+    info = classify_source(domain_or_url)
+    title = f"{info['label']} • Score {info['score']}/3"
+    return f"<span class='src-badge {info['css']}' title='{title}'>{info['label']}</span>"
+
 
 # -----------------------------------------------------------------------------
 # Whitelists (lokal) – Tools & Förderung
@@ -722,6 +889,7 @@ def _load_json(path: Path) -> List[Dict[str, Any]]:
     except Exception:
         return []
 
+
 def _local_tools(n: Normalized, limit: int) -> List[Dict[str, Any]]:
     try:
         from tools_loader import filter_tools  # type: ignore
@@ -733,13 +901,16 @@ def _local_tools(n: Normalized, limit: int) -> List[Dict[str, Any]]:
     for it in items:
         if it.get("industries") and n.branche not in it["industries"]:
             continue
-        out.append({
-            "title": it.get("name"),
-            "url": it.get("url"),
-            "domain": (it.get("url") or "").split("/")[2] if "://" in (it.get("url") or "") else "",
-            "date": "",
-        })
+        out.append(
+            {
+                "title": it.get("name"),
+                "url": it.get("url"),
+                "domain": (it.get("url") or "").split("/")[2] if "://" in (it.get("url") or "") else "",
+                "date": "",
+            }
+        )
     return out[:limit]
+
 
 def _local_funding(n: Normalized, limit: int) -> List[Dict[str, Any]]:
     try:
@@ -753,13 +924,16 @@ def _local_funding(n: Normalized, limit: int) -> List[Dict[str, Any]]:
         states = it.get("states") or []
         if states and n.bundesland_code.lower() not in [s.lower() for s in states]:
             continue
-        out.append({
-            "title": it.get("title"),
-            "url": it.get("url"),
-            "domain": (it.get("url") or "").split("/")[2] if "://" in (it.get("url") or "") else "",
-            "date": it.get("deadline") or "",
-        })
+        out.append(
+            {
+                "title": it.get("title"),
+                "url": it.get("url"),
+                "domain": (it.get("url") or "").split("/")[2] if "://" in (it.get("url") or "") else "",
+                "date": it.get("deadline") or "",
+            }
+        )
     return out[:limit]
+
 
 def _dedupe(items: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
     seen, out = set(), []
@@ -771,14 +945,18 @@ def _dedupe(items: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
         out.append(it)
     return out[:limit]
 
+
 # -----------------------------------------------------------------------------
 # HTML-Render-Bausteine
 # -----------------------------------------------------------------------------
 def _kpi_bars_html(score: ScorePack) -> str:
     order = ["digitalisierung", "automatisierung", "compliance", "prozessreife", "innovation"]
     labels = {
-        "digitalisierung": "Digitalisierung", "automatisierung": "Automatisierung",
-        "compliance": "Compliance", "prozessreife": "Prozessreife", "innovation": "Innovation",
+        "digitalisierung": "Digitalisierung",
+        "automatisierung": "Automatisierung",
+        "compliance": "Compliance",
+        "prozessreife": "Prozessreife",
+        "innovation": "Innovation",
     }
     rows = []
     for k in order:
@@ -787,11 +965,12 @@ def _kpi_bars_html(score: ScorePack) -> str:
         d = score.kpis[k]["delta"]
         rows.append(
             f"<div class='bar'><div class='label'>{labels[k]}</div>"
-            f"<div class='bar__track'><div class='bar__fill' style='width:{max(0,min(100,int(round(v))))}%;'></div>"
-            f"<div class='bar__median' style='left:{max(0,min(100,int(round(m))))}%;'></div></div>"
-            f"<div class='bar__delta'>{'+' if d>=0 else ''}{int(round(d))} pp</div></div>"
+            f"<div class='bar__track'><div class='bar__fill' style='width:{max(0, min(100, int(round(v))))}%;'></div>"
+            f"<div class='bar__median' style='left:{max(0, min(100, int(round(m))))}%;'></div></div>"
+            f"<div class='bar__delta'>{'+' if d >= 0 else ''}{int(round(d))} pp</div></div>"
         )
     return "<div class='kpi'>" + "".join(rows) + "</div>"
+
 
 def _benchmark_table_html(score: ScorePack) -> str:
     head = "<table class='bm'><thead><tr><th>KPI</th><th>Ihr Wert</th><th>Branchen‑Benchmark</th><th>Δ (pp)</th></tr></thead><tbody>"
@@ -807,15 +986,19 @@ def _benchmark_table_html(score: ScorePack) -> str:
         v = score.kpis[k]["value"]
         m = score.kpis[k]["benchmark"]
         d = score.kpis[k]["delta"]
-        rows.append(f"<tr><td>{lab}</td><td>{int(round(v))}%</td><td>{int(round(m))}%</td><td>{'+' if d>=0 else ''}{int(round(d))}</td></tr>")
+        rows.append(f"<tr><td>{lab}</td><td>{int(round(v))}%</td><td>{int(round(m))}%</td><td>{'+' if d >= 0 else ''}{int(round(d))}</td></tr>")
     return head + "".join(rows) + "</tbody></table>"
+
 
 def _profile_html(n: Normalized) -> str:
     pl = n.pull_kpis or {}
     pills = []
-    if pl.get("umsatzziel"): pills.append(f"<span class='pill'>Umsatzziel: {pl['umsatzziel']}</span>")
-    if pl.get("top_use_case"): pills.append(f"<span class='pill'>Top‑Use‑Case: {pl['top_use_case']}</span>")
-    if pl.get("zeitbudget"): pills.append(f"<span class='pill'>Zeitbudget: {pl['zeitbudget']}</span>")
+    if pl.get("umsatzziel"):
+        pills.append(f"<span class='pill'>Umsatzziel: {pl['umsatzziel']}</span>")
+    if pl.get("top_use_case"):
+        pills.append(f"<span class='pill'>Top‑Use‑Case: {pl['top_use_case']}</span>")
+    if pl.get("zeitbudget"):
+        pills.append(f"<span class='pill'>Zeitbudget: {pl['zeitbudget']}</span>")
     pills_html = " ".join(pills) if pills else "<span class='muted'>—</span>"
     return (
         "<div class='card'><h2>Unternehmensprofil & Ziele</h2>"
@@ -825,6 +1008,7 @@ def _profile_html(n: Normalized) -> str:
         f"<p>{pills_html}</p></div>"
     )
 
+
 def _list_html(items: List[Dict[str, Any]], empty_msg: str, berlin_badge: bool = False) -> str:
     if not items:
         return f"<div class='muted'>{empty_msg}</div>"
@@ -832,13 +1016,17 @@ def _list_html(items: List[Dict[str, Any]], empty_msg: str, berlin_badge: bool =
     for it in items:
         title = it.get("title") or it.get("name") or it.get("url")
         url = it.get("url") or "#"
-        dom = it.get("domain") or (url.split('/')[2] if '://' in url else "")
+        dom = it.get("domain") or (url.split("/")[2] if "://" in url else "")
         when = (it.get("date") or "")[:10]
         extra = ""
         if berlin_badge and any(d in (url or "") for d in ("berlin.de", "ibb.de")):
-            extra = " <span class='flag-berlin'>Land Berlin</span>"
+            extra += " <span class='flag-berlin'>Land Berlin</span>"
+        # Source badge
+        if dom:
+            extra += " " + _source_badge_html(dom)
         lis.append(f"<li><a href='{url}'>{title}</a> – <span class='muted'>{dom} {when}</span>{extra}</li>")
     return "<ul>" + "".join(lis) + "</ul>"
+
 
 def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]], funding: List[Dict[str, Any]], lang: str) -> str:
     def _mk(items, title):
@@ -848,14 +1036,16 @@ def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]]
         seen = set()
         for it in items:
             url = (it.get("url") or "").split("#")[0]
-            if not url or url in seen: 
+            if not url or url in seen:
                 continue
             seen.add(url)
             title_ = it.get("title") or it.get("name") or it.get("url")
-            dom = it.get("domain") or (url.split('/')[2] if '://' in url else "")
+            dom = it.get("domain") or (url.split("/")[2] if "://" in url else "")
             when = (it.get("date") or "")[:10]
-            lis.append(f"<li><a href='{url}'>{title_}</a> – <span class='muted'>{dom} {when}</span></li>")
+            badge = _source_badge_html(dom) if dom else ""
+            lis.append(f"<li><a href='{url}'>{title_}</a> – <span class='muted'>{dom} {when}</span> {badge}</li>")
         return "<ul>" + "".join(lis) + "</ul>"
+
     return (
         "<div class='grid'>"
         + "<div><h4>News</h4>" + _mk(news, "News") + "</div>"
@@ -863,6 +1053,7 @@ def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]]
         + "<div><h4>" + ("Förderungen" if lang.startswith("de") else "Funding") + "</h4>" + _mk(funding, "Förderungen") + "</div>"
         + "</div>"
     )
+
 
 # -----------------------------------------------------------------------------
 # Zusammenbau
@@ -883,6 +1074,7 @@ def _business_case_block(case: BusinessCase, lang: str) -> str:
         "<div class='footnotes'>Formel: Invest/Monate × 12; konservative Annahmen.</div></div>"
     )
 
+
 def _fill_placeholders(html: str, n: Normalized) -> str:
     if not html:
         return html
@@ -895,8 +1087,11 @@ def _fill_placeholders(html: str, n: Normalized) -> str:
     }
     deltas = sorted(((k, abs(v - 60.0)) for k, v in kpis.items()), key=lambda x: x[1], reverse=True)
     map_de = {
-        "digitalisierung": "Digitalisierung", "automatisierung": "Automatisierung",
-        "compliance": "Compliance", "prozessreife": "Prozessreife", "innovation": "Innovation",
+        "digitalisierung": "Digitalisierung",
+        "automatisierung": "Automatisierung",
+        "compliance": "Compliance",
+        "prozessreife": "Prozessreife",
+        "innovation": "Innovation",
     }
     top2 = " & ".join([map_de.get(d[0], d[0].title()) for d in deltas[:2]]) or "Digitalisierung & Compliance"
     repl = {
@@ -905,12 +1100,15 @@ def _fill_placeholders(html: str, n: Normalized) -> str:
         "[Hauptleistung]": n.hauptleistung,
         "[wichtigste Δ‑Hebel]": top2,
         "{{ hauptleistung }}": n.hauptleistung,
+        "{{BRANCHE_LABEL}}": n.branche_label,
+        "{{GROESSE_LABEL}}": n.unternehmensgroesse_label,
     }
     for k, v in repl.items():
         html = html.replace(k, v)
     html = re.sub(r"\[[^\]]+\]", "", html)
     html = re.sub(r"\{\{[^}]+\}\}", "", html)
     return html
+
 
 def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     n = normalize_briefing(raw, lang=lang)
@@ -931,9 +1129,13 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
 
     ctx = {
         "briefing": {
-            "branche": n.branche, "branche_label": n.branche_label,
-            "unternehmensgroesse": n.unternehmensgroesse, "unternehmensgroesse_label": n.unternehmensgroesse_label,
-            "bundesland_code": n.bundesland_code, "hauptleistung": n.hauptleistung, "pull_kpis": n.pull_kpis
+            "branche": n.branche,
+            "branche_label": n.branche_label,
+            "unternehmensgroesse": n.unternehmensgroesse,
+            "unternehmensgroesse_label": n.unternehmensgroesse_label,
+            "bundesland_code": n.bundesland_code,
+            "hauptleistung": n.hauptleistung,
+            "pull_kpis": n.pull_kpis,
         },
         "scoring": {"score_total": score.total, "badge": score.badge, "kpis": score.kpis, "weights": score.weights},
         "benchmarks": score.benchmarks,
@@ -958,39 +1160,63 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     coach = sec("coach")
     digest = sec("doc_digest")
 
-    tools_block = sec("tools") or _list_html(tools_items, "Keine passenden Tools gefunden." if lang.startswith("de") else "No matching tools.")
-    funding_block = sec("foerderprogramme") or _list_html(funding_items, "Keine aktuellen Einträge." if lang.startswith("de") else "No current items.", berlin_badge=True)
+    tools_block = sec("tools") or _list_html(
+        tools_items, "Keine passenden Tools gefunden." if lang.startswith("de") else "No matching tools."
+    )
+    funding_block = sec("foerderprogramme") or _list_html(
+        funding_items, "Keine aktuellen Einträge." if lang.startswith("de") else "No current items.", berlin_badge=True
+    )
 
     tpl = _template(lang)
     report_date = os.getenv("REPORT_DATE_OVERRIDE") or date.today().isoformat()
 
     html = (
         tpl.replace("{{LANG}}", "de" if lang.startswith("de") else "en")
-           .replace("{{ASSETS_BASE}}", ASSETS_BASE_URL)
-           .replace("{{REPORT_DATE}}", report_date)
-           .replace("{{STAND_DATUM}}", report_date)
-           .replace("{{SCORE_PERCENT}}", f"{score.total}%")
-           .replace("{{SCORE_BADGE}}", score.badge)
-           .replace("{{KPI_BARS_HTML}}", _kpi_bars_html(score))
-           .replace("{{BENCHMARK_TABLE_HTML}}", _benchmark_table_html(score))
-           .replace("{{BUSINESS_CASE_HTML}}", _business_case_block(case, lang))
-           .replace("{{PROFILE_HTML}}", _profile_html(n))
-           .replace("{{EXEC_SUMMARY_HTML}}", exec_llm)
-           .replace("{{QUICK_WINS_HTML}}", quick)
-           .replace("{{ROADMAP_HTML}}", roadmap)
-           .replace("{{RISKS_HTML}}", risks)
-           .replace("{{COMPLIANCE_HTML}}", compliance)
-           .replace("{{NEWS_HTML}}", _list_html(live_news, "Keine aktuellen News (30 Tage geprüft)." if lang.startswith("de") else "No recent news (30 days)."))
-           .replace("{{TOOLS_HTML}}", tools_block)
-           .replace("{{FUNDING_HTML}}", funding_block)
-           .replace("{{RECOMMENDATIONS_BLOCK}}", f"<section class='card'><h2>Recommendations</h2>{recs}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{GAMECHANGER_BLOCK}}", f"<section class='card'><h2>Gamechanger</h2>{game}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{VISION_BLOCK}}", f"<section class='card'><h2>Vision</h2>{vision}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{PERSONA_BLOCK}}", f"<section class='card'><h2>Persona</h2>{persona}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{PRAXIS_BLOCK}}", f"<section class='card'><h2>Praxisbeispiel</h2>{praxis}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{COACH_BLOCK}}", f"<section class='card'><h2>Coach</h2>{coach}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{DOC_DIGEST_BLOCK}}", digest or "")
-           .replace("{{SOURCES_FOOTER_HTML}}", _sources_footer_html(live_news, tools_items, funding_items, lang))
+        .replace("{{ASSETS_BASE}}", ASSETS_BASE_URL)
+        .replace("{{REPORT_DATE}}", report_date)
+        .replace("{{STAND_DATUM}}", report_date)
+        .replace("{{SCORE_PERCENT}}", f"{score.total}%")
+        .replace("{{SCORE_BADGE}}", score.badge)
+        .replace("{{KPI_BARS_HTML}}", _kpi_bars_html(score))
+        .replace("{{BENCHMARK_TABLE_HTML}}", _benchmark_table_html(score))
+        .replace("{{BUSINESS_CASE_HTML}}", _business_case_block(case, lang))
+        .replace("{{PROFILE_HTML}}", _profile_html(n))
+        .replace("{{EXEC_SUMMARY_HTML}}", exec_llm)
+        .replace("{{QUICK_WINS_HTML}}", quick)
+        .replace("{{ROADMAP_HTML}}", roadmap)
+        .replace("{{RISKS_HTML}}", risks)
+        .replace("{{COMPLIANCE_HTML}}", compliance)
+        .replace("{{NEWS_HTML}}", _list_html(live_news, "Keine aktuellen News (30 Tage geprüft)." if lang.startswith("de") else "No recent news (30 days)."))
+        .replace("{{TOOLS_HTML}}", tools_block)
+        .replace("{{FUNDING_HTML}}", funding_block)
+        .replace(
+            "{{RECOMMENDATIONS_BLOCK}}",
+            f"<section class='card'><h2>Recommendations</h2>{recs}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
+        )
+        .replace(
+            "{{GAMECHANGER_BLOCK}}",
+            f"<section class='card'><h2>Gamechanger</h2>{game}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
+        )
+        .replace(
+            "{{VISION_BLOCK}}",
+            f"<section class='card'><h2>Vision</h2>{vision}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
+        )
+        .replace(
+            "{{PERSONA_BLOCK}}",
+            f"<section class='card'><h2>Persona</h2>{persona}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
+        )
+        .replace(
+            "{{PRAXIS_BLOCK}}",
+            f"<section class='card'><h2>Praxisbeispiel</h2>{praxis}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
+        )
+        .replace(
+            "{{COACH_BLOCK}}",
+            f"<section class='card'><h2>Coach</h2>{coach}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>",
+        )
+        .replace("{{DOC_DIGEST_BLOCK}}", digest or "")
+        .replace("{{SOURCES_FOOTER_HTML}}", _sources_footer_html(live_news, tools_items, funding_items, lang))
+        .replace("{{BRANCHE_LABEL}}", n.branche_label)
+        .replace("{{GROESSE_LABEL}}", n.unternehmensgroesse_label)
     )
 
     html = _fill_placeholders(html, n)
@@ -1012,14 +1238,17 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
         "raw": n.raw,
     }
 
+
 # -----------------------------------------------------------------------------
 # Öffentliche API
 # -----------------------------------------------------------------------------
 def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
     return build_html_report(raw, lang)["html"]
 
+
 def build_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     return build_html_report(raw, lang)
+
 
 def produce_admin_attachments(raw: Dict[str, Any], lang: str = "de") -> Dict[str, str]:
     try:
@@ -1027,14 +1256,28 @@ def produce_admin_attachments(raw: Dict[str, Any], lang: str = "de") -> Dict[str
     except Exception as exc:  # pragma: no cover
         norm = Normalized(raw={"_error": f"normalize failed: {exc}", "_raw_keys": list((raw or {}).keys())})
     required = [
-        "branche","branche_label","unternehmensgroesse","unternehmensgroesse_label","bundesland_code",
-        "hauptleistung","kpi_digitalisierung","kpi_automatisierung","kpi_compliance","kpi_prozessreife","kpi_innovation",
+        "branche",
+        "branche_label",
+        "unternehmensgroesse",
+        "unternehmensgroesse_label",
+        "bundesland_code",
+        "hauptleistung",
+        "kpi_digitalisierung",
+        "kpi_automatisierung",
+        "kpi_compliance",
+        "kpi_prozessreife",
+        "kpi_innovation",
     ]
+
     def _is_missing(v) -> bool:
-        if v is None: return True
-        if isinstance(v, str): return v.strip() == ""
-        if isinstance(v, (list, dict, tuple, set)): return len(v) == 0
+        if v is None:
+            return True
+        if isinstance(v, str):
+            return v.strip() == ""
+        if isinstance(v, (list, dict, tuple, set)):
+            return len(v) == 0
         return False
+
     missing = sorted([k for k in required if _is_missing(getattr(norm, k, None))])
     payload_raw = raw if isinstance(raw, dict) else {"_note": "raw not dict"}
     return {
