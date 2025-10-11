@@ -75,6 +75,19 @@ table.compact.risk .col--due{width:8%}
   .page-break{page-break-before:always}
 }
 
+/* --- Source trust badges (NEW) --- */
+.src-badge{display:inline-block;padding:.1rem .4rem;border-radius:6px;font-size:.75rem;margin-left:.35rem;border:1px solid transparent}
+.src-gov{background:#DCFCE7;color:#065F46;border-color:#bbf7d0}
+.src-edu{background:#E0E7FF;color:#3730A3;border-color:#c7d2fe}
+.src-news{background:#F0F9FF;color:#075985;border-color:#bae6fd}
+.src-vendor{background:#FEF9C3;color:#854d0e;border-color:#fde68a}
+.src-code{background:#F5F5F5;color:#374151;border-color:#e5e7eb}
+.src-community{background:#FFE4E6;color:#9f1239;border-color:#fecdd3}
+.src-neutral{background:#F3F4F6;color:#374151;border-color:#e5e7eb}
+
+/* simple three-column grid for sources footer */
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:840px){.grid{grid-template-columns:1fr}}
 </style>
 <body>
   <div class="wrapper">
