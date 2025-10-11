@@ -3,13 +3,12 @@
 """
 Production API für KI‑Status‑Report (Gold‑Standard+)
 
-Änderungen in dieser Version:
-- **Schema‑Endpoint** eingebunden (GET /schema) – hält Frontend/Backend synchron.
-- **Perplexity/Tavily Health** sichtbarer in /health.
-- **/briefing_async** robust gegenüber gpt_analyze‑Varianten (build_report/analyze_briefing).
-- PDF‑Header‑Logging (X-PDF-Bytes/X-PDF-Limit) zur Diagnose.
+- Schema‑Endpoint (GET /schema) – hält Frontend/Backend synchron
+- /health erweitert um effektives Perplexity‑Model & Cache‑Settings
+- Perplexity/Tavily Health-Flags
+- /briefing_async robust: bevorzugt build_report(), Fallback analyze_briefing()
+- PDF‑Header‑Logging (X-PDF-Bytes/X-PDF-Limit) zur Diagnose
 """
-
 from __future__ import annotations
 
 import base64
@@ -43,11 +42,8 @@ except Exception:  # pragma: no cover
         def _noop():
             return {"ok": False, "detail": "schema file not found"}
         return r
-
-try:
-    from feedback_api import attach_to as attach_feedback  # type: ignore
-except Exception:  # pragma: no cover
-    attach_feedback = None
+    def get_schema_info():
+        return {"ok": False}
 
 APP_NAME = os.getenv("APP_NAME", "make-ki-backend")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -65,7 +61,6 @@ TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", os.path.join(BASE_DIR, "templates"))
 
 # Live flags (für /health)
 LIVE_TAVILY = bool(os.getenv("TAVILY_API_KEY"))
-# akzeptiere beide Env‑Namen
 LIVE_PERPLEXITY = bool(os.getenv("PPLX_API_KEY") or os.getenv("PERPLEXITY_API_KEY"))
 
 # PDF service
@@ -197,9 +192,20 @@ def _minify_html(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\\s+<", "><", s)
-    s = re.sub(r"\\s{2,}", " ", s)
+    s = re.sub(r">\s+<", "><", s)
+    s = re.sub(r"\s{2,}", " ", s)
     return s.strip()
+
+def _pplx_model_effective(raw: str | None) -> str:
+    name = (raw or "").strip()
+    if not name:
+        return "auto"
+    low = name.lower()
+    if low in {"auto", "best", "default", "none"}:
+        return "auto"
+    if "online" in low:
+        return "auto"
+    return name
 
 # --------------------------- PDF service ------------------------------------
 
@@ -288,23 +294,31 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-if attach_feedback:
-    attach_feedback(app)
-
-# NEW: Schema‑Router aktiv
+# Schema‑Router
 app.include_router(get_schema_router())
 
 
 @app.get("/health")
 def health() -> dict:
+    pplx_env = os.getenv("PPLX_MODEL", "")
     return {
         "ok": True,
         "ts": _now_str(),
         "app": APP_NAME,
         "pdf_service": PDF_SERVICE_URL or "-",
-        "live": {"tavily": LIVE_TAVILY, "perplexity": LIVE_PERPLEXITY},
+        "live": {
+            "tavily": LIVE_TAVILY,
+            "perplexity": LIVE_PERPLEXITY,
+            "pplx_model_env": pplx_env or "unset",
+            "pplx_model_effective": _pplx_model_effective(pplx_env),
+        },
         "schema": get_schema_info(),
         "smtp": bool(SMTP_HOST),
+        "cache": {
+            "file": os.getenv("LIVE_CACHE_FILE", "/tmp/ki_live_cache.json"),
+            "enabled": os.getenv("LIVE_CACHE_ENABLED", "1"),
+            "ttl_sec": os.getenv("LIVE_CACHE_TTL_SECONDS", "1800"),
+        }
     }
 
 
@@ -317,14 +331,16 @@ def health_html() -> HTMLResponse:
 body{{font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:880px;margin:2rem auto;line-height:1.4}}
 .card{{border:1px solid #e5e7eb;border-radius:8px;padding:1rem;margin:.75rem 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}}
 .badge{{display:inline-block;padding:.15rem .5rem;border-radius:6px;background:#e6fffa;color:#065f46;font-weight:600}}
-.kv{{display:grid;grid-template-columns:160px 1fr;gap:.25rem .75rem}}
+.kv{{display:grid;grid-template-columns:180px 1fr;gap:.25rem .75rem}}
 </style>
 <h1>{APP_NAME} <span class="badge">OK</span></h1>
 <div class="card"><div class="kv">
   <div>Zeit</div><div>{_now_str()}</div>
   <div>PDF-Service</div><div>{PDF_SERVICE_URL or "–"}</div>
   <div>Live-Quellen</div><div>Tavily: {"ON" if LIVE_TAVILY else "off"} · Perplexity: {"ON" if LIVE_PERPLEXITY else "off"}</div>
+  <div>Perplexity-Model</div><div>{_pplx_model_effective(os.getenv("PPLX_MODEL",""))} (env: {os.getenv("PPLX_MODEL","unset") or "unset"})</div>
   <div>SMTP</div><div>{"on" if SMTP_HOST else "off"} ({SMTP_FROM_NAME})</div>
+  <div>Cache</div><div>{os.getenv("LIVE_CACHE_ENABLED","1")} · TTL {os.getenv("LIVE_CACHE_TTL_SECONDS","1800")}s</div>
 </div></div>
 <p><a href="/metrics">/metrics</a></p>"""
     return HTMLResponse(html)
