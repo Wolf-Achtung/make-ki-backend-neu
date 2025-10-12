@@ -3,10 +3,11 @@
 """
 Perplexity API Client (Gold-Standard+)
 - JSON-schema forcing, model guard, retry on invalid_model
-- Conservative timeouts and structured logging via prints (service logs will capture stdout)
+- 429/5xx backoff handled by caller (websearch_utils) in hybrid paths;
+  here we also implement a light backoff for direct usage.
 Env:
   PPLX_API_KEY / PERPLEXITY_API_KEY
-  PPLX_MODEL   (leave empty for Best-Mode; 'auto','best','default' or any '*-online' are treated as None)
+  PPLX_MODEL   (leave empty for Best-Mode; 'auto','best','default' or any '*-online' => None)
   PPLX_TIMEOUT_SEC (default 30)
 """
 
@@ -78,10 +79,7 @@ class PerplexityClient:
 
         system_msg = system or "You are a precise research agent. Return ONLY JSON, no explanations."
         payload: Dict[str, Any] = {
-            "messages": [
-                {"role": "system", "content": system_msg},
-                {"role": "user", "content": query[:2000]},
-            ],
+            "messages": [{"role": "system", "content": system_msg}, {"role": "user", "content": query[:2000]}],
             "temperature": self.temperature,
             "top_p": self.top_p,
             "max_tokens": self.max_tokens,
@@ -99,45 +97,40 @@ class PerplexityClient:
         if extra_headers:
             headers.update({k: v for k, v in extra_headers.items() if isinstance(k, str)})
 
-        delays = [0.5, 1.2, 2.0] if self.enable_backoff else [0.0]
+        delays = [0.0, 0.6, 1.2, 2.0] if self.enable_backoff else [0.0]
         last_err = None
-        for attempt, delay in enumerate(delays, start=1):
-            if delay:
-                time.sleep(delay)
+        for attempt, d in enumerate(delays, start=1):
+            if d:
+                time.sleep(d)
             try:
                 with httpx.Client(timeout=self.timeout_sec) as client:
                     resp = client.post(self.base_url, headers=headers, json=payload)
 
                 if resp.status_code == 400 and "invalid_model" in (resp.text or "").lower():
-                    # retry once without model
-                    payload.pop("model", None)
+                    payload.pop("model", None)  # retry Best-Mode
                     with httpx.Client(timeout=self.timeout_sec) as client:
                         resp = client.post(self.base_url, headers=headers, json=payload)
+
+                if resp.status_code in (429, 502, 503) and attempt < len(delays):
+                    last_err = f"http_{resp.status_code}"
+                    continue
 
                 if resp.status_code == 200:
                     data = resp.json()
                     content = (data.get("choices") or [{}])[0].get("message", {}).get("content", "{}")
-                    try:
-                        obj = json.loads(content) if isinstance(content, str) else content
-                        items = obj.get("items") or []
-                        if clamp_items:
-                            items = items[:max_items]
-                        print(json.dumps({"evt": "perplexity_ok", "items": len(items)}, ensure_ascii=False))
-                        return [it for it in items if isinstance(it, dict)]
-                    except Exception as exc:
-                        last_err = f"parse_error: {exc}"
-                        print(json.dumps({"evt": "perplexity_parse_error", "error": str(exc)}, ensure_ascii=False))
-                        return []
+                    obj = json.loads(content) if isinstance(content, str) else content
+                    items = obj.get("items") or []
+                    if clamp_items:
+                        items = items[:max_items]
+                    print(json.dumps({"evt": "perplexity_ok", "items": len(items)}, ensure_ascii=False))
+                    return [it for it in items if isinstance(it, dict)]
                 elif resp.status_code in (401, 403, 404, 422):
                     print(json.dumps({"evt": "perplexity_fail", "status": resp.status_code}, ensure_ascii=False))
                     return []
                 else:
                     last_err = f"http_{resp.status_code}"
-                    print(json.dumps({"evt": "perplexity_retry", "status": resp.status_code, "attempt": attempt}, ensure_ascii=False))
             except Exception as exc:
                 last_err = f"error:{type(exc).__name__}"
-                print(json.dumps({"evt": "perplexity_error", "msg": str(exc)}, ensure_ascii=False))
-
         if last_err:
             print(json.dumps({"evt": "perplexity_final_fail", "error": last_err}, ensure_ascii=False))
         return []
