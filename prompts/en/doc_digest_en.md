@@ -1,17 +1,4 @@
-# Document digest
-Context (briefing, scoring, benchmarks) is provided in JSON.
-Return **only a clean HTML fragment** (no <html>/<head>/<body>), short paragraphs.
+# Document Digest (HTML fragment)
 
-## Data
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
-
-## Requirements
-- clear, professional tone; motivating but not salesy
-- concrete, actionable recommendations with timeframes (30/60/90 days) where useful
-- be GDPR / EU AI Act aware; flag risks
-- **no** custom CSS; no title/H1
+If {{FUNDING_JSON}} contains items, highlight 1–2 that fit best (size, region).
+Otherwise, point to the live section. One paragraph.

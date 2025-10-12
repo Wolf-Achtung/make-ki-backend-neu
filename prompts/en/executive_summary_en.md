@@ -1,17 +1,14 @@
-# Executive Summary (3 bullet insights incl. Δ/time/owner)
-Context (briefing, scoring, benchmarks) is provided in JSON.
-Return **only a clean HTML fragment** (no <html>/<head>/<body>), short paragraphs.
+# Executive Summary (HTML fragment only)
 
-## Data
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
+Context (JSON):
+- Briefing: {{BRIEFING_JSON}}
+- Scoring: {{SCORING_JSON}}
+- Benchmarks: {{BENCHMARKS_JSON}}
 
-## Requirements
-- clear, professional tone; motivating but not salesy
-- concrete, actionable recommendations with timeframes (30/60/90 days) where useful
-- be GDPR / EU AI Act aware; flag risks
-- **no** custom CSS; no title/H1
+Write 2–3 tight paragraphs with:
+- 3 outcome bullets inline (no <ul>): top Δ vs. benchmark, time horizon, business effect.
+- A crisp call‑to‑action (≤ 1 sentence).
+
+Rules:
+- VALID HTML fragment only (no <html>, no <body>). Use <p> and <strong> selectively.
+- No tables, no lists. No fake citations. No numbers beyond % deltas already provided.

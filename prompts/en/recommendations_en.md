@@ -1,9 +1,4 @@
-<!-- prompts/en/recommendations_en.md -->
-## Recommendations – prioritised
+# Recommendations (HTML fragment)
 
-Valid HTML fragment only, 2–3 paragraphs. Focus on **mature, low‑risk** steps with clear ownership and artefacts (policy, registry, tests). Avoid numbers.
-
-**Sector booster (background only):**
-{{BRANCH_SNIPPET}}
-
-Use {{BRIEFING_JSON}}, {{SCORING_JSON}} and {{BENCHMARKS_JSON}}.
+Give 4–6 compact recommendations stitched into two paragraphs aligned with {{SCORING_JSON}}.
+Cover people, process, and tooling. Avoid vendor buzzwords.

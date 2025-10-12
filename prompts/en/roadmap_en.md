@@ -1,17 +1,8 @@
-# Roadmap (3 sprints)
-Context (briefing, scoring, benchmarks) is provided in JSON.
-Return **only a clean HTML fragment** (no <html>/<head>/<body>), short paragraphs.
+# Roadmap (HTML fragment only)
 
-## Data
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
+Use {{SCORING_JSON}} and {{BENCHMARKS_JSON}} to propose a 3‑sprint plan:
+- Sprint 1: governance & risk baseline
+- Sprint 2: one pilot use case to production
+- Sprint 3: scale & training
 
-## Requirements
-- clear, professional tone; motivating but not salesy
-- concrete, actionable recommendations with timeframes (30/60/90 days) where useful
-- be GDPR / EU AI Act aware; flag risks
-- **no** custom CSS; no title/H1
+Write 2 paragraphs, explicit deliverables and acceptance signals. No lists/tables.

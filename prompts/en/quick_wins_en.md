@@ -1,9 +1,12 @@
-<!-- prompts/en/quick_wins_en.md -->
-## Quick Wins – 30/60/90 days
+# Quick Wins (HTML fragment only)
 
-Return **a valid HTML fragment** only. 2–3 paragraphs with **concrete, realistic actions** for 30/60/90 days; no lists; avoid numeric figures.
+Input JSON:
+- Briefing: {{BRIEFING_JSON}}
+- Tools: {{TOOLS_JSON}}
+- Funding: {{FUNDING_JSON}}
 
-**Sector booster (background only):**
-{{BRANCH_SNIPPET}}
+Write 1 short intro paragraph and 3–5 concrete quick wins for the next 30–60 days.
+Format as 3–4 sentences total (no list tags). Each win must include:
+- target outcome, owner hint, next action.
 
-Use {{BRIEFING_JSON}} and {{SCORING_JSON}} (mind the deltas). Prioritise a security/compliance baseline and 1–2 value‑adding automations.
+Rules: VALID HTML fragment, no lists, no tables, no code fences.

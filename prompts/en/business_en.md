@@ -1,17 +1,5 @@
-# Business Case / ROI
-Context (briefing, scoring, benchmarks) is provided in JSON.
-Return **only a clean HTML fragment** (no <html>/<head>/<body>), short paragraphs.
+# ROI & Payback (HTML fragment)
 
-## Data
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
-
-## Requirements
-- clear, professional tone; motivating but not salesy
-- concrete, actionable recommendations with timeframes (30/60/90 days) where useful
-- be GDPR / EU AI Act aware; flag risks
-- **no** custom CSS; no title/H1
+Use {{BUSINESS_JSON}} (invest, save_year_eur, payback_months, roi_year1_pct) to summarise
+the business case: what will be saved, when payback is reached, and how to track it.
+Two short paragraphs, no sales language.
