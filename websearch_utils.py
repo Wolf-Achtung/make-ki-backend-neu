@@ -1,75 +1,131 @@
-# filename: websearch_utils.py
+# websearch_utils.py
 # -*- coding: utf-8 -*-
 """
-Hybrid Live-Search (Tavily + Perplexity) mit 429-Backoff, Dedupe und Domain-Filter.
+Live web search helpers (Perplexity Search API + Tavily) – Gold-Standard+
+- Uses Perplexity *Search API* (no model parameter required)
+- Uses Tavily with sane defaults
+- Robust 429/5xx backoff with jitter
+- Domain allowlist via env SEARCH_INCLUDE_DOMAINS="europa.eu,foerderdatenbank.de,..."
 """
 from __future__ import annotations
-from typing import Dict, Any, List, Optional
-import os, time, httpx
-from urllib.parse import urlparse
+
+from typing import Any, Dict, List, Optional
+import os, time, random
+import httpx
 
 from utils_sources import filter_and_rank
 
-TAVILY_API_KEY = os.getenv("TAVILY_API_KEY","").strip()
-PPLX_ENABLED = bool(os.getenv("PERPLEXITY_API_KEY") or os.getenv("PPLX_API_KEY"))
-SEARCH_INCLUDE = [d.strip() for d in (os.getenv("SEARCH_INCLUDE_DOMAINS","").split(",") if os.getenv("SEARCH_INCLUDE_DOMAINS") else []) if d.strip()]
-SEARCH_DEPTH = os.getenv("SEARCH_DEPTH","basic")
+PPLX_BASE = "https://api.perplexity.ai"
+TAVILY_URL = "https://api.tavily.com/search"
 
-def _domain(u: str) -> str:
-    try:
-        return urlparse(u).netloc.lower()
-    except Exception:
-        return ""
+DEFAULT_TIMEOUT = float(os.getenv("LIVE_TIMEOUT", "20"))
 
-def _backoff_sleep(i: int) -> None:
-    time.sleep(min(0.25 * (2 ** i), 6.0))
+def _split_domains(s: str) -> List[str]:
+    parts = [p.strip() for p in (s or "").split(",") if p.strip()]
+    return parts[:20]
 
-def tavily_search(query: str, max_results: int = 6, days: Optional[int] = None) -> List[Dict[str,Any]]:
-    if not TAVILY_API_KEY:
+def _post_with_backoff(url: str, json_payload: Dict[str, Any], headers: Dict[str, str], timeout: float) -> Dict[str, Any]:
+    """POST with exponential backoff on 429/5xx. Returns {} on failure."""
+    max_attempts = 5
+    base_sleep = 0.6
+    for attempt in range(1, max_attempts + 1):
+        try:
+            with httpx.Client(timeout=timeout) as cli:
+                r = cli.post(url, headers=headers, json=json_payload)
+                if r.status_code == 429 or 500 <= r.status_code < 600:
+                    # retryable
+                    raise httpx.HTTPStatusError("retryable", request=r.request, response=r)
+                r.raise_for_status()
+                return r.json()
+        except httpx.HTTPStatusError as e:
+            if attempt >= max_attempts:
+                return {}
+            # server asked to back off; use jitter
+            sleep_s = base_sleep * (2 ** (attempt - 1)) + random.uniform(0, 0.3)
+            time.sleep(sleep_s)
+            continue
+        except Exception:
+            if attempt >= max_attempts:
+                return {}
+            sleep_s = base_sleep * (2 ** (attempt - 1)) + random.uniform(0, 0.3)
+            time.sleep(sleep_s)
+            continue
+    return {}
+
+def _normalize_results(items: List[Dict[str, Any]], max_results: int) -> List[Dict[str, Any]]:
+    out: List[Dict[str, Any]] = []
+    for it in items[:max_results]:
+        out.append({
+            "title": it.get("title") or it.get("name") or it.get("url"),
+            "url": it.get("url"),
+            "domain": (it.get("domain") or (it.get("url","").split("/")[2] if "://" in (it.get("url") or "") else "")),
+            "date": (it.get("date") or it.get("published_date") or it.get("last_updated") or "")[:10],
+            "score": float(it.get("score") or 0.0)
+        })
+    return filter_and_rank(out)
+
+def perplexity_search(query: str, max_results: int = 8, country: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Calls Perplexity Search API (no explicit model param).
+    Supports domain allowlist via SEARCH_INCLUDE_DOMAINS.
+    """
+    api_key = (os.getenv("PERPLEXITY_API_KEY") or "").strip()
+    if not api_key:
         return []
-    payload = {"api_key": TAVILY_API_KEY, "query": query, "max_results": max_results, "include_answer": False, "search_depth": SEARCH_DEPTH}
-    if days: payload["days"] = int(days)
-    out: List[Dict[str,Any]] = []
-    try:
-        with httpx.Client(timeout=15.0) as c:
-            for i in range(4):
-                r = c.post("https://api.tavily.com/search", json=payload)
-                if r.status_code in (429,500,502,503,504):
-                    _backoff_sleep(i); continue
-                if r.status_code >= 400:
-                    break
-                data = r.json()
-                for item in (data.get("results") or [])[: max_results * 2]:
-                    url = item.get("url")
-                    if not url: continue
-                    dom = _domain(url)
-                    if SEARCH_INCLUDE and not any(dom.endswith(d) or d in dom for d in SEARCH_INCLUDE):
-                        # nicht strikt filtern – nur soft markieren
-                        pass
-                    out.append({
-                        "title": item.get("title") or url,
-                        "url": url,
-                        "date": (item.get("published_date") or "")[:10],
-                        "domain": dom,
-                        "score": item.get("score")
-                    })
-                break
-    except Exception:
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    payload: Dict[str, Any] = {
+        "query": query,
+        "max_results": max(1, min(20, int(max_results))),
+        "max_tokens_per_page": int(os.getenv("PPLX_MAX_TOKENS_PER_PAGE", "512")),
+    }
+    # domain filter (allowlist)
+    allow = _split_domains(os.getenv("SEARCH_INCLUDE_DOMAINS", ""))
+    if allow:
+        payload["search_domain_filter"] = allow
+    if country:
+        payload["country"] = country  # ISO alpha-2
+    data = _post_with_backoff(f"{PPLX_BASE}/search", payload, headers, DEFAULT_TIMEOUT)
+    if not data:
         return []
-    return out[: max_results * 2]
+    results = data.get("results") or []
+    # results can be nested for multi-query; flatten
+    if results and isinstance(results[0], list):
+        flat: List[Dict[str, Any]] = []
+        for block in results:
+            flat.extend(block or [])
+        results = flat
+    return _normalize_results(results, max_results)
 
-def perplexity_search(query: str, max_results: int = 6, days: Optional[int] = None) -> List[Dict[str,Any]]:
-    if not PPLX_ENABLED:
+def tavily_search(query: str, max_results: int = 8, days: Optional[int] = None) -> List[Dict[str, Any]]:
+    api_key = (os.getenv("TAVILY_API_KEY") or "").strip()
+    if not api_key:
         return []
-    try:
-        from perplexity_client import search as pplx_search  # type: ignore
-    except Exception:
+    headers = {"Content-Type": "application/json"}
+    payload: Dict[str, Any] = {
+        "api_key": api_key,
+        "query": query,
+        "max_results": max_results,
+        "include_answer": False,
+        "search_depth": os.getenv("SEARCH_DEPTH", "basic"),
+    }
+    # domain allowlist aligns with Perplexity
+    allow = _split_domains(os.getenv("SEARCH_INCLUDE_DOMAINS", ""))
+    if allow:
+        payload["include_domains"] = allow
+    if days:
+        payload["days"] = int(days)
+    data = _post_with_backoff(TAVILY_URL, payload, headers, DEFAULT_TIMEOUT)
+    if not data:
         return []
-    out = pplx_search(query, max_results=max_results, days=days) or []
-    return out[: max_results * 2]
-
-def hybrid_search(query: str, max_results: int = 8, days: Optional[int] = None) -> List[Dict[str,Any]]:
-    t = tavily_search(query, max_results=max_results, days=days)
-    p = perplexity_search(query, max_results=max_results, days=days)
-    combined = (p or []) + (t or [])
-    return filter_and_rank(combined)[:max_results]
+    results = data.get("results") or []
+    # map fields to our schema
+    mapped = []
+    for r in results[:max_results]:
+        mapped.append({
+            "title": r.get("title"),
+            "url": r.get("url"),
+            "domain": (r.get("url","").split("/")[2] if "://" in (r.get("url") or "") else ""),
+            "date": (r.get("published_date") or "")[:10],
+            "score": float(r.get("score") or 0.0),
+        })
+    return _normalize_results(mapped, max_results)
