@@ -1,115 +1,103 @@
-<!-- templates/pdf_template.html (DE) -->
-    <!doctype html>
-    <html lang="de">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>KI‑Status‑Report</title>
-      <style>
-    :root { --blue:#113355; --accent:#FF6A00; --muted:#5B6B7C; --bg:#F7F9FC; --card:#FFFFFF; }
-    *{box-sizing:border-box} body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;margin:0;background:var(--bg);color:#0B1F35}
-    .container{max-width:780px;margin:32px auto;padding:0 16px}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    h1{font-size:28px;margin:0;color:#0B1F35} .stand{color:var(--muted);font-size:12px}
-    .card{background:var(--card);border-radius:8px;padding:16px 16px 8px;margin:12px 0;box-shadow:0 0 0 1px rgba(0,0,0,.05)}
-    h2{font-size:18px;margin:0 0 8px 0}
-    .muted{color:var(--muted)} .hl{font-weight:600}
-    .pill{display:inline-block;background:#EEF3F8;border-radius:14px;padding:4px 10px;margin:0 6px 6px 0;font-size:12px}
-    .kpi .bar{display:grid;grid-template-columns:160px 1fr 60px;align-items:center;margin:8px 0}
-    .kpi .label{font-weight:600}
-    .bar__track{position:relative;height:10px;background:#E9EEF4;border-radius:6px;overflow:hidden}
-    .bar__fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--blue),#3A87C8)}
-    .bar__median{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);opacity:.8}
-    .bar__delta{font-weight:600;text-align:right;color:var(--muted)}
-    table{border-collapse:collapse;width:100%} th,td{border-top:1px solid #E6EEF5;padding:8px 6px;text-align:left;font-size:14px}
-    th{color:#223A55;font-weight:700;background:#F4F7FB}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-    .source-list{margin:8px 0 0 0;padding-left:18px}
+<!-- filename: templates/pdf_template.html -->
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KI‑Status‑Report</title>
+  <style>
+    :root{--blue:#2563eb;--orange:#fb923c;--muted:#5B6B7C;--bg:#ffffff;--border:#E5E7EB;--card:#f9fafb;}
+    body{font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111827;background:#fff;margin:0}
+    .container{max-width:780px;margin:24px auto;padding:0 16px}
+    h1{font-size:28px;margin:0 0 6px;font-weight:800;color:#111827}
+    h2{font-size:18px;margin:0 0 8px;font-weight:700;color:#111827}
+    h3{font-size:16px;margin:0 0 6px;font-weight:700}
+    p{margin:0 0 10px}
+    .muted{color:var(--muted)}
+    .card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .pill{display:inline-block;background:#eef2ff;color:#3730a3;font-weight:600;border-radius:999px;padding:3px 8px;margin-right:6px}
+    .kpi .bar{display:grid;grid-template-columns:140px 1fr 120px;align-items:center;margin:8px 0}
+    .kpi .label{font-weight:700}
+    .bar__track{position:relative;height:10px;background:#f3f4f6;border-radius:6px;overflow:hidden}
+    .bar__fill{position:absolute;left:0;top:0;bottom:0;background:var(--blue)}
+    .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--orange);opacity:.9}
+    .bar__delta{font-variant-numeric:tabular-nums;color:#111827;display:flex;align-items:center;gap:6px}
+    table{width:100%;border-collapse:separate;border-spacing:0 6px}
+    th,td{text-align:left;padding:8px 10px;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;background:#fff}
+    th{font-size:12px;color:#374151;text-transform:uppercase;letter-spacing:.04em;background:#f8fafc}
+    .source-list{padding-left:18px}
     .source-list li{margin:6px 0}
-    /* Badges */
-    .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;margin-left:6px;border:1px solid transparent}
-    .badge-gov{background:#E7F4EC;border-color:#A6D9BA;color:#125C2C}
-    .badge-edu{background:#E9EFFD;border-color:#BFD0FF;color:#213B82}
-    .badge-media{background:#FFF2DC;border-color:#FCD49E;color:#8D4A00}
-    .badge-org{background:#F0EBFF;border-color:#D3C6FF;color:#4B2E83}
-    .badge-vendor{background:#FFE8EC;border-color:#FFC1CD;color:#7C1E33}
-    .badge-web{background:#EEF3F8;border-color:#D8E3EE;color:#2D4C6B}
-    .flag-berlin{display:inline-block;margin-left:6px;padding:2px 6px;border:1px solid #E66;border-radius:10px;color:#922;background:#FDEDED;font-size:10px}
-    footer{margin:24px 0 40px 0;color:var(--muted);font-size:12px}
-</style>
-    </head>
-    <body>
-      <div class="container">
-        <header>
-          <h1>KI‑Status‑Report</h1>
-          <div class="stand">Stand: {REPORT_DATE}</div>
-        </header>
+    .badge{display:inline-block;font-size:11px;border-radius:999px;padding:2px 6px;margin-left:6px;border:1px solid transparent}
+    .badge-official{background:#ecfeff;color:#155e75;border-color:#06b6d4}
+    .badge-news{background:#fef3c7;color:#92400e;border-color:#f59e0b}
+    .badge-vendor{background:#eef2ff;color:#3730a3;border-color:#6366f1}
+    .badge-research{background:#e0f2fe;color:#075985;border-color:#38bdf8}
+    .badge-unknown{background:#f3f4f6;color:#374151;border-color:#9ca3af}
+    .flag-berlin{background:#fee2e2;color:#991b1b;border:1px solid #ef4444;border-radius:6px;padding:0 6px;margin-left:6px}
+    .footer-note{margin-top:6px;color:var(--muted);font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>KI‑Status‑Report</h1>
+    <div class="muted">Stand: {{REPORT_DATE}}</div>
 
-        <section class="card">
-          <h2>Executive Summary</h2>
-          {EXEC_SUMMARY_HTML}
-        </section>
+    <div class="card">
+      <h2>Executive Summary</h2>
+      {{EXEC_SUMMARY_HTML}}
+    </div>
 
-        <section class="card">
-          <h2>Score & Benchmarks</h2>
-          {KPI_BARS_HTML}
-          {BENCHMARK_TABLE_HTML}
-        </section>
+    <div class="card">
+      <h2>Score &amp; Benchmarks</h2>
+      {{KPI_BARS_HTML}}
+      {{BENCHMARK_TABLE_HTML}}
+    </div>
 
-        <section class="card">
-          <h2>Unternehmensprofil</h2>
-          {PROFILE_HTML}
-        </section>
+    <div class="card">
+      <h2>Unternehmensprofil</h2>
+      {{PROFILE_HTML}}
+    </div>
 
-        <section class="card">
-          <h2>ROI & Payback</h2>
-          {BUSINESS_CASE_HTML}
-        </section>
+    <div class="card">
+      <h2>ROI &amp; Payback</h2>
+      {{BUSINESS_CASE_HTML}}
+    </div>
 
-        <section class="card">
-          <h2>Quick Wins</h2>
-          {QUICK_WINS_HTML}
-        </section>
+    <div class="card">
+      <h2>Quick Wins</h2>
+      {{QUICK_WINS_HTML}}
+    </div>
 
-        <section class="card">
-          <h2>Roadmap</h2>
-          {ROADMAP_HTML}
-        </section>
+    <div class="card">
+      <h2>Roadmap</h2>
+      {{ROADMAP_HTML}}
+    </div>
 
-        <section class="card">
-          <h2>Risikomatrix</h2>
-          {RISKS_HTML}
-        </section>
+    <div class="card">
+      <h2>Risikomatrix</h2>
+      {{RISKS_HTML}}
+    </div>
 
-        <section class="card">
-          <h2>Compliance</h2>
-          {COMPLIANCE_HTML}
-        </section>
+    <div class="card">
+      <h2>Compliance</h2>
+      {{COMPLIANCE_HTML}}
+    </div>
 
-        <section class="card">
-          <h2>News · Tools · Förderungen</h2>
-          <div class="grid">
-            <div><h3 style="margin-top:0">News</h3>{NEWS_HTML}</div>
-            <div><h3 style="margin-top:0">Tools</h3>{TOOLS_HTML}</div>
-            <div><h3 style="margin-top:0">Förderungen</h3>{FUNDING_HTML}</div>
-          </div>
-        </section>
+    {{GUIDES_HTML}}
 
-        <section class="card">
-          <h2>Guides & Checklisten</h2>
-          {CONTENT_BLOCKS_HTML}
-        </section>
-
-        <section class="card">
-          <h2>Gamechanger‑Idee</h2>
-          {GAMECHANGER_HTML}
-        </section>
-
-        <footer>
-          <div><strong>Quellen (News, Tools, Förderungen)</strong></div>
-          {SOURCES_FOOTER_HTML}
-          <div style="margin-top:6px">Stand: {REPORT_DATE} · Dedupliziert nach Domain/URL. Badges zeigen die Vertrauensklasse.</div>
-        </footer>
+    <div class="card">
+      <h2>News · Tools · Förderungen</h2>
+      <div class="grid">
+        <div><h3>News</h3>{{NEWS_HTML}}</div>
+        <div><h3>Tools</h3>{{TOOLS_HTML}}</div>
+        <div><h3>Förderungen</h3>{{FUNDING_HTML}}</div>
       </div>
-    </body>
-    </html>
+      <div class="footer-note">Stand: {{REPORT_DATE}} · Dedupliziert nach Domain/URL. Badges zeigen die Vertrauensklasse.</div>
+      <h3>Quellen (News, Tools, Förderungen)</h3>
+      {{SOURCES_FOOTER_HTML}}
+    </div>
+  </div>
+</body>
+</html>
