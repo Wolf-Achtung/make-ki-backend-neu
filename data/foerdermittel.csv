@@ -1,6 +1,11 @@
-name,zielgruppe,region,foerderart,einsatz,link
-ZIM – Zentrales Innovationsprogramm Mittelstand,kmu,bund,"Zuschuss für F&E‑Projekte (Einzel/Konsortien); technologieoffen",Innovation/F&E,"https://www.zim.de"
-BMBF – KMU‑innovativ (IKT),kmu,bund,"Zuschuss für Forschung & Entwicklung; themenoffene Calls","IKT, Daten, KI","https://www.bmbf.de"
-BMWK – go‑digital (Modul digitalisieren),kmu,bund,"Beratungsförderung; autorisierte Beratungen","Digitalisierung, Prozesse","https://www.bmwi.de"
-KfW – Digitalisierung & Innovation (Programmgruppe),kmu,bund,"Darlehen/Finanzierung; Ergänzung zu Zuschüssen","Digitalisierung, Investitionen","https://www.kfw.de"
-EU – Horizon Europe (EIC Accelerator),kmu,eu,"Zuschuss + Beteiligungskapital; wettbewerblich","DeepTech/Innovation","https://eic.ec.europa.eu"
+name,zielgruppe,region,grant,use_case,link
+ZIM – Zentrales Innovationsprogramm Mittelstand,KMU,bund,Zuschuss für F&E/Innovation,Produkt-/Prozessinnovation; KI/IKT-Komponenten,https://www.zim.de
+KMU-innovativ – IKT/Software-Systeme (BMBF),KMU,bund,Zuschuss – Verbund-/Einzelprojekte,IKT/Software; Daten/AI,https://www.bmbf.de
+KfW – Digitalisierung & Innovation (Programmfamilie),KMU,bund,Darlehen/Zuschuss je nach Programm,Digitalisierung; Investitionen/Software,https://www.kfw.de
+
+IBB Pro FIT,KMU,berlin,Zuschuss/Darlehen,F&E; Innovation; KI/Digitalisierung,https://www.ibb.de
+Coaching BONUS (IBB),KMU/Start‑ups,berlin,Zuschuss für Beratung,Beratung/Markt/Innovation,https://www.ibb.de
+
+Digitalisierungsprämie Plus,KMU,baden-wuerttemberg,Zuschuss,Digitalisierung/Automatisierung,https://www.l-bank.de
+Digitalbonus Bayern,KMU,bayern,Zuschuss,Digitalisierung/IT-Sicherheit,https://www.digitalbonus.bayern.de
+MID – Mittelstand Innovativ & Digital,KMU,nordrhein-westfalen,Zuschuss,Digitalisierung/Innovation,https://www.nrwbank.de
