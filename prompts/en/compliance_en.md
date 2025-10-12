@@ -1,9 +1,12 @@
-<!-- Base context -->
-<p>Use the JSON blocks as context. Answer ONLY as clean HTML fragment (no &lt;html&gt;/&lt;body&gt;).</p>
-<p><b>Briefing:</b> {BRIEFING_JSON}</p>
-<p><b>Scoring:</b> {SCORING_JSON}</p>
-<p><b>Benchmarks:</b> {BENCHMARKS_JSON}</p>
-<p><b>Tools:</b> {TOOLS_JSON}</p>
-<p><b>Funding:</b> {FUNDING_JSON}</p>
-<p><b>Business:</b> {BUSINESS_JSON}</p>
-<h3>Compliance</h3><p>Provide concrete to‑dos for data minimisation, DPIA, deletion rules, model cards, ROL (responsibility/ownership/logging). No percentages.</p>
+# Compliance
+Context (JSON):
+- Briefing: {BRIEFING_JSON}
+- Scoring: {SCORING_JSON}
+- Benchmarks: {BENCHMARKS_JSON}
+- Live Tools/Funding: {TOOLS_JSON} / {FUNDING_JSON}
+- Industry note: {INDUSTRY_SNIPPET}
+
+Requirements:
+- Return clean HTML fragment (no <html>/<head>/<body>), use only <p> and <h3>.
+- Tone: professional, clear, motivating; no hype.
+- Write 2–3 compact paragraphs. Avoid numeric percentages in prose.
