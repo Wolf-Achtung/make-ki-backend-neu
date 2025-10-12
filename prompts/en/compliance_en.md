@@ -1,4 +1,1 @@
-# Compliance (HTML fragment)
-
-Explain the minimal viable compliance set (policies, registry, DPIA/DSFA, contracts, logging).
-One paragraph + one sentence on auditability and evidence.
+Return 3–5 concrete compliance to‑dos as <ul>…</ul> (GDPR/EU AI Act‑ready).

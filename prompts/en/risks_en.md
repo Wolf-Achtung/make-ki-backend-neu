@@ -1,4 +1,1 @@
-# Risk Matrix (HTML fragment)
-
-Summarise 3–4 key risks (EU AI Act & GDPR aware) and their mitigations.
-One compact paragraph. Use terms like DPIA, registry, HiTL, kill‑switch where relevant.
+Return a compact risk matrix as <table> (columns: Risk, Impact (1‑5), Likelihood (1‑5), Mitigation, Owner).

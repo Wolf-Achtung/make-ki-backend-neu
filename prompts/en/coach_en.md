@@ -1,4 +1,1 @@
-# Coach (HTML fragment)
-
-Tone: helpful and motivating. Give one behavioural nudge for the next week.
-Two sentences.
+A friendly coaching note (1 paragraph).
