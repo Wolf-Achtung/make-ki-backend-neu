@@ -3,101 +3,114 @@
 <html lang="{{LANG}}">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="x-ua-compatible" content="ie=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KI‑Status‑Report</title>
   <style>
-    :root{--blue:#2563eb;--orange:#fb923c;--muted:#5B6B7C;--bg:#ffffff;--border:#E5E7EB;--card:#f9fafb;}
-    body{font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111827;background:#fff;margin:0}
-    .container{max-width:780px;margin:24px auto;padding:0 16px}
-    h1{font-size:28px;margin:0 0 6px;font-weight:800;color:#111827}
-    h2{font-size:18px;margin:0 0 8px;font-weight:700;color:#111827}
-    h3{font-size:16px;margin:0 0 6px;font-weight:700}
-    p{margin:0 0 10px}
+    :root{
+      --blue:#0e7490; --blue-700:#0369a1; --orange:#f97316; --muted:#64748b; --ok:#059669; --bad:#b91c1c;
+      --bg:#ffffff; --card:#f8fafc; --ink:#0f172a;
+    }
+    *{box-sizing:border-box}
+    body{font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff;margin:0}
+    .wrap{max-width:780px;margin:24px auto;padding:0 18px}
+    h1{margin:0 0 8px 0;color:var(--ink)}
     .muted{color:var(--muted)}
-    .card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-weight:600;font-size:12px}
+    .badge-gov{background:#ecfeff;color:#0e7490}
+    .badge-eu{background:#eef2ff;color:#3730a3}
+    .badge-media{background:#fef3c7;color:#92400e}
+    .badge-docs{background:#dcfce7;color:#166534}
+    .badge-web{background:#e5e7eb;color:#111827}
+    .badge-de{background:#fee2e2;color:#991b1b}
+    .badge-unk{background:#f3f4f6;color:#334155}
+    .pill{display:inline-block;background:#e2e8f0;padding:2px 8px;border-radius:999px;margin-right:6px}
+    header{display:flex;align-items:center;justify-content:space-between;margin:18px 0}
+    header img{height:32px}
+    .card{background:var(--card);padding:14px 16px;border-radius:10px;border:1px solid #e5e7eb;margin:10px 0}
+    h2{font-size:18px;margin:0 0 10px 0;color:#0f172a}
+    h3{font-size:16px;margin:12px 0 6px 0;color:#0f172a}
+    .kpi .bar{display:grid;grid-template-columns:160px 1fr 140px;gap:8px;align-items:center;margin:8px 0}
+    .bar__track{position:relative;height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+    .bar__fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(to right,#67e8f9,#06b6d4)}
+    .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--orange);opacity:.8}
+    .bar__delta{font-variant-numeric:tabular-nums}
+    table{width:100%;border-collapse:collapse;margin:6px 0}
+    th,td{padding:8px;border-bottom:1px solid #e5e7eb;text-align:left}
     .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    .pill{display:inline-block;background:#eef2ff;color:#3730a3;font-weight:600;border-radius:999px;padding:3px 8px;margin-right:6px}
-    .kpi .bar{display:grid;grid-template-columns:140px 1fr 120px;align-items:center;margin:8px 0}
-    .kpi .label{font-weight:700}
-    .bar__track{position:relative;height:10px;background:#f3f4f6;border-radius:6px;overflow:hidden}
-    .bar__fill{position:absolute;left:0;top:0;bottom:0;background:var(--blue)}
-    .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--orange);opacity:.9}
-    .bar__delta{font-variant-numeric:tabular-nums;color:#111827;display:flex;align-items:center;gap:6px}
-    table{width:100%;border-collapse:separate;border-spacing:0 6px}
-    th,td{text-align:left;padding:8px 10px;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;background:#fff}
-    th{font-size:12px;color:#374151;text-transform:uppercase;letter-spacing:.04em;background:#f8fafc}
-    .source-list{padding-left:18px}
-    .source-list li{margin:6px 0}
-    .badge{display:inline-block;font-size:11px;border-radius:999px;padding:2px 6px;margin-left:6px;border:1px solid transparent}
-    .badge-official{background:#ecfeff;color:#155e75;border-color:#06b6d4}
-    .badge-news{background:#fef3c7;color:#92400e;border-color:#f59e0b}
-    .badge-vendor{background:#eef2ff;color:#3730a3;border-color:#6366f1}
-    .badge-research{background:#e0f2fe;color:#075985;border-color:#38bdf8}
-    .badge-unknown{background:#f3f4f6;color:#374151;border-color:#9ca3af}
-    .flag-berlin{background:#fee2e2;color:#991b1b;border:1px solid #ef4444;border-radius:6px;padding:0 6px;margin-left:6px}
-    .footer-note{margin-top:6px;color:var(--muted);font-size:12px}
+    .source-list{padding-left:18px;margin:6px 0}
+    .flag-berlin{background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:6px;margin-left:6px}
+    footer{margin:18px 0 40px 0;color:var(--muted);font-size:12px}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>KI‑Status‑Report</h1>
-    <div class="muted">Stand: {{REPORT_DATE}}</div>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>KI‑Status‑Report</h1>
+        <div class="muted">Stand: {{REPORT_DATE}}</div>
+      </div>
+      <img src="{{ASSETS_BASE}}/logo_ki_ready.png" alt="Logo">
+    </header>
 
-    <div class="card">
+    <section class="card">
       <h2>Executive Summary</h2>
       {{EXEC_SUMMARY_HTML}}
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="card">
       <h2>Score &amp; Benchmarks</h2>
       {{KPI_BARS_HTML}}
       {{BENCHMARK_TABLE_HTML}}
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="card">
       <h2>Unternehmensprofil</h2>
       {{PROFILE_HTML}}
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="card">
       <h2>ROI &amp; Payback</h2>
       {{BUSINESS_CASE_HTML}}
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="card">
       <h2>Quick Wins</h2>
       {{QUICK_WINS_HTML}}
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="card">
       <h2>Roadmap</h2>
       {{ROADMAP_HTML}}
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="card">
       <h2>Risikomatrix</h2>
       {{RISKS_HTML}}
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="card">
       <h2>Compliance</h2>
       {{COMPLIANCE_HTML}}
-    </div>
+    </section>
 
-    {{GUIDES_HTML}}
-
-    <div class="card">
+    <section class="card">
       <h2>News · Tools · Förderungen</h2>
       <div class="grid">
         <div><h3>News</h3>{{NEWS_HTML}}</div>
         <div><h3>Tools</h3>{{TOOLS_HTML}}</div>
         <div><h3>Förderungen</h3>{{FUNDING_HTML}}</div>
       </div>
-      <div class="footer-note">Stand: {{REPORT_DATE}} · Dedupliziert nach Domain/URL. Badges zeigen die Vertrauensklasse.</div>
-      <h3>Quellen (News, Tools, Förderungen)</h3>
+    </section>
+
+    <section class="card">
+      {{GUIDES_HTML}}
+    </section>
+
+    <section class="card">
+      <h2>Quellen (News, Tools, Förderungen)</h2>
       {{SOURCES_FOOTER_HTML}}
-    </div>
+      <footer>Stand: {{REPORT_DATE}} · Dedupliziert nach Domain/URL. Badges zeigen die Vertrauensklasse.</footer>
+    </section>
   </div>
 </body>
 </html>
