@@ -1,4 +1,7 @@
 name,zielgruppe,region,foerderart,einsatz,link
-ZIM (Zentrales Innovationsprogramm Mittelstand),kmu,bund,Zuschuss,Innovations- & Entwicklungsprojekte,https://www.zim.de
-BMBF IKT-Förderung,kmu,bund,Zuschuss,IKT-Forschung & -Transfer,https://www.bmbf.de
-go-digital (BMWK),kmu,bund,Zuschuss,Beratung & Umsetzung Digitalisierung,https://www.bmwi.de
+ZIM – Zentrales Innovationsprogramm Mittelstand,kmu,DE,Zuschuss,Förderung von Innovations- und Entwicklungsprojekten (bundesweit).,https://www.zim.de
+Förderberatung des Bundes,kmu,DE,Portal,Zentrale Recherche zu Programmen des Bundes und der Länder.,https://www.foerderdatenbank.de
+Investitionsbank Berlin – Programme Digitalisierung & Innovation,kmu,BE,Förderung,Übersicht der landesspezifischen Programme.,https://www.ibb.de
+LfA Förderbank Bayern – Digitalisierung & Innovation,kmu,BY,Förderung,Programme und Kredite für KMU.,https://www.lfa.de
+NRW.BANK – Digitalisierung & Innovation,kmu,NW,Förderung,Programme und Kredite für KMU.,https://www.nrwbank.de
+L‑Bank Baden‑Württemberg – Innovation & Digitalisierung,kmu,BW,Förderung,Programme und Kredite für KMU.,https://www.l-bank.de
