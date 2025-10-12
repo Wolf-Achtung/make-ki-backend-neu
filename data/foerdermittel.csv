@@ -1,11 +1,6 @@
-name,zielgruppe,region,grant,use_case,link
-ZIM – Zentrales Innovationsprogramm Mittelstand,KMU,bund,Zuschuss für F&E/Innovation,Produkt-/Prozessinnovation; KI/IKT-Komponenten,https://www.zim.de
-KMU-innovativ – IKT/Software-Systeme (BMBF),KMU,bund,Zuschuss – Verbund-/Einzelprojekte,IKT/Software; Daten/AI,https://www.bmbf.de
-KfW – Digitalisierung & Innovation (Programmfamilie),KMU,bund,Darlehen/Zuschuss je nach Programm,Digitalisierung; Investitionen/Software,https://www.kfw.de
-
-IBB Pro FIT,KMU,berlin,Zuschuss/Darlehen,F&E; Innovation; KI/Digitalisierung,https://www.ibb.de
-Coaching BONUS (IBB),KMU/Start‑ups,berlin,Zuschuss für Beratung,Beratung/Markt/Innovation,https://www.ibb.de
-
-Digitalisierungsprämie Plus,KMU,baden-wuerttemberg,Zuschuss,Digitalisierung/Automatisierung,https://www.l-bank.de
-Digitalbonus Bayern,KMU,bayern,Zuschuss,Digitalisierung/IT-Sicherheit,https://www.digitalbonus.bayern.de
-MID – Mittelstand Innovativ & Digital,KMU,nordrhein-westfalen,Zuschuss,Digitalisierung/Innovation,https://www.nrwbank.de
+name,zielgruppe,region,foerderart,einsatz,link
+ZIM – Zentrales Innovationsprogramm Mittelstand,kmu,bund,Zuschuss,F&E, Digitalisierung, KI,https://www.zim.de
+BMBF – IKT Forschung,kmu,bund,Förderaufrufe,IKT/AI Forschung & Transfer,https://www.bmbf.de
+Berlin – ProFIT,kmu,berlin,Zuschuss/Darlehen,F&E, Digitalisierung,https://www.ibb.de
+NRW – MID Digitale Unternehmen,kmu,nrw,Zuschuss,Digitalisierung/KI,https://www.nrwbank.de
+Bayern – Digitalbonus,kmu,bayern,Zuschuss,Digitalisierung (Hardware/Software),https://www.digitalbonus.bayern

@@ -1,6 +1,4 @@
-name,Branche-Slugs,Unternehmensgröße,kategorie,eignung,hosting,preis,link
-DeepL (Translate/Write),"beratung,marketing,default,alle",alle,Übersetzung & Textqualität,"Übersetzungen, Stilverbesserung",EU/EWR,"Free/Pro","https://www.deepl.com"
-Microsoft Copilot for Microsoft 365,"beratung,it,marketing,default,alle",alle,Office‑Automation,"Dokumente, Tabellen, E‑Mails","Enterprise (MS Cloud)","https://www.microsoft.com"
-Google Gemini for Workspace,"beratung,marketing,default,alle",alle,Office‑Automation,"Dokumente, Tabellen, Präsentationen","Enterprise (Google Cloud)","https://workspace.google.com"
-Make (No‑Code Automation),"beratung,handel,default,alle",alle,Automation & Integration,"Workflows, Schnittstellen, Datenflüsse",EU‑Rechenzentren verfügbar,"Free/Pro","https://www.make.com"
-Hugging Face Inference Endpoints,"it,industrie,default,alle",alle,Model‑Hosting,"eigene/öffentliche Modelle mit Endpoints","Cloud/Self‑hosted","Usage-based","https://huggingface.co"
+name,kategorie,Branche-Slugs,Unternehmensgröße,eignung,hosting,preis,link
+Notion AI,Wissensmanagement,beratung,it,medien,alle,Dokumentation & Vorlagen,EU/US wählbar,ab 8€/Monat,https://www.notion.so
+Github Copilot Business,Entwicklung,it,software,team,Code-Beschleunigung, Richtlinien,EU-Residency optional,19$/Monat,https://github.com/features/copilot
+Microsoft 365 Copilot,Office/Automation,beratung,handel,industrie,medien,kmu,Schreiben, Analysen, Automatisierung,EU Data Boundary,lizenzabhängig,https://www.microsoft.com
