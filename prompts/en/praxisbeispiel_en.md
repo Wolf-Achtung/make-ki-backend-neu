@@ -1,17 +1,13 @@
-# Case example
-Context (briefing, scoring, benchmarks) is provided in JSON.
-Return **only a clean HTML fragment** (no <html>/<head>/<body>), short paragraphs.
+<!-- prompts/en/praxisbeispiel_en.md -->
+## Case Study – Sector Focus
 
-## Data
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
+**Role & style**: Serious, precise, action‑oriented. Return a **valid HTML fragment only** (no `<html>`/`<body>`), 2–3 paragraphs, no lists or tables, no marketing fluff.
 
-## Requirements
-- clear, professional tone; motivating but not salesy
-- concrete, actionable recommendations with timeframes (30/60/90 days) where useful
-- be GDPR / EU AI Act aware; flag risks
-- **no** custom CSS; no title/H1
+**Context JSON** is provided via placeholders: briefing, scoring, benchmarks, business case.
+
+**Sector booster (background only, do not quote verbatim):**
+{{BRANCH_SNIPPET}}
+
+**Task**: Write a **practical case** for the given sector. Briefly outline starting point, measure, qualitative outcomes and what was documented (policy, registry, tests). Avoid numeric figures.
+
+**Output format**: Only `<h3>` + `<p>`.

@@ -1,17 +1,9 @@
-# Quick Wins (3–5 steps)
-Context (briefing, scoring, benchmarks) is provided in JSON.
-Return **only a clean HTML fragment** (no <html>/<head>/<body>), short paragraphs.
+<!-- prompts/en/quick_wins_en.md -->
+## Quick Wins – 30/60/90 days
 
-## Data
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
+Return **a valid HTML fragment** only. 2–3 paragraphs with **concrete, realistic actions** for 30/60/90 days; no lists; avoid numeric figures.
 
-## Requirements
-- clear, professional tone; motivating but not salesy
-- concrete, actionable recommendations with timeframes (30/60/90 days) where useful
-- be GDPR / EU AI Act aware; flag risks
-- **no** custom CSS; no title/H1
+**Sector booster (background only):**
+{{BRANCH_SNIPPET}}
+
+Use {{BRIEFING_JSON}} and {{SCORING_JSON}} (mind the deltas). Prioritise a security/compliance baseline and 1–2 value‑adding automations.

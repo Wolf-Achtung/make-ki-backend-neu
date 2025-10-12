@@ -1,17 +1,9 @@
-# Recommendations (tools/processes)
-Context (briefing, scoring, benchmarks) is provided in JSON.
-Return **only a clean HTML fragment** (no <html>/<head>/<body>), short paragraphs.
+<!-- prompts/en/recommendations_en.md -->
+## Recommendations – prioritised
 
-## Data
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
+Valid HTML fragment only, 2–3 paragraphs. Focus on **mature, low‑risk** steps with clear ownership and artefacts (policy, registry, tests). Avoid numbers.
 
-## Requirements
-- clear, professional tone; motivating but not salesy
-- concrete, actionable recommendations with timeframes (30/60/90 days) where useful
-- be GDPR / EU AI Act aware; flag risks
-- **no** custom CSS; no title/H1
+**Sector booster (background only):**
+{{BRANCH_SNIPPET}}
+
+Use {{BRIEFING_JSON}}, {{SCORING_JSON}} and {{BENCHMARKS_JSON}}.
