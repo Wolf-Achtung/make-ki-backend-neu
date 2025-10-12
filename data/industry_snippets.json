@@ -1,10 +1,12 @@
 {
-  "beratung": {
-    "de": "Beratungen profitieren überdurchschnittlich von KI‑gestützter Recherche, Automatisierung von Dokumenten und schlanken Wissensportalen. Starten Sie mit standardisierten Fragebögen und Auswertungen, definieren Sie eine Policy und bauen Sie eine kleine Prompt‑Bibliothek sowie Checklisten auf. Für Solo/kleine Teams lohnt sich der Fokus auf Lead‑Qualifizierung, Angebotsentwürfe, Abrechnung und Wissensmanagement.",
-    "en": "Consulting benefits from AI‑assisted research, document automation and lean knowledge portals. Start with standardised questionnaires and evaluations, set a clear policy and build a small prompt library and checklists. For solo/small teams prioritise lead qualification, proposal drafts, invoicing and knowledge management."
+  "de": {
+    "beratung": "<p>Beratung: Typische KI-Hebel liegen in Wiederverwendung von Wissen, Prozessautomatisierung (Briefing → Auswertung) und Lead-Generierung. Für Solo- und Kleinteams empfehlen sich schlanke, auditierbare Workflows mit klaren Freigaben, Datenschutz‑Check und Vorlagensammlung.</p><p>Ein schneller Start gelingt mit einem gut gepflegten Prompt‑/Vorlagen‑Set, strukturierten Fragebögen und einer minimalen Toolchain (Text, Tabellen, Automatisierung). Danach folgen Trainings und Fallstudien.</p>",
+    "it": "<p>IT/Software: Fokus auf Dev‑Produktivität, Test‑/Eval‑Pipelines und sicheres Prompt‑Management. Achten Sie auf Geheimnisschutz, Audit‑Logs und reproduzierbare Builds.</p>",
+    "default": "<p>Branchenfokus: Wählen Sie 2–3 priorisierte Use‑Cases mit hoher Hebelwirkung und klarem Nachweis. Dokumentieren Sie Risiken und prüfen Sie Förderprogramme (Digitalisierung/Innovation) – siehe Kapitel „Förderungen“.</p>"
   },
-  "it": {
-    "de": "IT‑Dienstleister setzen auf Code‑Assistants, Tests und Ticketautomatisierung. Wichtig sind Datenschutz, Mandantentrennung und Audit‑Logs.",
-    "en": "IT service providers leverage code assistants, testing and ticket automation. Focus on data protection, tenancy separation and audit logs."
+  "en": {
+    "consulting": "<p>Consulting: Key levers are knowledge reuse, process automation (intake → analysis) and lead generation. For solo/small teams, start with lean, auditable workflows, privacy checks and a template library.</p><p>Kick off with a curated prompt/template set, structured questionnaires and a minimal toolchain (text, spreadsheets, automation). Follow with training and case stories.</p>",
+    "it": "<p>IT/Software: Focus on dev productivity, test/eval pipelines and safe prompt management. Protect secrets, enable audit logs and reproducible builds.</p>",
+    "default": "<p>Industry focus: Select 2–3 high‑leverage use cases with measurable proof. Document risks and check funding options – see the “Funding” chapter.</p>"
   }
 }

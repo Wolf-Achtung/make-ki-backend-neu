@@ -1,5 +1,7 @@
-tool,self_hosting,eu_residency,audit_logs,notes,link,tags
-OpenAI via Azure,No,EU regions available,Yes (platform),Use Azure OpenAI in EU region for data residency; check contract terms.,https://azure.microsoft.com/services/ai-services/openai-service/,"all,beratung,it"
-Mistral (self-hosted),Yes,N/A,Depends on setup,Self‑hosting possible; GDPR depends on your infra.,https://mistral.ai/,"all,it"
-Aleph Alpha,No (managed),EU (Germany),Yes (per plan),German provider; check plan for logging & residency.,https://www.aleph-alpha.com/,"all,beratung"
-Perplexity API (Search),No,US/EU mixed index,Citations,"Search API returns sources with citations; use for discovery, not PII.",https://docs.perplexity.ai/,"all,beratung"
+tool,tags,size,self_host,eu_residency,audit_logs,notes,link
+Open Source RAG (Haystack/Weaviate),all,all,yes,yes,yes,Hohe Kontrolle; Setup-Aufwand,https://haystack.deepset.ai/
+Microsoft Copilot for M365,consulting;it;marketing,team,no,eu-available,yes,Starke Office-Integration,https://www.microsoft.com
+Google Workspace Duet AI,consulting;marketing,team,no,eu-available,yes,Guter Kollab-Fokus,https://workspace.google.com
+OpenAI Platform (API),all,all,no,eu-plans,yes,Schnell & vielseitig; prüfen Sie DPA,https://platform.openai.com
+Anthropic Claude API,all,all,no,eu-available,yes,Stark bei Text & Sicherheit,https://www.anthropic.com
+Local LLM (Llama/MLC),it;consulting,solo;team,yes,yes,no,Hohe Datensouveränität,https://mlc.ai
