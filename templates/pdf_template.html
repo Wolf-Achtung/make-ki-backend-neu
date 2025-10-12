@@ -54,8 +54,7 @@ ul.source-list{padding-left:1.2rem}ul.source-list li{margin:.2rem 0}
   <header class="header">
     <div>
       <h1>KI‑Status‑Report</h1>
-      <div class="kicker">Branche: <strong>{{BRANCHE_LABEL}}</strong> · Größe: <strong>{{GROESSE_LABEL}}</strong></div>
-      <div class="muted small">Stand: {{REPORT_DATE}}</div>
+      <div class="kicker">Stand: {{REPORT_DATE}}</div>
     </div>
     <img src="{{ASSETS_BASE}}/logo_header.png" alt="Logo" style="height:40px">
   </header>
@@ -67,7 +66,6 @@ ul.source-list{padding-left:1.2rem}ul.source-list li{margin:.2rem 0}
 
   <section class="card">
     <h2>Score & Benchmarks</h2>
-    <p><b>Gesamt‑Score:</b> {{SCORE_PERCENT}} <span class="badge">{{SCORE_BADGE}}</span></p>
     {{KPI_BARS_HTML}}
     <div style="margin-top:.6rem">{{BENCHMARK_TABLE_HTML}}</div>
   </section>
@@ -83,12 +81,12 @@ ul.source-list{padding-left:1.2rem}ul.source-list li{margin:.2rem 0}
   </section>
 
   <section class="card">
-    <h2>Quick Wins (0–8 Wochen)</h2>
+    <h2>Quick Wins</h2>
     {{QUICK_WINS_HTML}}
   </section>
 
   <section class="card">
-    <h2>Roadmap (12 Wochen)</h2>
+    <h2>Roadmap</h2>
     {{ROADMAP_HTML}}
   </section>
 
@@ -117,18 +115,10 @@ ul.source-list{padding-left:1.2rem}ul.source-list li{margin:.2rem 0}
     {{FUNDING_HTML}}
   </section>
 
-  {{RECOMMENDATIONS_BLOCK}}
-  {{GAMECHANGER_BLOCK}}
-  {{VISION_BLOCK}}
-  {{PERSONA_BLOCK}}
-  {{PRAXIS_BLOCK}}
-  {{COACH_BLOCK}}
-  {{DOC_DIGEST_BLOCK}}
-
   <section class="card small">
     <h2>Quellen (News, Tools, Förderungen)</h2>
     {{SOURCES_FOOTER_HTML}}
-    <p class="muted">Stand: {{REPORT_DATE}} · Dedupliziert nach Domain/URL. Badges geben die Vertrauensklasse an.</p>
+    <p class="muted">Stand: {{REPORT_DATE}} · Dedupliziert nach Domain/URL. Badges zeigen die Vertrauensklasse.</p>
   </section>
 </div>
 </body>
