@@ -1,55 +1,36 @@
 # filename: gpt_analyze.py
 # -*- coding: utf-8 -*-
 """
-KI-Status-Report Analyzer – Gold-Standard+ (hardened, full)
-- Schema-tolerante Normalisierung
-- KPI-Scoring + Benchmarks + Δ (mit Mini‑Sparklines)
-- ROI/Payback (≤ 4 Monate baseline via ROI_BASELINE_MONTHS)
+KI-Status-Report Analyzer – Gold-Standard+
+- Normalisierung + Scoring + Benchmarks + Δ
+- ROI (≤ 4 Monate baseline via ROI_BASELINE_MONTHS)
 - Prompt-Overlays (DE/EN) – strikt HTML-Fragmente
-- Live-Layer: Tavily + Perplexity (über websearch_utils; Guards, Backoff, Retry)
-- Quellen-Badges im Footer
-- PDF-Template-Füllung inkl. „Stand: Datum“
-- Guides/Checklisten: Inhalte aus /content (DE & EN) einbinden
+- Live-Layer: Tavily + Perplexity (Guards, Backoff)
+- Guides-Einbindung aus content/ (DE: .docx -> HTML Fallback)
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-import json
-import logging
-import os
-import re
-import httpx
+from typing import Any, Dict, List, Optional, Tuple
+import json, logging, os, re, httpx, zipfile, xml.etree.ElementTree as ET
 
-# Hybrid search optional (import-safe)
+# Hybrid search optional
 try:
     import websearch_utils  # type: ignore
 except Exception:  # pragma: no cover
     websearch_utils = None  # type: ignore
 
-# Source classification helpers
+# Source helpers
 try:
-    from .utils_sources import classify_source, filter_and_rank  # type: ignore
-except Exception:  # pragma: no cover
     from utils_sources import classify_source, filter_and_rank  # type: ignore
-
-# Optional structured emitter
-try:
-    from .live_logger import log_event as _emit  # type: ignore
 except Exception:  # pragma: no cover
-    try:
-        from live_logger import log_event as _emit  # type: ignore
-    except Exception:  # pragma: no cover
-        def _emit(provider: str, model: Optional[str], status: str, latency_ms: int, count: int = 0, **kw: Any) -> None:
-            pass  # no-op
+    def classify_source(url: str, domain: str): return ("web","Web","badge-web",0.5)
+    def filter_and_rank(x): return x
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(
-    level=getattr(logging, LOG_LEVEL, logging.INFO),
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-)
+logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("gpt_analyze")
 
 BASE_DIR = Path(os.getenv("APP_BASE") or os.getcwd()).resolve()
@@ -67,20 +48,18 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or ""
 OPENAI_MODEL = os.getenv("OPENAI_MODEL_DEFAULT", "gpt-4o")
 EXEC_SUMMARY_MODEL = os.getenv("EXEC_SUMMARY_MODEL", OPENAI_MODEL)
 OPENAI_TIMEOUT = float(os.getenv("OPENAI_TIMEOUT", "45"))
-OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", "1200"))
+OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", "1100"))
 GPT_TEMPERATURE = float(os.getenv("GPT_TEMPERATURE", "0.2"))
 
-# Live windows
 SEARCH_DAYS_NEWS = int(os.getenv("SEARCH_DAYS_NEWS", "30"))
 SEARCH_DAYS_TOOLS = int(os.getenv("SEARCH_DAYS_TOOLS", "60"))
 SEARCH_DAYS_FUNDING = int(os.getenv("SEARCH_DAYS_FUNDING", "60"))
 LIVE_MAX_ITEMS = int(os.getenv("LIVE_MAX_ITEMS", "8"))
-HYBRID_LIVE = os.getenv("HYBRID_LIVE", "1").strip().lower() in {"1", "true", "yes"}
+HYBRID_LIVE = os.getenv("HYBRID_LIVE", "1").strip().lower() in {"1","true","yes"}
 
 ROI_BASELINE_MONTHS = float(os.getenv("ROI_BASELINE_MONTHS", "4"))
 
 # ---------------- IO helpers ----------------
-
 def _read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
@@ -103,14 +82,12 @@ def _minify_html_soft(s: str) -> str:
     return s.strip()
 
 def _strip_llm(text: str) -> str:
-    if not text:
-        return ""
+    if not text: return ""
     text = re.sub(r"```[a-zA-Z0-9]*\\s*", "", text).replace("```", "")
     return text.strip()
 
 def _as_fragment(html: str) -> str:
-    if not html:
-        return ""
+    if not html: return ""
     s = html
     s = re.sub(r"(?is)<!doctype.*?>", "", s)
     s = re.sub(r"(?is)<\\s*html[^>]*>|</\\s*html\\s*>", "", s)
@@ -120,7 +97,6 @@ def _as_fragment(html: str) -> str:
     return s.strip()
 
 # ---------------- Locale helpers ----------------
-
 def _fmt_pct(v: float, lang: str) -> str:
     if lang.startswith("de"):
         return f"{v:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".").replace(".0", "") + " %"
@@ -132,11 +108,7 @@ def _fmt_money_eur(v: float, lang: str) -> str:
         return s + " €"
     return "€" + f"{v:,.0f}"
 
-def _nbsp(s: str) -> str:
-    return s.replace(" ", " ")
-
 # ---------------- Schema / Normalization ----------------
-
 def _parse_percent_bucket(val: Any) -> int:
     s = str(val or "").lower()
     if "81" in s: return 90
@@ -144,10 +116,8 @@ def _parse_percent_bucket(val: Any) -> int:
     if "41" in s: return 50
     if "21" in s: return 30
     if "0" in s:  return 10
-    try:
-        return int(max(0, min(100, float(s))))
-    except Exception:
-        return 50
+    try: return int(max(0, min(100, float(s))))
+    except Exception: return 50
 
 @dataclass
 class Normalized:
@@ -224,7 +194,6 @@ def normalize_briefing(raw: Dict[str, Any], lang: str = "de") -> Normalized:
     )
 
 # ---------------- Benchmarks & Scoring ----------------
-
 def _kpi_key_norm(k: str) -> str:
     s = k.strip().lower()
     mapping = {"digitalisierung":"digitalisierung","automatisierung":"automatisierung","automation":"automatisierung",
@@ -259,7 +228,7 @@ def _load_benchmarks(branche: str, groesse: str) -> Dict[str, float]:
                             try: out[k] = float(str(v).replace("%","").strip())
                             except Exception: pass
                 if out: return out
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 log.warning("Benchmark import failed (%s): %s", p, exc)
     return {k: 60.0 for k in ["digitalisierung","automatisierung","compliance","prozessreife","innovation"]}
 
@@ -277,19 +246,6 @@ def _badge(total: float) -> str:
     if total >= 55: return "FAIR"
     return "BASIC"
 
-def _sparkline_svg(v: float, m: float) -> str:
-    """Inline SVG‑Sparkline: blau = Wert, orange‑Strich = Benchmark"""
-    v = max(0.0, min(100.0, float(v)))
-    m = max(0.0, min(100.0, float(m)))
-    w, h = 60, 12
-    xv = int(v / 100.0 * w)
-    xm = int(m / 100.0 * w)
-    return (f"<svg width='{w}' height='{h}' viewBox='0 0 {w} {h}' aria-hidden='true'>"
-            f"<rect x='0' y='{h-4}' width='{w}' height='3' fill='#E5E7EB' />"
-            f"<rect x='0' y='{h-4}' width='{xv}' height='3' fill='#3B82F6' />"
-            f"<rect x='{xm}' y='{h-5}' width='2' height='5' fill='#fb923c' />"
-            f"</svg>")
-
 def compute_scores(n: Normalized) -> ScorePack:
     weights = {k: 0.2 for k in ("digitalisierung","automatisierung","compliance","prozessreife","innovation")}
     bm = _load_benchmarks(n.branche, n.unternehmensgroesse)
@@ -298,15 +254,13 @@ def compute_scores(n: Normalized) -> ScorePack:
     kpis: Dict[str, Dict[str, float]] = {}
     total = 0.0
     for k, v in vals.items():
-        m = float(bm.get(k, 60.0))
-        d = float(v) - m
-        kpis[k] = {"value": float(v), "benchmark": m, "delta": d, "spark": _sparkline_svg(v, m)}
+        m = float(bm.get(k, 60.0)); d = float(v) - m
+        kpis[k] = {"value": float(v), "benchmark": m, "delta": d}
         total += weights[k] * float(v)
     t = int(round(total))
     return ScorePack(total=t, badge=_badge(t), kpis=kpis, weights=weights, benchmarks=bm)
 
 # ---------------- Business Case (ROI) ----------------
-
 @dataclass
 class BusinessCase:
     invest_eur: float
@@ -332,7 +286,6 @@ def business_case(n: Normalized) -> BusinessCase:
     return BusinessCase(round(invest,2), round(save_year,2), round(payback_m,1), round(roi_y1,1))
 
 # ---------------- LLM Overlays (OpenAI) ----------------
-
 def _openai_chat(messages: List[Dict[str, str]], model: Optional[str] = None, max_tokens: Optional[int] = None) -> str:
     if not OPENAI_API_KEY:
         return ""
@@ -361,8 +314,7 @@ def _load_prompt(lang: str, name: str) -> str:
 
 def render_overlay(name: str, lang: str, ctx: Dict[str, Any]) -> str:
     prompt = _load_prompt(lang, name)
-    if not prompt:
-        return ""
+    if not prompt: return ""
     system = "Du bist präzise und risikobewusst. Antworte als sauberes HTML-Fragment (ohne <html>/<head>/<body>)." if lang.startswith("de") else \
              "You are precise and risk-aware. Answer as clean HTML fragment (no <html>/<head>/<body>)."
     user = (prompt
@@ -377,27 +329,36 @@ def render_overlay(name: str, lang: str, ctx: Dict[str, Any]) -> str:
                        model=EXEC_SUMMARY_MODEL if name == "executive_summary" else OPENAI_MODEL)
     return _minify_html_soft(_as_fragment(out))
 
-# ---------------- HTML blocks ----------------
+# ---------------- HTML helper blocks ----------------
+def _spark_delta(delta: float) -> str:
+    # Inline-SVG: -30..+30 pp
+    try:
+        d = max(-30.0, min(30.0, float(delta)))
+    except Exception:
+        d = 0.0
+    x = int(round((d + 30.0) / 60.0 * 58))  # 0..58
+    color = "#059669" if d >= 0 else "#b91c1c"
+    return f"<svg width='60' height='12' viewBox='0 0 60 12' xmlns='http://www.w3.org/2000/svg'><line x1='30' y1='1' x2='30' y2='11' stroke='#9CA3AF' stroke-width='1'/><rect x='30' y='3' width='{abs(x-30)}' height='6' fill='{color}' transform='scale({1 if d>=0 else -1},1) translate({0 if d>=0 else -60},0)'></rect></svg>"
 
-def _kpi_bars_html(score: ScorePack) -> str:
+def _kpi_bars_html(score) -> str:
     order = ["digitalisierung","automatisierung","compliance","prozessreife","innovation"]
     labels = {"digitalisierung":"Digitalisierung","automatisierung":"Automatisierung","compliance":"Compliance","prozessreife":"Prozessreife","innovation":"Innovation"}
     rows = []
     for k in order:
-        v = score.kpis[k]["value"]; m = score.kpis[k]["benchmark"]; d = score.kpis[k]["delta"]; sp = score.kpis[k]["spark"]
-        rows.append(f"<div class='bar'><div class='label'>{labels[k]}</div><div class='bar__track'><div class='bar__fill' style='width:{max(0,min(100,int(round(v))))}%;'></div><div class='bar__median' style='left:{max(0,min(100,int(round(m))))}%;'></div></div><div class='bar__delta'>{'+' if d>=0 else ''}{int(round(d))} pp {sp}</div></div>")
+        v = score.kpis[k]["value"]; m = score.kpis[k]["benchmark"]; d = score.kpis[k]["delta"]
+        rows.append(f"<div class='bar'><div class='label'>{labels[k]}</div><div class='bar__track'><div class='bar__fill' style='width:{max(0,min(100,int(round(v))))}%;'></div><div class='bar__median' style='left:{max(0,min(100,int(round(m))))}%;'></div></div><div class='bar__delta'>{'+' if d>=0 else ''}{int(round(d))} pp {_spark_delta(d)}</div></div>")
     return "<div class='kpi'>" + "".join(rows) + "</div>"
 
-def _benchmark_table_html(score: ScorePack) -> str:
+def _benchmark_table_html(score) -> str:
     labels = {"digitalisierung":"Digitalisierung","automatisierung":"Automatisierung","compliance":"Compliance","prozessreife":"Prozessreife","innovation":"Innovation"}
-    head = "<table class='bm'><thead><tr><th>KPI</th><th>Ihr Wert</th><th>Branchen‑Benchmark</th><th>Δ (pp)</th></tr></thead><tbody>"
+    head = "<table class='bm'><thead><tr><th>KPI</th><th>Ihr Wert</th><th>Branchen‑Benchmark</th><th>Δ (pp)</th><th>Trend</th></tr></thead><tbody>"
     rows = []
     for k, lab in labels.items():
-        v = score.kpis[k]["value"]; m = score.kpis[k]["benchmark"]; d = score.kpis[k]["delta"]; sp = score.kpis[k]["spark"]
-        rows.append(f"<tr><td>{lab}</td><td>{int(round(v))}%</td><td>{int(round(m))}%</td><td>{'+' if d>=0 else ''}{int(round(d))} {sp}</td></tr>")
+        v = score.kpis[k]["value"]; m = score.kpis[k]["benchmark"]; d = score.kpis[k]["delta"]
+        rows.append(f"<tr><td>{lab}</td><td>{int(round(v))}%</td><td>{int(round(m))}%</td><td>{'+' if d>=0 else ''}{int(round(d))}</td><td>{_spark_delta(d)}</td></tr>")
     return head + "".join(rows) + "</tbody></table>"
 
-def _profile_html(n: Normalized) -> str:
+def _profile_html(n) -> str:
     pl = n.pull_kpis or {}
     pills = []
     if pl.get("umsatzziel"): pills.append(f"<span class='pill'>Umsatzziel: {pl['umsatzziel']}</span>")
@@ -426,7 +387,46 @@ def _list_html(items: List[Dict[str, Any]], empty_msg: str, berlin_badge: bool =
         lis.append(f"<li><a href='{url}'>{title}</a> – <span class='muted'>{dom} {when}</span> {_badge_html(url, dom)}{extra}</li>")
     return "<ul class='source-list'>" + "".join(lis) + "</ul>"
 
-def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]], funding: List[Dict[str, Any]], lang: str) -> str:
+def _read_docx_text(path: Path) -> str:
+    try:
+        with zipfile.ZipFile(str(path), "r") as z:
+            xml = z.read("word/document.xml").decode("utf-8", errors="ignore")
+        root = ET.fromstring(xml)
+        ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+        parts: List[str] = []
+        for p in root.findall(".//w:body/w:p", ns):
+            text = "".join(t.text or "" for t in p.findall(".//w:t", ns)).strip()
+            if text:
+                parts.append(f"<p>{text}</p>")
+        return "\n".join(parts)
+    except Exception:
+        return ""
+
+def _guides_html(lang: str) -> str:
+    blocks: List[str] = []
+    if lang.startswith("de"):
+        # Bevorzugt .html, Fallback .docx
+        for name in ["4-Saeulen-KI-Readiness.html", "rechtliche-Stolpersteine-KI-im-Unternehmen.html", "Formel-fuer-Transformation.html"]:
+            p = CONTENT_DIR / name
+            if p.exists():
+                blocks.append(_read_text(p))
+        # Fallback: .docx -> simple HTML
+        if not blocks:
+            for docx in ["4-Saeulen-KI-Readiness.docx","rechtliche-Stolpersteine-KI-im-Unternehmen.docx","Formel-fuer-Transformation.docx"]:
+                p = CONTENT_DIR / docx
+                if p.exists():
+                    blocks.append(_read_docx_text(p))
+    else:
+        for name in ["4-pillars-ai-readiness.en.html","legal-pitfalls-ai.en.html","transformation-formula-10-20-70.en.html"]:
+            p = CONTENT_DIR / name
+            if p.exists():
+                blocks.append(_read_text(p))
+    if not blocks:
+        return ""
+    hdr = "<h2>Guides & Checklisten</h2>"
+    return "<section class='guides'>" + hdr + "".join(blocks) + "</section>"
+
+def _sources_footer_html(news, tools, funding, lang: str) -> str:
     def _mk(items, title):
         if not items:
             return f"<div class='muted'>Keine {title}.</div>" if lang.startswith("de") else f"<div class='muted'>No {title}.</div>"
@@ -438,38 +438,12 @@ def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]]
             title_ = it.get("title") or it.get("name") or it.get("url")
             dom = it.get("domain") or (url.split('/')[2] if '://' in url else "")
             when = (it.get("date") or "")[:10]
-            lis.append(f"<li><a href='{url}'>{title_}</a> – <span class='muted'>{dom} {when}</span> {_badge_html(url, dom)}</li>")
+            lis.append(f"<li><a href='{url}'>{title_}</a> – <span class='muted'>{dom} {when}</span></li>")
         return "<ul class='source-list'>" + "".join(lis) + "</ul>"
     return "<div class='grid'>" + "<div><h4>News</h4>" + _mk(news,"News") + "</div>" + "<div><h4>Tools</h4>" + _mk(tools,"Tools") + "</div>" + "<div><h4>" + ("Förderungen" if lang.startswith("de") else "Funding") + "</h4>" + _mk(funding,"Förderungen") + "</div>" + "</div>"
 
-# ---------------- Guides/Checklisten ----------------
-
-def _guides_html(lang: str) -> str:
-    if lang.startswith("de"):
-        file_names = ["4-Saeulen-KI-Readiness.de.html", "rechtliche-stolpersteine-ki.de.html", "transformation-formel-10-20-70.de.html"]
-        title = "Guides & Checklisten"
-    else:
-        file_names = ["4-pillars-ai-readiness.en.html", "legal-pitfalls-ai.en.html", "transformation-formula-10-20-70.en.html"]
-        title = "Guides & Checklists"
-    parts = []
-    for fn in file_names:
-        p = CONTENT_DIR / fn
-        if p.exists():
-            parts.append(_as_fragment(_read_text(p)))
-    if not parts:
-        return ""
-    return "<div class='card'><h2>"+title+"</h2>" + "".join(parts) + "</div>"
-
 # ---------------- Glue ----------------
-
 def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
-    # Boot snapshot to help diagnose env/model
-    _emit("analyzer", None, "boot", 0, 0, extra={
-        "hybrid_live": os.getenv("HYBRID_LIVE", "1"),
-        "pplx_model_effective": (os.getenv("PPLX_MODEL") or "").strip() or "auto",
-        "search_windows": {"news": SEARCH_DAYS_NEWS, "tools": SEARCH_DAYS_TOOLS, "funding": SEARCH_DAYS_FUNDING},
-    })
-
     n = normalize_briefing(raw, lang=lang)
     score = compute_scores(n)
     case = business_case(n)
@@ -485,7 +459,7 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
             news = websearch_utils.perplexity_search(q_news, max_results=LIVE_MAX_ITEMS) + websearch_utils.tavily_search(q_news, max_results=LIVE_MAX_ITEMS, days=SEARCH_DAYS_NEWS)
             tools = websearch_utils.perplexity_search(q_tools, max_results=LIVE_MAX_ITEMS) + websearch_utils.tavily_search(q_tools, max_results=LIVE_MAX_ITEMS, days=SEARCH_DAYS_TOOLS)
             funding = websearch_utils.perplexity_search(q_fund, max_results=max(LIVE_MAX_ITEMS, 10)) + websearch_utils.tavily_search(q_fund, max_results=max(LIVE_MAX_ITEMS, 10), days=SEARCH_DAYS_FUNDING)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             log.warning("hybrid_live failed: %s", exc)
 
     news = filter_and_rank(news)[:LIVE_MAX_ITEMS]
@@ -520,6 +494,8 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
     tpl = _template(lang)
     report_date = os.getenv("REPORT_DATE_OVERRIDE") or date.today().isoformat()
 
+    guides = _guides_html(lang)
+
     html = (tpl.replace("{{LANG}}", "de" if lang.startswith("de") else "en")
            .replace("{{ASSETS_BASE}}", ASSETS_BASE_URL)
            .replace("{{REPORT_DATE}}", report_date)
@@ -532,10 +508,10 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
            .replace("{{ROADMAP_HTML}}", roadmap)
            .replace("{{RISKS_HTML}}", risks)
            .replace("{{COMPLIANCE_HTML}}", compliance)
-           .replace("{{GUIDES_HTML}}", _guides_html(lang))
            .replace("{{NEWS_HTML}}", _list_html(news, "Keine aktuellen News (30–60 Tage überprüft)." if lang.startswith("de") else "No recent news (30–60 days)."))
            .replace("{{TOOLS_HTML}}", _list_html(tools, "Keine passenden Tools gefunden." if lang.startswith("de") else "No matching tools."))
            .replace("{{FUNDING_HTML}}", _list_html(funding, "Keine aktuellen Einträge." if lang.startswith("de") else "No current items.", berlin_badge=True))
+           .replace("{{GUIDES_HTML}}", guides)
            .replace("{{SOURCES_FOOTER_HTML}}", _sources_footer_html(news, tools, funding, lang))
     )
     return {"html": html, "meta": {"score": score.total, "badge": score.badge, "date": report_date,
@@ -544,7 +520,6 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
                                    "live_counts": {"news": len(news), "tools": len(tools), "funding": len(funding)}},
             "normalized": n.__dict__, "raw": n.raw}
 
-# Public API
 def analyze_briefing(raw: Dict[str, Any], lang: str = "de") -> str:
     return build_html_report(raw, lang)["html"]
 

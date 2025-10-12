@@ -3,12 +3,9 @@
 """
 Production API für KI‑Status‑Report (Gold‑Standard+)
 
-- Schema‑Endpoint (GET /schema) – hält Frontend/Backend synchron
-- /health erweitert um effektives Perplexity‑Model & Cache‑Settings
-- Perplexity/Tavily Health-Flags
-- /briefing_async robust: bevorzugt build_report(), Fallback analyze_briefing()
-- PDF‑Header‑Logging (X-PDF-Bytes/X-PDF-Limit) zur Diagnose
-- CORS: explizite Origins + optional Credentials (Railway Variablen)
+- Korrekte CORS-Guards (kein "*" mit Credentials)
+- /health mit effektivem PPLX-Modell
+- /briefing_async robust (idempotent, PDF-Logging)
 """
 from __future__ import annotations
 
@@ -32,7 +29,7 @@ from jose import jwt
 from jose.exceptions import JWTError
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
-# NEW: Schema‑Router
+# Optional schema router (keine harte Abhängigkeit)
 try:
     from schema import get_router as get_schema_router, get_schema_info  # type: ignore
 except Exception:  # pragma: no cover
@@ -87,14 +84,19 @@ SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "KI‑Sicherheit")
 
 MAIL_SUBJECT_PREFIX = os.getenv("MAIL_SUBJECT_PREFIX", "KI‑Ready")
 
-# -------- CORS (härtet Preflight-Fehler ab) --------
-def _parse_list_env(name: str, default: str = "") -> list[str]:
-    val = os.getenv(name, default)
-    return [v.strip() for v in (val or "").split(",") if v.strip()]
+# -------- CORS Guards ---------
+def _parse_csv(s: str) -> list[str]:
+    return [p.strip() for p in (s or "").split(",") if p and p.strip()]
 
-CORS_ALLOW = _parse_list_env("CORS_ALLOW_ORIGINS", "*")
-CORS_ALLOW_REGEX = os.getenv("CORS_ALLOW_ORIGIN_REGEX", "")
-CORS_ALLOW_CREDENTIALS = os.getenv("CORS_ALLOW_CREDENTIALS", "0").strip().lower() in {"1", "true", "yes"}
+CORS_ALLOW = _parse_csv(os.getenv("CORS_ALLOW_ORIGINS", ""))
+ALLOW_ALL = (not CORS_ALLOW) or CORS_ALLOW == ["*"]
+CORS_CREDENTIALS_ENV = os.getenv("CORS_ALLOW_CREDENTIALS", "0").strip().lower() in {"1","true","yes"}
+# Wenn "*" genutzt wird, dürfen laut Spec keine Credentials gesetzt werden
+CORS_ALLOW_CREDENTIALS = (False if ALLOW_ALL else CORS_CREDENTIALS_ENV)
+if ALLOW_ALL and CORS_CREDENTIALS_ENV:
+    log.warning("CORS: '*' mit Credentials ist nicht erlaubt. Credentials wurden deaktiviert. "
+                "Setze CORS_ALLOW_ORIGINS auf die konkrete Frontend‑Domain, z. B. "
+                "'https://make.ki-sicherheit.jetzt'")
 
 # Metrics
 REQUESTS = Counter("app_requests_total", "HTTP requests total", ["method", "path", "status"])
@@ -292,19 +294,13 @@ async def current_user(req: Request):
 
 
 app = FastAPI(title=APP_NAME)
-
-# CORS: Wenn Credentials aktiviert sind, müssen Origins explizit sein.
-allow_origins = ["*"] if (CORS_ALLOW and CORS_ALLOW == ["*"] and not CORS_ALLOW_CREDENTIALS) else (CORS_ALLOW or ["*"])
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allow_origins,
-    allow_origin_regex=CORS_ALLOW_REGEX or None,
+    allow_origins=(["*"] if ALLOW_ALL else CORS_ALLOW),
     allow_credentials=CORS_ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Schema‑Router
 app.include_router(get_schema_router())
 
 
@@ -399,12 +395,10 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
     html_content: str
     admin_json: Dict[str, bytes] = {}
     try:
-        # prefer build_report (new), fallback to analyze_briefing (old)
         try:
             from gpt_analyze import build_report, produce_admin_attachments  # type: ignore
             result = build_report(form_data, lang=lang)
             html_content = result["html"] if isinstance(result, dict) else str(result)
-            # optional admin attachments
             if callable(produce_admin_attachments):
                 tri = produce_admin_attachments(form_data, lang=lang)
                 admin_json = {name: content.encode("utf-8") for name, content in tri.items()}

@@ -1,90 +1,82 @@
 # filename: utils_sources.py
 # -*- coding: utf-8 -*-
 """
-Source classification & ranking utilities for Live‑Layer.
-- classify_source(url, domain) -> (category, label, css_badge, weight)
-- filter_and_rank(items) -> de‑duplicated, trust‑weighted, recency‑aware list
+Source classification + ranking utilities.
+- classify_source(url, domain) -> (category, label, css_badge, score_weight)
+- filter_and_rank(items) -> dedup + trusted-first + recency
 """
+
 from __future__ import annotations
+from typing import Dict, List, Tuple, Any
+from urllib.parse import urlparse
+import os, re, datetime as dt
 
-import re
-from datetime import datetime
-from typing import Any, Dict, List, Tuple
+INCLUDE_DOMAINS = {d.strip().lower() for d in (os.getenv("SEARCH_INCLUDE_DOMAINS","").split(",") if os.getenv("SEARCH_INCLUDE_DOMAINS") else []) if d.strip()}
+EXCLUDE_DOMAINS = {d.strip().lower() for d in (os.getenv("SEARCH_EXCLUDE_DOMAINS","").split(",") if os.getenv("SEARCH_EXCLUDE_DOMAINS") else []) if d.strip()}
 
-TRUST_MAP: Dict[str, Tuple[str, str, str, int]] = {
-    # domain : (category, label, css_badge, weight)
-    # Officials / public sector / banks
-    "europa.eu": ("official", "EU", "badge-official", 90),
-    "ec.europa.eu": ("official", "EU", "badge-official", 90),
-    "foerderdatenbank.de": ("official", "Bund", "badge-official", 85),
-    "bmwk.de": ("official", "BMWK", "badge-official", 85),
-    "bmbf.de": ("official", "BMBF", "badge-official", 85),
-    "dlr.de": ("official", "DLR", "badge-official", 80),
-    "kfw.de": ("official", "KfW", "badge-official", 85),
-    "l-bank.de": ("official", "L‑Bank", "badge-official", 78),
-    "nrwbank.de": ("official", "NRW.BANK", "badge-official", 78),
-    "ihk.de": ("official", "IHK", "badge-official", 75),
-    "berlin.de": ("official", "Land Berlin", "badge-official", 78),
-    "ibb.de": ("official", "IBB", "badge-official", 78),
-    # Tech/press
-    "heise.de": ("news", "Heise", "badge-news", 70),
-    "golem.de": ("news", "Golem", "badge-news", 68),
-    "t3n.de": ("news", "t3n", "badge-news", 65),
-}
-
-CAT_FALLBACKS = [
-    (r"(^|\.)uni\.", ("research", "Uni", "badge-research", 60)),
-    (r"(^|\.)(fh|hs)-", ("research", "Hochschule", "badge-research", 58)),
-    (r"(^|\.)(gov|gouv|gob)\.", ("official", "Regierung", "badge-official", 80)),
+TRUST_RULES = [
+    (re.compile(r"\.(gov|bund|gob)\."), ("gov","Behörde","badge-gov", 6.0)),
+    (re.compile(r"(europa\.eu|ec\.europa\.eu)"), ("eu","EU","badge-eu", 6.0)),
+    (re.compile(r"(bmwk\.de|bmbf\.de|kfw\.de|dlr\.de|ihk\.de|foerderdatenbank\.de)"), ("gov","Behörde","badge-gov", 5.5)),
+    (re.compile(r"(heise\.de|golem\.de|t3n\.de|handelsblatt\.com|faz\.net)"), ("media","Fachpresse","badge-media", 3.0)),
+    (re.compile(r"(github\.com|docs\.)"), ("docs","Dokumentation","badge-docs", 2.0)),
 ]
 
-def _domain_from_url(url: str) -> str:
+def _domain_of(url: str, domain_hint: str | None = None) -> str:
+    if domain_hint:
+        return domain_hint.lower()
     try:
-        return re.split(r"/+", url.split("://", 1)[-1])[0].lower()
+        return urlparse(url).netloc.lower()
     except Exception:
         return ""
 
-def classify_source(url: str, domain: str | None = None) -> Tuple[str, str, str, int]:
-    """Return (category, label, css_badge, weight)."""
-    dom = (domain or _domain_from_url(url)).lower()
-    if dom in TRUST_MAP:
-        return TRUST_MAP[dom]
-    for pat, tpl in CAT_FALLBACKS:
-        if re.search(pat, dom):
-            return tpl
-    if dom.endswith(".de") or dom.endswith(".eu"):
-        return ("vendor", "DE/EU", "badge-vendor", 50)
-    return ("unknown", "Web", "badge-unknown", 40)
+def classify_source(url: str, domain_hint: str | None = None) -> Tuple[str,str,str,float]:
+    dom = _domain_of(url, domain_hint)
+    for pat, tup in TRUST_RULES:
+        if pat.search(dom):
+            return tup
+    if dom.endswith(".de"):
+        return ("de","Deutschland","badge-de",1.0)
+    if dom:
+        return ("web","Web","badge-web",0.5)
+    return ("unk","Unbekannt","badge-unk",0.1)
 
-def _parse_date(d: str | None) -> datetime | None:
-    if not d:
-        return None
-    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d.%m.%Y", "%Y-%m", "%Y"):
-        try:
-            return datetime.strptime(d[:len(fmt)], fmt)
-        except Exception:
-            continue
-    return None
+def _score(item: Dict[str,Any]) -> float:
+    url = (item.get("url") or "")
+    dom = (item.get("domain") or _domain_of(url))
+    cat, _, _, w = classify_source(url, dom)
+    weight = w
+    # Include/Exclude
+    if INCLUDE_DOMAINS and dom:
+        if any(dom.endswith(x) or x in dom for x in INCLUDE_DOMAINS):
+            weight += 3.0
+        else:
+            weight -= 2.0
+    if EXCLUDE_DOMAINS and dom and any(x in dom for x in EXCLUDE_DOMAINS):
+        weight -= 10.0
+    # Recency bonus
+    when = (item.get("date") or item.get("published_date") or "")[:10]
+    try:
+        ts = dt.datetime.strptime(when, "%Y-%m-%d").timestamp()
+        age_days = (dt.datetime.utcnow().timestamp() - ts)/86400.0
+        if age_days < 8: weight += 1.0
+        elif age_days < 31: weight += 0.5
+    except Exception:
+        pass
+    return weight
 
-def filter_and_rank(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Dedupe + rank by trust, recency and optional score."""
-    seen = set()
-    out: List[Dict[str, Any]] = []
-    for it in items or []:
-        url = (it.get("url") or "").split("#")[0].strip()
-        if not url or url in seen:
+def filter_and_rank(items: List[Dict[str,Any]]) -> List[Dict[str,Any]]:
+    if not items: return []
+    out, seen = [], set()
+    for it in items:
+        url = (it.get("url") or "").split("#")[0]
+        if not url or url in seen: 
             continue
+        dom = it.get("domain") or _domain_of(url)
+        if EXCLUDE_DOMAINS and any(x in dom for x in EXCLUDE_DOMAINS):
+            continue
+        it["domain"] = dom
         seen.add(url)
-        dom = it.get("domain") or _domain_from_url(url)
-        cat, label, badge, weight = classify_source(url, dom)
-        when = _parse_date(it.get("date") or it.get("published_date"))
-        score = float(it.get("score") or 0.0)
-        rank = weight + score
-        if when:
-            # Favor recent items
-            delta_days = (datetime.utcnow() - when).days
-            rank += max(0, 60 - min(delta_days, 60)) * 0.5
-        it.update({"domain": dom, "category": cat, "badge_label": label, "badge": badge, "_rank": rank})
         out.append(it)
-    out.sort(key=lambda x: x.get("_rank", 0), reverse=True)
+    out.sort(key=_score, reverse=True)
     return out
