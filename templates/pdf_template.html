@@ -1,72 +1,94 @@
+<!-- filename: templates/pdf_template.html -->
 <!doctype html>
-<html lang="{{LANG}}">
+<html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KI-Status-Report</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:780px;margin:24px auto;padding:0 16px;}
-    .card{background:#fff;border:1px solid #e6e6e9;border-radius:10px;padding:16px;margin:12px 0;}
-    .kpi .bar{display:flex;gap:12px;align-items:center;margin:8px 0;}
-    .bar__track{position:relative;flex:1;height:10px;background:#f3f4f6;border-radius:8px;overflow:hidden}
-    .bar__fill{position:absolute;left:0;top:0;height:100%;background:#0ea5e9}
-    .bar__median{position:absolute;top:-4px;width:2px;height:18px;background:#f97316}
-    .bar__delta{width:56px;text-align:right;color:#111827;font-weight:600}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .source-list{padding-left:18px}
-    .muted{color:#6b7280}
-    .badge{font-size:12px;padding:2px 8px;border-radius:6px;border:1px solid #e5e7eb;margin-left:6px}
-    .badge--eu{background:#eef2ff;border-color:#c7d2fe}
-    .badge--gov{background:#ecfeff;border-color:#a5f3fc}
-    .badge--funding{background:#ecfccb;border-color:#d9f99d}
-    .badge--academic{background:#fdf2f8;border-color:#fbcfe8}
-    .badge--media{background:#fff7ed;border-color:#fed7aa}
-    .badge--vendor{background:#f0f9ff;border-color:#bae6fd}
-    .badge--ngo{background:#f1f5f9;border-color:#cbd5e1}
-    .badge--blog{background:#f9fafb;border-color:#e5e7eb}
-    .badge--muted{background:#f9fafb;border-color:#e5e7eb}
+    :root { --blue:#1F5AF6; --orange:#FF7A00; --text:#243142; --muted:#5B6B7C; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; color: var(--text); line-height:1.45; margin:0; }
+    .container { width: 780px; margin: 0 auto; padding: 24px 0 48px; }
+    h1,h2,h3 { margin: 0 0 12px; }
+    h1 { font-size: 28px; font-weight: 800; }
+    h2 { font-size: 20px; font-weight: 700; }
+    h3 { font-size: 16px; font-weight: 700; margin-top: 12px; }
+    p { margin: 0 0 10px; }
+    .muted { color: var(--muted); }
+    .hl { color: var(--blue); font-weight: 600; }
+    header { display:flex; justify-content: space-between; align-items:center; margin-bottom: 16px; }
+    .badge { border-radius: 999px; font-size: 11px; padding: 2px 8px; border: 1px solid #e0e6ef; }
+    .badge--gov { background: #EDF3FF; color:#0B3B8F; border-color:#CFE0FF; }
+    .badge--edu { background:#EDF9F2; color:#226644; border-color:#BFE9CF; }
+    .badge--news { background:#FFF5E6; color:#7A5200; border-color:#FFE0A8; }
+    .badge--vendor { background:#F0F5FF; color:#2F558F; border-color:#CFDBFF; }
+    .badge--community { background:#F9F0FF; color:#6A2FA1; border-color:#E9D6FF; }
+    .badge--muted { background:#F6F8FB; color:#5B6B7C; border-color:#E5EAF1; }
+    .flag-berlin { background:#222; color:#fff; padding:2px 6px; font-size:11px; border-radius:4px; margin-left:6px; }
+    .card { background:#fff; border:1px solid #E6ECF5; border-radius:10px; padding:14px 16px; margin: 8px 0 16px; box-shadow: 0 1px 0 rgba(0,0,0,0.02); }
+    .kpi .bar { display:grid; grid-template-columns: 160px 1fr 64px; gap:10px; align-items:center; margin:8px 0; }
+    .bar__track { position:relative; height:10px; border-radius:6px; background:#F0F3F8; overflow:hidden; }
+    .bar__fill { position:absolute; left:0; top:0; bottom:0; background: var(--blue); }
+    .bar__median { position:absolute; top:-3px; bottom:-3px; width:2px; background: var(--orange); opacity:.8; }
+    .bar__delta { text-align:right; font-variant-numeric: tabular-nums; color: var(--muted); }
+    table { width:100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 8px 10px; border-top:1px solid #E6ECF5; text-align:left; }
+    thead th { background:#F7FAFF; border-top-color:#F7FAFF; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .source-list { list-style: none; padding-left: 0; }
+    .source-list li { margin: 6px 0; }
+    .footer { margin-top: 16px; font-size: 12px; color: var(--muted); }
+    .section { margin: 12px 0 18px; }
   </style>
 </head>
 <body>
-<header class="card">
-  <h1>KI‑Status‑Report</h1>
-  <div class="muted">Stand: {{REPORT_DATE}}</div>
-</header>
+  <div class="container">
+    <header>
+      <h1>KI-Status-Report</h1>
+      <div class="muted">Stand: {{REPORT_DATE}}</div>
+    </header>
 
-<section class="card">
-  <h2>Executive Summary</h2>
-  {{EXEC_SUMMARY_HTML}}
-</section>
+    <div class="card">
+      <h2>Executive Summary</h2>
+      {{EXEC_SUMMARY_HTML}}
+    </div>
 
-<section class="card">
-  <h2>Score & Benchmarks</h2>
-  {{KPI_BARS_HTML}}
-</section>
+    <div class="card">
+      <h2>Score &amp; Benchmarks</h2>
+      {{KPI_BARS_HTML}}
+      {{BENCHMARK_TABLE_HTML}}
+    </div>
 
-<section class="card">
-  <h2>News · Tools · Förderungen</h2>
-  <h3>News</h3>
-  {{NEWS_HTML}}
-  <h3>Tools</h3>
-  {{TOOLS_HTML}}
-  <h3>Förderungen</h3>
-  {{FUNDING_HTML}}
-</section>
+    <div class="card">
+      <h2>Unternehmensprofil</h2>
+      {{PROFILE_HTML}}
+    </div>
 
-<section class="card">
-  <h2>Guides & Checklisten</h2>
-  <h3>Die 4 Säulen Ihrer KI‑Readiness</h3>
-  {{CONTENT_PILLARS_HTML}}
-  <h3>Rechtliche Stolpersteine</h3>
-  {{CONTENT_LEGAL_HTML}}
-  <h3>Transformationsformel 10‑20‑70</h3>
-  {{CONTENT_FORMULA_HTML}}
-</section>
+    <div class="card">
+      <h2>ROI &amp; Payback</h2>
+      {{BUSINESS_CASE_HTML}}
+    </div>
 
-<section class="card">
-  <h2>Quellen (Live-Layer)</h2>
-  {{SOURCES_FOOTER_HTML}}
-</section>
+    <div class="card section">
+      <h2>News · Tools · Förderungen</h2>
+      <div class="grid">
+        <div><h3>News</h3>{{NEWS_HTML}}</div>
+        <div><h3>Tools</h3>{{TOOLS_HTML}}</div>
+        <div><h3>Förderungen</h3>{{FUNDING_HTML}}</div>
+      </div>
+      <div class="footer"><b>Quellen (Live‑Layer):</b> Dedupliziert nach Domain/URL. Badges zeigen die Vertrauensklasse.</div>
+      {{SOURCES_FOOTER_HTML}}
+    </div>
 
+    <div class="card section">
+      <h2>Guides &amp; Checklisten</h2>
+      <h3>Die 4 Säulen Ihrer KI‑Readiness</h3>
+      {{CONTENT_PILLARS_HTML}}
+      <h3>Rechtliche Stolpersteine</h3>
+      {{CONTENT_LEGAL_HTML}}
+      <h3>Transformationsformel 10‑20‑70</h3>
+      {{CONTENT_FORMULA_HTML}}
+    </div>
+  </div>
 </body>
 </html>
