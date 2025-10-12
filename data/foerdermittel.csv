@@ -1,11 +1,6 @@
 name,zielgruppe,region,foerderart,einsatz,link
-Digital Jetzt,kmu,bund,Zuschuss für Investitionen & Qualifizierung,"Digitale Technologien & Mitarbeiterqualifizierung (KI, Automatisierung, Daten)",https://www.bmwi.de/Redaktion/DE/Dossier/digital-jetzt.html
-go-digital,kmu,bund,Zuschuss für externe Beratung,"Digitalstrategie, Prozesse, IT‑Sicherheit, Daten & KI‑Einführung mit autorisierten Beratern",https://www.bmwk.de/Navigation/DE/Themen/Wirtschaft/Digitalisierung/go-digital/go-digital.html
-ZIM – Zentrales Innovationsprogramm Mittelstand,kmu + forschung,bund,Zuschuss F&E / Kooperation,"Marktnahe Entwicklung, Prototyping, Transfer mit Forschungs­partnern (inkl. KI)",https://www.zim.de
-EXIST – Gründung aus der Wissenschaft,gründung,bund,Stipendium/Coaching/Anschub,Validierung & Prototyping technologie­orientierter Gründungen (auch KI),https://www.exist.de
-BAFA – Beratungsförderung,"kmu, solo",bund,Zuschuss für Unternehmensberatung,"Strategie, Prozesse, Digitalisierung & KI, Organisationsentwicklung",https://www.bafa.de
-ERP‑Digitalisierungs- und Innovationskredit (KfW),kmu,bund,Kredit mit Zinsvorteil,"Investitionen in Digitalisierung/Innovation, auch KI‑Vorhaben",https://www.kfw.de
-INVEST – Zuschuss für Wagniskapital,startups + investoren,bund,Zuschuss,Förderung privater Wagniskapital‑Investitionen in Start‑ups,https://www.bmwi.de/Redaktion/DE/Dossier/invest.html
-Coaching BONUS Berlin,"solo, team, kmu",berlin,Zuschuss für Coaching,"Innovation, Digitalisierung & KI‑Einführung mit externem Coaching",https://www.ibb-business-team.de/foerderprogramme/coaching-bonus/
-Transfer BONUS Berlin,kmu,berlin,Zuschuss F&E‑Transfer,Kooperation mit Hochschulen/Forschung für Tests & Implementierung (inkl. KI),https://www.berlin.de/sen/wirtschaft/foerderprogramme/transfer-bonus/
-GründungsBONUS Berlin,"gründung, solo, team",berlin,Zuschuss,Frühe Wachstumsphase innovativer Start‑ups & Solo‑Gründungen,https://www.ibb-business-team.de/foerderprogramme/gruendungsbonus/
+ZIM – Zentrales Innovationsprogramm Mittelstand,kmu,bund,"Zuschuss für F&E‑Projekte (Einzel/Konsortien); technologieoffen",Innovation/F&E,"https://www.zim.de"
+BMBF – KMU‑innovativ (IKT),kmu,bund,"Zuschuss für Forschung & Entwicklung; themenoffene Calls","IKT, Daten, KI","https://www.bmbf.de"
+BMWK – go‑digital (Modul digitalisieren),kmu,bund,"Beratungsförderung; autorisierte Beratungen","Digitalisierung, Prozesse","https://www.bmwi.de"
+KfW – Digitalisierung & Innovation (Programmgruppe),kmu,bund,"Darlehen/Finanzierung; Ergänzung zu Zuschüssen","Digitalisierung, Investitionen","https://www.kfw.de"
+EU – Horizon Europe (EIC Accelerator),kmu,eu,"Zuschuss + Beteiligungskapital; wettbewerblich","DeepTech/Innovation","https://eic.ec.europa.eu"

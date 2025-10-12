@@ -1,0 +1,15 @@
+{
+  "default": "This sector benefits from a pragmatic, auditable AI operating model: clear roles (owner, prompt stewards, data steward), a central registry of use cases, and a lean approval flow. Start with 2–3 measurable use cases and establish quality gates (prompt/data reviews, human‑in‑the‑loop, evidence). Address security and privacy from day one.",
+  "consulting": "Consultancies can turn questionnaires, playbooks and best‑practice kits into scalable products. Modular knowledge blocks drop into client deliverables. Lead capture via self‑checks with automated scoring works well. Prompt/document libraries, versioning and evidence keep quality high.",
+  "it": "IT focuses on code assistance, test automation and documentation. A developer playbook for secrets, data and prompts reduces risk. Great starters: issue triage, runbook generation, log summaries, migration assistants.",
+  "marketing": "Marketing benefits from ContentOps: briefing → draft → edit → approval. Brand voice, fact sheets and sources minimise rework. Use AI for variants, A/B tests, metadata and repurposing with proper disclosure.",
+  "construction": "Construction prioritises schedules, document control and site communication. AI extracts requirements, checks tenders and supports safety briefings; photo documentation and defect classification are strong early wins.",
+  "industry": "Manufacturing gains from quality control, maintenance and planning. Data quality and drift monitoring are key; start with contained pilots and clear KPIs.",
+  "trade": "Retail improves product data, search/recommendations and service. GDPR: minimise PII, ensure transparency and opt‑out pathways.",
+  "finance": "Finance requires strict governance: KYC/AML, audit trails, roles and four‑eyes principle. AI shines at document review, summarisation and rule checks.",
+  "healthcare": "Healthcare is highly regulated. Focus on documentation assistants, summaries and non‑diagnostic triage hints. Human‑in‑the‑loop and clear disclosures are mandatory.",
+  "media": "Media houses organise fact sheets, sources and rights chains. AI accelerates research aggregations, pitch outlines and transcript mining. Label AI outputs and check IP.",
+  "logistics": "Logistics: ETA prediction, routing, OCR for documents, exception handling. Mind SLA, residency and supplier contracts.",
+  "public administration": "Public sector values transparency, accessibility and audit‑ready processes. AI supports form checks, drafting, citizen communication and knowledge management.",
+  "education": "Education needs robust policies and literacy. AI assists with materials, rubrics and feedback; watch fairness and privacy of student data."
+}

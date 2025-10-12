@@ -1,26 +1,6 @@
-# Datei: data/tools.csv
-name,category,industry,target,use_case,gdpr_ai_act,hosting_model,data_residency,pricing_eur,pricing_tier,integration_effort_1to5,one_liner,homepage_url,vendor_region,company_size_fit,last_checked
-ChatGPT Enterprise,Assistant,*,Wissensarbeit,Assistent & Recherche,yes,SaaS,Global,"Enterprise (Angebot)",€€€,2,"Sichere Unternehmens-Assistenz mit Admin-Kontrollen und DPA",https://openai.com/enterprise,US,Solo/Team/KMU,2025-10-06
-Microsoft 365 Copilot,Office,*,Wissensarbeit,Office-Automatisierung,yes,SaaS,EU,"~30 €/Nutzer/Monat (Add-on)",€€,1,"KI in Word/Excel/Outlook; EU Data Boundary verfügbar",https://copilot.microsoft.com,Global,Team/KMU,2025-10-06
-Google Duet AI,Office,*,Wissensarbeit,Workspace-Automatisierung,yes,SaaS,Global,"~30 €/Nutzer/Monat (Plan-abh.)",€€,1,"KI-Hilfe in Gmail/Docs/Sheets; Datenschutzfunktionen",https://workspace.google.com/intl/de/features/ai,Global,Team/KMU,2025-10-06
-Claude for Teams,Assistant,*,Wissensarbeit,Schreiben & Auswerten,partial,SaaS,Global,"~20 €/Monat (Pro), Enterprise auf Anfrage",€€,1,"Großer Kontext, Team-Spaces; DPA/Policy-Kontrollen",https://www.anthropic.com,US,Solo/Team/KMU,2025-10-06
-Perplexity Enterprise,Search,*,Wissensarbeit,Antworten mit Quellen,partial,SaaS,Global,"Pro ~20 €/Monat, Enterprise auf Anfrage",€€,1,"Recherche-Assistenz mit Zitaten; Unternehmens-Modus",https://www.perplexity.ai,US,Solo/Team/KMU,2025-10-06
-Notion AI,Productivity,*,Wissensarbeit,Wissensmanagement & Schreiben,partial,SaaS,Global,"~10 €/Nutzer/Monat (Add-on)",€,1,"Zusammenfassen, Ideen, Q&A im Wiki",https://www.notion.so/product/ai,US,Solo/Team/KMU,2025-10-06
-Grammarly Business,Productivity,*,Wissensarbeit,Text-Korrektur & Stil,partial,SaaS,Global,"~12 €/Nutzer/Monat",€,1,"KI-Lektorat für Mails & Doku; Teamfunktionen",https://www.grammarly.com/business,US,Solo/Team/KMU,2025-10-06
-Zapier + AI,Automation,*,Ops/Backoffice,Workflow-Automatisierung,partial,SaaS,Global,"Freemium; Pro ab ~20 €/Monat",€–€€,2,"No-Code-Automationen, KI-Trigger; 6000+ Integrationen",https://zapier.com,US,Solo/Team/KMU,2025-10-06
-Make.com,Automation,*,Ops/Backoffice,Prozess-Automatisierung,yes,SaaS,EU,"Freemium; Pläne variabel",€–€€,2,"Visuelle Automatisierungen, EU-Hosting-Optionen",https://www.make.com,EU,Solo/Team/KMU,2025-10-06
-Canva Magic Studio,Content,*,Marketing/Design,Grafik & Präsentation,partial,SaaS,Global,"~12 €/Nutzer/Monat (Pro)",€,1,"KI-Design (Bilder, Decks) – sehr schnell",https://www.canva.com/magic-studio,Other,Solo/Team/KMU,2025-10-06
-Otter.ai,Meetings,*,Wissensarbeit,Meeting-Notizen & Transkripte,unknown,SaaS,Global,"Freemium; Pro ~16 €/Monat",€,2,"Automatische Mitschriften & Action Items",https://otter.ai,US,Solo/Team/KMU,2025-10-06
-Mistral Codestral,Dev,Tech/IT,Engineering,Code-Assistenz (on-prem),yes,Open-Source,EU,"kostenlos (OSS); Support auf Anfrage",€,5,"On-prem/Open-Source Code-Modelle; volle Kontrolle",https://mistral.ai,EU,Team/KMU,2025-10-06
-Weaviate,Data,*,Data/IT,Vektor-Suche (Self-hosted/Cloud),yes,Hybrid,EU,"OSS kostenlos; Cloud verbrauchsabhängig",€,4,"Open-Source Vektor-DB; EU-Cloud möglich",https://weaviate.io,EU,Solo/Team/KMU,2025-10-06
-Pinecone,Data,*,Data/IT,Vektor-Suche (SaaS),yes,SaaS,EU,"nutzungsbasiert (Free-Tier verfügbar)",€–€€,4,"Managed Vektor-DB mit EU-Region; schneller Start",https://www.pinecone.io,US,Team/KMU,2025-10-06
-Stability AI SDXL,Content,Medien,Marketing/Design,Bildgenerierung (Open-Source),yes,Open-Source,Global,"kostenlos (OSS); API nach Credits",€,3,"Open-Source Bild-Modelle; Self-Hosting möglich",https://stability.ai,Other,Solo/Team/KMU,2025-10-06
-ElevenLabs,Audio,Medien,Marketing/Audio,Text-zu-Sprache,unknown,SaaS,Global,"ab ~$5/Monat",€,2,"Natürlich klingende KI-Stimmen; API verfügbar",https://elevenlabs.io,US,Solo/Team/KMU,2025-10-06
-Jasper,Marketing,Marketing,Solo/KMU,Marketing-Texte & Kampagnen,partial,SaaS,Global,"ab ~$39/Monat",€€,1,"Spezialisiert auf Marketing-Content & Templates",https://www.jasper.ai,US,Solo/Team/KMU,2025-10-06
-HubSpot ChatSpot,CRM,Marketing/Vertrieb,KMU,KI im CRM (Leads, E-Mails),yes,SaaS,EU,"in HubSpot-Plänen (Pro/Enterprise)",€€–€€€,2,"KI-Assistent innerhalb von HubSpot",https://www.hubspot.com/chatspot,Global,Team/KMU,2025-10-06
-Semrush (KI-Features),Marketing,Marketing,Solo/KMU,SEO & Content-Optimierung,yes,SaaS,Global,"ab ~117 $/Monat (Pro-Plan)",€€€,2,"Keyword-Research, Content-Briefings, Audits",https://www.semrush.com,US,Solo/Team/KMU,2025-10-06
-Synthesia,Video,Bildung/Marketing,KMU,KI-Video-Avatare (Schulung & Content),yes,SaaS,EU,"ab ~$30/Monat; Enterprise auf Anfrage",€–€€,2,"Schnelle Videoproduktion mit Avataren; AVV möglich",https://www.synthesia.io,EU,Team/KMU,2025-10-06
-Ada Health,Healthcare,Gesundheit,Praxen/Kliniken,Symptom-Checker & Triage,yes,SaaS,EU,"B2B-Lizenz (Angebot); Endnutzer App kostenfrei",€–€€,2,"CE-zertifizierter Chatbot zur Vorabklärung",https://ada.com,EU,Team/KMU,2025-10-06
-Buildots,Construction,Bau,Bauunternehmen,Baustellen-Überwachung (CV),partial,Hybrid,EU,"Enterprise (projektabhängig)",€€€€,5,"Computer-Vision trackt Baufortschritt & Abweichungen",https://buildots.com,EU,KMU/Mid-Market,2025-10-06
-Harvey AI,Legal,Recht,Kanzleien,Vertragsanalyse & Recherche,partial,SaaS,Global,"Enterprise auf Anfrage",€€€,3,"LLM-Assistent für Kanzleien; Policies & DPA",https://www.harvey.ai,US,KMU,2025-10-06
-Gamma,Presentations,Beratung,Solo/KMU,Präsentations- & Docs-Generator,unknown,SaaS,Global,"Freemium; Pro ab ~$10/Monat",€,1,"Erstellt Folien & Docs aus Prompts – schneller Pitch-Support",https://gamma.app,US,Solo/Team/KMU,2025-10-06
+name,Branche-Slugs,Unternehmensgröße,kategorie,eignung,hosting,preis,link
+DeepL (Translate/Write),"beratung,marketing,default,alle",alle,Übersetzung & Textqualität,"Übersetzungen, Stilverbesserung",EU/EWR,"Free/Pro","https://www.deepl.com"
+Microsoft Copilot for Microsoft 365,"beratung,it,marketing,default,alle",alle,Office‑Automation,"Dokumente, Tabellen, E‑Mails","Enterprise (MS Cloud)","https://www.microsoft.com"
+Google Gemini for Workspace,"beratung,marketing,default,alle",alle,Office‑Automation,"Dokumente, Tabellen, Präsentationen","Enterprise (Google Cloud)","https://workspace.google.com"
+Make (No‑Code Automation),"beratung,handel,default,alle",alle,Automation & Integration,"Workflows, Schnittstellen, Datenflüsse",EU‑Rechenzentren verfügbar,"Free/Pro","https://www.make.com"
+Hugging Face Inference Endpoints,"it,industrie,default,alle",alle,Model‑Hosting,"eigene/öffentliche Modelle mit Endpoints","Cloud/Self‑hosted","Usage-based","https://huggingface.co"
