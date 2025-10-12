@@ -1,7 +1,17 @@
-Erzeuge 5 Quick Wins (0–8 Wochen) als geordnete Liste (<ol>), priorisiert nach Aufwand/Nutzen.
-Nutze Briefing, Benchmarks und Tools/Funding:
-- {{BRIEFING_JSON}}
-- {{BENCHMARKS_JSON}}
-- {{TOOLS_JSON}}
-- {{FUNDING_JSON}}
-Form: <ol><li><b>Maßnahme</b> – Ziel, Aufwand (S/M/L), erwarteter Effekt (Zeit/€), Verantwortlich, nächste Aktion (konkret).</li>…</ol>
+# Quick Wins (3–5 Schritte)
+Kontext (Briefing, Scoring, Benchmarks) liegt in JSON vor.
+Erzeuge **nur ein sauberes HTML-Fragment** ohne <html>/<head>/<body>, kurze Absätze.
+
+## Daten
+- BRIEFING: {BRIEFING_JSON}
+- SCORING: {SCORING_JSON}
+- BENCHMARKS: {BENCHMARKS_JSON}
+- BUSINESS: {BUSINESS_JSON}
+- TOOLS: {TOOLS_JSON}
+- FUNDING: {FUNDING_JSON}
+
+## Anforderungen
+- präzise, verständliche Sprache; motivierend, ohne Marketing-Floskeln
+- konkrete, umsetzbare Empfehlungen mit Zeitrahmen (30/60/90 Tage) – falls sinnvoll
+- DSGVO/EU-AI-Act beachten; Risiken klar markieren
+- gib **kein** eigenes CSS aus; kein Titel/H1
