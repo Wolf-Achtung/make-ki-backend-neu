@@ -1,43 +1,63 @@
-
-<!-- filename: templates/pdf_template_en.html -->
 <!doctype html>
 <html lang="{{LANG}}">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Status Report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-:root{--bg:#fff;--fg:#0f172a;--muted:#5B6B7C;--brand:#0b5ea8;--accent:#ff7a00;--ok:#0ea5e9}
-*{box-sizing:border-box}body{font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f9fafb;color:var(--fg);margin:0}
-.wrap{max-width:780px;margin:28px auto;padding:0 16px}
-h1{font-size:28px;margin:0 0 4px 0}h2{font-size:18px;margin:18px 0 10px}h3{font-size:16px;margin:12px 0 8px}
-.muted{color:var(--muted)}.hl{font-weight:600}.pill{display:inline-block;border:1px solid #e5e7eb;border-radius:999px;padding:.1rem .5rem;margin-right:.25rem;background:#fff}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}@media print, (max-width:760px){.grid{grid-template-columns:1fr}}
-.header small{color:var(--muted)} .logo{float:right;width:80px;opacity:.9}
-.badge{display:inline-block;padding:.1rem .4rem;border-radius:6px;font-weight:600;font-size:12px}
-.badge--gov{background:#e6f7ff;color:#0b5ea8}.badge--news{background:#fff7ed;color:#c2410c}
-.badge--research{background:#eef2ff;color:#3730a3}.badge--vendor{background:#ecfdf5;color:#166534}
-.badge--blog{background:#fef2f2;color:#991b1b}.badge--other{background:#f3f4f6;color:#374151}
-.flag-berlin{background:#fde68a;color:#92400e;padding:.05rem .3rem;border-radius:4px;margin-left:.25rem}
-.kpi .bar{display:grid;grid-template-columns:180px 1fr 60px;gap:8px;align-items:center;margin:8px 0}
-.bar__track{position:relative;background:#EEF2F6;border-radius:6px;height:10px}
-.bar__fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--brand),#3b82f6);border-radius:6px}
-.bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--accent);opacity:.6}
-.bar__delta{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
-.bm{width:100%;border-collapse:collapse} .bm th,.bm td{border:1px solid #e5e7eb;padding:6px 8px}
-.bm th{background:#f8fafc;text-align:left}.bm .spark{width:60px} .matrix{width:100%;border-collapse:collapse}
-.matrix th,.matrix td{border:1px solid #e5e7eb;padding:6px 8px}.matrix th{background:#f8fafc;text-align:left}
-.source-list{padding-left:18px} .source-list li{margin:6px 0}
-.footer{font-size:12px;color:var(--muted);margin-top:18px}
+:root{
+  --blue:#0b57d0; --blue-200:#dce9ff; --orange:#ff7a00;
+  --text:#102a43; --muted:#5b6b7c; --bg:#ffffff; --card:#f8fafc;
+}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+     color:var(--text); background:var(--bg); margin:0; padding:24px}
+.container{max-width:780px;margin:0 auto}
+h1{font-size:28px;margin:0 0 4px 0}
+h2{font-size:20px;margin:16px 0 8px}
+h3{font-size:16px;margin:12px 0 6px}
+p{margin:8px 0 10px;line-height:1.45}
+.muted{color:var(--muted)}
+.hl{font-weight:600}
+.card{background:var(--card);border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin:12px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2ff;color:#1f3a8a;margin-right:6px;font-size:12px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.badge{display:inline-block;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:600;vertical-align:middle}
+.badge--gov{background:#ecfdf5;color:#065f46}
+.badge--news{background:#eef2ff;color:#3730a3}
+.badge--vendor{background:#fff7ed;color:#9a3412}
+.badge--community{background:#fdf2f8;color:#9d174d}
+.badge--edu{background:#f0fdf4;color:#166534}
+.badge--official{background:#f1f5f9;color:#0f172a}
+.flag-berlin{background:#fef3c7;color:#92400e;border-radius:6px;padding:2px 6px;font-size:11px;margin-left:8px}
+/* KPI bars */
+.kpi .bar{display:grid;grid-template-columns:160px 1fr 80px;gap:8px;align-items:center;margin:6px 0}
+.kpi .bar .label{font-weight:600}
+.bar__track{position:relative;height:10px;background:#eef2ff;border-radius:6px;overflow:hidden}
+.bar__fill{position:absolute;left:0;top:0;height:100%;background:var(--blue);opacity:.85}
+.bar__median{position:absolute;top:-1px;width:2px;height:12px;background:var(--orange);opacity:.9}
+.bar__delta{text-align:right;color:var(--muted);font-size:12px}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead th{background:var(--blue-200);text-align:left;padding:8px}
+td{border-bottom:1px solid #e5e7eb;padding:8px 6px}
+/* source list */
+.source-list{padding-left:18px}
+.source-list li{margin:6px 0}
+/* sparkline (delta) */
+.spark{display:inline-block;width:32px;height:8px;border-radius:4px;margin-right:6px;background:linear-gradient(90deg,#c7f9cc, #34d399)}
+.spark-neg{background:linear-gradient(90deg,#fecaca, #ef4444)}
+/* footer */
+.footer{margin-top:12px;font-size:12px;color:var(--muted)}
+hr.sep{border:0;border-top:1px solid #e5e7eb;margin:18px 0}
 </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="container">
     <div class="header">
-      <img class="logo" src="{{ASSETS_BASE}}/ki-ready-2025.webp" alt="Logo">
       <h1>AI Status Report</h1>
-      <div class="muted">As at: {{REPORT_DATE}}</div>
+      <div class="muted">As of: {{REPORT_DATE}}</div>
     </div>
 
     <div class="card">
@@ -46,20 +66,23 @@ h1{font-size:28px;margin:0 0 4px 0}h2{font-size:18px;margin:18px 0 10px}h3{font-
     </div>
 
     <div class="card">
-      <h2>Score & Benchmarks</h2>
+      <h2>Score &amp; Benchmarks</h2>
       {{KPI_BARS_HTML}}
-      {{BENCHMARK_TABLE_HTML}}
+      <div style="margin-top:8px">{{BENCHMARK_TABLE_HTML}}</div>
     </div>
 
-    {{PROFILE_HTML}}
+    <div class="card">
+      <h2>Company Profile</h2>
+      {{PROFILE_HTML}}
+    </div>
 
     <div class="card">
-      <h2>ROI & Payback</h2>
+      <h2>ROI &amp; Payback</h2>
       {{BUSINESS_CASE_HTML}}
     </div>
 
     <div class="card">
-      <h2>Quick wins (30–60 days)</h2>
+      <h2>Quick Wins</h2>
       {{QUICK_WINS_HTML}}
     </div>
 
@@ -69,7 +92,7 @@ h1{font-size:28px;margin:0 0 4px 0}h2{font-size:18px;margin:18px 0 10px}h3{font-
     </div>
 
     <div class="card">
-      <h2>Risk matrix</h2>
+      <h2>Risk Matrix</h2>
       {{RISKS_HTML}}
     </div>
 
@@ -79,32 +102,31 @@ h1{font-size:28px;margin:0 0 4px 0}h2{font-size:18px;margin:18px 0 10px}h3{font-
     </div>
 
     <div class="card">
-      <h2>Industry focus</h2>
-      {{INDUSTRY_SNIPPET_HTML}}
-    </div>
-
-    <div class="card">
-      <h2>Tool compatibility</h2>
-      {{TOOLS_MATRIX_HTML}}
-    </div>
-
-    <div class="card">
       <h2>News · Tools · Funding</h2>
-      <div class="grid">
-        <div><h3>News</h3>{{NEWS_HTML}}</div>
-        <div><h3>Tools</h3>{{TOOLS_HTML}}</div>
-        <div><h3>Funding</h3>{{FUNDING_HTML}}</div>
-      </div>
+      <h3>News</h3>{{NEWS_HTML}}
+      <h3>Tools</h3>{{TOOLS_HTML}}
+      <h3>Funding</h3>{{FUNDING_HTML}}
+      <hr class="sep">
       <div class="footer">
-        Sources (news, tools, funding) – as at: {{REPORT_DATE}} · De-duplicated by domain/URL. Badges show trust class.
+        <b>Sources (news, tools, funding)</b><br>
         {{SOURCES_FOOTER_HTML}}
+        <div style="margin-top:6px">As of {{REPORT_DATE}} · Deduplicated by domain/URL. Badges show trust category.</div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Guides & Checklists</h2>
-      {{GUIDES_HTML}}
+      <h2>Compatibility Matrix of Popular AI Tools</h2>
+      {{TOOL_MATRIX_HTML}}
+      <p class="muted" style="font-size:12px">Note: Indicative only — verify vendor security/compliance pages.</p>
     </div>
+
+    <div class="card">
+      <h2>Guides &amp; Checklists</h2>
+      {{CONTENT_PILLARS_HTML}}
+      {{CONTENT_LEGAL_HTML}}
+      {{CONTENT_FORMULA_HTML}}
+    </div>
+
   </div>
 </body>
 </html>
