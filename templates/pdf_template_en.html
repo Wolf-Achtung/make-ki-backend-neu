@@ -1,94 +1,66 @@
-<!-- filename: templates/pdf_template_en.html -->
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI Readiness Report</title>
-  <style>
-    :root { --blue:#1F5AF6; --orange:#FF7A00; --text:#243142; --muted:#5B6B7C; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; color: var(--text); line-height:1.45; margin:0; }
-    .container { width: 780px; margin: 0 auto; padding: 24px 0 48px; }
-    h1,h2,h3 { margin: 0 0 12px; }
-    h1 { font-size: 28px; font-weight: 800; }
-    h2 { font-size: 20px; font-weight: 700; }
-    h3 { font-size: 16px; font-weight: 700; margin-top: 12px; }
-    p { margin: 0 0 10px; }
-    .muted { color: var(--muted); }
-    .hl { color: var(--blue); font-weight: 600; }
-    header { display:flex; justify-content: space-between; align-items:center; margin-bottom: 16px; }
-    .badge { border-radius: 999px; font-size: 11px; padding: 2px 8px; border: 1px solid #e0e6ef; }
-    .badge--gov { background: #EDF3FF; color:#0B3B8F; border-color:#CFE0FF; }
-    .badge--edu { background:#EDF9F2; color:#226644; border-color:#BFE9CF; }
-    .badge--news { background:#FFF5E6; color:#7A5200; border-color:#FFE0A8; }
-    .badge--vendor { background:#F0F5FF; color:#2F558F; border-color:#CFDBFF; }
-    .badge--community { background:#F9F0FF; color:#6A2FA1; border-color:#E9D6FF; }
-    .badge--muted { background:#F6F8FB; color:#5B6B7C; border-color:#E5EAF1; }
-    .flag-berlin { background:#222; color:#fff; padding:2px 6px; font-size:11px; border-radius:4px; margin-left:6px; }
-    .card { background:#fff; border:1px solid #E6ECF5; border-radius:10px; padding:14px 16px; margin: 8px 0 16px; box-shadow: 0 1px 0 rgba(0,0,0,0.02); }
-    .kpi .bar { display:grid; grid-template-columns: 160px 1fr 64px; gap:10px; align-items:center; margin:8px 0; }
-    .bar__track { position:relative; height:10px; border-radius:6px; background:#F0F3F8; overflow:hidden; }
-    .bar__fill { position:absolute; left:0; top:0; bottom:0; background: var(--blue); }
-    .bar__median { position:absolute; top:-3px; bottom:-3px; width:2px; background: var(--orange); opacity:.8; }
-    .bar__delta { text-align:right; font-variant-numeric: tabular-nums; color: var(--muted); }
-    table { width:100%; border-collapse: collapse; font-size: 14px; }
-    th, td { padding: 8px 10px; border-top:1px solid #E6ECF5; text-align:left; }
-    thead th { background:#F7FAFF; border-top-color:#F7FAFF; }
-    .grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-    .source-list { list-style: none; padding-left: 0; }
-    .source-list li { margin: 6px 0; }
-    .footer { margin-top: 16px; font-size: 12px; color: var(--muted); }
-    .section { margin: 12px 0 18px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>AI Readiness Report</h1>
-      <div class="muted">As of: {{REPORT_DATE}}</div>
-    </header>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Readiness Report</title>
+<style>
+:root{
+  --blue:#0C5DB3; --orange:#FF7A00; --muted:#5B6B7C; --bg:#FFFFFF; --card:#F7F9FC;
+  --text:#0A1420; --badge:#EEF2F7; --ok:#12805C; --warn:#C75100;
+}
+*{box-sizing:border-box} body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:#fff;margin:0}
+.container{max-width:780px;margin:28px auto;padding:0 18px}
+h1{font-size:28px;margin:12px 0 4px} h2{font-size:18px;margin:0 0 10px}
+.card{background:var(--card);border-radius:10px;padding:14px 16px;margin:14px 0;border:1px solid #E6ECF2}
+.muted{color:var(--muted)} .hl{font-weight:600}
+.kpi .bar{display:grid;grid-template-columns:160px 1fr 64px;align-items:center;margin:8px 0}
+.kpi .bar__track{position:relative;height:10px;background:#E9EEF5;border-radius:6px;overflow:hidden}
+.kpi .bar__fill{position:absolute;height:10px;background:var(--blue)} .kpi .bar__median{position:absolute;top:0;bottom:0;width:2px;background:var(--orange)}
+.kpi .bar__delta{font-weight:600;text-align:right}
+.bm{width:100%;border-collapse:collapse;font-size:14px} .bm th,.bm td{border-bottom:1px solid #E6ECF2;padding:8px 6px;text-align:left}
+.pill{display:inline-block;background:#EAF4FF;color:#0C5DB3;border:1px solid #B9DCF9;border-radius:999px;padding:2px 8px;margin-right:6px;font-size:12px}
+.source-list{padding-left:20px} .source-list li{margin:6px 0}
+.badge{display:inline-block;background:var(--badge);color:#243142;border-radius:6px;padding:2px 6px;margin-left:6px;font-size:11px;border:1px solid #D7E0EA}
+.badge.gov{background:#EAF7EE;color:#0E5B3F;border-color:#CCE9D8}
+.badge.eu{background:#EAF0FF;color:#0C2B6B;border-color:#CCD9FF}
+.badge.bank{background:#FFF4E6;color:#663C00;border-color:#FFE1BF}
+.badge.press{background:#F5F5F5}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.flag-berlin{display:inline-block;background:#FCE8F2;color:#9F2B68;border:1px solid #F8BBD0;border-radius:6px;padding:2px 6px;margin-left:6px;font-size:11px}
+footer{color:var(--muted);font-size:12px;margin:18px 0}
+</style>
+</head><body><div class="container">
+  <h1>AI Readiness Report</h1>
+  <p class="muted">As of: {REPORT_DATE}</p>
 
-    <div class="card">
-      <h2>Executive Summary</h2>
-      {{EXEC_SUMMARY_HTML}}
-    </div>
+  <div class="card"><h2>Executive Summary</h2>{EXEC_SUMMARY_HTML}</div>
 
-    <div class="card">
-      <h2>Score &amp; Benchmarks</h2>
-      {{KPI_BARS_HTML}}
-      {{BENCHMARK_TABLE_HTML}}
-    </div>
+  <div class="card"><h2>Score &amp; Benchmarks</h2>{KPI_BARS_HTML}{BENCHMARK_TABLE_HTML}</div>
 
-    <div class="card">
-      <h2>Company Profile</h2>
-      {{PROFILE_HTML}}
-    </div>
+  <div class="card"><h2>Company Profile</h2>{PROFILE_HTML}</div>
 
-    <div class="card">
-      <h2>ROI &amp; Payback</h2>
-      {{BUSINESS_CASE_HTML}}
-    </div>
+  <div class="card"><h2>ROI &amp; Payback</h2>{BUSINESS_CASE_HTML}</div>
 
-    <div class="card section">
-      <h2>News · Tools · Funding</h2>
-      <div class="grid">
-        <div><h3>News</h3>{{NEWS_HTML}}</div>
-        <div><h3>Tools</h3>{{TOOLS_HTML}}</div>
-        <div><h3>Funding</h3>{{FUNDING_HTML}}</div>
-      </div>
-      <div class="footer"><b>Sources (live layer):</b> Deduplicated by domain/URL. Badges show trust class.</div>
-      {{SOURCES_FOOTER_HTML}}
-    </div>
+  <div class="card"><h2>Quick Wins</h2>{QUICK_WINS_HTML}</div>
 
-    <div class="card section">
-      <h2>Guides &amp; Checklists</h2>
-      <h3>4 Pillars of AI Readiness</h3>
-      {{CONTENT_PILLARS_HTML}}
-      <h3>Legal Pitfalls</h3>
-      {{CONTENT_LEGAL_HTML}}
-      <h3>Transformation Formula 10‑20‑70</h3>
-      {{CONTENT_FORMULA_HTML}}
-    </div>
+  <div class="card"><h2>Roadmap</h2>{ROADMAP_HTML}</div>
+
+  <div class="card"><h2>Risk Matrix</h2>{RISKS_HTML}</div>
+
+  <div class="card"><h2>Compliance</h2>{COMPLIANCE_HTML}</div>
+
+  <div class="card"><h2>Guides &amp; Checklists</h2>
+    <h3>4 Pillars of AI Readiness</h3>{CONTENT_PILLARS_HTML}
+    <h3>Legal Pitfalls</h3>{CONTENT_LEGAL_HTML}
+    <h3>Transformation Formula 10‑20‑70</h3>{CONTENT_FORMULA_HTML}
   </div>
-</body>
-</html>
+
+  <div class="card"><h2>News · Tools · Funding</h2>
+    <h3>News</h3>{NEWS_HTML}
+    <h3>Tools</h3>{TOOLS_HTML}
+    <h3>Funding</h3>{FUNDING_HTML}
+  </div>
+
+  <div class="card"><h2>Sources (News, Tools, Funding)</h2>{SOURCES_FOOTER_HTML}</div>
+
+  <footer>As of: {REPORT_DATE} · Deduplicated by domain/URL. Badges show trust class.</footer>
+</div></body></html>
