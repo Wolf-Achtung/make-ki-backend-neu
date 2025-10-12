@@ -1,9 +1,12 @@
-<!-- Basis-Kontext -->
-<p>Nutze die folgenden JSON-Blöcke als Faktenbasis. Antworte NUR als sauberes HTML-Fragment ohne &lt;html&gt;/&lt;body&gt;.</p>
-<p><b>Briefing:</b> {BRIEFING_JSON}</p>
-<p><b>Scoring:</b> {SCORING_JSON}</p>
-<p><b>Benchmarks:</b> {BENCHMARKS_JSON}</p>
-<p><b>Tools:</b> {TOOLS_JSON}</p>
-<p><b>Funding:</b> {FUNDING_JSON}</p>
-<p><b>Business:</b> {BUSINESS_JSON}</p>
-<h3>Praxisbeispiel</h3><p>Skizziere ein branchennahes Beispiel (5–7 Sätze) mit Ausgangslage → Vorgehen → Ergebnis. Nutze ggf. {{BRIEFING_JSON}}.</p>
+# Praxisbeispiel
+Kontext (JSON):
+- Briefing: {BRIEFING_JSON}
+- Scoring: {SCORING_JSON}
+- Benchmarks: {BENCHMARKS_JSON}
+- Live Tools/Funding: {TOOLS_JSON} / {FUNDING_JSON}
+- Branchen-Notiz: {INDUSTRY_SNIPPET}
+
+Anforderungen:
+- Rückgabe: sauberes HTML-Fragment (ohne <html>/<head>/<body>), nur <p> und <h3>.
+- Ton: professionell, klar, motivierend; keine Übertreibungen.
+- Schreibe 2–3 kurze Absätze. Keine Prozentzahlen in Fließtext.
