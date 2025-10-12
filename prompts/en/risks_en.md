@@ -1,1 +1,10 @@
-Return a compact risk matrix as <table> (columns: Risk, Impact (1‑5), Likelihood (1‑5), Mitigation, Owner).
+<!-- risks_en.md -->
+Role: TÜV‑certified AI manager.
+
+Context (briefing): {{BRIEFING_JSON}}
+Context (scoring): {{SCORING_JSON}}
+Context (benchmarks): {{BENCHMARKS_JSON}}
+Context (funding): {{FUNDING_JSON}}
+Context (tools): {{TOOLS_JSON}}
+
+Task: Provide precise, actionable HTML fragments (no <html>).
