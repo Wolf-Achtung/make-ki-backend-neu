@@ -1,122 +1,121 @@
-# filename: perplexity_client.py
-# -*- coding: utf-8 -*-
-"""
-Minimal Perplexity client with robust guards.
-
-Default uses the Search API (no explicit model). If 'PPLX_MODEL' is provided
-AND endpoint '/chat/completions' must be used, we fall back to 'sonar-pro' as
-a safe default and never send the placeholder 'auto'.
-"""
-
+# perplexity_client.py — resilient client (search-first) for Perplexity
 from __future__ import annotations
-from typing import Any, Dict, List, Optional
+from typing import List, Dict, Any, Optional
 import os, time, random
 import httpx
 
-try:
-    from live_logger import log_event as _emit  # type: ignore
-except Exception:  # pragma: no cover
-    def _emit(provider: str, model: Optional[str], status: str, latency_ms: int, count: int = 0, **kw: Any) -> None:
-        pass
+def _jitter(base: float, factor: float = 0.4) -> float:
+    lo = base * (1.0 - factor)
+    hi = base * (1.0 + factor)
+    return random.uniform(lo, hi)
 
-API_BASE = os.getenv("PPLX_BASE_URL", "https://api.perplexity.ai")
-API_KEY = os.getenv("PERPLEXITY_API_KEY", "").strip()
-TIMEOUT = float(os.getenv("PPLX_TIMEOUT", "30"))
-MODEL = os.getenv("PPLX_MODEL", "").strip()
+class PerplexityClient:
+    def __init__(self, api_key: Optional[str] = None, timeout: float = 12.0, base_url: str = "https://api.perplexity.ai") -> None:
+        self.api_key = (api_key or os.getenv("PERPLEXITY_API_KEY",""))
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
 
-def _effective_model() -> Optional[str]:
-    m = (MODEL or "").strip().lower()
-    if not m or m in {"auto", "default", "best", "best_mode"}:
-        return None
-    return MODEL
+    # --- Internal HTTP helpers -------------------------------------------------
+    def _post(self, path: str, payload: Dict[str,Any]) -> httpx.Response:
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        url = f"{self.base_url}{path}"
+        with httpx.Client(timeout=self.timeout) as c:
+            return c.post(url, headers=headers, json=payload)
 
-def search(query: str, top_k: int = 8, days: Optional[int] = None) -> List[Dict[str,Any]]:
-    """Use Perplexity Search API (no explicit model required)."""
-    if not API_KEY:
-        return []
-    t0 = time.time()
-    headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
-    payload: Dict[str, Any] = {"q": query, "top_k": int(top_k)}
-    if days:
-        payload["time"] = f"{int(days)}d"  # relative window e.g. '30d'
+    def _backoff(self, attempt: int) -> None:
+        # exponential with jitter; honor Retry-After if present (handled by caller)
+        time.sleep(_jitter(0.6 * (2 ** attempt)))
 
-    url = f"{API_BASE}/search"
-    try:
-        with httpx.Client(timeout=TIMEOUT) as cli:
-            r = cli.post(url, headers=headers, json=payload)
-            if r.status_code == 404:
-                # Some deployments require /v1/search
-                url_v1 = f"{API_BASE}/v1/search"
-                r = cli.post(url_v1, headers=headers, json=payload)
-            r.raise_for_status()
-            data = r.json()
-            items = []
-            for hit in (data.get("results") or []):
-                items.append({
-                    "title": hit.get("title") or hit.get("name") or hit.get("url"),
-                    "url": hit.get("url"),
-                    "domain": (hit.get("source") or ""),
-                    "date": hit.get("published_at") or hit.get("date") or "",
-                    "provider": "perplexity",
-                })
-            latency = int((time.time() - t0) * 1000)
-            _emit("perplexity", None, "ok", latency, count=len(items))
-            return items
-    except httpx.HTTPStatusError as e:  # pragma: no cover
-        latency = int((time.time() - t0) * 1000)
-        _emit("perplexity", None, f"error:{e.__class__.__name__}", latency, count=0)
-        return []
-    except Exception as e:  # pragma: no cover
-        latency = int((time.time() - t0) * 1000)
-        _emit("perplexity", None, f"error:{e.__class__.__name__}", latency, count=0)
-        return []
+    # --- Public API ------------------------------------------------------------
+    def search(self, query: str, max_results: int = 8, include_domains: Optional[List[str]] = None, exclude_domains: Optional[List[str]] = None, days: Optional[int] = None) -> List[Dict[str,Any]]:
+        if not self.api_key:
+            return []
+        include_domains = include_domains or []
+        exclude_domains = exclude_domains or []
+        # Prefer Search API – model-less; avoids invalid model errors.
+        payload: Dict[str,Any] = {"q": query, "top_k": max_results}
+        if include_domains:
+            payload["include_domains"] = include_domains
+        if exclude_domains:
+            payload["exclude_domains"] = exclude_domains
+        if days:
+            payload["days"] = int(days)
 
-def chat_search(query: str, top_k: int = 8) -> List[Dict[str,Any]]:
-    """Fallback to chat/completions with a supported model if Search API is unavailable.
-       Returns a list of dicts with 'title','url','domain','date' when the model can tool-use or quote URLs.
-    """
-    if not API_KEY:
-        return []
-    model = _effective_model() or "sonar-pro"
-    t0 = time.time()
-    headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
-    url = f"{API_BASE}/chat/completions"
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": "Return JSON with an array 'results' of {title,url,source,date}. Be concise."},
-            {"role": "user", "content": f"Find {top_k} trustworthy sources for: {query}. Return only JSON."},
-        ],
-        "max_tokens": 500,
-        "temperature": 0.0
-    }
-    try:
-        with httpx.Client(timeout=TIMEOUT) as cli:
-            r = cli.post(url, headers=headers, json=payload)
-            r.raise_for_status()
-            data = r.json()
-            content = ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "{}"
-            # naive JSON extraction
-            import json as _json
-            content = content.strip().strip("`").strip()
-            if content.startswith("{") and content.endswith("}"):
-                obj = _json.loads(content)
-                arr = obj.get("results") or []
-            else:
-                arr = []
-            items = []
-            for hit in arr:
-                items.append({
-                    "title": hit.get("title") or hit.get("url"),
-                    "url": hit.get("url"),
-                    "domain": (hit.get("source") or ""),
-                    "date": hit.get("date") or "",
-                    "provider": "perplexity",
-                })
-            latency = int((time.time() - t0) * 1000)
-            _emit("perplexity", model, "ok_fallback_chat", latency, count=len(items))
-            return items
-    except Exception:
-        latency = int((time.time() - t0) * 1000)
-        _emit("perplexity", model, "error_fallback_chat", latency, count=0)
+        # Try /search first; if 404, fall back to /v1/search (older docs).
+        paths = ["/search", "/v1/search"]
+        for path in paths:
+            for attempt in range(0, 3):
+                r = self._post(path, payload)
+                if r.status_code == 200:
+                    data = r.json()
+                    res = []
+                    for it in data.get("results", []):
+                        url = it.get("url") or ""
+                        res.append({
+                            "title": it.get("title") or url,
+                            "url": url,
+                            "domain": it.get("domain") or (url.split('/')[2] if '://' in url else ""),
+                            "date": (it.get("published_at") or it.get("published_date") or it.get("date") or "")[:10],
+                            "score": it.get("score") or 0.0,
+                            "snippet": it.get("snippet") or it.get("content") or "",
+                        })
+                    return res
+                if r.status_code == 429:
+                    ra = r.headers.get("Retry-After")
+                    if ra:
+                        try: time.sleep(float(ra))
+                        except Exception: self._backoff(attempt)
+                    else:
+                        self._backoff(attempt)
+                    continue
+                if r.status_code >= 500:
+                    self._backoff(attempt)
+                    continue
+                # if 4xx other than 429: break and try next path
+                break
+
+        # Optional chat fallback if a valid model is configured
+        model = (os.getenv("PPLX_MODEL","")) or (os.getenv("PPLX_CHAT_MODEL",""))
+        if not model or model.lower() in {"auto","best","default"}:
+            return []
+        chat_payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": f"List the most relevant web sources for: {query}. Return titles and links only."}],
+            "max_tokens": 512,
+            "temperature": 0.0
+        }
+        for attempt in range(0, 2):
+            r = self._post("/chat/completions", chat_payload)
+            if r.status_code == 200:
+                try:
+                    txt = (r.json().get("choices")[0].get("message").get("content") or "")
+                except Exception:
+                    return []
+                # naive link harvest
+                items: List[Dict[str,Any]] = []
+                for line in txt.splitlines():
+                    line = line.strip(" -*•\t")
+                    if not line: continue
+                    # try markdown [title](url)
+                    import re
+                    m = re.search(r"\[(?P<title>[^\]]+)\]\((?P<url>https?://[^\)]+)\)", line)
+                    if m:
+                        u = m.group("url")
+                        items.append({"title": m.group("title"), "url": u, "domain": u.split('/')[2], "date": ""})
+                        continue
+                    # fallback: split by http
+                    if "http" in line:
+                        parts = line.split("http", 1)
+                        u = "http" + parts[1].split()[0].strip("()[]{}.")
+                        title = parts[0].strip("-:• ") or u
+                        items.append({"title": title, "url": u, "domain": u.split('/')[2], "date": ""})
+                return items[:max_results]
+            if r.status_code == 429:
+                ra = r.headers.get("Retry-After")
+                if ra:
+                    try: time.sleep(float(ra))
+                    except Exception: self._backoff(attempt)
+                else:
+                    self._backoff(attempt)
+                continue
         return []
