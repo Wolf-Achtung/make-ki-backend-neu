@@ -1,0 +1,5 @@
+tool,self_hosting,eu_residency,audit_logs,notes,link,tags
+OpenAI via Azure,No,EU regions available,Yes (platform),Use Azure OpenAI in EU region for data residency; check contract terms.,https://azure.microsoft.com/services/ai-services/openai-service/,"all,beratung,it"
+Mistral (self-hosted),Yes,N/A,Depends on setup,Self‑hosting possible; GDPR depends on your infra.,https://mistral.ai/,"all,it"
+Aleph Alpha,No (managed),EU (Germany),Yes (per plan),German provider; check plan for logging & residency.,https://www.aleph-alpha.com/,"all,beratung"
+Perplexity API (Search),No,US/EU mixed index,Citations,"Search API returns sources with citations; use for discovery, not PII.",https://docs.perplexity.ai/,"all,beratung"
