@@ -1,110 +1,122 @@
-# utils_sources.py
+
+# filename: utils_sources.py
 # -*- coding: utf-8 -*-
 """
-Source classification & ranking utilities (Gold-Standard+)
-- classify_source(url, domain) -> (category, label, css_badge, weight)
-- filter_and_rank(items) -> normalized + deduped + ranked list
-Items schema tolerated:
-  {title, url, domain?, date?, score?}
+Source classification & ranking helpers (Gold-Standard+)
+- classify_source(url, domain?) -> (category, label, badge_class, weight)
+- filter_and_rank(items) -> list[dict]  (dedup + category weight + recency)
 """
+
 from __future__ import annotations
-from urllib.parse import urlparse
-from typing import Dict, Any, List, Tuple
+
 import re
+from datetime import datetime, timezone
+from typing import Dict, List, Tuple, Any
 
-TRUST_WEIGHTS = {
-    "gov": 1.00,
-    "eu": 0.98,
-    "edu": 0.95,
-    "org": 0.93,
-    "news": 0.90,
-    "vendor": 0.85,
-    "blog": 0.80,
-    "other": 0.70,
+_DOMAIN_RE = re.compile(r"^(?:https?://)?([^/]+)", re.I)
+
+GOV_DOMAINS = {
+    "europa.eu","bund.de","bmbf.de","bmwk.de","dlr.de","kfw.de","foerderdatenbank.de",
+    "nrwbank.de","l-bank.de","bayern.de","berlin.de","ibb.de","ihk.de"
+}
+NEWS_DOMAINS = {
+    "heise.de","golem.de","t3n.de","handelsblatt.com","faz.net","zeit.de","sueddeutsche.de",
+    "spiegel.de","theverge.com","techcrunch.com","wired.com"
+}
+RESEARCH_DOMAINS = {
+    "arxiv.org","nature.com","science.org","acm.org","ieee.org","stanford.edu","mit.edu","ox.ac.uk","uni-"
+}
+VENDOR_DOMAINS = {
+    "openai.com","anthropic.com","deepmind.com","google.com","microsoft.com","azure.com","aws.amazon.com",
+    "ai.meta.com","cohere.com","huggingface.co"
 }
 
-BADGE_CSS = {
-    "gov": "badge--gov",
-    "eu": "badge--eu",
-    "edu": "badge--edu",
-    "org": "badge--org",
-    "news": "badge--news",
-    "vendor": "badge--vendor",
-    "blog": "badge--blog",
-    "other": "badge--other",
+_CATEGORY_WEIGHT = {
+    "gov": 100,
+    "research": 90,
+    "news": 70,
+    "vendor": 60,
+    "blog": 40,
+    "other": 30,
 }
 
-def _netloc(url_or_domain: str) -> str:
-    s = (url_or_domain or "").strip()
+def _domain_from(url: str) -> str:
+    m = _DOMAIN_RE.search(url or "")
+    host = (m.group(1) if m else "").lower()
+    # strip subdomains
+    parts = [p for p in host.split(":")[0].split(".") if p]
+    if len(parts) >= 2:
+        return ".".join(parts[-2:])
+    return host
+
+def classify_source(url: str, domain: str | None = None) -> Tuple[str,str,str,int]:
+    """
+    Returns (category, label, badge_class, weight)
+    """
+    d = (domain or _domain_from(url or "")).lower()
+    cat = "other"; label = "Quelle"; badge = "badge--other"
+    if any(d.endswith(g) for g in GOV_DOMAINS):
+        cat, label, badge = "gov", "Amtlich/Behörde", "badge--gov"
+    elif any(d.endswith(n) for n in NEWS_DOMAINS):
+        cat, label, badge = "news", "Fachpresse", "badge--news"
+    elif any((d.endswith(r) or r in d) for r in RESEARCH_DOMAINS):
+        cat, label, badge = "research", "Studie/Forschung", "badge--research"
+    elif any(d.endswith(v) for v in VENDOR_DOMAINS):
+        cat, label, badge = "vendor", "Hersteller", "badge--vendor"
+    elif d:
+        cat, label, badge = "blog", "Blog/Portal", "badge--blog"
+    weight = _CATEGORY_WEIGHT.get(cat, 10)
+    return cat, label, badge, weight
+
+def _parse_date(s: str | None) -> datetime | None:
     if not s:
-        return ""
-    if "://" in s:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d.%m.%Y", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S"):
         try:
-            return urlparse(s).netloc.lower()
+            dt = datetime.strptime(s[:19], fmt)  # be tolerant
+            if not dt.tzinfo:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
         except Exception:
-            return ""
-    return s.lower()
-
-def classify_source(url: str, domain: str | None = None) -> Tuple[str, str, str, float]:
-    """
-    Heuristics for trust class.
-    Returns: (category, human_label, css_badge, weight)
-    """
-    dom = _netloc(domain or url)
-    if not dom:
-        return ("other", "Quelle", BADGE_CSS["other"], TRUST_WEIGHTS["other"])
-
-    # EU/government
-    if dom.endswith(".eu") or dom.endswith(".europa.eu") or any(part in dom for part in ["ec.europa.eu", "europa.eu"]):
-        return ("eu", "EU‑Quelle", BADGE_CSS["eu"], TRUST_WEIGHTS["eu"])
-    if re.search(r"\.(gov|gv\.at|admin\.ch)$", dom) or dom.endswith(".bund.de") or "bmwk.de" in dom or "bmbf.de" in dom or "nrwbank.de" in dom:
-        return ("gov", "Behörde", BADGE_CSS["gov"], TRUST_WEIGHTS["gov"])
-
-    # Academia / org / news / vendor / blogs
-    if dom.endswith(".edu") or ".uni-" in dom or dom.startswith("uni-") or ".ac." in dom:
-        return ("edu", "Hochschule", BADGE_CSS["edu"], TRUST_WEIGHTS["edu"])
-    if dom.endswith(".org"):
-        return ("org", "Organisation", BADGE_CSS["org"], TRUST_WEIGHTS["org"])
-    if any(k in dom for k in ["heise.de", "golem.de", "t3n.de", "wired.com", "theverge.com", "ft.com", "handelsblatt.com"]):
-        return ("news", "Fachpresse", BADGE_CSS["news"], TRUST_WEIGHTS["news"])
-    if any(k in dom for k in ["aws.amazon.com","azure.microsoft.com","microsoft.com","openai.com","anthropic.com","google.com","deepmind.com","mistral.ai","aleph-alpha.com"]):
-        return ("vendor", "Anbieter", BADGE_CSS["vendor"], TRUST_WEIGHTS["vendor"])
-    if any(k in dom for k in ["medium.com","substack.com","dev.to","hashnode.com","github.io"]):
-        return ("blog", "Blog", BADGE_CSS["blog"], TRUST_WEIGHTS["blog"])
-
-    return ("other", "Quelle", BADGE_CSS["other"], TRUST_WEIGHTS["other"])
-
-def _norm_item(it: Dict[str, Any]) -> Dict[str, Any]:
-    url = (it.get("url") or "").strip()
-    title = (it.get("title") or it.get("name") or url) or ""
-    domain = (it.get("domain") or _netloc(url)) or ""
-    date = (it.get("date") or it.get("published_date") or it.get("last_updated") or "")[:10]
-    out = {"title": title, "url": url, "domain": domain, "date": date}
-    # compute weight
-    cat, _, _, w = classify_source(url, domain)
-    score = float(it.get("score") or 0.0)
-    out["_rank"] = (w * 100.0) + score
-    out["_cat"] = cat
-    return out
-
-def _dedupe(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    seen = set()
-    out: List[Dict[str, Any]] = []
-    for it in items:
-        url = (it.get("url") or "").split("#")[0]
-        if not url or url in seen:
             continue
-        seen.add(url)
-        out.append(it)
-    return out
+    return None
 
-def filter_and_rank(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def filter_and_rank(items: List[Dict[str,Any]], max_age_days: int | None = None) -> List[Dict[str,Any]]:
+    """
+    - normalizes urls/domains
+    - boosts trusted domains
+    - deduplicates by normalized url (domain+path without hash)
+    - optional recency boost
+    """
     if not items:
         return []
-    normed = [_norm_item(x) for x in items if x]
-    normed = _dedupe(normed)
-    normed.sort(key=lambda x: x.get("_rank", 0.0), reverse=True)
-    # strip internals
-    for x in normed:
-        x.pop("_rank", None); x.pop("_cat", None)
+
+    # normalize & enrich
+    normed = []
+    seen = set()
+    for it in items:
+        url = (it.get("url") or it.get("link") or "").strip()
+        if not url:
+            continue
+        norm_url = re.sub(r"#.*$", "", url)
+        dom = it.get("domain") or _domain_from(norm_url)
+        cat, label, badge, w = classify_source(norm_url, dom)
+        dt = _parse_date(it.get("date") or it.get("published_date"))
+        if norm_url in seen:
+            continue
+        seen.add(norm_url)
+        normed.append({**it, "url": norm_url, "domain": dom, "cat": cat, "cat_label": label, "badge": badge, "_w": w, "_dt": dt})
+
+    if not normed:
+        return []
+
+    # rank
+    def _key(d):
+        age_boost = 0
+        if d.get("_dt"):
+            age_days = (datetime.now(timezone.utc) - d["_dt"]).days
+            age_boost = max(0, 90 - age_days)  # recent first
+        return (d["_w"], age_boost)
+
+    normed.sort(key=_key, reverse=True)
     return normed
