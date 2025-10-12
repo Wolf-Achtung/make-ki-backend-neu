@@ -1,1 +1,0 @@
-4–8 programs (program, owner, rate/budget, federal/state, deadline/as-of, link). Always include ZIM (BMWK) and KMU‑innovativ: IKT (BMBF/DLR‑PT), plus ≥2 state programs for {{BRIEFING_JSON.bundesland_code}}.
