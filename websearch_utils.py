@@ -1,7 +1,7 @@
 # filename: websearch_utils.py
 # -*- coding: utf-8 -*-
 """
-Hybrid live search (Tavily + Perplexity) with model-guards, 400-minimal fallback,
+Hybrid live search (Tavily + Perplexity) with model-guards, minimal 400 fallback,
 and robust 429/5xx exponential backoff. Import-safe and production-hardened.
 """
 
@@ -13,27 +13,22 @@ import time
 import json
 import httpx
 
+# Structured JSON logging (uses live_logger, falls back to stdout)
+try:
+    from .live_logger import log_event as _emit  # type: ignore
+except Exception:  # pragma: no cover
+    try:
+        from live_logger import log_event as _emit  # type: ignore
+    except Exception:  # pragma: no cover
+        def _emit(provider: str, model: Optional[str], status: str, latency_ms: int, count: int = 0, **kw: Any) -> None:
+            payload = {"evt":"live_search","provider":provider,"model":model,"status":status,"latency_ms":int(latency_ms),"count":int(count)}
+            payload.update({k:v for k,v in (kw or {}).items() if v is not None})
+            print(json.dumps(payload, ensure_ascii=False))
+
 try:
     from .utils_sources import filter_and_rank  # type: ignore
 except Exception:  # pragma: no cover
     from utils_sources import filter_and_rank  # type: ignore
-
-# ---------------- Structured logging ----------------
-
-def _log_event(provider: str, model: Optional[str], status: str, latency_ms: int, count: int = 0, **kw: Any) -> None:
-    payload = {
-        "evt": "live_search",
-        "provider": provider,
-        "model": model,
-        "status": status,
-        "latency_ms": int(latency_ms),
-        "count": int(count),
-    }
-    payload.update({k: v for k, v in (kw or {}).items() if v is not None})
-    try:
-        print(json.dumps(payload, ensure_ascii=False))
-    except Exception:
-        print(f"[live_search] {provider} {status} {latency_ms}ms c={count}")
 
 # ---------------- Config ----------------
 
@@ -43,7 +38,6 @@ PPLX_URL = "https://api.perplexity.ai/chat/completions"
 SEARCH_DAYS_NEWS = int(os.getenv("SEARCH_DAYS_NEWS", "30"))
 SEARCH_DAYS_TOOLS = int(os.getenv("SEARCH_DAYS_TOOLS", "60"))
 TAVILY_MAX = int(os.getenv("TAVILY_MAX", "12"))
-
 PPLX_TIMEOUT = float(os.getenv("PPLX_TIMEOUT", os.getenv("PPLX_TIMEOUT_SEC", "30.0")))
 
 # ---------------- Helpers ----------------
@@ -64,7 +58,7 @@ def _http_post_with_backoff(
     timeout: float,
     provider: str,
     model: Optional[str] = None,
-    backoff_codes: Tuple[int, ...] = (429, 502, 503),
+    backoff_codes: Tuple[int, ...] = (408, 429, 502, 503),
     attempts: int = 4,
 ) -> Tuple[httpx.Response, float]:
     """POST with exponential backoff for transient HTTP error codes."""
@@ -78,13 +72,13 @@ def _http_post_with_backoff(
             try:
                 resp = client.post(url, headers=headers, json=payload)
                 if resp.status_code in backoff_codes and i < attempts:
-                    _log_event(provider, model, f"backoff_{resp.status_code}", int((time.monotonic() - start) * 1000), 0)
+                    _emit(provider, model, f"backoff_{resp.status_code}", int((time.monotonic() - start) * 1000), 0)
                     last_err = f"http_{resp.status_code}"
                     continue
                 return resp, start
             except Exception as exc:  # pragma: no cover
                 last_err = f"error:{type(exc).__name__}"
-                _log_event(provider, model, last_err, int((time.monotonic() - start) * 1000), 0)
+                _emit(provider, model, last_err, int((time.monotonic() - start) * 1000), 0)
                 continue
     raise RuntimeError(last_err or "backoff_failed")
 
@@ -102,7 +96,7 @@ def tavily_search(query: str, *, max_results: int = TAVILY_MAX, days: int = SEAR
     try:
         resp, start = _http_post_with_backoff(TAVILY_URL, headers, payload_full, 30.0, "tavily")
         if resp.status_code == 400:
-            _log_event("tavily", None, "400_bad_request_retry_minimal", int((time.monotonic() - start) * 1000), 0)
+            _emit("tavily", None, "400_bad_request_retry_minimal", int((time.monotonic() - start) * 1000), 0)
             resp, start = _http_post_with_backoff(TAVILY_URL, headers, {"query": query}, 30.0, "tavily")
         if resp.status_code == 401:
             status = "unauthorized"
@@ -120,7 +114,7 @@ def tavily_search(query: str, *, max_results: int = TAVILY_MAX, days: int = SEAR
     except Exception as e:
         status = f"error:{type(e).__name__}"
     finally:
-        _log_event("tavily", None, status, int((time.monotonic() - t0) * 1000), len(items))
+        _emit("tavily", None, status, int((time.monotonic() - t0) * 1000), len(items))
     return items
 
 # ---------------- Perplexity ----------------
@@ -149,7 +143,12 @@ def perplexity_search(query: str, *, max_results: int = 10, category_hint: Optio
         "additionalProperties": False,
     }
     model = _pplx_model_effective()
-    base_body = {"messages": [{"role": "system", "content": system}, {"role": "user", "content": user}], "temperature": 0.1, "max_tokens": 900, "response_format": {"type": "json_schema", "json_schema": {"schema": schema}}}
+    base_body = {
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+        "temperature": 0.1,
+        "max_tokens": 900,
+        "response_format": {"type": "json_schema", "json_schema": {"schema": schema}},
+    }
     body = dict(base_body, **({"model": model} if model else {}))
 
     t0 = time.monotonic()
@@ -160,6 +159,7 @@ def perplexity_search(query: str, *, max_results: int = 10, category_hint: Optio
         resp, start = _http_post_with_backoff(PPLX_URL, headers, body, PPLX_TIMEOUT, "perplexity", model_used)
         if resp.status_code == 400 and "invalid_model" in (resp.text or "").lower():
             body.pop("model", None)
+            _emit("perplexity", model_used, "400_invalid_model_retry_auto", int((time.monotonic() - start) * 1000), 0)
             model_used = "auto"
             resp, start = _http_post_with_backoff(PPLX_URL, headers, body, PPLX_TIMEOUT, "perplexity", model_used)
         if resp.status_code == 401:
@@ -180,7 +180,7 @@ def perplexity_search(query: str, *, max_results: int = 10, category_hint: Optio
     except Exception as e:
         status = f"error:{type(e).__name__}"
     finally:
-        _log_event("perplexity", model_used, status, int((time.monotonic() - t0) * 1000), len(items))
+        _emit("perplexity", model_used, status, int((time.monotonic() - t0) * 1000), len(items))
     return items
 
 # ---------------- Hybrid ----------------

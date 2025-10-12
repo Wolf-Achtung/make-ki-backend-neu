@@ -14,7 +14,7 @@ KI-Status-Report Analyzer – Gold-Standard+ (hardened, full)
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import json
@@ -35,8 +35,21 @@ try:
 except Exception:  # pragma: no cover
     from utils_sources import classify_source, filter_and_rank  # type: ignore
 
+# Optional structured emitter
+try:
+    from .live_logger import log_event as _emit  # type: ignore
+except Exception:  # pragma: no cover
+    try:
+        from live_logger import log_event as _emit  # type: ignore
+    except Exception:  # pragma: no cover
+        def _emit(provider: str, model: Optional[str], status: str, latency_ms: int, count: int = 0, **kw: Any) -> None:
+            pass  # no-op
+
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO), format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 log = logging.getLogger("gpt_analyze")
 
 BASE_DIR = Path(os.getenv("APP_BASE") or os.getcwd()).resolve()
@@ -415,23 +428,16 @@ def _sources_footer_html(news: List[Dict[str, Any]], tools: List[Dict[str, Any]]
         return "<ul class='source-list'>" + "".join(lis) + "</ul>"
     return "<div class='grid'>" + "<div><h4>News</h4>" + _mk(news,"News") + "</div>" + "<div><h4>Tools</h4>" + _mk(tools,"Tools") + "</div>" + "<div><h4>" + ("Förderungen" if lang.startswith("de") else "Funding") + "</h4>" + _mk(funding,"Förderungen") + "</div>" + "</div>"
 
-def _business_case_block(case: BusinessCase, lang: str) -> str:
-    payback = f"{case.payback_months:.1f}"
-    roi = _fmt_pct(case.roi_year1_pct, lang)
-    invest = _fmt_money_eur(case.invest_eur, lang)
-    save = _fmt_money_eur(case.save_year_eur, lang)
-    label_invest = "Invest" if lang.startswith("de") else "Invest"
-    label_save = "Ersparnis/Jahr" if lang.startswith("de") else "Savings/year"
-    label_payback = "Payback"
-    label_roi = "ROI Jahr 1" if lang.startswith("de") else "ROI year 1"
-    return ("<div class='card'><h2>ROI & Payback</h2>"
-            f"<p><b>{label_invest}:</b> ~{_nbsp(invest)} | <b>{label_save}:</b> ~{_nbsp(save)} | "
-            f"<b>{label_payback}:</b> ~{payback} Monate | <b>{label_roi}:</b> ~{roi}</p>"
-            "<div class='footnotes'>Formel: Invest/Monate × 12; konservative Annahmen.</div></div>")
-
 # ---------------- Glue ----------------
 
 def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
+    # Boot snapshot to help diagnose env/model
+    _emit("analyzer", None, "boot", 0, 0, extra={
+        "hybrid_live": os.getenv("HYBRID_LIVE", "1"),
+        "pplx_model_effective": (os.getenv("PPLX_MODEL") or "").strip() or "auto",
+        "search_windows": {"news": SEARCH_DAYS_NEWS, "tools": SEARCH_DAYS_TOOLS, "funding": SEARCH_DAYS_FUNDING},
+    })
+
     n = normalize_briefing(raw, lang=lang)
     score = compute_scores(n)
     case = business_case(n)
@@ -488,7 +494,7 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
            .replace("{{PROFILE_HTML}}", _profile_html(n))
            .replace("{{KPI_BARS_HTML}}", _kpi_bars_html(score))
            .replace("{{BENCHMARK_TABLE_HTML}}", _benchmark_table_html(score))
-           .replace("{{BUSINESS_CASE_HTML}}", _business_case_block(case, lang))
+           .replace("{{BUSINESS_CASE_HTML}}", business_block or "")
            .replace("{{EXEC_SUMMARY_HTML}}", exec_llm)
            .replace("{{QUICK_WINS_HTML}}", quick)
            .replace("{{ROADMAP_HTML}}", roadmap)
@@ -497,13 +503,6 @@ def build_html_report(raw: Dict[str, Any], lang: str = "de") -> Dict[str, Any]:
            .replace("{{NEWS_HTML}}", _list_html(news, "Keine aktuellen News (30–60 Tage überprüft)." if lang.startswith("de") else "No recent news (30–60 days)."))
            .replace("{{TOOLS_HTML}}", _list_html(tools, "Keine passenden Tools gefunden." if lang.startswith("de") else "No matching tools."))
            .replace("{{FUNDING_HTML}}", _list_html(funding, "Keine aktuellen Einträge." if lang.startswith("de") else "No current items.", berlin_badge=True))
-           .replace("{{RECOMMENDATIONS_BLOCK}}", f"<section class='card'><h2>Recommendations</h2>{recs}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{GAMECHANGER_BLOCK}}", f"<section class='card'><h2>Gamechanger</h2>{game}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{VISION_BLOCK}}", f"<section class='card'><h2>Vision</h2>{vision}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{PERSONA_BLOCK}}", f"<section class='card'><h2>Persona</h2>{persona}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{PRAXIS_BLOCK}}", f"<section class='card'><h2>Praxisbeispiel</h2>{praxis}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{COACH_BLOCK}}", f"<section class='card'><h2>Coach</h2>{coach}<div class='meta'>{'Stand' if lang.startswith('de') else 'As of'}: {report_date}</div></section>")
-           .replace("{{DOC_DIGEST_BLOCK}}", digest or "")
            .replace("{{SOURCES_FOOTER_HTML}}", _sources_footer_html(news, tools, funding, lang))
     )
     return {"html": html, "meta": {"score": score.total, "badge": score.badge, "date": report_date,
