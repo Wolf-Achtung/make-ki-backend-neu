@@ -1,12 +1,10 @@
 {
   "de": {
-    "beratung": "<p>Beratung: Typische KI-Hebel liegen in Wiederverwendung von Wissen, Prozessautomatisierung (Briefing → Auswertung) und Lead-Generierung. Für Solo- und Kleinteams empfehlen sich schlanke, auditierbare Workflows mit klaren Freigaben, Datenschutz‑Check und Vorlagensammlung.</p><p>Ein schneller Start gelingt mit einem gut gepflegten Prompt‑/Vorlagen‑Set, strukturierten Fragebögen und einer minimalen Toolchain (Text, Tabellen, Automatisierung). Danach folgen Trainings und Fallstudien.</p>",
-    "it": "<p>IT/Software: Fokus auf Dev‑Produktivität, Test‑/Eval‑Pipelines und sicheres Prompt‑Management. Achten Sie auf Geheimnisschutz, Audit‑Logs und reproduzierbare Builds.</p>",
-    "default": "<p>Branchenfokus: Wählen Sie 2–3 priorisierte Use‑Cases mit hoher Hebelwirkung und klarem Nachweis. Dokumentieren Sie Risiken und prüfen Sie Förderprogramme (Digitalisierung/Innovation) – siehe Kapitel „Förderungen“.</p>"
+    "default": "In Ihrer Branche gilt: messbarer Nutzen schlägt große Plattformen. Starten Sie mit 2–3 konkreten Anwendungsfällen, die Datenfluss, Qualität und rechtliche Anforderungen berücksichtigen. Bauen Sie entlang der Nutzung aus.",
+    "beratung": "Beratung profitiert besonders von wiederholbaren Mustern: Intake‑Fragebogen → Auswertung → Empfehlung. Achten Sie auf Datenminimierung, klare Haftungsabgrenzungen und nachvollziehbare Entscheidungslogik."
   },
   "en": {
-    "consulting": "<p>Consulting: Key levers are knowledge reuse, process automation (intake → analysis) and lead generation. For solo/small teams, start with lean, auditable workflows, privacy checks and a template library.</p><p>Kick off with a curated prompt/template set, structured questionnaires and a minimal toolchain (text, spreadsheets, automation). Follow with training and case stories.</p>",
-    "it": "<p>IT/Software: Focus on dev productivity, test/eval pipelines and safe prompt management. Protect secrets, enable audit logs and reproducible builds.</p>",
-    "default": "<p>Industry focus: Select 2–3 high‑leverage use cases with measurable proof. Document risks and check funding options – see the “Funding” chapter.</p>"
+    "default": "In your sector, measurable value beats big platforms. Start with 2–3 concrete use cases that respect data flows, quality and legal duties. Expand along actual usage.",
+    "consulting": "Consulting benefits from repeatable patterns: intake form → analysis → recommendation. Emphasise data minimisation, liability boundaries and explainable decision logic."
   }
 }

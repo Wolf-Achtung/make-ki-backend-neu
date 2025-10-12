@@ -1,7 +1,6 @@
-name,region,zielgruppe,foerderart,einsatz,link
-ZIM (Zentrales Innovationsprogramm Mittelstand),bund,KMU,Zuschuss,Industrielle Forschung & Entwicklung,https://www.zim.de
-BMBF – IKT Forschung,bund,KMU/Hochschule/ZIM-Kooperation,Zuschuss,KI/IKT Projekte,https://www.bmbf.de
-KfW Digitalisierungsförderung,bund,KMU/Dienstleister,Kredit,Digitale Investitionen,https://www.kfw.de
-IBB Digitalprämie,berlin,KMU/Zwischengröße,Zuschuss,Digitalisierung & KI,https://www.ibb.de
-NRW.Bank Digitalisierungskredit,nrw,KMU,Kredit,Digitale Investitionen,https://www.nrwbank.de
-L-Bank Digitalisierungsprämie,baden-württemberg,KMU,Kredit/Zuschuss,Digitalisierung,https://www.l-bank.de
+name,region,url,date
+ZIM – Zentrales Innovationsprogramm Mittelstand,DE,https://www.zim.de/,
+BMBF IKT/Digital – themenoffene Calls,DE,https://www.bmbf.de/,
+KfW – Digital jetzt / ERP-Digitalisierung,DE,https://www.kfw.de/,
+IBB Digitalprämie – Berlin (sofern offen),BE,https://www.ibb.de/,
+NRW.Bank Digitalisierungskredit – NRW,NW,https://www.nrwbank.de/,
