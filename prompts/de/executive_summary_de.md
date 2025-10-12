@@ -1,17 +1,15 @@
-# Executive Summary (3 Kernaussagen mit Δ/Zeitrahmen/Owner)
-Kontext (Briefing, Scoring, Benchmarks) liegt in JSON vor.
-Erzeuge **nur ein sauberes HTML-Fragment** ohne <html>/<head>/<body>, kurze Absätze.
+### Executive Summary (DE)
 
-## Daten
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
+Kontext (Briefing, Scores, Benchmarks als JSON sind verfügbar in den Variablen):
+- BRIEFING_JSON, SCORING_JSON, BENCHMARKS_JSON, TOOLS_JSON, FUNDING_JSON, BUSINESS_JSON
 
-## Anforderungen
-- präzise, verständliche Sprache; motivierend, ohne Marketing-Floskeln
-- konkrete, umsetzbare Empfehlungen mit Zeitrahmen (30/60/90 Tage) – falls sinnvoll
-- DSGVO/EU-AI-Act beachten; Risiken klar markieren
-- gib **kein** eigenes CSS aus; kein Titel/H1
+Ziel: Formuliere drei präzise Kernaussagen zu **Top‑Δ**, **Quick Wins (≤60 Tage)** und **Payback**. 
+- Keine Floskeln, keine überzogenen Versprechen. 
+- Schreibe als HTML-Fragment mit <p> und <ul>/<li>.
+
+Liefere:
+<ul>
+<li><b>Top‑Δ:</b> Ein Satz, der die größte positive oder negative Abweichung vs. Benchmark in Klartext benennt und warum sie wichtig ist.</li>
+<li><b>Quick Wins:</b> 2–3 Sofortmaßnahmen inkl. erwarteter Wirkung.</li>
+<li><b>Payback:</b> Ein Satz mit dem berechneten Payback (≤ {{BUSINESS_JSON.payback_months}} Monate) und was das operativ bedeutet.</li>
+</ul>
