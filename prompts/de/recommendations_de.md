@@ -1,17 +1,9 @@
-# Empfehlungen (Tools/Prozesse)
-Kontext (Briefing, Scoring, Benchmarks) liegt in JSON vor.
-Erzeuge **nur ein sauberes HTML-Fragment** ohne <html>/<head>/<body>, kurze Absätze.
+<!-- prompts/de/recommendations_de.md -->
+## Handlungsempfehlungen – priorisiert
 
-## Daten
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
+Valides HTML‑Fragment (ohne `<html>`/`<body>`), 2–3 Absätze. Fokussiere auf **reife, risikoarme** Schritte mit klarer Verantwortlichkeit (Owner) und Artefakten (Policy, Register, Tests). Vermeide Zahlen.
 
-## Anforderungen
-- präzise, verständliche Sprache; motivierend, ohne Marketing-Floskeln
-- konkrete, umsetzbare Empfehlungen mit Zeitrahmen (30/60/90 Tage) – falls sinnvoll
-- DSGVO/EU-AI-Act beachten; Risiken klar markieren
-- gib **kein** eigenes CSS aus; kein Titel/H1
+**Branchen-Booster (nur Hintergrund):**
+{{BRANCH_SNIPPET}}
+
+Nutze {{BRIEFING_JSON}}, {{SCORING_JSON}} und {{BENCHMARKS_JSON}}.

@@ -1,17 +1,9 @@
-# Quick Wins (3–5 Schritte)
-Kontext (Briefing, Scoring, Benchmarks) liegt in JSON vor.
-Erzeuge **nur ein sauberes HTML-Fragment** ohne <html>/<head>/<body>, kurze Absätze.
+<!-- prompts/de/quick_wins_de.md -->
+## Quick Wins – 30/60/90 Tage
 
-## Daten
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
+Schreibe **ausschließlich ein valides HTML‑Fragment** (ohne `<html>`/`<body>`). 2–3 Absätze mit **konkreten, realistischen Maßnahmen** für 30/60/90 Tage; keine Listen. Vermeide Prozent-/Euro‑Angaben.
 
-## Anforderungen
-- präzise, verständliche Sprache; motivierend, ohne Marketing-Floskeln
-- konkrete, umsetzbare Empfehlungen mit Zeitrahmen (30/60/90 Tage) – falls sinnvoll
-- DSGVO/EU-AI-Act beachten; Risiken klar markieren
-- gib **kein** eigenes CSS aus; kein Titel/H1
+**Branchen-Booster (nur Hintergrund):**
+{{BRANCH_SNIPPET}}
+
+Nutze die Informationen aus {{BRIEFING_JSON}} und {{SCORING_JSON}} (Δ‑Werte beachten). Lege einen Schwerpunkt auf Sicherheit/Compliance‑Baseline und 1–2 wertstiftende Automatisierungen.

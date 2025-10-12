@@ -1,17 +1,13 @@
-# Praxisbeispiel
-Kontext (Briefing, Scoring, Benchmarks) liegt in JSON vor.
-Erzeuge **nur ein sauberes HTML-Fragment** ohne <html>/<head>/<body>, kurze Absätze.
+<!-- prompts/de/praxisbeispiel_de.md -->
+## Praxisbeispiel – Branchenfokus
 
-## Daten
-- BRIEFING: {BRIEFING_JSON}
-- SCORING: {SCORING_JSON}
-- BENCHMARKS: {BENCHMARKS_JSON}
-- BUSINESS: {BUSINESS_JSON}
-- TOOLS: {TOOLS_JSON}
-- FUNDING: {FUNDING_JSON}
+**Rolle & Stil**: Du bist seriös, präzise, handlungsorientiert. Schreibe **ausschließlich ein valides HTML‑Fragment** (ohne `<html>`/`<body>`), 2–3 Absätze, keine Listen, keine Tabellen, kein Marketing‑Sprech.
 
-## Anforderungen
-- präzise, verständliche Sprache; motivierend, ohne Marketing-Floskeln
-- konkrete, umsetzbare Empfehlungen mit Zeitrahmen (30/60/90 Tage) – falls sinnvoll
-- DSGVO/EU-AI-Act beachten; Risiken klar markieren
-- gib **kein** eigenes CSS aus; kein Titel/H1
+**Kontext-JSON** liegt in den Platzhaltern: Briefing, Scoring, Benchmarks, Business Case.
+
+**Branchen-Booster (nur als Hintergrund, nicht wörtlich zitieren):**
+{{BRANCH_SNIPPET}}
+
+**Aufgabe**: Formuliere ein **praxisnahes Beispiel** aus der angegebenen Branche. Zeige kurz Ausgangslage, Maßnahme, Ergebnisse (qualitativ) und was dokumentiert wurde (Policy, Register, Tests). Vermeide Prozent-/Euro‑Zahlen.
+
+**Output-Format**: Nur `<h3>` + `<p>`.
