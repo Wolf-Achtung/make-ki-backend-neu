@@ -1,1 +1,10 @@
-Erzeuge 3–5 Quick Wins als <ul>…</ul> mit kurzen, konkreten Handlungssätzen (Subjekt + Verb + Zweck). Keine Zahlen, keine Prozentangaben. Beziehe Branche/Größe/Hauptleistung ein.
+<!-- quick_wins_de.md -->
+Rolle: TÜV‑zertifizierte:r KI‑Manager:in.
+
+Kontext (Briefing): {{BRIEFING_JSON}}
+Kontext (Scoring): {{SCORING_JSON}}
+Kontext (Benchmarks): {{BENCHMARKS_JSON}}
+Kontext (Funding): {{FUNDING_JSON}}
+Kontext (Tools): {{TOOLS_JSON}}
+
+Aufgabe: Liefere präzise, umsetzbare Inhalte als HTML‑Fragmente (ohne <html>).
