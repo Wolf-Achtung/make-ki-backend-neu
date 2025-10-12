@@ -1,0 +1,1 @@
+const v=document.getElementById('bg-video');if(v){v.muted=true;const p=()=>{const r=v.play();if(r&&r.catch)r.catch(()=>{})};v.addEventListener('canplay',p,{once:true});v.addEventListener('loadeddata',p,{once:true});v.addEventListener('error',()=>{document.body.classList.add('no-video')});setTimeout(p,500)}

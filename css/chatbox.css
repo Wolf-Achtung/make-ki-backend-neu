@@ -1,0 +1,24 @@
+/* chatbox.css — Glas-Dock unten + Output-Panel */
+.chat-output{
+  position:fixed; left:24px; right:24px; bottom:90px; max-height:40vh; overflow:auto;
+  background: rgba(8,14,20,.64); border:1px solid rgba(255,255,255,.14); border-radius:16px;
+  padding:12px 14px; backdrop-filter: blur(10px); color:#e8f4ff; white-space:pre-wrap;
+  display:none; z-index:40; box-shadow: 0 12px 38px rgba(0,0,0,.35);
+}
+.chat-output.show{ display:block; }
+.msg{ display:flex; margin:.35rem 0; }
+.msg .bubble{ max-width:min(70ch,92%); padding:.7rem .9rem; border-radius:14px; }
+.msg.user{ justify-content:flex-end; }
+.msg.user .bubble{ background: rgba(120,255,180,.14); color:#eafff2; border:1px solid rgba(120,255,180,.4); }
+.msg.assistant .bubble{ background: rgba(255,255,255,.08); color:#e8f4ff; border:1px solid rgba(255,255,255,.14); }
+
+/* Dock-Leiste (optional, falls noch nicht vorhanden) */
+.chat-dock{
+  position:fixed; left:24px; right:24px; bottom:18px; display:flex; gap:10px; align-items:center;
+  background: rgba(8,14,20,.64); border:1px solid rgba(255,255,255,.14); border-radius:16px;
+  padding:10px; backdrop-filter: blur(10px); z-index:41; box-shadow: 0 12px 38px rgba(0,0,0,.35);
+}
+.chat-dock input{ flex:1; background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+  color:#e8f4ff; padding:12px 14px; border-radius:12px; outline:none; }
+.chat-dock button{ background: linear-gradient(180deg,#6c8cff,#4255ff); color:#fff; border:0; padding:10px 16px;
+  border-radius:12px; font-weight:700; cursor:pointer; box-shadow: 0 10px 24px rgba(66,85,255,.35); }

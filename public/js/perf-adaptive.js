@@ -1,0 +1,1 @@
+(function(){let f=0,s=performance.now();function t(){f++;if(performance.now()-s>1500){localStorage.setItem('perf_bucket',String(Math.round(f/((performance.now()-s)/1000))));return;}requestAnimationFrame(t);}requestAnimationFrame(t);})();

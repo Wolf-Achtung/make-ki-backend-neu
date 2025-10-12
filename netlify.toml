@@ -1,0 +1,20 @@
+[build]
+  publish = "public"
+  command = "echo 'Static build only'"
+
+[[redirects]]
+  from = "/api/*"
+  to = ":API_BASE/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/chat-sse"
+  to = ":API_BASE/chat-sse"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

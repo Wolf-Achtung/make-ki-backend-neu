@@ -1,0 +1,1 @@
+Bitte 'videos/road.mp4' hierher kopieren (unter public/videos/).
