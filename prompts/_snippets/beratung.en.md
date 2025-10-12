@@ -1,0 +1,1 @@
+<p><strong>Sector Booster (Consulting):</strong> Consulting benefits from reusable templates, clear privacy patterns and a modular service portfolio. Examples: standardised discovery workshops, audit bundles (policy, registry, DPIA), small automations (email, offer drafts) and case studies for acquisition.</p>

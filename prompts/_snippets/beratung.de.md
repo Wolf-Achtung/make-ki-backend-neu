@@ -1,0 +1,1 @@
+<p><strong>Branchen-Booster (Beratung):</strong> Beratungen profitieren von schlanken, wiederverwendbaren Vorlagen, klaren Datenschutzmustern und einem modularen Leistungsportfolio. Beispiele: standardisierte Discovery‑Workshops, Audit‑Pakete (Policy, Register, DPIA), kleine Automationen (E-Mail, Angebotsentwürfe), plus Fallstudien für Akquise.</p>
