@@ -8,6 +8,7 @@ Production API für KI‑Status‑Report (Gold‑Standard+)
 - Perplexity/Tavily Health-Flags
 - /briefing_async robust: bevorzugt build_report(), Fallback analyze_briefing()
 - PDF‑Header‑Logging (X-PDF-Bytes/X-PDF-Limit) zur Diagnose
+- CORS: explizite Origins + optional Credentials (Railway Variablen)
 """
 from __future__ import annotations
 
@@ -86,10 +87,14 @@ SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "KI‑Sicherheit")
 
 MAIL_SUBJECT_PREFIX = os.getenv("MAIL_SUBJECT_PREFIX", "KI‑Ready")
 
-# CORS
-CORS_ALLOW = [o.strip() for o in (os.getenv("CORS_ALLOW_ORIGINS") or "*").split(",") if o.strip()]
-if not CORS_ALLOW:
-    CORS_ALLOW = ["*"]
+# -------- CORS (härtet Preflight-Fehler ab) --------
+def _parse_list_env(name: str, default: str = "") -> list[str]:
+    val = os.getenv(name, default)
+    return [v.strip() for v in (val or "").split(",") if v.strip()]
+
+CORS_ALLOW = _parse_list_env("CORS_ALLOW_ORIGINS", "*")
+CORS_ALLOW_REGEX = os.getenv("CORS_ALLOW_ORIGIN_REGEX", "")
+CORS_ALLOW_CREDENTIALS = os.getenv("CORS_ALLOW_CREDENTIALS", "0").strip().lower() in {"1", "true", "yes"}
 
 # Metrics
 REQUESTS = Counter("app_requests_total", "HTTP requests total", ["method", "path", "status"])
@@ -192,8 +197,8 @@ def _minify_html(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\s+<", "><", s)
-    s = re.sub(r"\s{2,}", " ", s)
+    s = re.sub(r">\\s+<", "><", s)
+    s = re.sub(r"\\s{2,}", " ", s)
     return s.strip()
 
 def _pplx_model_effective(raw: str | None) -> str:
@@ -287,13 +292,18 @@ async def current_user(req: Request):
 
 
 app = FastAPI(title=APP_NAME)
+
+# CORS: Wenn Credentials aktiviert sind, müssen Origins explizit sein.
+allow_origins = ["*"] if (CORS_ALLOW and CORS_ALLOW == ["*"] and not CORS_ALLOW_CREDENTIALS) else (CORS_ALLOW or ["*"])
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ALLOW if CORS_ALLOW else ["*"],
-    allow_credentials=True,
+    allow_origins=allow_origins,
+    allow_origin_regex=CORS_ALLOW_REGEX or None,
+    allow_credentials=CORS_ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # Schema‑Router
 app.include_router(get_schema_router())
 
