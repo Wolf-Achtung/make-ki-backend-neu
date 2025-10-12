@@ -1,116 +1,123 @@
-<!-- filename: templates/pdf_template_en.html -->
+<!-- templates/pdf_template_en.html -->
 <!doctype html>
-<html lang="{{LANG}}">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI Status Report</title>
-  <style>
-    :root{
-      --blue:#0e7490; --blue-700:#0369a1; --orange:#f97316; --muted:#64748b; --ok:#059669; --bad:#b91c1c;
-      --bg:#ffffff; --card:#f8fafc; --ink:#0f172a;
-    }
-    *{box-sizing:border-box}
-    body{font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff;margin:0}
-    .wrap{max-width:780px;margin:24px auto;padding:0 18px}
-    h1{margin:0 0 8px 0;color:var(--ink)}
-    .muted{color:var(--muted)}
-    .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-weight:600;font-size:12px}
-    .badge-gov{background:#ecfeff;color:#0e7490}
-    .badge-eu{background:#eef2ff;color:#3730a3}
-    .badge-media{background:#fef3c7;color:#92400e}
-    .badge-docs{background:#dcfce7;color:#166534}
-    .badge-web{background:#e5e7eb;color:#111827}
-    .badge-de{background:#fee2e2;color:#991b1b}
-    .badge-unk{background:#f3f4f6;color:#334155}
-    .pill{display:inline-block;background:#e2e8f0;padding:2px 8px;border-radius:999px;margin-right:6px}
-    header{display:flex;align-items:center;justify-content:space-between;margin:18px 0}
-    header img{height:32px}
-    .card{background:var(--card);padding:14px 16px;border-radius:10px;border:1px solid #e5e7eb;margin:10px 0}
-    h2{font-size:18px;margin:0 0 10px 0;color:#0f172a}
-    h3{font-size:16px;margin:12px 0 6px 0;color:#0f172a}
-    .kpi .bar{display:grid;grid-template-columns:160px 1fr 140px;gap:8px;align-items:center;margin:8px 0}
-    .bar__track{position:relative;height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden}
-    .bar__fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(to right,#67e8f9,#06b6d4)}
-    .bar__median{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--orange);opacity:.8}
-    .bar__delta{font-variant-numeric:tabular-nums}
-    table{width:100%;border-collapse:collapse;margin:6px 0}
-    th,td{padding:8px;border-bottom:1px solid #e5e7eb;text-align:left}
-    .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    .source-list{padding-left:18px;margin:6px 0}
-    .flag-berlin{background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:6px;margin-left:6px}
-    footer{margin:18px 0 40px 0;color:var(--muted);font-size:12px}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AI Readiness Report</title>
+<style>
+:root{
+  --bg:#ffffff; --text:#1f2937; --muted:#5b6b7c; --card:#f6f8fb;
+  --blue:#2563eb; --orange:#f97316; --green:#16a34a; --red:#dc2626; --amber:#f59e0b;
+  --border:#e5e7eb;
+}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',sans-serif;margin:0;background:var(--bg);color:var(--text)}
+main{max-width:780px;margin:32px auto;padding:0 16px}
+h1{font-size:28px;margin:0 0 8px}
+h2{font-size:20px;margin:16px 0 8px}
+h3{font-size:16px;margin:12px 0 6px}
+p{line-height:1.5;margin:8px 0}
+.muted{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin:12px 0}
+.hl{font-weight:600}
+ul.source-list{margin:8px 0 0 18px;padding:0}
+ul.source-list li{margin:6px 0}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+table{width:100%;border-collapse:collapse}
+th,td{border-top:1px solid var(--border);padding:8px 6px;text-align:left;font-size:14px}
+th{background:#fafafa}
+.kpi .bar{display:flex;align-items:center;margin:8px 0}
+.kpi .label{width:160px;font-weight:600}
+.kpi .bar__track{position:relative;flex:1;height:10px;background:#eef2f7;border-radius:6px;margin-right:10px}
+.kpi .bar__fill{position:absolute;left:0;top:0;height:10px;background:var(--blue);border-radius:6px}
+.kpi .bar__median{position:absolute;top:-3px;width:2px;height:16px;background:var(--orange)}
+.kpi .bar__delta{width:60px;text-align:right;color:var(--muted)}
+.badge{display:inline-block;border-radius:999px;padding:2px 8px;font-size:11px;margin-left:6px;border:1px solid var(--border)}
+.badge--gov{background:#e6f4ff;border-color:#b6e0fe}
+.badge--eu{background:#f0f7ff;border-color:#cddaff}
+.badge--edu{background:#eef7ee;border-color:#cce5cc}
+.badge--org{background:#f6f0ff;border-color:#e0d7ff}
+.badge--news{background:#fff7e6;border-color:#fde1b0}
+.badge--vendor{background:#f3f4f6;border-color:#e5e7eb}
+.badge--blog{background:#fff1f2;border-color:#fecdd3}
+.badge--other{background:#f8fafc;border-color:#e2e8f0}
+.pill{display:inline-block;padding:2px 8px;border-radius:8px;background:#eef2f7;margin-right:8px;font-size:12px}
+table.compat td:nth-child(2), table.compat td:nth-child(3), table.compat td:nth-child(4){font-weight:600}
+.footer-note{margin-top:10px;color:var(--muted);font-size:12px}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>AI Status Report</h1>
-        <div class="muted">As of: {{REPORT_DATE}}</div>
-      </div>
-      <img src="{{ASSETS_BASE}}/logo_ki_ready.png" alt="Logo">
-    </header>
+<main>
+  <header>
+    <h1>AI Readiness Report</h1>
+    <div class="muted">As of: {{REPORT_DATE}}</div>
+  </header>
 
-    <section class="card">
-      <h2>Executive Summary</h2>
-      {{EXEC_SUMMARY_HTML}}
-    </section>
+  <section class="card">
+    <h2>Executive Summary</h2>
+    {{EXEC_SUMMARY_HTML}}
+  </section>
 
-    <section class="card">
-      <h2>Score &amp; Benchmarks</h2>
-      {{KPI_BARS_HTML}}
-      {{BENCHMARK_TABLE_HTML}}
-    </section>
+  <section class="card">
+    <h2>Score &amp; Benchmarks</h2>
+    {{KPI_BARS_HTML}}
+    {{BENCHMARK_TABLE_HTML}}
+  </section>
 
-    <section class="card">
-      <h2>Company Profile</h2>
-      {{PROFILE_HTML}}
-    </section>
+  <section class="card">
+    <h2>Company Profile</h2>
+    {{PROFILE_HTML}}
+  </section>
 
-    <section class="card">
-      <h2>ROI &amp; Payback</h2>
-      {{BUSINESS_CASE_HTML}}
-    </section>
+  <section class="card">
+    <h2>ROI &amp; Payback</h2>
+    {{BUSINESS_CASE_HTML}}
+  </section>
 
-    <section class="card">
-      <h2>Quick Wins</h2>
-      {{QUICK_WINS_HTML}}
-    </section>
+  <section class="card">
+    <h2>Quick Wins</h2>
+    {{QUICK_WINS_HTML}}
+  </section>
 
-    <section class="card">
-      <h2>Roadmap</h2>
-      {{ROADMAP_HTML}}
-    </section>
+  <section class="card">
+    <h2>Roadmap</h2>
+    {{ROADMAP_HTML}}
+  </section>
 
-    <section class="card">
-      <h2>Risk Matrix</h2>
-      {{RISKS_HTML}}
-    </section>
+  <section class="card">
+    <h2>Risk Matrix</h2>
+    {{RISKS_HTML}}
+  </section>
 
-    <section class="card">
-      <h2>Compliance</h2>
-      {{COMPLIANCE_HTML}}
-    </section>
+  <section class="card">
+    <h2>Compliance</h2>
+    {{COMPLIANCE_HTML}}
+  </section>
 
-    <section class="card">
-      <h2>News · Tools · Funding</h2>
-      <div class="grid">
-        <div><h3>News</h3>{{NEWS_HTML}}</div>
-        <div><h3>Tools</h3>{{TOOLS_HTML}}</div>
-        <div><h3>Funding</h3>{{FUNDING_HTML}}</div>
-      </div>
-    </section>
+  <section class="card">
+    <h2>News · Tools · Funding</h2>
+    <h3>News</h3>
+    {{NEWS_HTML}}
+    <h3>Tools</h3>
+    {{TOOLS_HTML}}
+    <h3>Funding</h3>
+    {{FUNDING_HTML}}
+  </section>
 
-    <section class="card">
-      {{GUIDES_HTML}}
-    </section>
+  <section class="card">
+    <h2>Guides &amp; Checklists</h2>
+    {{GUIDES_HTML}}
+  </section>
 
-    <section class="card">
-      <h2>Sources (News, Tools, Funding)</h2>
-      {{SOURCES_FOOTER_HTML}}
-      <footer>As of: {{REPORT_DATE}} · Deduplicated by domain/URL. Badges show trust class.</footer>
-    </section>
-  </div>
+  {{INDUSTRY_SNIPPET_HTML}}
+  {{TOOL_MATRIX_HTML}}
+
+  <section class="card">
+    <h2>Sources (News, Tools, Funding)</h2>
+    {{SOURCES_FOOTER_HTML}}
+    <div class="footer-note">As of: {{REPORT_DATE}} · Duplicates removed by domain/URL. Badges indicate trust class.</div>
+  </section>
+</main>
 </body>
 </html>
