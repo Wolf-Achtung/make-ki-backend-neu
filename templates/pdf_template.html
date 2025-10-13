@@ -1,132 +1,101 @@
+<!-- filename: templates/pdf_template.html -->
 <!doctype html>
-<html lang="{{LANG}}">
+<html lang="de">
 <head>
-<meta charset="utf-8">
-<title>KI-Status-Report</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-:root{
-  --blue:#0b57d0; --blue-200:#dce9ff; --orange:#ff7a00;
-  --text:#102a43; --muted:#5b6b7c; --bg:#ffffff; --card:#f8fafc;
-}
-*{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-     color:var(--text); background:var(--bg); margin:0; padding:24px}
-.container{max-width:780px;margin:0 auto}
-h1{font-size:28px;margin:0 0 4px 0}
-h2{font-size:20px;margin:16px 0 8px}
-h3{font-size:16px;margin:12px 0 6px}
-p{margin:8px 0 10px;line-height:1.45}
-.muted{color:var(--muted)}
-.hl{font-weight:600}
-.card{background:var(--card);border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin:12px 0}
-.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2ff;color:#1f3a8a;margin-right:6px;font-size:12px}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.badge{display:inline-block;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:600;vertical-align:middle}
-.badge--gov{background:#ecfdf5;color:#065f46}
-.badge--news{background:#eef2ff;color:#3730a3}
-.badge--vendor{background:#fff7ed;color:#9a3412}
-.badge--community{background:#fdf2f8;color:#9d174d}
-.badge--edu{background:#f0fdf4;color:#166534}
-.badge--official{background:#f1f5f9;color:#0f172a}
-.flag-berlin{background:#fef3c7;color:#92400e;border-radius:6px;padding:2px 6px;font-size:11px;margin-left:8px}
-/* KPI bars */
-.kpi .bar{display:grid;grid-template-columns:160px 1fr 80px;gap:8px;align-items:center;margin:6px 0}
-.kpi .bar .label{font-weight:600}
-.bar__track{position:relative;height:10px;background:#eef2ff;border-radius:6px;overflow:hidden}
-.bar__fill{position:absolute;left:0;top:0;height:100%;background:var(--blue);opacity:.85}
-.bar__median{position:absolute;top:-1px;width:2px;height:12px;background:var(--orange);opacity:.9}
-.bar__delta{text-align:right;color:var(--muted);font-size:12px}
-/* table */
-table{width:100%;border-collapse:collapse;font-size:14px}
-thead th{background:var(--blue-200);text-align:left;padding:8px}
-td{border-bottom:1px solid #e5e7eb;padding:8px 6px}
-/* source list */
-.source-list{padding-left:18px}
-.source-list li{margin:6px 0}
-/* sparkline (delta) */
-.spark{display:inline-block;width:32px;height:8px;border-radius:4px;margin-right:6px;background:linear-gradient(90deg,#c7f9cc, #34d399)}
-.spark-neg{background:linear-gradient(90deg,#fecaca, #ef4444)}
-/* footer */
-.footer{margin-top:12px;font-size:12px;color:var(--muted)}
-hr.sep{border:0;border-top:1px solid #e5e7eb;margin:18px 0}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KI‑Status‑Report</title>
+  <style>
+    :root{--w:780px;--c1:#0f67ff;--c2:#ff6a00;--ink:#0f172a}
+    *{box-sizing:border-box}
+    body{margin:0;font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink)}
+    main{max-width:var(--w);margin:24px auto;padding:0 16px}
+    h1,h2,h3{line-height:1.25;margin:1.2em 0 .5em}
+    h1{font-size:28px}h2{font-size:20px}h3{font-size:16px}
+    .muted{color:#64748b}
+    .badge{display:inline-block;background:#eef2ff;color:#3730a3;border-radius:6px;padding:.12rem .5rem;font-weight:600}
+    .grid{display:grid;gap:12px}
+    .cards{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .card{border:1px solid #e5e7eb;border-radius:10px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .progress{height:10px;border-radius:8px;background:#e5e7eb;overflow:hidden}
+    .progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--c1),var(--c2))}
+    .spark{width:100%;height:28px}
+    table{border-collapse:collapse;width:100%;margin:.5rem 0}
+    th,td{border-bottom:1px solid #e5e7eb;text-align:left;padding:8px 6px;vertical-align:top}
+    th{font-size:12px;color:#475569;text-transform:uppercase;letter-spacing:.02em}
+    .footer{margin:28px 0 40px;font-size:12px;color:#64748b}
+    @media print{
+      a[href]::after{content:" (" attr(href) ")";font-size:10px;color:#94a3b8}
+      .card{break-inside:avoid}
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>KI‑Status‑Report</h1>
-      <div class="muted">Stand: {{REPORT_DATE}}</div>
-    </div>
+<main>
+  <header>
+    <h1>KI‑Status‑Report <span class="badge">Gold‑Standard+</span></h1>
+    <p class="muted">Stand: <!--DATE--></p>
+  </header>
 
-    <div class="card">
-      <h2>Executive Summary</h2>
-      {{EXEC_SUMMARY_HTML}}
-    </div>
+  <!-- EXECUTIVE SUMMARY -->
+  <section id="exec-summary">
+    <h2>Executive Summary</h2>
+    <!--EXEC_SUMMARY-->
+  </section>
 
-    <div class="card">
-      <h2>Score &amp; Benchmarks</h2>
-      {{KPI_BARS_HTML}}
-      <div style="margin-top:8px">{{BENCHMARK_TABLE_HTML}}</div>
+  <!-- READINESS & Δ -->
+  <section id="readiness">
+    <h2>Readiness &amp; Δ‑Analyse</h2>
+    <div class="grid cards">
+      <!-- For each pillar: -->
+      <!--
+      <article class="card">
+        <h3>Strategie</h3>
+        <div class="progress"><i style="width: 68%"></i></div>
+        <p class="muted">Δ&nbsp;=&nbsp;+12 Punkte (Ziel 80)</p>
+        <svg class="spark" viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg" aria-label="Trend">
+          <polyline fill="none" stroke="currentColor" stroke-width="2"
+            points="0,14 12,12 24,10 36,11 48,8 60,9 72,6 84,7 96,5"/>
+        </svg>
+      </article>
+      -->
+      <!--PILLARS-->
     </div>
+  </section>
 
-    <div class="card">
-      <h2>Unternehmensprofil</h2>
-      {{PROFILE_HTML}}
-    </div>
+  <!-- BENCHMARKS -->
+  <section id="benchmarks">
+    <h2>Benchmarks (Branche × Größe)</h2>
+    <!--BENCHMARKS_TABLE-->
+  </section>
 
-    <div class="card">
-      <h2>ROI &amp; Payback</h2>
-      {{BUSINESS_CASE_HTML}}
-    </div>
+  <!-- RISIKEN & REGULATORIK -->
+  <section id="risks">
+    <h2>Risiken &amp; Regulatorik</h2>
+    <!--RISKS_LIST-->
+  </section>
 
-    <div class="card">
-      <h2>Quick Wins</h2>
-      {{QUICK_WINS_HTML}}
-    </div>
+  <!-- QUICK WINS & ROADMAP -->
+  <section id="roadmap">
+    <h2>Quick Wins (90 Tage) &amp; Roadmap (12 Monate)</h2>
+    <!--ROADMAP-->
+  </section>
 
-    <div class="card">
-      <h2>Roadmap</h2>
-      {{ROADMAP_HTML}}
-    </div>
+  <!-- TOOL-MATRIX -->
+  <section id="tools">
+    <h2>Tool‑Matrix</h2>
+    <!--TOOL_MATRIX_TABLE-->
+  </section>
 
-    <div class="card">
-      <h2>Risikomatrix</h2>
-      {{RISKS_HTML}}
-    </div>
+  <!-- FÖRDERUNG -->
+  <section id="funding">
+    <h2>Fördermöglichkeiten (Bund/Land)</h2>
+    <!--FUNDING_TABLE-->
+  </section>
 
-    <div class="card">
-      <h2>Compliance</h2>
-      {{COMPLIANCE_HTML}}
-    </div>
-
-    <div class="card">
-      <h2>News · Tools · Förderungen</h2>
-      <h3>News</h3>{{NEWS_HTML}}
-      <h3>Tools</h3>{{TOOLS_HTML}}
-      <h3>Förderungen</h3>{{FUNDING_HTML}}
-      <hr class="sep">
-      <div class="footer">
-        <b>Quellen (News, Tools, Förderungen)</b><br>
-        {{SOURCES_FOOTER_HTML}}
-        <div style="margin-top:6px">Stand: {{REPORT_DATE}} · Dedupliziert nach Domain/URL. Badges zeigen die Vertrauensklasse.</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Kompatibilitätsmatrix gängiger KI‑Tools</h2>
-      {{TOOL_MATRIX_HTML}}
-      <p class="muted" style="font-size:12px">Hinweis: Angaben ohne Gewähr, bitte Sicherheits-/Compliance‑Seiten der Anbieter prüfen.</p>
-    </div>
-
-    <div class="card">
-      <h2>Guides &amp; Checklisten</h2>
-      {{CONTENT_PILLARS_HTML}}
-      {{CONTENT_LEGAL_HTML}}
-      {{CONTENT_FORMULA_HTML}}
-    </div>
-
-  </div>
+  <footer class="footer">
+    <!--SOURCES-->
+  </footer>
+</main>
 </body>
 </html>
