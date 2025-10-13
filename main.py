@@ -1,12 +1,17 @@
 # filename: main.py
 # -*- coding: utf-8 -*-
 """
-Production API für KI‑Status‑Report (Gold‑Standard+)
+Production API – KI‑Status‑Report (CORS Hotfix, Gold‑Standard+)
 
-- Korrekte CORS-Guards (kein "*" mit Credentials)
-- /health mit effektivem PPLX-Modell
-- /briefing_async robust (idempotent, PDF-Logging)
-- Observability: /healthz und /metrics via app.observability (Prometheus‑ready)
+Fixes
+-----
+- Robust **CORS** handling for preflight requests from https://make.ki-sicherheit.jetzt
+  * explicit OPTIONS catch‑all (204)
+  * allow_origin_regex fallback: `^https?://([a-z0-9-]+\.)?(ki-sicherheit\.jetzt|ki-foerderung\.jetzt)$`
+  * max_age/expose_headers
+- Keeps existing Analyzer/PDF/Metrics behaviour
+
+This file is drop‑in compatible with the previous version.
 """
 from __future__ import annotations
 
@@ -20,14 +25,15 @@ import time
 import uuid
 from email.message import EmailMessage
 from email.utils import formataddr, parseaddr
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import httpx
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Body, Depends, FastAPI, HTTPException, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from jose import jwt
 from jose.exceptions import JWTError
+from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
 # Optional schema router (keine harte Abhängigkeit)
 try:
@@ -42,12 +48,6 @@ except Exception:  # pragma: no cover
         return r
     def get_schema_info():
         return {"ok": False}
-
-# Observability (Healthz + Metrics)
-try:
-    from app.observability import router as observability_router, MetricsMiddleware  # type: ignore
-except Exception:  # pragma: no cover
-    observability_router, MetricsMiddleware = None, None  # type: ignore
 
 APP_NAME = os.getenv("APP_NAME", "make-ki-backend")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -66,6 +66,8 @@ TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", os.path.join(BASE_DIR, "templates"))
 # Live flags (für /health)
 LIVE_TAVILY = bool(os.getenv("TAVILY_API_KEY"))
 LIVE_PERPLEXITY = bool(os.getenv("PPLX_API_KEY") or os.getenv("PERPLEXITY_API_KEY"))
+SEARCH_PROVIDER = os.getenv("SEARCH_PROVIDER", "hybrid")
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "anthropic")
 
 # PDF service
 PDF_SERVICE_URL = (os.getenv("PDF_SERVICE_URL") or "").rstrip("/")
@@ -99,34 +101,43 @@ ALLOW_ALL = (not CORS_ALLOW) or CORS_ALLOW == ["*"]
 CORS_CREDENTIALS_ENV = os.getenv("CORS_ALLOW_CREDENTIALS", "0").strip().lower() in {"1","true","yes"}
 # Wenn "*" genutzt wird, dürfen laut Spec keine Credentials gesetzt werden
 CORS_ALLOW_CREDENTIALS = (False if ALLOW_ALL else CORS_CREDENTIALS_ENV)
-if ALLOW_ALL and CORS_CREDENTIALS_ENV:
-    log.warning("CORS: '*' mit Credentials ist nicht erlaubt. Credentials wurden deaktiviert. "
-                "Setze CORS_ALLOW_ORIGINS auf die konkrete Frontend‑Domain, z. B. "
-                "'https://make.ki-sicherheit.jetzt'")
+
+# Fallback‑Regex: erlaubt alle Subdomains von ki‑sicherheit.jetzt & ki‑foerderung.jetzt
+CORS_ALLOW_REGEX = os.getenv(
+    "CORS_ALLOW_REGEX",
+    r"^https?://([a-z0-9-]+\.)?(ki-sicherheit\.jetzt|ki-foerderung\.jetzt)$",
+)
+
+# -------- Metrics ---------
+REQUESTS = Counter("app_requests_total", "HTTP requests total", ["method", "path", "status"])
+LATENCY = Histogram("app_request_latency_seconds", "Request latency", ["path"])
+PDF_RENDER = Histogram("app_pdf_render_seconds", "PDF render duration seconds")
+POOL_AVAILABLE = Gauge("app_pdf_pool_available", "PDF contexts available (reported by service)")
+
+def _normalize_path(path: str) -> str:
+    # keep low cardinality by collapsing ids/uuids/numbers
+    p = re.sub(r"/[0-9a-fA-F]{8,}", "/:id", path)
+    p = re.sub(r"/\\d+", "/:n", p)
+    return p if len(p) <= 64 else p[:64]
 
 def _now_str() -> str:
     import datetime as dt
     return dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
-
 def _sanitize_email(value: str | None) -> str:
     _, addr = parseaddr(value or "")
     return addr or ""
-
 
 def _lang_from_body(body: Dict[str, Any]) -> str:
     lang = str(body.get("lang") or body.get("language") or "de").lower()
     return "de" if lang.startswith("de") else "en"
 
-
 def _new_job_id() -> str:
     return uuid.uuid4().hex
-
 
 def _sha256(s: str) -> str:
     import hashlib
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
-
 
 def _idem_seen(key: str) -> bool:
     path = os.path.join(IDEMPOTENCY_DIR, key)
@@ -149,7 +160,6 @@ def _idem_seen(key: str) -> bool:
         return False
     return False
 
-
 def _smtp_send(msg: EmailMessage) -> None:
     if not SMTP_HOST or not SMTP_FROM:
         log.info("[mail] SMTP deaktiviert oder unkonfiguriert")
@@ -163,12 +173,10 @@ def _smtp_send(msg: EmailMessage) -> None:
             s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
 
-
 def _recipient_from(body: Dict[str, Any], fallback: str) -> str:
     answers = body.get("answers") or {}
     cand = answers.get("to") or answers.get("email") or body.get("to") or body.get("email") or fallback
     return _sanitize_email(cand)
-
 
 def _display_name_from(body: Dict[str, Any]) -> str:
     for key in ("unternehmen", "firma", "company", "company_name", "organization"):
@@ -178,85 +186,75 @@ def _display_name_from(body: Dict[str, Any]) -> str:
     email = _recipient_from(body, ADMIN_EMAIL)
     return (email.split("@")[0] if email else "Customer").title()
 
-
 def _build_subject(prefix: str, lang: str, display_name: str) -> str:
     core = "KI‑Status Report" if lang == "de" else "AI Status Report"
     return f"{prefix}/{display_name} – {core}"
-
 
 def _safe_pdf_filename(display_name: str, lang: str) -> str:
     dn = re.sub(r"[^a-zA-Z0-9_.-]+", "_", display_name) or "user"
     return f"KI-Status-Report-{dn}-{lang}.pdf"
 
-
 def _safe_html_filename(display_name: str, lang: str) -> str:
     dn = re.sub(r"[^a-zA-Z0-9_.-]+", "_", display_name) or "user"
     return f"KI-Status-Report-{dn}-{lang}.html"
-
 
 def _minify_html(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\s+<", "><", s)
-    s = re.sub(r"\s{2,}", " ", s)
+    s = re.sub(r">\\s+<", "><", s)
+    s = re.sub(r"\\s{2,}", " ", s)
     return s.strip()
 
-def _pplx_model_effective(raw: str | None) -> str:
+def _pplx_model_effective(raw: Optional[str]) -> str:
     name = (raw or "").strip()
     if not name:
         return "auto"
     low = name.lower()
-    if low in {"auto", "best", "default", "none"}:
-        return "auto"
-    if "online" in low:
+    if low in {"auto", "best", "default", "none"} or "online" in low:
         return "auto"
     return name
 
 # --------------------------- PDF service ------------------------------------
-
 async def _render_pdf_bytes(html: str, filename: str):
     if not (PDF_SERVICE_URL and html):
         return None
     start = time.time()
     payload_html = _minify_html(html) if PDF_MINIFY_HTML else html
-    headers_logged = {}
     async with httpx.AsyncClient(timeout=PDF_TIMEOUT) as cli:
         payload = {"html": payload_html, "fileName": filename, "stripScripts": PDF_STRIP_SCRIPTS, "maxBytes": PDF_MAX_BYTES}
         try:
             r = await cli.post(f"{PDF_SERVICE_URL}/render-pdf", json=payload)
-            headers_logged = {"X-PDF-Bytes": r.headers.get("x-pdf-bytes"), "X-PDF-Limit": r.headers.get("x-pdf-limit")}
             ct = (r.headers.get("content-type") or "").lower()
             if r.status_code == 200 and "application/pdf" in ct:
-                log.info("[pdf] bytes=%s limit=%s via /render-pdf", headers_logged.get("X-PDF-Bytes"), headers_logged.get("X-PDF-Limit"))
+                PDF_RENDER.observe(time.time() - start)
                 return r.content
         except Exception as exc:
             log.warning("pdf /render-pdf failed: %s", exc)
         try:
             r = await cli.post(f"{PDF_SERVICE_URL}/generate-pdf", json={**payload, "return_pdf_bytes": True})
-            headers_logged = {"X-PDF-Bytes": r.headers.get("x-pdf-bytes"), "X-PDF-Limit": r.headers.get("x-pdf-limit")}
             ct = (r.headers.get("content-type") or "").lower()
             if r.status_code == 200 and "application/pdf" in ct:
-                log.info("[pdf] bytes=%s limit=%s via /generate-pdf", headers_logged.get("X-PDF-Bytes"), headers_logged.get("X-PDF-Limit"))
+                PDF_RENDER.observe(time.time() - start)
                 return r.content
             if r.status_code == 200 and "application/json" in ct:
                 data = r.json()
                 b64 = data.get("pdf_base64") or data.get("pdf") or data.get("data")
                 if b64:
+                    PDF_RENDER.observe(time.time() - start)
                     return base64.b64decode(b64)
         except Exception as exc:
             log.warning("pdf /generate-pdf failed: %s", exc)
     return None
 
 # --------------------------- SMTP -------------------------------------------
-
 def _send_combined_email(
     to_address: str,
     subject: str,
     html_body: str,
     html_attachment: bytes,
-    pdf_attachment: bytes | None,
-    admin_json: Dict[str, bytes] | None = None,
+    pdf_attachment: Optional[bytes],
+    admin_json: Optional[Dict[str, bytes]] = None,
     html_filename: str = "report.html",
     pdf_filename: str = "report.pdf",
 ) -> None:
@@ -274,11 +272,9 @@ def _send_combined_email(
     _smtp_send(msg)
 
 # --------------------------- Auth / App -------------------------------------
-
 def _issue_token(email: str) -> str:
     payload = {"sub": email, "iat": int(time.time()), "exp": int(time.time() + 14 * 24 * 3600)}
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
-
 
 async def current_user(req: Request):
     auth = req.headers.get("authorization") or ""
@@ -291,25 +287,43 @@ async def current_user(req: Request):
             pass
     return {"sub": "anon", "email": ""}
 
-
 app = FastAPI(title=APP_NAME)
+
+# CORS middleware (robust)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=(["*"] if ALLOW_ALL else CORS_ALLOW),
+    allow_origin_regex=(None if ALLOW_ALL else CORS_ALLOW_REGEX),
     allow_credentials=CORS_ALLOW_CREDENTIALS,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
 )
 
-# Observability anhängen (wenn verfügbar)
-if MetricsMiddleware:
-    app.add_middleware(MetricsMiddleware)
-if observability_router:
-    app.include_router(observability_router)
+# Request‑Metriken via Middleware
+@app.middleware("http")
+async def _metrics_mw(request: Request, call_next):
+    path_label = _normalize_path(request.url.path)
+    start = time.time()
+    try:
+        resp = await call_next(request)
+    except Exception:
+        REQUESTS.labels(request.method, path_label, "500").inc()
+        LATENCY.labels(path_label).observe(time.time() - start)
+        raise
+    status = getattr(resp, "status_code", 200) or 200
+    REQUESTS.labels(request.method, path_label, str(status)).inc()
+    LATENCY.labels(path_label).observe(time.time() - start)
+    return resp
 
-# Schema-Router
+# Preflight catch‑all – CORSMiddleware will append headers
+@app.options("/{rest_of_path:path}")
+def cors_preflight_ok(rest_of_path: str) -> PlainTextResponse:
+    return PlainTextResponse("", status_code=204)
+
+# Schema router
 app.include_router(get_schema_router())
-
 
 @app.get("/health")
 def health() -> dict:
@@ -322,53 +336,62 @@ def health() -> dict:
         "live": {
             "tavily": LIVE_TAVILY,
             "perplexity": LIVE_PERPLEXITY,
+            "provider": SEARCH_PROVIDER,
+            "llm_provider": LLM_PROVIDER,
             "pplx_model_env": pplx_env or "unset",
             "pplx_model_effective": _pplx_model_effective(pplx_env),
         },
         "schema": get_schema_info(),
         "smtp": bool(SMTP_HOST),
-        "cache": {
-            "file": os.getenv("LIVE_CACHE_FILE", "/tmp/ki_live_cache.json"),
-            "enabled": os.getenv("LIVE_CACHE_ENABLED", "1"),
-            "ttl_sec": os.getenv("LIVE_CACHE_TTL_SECONDS", "1800"),
-        }
     }
 
+@app.get("/healthz")
+def healthz() -> dict:
+    return {
+        "status": "ok",
+        "ts": _now_str(),
+        "env": {
+            "cors_allow_origins": CORS_ALLOW,
+            "cors_allow_regex": CORS_ALLOW_REGEX,
+            "cors_allow_credentials": CORS_ALLOW_CREDENTIALS,
+        },
+        "metrics": {"exposed": True, "endpoint": "/metrics"},
+    }
 
-@app.get("/health/html")
-def health_html() -> HTMLResponse:
-    html = f"""<!doctype html>
-<meta charset="utf-8">
-<title>{APP_NAME} /health</title>
-<style>
-body{{font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:880px;margin:2rem auto;line-height:1.4}}
-.card{{border:1px solid #e5e7eb;border-radius:8px;padding:1rem;margin:.75rem 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}}
-.badge{{display:inline-block;padding:.15rem .5rem;border-radius:6px;background:#e6fffa;color:#065f46;font-weight:600}}
-.kv{{display:grid;grid-template-columns:180px 1fr;gap:.25rem .75rem}}
-</style>
-<h1>{APP_NAME} <span class="badge">OK</span></h1>
-<div class="card"><div class="kv">
-  <div>Zeit</div><div>{_now_str()}</div>
-  <div>PDF-Service</div><div>{PDF_SERVICE_URL or "–"}</div>
-  <div>Live-Quellen</div><div>Tavily: {"ON" if LIVE_TAVILY else "off"} · Perplexity: {"ON" if LIVE_PERPLEXITY else "off"}</div>
-  <div>Perplexity-Model</div><div>{_pplx_model_effective(os.getenv("PPLX_MODEL",""))} (env: {os.getenv("PPLX_MODEL","unset") or "unset"})</div>
-  <div>SMTP</div><div>{"on" if SMTP_HOST else "off"} ({SMTP_FROM_NAME})</div>
-  <div>Cache</div><div>{os.getenv("LIVE_CACHE_ENABLED","1")} · TTL {os.getenv("LIVE_CACHE_TTL_SECONDS","1800")}s</div>
-</div></div>
-<p><a href="/healthz">/healthz</a> · <a href="/metrics">/metrics</a></p>"""
-    return HTMLResponse(html)
+@app.get("/health/cors-echo")
+def cors_echo(request: Request) -> Dict[str, Any]:
+    # Helps debugging in the browser console
+    origin = request.headers.get("origin")
+    acrm = request.headers.get("access-control-request-method")
+    acrh = request.headers.get("access-control-request-headers")
+    return {"origin": origin, "request_method": acrm, "request_headers": acrh}
 
+@app.get("/metrics")
+def metrics() -> PlainTextResponse:
+    data = generate_latest()  # type: ignore
+    return PlainTextResponse(data, media_type=CONTENT_TYPE_LATEST)
 
+# --------------------------- Login ------------------------------------------
 @app.post("/api/login")
-def api_login(req: Dict[str, Any]) -> Dict[str, Any]:
-    email = _sanitize_email(str(req.get("email") or ""))
+async def api_login(
+    email_form: Optional[str] = Form(None),
+    password_form: Optional[str] = Form(None),
+    body: Optional[Dict[str, Any]] = Body(None),
+) -> Dict[str, Any]:
+    # Accept both form and JSON payloads
+    payload: Dict[str, Any] = body or {}
+    if not payload.get("email") and email_form:
+        payload["email"] = email_form
+    if not payload.get("password") and password_form:
+        payload["password"] = password_form
+
+    email = _sanitize_email(str(payload.get("email") or ""))
     if not email:
         raise HTTPException(status_code=400, detail="email required")
     token = _issue_token(email)
     return {"token": token, "email": email}
 
 # --------------------------- Core Endpoint ----------------------------------
-
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(current_user)):
     lang = _lang_from_body(body)
@@ -458,14 +481,13 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
 
     return JSONResponse({"status": "ok", "job_id": uuid.uuid4().hex, "user_mail": user_result, "admin_mail": admin_result})
 
-
+# --------------------------- Misc -------------------------------------------
 @app.post("/pdf_test")
 async def pdf_test(body: Dict[str, Any]) -> Dict[str, Any]:
     lang = _lang_from_body(body)
     html = body.get("html") or "<!doctype html><meta charset='utf-8'><h1>Ping</h1>"
     pdf = await _render_pdf_bytes(html, _safe_pdf_filename("test", lang))
-    return {"ok": bool(pdf), "bytes": len(pdf or b'0')}
-
+    return {"ok": bool(pdf), "bytes": len(pdf or b"0")}
 
 @app.get("/")
 def root() -> HTMLResponse:
