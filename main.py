@@ -1,17 +1,16 @@
 # filename: main.py
 # -*- coding: utf-8 -*-
 """
-Production API – KI‑Status‑Report (CORS Hotfix, Gold‑Standard+)
+KI‑Status‑Report Backend – Gold‑Standard+ (Best of Both Worlds)
 
-Fixes
------
-- Robust **CORS** handling for preflight requests from https://make.ki-sicherheit.jetzt
-  * explicit OPTIONS catch‑all (204)
-  * allow_origin_regex fallback: `^https?://([a-z0-9-]+\.)?(ki-sicherheit\.jetzt|ki-foerderung\.jetzt)$`
-  * max_age/expose_headers
-- Keeps existing Analyzer/PDF/Metrics behaviour
-
-This file is drop‑in compatible with the previous version.
+Vereint:
+- Funktionsumfang deiner älteren main.py (Feedback‑API‑Hook, Health‑HTML, PDF‑Diagnose‑Header)
+- Robustes CORS inkl. OPTIONS‑Catch‑All und allow_origin_regex‑Fallback
+- Sichere CORS‑Guards: "*" => keine Credentials; konkrete Origins => Credentials optional
+- Metriken‑Middleware (Requests & Latenz, Pfad‑Normalisierung für geringe Label‑Kardinalität)
+- Health/Healthz mit Schema‑Infos und effektiven Live/LLM‑Flags
+- Login rein JSON (kein python-multipart nötig -> verhindert Railway‑Crash)
+- Analyzer‑Aufruf mit Fallback (build_report -> analyze_briefing), Admin‑JSON‑Anhänge
 """
 from __future__ import annotations
 
@@ -28,14 +27,14 @@ from email.utils import formataddr, parseaddr
 from typing import Any, Dict, Optional
 
 import httpx
-from fastapi import Body, Depends, FastAPI, HTTPException, Request, Form
+from fastapi import Body, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from jose import jwt
 from jose.exceptions import JWTError
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
-# Optional schema router (keine harte Abhängigkeit)
+# -------- Optional integrations --------
 try:
     from schema import get_router as get_schema_router, get_schema_info  # type: ignore
 except Exception:  # pragma: no cover
@@ -48,28 +47,41 @@ except Exception:  # pragma: no cover
         return r
     def get_schema_info():
         return {"ok": False}
+try:
+    from feedback_api import attach_to as attach_feedback  # type: ignore
+except Exception:
+    attach_feedback = None
 
+# -------- App/Logging --------
 APP_NAME = os.getenv("APP_NAME", "make-ki-backend")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 log = logging.getLogger("backend")
 
+# -------- Security / Tokens --------
 JWT_SECRET = os.getenv("JWT_SECRET", os.getenv("SECRET_KEY", "dev-secret"))
 JWT_ALGO = "HS256"
 
+# -------- Idempotency --------
 IDEMPOTENCY_TTL_SECONDS = int(os.getenv("IDEMPOTENCY_TTL_SECONDS", "3600"))
 IDEMPOTENCY_DIR = os.getenv("IDEMPOTENCY_DIR", "/tmp/ki_idempotency")
 
+# -------- Paths --------
 BASE_DIR = os.path.abspath(os.getenv("APP_BASE", os.getcwd()))
 TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", os.path.join(BASE_DIR, "templates"))
 
-# Live flags (für /health)
+# -------- Live/LLM flags (for /health) --------
 LIVE_TAVILY = bool(os.getenv("TAVILY_API_KEY"))
-LIVE_PERPLEXITY = bool(os.getenv("PPLX_API_KEY") or os.getenv("PERPLEXITY_API_KEY"))
+LIVE_PERPLEXITY = bool(os.getenv("PERPLEXITY_API_KEY") or os.getenv("PPLX_API_KEY"))
 SEARCH_PROVIDER = os.getenv("SEARCH_PROVIDER", "hybrid")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "anthropic")
+EXEC_SUMMARY_MODEL = os.getenv("EXEC_SUMMARY_MODEL", os.getenv("OPENAI_MODEL_DEFAULT", "gpt-4o"))
+OPENAI_MODEL_DEFAULT = os.getenv("OPENAI_MODEL_DEFAULT", "gpt-4o")
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
+PPLX_USE_CHAT = os.getenv("PPLX_USE_CHAT", "0")
+PPLX_MODEL = os.getenv("PPLX_MODEL", "")
 
-# PDF service
+# -------- PDF service --------
 PDF_SERVICE_URL = (os.getenv("PDF_SERVICE_URL") or "").rstrip("/")
 _pdf_timeout_raw = int(os.getenv("PDF_TIMEOUT", "45000"))
 PDF_TIMEOUT = _pdf_timeout_raw / 1000 if _pdf_timeout_raw > 1000 else _pdf_timeout_raw
@@ -78,7 +90,7 @@ PDF_STRIP_SCRIPTS = os.getenv("PDF_STRIP_SCRIPTS", "1").strip().lower() in {"1",
 PDF_EMAIL_FALLBACK_TO_USER = os.getenv("PDF_EMAIL_FALLBACK_TO_USER", "1").strip().lower() in {"1", "true", "yes"}
 PDF_MINIFY_HTML = os.getenv("PDF_MINIFY_HTML", "1").strip().lower() in {"1", "true", "yes"}
 
-# Email
+# -------- Email --------
 SEND_TO_USER = os.getenv("SEND_TO_USER", "1").strip().lower() in {"1", "true", "yes"}
 ADMIN_NOTIFY = os.getenv("ADMIN_NOTIFY", "1").strip().lower() in {"1", "true", "yes"}
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", os.getenv("SMTP_FROM", ""))
@@ -89,7 +101,6 @@ SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "noreply@example.com")
 SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "KI‑Sicherheit")
-
 MAIL_SUBJECT_PREFIX = os.getenv("MAIL_SUBJECT_PREFIX", "KI‑Ready")
 
 # -------- CORS Guards ---------
@@ -99,10 +110,9 @@ def _parse_csv(s: str) -> list[str]:
 CORS_ALLOW = _parse_csv(os.getenv("CORS_ALLOW_ORIGINS", ""))
 ALLOW_ALL = (not CORS_ALLOW) or CORS_ALLOW == ["*"]
 CORS_CREDENTIALS_ENV = os.getenv("CORS_ALLOW_CREDENTIALS", "0").strip().lower() in {"1","true","yes"}
-# Wenn "*" genutzt wird, dürfen laut Spec keine Credentials gesetzt werden
+# "*" => Credentials off (Spezifikation)
 CORS_ALLOW_CREDENTIALS = (False if ALLOW_ALL else CORS_CREDENTIALS_ENV)
-
-# Fallback‑Regex: erlaubt alle Subdomains von ki‑sicherheit.jetzt & ki‑foerderung.jetzt
+# Fallback‑Regex für Subdomains
 CORS_ALLOW_REGEX = os.getenv(
     "CORS_ALLOW_REGEX",
     r"^https?://([a-z0-9-]+\.)?(ki-sicherheit\.jetzt|ki-foerderung\.jetzt)$",
@@ -115,9 +125,9 @@ PDF_RENDER = Histogram("app_pdf_render_seconds", "PDF render duration seconds")
 POOL_AVAILABLE = Gauge("app_pdf_pool_available", "PDF contexts available (reported by service)")
 
 def _normalize_path(path: str) -> str:
-    # keep low cardinality by collapsing ids/uuids/numbers
+    # Geringe Label-Kardinalität (UUIDs/Zahlen zusammenfassen)
     p = re.sub(r"/[0-9a-fA-F]{8,}", "/:id", path)
-    p = re.sub(r"/\\d+", "/:n", p)
+    p = re.sub(r"/\d+", "/:n", p)
     return p if len(p) <= 64 else p[:64]
 
 def _now_str() -> str:
@@ -221,21 +231,26 @@ async def _render_pdf_bytes(html: str, filename: str):
         return None
     start = time.time()
     payload_html = _minify_html(html) if PDF_MINIFY_HTML else html
+    headers_logged = {}
     async with httpx.AsyncClient(timeout=PDF_TIMEOUT) as cli:
         payload = {"html": payload_html, "fileName": filename, "stripScripts": PDF_STRIP_SCRIPTS, "maxBytes": PDF_MAX_BYTES}
         try:
             r = await cli.post(f"{PDF_SERVICE_URL}/render-pdf", json=payload)
+            headers_logged = {"X-PDF-Bytes": r.headers.get("x-pdf-bytes"), "X-PDF-Limit": r.headers.get("x-pdf-limit")}
             ct = (r.headers.get("content-type") or "").lower()
             if r.status_code == 200 and "application/pdf" in ct:
                 PDF_RENDER.observe(time.time() - start)
+                log.info("[pdf] bytes=%s limit=%s via /render-pdf", headers_logged.get("X-PDF-Bytes"), headers_logged.get("X-PDF-Limit"))
                 return r.content
         except Exception as exc:
             log.warning("pdf /render-pdf failed: %s", exc)
         try:
             r = await cli.post(f"{PDF_SERVICE_URL}/generate-pdf", json={**payload, "return_pdf_bytes": True})
+            headers_logged = {"X-PDF-Bytes": r.headers.get("x-pdf-bytes"), "X-PDF-Limit": r.headers.get("x-pdf-limit")}
             ct = (r.headers.get("content-type") or "").lower()
             if r.status_code == 200 and "application/pdf" in ct:
                 PDF_RENDER.observe(time.time() - start)
+                log.info("[pdf] bytes=%s limit=%s via /generate-pdf", headers_logged.get("X-PDF-Bytes"), headers_logged.get("X-PDF-Limit"))
                 return r.content
             if r.status_code == 200 and "application/json" in ct:
                 data = r.json()
@@ -317,17 +332,22 @@ async def _metrics_mw(request: Request, call_next):
     LATENCY.labels(path_label).observe(time.time() - start)
     return resp
 
-# Preflight catch‑all – CORSMiddleware will append headers
+# Preflight catch‑all – CORSMiddleware wird Header ergänzen
 @app.options("/{rest_of_path:path}")
 def cors_preflight_ok(rest_of_path: str) -> PlainTextResponse:
     return PlainTextResponse("", status_code=204)
 
-# Schema router
+# Optional: schema + feedback
 app.include_router(get_schema_router())
+if attach_feedback:
+    try:
+        attach_feedback(app)
+    except Exception as exc:
+        log.warning("feedback_api attach failed: %s", exc)
 
+# --------------------------- Health / Metrics --------------------------------
 @app.get("/health")
 def health() -> dict:
-    pplx_env = os.getenv("PPLX_MODEL", "")
     return {
         "ok": True,
         "ts": _now_str(),
@@ -338,8 +358,8 @@ def health() -> dict:
             "perplexity": LIVE_PERPLEXITY,
             "provider": SEARCH_PROVIDER,
             "llm_provider": LLM_PROVIDER,
-            "pplx_model_env": pplx_env or "unset",
-            "pplx_model_effective": _pplx_model_effective(pplx_env),
+            "pplx_model_env": PPLX_MODEL or "unset",
+            "pplx_model_effective": _pplx_model_effective(PPLX_MODEL),
         },
         "schema": get_schema_info(),
         "smtp": bool(SMTP_HOST),
@@ -354,17 +374,37 @@ def healthz() -> dict:
             "cors_allow_origins": CORS_ALLOW,
             "cors_allow_regex": CORS_ALLOW_REGEX,
             "cors_allow_credentials": CORS_ALLOW_CREDENTIALS,
+            "llm_provider": LLM_PROVIDER,
+            "openai_default": OPENAI_MODEL_DEFAULT,
+            "claude_model": CLAUDE_MODEL,
+            "pplx_use_chat": PPLX_USE_CHAT,
+            "search_provider": SEARCH_PROVIDER,
         },
         "metrics": {"exposed": True, "endpoint": "/metrics"},
+        "schema": get_schema_info(),
     }
 
-@app.get("/health/cors-echo")
-def cors_echo(request: Request) -> Dict[str, Any]:
-    # Helps debugging in the browser console
-    origin = request.headers.get("origin")
-    acrm = request.headers.get("access-control-request-method")
-    acrh = request.headers.get("access-control-request-headers")
-    return {"origin": origin, "request_method": acrm, "request_headers": acrh}
+@app.get("/health/html")
+def health_html() -> HTMLResponse:
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<title>{APP_NAME} /health</title>
+<style>
+body{{font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:880px;margin:2rem auto;line-height:1.4}}
+.card{{border:1px solid #e5e7eb;border-radius:8px;padding:1rem;margin:.75rem 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}}
+.badge{{display:inline-block;padding:.15rem .5rem;border-radius:6px;background:#e6fffa;color:#065f46;font-weight:600}}
+.kv{{display:grid;grid-template-columns:180px 1fr;gap:.25rem .75rem}}
+</style>
+<h1>{APP_NAME} <span class="badge">OK</span></h1>
+<div class="card"><div class="kv">
+  <div>Zeit (UTC)</div><div>{_now_str()}</div>
+  <div>PDF-Service</div><div>{PDF_SERVICE_URL or "–"}</div>
+  <div>Live-Quellen</div><div>Tavily: {"ON" if LIVE_TAVILY else "off"} · Perplexity: {"ON" if LIVE_PERPLEXITY else "off"}</div>
+  <div>Perplexity-Model</div><div>{_pplx_model_effective(PPLX_MODEL)} (env: {PPLX_MODEL or "unset"})</div>
+  <div>SMTP</div><div>{"on" if SMTP_HOST else "off"} ({SMTP_FROM_NAME})</div>
+</div></div>
+<p><a href="/healthz">/healthz</a> · <a href="/metrics">/metrics</a></p>"""
+    return HTMLResponse(html)
 
 @app.get("/metrics")
 def metrics() -> PlainTextResponse:
@@ -373,19 +413,19 @@ def metrics() -> PlainTextResponse:
 
 # --------------------------- Login ------------------------------------------
 @app.post("/api/login")
-async def api_login(
-    email_form: Optional[str] = Form(None),
-    password_form: Optional[str] = Form(None),
-    body: Optional[Dict[str, Any]] = Body(None),
-) -> Dict[str, Any]:
-    # Accept both form and JSON payloads
-    payload: Dict[str, Any] = body or {}
-    if not payload.get("email") and email_form:
-        payload["email"] = email_form
-    if not payload.get("password") and password_form:
-        payload["password"] = password_form
-
-    email = _sanitize_email(str(payload.get("email") or ""))
+async def api_login(body: Any = Body(...)) -> Dict[str, Any]:
+    # JSON only – vermeidet Abhängigkeit auf python-multipart
+    if isinstance(body, str):
+        # Tolerant: plain text -> treat as email
+        email = _sanitize_email(body)
+        if not email:
+            try:
+                body = json.loads(body)
+            except Exception:
+                body = {}
+    if not isinstance(body, dict):
+        body = body or {}
+    email = _sanitize_email(str(body.get("email") or ""))
     if not email:
         raise HTTPException(status_code=400, detail="email required")
     token = _issue_token(email)
@@ -410,12 +450,12 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
         log.info("[idem] duplicate (user=%s, lang=%s) – skipping", recipient_user, lang)
         return JSONResponse({"status": "duplicate", "job_id": uuid.uuid4().hex})
 
-    # Merge answers up one level
+    # Answers nach oben ziehen
     form_data = dict(body.get("answers") or {})
     for k, v in body.items():
         form_data.setdefault(k, v)
 
-    # Import analyzer
+    # Analyzer import & Fallback
     html_content: str
     admin_json: Dict[str, bytes] = {}
     try:
@@ -426,9 +466,14 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
             if callable(produce_admin_attachments):
                 tri = produce_admin_attachments(form_data, lang=lang)
                 admin_json = {name: content.encode("utf-8") for name, content in tri.items()}
-        except Exception:  # pragma: no cover
-            from gpt_analyze import analyze_briefing  # type: ignore
+        except Exception:
+            from gpt_analyze import analyze_briefing, produce_admin_attachments  # type: ignore
             html_content = analyze_briefing(form_data, lang=lang)
+            try:
+                tri = produce_admin_attachments(form_data, lang=lang)
+                admin_json = {name: content.encode("utf-8") for name, content in tri.items()}
+            except Exception:
+                pass
     except Exception as exc:
         log.error("gpt_analyze import/exec failed: %s", exc)
         raise HTTPException(status_code=500, detail="analysis module not available")
@@ -443,6 +488,7 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
         log.warning("PDF render failed: %s", exc)
 
     # Mail an User
+    user_result: Dict[str, Any] = {"ok": False, "status": 0, "detail": "skipped"}
     try:
         _send_combined_email(
             to_address=recipient_user,
@@ -458,10 +504,9 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
         user_result = {"ok": True, "status": 200, "detail": "SMTP"}
     except Exception as exc:
         log.error("[mail] user SMTP failed: %s", exc)
-        user_result = {"ok": False, "status": 0, "detail": "smtp failed"}
 
     # Admin-Mail
-    admin_result = {"ok": False, "status": 0, "detail": "skipped"}
+    admin_result: Dict[str, Any] = {"ok": False, "status": 0, "detail": "skipped"}
     if os.getenv("ADMIN_NOTIFY", "1").lower() in {"1", "true"} and os.getenv("ADMIN_EMAIL"):
         try:
             _send_combined_email(

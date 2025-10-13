@@ -1,7 +1,8 @@
-# File: requirements.txt
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
 httpx==0.27.2
-python-jose[cryptography]==3.3.0
+python-jose==3.3.0
 prometheus-client==0.20.0
+# Optional: only if you later re-enable Form() parameters
+python-multipart==0.0.9
 pydantic==2.8.2
