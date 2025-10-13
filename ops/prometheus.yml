@@ -1,0 +1,11 @@
+# filename: ops/prometheus.yml
+# Example Prometheus config to scrape the Railway app's /metrics endpoint.
+# Replace YOUR_RAILWAY_DOMAIN with your deployed hostname.
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: 'ki-status-report'
+    metrics_path: /metrics
+    scheme: https
+    static_configs:
+      - targets: ['YOUR_RAILWAY_DOMAIN.up.railway.app']
