@@ -6,6 +6,7 @@ Production API für KI‑Status‑Report (Gold‑Standard+)
 - Korrekte CORS-Guards (kein "*" mit Credentials)
 - /health mit effektivem PPLX-Modell
 - /briefing_async robust (idempotent, PDF-Logging)
+- Observability: /healthz und /metrics via app.observability (Prometheus‑ready)
 """
 from __future__ import annotations
 
@@ -24,10 +25,9 @@ from typing import Any, Dict
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from jose import jwt
 from jose.exceptions import JWTError
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
 # Optional schema router (keine harte Abhängigkeit)
 try:
@@ -42,6 +42,12 @@ except Exception:  # pragma: no cover
         return r
     def get_schema_info():
         return {"ok": False}
+
+# Observability (Healthz + Metrics)
+try:
+    from app.observability import router as observability_router, MetricsMiddleware  # type: ignore
+except Exception:  # pragma: no cover
+    observability_router, MetricsMiddleware = None, None  # type: ignore
 
 APP_NAME = os.getenv("APP_NAME", "make-ki-backend")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -97,13 +103,6 @@ if ALLOW_ALL and CORS_CREDENTIALS_ENV:
     log.warning("CORS: '*' mit Credentials ist nicht erlaubt. Credentials wurden deaktiviert. "
                 "Setze CORS_ALLOW_ORIGINS auf die konkrete Frontend‑Domain, z. B. "
                 "'https://make.ki-sicherheit.jetzt'")
-
-# Metrics
-REQUESTS = Counter("app_requests_total", "HTTP requests total", ["method", "path", "status"])
-LATENCY = Histogram("app_request_latency_seconds", "Request latency", ["path"])
-PDF_RENDER = Histogram("app_pdf_render_seconds", "PDF render duration seconds")
-POOL_AVAILABLE = Gauge("app_pdf_pool_available", "PDF contexts available (reported by service)")
-
 
 def _now_str() -> str:
     import datetime as dt
@@ -199,8 +198,8 @@ def _minify_html(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\\s+<", "><", s)
-    s = re.sub(r"\\s{2,}", " ", s)
+    s = re.sub(r">\s+<", "><", s)
+    s = re.sub(r"\s{2,}", " ", s)
     return s.strip()
 
 def _pplx_model_effective(raw: str | None) -> str:
@@ -301,6 +300,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Observability anhängen (wenn verfügbar)
+if MetricsMiddleware:
+    app.add_middleware(MetricsMiddleware)
+if observability_router:
+    app.include_router(observability_router)
+
+# Schema-Router
 app.include_router(get_schema_router())
 
 
@@ -348,14 +355,8 @@ body{{font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-ser
   <div>SMTP</div><div>{"on" if SMTP_HOST else "off"} ({SMTP_FROM_NAME})</div>
   <div>Cache</div><div>{os.getenv("LIVE_CACHE_ENABLED","1")} · TTL {os.getenv("LIVE_CACHE_TTL_SECONDS","1800")}s</div>
 </div></div>
-<p><a href="/metrics">/metrics</a></p>"""
+<p><a href="/healthz">/healthz</a> · <a href="/metrics">/metrics</a></p>"""
     return HTMLResponse(html)
-
-
-@app.get("/metrics")
-def metrics() -> PlainTextResponse:
-    data = generate_latest()  # type: ignore
-    return PlainTextResponse(data, media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/api/login")

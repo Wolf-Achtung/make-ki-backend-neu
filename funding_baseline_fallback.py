@@ -1,41 +1,27 @@
-
-# file: funding_baseline_fallback.py
+# filename: funding_baseline_fallback.py
 # -*- coding: utf-8 -*-
 """
 Funding baseline fallback.
 
-Goal: ensure that the report always shows at least a minimal, region‑aware
-baseline for funding even when the live layer has no results. The functions
-here are side‑effect free and can be used from gpt_analyze/postprocess paths.
-
-Data sources (static, committed):
-- data/foerder_baseline.csv         (generic, compact)             # fileciteturn0file0
-- ENHANCED_FUNDING_DATABASE.py      (richer, if present)
-
-Environment reference:
-- EU_FUNDING_ENABLED=true enables baseline usage even with empty live results. # fileciteturn0file0
+Ensures that the report always shows at least a minimal, region‑aware baseline
+for funding even when the live layer has no results.
 """
 from __future__ import annotations
 
 import csv
-import json
-import logging
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-logger = logging.getLogger("funding_baseline")
-
-BASE_DIR = Path.cwd()
 DATA_DIR = Path("data")
-CSV_BASELINE = DATA_DIR / "foerder_baseline.csv"  # fileciteturn0file0
+CSV_BASELINE = DATA_DIR / "foerder_baseline.csv"
 
 @dataclass
 class FundingItem:
     title: str
     url: str
     source: str = "Förderprogramm"
-    region: str = "DE"  # 'DE' (bundesweit) or 'BE', 'BY', ...
+    region: str = "DE"
     type: str = "Zuschuss"
     rate: str = ""
     cap_eur: str = ""
@@ -63,7 +49,6 @@ def _read_csv(path: Path) -> List[FundingItem]:
     return items
 
 def load_baseline() -> List[FundingItem]:
-    """Load generic baseline from CSV. Returns empty list if file missing."""
     return _read_csv(CSV_BASELINE)
 
 def filter_by_region(items: List[FundingItem], region_code: str) -> List[FundingItem]:
@@ -76,7 +61,6 @@ def filter_by_region(items: List[FundingItem], region_code: str) -> List[Funding
     return out
 
 def ensure_minimum_for_region(region_code: str, limit: int = 5) -> List[Dict[str, Any]]:
-    """Always return at least 3‑5 credible baseline entries for the UI filter."""
     base = load_baseline()
     sel = filter_by_region(base, region_code)[: max(3, int(limit))]
     return [asdict(x) for x in sel]
