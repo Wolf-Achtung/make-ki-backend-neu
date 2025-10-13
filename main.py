@@ -1,16 +1,14 @@
-# filename: main.py
+# filename: backend/main.py
 # -*- coding: utf-8 -*-
 """
-KI‑Status‑Report Backend – Gold‑Standard+ (Best of Both Worlds)
+KI‑Status‑Report Backend – Gold‑Standard+
 
-Vereint:
-- Funktionsumfang deiner älteren main.py (Feedback‑API‑Hook, Health‑HTML, PDF‑Diagnose‑Header)
-- Robustes CORS inkl. OPTIONS‑Catch‑All und allow_origin_regex‑Fallback
-- Sichere CORS‑Guards: "*" => keine Credentials; konkrete Origins => Credentials optional
-- Metriken‑Middleware (Requests & Latenz, Pfad‑Normalisierung für geringe Label‑Kardinalität)
-- Health/Healthz mit Schema‑Infos und effektiven Live/LLM‑Flags
-- Login rein JSON (kein python-multipart nötig -> verhindert Railway‑Crash)
-- Analyzer‑Aufruf mit Fallback (build_report -> analyze_briefing), Admin‑JSON‑Anhänge
+- Robuste CORS‑Behandlung (OPTIONS Catch‑All, Regex‑Fallback, sichere Credentials‑Schalter)
+- JSON‑Login (keine python-multipart Abhängigkeit); wahlweise DB‑Check gegen PostgreSQL
+- Postgres‑Support (SQLAlchemy 2.x, psycopg 3) inkl. Auto‑Migration (Create‑All) & Seed per ENV
+- In‑Memory Rate Limiting für /api/login (Default: 10/min pro IP)
+- Observability: /metrics (Prometheus), Request‑Hist, /health & /healthz (CORS/LLM/Search/DB)
+- PDF‑Service mit Diagnose‑Headern; Analyzer‑Fallback build_report -> analyze_briefing
 """
 from __future__ import annotations
 
@@ -30,11 +28,18 @@ import httpx
 from fastapi import Body, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.concurrency import run_in_threadpool
 from jose import jwt
 from jose.exceptions import JWTError
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
-# -------- Optional integrations --------
+# Local modules
+from .db import get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective
+from .models import User
+from .security import verify_password
+from .rate_limit import RateLimiter
+
+# Optional integrations
 try:
     from schema import get_router as get_schema_router, get_schema_info  # type: ignore
 except Exception:  # pragma: no cover
@@ -66,20 +71,16 @@ JWT_ALGO = "HS256"
 IDEMPOTENCY_TTL_SECONDS = int(os.getenv("IDEMPOTENCY_TTL_SECONDS", "3600"))
 IDEMPOTENCY_DIR = os.getenv("IDEMPOTENCY_DIR", "/tmp/ki_idempotency")
 
-# -------- Paths --------
-BASE_DIR = os.path.abspath(os.getenv("APP_BASE", os.getcwd()))
-TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", os.path.join(BASE_DIR, "templates"))
-
 # -------- Live/LLM flags (for /health) --------
 LIVE_TAVILY = bool(os.getenv("TAVILY_API_KEY"))
 LIVE_PERPLEXITY = bool(os.getenv("PERPLEXITY_API_KEY") or os.getenv("PPLX_API_KEY"))
 SEARCH_PROVIDER = os.getenv("SEARCH_PROVIDER", "hybrid")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "anthropic")
-EXEC_SUMMARY_MODEL = os.getenv("EXEC_SUMMARY_MODEL", os.getenv("OPENAI_MODEL_DEFAULT", "gpt-4o"))
 OPENAI_MODEL_DEFAULT = os.getenv("OPENAI_MODEL_DEFAULT", "gpt-4o")
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
 PPLX_USE_CHAT = os.getenv("PPLX_USE_CHAT", "0")
 PPLX_MODEL = os.getenv("PPLX_MODEL", "")
+TOOL_MATRIX_LIVE_ENRICH = os.getenv("TOOL_MATRIX_LIVE_ENRICH", "1").strip().lower() in {"1","true","yes"}
 
 # -------- PDF service --------
 PDF_SERVICE_URL = (os.getenv("PDF_SERVICE_URL") or "").rstrip("/")
@@ -87,14 +88,10 @@ _pdf_timeout_raw = int(os.getenv("PDF_TIMEOUT", "45000"))
 PDF_TIMEOUT = _pdf_timeout_raw / 1000 if _pdf_timeout_raw > 1000 else _pdf_timeout_raw
 PDF_MAX_BYTES = int(os.getenv("PDF_MAX_BYTES", str(32 * 1024 * 1024)))
 PDF_STRIP_SCRIPTS = os.getenv("PDF_STRIP_SCRIPTS", "1").strip().lower() in {"1", "true", "yes"}
-PDF_EMAIL_FALLBACK_TO_USER = os.getenv("PDF_EMAIL_FALLBACK_TO_USER", "1").strip().lower() in {"1", "true", "yes"}
 PDF_MINIFY_HTML = os.getenv("PDF_MINIFY_HTML", "1").strip().lower() in {"1", "true", "yes"}
 
 # -------- Email --------
-SEND_TO_USER = os.getenv("SEND_TO_USER", "1").strip().lower() in {"1", "true", "yes"}
-ADMIN_NOTIFY = os.getenv("ADMIN_NOTIFY", "1").strip().lower() in {"1", "true", "yes"}
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", os.getenv("SMTP_FROM", ""))
-
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
@@ -110,9 +107,9 @@ def _parse_csv(s: str) -> list[str]:
 CORS_ALLOW = _parse_csv(os.getenv("CORS_ALLOW_ORIGINS", ""))
 ALLOW_ALL = (not CORS_ALLOW) or CORS_ALLOW == ["*"]
 CORS_CREDENTIALS_ENV = os.getenv("CORS_ALLOW_CREDENTIALS", "0").strip().lower() in {"1","true","yes"}
-# "*" => Credentials off (Spezifikation)
+# "*" => Credentials off (Spec)
 CORS_ALLOW_CREDENTIALS = (False if ALLOW_ALL else CORS_CREDENTIALS_ENV)
-# Fallback‑Regex für Subdomains
+# Regex‑Fallback
 CORS_ALLOW_REGEX = os.getenv(
     "CORS_ALLOW_REGEX",
     r"^https?://([a-z0-9-]+\.)?(ki-sicherheit\.jetzt|ki-foerderung\.jetzt)$",
@@ -122,10 +119,11 @@ CORS_ALLOW_REGEX = os.getenv(
 REQUESTS = Counter("app_requests_total", "HTTP requests total", ["method", "path", "status"])
 LATENCY = Histogram("app_request_latency_seconds", "Request latency", ["path"])
 PDF_RENDER = Histogram("app_pdf_render_seconds", "PDF render duration seconds")
+LOGIN_REJECTS = Counter("app_login_rejects_total", "Rejected login attempts", ["reason"])
 POOL_AVAILABLE = Gauge("app_pdf_pool_available", "PDF contexts available (reported by service)")
 
 def _normalize_path(path: str) -> str:
-    # Geringe Label-Kardinalität (UUIDs/Zahlen zusammenfassen)
+    # low‑cardinality labels
     p = re.sub(r"/[0-9a-fA-F]{8,}", "/:id", path)
     p = re.sub(r"/\d+", "/:n", p)
     return p if len(p) <= 64 else p[:64]
@@ -141,9 +139,6 @@ def _sanitize_email(value: str | None) -> str:
 def _lang_from_body(body: Dict[str, Any]) -> str:
     lang = str(body.get("lang") or body.get("language") or "de").lower()
     return "de" if lang.startswith("de") else "en"
-
-def _new_job_id() -> str:
-    return uuid.uuid4().hex
 
 def _sha256(s: str) -> str:
     import hashlib
@@ -183,19 +178,6 @@ def _smtp_send(msg: EmailMessage) -> None:
             s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
 
-def _recipient_from(body: Dict[str, Any], fallback: str) -> str:
-    answers = body.get("answers") or {}
-    cand = answers.get("to") or answers.get("email") or body.get("to") or body.get("email") or fallback
-    return _sanitize_email(cand)
-
-def _display_name_from(body: Dict[str, Any]) -> str:
-    for key in ("unternehmen", "firma", "company", "company_name", "organization"):
-        val = (body.get("answers") or {}).get(key) or body.get(key)
-        if val:
-            return str(val)[:64]
-    email = _recipient_from(body, ADMIN_EMAIL)
-    return (email.split("@")[0] if email else "Customer").title()
-
 def _build_subject(prefix: str, lang: str, display_name: str) -> str:
     core = "KI‑Status Report" if lang == "de" else "AI Status Report"
     return f"{prefix}/{display_name} – {core}"
@@ -212,8 +194,8 @@ def _minify_html(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\\s+<", "><", s)
-    s = re.sub(r"\\s{2,}", " ", s)
+    s = re.sub(r">\s+<", "><", s)
+    s = re.sub(r"\s{2,}", " ", s)
     return s.strip()
 
 def _pplx_model_effective(raw: Optional[str]) -> str:
@@ -262,49 +244,10 @@ async def _render_pdf_bytes(html: str, filename: str):
             log.warning("pdf /generate-pdf failed: %s", exc)
     return None
 
-# --------------------------- SMTP -------------------------------------------
-def _send_combined_email(
-    to_address: str,
-    subject: str,
-    html_body: str,
-    html_attachment: bytes,
-    pdf_attachment: Optional[bytes],
-    admin_json: Optional[Dict[str, bytes]] = None,
-    html_filename: str = "report.html",
-    pdf_filename: str = "report.pdf",
-) -> None:
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = formataddr((SMTP_FROM_NAME, SMTP_FROM))
-    msg["To"] = to_address
-    msg.set_content("Dies ist eine HTML-Mail. Bitte HTML-Ansicht verwenden.")
-    msg.add_alternative(html_body or "<p></p>", subtype="html")
-    msg.add_attachment(html_attachment, maintype="text", subtype="html", filename=html_filename)
-    if pdf_attachment:
-        msg.add_attachment(pdf_attachment, maintype="application", subtype="pdf", filename=pdf_filename)
-    for name, data in (admin_json or {}).items():
-        msg.add_attachment(data, maintype="application", subtype="json", filename=name)
-    _smtp_send(msg)
-
-# --------------------------- Auth / App -------------------------------------
-def _issue_token(email: str) -> str:
-    payload = {"sub": email, "iat": int(time.time()), "exp": int(time.time() + 14 * 24 * 3600)}
-    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
-
-async def current_user(req: Request):
-    auth = req.headers.get("authorization") or ""
-    parts = auth.split()
-    if len(parts) == 2 and parts[0].lower() == "bearer":
-        try:
-            payload = jwt.decode(parts[1], JWT_SECRET, algorithms=["HS256"])
-            return {"sub": payload.get("sub"), "email": payload.get("sub")}
-        except JWTError:
-            pass
-    return {"sub": "anon", "email": ""}
-
+# --------------------------- App init ---------------------------------------
 app = FastAPI(title=APP_NAME)
 
-# CORS middleware (robust)
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=(["*"] if ALLOW_ALL else CORS_ALLOW),
@@ -316,7 +259,11 @@ app.add_middleware(
     max_age=600,
 )
 
-# Request‑Metriken via Middleware
+# Rate limiting (simple in‑mem per IP)
+LOGIN_LIMITER = RateLimiter(capacity=int(os.getenv("LOGIN_RATE_CAPACITY", "10")),
+                            refill_rate=float(os.getenv("LOGIN_RATE_REFILL_PER_SEC", "0.2")))  # 12/min
+
+# Metrics MW
 @app.middleware("http")
 async def _metrics_mw(request: Request, call_next):
     path_label = _normalize_path(request.url.path)
@@ -332,12 +279,21 @@ async def _metrics_mw(request: Request, call_next):
     LATENCY.labels(path_label).observe(time.time() - start)
     return resp
 
-# Preflight catch‑all – CORSMiddleware wird Header ergänzen
+@app.on_event("startup")
+async def _on_startup():
+    if engine_ok():
+        await run_in_threadpool(ensure_schema)
+        await run_in_threadpool(seed_from_env)
+        log.info("[db] connected: %s", db_url_effective())
+    else:
+        log.warning("[db] DATABASE_URL not configured – login will skip DB check")
+
+# Preflight catch‑all (CORS headers werden von Middleware angefügt)
 @app.options("/{rest_of_path:path}")
 def cors_preflight_ok(rest_of_path: str) -> PlainTextResponse:
     return PlainTextResponse("", status_code=204)
 
-# Optional: schema + feedback
+# Optional routers
 app.include_router(get_schema_router())
 if attach_feedback:
     try:
@@ -360,7 +316,9 @@ def health() -> dict:
             "llm_provider": LLM_PROVIDER,
             "pplx_model_env": PPLX_MODEL or "unset",
             "pplx_model_effective": _pplx_model_effective(PPLX_MODEL),
+            "tools_live_enrich": TOOL_MATRIX_LIVE_ENRICH,
         },
+        "db": {"connected": engine_ok(), "url": db_url_effective(mask=True)},
         "schema": get_schema_info(),
         "smtp": bool(SMTP_HOST),
     }
@@ -379,67 +337,64 @@ def healthz() -> dict:
             "claude_model": CLAUDE_MODEL,
             "pplx_use_chat": PPLX_USE_CHAT,
             "search_provider": SEARCH_PROVIDER,
+            "db": db_url_effective(mask=True),
         },
         "metrics": {"exposed": True, "endpoint": "/metrics"},
         "schema": get_schema_info(),
     }
-
-@app.get("/health/html")
-def health_html() -> HTMLResponse:
-    html = f"""<!doctype html>
-<meta charset="utf-8">
-<title>{APP_NAME} /health</title>
-<style>
-body{{font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:880px;margin:2rem auto;line-height:1.4}}
-.card{{border:1px solid #e5e7eb;border-radius:8px;padding:1rem;margin:.75rem 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}}
-.badge{{display:inline-block;padding:.15rem .5rem;border-radius:6px;background:#e6fffa;color:#065f46;font-weight:600}}
-.kv{{display:grid;grid-template-columns:180px 1fr;gap:.25rem .75rem}}
-</style>
-<h1>{APP_NAME} <span class="badge">OK</span></h1>
-<div class="card"><div class="kv">
-  <div>Zeit (UTC)</div><div>{_now_str()}</div>
-  <div>PDF-Service</div><div>{PDF_SERVICE_URL or "–"}</div>
-  <div>Live-Quellen</div><div>Tavily: {"ON" if LIVE_TAVILY else "off"} · Perplexity: {"ON" if LIVE_PERPLEXITY else "off"}</div>
-  <div>Perplexity-Model</div><div>{_pplx_model_effective(PPLX_MODEL)} (env: {PPLX_MODEL or "unset"})</div>
-  <div>SMTP</div><div>{"on" if SMTP_HOST else "off"} ({SMTP_FROM_NAME})</div>
-</div></div>
-<p><a href="/healthz">/healthz</a> · <a href="/metrics">/metrics</a></p>"""
-    return HTMLResponse(html)
 
 @app.get("/metrics")
 def metrics() -> PlainTextResponse:
     data = generate_latest()  # type: ignore
     return PlainTextResponse(data, media_type=CONTENT_TYPE_LATEST)
 
-# --------------------------- Login ------------------------------------------
+# --------------------------- Auth / Login -----------------------------------
+def _issue_token(email: str) -> str:
+    payload = {"sub": email, "iat": int(time.time()), "exp": int(time.time() + 14 * 24 * 3600)}
+    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+
 @app.post("/api/login")
-async def api_login(body: Any = Body(...)) -> Dict[str, Any]:
-    # JSON only – vermeidet Abhängigkeit auf python-multipart
+async def api_login(body: Any = Body(...), request: Request = None):
+    # Rate limit
+    ip = request.client.host if request and request.client else "unknown"
+    if not LOGIN_LIMITER.allow(ip):
+        LOGIN_REJECTS.labels("rate").inc()
+        raise HTTPException(status_code=429, detail="too many requests")
+
+    # JSON only – vermeidet python-multipart
     if isinstance(body, str):
-        # Tolerant: plain text -> treat as email
-        email = _sanitize_email(body)
-        if not email:
-            try:
-                body = json.loads(body)
-            except Exception:
-                body = {}
+        try:
+            body = json.loads(body)
+        except Exception:
+            body = {"email": body}
     if not isinstance(body, dict):
         body = body or {}
     email = _sanitize_email(str(body.get("email") or ""))
+    password = str(body.get("password") or "")
+
     if not email:
+        LOGIN_REJECTS.labels("no_email").inc()
         raise HTTPException(status_code=400, detail="email required")
+
+    # Check DB if present
+    if engine_ok():
+        with get_session() as db:
+            user = db.query(User).filter(User.email == email).first()
+            if not user or (user.password_hash and not verify_password(password, user.password_hash)):
+                LOGIN_REJECTS.labels("invalid").inc()
+                raise HTTPException(status_code=401, detail="invalid credentials")
     token = _issue_token(email)
     return {"token": token, "email": email}
 
 # --------------------------- Core Endpoint ----------------------------------
 @app.post("/briefing_async")
-async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(current_user)):
+async def briefing_async(body: Dict[str, Any], request: Request):
     lang = _lang_from_body(body)
-    recipient_user = _recipient_from(body, fallback=ADMIN_EMAIL)
+    recipient_user = _sanitize_email(body.get("email") or body.get("to") or ADMIN_EMAIL)
     if not recipient_user:
         raise HTTPException(status_code=400, detail="recipient could not be resolved")
 
-    display_name = _display_name_from(body)
+    display_name = body.get("company") or body.get("unternehmen") or (recipient_user.split("@")[0].title())
     subject = _build_subject(MAIL_SUBJECT_PREFIX, lang, display_name)
     filename_pdf = _safe_pdf_filename(display_name, lang)
     filename_html = _safe_html_filename(display_name, lang)
@@ -447,10 +402,9 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
     nonce = str(body.get("nonce") or request.headers.get("x-request-id") or request.headers.get("x-idempotency-key") or "")
     idem_key = _sha256(json.dumps({"body": body, "user": recipient_user, "lang": lang, "nonce": nonce}, sort_keys=True, ensure_ascii=False))
     if _idem_seen(idem_key):
-        log.info("[idem] duplicate (user=%s, lang=%s) – skipping", recipient_user, lang)
         return JSONResponse({"status": "duplicate", "job_id": uuid.uuid4().hex})
 
-    # Answers nach oben ziehen
+    # Merge answers up one level
     form_data = dict(body.get("answers") or {})
     for k, v in body.items():
         form_data.setdefault(k, v)
@@ -461,10 +415,13 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
     try:
         try:
             from gpt_analyze import build_report, produce_admin_attachments  # type: ignore
-            result = build_report(form_data, lang=lang)
+            try:
+                result = build_report(form_data, lang=lang, live_enrich=TOOL_MATRIX_LIVE_ENRICH)  # type: ignore
+            except TypeError:
+                result = build_report(form_data, lang=lang)  # type: ignore
             html_content = result["html"] if isinstance(result, dict) else str(result)
             if callable(produce_admin_attachments):
-                tri = produce_admin_attachments(form_data, lang=lang)
+                tri = produce_admin_attachments(form_data, lang=lang)  # type: ignore
                 admin_json = {name: content.encode("utf-8") for name, content in tri.items()}
         except Exception:
             from gpt_analyze import analyze_briefing, produce_admin_attachments  # type: ignore
@@ -487,53 +444,19 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
     except Exception as exc:
         log.warning("PDF render failed: %s", exc)
 
-    # Mail an User
-    user_result: Dict[str, Any] = {"ok": False, "status": 0, "detail": "skipped"}
+    # Mail to user (optional; you can also expose HTML as response if wanted)
     try:
-        _send_combined_email(
-            to_address=recipient_user,
-            subject=subject,
-            html_body=("<p>Ihr KI‑Status‑Report liegt im Anhang (PDF &amp; HTML).</p>" if lang == "de"
-                       else "<p>Your AI status report is attached (PDF &amp; HTML).</p>"),
-            html_attachment=html_content.encode("utf-8"),
-            pdf_attachment=pdf_bytes,
-            html_filename=filename_html,
-            pdf_filename=filename_pdf,
-            admin_json=admin_json if os.getenv("ADMIN_ATTACH_USER", "0") in {"1", "true"} else None,
-        )
-        user_result = {"ok": True, "status": 200, "detail": "SMTP"}
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = formataddr((SMTP_FROM_NAME, SMTP_FROM))
+        msg["To"] = recipient_user
+        msg.set_content("Bitte HTML‑Ansicht verwenden.")
+        msg.add_alternative(html_content or "<p></p>", subtype="html")
+        msg.add_attachment(html_content.encode("utf-8"), maintype="text", subtype="html", filename=filename_html)
+        if pdf_bytes:
+            msg.add_attachment(pdf_bytes, maintype="application", subtype="pdf", filename=filename_pdf)
+        _smtp_send(msg)
     except Exception as exc:
         log.error("[mail] user SMTP failed: %s", exc)
 
-    # Admin-Mail
-    admin_result: Dict[str, Any] = {"ok": False, "status": 0, "detail": "skipped"}
-    if os.getenv("ADMIN_NOTIFY", "1").lower() in {"1", "true"} and os.getenv("ADMIN_EMAIL"):
-        try:
-            _send_combined_email(
-                to_address=os.getenv("ADMIN_EMAIL"),
-                subject=subject + (" (Admin‑Kopie)" if lang == "de" else " (Admin copy)"),
-                html_body=("<p>Neuer Report erstellt. Anhänge: PDF, HTML sowie JSON‑Diagnosen.</p>" if lang == "de"
-                           else "<p>New report created. Attachments: PDF, HTML and JSON diagnostics.</p>"),
-                html_attachment=html_content.encode("utf-8"),
-                pdf_attachment=pdf_bytes,
-                admin_json=admin_json or None,
-                html_filename=filename_html,
-                pdf_filename=filename_pdf,
-            )
-            admin_result = {"ok": True, "status": 200, "detail": "SMTP"}
-        except Exception as exc:
-            log.error("[mail] admin SMTP failed: %s", exc)
-
-    return JSONResponse({"status": "ok", "job_id": uuid.uuid4().hex, "user_mail": user_result, "admin_mail": admin_result})
-
-# --------------------------- Misc -------------------------------------------
-@app.post("/pdf_test")
-async def pdf_test(body: Dict[str, Any]) -> Dict[str, Any]:
-    lang = _lang_from_body(body)
-    html = body.get("html") or "<!doctype html><meta charset='utf-8'><h1>Ping</h1>"
-    pdf = await _render_pdf_bytes(html, _safe_pdf_filename("test", lang))
-    return {"ok": bool(pdf), "bytes": len(pdf or b"0")}
-
-@app.get("/")
-def root() -> HTMLResponse:
-    return HTMLResponse(f"<!doctype html><meta charset='utf-8'><h1>{APP_NAME}</h1><p>OK – {_now_str()}</p>")
+    return JSONResponse({"status": "ok", "job_id": uuid.uuid4().hex})

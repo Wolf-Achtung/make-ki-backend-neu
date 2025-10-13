@@ -1,8 +1,11 @@
+# filename: backend/requirements.txt
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
 httpx==0.27.2
 python-jose==3.3.0
 prometheus-client==0.20.0
-# Optional: only if you later re-enable Form() parameters
+SQLAlchemy==2.0.34
+psycopg[binary]==3.1.19
+bcrypt==4.1.3
+# Optional if you decide to re-enable FastAPI Form() arguments
 python-multipart==0.0.9
-pydantic==2.8.2
