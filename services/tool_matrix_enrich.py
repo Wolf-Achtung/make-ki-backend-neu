@@ -1,14 +1,13 @@
-
-# file: services/tool_matrix_enrich.py
+# filename: services/tool_matrix_enrich.py
 # -*- coding: utf-8 -*-
 """
 Tool matrix enrichment for KI‑Status‑Report.
 
 - Loads baseline from data/tool_matrix.csv and data/tools_baseline.csv
 - Normalizes fields and fills required columns (self_hosting, eu_residency, audit_logs)
-- Provides a hook `enrich_with_live()` that can use the hybrid live layer (optional)
-  to add fields like `saml_scim`, `dpa_url`, `audit_export` if available.
-  The hook is defensive and will never break the report if the live layer fails.
+- Provides a hook `enrich_with_live()` that can use Tavily/Hybrid to add fields like
+  `saml_scim`, `dpa_url`, `audit_export` if available.
+- Defensive by default: if no live layer or key is present, returns input unchanged.
 
 This module is self‑contained and can be used by the analyzer or post‑processor.
 """
@@ -18,7 +17,7 @@ import csv
 import logging
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List
 
 logger = logging.getLogger("tool_matrix_enrich")
 
@@ -80,26 +79,26 @@ def load_tool_matrix() -> List[ToolRow]:
     fallback = _read_csv(CSV_BASELINE)
     merged = _coalesce(primary, fallback)
     rows = [_ensure_required(r) for r in merged if (r.get("name") or "").strip()]
-    # Deterministic order
     rows.sort(key=lambda r: (r.category.lower(), r.name.lower()))
     return rows
 
 def enrich_with_live(rows: List[ToolRow]) -> List[ToolRow]:
-    """Best‑effort enrichment using the hybrid live layer if available.
-    This implementation is intentionally conservative: it returns input rows unchanged
-    if no live layer function is present. To plug in the live layer, provide a function
-    `hybrid_lookup(name: str) -> Dict[str, str]` in a module `websearch_utils_ext`.
-    That function may supply keys: saml_scim, dpa_url, audit_export.
+    """
+    Best‑effort enrichment using hybrid search (Tavily preferred) if keys are present.
+    Reads SEARCH_INCLUDE_DOMAINS and LIVE_TIMEOUT_S from ENV for better signal.
     """
     try:
         from websearch_utils_ext import hybrid_lookup  # type: ignore
-    except Exception:
-        return rows  # nothing to do
+    except Exception as exc:
+        logger.info("no hybrid enrichment hook: %s", exc)
+        return rows
+
     out: List[ToolRow] = []
     for r in rows:
         try:
             ext = hybrid_lookup(r.name) or {}
-        except Exception:
+        except Exception as exc:
+            logger.warning("hybrid_lookup failed for %s: %s", r.name, exc)
             ext = {}
         if ext:
             r.saml_scim = ext.get("saml_scim", r.saml_scim)
@@ -107,3 +106,16 @@ def enrich_with_live(rows: List[ToolRow]) -> List[ToolRow]:
             r.audit_export = ext.get("audit_export", r.audit_export)
         out.append(r)
     return out
+
+def export_enriched_csv(out_path: Path) -> int:
+    """Utility: writes a CSV `tool_matrix_enriched.csv` for QA/inspection."""
+    rows = load_tool_matrix()
+    rows = enrich_with_live(rows)
+    cols = ["name","category","self_hosting","eu_residency","audit_logs","link","saml_scim","dpa_url","audit_export"]
+    with out_path.open("w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(cols)
+        for r in rows:
+            d = asdict(r)
+            w.writerow([d.get(c, "") for c in cols])
+    return len(rows)
