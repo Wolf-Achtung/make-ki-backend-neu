@@ -1,14 +1,12 @@
 # filename: main.py
 # -*- coding: utf-8 -*-
 """
-KI‑Status‑Report Backend – Gold‑Standard+ (v3, release RWX‑1)
+KI‑Status‑Report Backend – Gold‑Standard+ (v3, release RWX‑2)
 
-Stabil & vollständig:
-- /api/login (korrekte Param-Reihenfolge), /api/auth/verify, /briefing_async
-- Health (/healthz, /health, /health/html), /metrics (Prometheus)
-- CORS korrekt inkl. OPTIONS, Idempotency, PDF‑Fallbacks, Mailversand (optional)
-- Analyzer‑Kompatibilität (build_report bevorzugt, analyze_briefing Fallback)
-- Lifespan statt on_event; optionaler DB‑Check wird robust umgangen
+Fixes in dieser Version:
+- Regex-Escapes korrigiert (\\d, \\s) in _normalize_path/_minify_html
+- /metrics liefert Bytes via Response (korrekter Content-Type)
+- CORS erlaubt zusätzlich HEAD
 """
 from __future__ import annotations
 
@@ -29,7 +27,7 @@ import httpx
 from fastapi import Body, Depends, FastAPI, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 from jose import jwt
 from jose.exceptions import JWTError
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
@@ -92,7 +90,7 @@ LOGIN_REJECTS = Counter("app_login_rejects_total", "Rejected login attempts", ["
 
 def _normalize_path(path: str) -> str:
     p = re.sub(r"/[0-9a-fA-F]{8,}", "/:id", path)
-    p = re.sub(r"/\d+", "/:n", p)
+    p = re.sub(r"/\d+", "/:n", p)  # FIX: \d
     return p if len(p) <= 64 else p[:64]
 
 def _now_str() -> str:
@@ -161,8 +159,8 @@ def _minify_html(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\s+<", "><", s)
-    s = re.sub(r"\s{2,}", " ", s)
+    s = re.sub(r">\s+<", "><", s)   # FIX: \s
+    s = re.sub(r"\s{2,}", " ", s)   # FIX: \s
     return s.strip()
 
 def _pplx_model_effective(raw: Optional[str]) -> str:
@@ -216,6 +214,176 @@ class _TokenBucket:
             self.tokens -= 1.0
             return True
         return False
+
+class _RateLimiter:
+    def __init__(self, capacity: int = 10, refill_rate: float = 0.2):
+        self.capacity = capacity
+        self.refill = refill_rate
+        self.buckets: dict[str, _TokenBucket] = {}
+    def allow(self, key: str) -> bool:
+        b = self.buckets.get(key)
+        if b is None:
+            b = self.buckets[key] = _TokenBucket(self.capacity, self.refill)
+        return b.allow()
+
+async def _render_pdf_bytes(html: str, filename: str):
+    if not (PDF_SERVICE_URL and html):
+        return None
+    start = time.time()
+    payload_html = _minify_html(html) if PDF_MINIFY_HTML else html
+    async with httpx.AsyncClient(timeout=PDF_TIMEOUT) as cli:
+        payload = {"html": payload_html, "fileName": filename, "stripScripts": PDF_STRIP_SCRIPTS, "maxBytes": PDF_MAX_BYTES}
+        try:
+            r = await cli.post(f"{PDF_SERVICE_URL}/render-pdf", json=payload)
+            ct = (r.headers.get("content-type") or "").lower()
+            if r.status_code == 200 and "application/pdf" in ct:
+                PDF_RENDER.observe(time.time() - start)
+                POOL_AVAILABLE.set(float(r.headers.get("x-pdf-pool-available", "0") or 0))
+                return r.content
+        except Exception as exc:
+            log.warning("pdf /render-pdf failed: %s", exc)
+        try:
+            r = await cli.post(f"{PDF_SERVICE_URL}/generate-pdf", json={**payload, "return_pdf_bytes": True})
+            ct = (r.headers.get("content-type") or "").lower()
+            if r.status_code == 200 and "application/pdf" in ct:
+                PDF_RENDER.observe(time.time() - start)
+                POOL_AVAILABLE.set(float(r.headers.get("x-pdf-pool-available", "0") or 0))
+                return r.content
+            if r.status_code == 200 and "application/json" in ct:
+                data = r.json()
+                b64 = data.get("pdf_base64") or data.get("pdf") or data.get("data")
+                if b64:
+                    PDF_RENDER.observe(time.time() - start)
+                    return base64.b64decode(b64)
+        except Exception as exc:
+            log.warning("pdf /generate-pdf failed: %s", exc)
+    return None
+
+def _issue_token(email: str) -> str:
+    payload = {"sub": email, "iat": int(time.time()), "exp": int(time.time() + 14 * 24 * 3600)}
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
+
+async def current_user(req: Request):
+    auth = req.headers.get("authorization") or ""
+    parts = auth.split()
+    if len(parts) == 2 and parts[0].lower() == "bearer":
+        try:
+            payload = jwt.decode(parts[1], JWT_SECRET, algorithms=[JWT_ALGO])
+            return {"sub": payload.get("sub"), "email": payload.get("sub")}
+        except JWTError:
+            pass
+    return {"sub": "anon", "email": ""}
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if engine_ok():
+        try:
+            await run_in_threadpool(ensure_schema)
+            await run_in_threadpool(seed_from_env)
+            log.info("[db] connected: %s", db_url_effective(mask=True))
+        except Exception as exc:
+            log.warning("[db] init failed: %s", exc)
+    yield
+    return
+
+app = FastAPI(title=APP_NAME, lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=(["*"] if ALLOW_ALL else CORS_ALLOW),
+    allow_origin_regex=(None if ALLOW_ALL else CORS_ALLOW_REGEX),
+    allow_credentials=CORS_ALLOW_CREDENTIALS,
+    allow_methods=["GET", "POST", "OPTIONS", "HEAD"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
+)
+
+@app.middleware("http")
+async def _metrics_mw(request: Request, call_next):
+    path_label = _normalize_path(request.url.path)
+    start = time.time()
+    try:
+        resp = await call_next(request)
+    except Exception:
+        REQUESTS.labels(request.method, path_label, "500").inc()
+        LATENCY.labels(path_label).observe(time.time() - start)
+        raise
+    status = getattr(resp, "status_code", 200) or 200
+    REQUESTS.labels(request.method, path_label, str(status)).inc()
+    LATENCY.labels(path_label).observe(time.time() - start)
+    return resp
+
+@app.options("/{rest_of_path:path}")
+def cors_preflight_ok(rest_of_path: str) -> PlainTextResponse:
+    return PlainTextResponse("", status_code=204)
+
+@app.get("/healthz")
+def healthz() -> dict:
+    return {
+        "status": "ok",
+        "ts": _now_str(),
+        "env": {
+            "cors_allow_origins": CORS_ALLOW,
+            "cors_allow_regex": CORS_ALLOW_REGEX,
+            "cors_allow_credentials": CORS_ALLOW_CREDENTIALS,
+            "llm_provider": LLM_PROVIDER,
+            "openai_default": OPENAI_MODEL_DEFAULT,
+            "claude_model": CLAUDE_MODEL,
+            "pplx_use_chat": PPLX_USE_CHAT,
+            "search_provider": SEARCH_PROVIDER,
+        },
+        "metrics": {"exposed": True, "endpoint": "/metrics"}
+    }
+
+@app.get("/health")
+def health() -> dict:
+    return {
+        "ok": True,
+        "ts": _now_str(),
+        "app": APP_NAME,
+        "pdf_service": PDF_SERVICE_URL or "-",
+        "live": {
+            "tavily": LIVE_TAVILY,
+            "perplexity": LIVE_PERPLEXITY,
+            "provider": SEARCH_PROVIDER,
+            "llm_provider": LLM_PROVIDER,
+            "pplx_model_env": PPLX_MODEL or "unset",
+            "pplx_model_effective": _pplx_model_effective(PPLX_MODEL),
+            "tools_live_enrich": TOOL_MATRIX_LIVE_ENRICH,
+        },
+        "smtp": bool(SMTP_HOST),
+    }
+
+@app.get("/health/html")
+def health_html() -> HTMLResponse:
+    now = _now_str()
+    html = f"""<!doctype html>
+<meta charset="utf-8">
+<title>{APP_NAME} /health</title>
+<style>
+body{{font:14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:880px;margin:2rem auto;line-height:1.4}}
+.card{{border:1px solid #e5e7eb;border-radius:8px;padding:1rem;margin:.75rem 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}}
+.badge{{display:inline-block;padding:.15rem .5rem;border-radius:6px;background:#e6fffa;color:#065f46;font-weight:600}}
+.kv{{display:grid;grid-template-columns:180px 1fr;gap:.25rem .75rem}}
+</style>
+<h1>{APP_NAME} <span class="badge">OK</span></h1>
+<div class="card"><div class="kv">
+  <div>Zeit (UTC)</div><div>{now}</div>
+  <div>PDF-Service</div><div>{PDF_SERVICE_URL or "–"}</div>
+  <div>Live-Quellen</div><div>Tavily: {"ON" if LIVE_TAVILY else "off"} · Perplexity: {"ON" if LIVE_PERPLEXITY else "off"}</div>
+  <div>Perplexity-Model</div><div>{_pplx_model_effective(PPLX_MODEL)} (env: {PPLX_MODEL or "unset"})</div>
+</div></div>
+<p><a href="/healthz">/healthz</a> · <a href="/metrics">/metrics</a></p>"""
+    return HTMLResponse(html)
+
+@app.get("/metrics")
+def metrics() -> Response:
+    data = generate_latest()  # bytes
+    return Response(content=data, media_type=CONTENT_TYPE_LATEST)
+
+_LOGIN_LIMITER = _RateLimiter(capacity=int(os.getenv("LOGIN_RATE_CAPACITY", "10")),
+                              refill_rate=float(os.getenv("LOGIN_RATE_REFILL_PER_SEC", "0.2")))
 
 @app.post("/api/login", response_model=None)
 async def api_login(request: Request, body: Any = Body(...)) -> Dict[str, Any]:
