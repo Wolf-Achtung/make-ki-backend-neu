@@ -1,12 +1,13 @@
 # filename: main.py
 # -*- coding: utf-8 -*-
 """
-KI‑Status‑Report Backend – Gold‑Standard+ (v3, release RWX‑2)
+KI-Status-Report Backend – Gold-Standard+ (v3, release RWX-3)
 
-Fixes in dieser Version:
-- Regex-Escapes korrigiert (\\d, \\s) in _normalize_path/_minify_html
-- /metrics liefert Bytes via Response (korrekter Content-Type)
-- CORS erlaubt zusätzlich HEAD
+- /api/login gehärtet (Top-Level try/except, niemals „nackte“ 5xx)
+- /api/ping für schnelle Upstream-Diagnose
+- Regex-Fixes (\d, \s), /metrics → Response(bytes)
+- CORS inkl. HEAD + Preflight-Catch-All
+- Lifespan-Startup, DB optional & fehlertolerant
 """
 from __future__ import annotations
 
@@ -70,8 +71,8 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "noreply@example.com")
-SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "KI‑Sicherheit")
-MAIL_SUBJECT_PREFIX = os.getenv("MAIL_SUBJECT_PREFIX", "KI‑Ready")
+SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "KI-Sicherheit")
+MAIL_SUBJECT_PREFIX = os.getenv("MAIL_SUBJECT_PREFIX", "KI-Ready")
 
 def _parse_csv(s: str) -> list[str]:
     return [p.strip() for p in (s or "").split(",") if p and p.strip()]
@@ -90,7 +91,7 @@ LOGIN_REJECTS = Counter("app_login_rejects_total", "Rejected login attempts", ["
 
 def _normalize_path(path: str) -> str:
     p = re.sub(r"/[0-9a-fA-F]{8,}", "/:id", path)
-    p = re.sub(r"/\d+", "/:n", p)  # FIX: \d
+    p = re.sub(r"/\d+", "/:n", p)  # FIX
     return p if len(p) <= 64 else p[:64]
 
 def _now_str() -> str:
@@ -159,8 +160,8 @@ def _minify_html(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\s+<", "><", s)   # FIX: \s
-    s = re.sub(r"\s{2,}", " ", s)   # FIX: \s
+    s = re.sub(r">\s+<", "><", s)   # FIX
+    s = re.sub(r"\s{2,}", " ", s)   # FIX
     return s.strip()
 
 def _pplx_model_effective(raw: Optional[str]) -> str:
@@ -226,6 +227,7 @@ class _RateLimiter:
             b = self.buckets[key] = _TokenBucket(self.capacity, self.refill)
         return b.allow()
 
+# --------------------------- PDF Rendering -----------------------------------
 async def _render_pdf_bytes(html: str, filename: str):
     if not (PDF_SERVICE_URL and html):
         return None
@@ -259,6 +261,7 @@ async def _render_pdf_bytes(html: str, filename: str):
             log.warning("pdf /generate-pdf failed: %s", exc)
     return None
 
+# --------------------------- Auth / App --------------------------------------
 def _issue_token(email: str) -> str:
     payload = {"sub": email, "iat": int(time.time()), "exp": int(time.time() + 14 * 24 * 3600)}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
@@ -382,47 +385,58 @@ def metrics() -> Response:
     data = generate_latest()  # bytes
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
+@app.get("/api/ping")
+def api_ping() -> Dict[str, Any]:
+    return {"ok": True, "ts": _now_str()}
+
+# --------------------------- Auth Endpoints ----------------------------------
 _LOGIN_LIMITER = _RateLimiter(capacity=int(os.getenv("LOGIN_RATE_CAPACITY", "10")),
                               refill_rate=float(os.getenv("LOGIN_RATE_REFILL_PER_SEC", "0.2")))
 
 @app.post("/api/login", response_model=None)
 async def api_login(request: Request, body: Any = Body(...)) -> Dict[str, Any]:
-    ip = request.client.host if request and request.client else "unknown"
-    if not _LOGIN_LIMITER.allow(ip):
-        LOGIN_REJECTS.labels("rate").inc()
-        raise HTTPException(status_code=429, detail="too many requests")
-    if isinstance(body, str):
-        try:
-            body = json.loads(body)
-        except Exception:
-            body = {"email": body}
-    if not isinstance(body, dict):
-        body = body or {}
-    email = _sanitize_email(str(body.get("email") or ""))
-    password = str(body.get("password") or "")
-    if not email:
-        LOGIN_REJECTS.labels("no_email").inc()
-        raise HTTPException(status_code=400, detail="email required")
-    if engine_ok():
-        try:
-            with get_session() as db:
-                user = db.query(User).filter(User.email == email).first()
-                if not user or (getattr(user, "password_hash", None) and not verify_password(password, user.password_hash)):  # type: ignore[attr-defined]
-                    LOGIN_REJECTS.labels("invalid").inc()
-                    raise HTTPException(status_code=401, detail="invalid credentials")
-        except HTTPException:
-            raise
-        except Exception:
-            pass
-    token = _issue_token(email)
-    return {"token": token, "email": email}
+    try:
+        ip = request.client.host if request and request.client else "unknown"
+        if not _LOGIN_LIMITER.allow(ip):
+            LOGIN_REJECTS.labels("rate").inc()
+            raise HTTPException(status_code=429, detail="too many requests")
 
-@app.get("/api/auth/verify", response_model=None)
-async def api_auth_verify(user=Depends(current_user)) -> Dict[str, Any]:
-    if user.get("email"):
-        return {"ok": True, "email": user["email"]}
-    raise HTTPException(status_code=401, detail="invalid token")
+        if isinstance(body, str):
+            try:
+                body = json.loads(body)
+            except Exception:
+                body = {"email": body}
+        if not isinstance(body, dict):
+            body = body or {}
 
+        email = _sanitize_email(str(body.get("email") or ""))
+        password = str(body.get("password") or "")
+        if not email:
+            LOGIN_REJECTS.labels("no_email").inc()
+            raise HTTPException(status_code=400, detail="email required")
+
+        if engine_ok():
+            try:
+                with get_session() as db:
+                    user = db.query(User).filter(User.email == email).first()
+                    if not user or (getattr(user, "password_hash", None) and not verify_password(password, user.password_hash)):  # type: ignore[attr-defined]
+                        LOGIN_REJECTS.labels("invalid").inc()
+                        raise HTTPException(status_code=401, detail="invalid credentials")
+            except HTTPException:
+                raise
+            except Exception as exc:
+                log.warning("[login] DB check failed, fallback to token-only (%s)", exc)
+
+        token = _issue_token(email)
+        return {"token": token, "email": email}
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log.exception("[login] unexpected error: %s", exc)
+        raise HTTPException(status_code=500, detail="internal login error")
+
+# --------------------------- Core Endpoint -----------------------------------
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(current_user)):
     lang = _lang_from_body(body)
@@ -431,7 +445,7 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
         raise HTTPException(status_code=400, detail="recipient could not be resolved")
 
     display_name = (body.get("company") or body.get("unternehmen") or (recipient_user.split("@")[0].title()))
-    subject = f"{MAIL_SUBJECT_PREFIX}/{display_name} – " + ("KI‑Status Report" if lang == "de" else "AI Status Report")
+    subject = f"{MAIL_SUBJECT_PREFIX}/{display_name} – " + ("KI-Status Report" if lang == "de" else "AI Status Report")
     filename_pdf = _safe_pdf_filename(display_name, lang)
     filename_html = _safe_html_filename(display_name, lang)
 
@@ -483,7 +497,7 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
             msg["Subject"] = subject
             msg["From"] = formataddr((SMTP_FROM_NAME, SMTP_FROM))
             msg["To"] = recipient_user
-            msg.set_content("Bitte HTML‑Ansicht verwenden.")
+            msg.set_content("Bitte HTML-Ansicht verwenden.")
             msg.add_alternative(html_content or "<p></p>", subtype="html")
             msg.add_attachment(html_content.encode("utf-8"), maintype="text", subtype="html", filename=filename_html)
             if pdf_bytes:
@@ -495,11 +509,11 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
     if ADMIN_NOTIFY and ADMIN_EMAIL:
         try:
             admin_msg = EmailMessage()
-            admin_msg["Subject"] = subject + (" (Admin‑Kopie)" if lang == "de" else " (Admin copy)")
+            admin_msg["Subject"] = subject + (" (Admin-Kopie)" if lang == "de" else " (Admin copy)")
             admin_msg["From"] = formataddr((SMTP_FROM_NAME, SMTP_FROM))
             admin_msg["To"] = ADMIN_EMAIL
-            admin_msg.set_content("Admin‑Diagnose.")
-            admin_msg.add_alternative("<p>Admin‑Kopie des Reports.</p>", subtype="html")
+            admin_msg.set_content("Admin-Diagnose.")
+            admin_msg.add_alternative("<p>Admin-Kopie des Reports.</p>", subtype="html")
             admin_msg.add_attachment(html_content.encode("utf-8"), maintype="text", subtype="html", filename=filename_html)
             if pdf_bytes:
                 admin_msg.add_attachment(pdf_bytes, maintype="application", subtype="pdf", filename=filename_pdf)
