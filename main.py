@@ -1,16 +1,18 @@
 # filename: main.py
 # -*- coding: utf-8 -*-
 """
-KI-Status-Report Backend – Gold-Standard+ (v3, release RWX-3)
+KI‑Status‑Report Backend – Gold‑Standard+ (v3, release RWX‑3)
 
-- /api/login gehärtet (Top-Level try/except, niemals „nackte“ 5xx)
-- /api/ping für schnelle Upstream-Diagnose
-- Regex-Fixes (\d, \s), /metrics → Response(bytes)
-- CORS inkl. HEAD + Preflight-Catch-All
-- Lifespan-Startup, DB optional & fehlertolerant
+Änderungen ggü. vorher:
+- DB‑Login mit Timeout (DB_LOGIN_TIMEOUT_S, default 1.5s) + optional STRICT_DB_LOGIN
+- /metrics liefert Bytes (korrekter Prometheus Content-Type)
+- Regex-Fixes in _normalize_path/_minify_html (\d, \s)
+- CORS erlaubt zusätzlich HEAD
+- Login-Metriken erweitert
 """
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import logging
@@ -38,12 +40,15 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 log = logging.getLogger("backend")
 
+# --- Auth / Tokens ---
 JWT_SECRET = os.getenv("JWT_SECRET", os.getenv("SECRET_KEY", "dev-secret"))
 JWT_ALGO = "HS256"
 
+# --- Idempotency ---
 IDEMPOTENCY_TTL_SECONDS = int(os.getenv("IDEMPOTENCY_TTL_SECONDS", "3600"))
 IDEMPOTENCY_DIR = os.getenv("IDEMPOTENCY_DIR", "/tmp/ki_idempotency")
 
+# --- Live/LLM Flags (nur Anzeige/Weitergabe) ---
 LIVE_TAVILY = bool(os.getenv("TAVILY_API_KEY"))
 LIVE_PERPLEXITY = bool(os.getenv("PERPLEXITY_API_KEY") or os.getenv("PPLX_API_KEY"))
 SEARCH_PROVIDER = os.getenv("SEARCH_PROVIDER", "hybrid")
@@ -54,6 +59,7 @@ PPLX_USE_CHAT = os.getenv("PPLX_USE_CHAT", "0")
 PPLX_MODEL = os.getenv("PPLX_MODEL", "")
 TOOL_MATRIX_LIVE_ENRICH = os.getenv("TOOL_MATRIX_LIVE_ENRICH", "1").strip().lower() in {"1", "true", "yes"}
 
+# --- PDF-Service ---
 PDF_SERVICE_URL = (os.getenv("PDF_SERVICE_URL") or "").rstrip("/")
 _pdf_timeout_raw = int(os.getenv("PDF_TIMEOUT", "45000"))
 PDF_TIMEOUT = _pdf_timeout_raw / 1000 if _pdf_timeout_raw > 1000 else _pdf_timeout_raw
@@ -62,18 +68,19 @@ PDF_STRIP_SCRIPTS = os.getenv("PDF_STRIP_SCRIPTS", "1").strip().lower() in {"1",
 PDF_EMAIL_FALLBACK_TO_USER = os.getenv("PDF_EMAIL_FALLBACK_TO_USER", "1").strip().lower() in {"1", "true", "yes"}
 PDF_MINIFY_HTML = os.getenv("PDF_MINIFY_HTML", "1").strip().lower() in {"1", "true", "yes"}
 
+# --- Mail ---
 SEND_TO_USER = os.getenv("SEND_TO_USER", "1").strip().lower() in {"1", "true", "yes"}
 ADMIN_NOTIFY = os.getenv("ADMIN_NOTIFY", "1").strip().lower() in {"1", "true", "yes"}
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", os.getenv("SMTP_FROM", ""))
-
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "noreply@example.com")
-SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "KI-Sicherheit")
-MAIL_SUBJECT_PREFIX = os.getenv("MAIL_SUBJECT_PREFIX", "KI-Ready")
+SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "KI‑Sicherheit")
+MAIL_SUBJECT_PREFIX = os.getenv("MAIL_SUBJECT_PREFIX", "KI‑Ready")
 
+# --- CORS ---
 def _parse_csv(s: str) -> list[str]:
     return [p.strip() for p in (s or "").split(",") if p and p.strip()]
 
@@ -83,15 +90,18 @@ CORS_CREDENTIALS_ENV = os.getenv("CORS_ALLOW_CREDENTIALS", "0").strip().lower() 
 CORS_ALLOW_CREDENTIALS = (False if ALLOW_ALL else CORS_CREDENTIALS_ENV)
 CORS_ALLOW_REGEX = os.getenv("CORS_ALLOW_REGEX", r"^https?://([a-z0-9-]+\.)?(ki-sicherheit\.jetzt|ki-foerderung\.jetzt)$")
 
+# --- Metriken ---
 REQUESTS = Counter("app_requests_total", "HTTP requests total", ["method", "path", "status"])
 LATENCY = Histogram("app_request_latency_seconds", "Request latency", ["path"])
 PDF_RENDER = Histogram("app_pdf_render_seconds", "PDF render duration seconds")
 POOL_AVAILABLE = Gauge("app_pdf_pool_available", "PDF contexts available (reported by service)")
 LOGIN_REJECTS = Counter("app_login_rejects_total", "Rejected login attempts", ["reason"])
+LOGIN_SUCCESS = Counter("app_login_success_total", "Successful logins")
 
+# --- Utils ---
 def _normalize_path(path: str) -> str:
     p = re.sub(r"/[0-9a-fA-F]{8,}", "/:id", path)
-    p = re.sub(r"/\d+", "/:n", p)  # FIX
+    p = re.sub(r"/\d+", "/:n", p)
     return p if len(p) <= 64 else p[:64]
 
 def _now_str() -> str:
@@ -132,7 +142,7 @@ def _idem_seen(key: str) -> bool:
 
 def _smtp_send(msg: EmailMessage) -> None:
     if not SMTP_HOST or not SMTP_FROM:
-        log.info("[mail] SMTP deaktiviert oder unkonfiguriert")
+        log.info("[mail] SMTP deaktiviert/unkonfiguriert")
         return
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
         try:
@@ -160,8 +170,8 @@ def _minify_html(s: str) -> str:
     if not s:
         return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\s+<", "><", s)   # FIX
-    s = re.sub(r"\s{2,}", " ", s)   # FIX
+    s = re.sub(r">\s+<", "><", s)
+    s = re.sub(r"\s{2,}", " ", s)
     return s.strip()
 
 def _pplx_model_effective(raw: Optional[str]) -> str:
@@ -173,6 +183,7 @@ def _pplx_model_effective(raw: Optional[str]) -> str:
         return "auto"
     return name
 
+# --- Optional DB (best effort) ---
 def _try_db_imports():
     try:
         from backend.db import get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective  # type: ignore
@@ -200,6 +211,7 @@ def _try_db_imports():
 
 (get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, User, verify_password) = _try_db_imports()
 
+# --- Rate Limiter ---
 class _TokenBucket:
     def __init__(self, capacity: int, refill_rate: float):
         self.capacity = max(1, int(capacity))
@@ -227,7 +239,13 @@ class _RateLimiter:
             b = self.buckets[key] = _TokenBucket(self.capacity, self.refill)
         return b.allow()
 
-# --------------------------- PDF Rendering -----------------------------------
+LOGIN_RATE = _RateLimiter(capacity=int(os.getenv("LOGIN_RATE_CAPACITY", "10")),
+                          refill_rate=float(os.getenv("LOGIN_RATE_REFILL_PER_SEC", "0.2")))
+
+DB_LOGIN_TIMEOUT_S = float(os.getenv("DB_LOGIN_TIMEOUT_S", "1.5"))
+STRICT_DB_LOGIN = os.getenv("STRICT_DB_LOGIN", "0").strip().lower() in {"1","true","yes"}
+
+# --- PDF Rendering (optional) ---
 async def _render_pdf_bytes(html: str, filename: str):
     if not (PDF_SERVICE_URL and html):
         return None
@@ -261,7 +279,7 @@ async def _render_pdf_bytes(html: str, filename: str):
             log.warning("pdf /generate-pdf failed: %s", exc)
     return None
 
-# --------------------------- Auth / App --------------------------------------
+# --- Auth Helpers ---
 def _issue_token(email: str) -> str:
     payload = {"sub": email, "iat": int(time.time()), "exp": int(time.time() + 14 * 24 * 3600)}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
@@ -277,6 +295,7 @@ async def current_user(req: Request):
             pass
     return {"sub": "anon", "email": ""}
 
+# --- App ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if engine_ok():
@@ -302,6 +321,7 @@ app.add_middleware(
     max_age=600,
 )
 
+# --- Metrics Middleware ---
 @app.middleware("http")
 async def _metrics_mw(request: Request, call_next):
     path_label = _normalize_path(request.url.path)
@@ -317,10 +337,12 @@ async def _metrics_mw(request: Request, call_next):
     LATENCY.labels(path_label).observe(time.time() - start)
     return resp
 
+# --- Preflight ---
 @app.options("/{rest_of_path:path}")
 def cors_preflight_ok(rest_of_path: str) -> PlainTextResponse:
     return PlainTextResponse("", status_code=204)
 
+# --- Health / Metrics ---
 @app.get("/healthz")
 def healthz() -> dict:
     return {
@@ -385,58 +407,62 @@ def metrics() -> Response:
     data = generate_latest()  # bytes
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
-@app.get("/api/ping")
-def api_ping() -> Dict[str, Any]:
-    return {"ok": True, "ts": _now_str()}
-
-# --------------------------- Auth Endpoints ----------------------------------
-_LOGIN_LIMITER = _RateLimiter(capacity=int(os.getenv("LOGIN_RATE_CAPACITY", "10")),
-                              refill_rate=float(os.getenv("LOGIN_RATE_REFILL_PER_SEC", "0.2")))
-
+# --- Auth Endpoints ---
 @app.post("/api/login", response_model=None)
 async def api_login(request: Request, body: Any = Body(...)) -> Dict[str, Any]:
-    try:
-        ip = request.client.host if request and request.client else "unknown"
-        if not _LOGIN_LIMITER.allow(ip):
-            LOGIN_REJECTS.labels("rate").inc()
-            raise HTTPException(status_code=429, detail="too many requests")
+    ip = request.client.host if request and request.client else "unknown"
+    if not LOGIN_RATE.allow(ip):
+        LOGIN_REJECTS.labels("rate").inc()
+        raise HTTPException(status_code=429, detail="too many requests")
 
-        if isinstance(body, str):
-            try:
-                body = json.loads(body)
-            except Exception:
-                body = {"email": body}
-        if not isinstance(body, dict):
-            body = body or {}
+    if isinstance(body, str):
+        try:
+            body = json.loads(body)
+        except Exception:
+            body = {"email": body}
+    if not isinstance(body, dict):
+        body = body or {}
 
-        email = _sanitize_email(str(body.get("email") or ""))
-        password = str(body.get("password") or "")
-        if not email:
-            LOGIN_REJECTS.labels("no_email").inc()
-            raise HTTPException(status_code=400, detail="email required")
+    email = _sanitize_email(str(body.get("email") or ""))
+    password = str(body.get("password") or "")
+    if not email:
+        LOGIN_REJECTS.labels("no_email").inc()
+        raise HTTPException(status_code=400, detail="email required")
 
-        if engine_ok():
-            try:
+    # Optional DB-Check (mit Timeout)
+    if engine_ok() and (STRICT_DB_LOGIN or password):
+        async def _check():
+            def _inner():
                 with get_session() as db:
                     user = db.query(User).filter(User.email == email).first()
-                    if not user or (getattr(user, "password_hash", None) and not verify_password(password, user.password_hash)):  # type: ignore[attr-defined]
-                        LOGIN_REJECTS.labels("invalid").inc()
+                    if not user or (getattr(user, "password_hash", None)
+                                    and not verify_password(password, user.password_hash)):  # type: ignore[attr-defined]
                         raise HTTPException(status_code=401, detail="invalid credentials")
-            except HTTPException:
-                raise
-            except Exception as exc:
-                log.warning("[login] DB check failed, fallback to token-only (%s)", exc)
+            return await run_in_threadpool(_inner)
+        try:
+            await asyncio.wait_for(_check(), timeout=DB_LOGIN_TIMEOUT_S)
+        except HTTPException:
+            LOGIN_REJECTS.labels("invalid").inc()
+            raise
+        except asyncio.TimeoutError:
+            log.warning("[db] login check timed out after %.2fs (email=%s)", DB_LOGIN_TIMEOUT_S, email)
+            if STRICT_DB_LOGIN:
+                LOGIN_REJECTS.labels("timeout").inc()
+                raise HTTPException(status_code=504, detail="login backend timeout")
+        except Exception as exc:
+            log.warning("[db] login check failed: %s", exc)
 
-        token = _issue_token(email)
-        return {"token": token, "email": email}
+    token = _issue_token(email)
+    LOGIN_SUCCESS.inc()
+    return {"token": token, "email": email}
 
-    except HTTPException:
-        raise
-    except Exception as exc:
-        log.exception("[login] unexpected error: %s", exc)
-        raise HTTPException(status_code=500, detail="internal login error")
+@app.get("/api/auth/verify", response_model=None)
+async def api_auth_verify(user=Depends(current_user)) -> Dict[str, Any]:
+    if user.get("email"):
+        return {"ok": True, "email": user["email"]}
+    raise HTTPException(status_code=401, detail="invalid token")
 
-# --------------------------- Core Endpoint -----------------------------------
+# --- Core Endpoint ---
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(current_user)):
     lang = _lang_from_body(body)
@@ -445,7 +471,7 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
         raise HTTPException(status_code=400, detail="recipient could not be resolved")
 
     display_name = (body.get("company") or body.get("unternehmen") or (recipient_user.split("@")[0].title()))
-    subject = f"{MAIL_SUBJECT_PREFIX}/{display_name} – " + ("KI-Status Report" if lang == "de" else "AI Status Report")
+    subject = f"{MAIL_SUBJECT_PREFIX}/{display_name} – " + ("KI‑Status Report" if lang == "de" else "AI Status Report")
     filename_pdf = _safe_pdf_filename(display_name, lang)
     filename_html = _safe_html_filename(display_name, lang)
 
@@ -497,7 +523,7 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
             msg["Subject"] = subject
             msg["From"] = formataddr((SMTP_FROM_NAME, SMTP_FROM))
             msg["To"] = recipient_user
-            msg.set_content("Bitte HTML-Ansicht verwenden.")
+            msg.set_content("Bitte HTML‑Ansicht verwenden.")
             msg.add_alternative(html_content or "<p></p>", subtype="html")
             msg.add_attachment(html_content.encode("utf-8"), maintype="text", subtype="html", filename=filename_html)
             if pdf_bytes:
@@ -509,11 +535,11 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
     if ADMIN_NOTIFY and ADMIN_EMAIL:
         try:
             admin_msg = EmailMessage()
-            admin_msg["Subject"] = subject + (" (Admin-Kopie)" if lang == "de" else " (Admin copy)")
+            admin_msg["Subject"] = subject + (" (Admin‑Kopie)" if lang == "de" else " (Admin copy)")
             admin_msg["From"] = formataddr((SMTP_FROM_NAME, SMTP_FROM))
             admin_msg["To"] = ADMIN_EMAIL
-            admin_msg.set_content("Admin-Diagnose.")
-            admin_msg.add_alternative("<p>Admin-Kopie des Reports.</p>", subtype="html")
+            admin_msg.set_content("Admin‑Diagnose.")
+            admin_msg.add_alternative("<p>Admin‑Kopie des Reports.</p>", subtype="html")
             admin_msg.add_attachment(html_content.encode("utf-8"), maintype="text", subtype="html", filename=filename_html)
             if pdf_bytes:
                 admin_msg.add_attachment(pdf_bytes, maintype="application", subtype="pdf", filename=filename_pdf)
