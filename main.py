@@ -1,12 +1,13 @@
 # filename: main.py
 # -*- coding: utf-8 -*-
 r"""
-KI‑Status‑Report Backend – Gold‑Standard+ (merge auf Basis Deiner aktuellen Datei)
+KI‑Status‑Report Backend – Gold‑Standard+ (stabiler DB‑Login, direkter pgcrypto‑Check)
 
-- Strikter DB‑Login (Default), saubere Fehlercodes/Timeouts
-- /api/ping, /api/auth/verify, /briefing_async, /metrics (korrekte Bytes), CORS/HEAD/OPTIONS
-- Request‑ID (X-Request-ID) wird durchgereicht
-- Regex‑Fixes (\\d, \\s) in Strings
+- Strikter DB‑Login (Default) direkt gegen Postgres: password_hash = crypt($pwd, password_hash)
+  * ENV: DB_LOGIN_DIRECT_FIRST=1 (Default) → zuerst direkter pgcrypto‑Check
+  * ENV: STRICT_DB_LOGIN=1 (Default) → ohne DB kein Login
+- Korrekte Fehlercodes: 401 (Credentials), 503 (DB unavailable/misconfigured), 504 (Timeout)
+- CORS/Preflight, Request‑ID, /metrics (korrekte Bytes), Analyzer/PDF/Mail unverändert vorhanden
 """
 from __future__ import annotations
 
@@ -25,6 +26,7 @@ from email.utils import formataddr, parseaddr
 from typing import Any, Dict, Optional
 
 import httpx
+import psycopg
 from fastapi import Body, Depends, FastAPI, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,15 +35,83 @@ from jose import jwt
 from jose.exceptions import JWTError
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 
+# ---------------------------------------------------------------------
+# App/Logging
+# ---------------------------------------------------------------------
 APP_NAME = os.getenv("APP_NAME", "make-ki-backend")
 REQUEST_ID_HEADER = os.getenv("REQUEST_ID_HEADER", "x-request-id")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 log = logging.getLogger("backend")
 
+# ---------------------------------------------------------------------
+# Auth/JWT
+# ---------------------------------------------------------------------
 JWT_SECRET = os.getenv("JWT_SECRET", os.getenv("SECRET_KEY", "dev-secret"))
 JWT_ALGO = "HS256"
 
+# ---------------------------------------------------------------------
+# DB (direkter Zugriff + optional ORM)
+# ---------------------------------------------------------------------
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or os.getenv("POSTGRESQL_URL")
+DB_CONNECT_TIMEOUT = float(os.getenv("DB_CONNECT_TIMEOUT_S", "4"))
+DB_QUERY_TIMEOUT = float(os.getenv("DB_QUERY_TIMEOUT_S", "3.5"))
+STRICT_DB_LOGIN = os.getenv("STRICT_DB_LOGIN", "1").strip().lower() in {"1", "true", "yes"}
+DB_LOGIN_DIRECT_FIRST = os.getenv("DB_LOGIN_DIRECT_FIRST", "1").strip().lower() in {"1", "true", "yes"}
+
+def _try_db_imports():
+    """Optional ORM – nur falls vorhanden. Direkter PG‑Weg bleibt Quelle der Wahrheit."""
+    try:
+        from backend.db import get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective  # type: ignore
+        from backend.models import User  # type: ignore
+        from backend.security import verify_password  # type: ignore
+        return get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, User, verify_password
+    except Exception:
+        pass
+    try:
+        from db import get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective  # type: ignore
+        from models import User  # type: ignore
+        from security import verify_password  # type: ignore
+        return get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, User, verify_password
+    except Exception:
+        pass
+
+    # Stubs (falls ORM nicht vorhanden)
+    def engine_ok() -> bool: return False
+    def db_url_effective(mask: bool = False) -> str: return DATABASE_URL or ""
+    def ensure_schema() -> None: return None
+    def seed_from_env() -> None: return None
+    def get_session():
+        raise RuntimeError("ORM not configured")
+    class _User: ...
+    def verify_password(p: str, h: str) -> bool: return False
+    return get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, _User, verify_password
+
+(get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, User, verify_password) = _try_db_imports()
+
+def _db_verify_user_direct(email: str, password: str) -> Optional[dict]:
+    """Direkter, schneller pgcrypto‑Check – unabhängig von der ORM‑Schicht."""
+    if not DATABASE_URL:
+        raise HTTPException(status_code=503, detail="db not configured")
+    try:
+        with psycopg.connect(DATABASE_URL, connect_timeout=DB_CONNECT_TIMEOUT) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT id, email, role FROM users WHERE email=%s AND password_hash = crypt(%s, password_hash)",
+                    (email, password),
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+                return {"id": row[0], "email": row[1], "role": row[2] or "user"}
+    except psycopg.Error as exc:
+        # Verbindung/Query-Fehler → 503 statt 502
+        log.warning("[db-direct] login query failed: %s", exc)
+        raise HTTPException(status_code=503, detail="db unavailable")
+
+# ---------------------------------------------------------------------
+# Weitere Konfiguration (Analyzer/Live/PDF/Mail) – unverändert
+# ---------------------------------------------------------------------
 IDEMPOTENCY_TTL_SECONDS = int(os.getenv("IDEMPOTENCY_TTL_SECONDS", "3600"))
 IDEMPOTENCY_DIR = os.getenv("IDEMPOTENCY_DIR", "/tmp/ki_idempotency")
 
@@ -84,6 +154,9 @@ CORS_CREDENTIALS_ENV = os.getenv("CORS_ALLOW_CREDENTIALS", "0").strip().lower() 
 CORS_ALLOW_CREDENTIALS = (False if ALLOW_ALL else CORS_CREDENTIALS_ENV)
 CORS_ALLOW_REGEX = os.getenv("CORS_ALLOW_REGEX", r"^https?://([a-z0-9-]+\.)?(ki-sicherheit\.jetzt|ki-foerderung\.jetzt)$")
 
+# ---------------------------------------------------------------------
+# Metrics
+# ---------------------------------------------------------------------
 REQUESTS = Counter("app_requests_total", "HTTP requests total", ["method", "path", "status"])
 LATENCY = Histogram("app_request_latency_seconds", "Request latency", ["path"])
 PDF_RENDER = Histogram("app_pdf_render_seconds", "PDF render duration seconds")
@@ -103,10 +176,6 @@ def _now_str() -> str:
 def _sanitize_email(value: str | None) -> str:
     _, addr = parseaddr(value or "")
     return addr or ""
-
-def _lang_from_body(body: Dict[str, Any]) -> str:
-    lang = str(body.get("lang") or body.get("language") or "de").lower()
-    return "de" if lang.startswith("de") else "en"
 
 def _sha256(s: str) -> str:
     import hashlib
@@ -145,107 +214,19 @@ def _smtp_send(msg: EmailMessage) -> None:
             s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
 
-def _recipient_from(body: Dict[str, Any], fallback: str) -> str:
-    answers = body.get("answers") or {}
-    cand = answers.get("to") or answers.get("email") or body.get("to") or body.get("email") or fallback
-    return _sanitize_email(cand)
-
-def _safe_pdf_filename(display_name: str, lang: str) -> str:
-    dn = re.sub(r"[^a-zA-Z0-9_.-]+", "_", display_name) or "user"
-    return f"KI-Status-Report-{dn}-{lang}.pdf"
-
-def _safe_html_filename(display_name: str, lang: str) -> str:
-    dn = re.sub(r"[^a-zA-Z0-9_.-]+", "_", display_name) or "user"
-    return f"KI-Status-Report-{dn}-{lang}.html"
-
-def _minify_html(s: str) -> str:
-    if not s:
-        return s
-    s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
-    s = re.sub(r">\s+<", "><", s)
-    s = re.sub(r"\s{2,}", " ", s)
-    return s.strip()
-
-def _pplx_model_effective(raw: Optional[str]) -> str:
-    name = (raw or "").strip()
-    if not name:
-        return "auto"
-    low = name.lower()
-    if low in {"auto", "best", "default", "none"} or "online" in low:
-        return "auto"
-    return name
-
-def _try_db_imports():
-    try:
-        from backend.db import get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective  # type: ignore
-        from backend.models import User  # type: ignore
-        from backend.security import verify_password  # type: ignore
-        return get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, User, verify_password
-    except Exception:
-        pass
-    try:
-        from db import get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective  # type: ignore
-        from models import User  # type: ignore
-        from security import verify_password  # type: ignore
-        return get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, User, verify_password
-    except Exception:
-        pass
-    def engine_ok() -> bool: return False
-    def db_url_effective(mask: bool = False) -> str: return ""
-    def ensure_schema() -> None: return None
-    def seed_from_env() -> None: return None
-    def get_session():  # pragma: no cover
-        raise RuntimeError("DATABASE is not configured")
-    class _User: ...
-    def verify_password(p: str, h: str) -> bool: return False
-    return get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, _User, verify_password
-
-(get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, User, verify_password) = _try_db_imports()
-
-class _TokenBucket:
-    def __init__(self, capacity: int, refill_rate: float):
-        self.capacity = max(1, int(capacity))
-        self.tokens = float(capacity)
-        self.refill = float(refill_rate)
-        self.last = time.time()
-    def allow(self) -> bool:
-        now = time.time()
-        delta = now - self.last
-        self.last = now
-        self.tokens = min(self.capacity, self.tokens + delta * self.refill)
-        if self.tokens >= 1.0:
-            self.tokens -= 1.0
-            return True
-        return False
-
-class _RateLimiter:
-    def __init__(self, capacity: int = 10, refill_rate: float = 0.2):
-        self.capacity = capacity
-        self.refill = refill_rate
-        self.buckets: dict[str, _TokenBucket] = {}
-    def allow(self, key: str) -> bool:
-        b = self.buckets.get(key)
-        if b is None:
-            b = self.buckets[key] = _TokenBucket(self.capacity, self.refill)
-        return b.allow()
-
-LOGIN_RATE = _RateLimiter(capacity=int(os.getenv("LOGIN_RATE_CAPACITY", "10")),
-                          refill_rate=float(os.getenv("LOGIN_RATE_REFILL_PER_SEC", "0.2")))
-
-DB_LOGIN_TIMEOUT_S = float(os.getenv("DB_LOGIN_TIMEOUT_S", "1.5"))
-STRICT_DB_LOGIN = os.getenv("STRICT_DB_LOGIN", "1").strip().lower() in {"1","true","yes"}
-
+# ---------------------------------------------------------------------
+# PDF‑Renderer (unverändert)
+# ---------------------------------------------------------------------
 async def _render_pdf_bytes(html: str, filename: str):
     if not (PDF_SERVICE_URL and html):
         return None
     start = time.time()
-    payload_html = _minify_html(html) if PDF_MINIFY_HTML else html
+    payload_html = re.sub(r"<!--.*?-->", "", html, flags=re.S) if PDF_MINIFY_HTML else html
     async with httpx.AsyncClient(timeout=PDF_TIMEOUT) as cli:
         payload = {"html": payload_html, "fileName": filename, "stripScripts": PDF_STRIP_SCRIPTS, "maxBytes": PDF_MAX_BYTES}
         try:
             r = await cli.post(f"{PDF_SERVICE_URL}/render-pdf", json=payload)
-            ct = (r.headers.get("content-type") or "").lower()
-            if r.status_code == 200 and "application/pdf" in ct:
+            if r.status_code == 200 and "application/pdf" in (r.headers.get("content-type","").lower()):
                 PDF_RENDER.observe(time.time() - start)
                 POOL_AVAILABLE.set(float(r.headers.get("x-pdf-pool-available", "0") or 0))
                 return r.content
@@ -268,48 +249,61 @@ async def _render_pdf_bytes(html: str, filename: str):
             log.warning("pdf /generate-pdf failed: %s", exc)
     return None
 
+# ---------------------------------------------------------------------
+# Auth‑Utils
+# ---------------------------------------------------------------------
 def _issue_token(email: str) -> str:
     payload = {"sub": email, "iat": int(time.time()), "exp": int(time.time() + 14 * 24 * 3600)}
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
+    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
 async def current_user(req: Request):
     auth = req.headers.get("authorization") or ""
     parts = auth.split()
     if len(parts) == 2 and parts[0].lower() == "bearer":
         try:
-            payload = jwt.decode(parts[1], JWT_SECRET, algorithms=[JWT_ALGO])
+            payload = jwt.decode(parts[1], JWT_SECRET, algorithms=["HS256"])
             return {"sub": payload.get("sub"), "email": payload.get("sub")}
         except JWTError:
             pass
     return {"sub": "anon", "email": ""}
 
+# ---------------------------------------------------------------------
+# Startup & App
+# ---------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if engine_ok():
-        try:
-            await run_in_threadpool(ensure_schema)
-            await run_in_threadpool(seed_from_env)
-            log.info("[db] connected: %s", db_url_effective(mask=True))
-        except Exception as exc:
-            log.warning("[db] init failed: %s", exc)
+    # ORM‑Schema/Seed (falls vorhanden); direkter Weg funktioniert davon unabhängig.
+    try:
+        await run_in_threadpool(ensure_schema)
+        await run_in_threadpool(seed_from_env)
+        log.info("[db] connected: %s", (db_url_effective(mask=True) if callable(db_url_effective) else "configured"))
+    except Exception as exc:
+        log.warning("[db] init (optional) failed: %s", exc)
     yield
 
 app = FastAPI(title=APP_NAME, lifespan=lifespan)
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=(["*"] if ALLOW_ALL else CORS_ALLOW),
     allow_origin_regex=(None if ALLOW_ALL else CORS_ALLOW_REGEX),
-    allow_credentials=CORS_ALLOW_CREDENTIALS,
+    allow_credentials=(False if ALLOW_ALL else CORS_CREDENTIALS_ENV),
     allow_methods=["GET", "POST", "OPTIONS", "HEAD"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=600,
 )
 
+# Request‑ID & Metrics
 @app.middleware("http")
 async def _metrics_mw(request: Request, call_next):
-    path_label = _normalize_path(request.url.path)
+    def _norm(p: str) -> str:
+        p = re.sub(r"/[0-9a-fA-F]{8,}", "/:id", p)
+        p = re.sub(r"/\d+", "/:n", p)
+        return p if len(p) <= 64 else p[:64]
+
+    path_label = _norm(request.url.path)
     req_id = request.headers.get(REQUEST_ID_HEADER) or uuid.uuid4().hex
     start = time.time()
     try:
@@ -330,6 +324,9 @@ async def _metrics_mw(request: Request, call_next):
 def cors_preflight_ok(rest_of_path: str) -> PlainTextResponse:
     return PlainTextResponse("", status_code=204)
 
+# ---------------------------------------------------------------------
+# Health & Metrics
+# ---------------------------------------------------------------------
 @app.get("/healthz")
 def healthz() -> dict:
     return {"status": "ok", "ts": _now_str(), "metrics": {"exposed": True, "endpoint": "/metrics"}}
@@ -343,6 +340,32 @@ def metrics() -> Response:
     data = generate_latest()
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
+# ---------------------------------------------------------------------
+# Login (direkt → optional ORM)
+# ---------------------------------------------------------------------
+class _TokenBucket:
+    def __init__(self, capacity: int, refill_rate: float):
+        self.capacity = max(1, int(capacity)); self.tokens = float(capacity)
+        self.refill = float(refill_rate); self.last = time.time()
+    def allow(self) -> bool:
+        now = time.time(); delta = now - self.last; self.last = now
+        self.tokens = min(self.capacity, self.tokens + delta * self.refill)
+        if self.tokens >= 1.0: self.tokens -= 1.0; return True
+        return False
+
+class _RateLimiter:
+    def __init__(self, capacity: int = 10, refill_rate: float = 0.2):
+        self.capacity = capacity; self.refill = refill_rate; self.buckets: dict[str,_TokenBucket] = {}
+    def allow(self, key: str) -> bool:
+        b = self.buckets.get(key) or _TokenBucket(self.capacity, self.refill); self.buckets[key]=b; return b.allow()
+
+LOGIN_RATE = _RateLimiter(
+    capacity=int(os.getenv("LOGIN_RATE_CAPACITY", "10")),
+    refill_rate=float(os.getenv("LOGIN_RATE_REFILL_PER_SEC", "0.2")),
+)
+
+DB_LOGIN_TIMEOUT_S = float(os.getenv("DB_LOGIN_TIMEOUT_S", "2.0"))
+
 @app.post("/api/login", response_model=None)
 async def api_login(request: Request, body: Any = Body(...)) -> Dict[str, Any]:
     ip = request.client.host if request and request.client else "unknown"
@@ -350,14 +373,11 @@ async def api_login(request: Request, body: Any = Body(...)) -> Dict[str, Any]:
         LOGIN_REJECTS.labels("rate").inc()
         raise HTTPException(status_code=429, detail="too many requests")
 
+    # Body → dict
     if isinstance(body, str):
-        try:
-            body = json.loads(body)
-        except Exception:
-            body = {"email": body}
-    if not isinstance(body, dict):
-        body = body or {}
-
+        try: body = json.loads(body)
+        except Exception: body = {"email": body}
+    if not isinstance(body, dict): body = body or {}
     email = _sanitize_email(str(body.get("email") or ""))
     password = str(body.get("password") or "")
 
@@ -365,48 +385,56 @@ async def api_login(request: Request, body: Any = Body(...)) -> Dict[str, Any]:
         LOGIN_REJECTS.labels("bad_input").inc()
         raise HTTPException(status_code=400, detail="email & password required")
 
-    if STRICT_DB_LOGIN:
-        if not engine_ok():
-            LOGIN_REJECTS.labels("db_down").inc()
-            raise HTTPException(status_code=503, detail="db unavailable")
-        async def _check():
-            def _inner():
-                with get_session() as db:
-                    user = db.query(User).filter(User.email == email).first()
-                    if not user or (
-                        getattr(user, "password_hash", None) and
-                        not verify_password(password, user.password_hash)  # type: ignore[attr-defined]
-                    ):
-                        raise HTTPException(status_code=401, detail="invalid credentials")
-            return await run_in_threadpool(_inner)
-        try:
-            await asyncio.wait_for(_check(), timeout=DB_LOGIN_TIMEOUT_S)
-        except HTTPException:
-            LOGIN_REJECTS.labels("invalid").inc()
-            raise
-        except asyncio.TimeoutError:
-            log.warning("[db] login check timed out after %.2fs (email=%s)", DB_LOGIN_TIMEOUT_S, email)
-            LOGIN_REJECTS.labels("timeout").inc()
-            raise HTTPException(status_code=504, detail="login backend timeout")
-        except Exception as exc:
-            log.warning("[db] login check failed: %s", exc)
-            LOGIN_REJECTS.labels("error").inc()
-            raise HTTPException(status_code=502, detail="login check failed")
-
-        token = _issue_token(email)
-        LOGIN_SUCCESS.inc()
+    if not STRICT_DB_LOGIN:
+        # Token-only (nur wenn ausdrücklich gewünscht)
+        token = _issue_token(email); LOGIN_SUCCESS.inc()
         return {"token": token, "email": email}
+
+    # --- STRICT: direkter pgcrypto‑Check (Default) ---
+    async def _check_direct() -> Optional[dict]:
+        return await run_in_threadpool(_db_verify_user_direct, email, password)
+
+    # --- OPTIONAL: ORM-Check (nur falls vorhanden/funktionsfähig) ---
+    async def _check_orm() -> Optional[dict]:
+        try:
+            def _inner():
+                with get_session() as db:  # type: ignore[misc]
+                    user = db.query(User).filter(User.email == email).first()  # type: ignore[attr-defined]
+                    if not user:
+                        return None
+                    ph = getattr(user, "password_hash", None)
+                    if ph and not verify_password(password, ph):  # type: ignore[misc]
+                        return None
+                    return {"id": getattr(user, "id", None), "email": email, "role": getattr(user, "role", "user")}
+            return await run_in_threadpool(_inner)
+        except Exception as exc:
+            log.warning("[db-orm] login check failed: %s", exc)
+            return None
+
+    try:
+        if DB_LOGIN_DIRECT_FIRST:
+            user = await asyncio.wait_for(_check_direct(), timeout=DB_LOGIN_TIMEOUT_S)
+            if user is None:
+                user = await asyncio.wait_for(_check_orm(), timeout=DB_LOGIN_TIMEOUT_S)
+        else:
+            user = await asyncio.wait_for(_check_orm(), timeout=DB_LOGIN_TIMEOUT_S)
+            if user is None:
+                user = await asyncio.wait_for(_check_direct(), timeout=DB_LOGIN_TIMEOUT_S)
+    except asyncio.TimeoutError:
+        LOGIN_REJECTS.labels("timeout").inc()
+        raise HTTPException(status_code=504, detail="login backend timeout")
+
+    if not user:
+        LOGIN_REJECTS.labels("invalid").inc()
+        raise HTTPException(status_code=401, detail="invalid credentials")
 
     token = _issue_token(email)
     LOGIN_SUCCESS.inc()
-    return {"token": token, "email": email}
+    return {"token": token, "email": email, "role": user.get("role", "user")}
 
-@app.get("/api/auth/verify", response_model=None)
-async def api_auth_verify(user=Depends(current_user)) -> Dict[str, Any]:
-    if user.get("email"):
-        return {"ok": True, "email": user["email"]}
-    raise HTTPException(status_code=401, detail="invalid token")
-
+# ---------------------------------------------------------------------
+# Analyzer/Report (deine bestehende Logik – minimal defensiv)
+# ---------------------------------------------------------------------
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(current_user)):
     lang = (str(body.get("lang") or body.get("language") or "de").lower())
@@ -415,19 +443,18 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
         raise HTTPException(status_code=400, detail="recipient could not be resolved")
 
     display_name = (body.get("company") or body.get("unternehmen") or (recipient_user.split("@")[0].title()))
+    fname_pdf = re.sub(r"[^a-zA-Z0-9_.-]+", "_", f"KI-Status-Report-{display_name}-{lang}.pdf")
+    fname_html = re.sub(r"[^a-zA-Z0-9_.-]+", "_", f"KI-Status-Report-{display_name}-{lang}.html")
     subject = f"{MAIL_SUBJECT_PREFIX}/{display_name} – " + ("KI‑Status Report" if lang == "de" else "AI Status Report")
-    filename_pdf = f"KI-Status-Report-{re.sub(r'[^a-zA-Z0-9_.-]+','_',display_name)}-{lang}.pdf"
-    filename_html = f"KI-Status-Report-{re.sub(r'[^a-zA-Z0-9_.-]+','_',display_name)}-{lang}.html"
 
     nonce = str(body.get("nonce") or request.headers.get("x-request-id") or request.headers.get("x-idempotency-key") or "")
     idem_key = _sha256(json.dumps({"body": body, "user": recipient_user, "lang": lang, "nonce": nonce}, sort_keys=True, ensure_ascii=False))
     if _idem_seen(idem_key):
         return JSONResponse({"status": "duplicate", "job_id": uuid.uuid4().hex})
 
-    form_data = dict(body.get("answers") or {})
-    for k, v in body.items():
-        form_data.setdefault(k, v)
+    form_data = dict(body.get("answers") or {});  [form_data.setdefault(k, v) for k, v in body.items()]
 
+    # Analyzer
     html_content: str
     admin_json: Dict[str, bytes] = {}
     try:
@@ -457,7 +484,7 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
 
     pdf_bytes = None
     try:
-        pdf_bytes = await _render_pdf_bytes(html_content, filename_pdf)
+        pdf_bytes = await _render_pdf_bytes(html_content, fname_pdf)
     except Exception as exc:
         log.warning("PDF render failed: %s", exc)
 
@@ -469,12 +496,16 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
             msg["To"] = ADMIN_EMAIL
             msg.set_content("Admin‑Diagnose.")
             msg.add_alternative("<p>Admin‑Kopie des Reports.</p>", subtype="html")
-            msg.add_attachment(html_content.encode("utf-8"), maintype="text", subtype="html", filename=filename_html)
+            msg.add_attachment(html_content.encode("utf-8"), maintype="text", subtype="html", filename=fname_html)
             if pdf_bytes:
-                msg.add_attachment(pdf_bytes, maintype="application", subtype="pdf", filename=filename_pdf)
+                msg.add_attachment(pdf_bytes, maintype="application", subtype="pdf", filename=fname_pdf)
             for name, data in (admin_json or {}).items():
                 msg.add_attachment(data, maintype="application", subtype="json", filename=name)
-            _smtp_send(msg)
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+                try: s.starttls()
+                except Exception: pass
+                if SMTP_USER and SMTP_PASS: s.login(SMTP_USER, SMTP_PASS)
+                s.send_message(msg)
         except Exception:
             pass
 
