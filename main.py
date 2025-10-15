@@ -3,15 +3,10 @@
 r"""
 KI‑Status‑Report Backend – Gold‑Standard+ (merge auf Basis Deiner aktuellen Datei)
 
-Wesentliche Punkte:
-- DB‑Login strikt (Default): Prüfung gegen Postgres (per backend.db/* oder Fallback), Timeout & saubere Fehlercodes
+- Strikter DB‑Login (Default), saubere Fehlercodes/Timeouts
 - /api/ping, /api/auth/verify, /briefing_async, /metrics (korrekte Bytes), CORS/HEAD/OPTIONS
-- Request‑ID (X-Request-ID) wird durchgereicht und auf Responses gesetzt
-- Regex‑Fixes (\\d, \\s) in Strings, keine SyntaxWarnings
-- PDF‑Service‑Anbindung (Render/Generate), Minify optional
-- Healthz mit optionalen Versionsinfos (PROMPT_VERSION, SCHEMA_VERSION, GIT_SHA)
-
-Hinweis: Diese Datei basiert auf Deiner gelieferten Fassung und behält deren Struktur/Endpunkte bei.
+- Request‑ID (X-Request-ID) wird durchgereicht
+- Regex‑Fixes (\\d, \\s) in Strings
 """
 from __future__ import annotations
 
@@ -38,33 +33,18 @@ from jose import jwt
 from jose.exceptions import JWTError
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 
-# -----------------------------------------------------------------------------
-# Konfiguration & Logging
-# -----------------------------------------------------------------------------
 APP_NAME = os.getenv("APP_NAME", "make-ki-backend")
-APP_VERSION = os.getenv("APP_VERSION", "")
-PROMPT_VERSION = os.getenv("PROMPT_VERSION", "")
-SCHEMA_VERSION = os.getenv("SCHEMA_VERSION", "")
-GIT_SHA = os.getenv("GIT_SHA", "")
-
 REQUEST_ID_HEADER = os.getenv("REQUEST_ID_HEADER", "x-request-id")
-
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(
-    level=LOG_LEVEL,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
+logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 log = logging.getLogger("backend")
 
-# JWT
 JWT_SECRET = os.getenv("JWT_SECRET", os.getenv("SECRET_KEY", "dev-secret"))
 JWT_ALGO = "HS256"
 
-# Idempotenz
 IDEMPOTENCY_TTL_SECONDS = int(os.getenv("IDEMPOTENCY_TTL_SECONDS", "3600"))
 IDEMPOTENCY_DIR = os.getenv("IDEMPOTENCY_DIR", "/tmp/ki_idempotency")
 
-# Live‑Layer/LLM (bleiben wie in Deiner Datei)
 LIVE_TAVILY = bool(os.getenv("TAVILY_API_KEY"))
 LIVE_PERPLEXITY = bool(os.getenv("PERPLEXITY_API_KEY") or os.getenv("PPLX_API_KEY"))
 SEARCH_PROVIDER = os.getenv("SEARCH_PROVIDER", "hybrid")
@@ -75,19 +55,18 @@ PPLX_USE_CHAT = os.getenv("PPLX_USE_CHAT", "0")
 PPLX_MODEL = os.getenv("PPLX_MODEL", "")
 TOOL_MATRIX_LIVE_ENRICH = os.getenv("TOOL_MATRIX_LIVE_ENRICH", "1").strip().lower() in {"1", "true", "yes"}
 
-# PDF‑Service
 PDF_SERVICE_URL = (os.getenv("PDF_SERVICE_URL") or "").rstrip("/")
 _pdf_timeout_raw = int(os.getenv("PDF_TIMEOUT", "45000"))
 PDF_TIMEOUT = _pdf_timeout_raw / 1000 if _pdf_timeout_raw > 1000 else _pdf_timeout_raw
 PDF_MAX_BYTES = int(os.getenv("PDF_MAX_BYTES", str(32 * 1024 * 1024)))
-PDF_STRIP_SCRIPTS = os.getenv("PDF_STRIP_SCRIPTS", "1").strip().lower() in {"1", "true", "yes"}
-PDF_EMAIL_FALLBACK_TO_USER = os.getenv("PDF_EMAIL_FALLBACK_TO_USER", "1").strip().lower() in {"1", "true", "yes"}
-PDF_MINIFY_HTML = os.getenv("PDF_MINIFY_HTML", "1").strip().lower() in {"1", "true", "yes"}
+PDF_STRIP_SCRIPTS = os.getenv("PDF_STRIP_SCRIPTS", "1").strip().lower() in {"1","true","yes"}
+PDF_EMAIL_FALLBACK_TO_USER = os.getenv("PDF_EMAIL_FALLBACK_TO_USER", "1").strip().lower() in {"1","true","yes"}
+PDF_MINIFY_HTML = os.getenv("PDF_MINIFY_HTML", "1").strip().lower() in {"1","true","yes"}
 
-# Mail
-SEND_TO_USER = os.getenv("SEND_TO_USER", "1").strip().lower() in {"1", "true", "yes"}
-ADMIN_NOTIFY = os.getenv("ADMIN_NOTIFY", "1").strip().lower() in {"1", "true", "yes"}
+SEND_TO_USER = os.getenv("SEND_TO_USER", "1").strip().lower() in {"1","true","yes"}
+ADMIN_NOTIFY = os.getenv("ADMIN_NOTIFY", "1").strip().lower() in {"1","true","yes"}
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", os.getenv("SMTP_FROM", ""))
+
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
@@ -99,19 +78,12 @@ MAIL_SUBJECT_PREFIX = os.getenv("MAIL_SUBJECT_PREFIX", "KI‑Ready")
 def _parse_csv(s: str) -> list[str]:
     return [p.strip() for p in (s or "").split(",") if p and p.strip()]
 
-# CORS
 CORS_ALLOW = _parse_csv(os.getenv("CORS_ALLOW_ORIGINS", ""))
 ALLOW_ALL = (not CORS_ALLOW) or CORS_ALLOW == ["*"]
-CORS_CREDENTIALS_ENV = os.getenv("CORS_ALLOW_CREDENTIALS", "0").strip().lower() in {"1", "true", "yes"}
+CORS_CREDENTIALS_ENV = os.getenv("CORS_ALLOW_CREDENTIALS", "0").strip().lower() in {"1","true","yes"}
 CORS_ALLOW_CREDENTIALS = (False if ALLOW_ALL else CORS_CREDENTIALS_ENV)
-CORS_ALLOW_REGEX = os.getenv(
-    "CORS_ALLOW_REGEX",
-    r"^https?://([a-z0-9-]+\.)?(ki-sicherheit\.jetzt|ki-foerderung\.jetzt)$",
-)
+CORS_ALLOW_REGEX = os.getenv("CORS_ALLOW_REGEX", r"^https?://([a-z0-9-]+\.)?(ki-sicherheit\.jetzt|ki-foerderung\.jetzt)$")
 
-# -----------------------------------------------------------------------------
-# Prometheus‑Metriken
-# -----------------------------------------------------------------------------
 REQUESTS = Counter("app_requests_total", "HTTP requests total", ["method", "path", "status"])
 LATENCY = Histogram("app_request_latency_seconds", "Request latency", ["path"])
 PDF_RENDER = Histogram("app_pdf_render_seconds", "PDF render duration seconds")
@@ -119,9 +91,6 @@ POOL_AVAILABLE = Gauge("app_pdf_pool_available", "PDF contexts available (report
 LOGIN_REJECTS = Counter("app_login_rejects_total", "Rejected login attempts", ["reason"])
 LOGIN_SUCCESS = Counter("app_login_success_total", "Successful logins")
 
-# -----------------------------------------------------------------------------
-# Hilfsfunktionen
-# -----------------------------------------------------------------------------
 def _normalize_path(path: str) -> str:
     p = re.sub(r"/[0-9a-fA-F]{8,}", "/:id", path)
     p = re.sub(r"/\d+", "/:n", p)
@@ -206,14 +175,9 @@ def _pplx_model_effective(raw: Optional[str]) -> str:
         return "auto"
     return name
 
-# -----------------------------------------------------------------------------
-# DB‑Integration (wie in Deiner Datei, mit Fallback‑Imports)
-# -----------------------------------------------------------------------------
 def _try_db_imports():
     try:
-        from backend.db import (  # type: ignore
-            get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective
-        )
+        from backend.db import get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective  # type: ignore
         from backend.models import User  # type: ignore
         from backend.security import verify_password  # type: ignore
         return get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, User, verify_password
@@ -226,8 +190,6 @@ def _try_db_imports():
         return get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, User, verify_password
     except Exception:
         pass
-
-    # Fallback‑Stubs (falls DB‑Modul nicht vorhanden)
     def engine_ok() -> bool: return False
     def db_url_effective(mask: bool = False) -> str: return ""
     def ensure_schema() -> None: return None
@@ -240,9 +202,6 @@ def _try_db_imports():
 
 (get_session, engine_ok, ensure_schema, seed_from_env, db_url_effective, User, verify_password) = _try_db_imports()
 
-# -----------------------------------------------------------------------------
-# Rate‑Limiting für Login
-# -----------------------------------------------------------------------------
 class _TokenBucket:
     def __init__(self, capacity: int, refill_rate: float):
         self.capacity = max(1, int(capacity))
@@ -270,18 +229,12 @@ class _RateLimiter:
             b = self.buckets[key] = _TokenBucket(self.capacity, self.refill)
         return b.allow()
 
-LOGIN_RATE = _RateLimiter(
-    capacity=int(os.getenv("LOGIN_RATE_CAPACITY", "10")),
-    refill_rate=float(os.getenv("LOGIN_RATE_REFILL_PER_SEC", "0.2")),
-)
+LOGIN_RATE = _RateLimiter(capacity=int(os.getenv("LOGIN_RATE_CAPACITY", "10")),
+                          refill_rate=float(os.getenv("LOGIN_RATE_REFILL_PER_SEC", "0.2")))
 
-# Login‑Verhalten: Standard jetzt STRICT
 DB_LOGIN_TIMEOUT_S = float(os.getenv("DB_LOGIN_TIMEOUT_S", "1.5"))
-STRICT_DB_LOGIN = os.getenv("STRICT_DB_LOGIN", "1").strip().lower() in {"1", "true", "yes"}
+STRICT_DB_LOGIN = os.getenv("STRICT_DB_LOGIN", "1").strip().lower() in {"1","true","yes"}
 
-# -----------------------------------------------------------------------------
-# PDF‑Renderer
-# -----------------------------------------------------------------------------
 async def _render_pdf_bytes(html: str, filename: str):
     if not (PDF_SERVICE_URL and html):
         return None
@@ -289,7 +242,6 @@ async def _render_pdf_bytes(html: str, filename: str):
     payload_html = _minify_html(html) if PDF_MINIFY_HTML else html
     async with httpx.AsyncClient(timeout=PDF_TIMEOUT) as cli:
         payload = {"html": payload_html, "fileName": filename, "stripScripts": PDF_STRIP_SCRIPTS, "maxBytes": PDF_MAX_BYTES}
-        # 1) render-pdf
         try:
             r = await cli.post(f"{PDF_SERVICE_URL}/render-pdf", json=payload)
             ct = (r.headers.get("content-type") or "").lower()
@@ -299,7 +251,6 @@ async def _render_pdf_bytes(html: str, filename: str):
                 return r.content
         except Exception as exc:
             log.warning("pdf /render-pdf failed: %s", exc)
-        # 2) generate-pdf (Base64‑Fallback)
         try:
             r = await cli.post(f"{PDF_SERVICE_URL}/generate-pdf", json={**payload, "return_pdf_bytes": True})
             ct = (r.headers.get("content-type") or "").lower()
@@ -317,9 +268,6 @@ async def _render_pdf_bytes(html: str, filename: str):
             log.warning("pdf /generate-pdf failed: %s", exc)
     return None
 
-# -----------------------------------------------------------------------------
-# Auth‑Utils
-# -----------------------------------------------------------------------------
 def _issue_token(email: str) -> str:
     payload = {"sub": email, "iat": int(time.time()), "exp": int(time.time() + 14 * 24 * 3600)}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
@@ -335,12 +283,8 @@ async def current_user(req: Request):
             pass
     return {"sub": "anon", "email": ""}
 
-# -----------------------------------------------------------------------------
-# Lifespan & App
-# -----------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # DB‑Schema/Seed – wie in Deiner Datei (sofern Module vorhanden)
     if engine_ok():
         try:
             await run_in_threadpool(ensure_schema)
@@ -352,7 +296,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=APP_NAME, lifespan=lifespan)
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=(["*"] if ALLOW_ALL else CORS_ALLOW),
@@ -364,9 +307,6 @@ app.add_middleware(
     max_age=600,
 )
 
-# -----------------------------------------------------------------------------
-# Middleware: Request‑ID & Metriken
-# -----------------------------------------------------------------------------
 @app.middleware("http")
 async def _metrics_mw(request: Request, call_next):
     path_label = _normalize_path(request.url.path)
@@ -377,7 +317,6 @@ async def _metrics_mw(request: Request, call_next):
     except Exception:
         REQUESTS.labels(request.method, path_label, "500").inc()
         LATENCY.labels(path_label).observe(time.time() - start)
-        # Setze dennoch Request‑ID
         resp = Response(status_code=500)
         resp.headers[REQUEST_ID_HEADER] = req_id
         raise
@@ -387,33 +326,13 @@ async def _metrics_mw(request: Request, call_next):
     resp.headers[REQUEST_ID_HEADER] = req_id
     return resp
 
-# OPTIONS Preflight
 @app.options("/{rest_of_path:path}")
 def cors_preflight_ok(rest_of_path: str) -> PlainTextResponse:
     return PlainTextResponse("", status_code=204)
 
-# -----------------------------------------------------------------------------
-# Health & Metrics
-# -----------------------------------------------------------------------------
 @app.get("/healthz")
 def healthz() -> dict:
-    return {
-        "status": "ok",
-        "ts": _now_str(),
-        "app": {"name": APP_NAME, "version": APP_VERSION, "git": GIT_SHA},
-        "versions": {"prompt": PROMPT_VERSION, "schema": SCHEMA_VERSION},
-        "env": {
-            "cors_allow_origins": CORS_ALLOW,
-            "cors_allow_regex": CORS_ALLOW_REGEX,
-            "cors_allow_credentials": CORS_ALLOW_CREDENTIALS,
-            "llm_provider": LLM_PROVIDER,
-            "openai_default": OPENAI_MODEL_DEFAULT,
-            "claude_model": CLAUDE_MODEL,
-            "pplx_use_chat": PPLX_USE_CHAT,
-            "search_provider": SEARCH_PROVIDER,
-        },
-        "metrics": {"exposed": True, "endpoint": "/metrics"},
-    }
+    return {"status": "ok", "ts": _now_str(), "metrics": {"exposed": True, "endpoint": "/metrics"}}
 
 @app.get("/api/ping")
 def api_ping() -> Dict[str, Any]:
@@ -424,18 +343,13 @@ def metrics() -> Response:
     data = generate_latest()
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
-# -----------------------------------------------------------------------------
-# Auth
-# -----------------------------------------------------------------------------
 @app.post("/api/login", response_model=None)
 async def api_login(request: Request, body: Any = Body(...)) -> Dict[str, Any]:
-    # Rate‑Limit pro IP
     ip = request.client.host if request and request.client else "unknown"
     if not LOGIN_RATE.allow(ip):
         LOGIN_REJECTS.labels("rate").inc()
         raise HTTPException(status_code=429, detail="too many requests")
 
-    # Body normalisieren
     if isinstance(body, str):
         try:
             body = json.loads(body)
@@ -451,7 +365,6 @@ async def api_login(request: Request, body: Any = Body(...)) -> Dict[str, Any]:
         LOGIN_REJECTS.labels("bad_input").inc()
         raise HTTPException(status_code=400, detail="email & password required")
 
-    # Strikter DB‑Login (Default)
     if STRICT_DB_LOGIN:
         if not engine_ok():
             LOGIN_REJECTS.labels("db_down").inc()
@@ -484,7 +397,6 @@ async def api_login(request: Request, body: Any = Body(...)) -> Dict[str, Any]:
         LOGIN_SUCCESS.inc()
         return {"token": token, "email": email}
 
-    # Nicht‑strikte Variante (nur falls explizit so konfiguriert)
     token = _issue_token(email)
     LOGIN_SUCCESS.inc()
     return {"token": token, "email": email}
@@ -495,9 +407,6 @@ async def api_auth_verify(user=Depends(current_user)) -> Dict[str, Any]:
         return {"ok": True, "email": user["email"]}
     raise HTTPException(status_code=401, detail="invalid token")
 
-# -----------------------------------------------------------------------------
-# Core: Briefing/Report (wie in Deiner Datei, nur defensive Checks)
-# -----------------------------------------------------------------------------
 @app.post("/briefing_async")
 async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(current_user)):
     lang = (str(body.get("lang") or body.get("language") or "de").lower())
@@ -507,17 +416,11 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
 
     display_name = (body.get("company") or body.get("unternehmen") or (recipient_user.split("@")[0].title()))
     subject = f"{MAIL_SUBJECT_PREFIX}/{display_name} – " + ("KI‑Status Report" if lang == "de" else "AI Status Report")
-    filename_pdf = _safe_pdf_filename(display_name, lang)
-    filename_html = _safe_html_filename(display_name, lang)
+    filename_pdf = f"KI-Status-Report-{re.sub(r'[^a-zA-Z0-9_.-]+','_',display_name)}-{lang}.pdf"
+    filename_html = f"KI-Status-Report-{re.sub(r'[^a-zA-Z0-9_.-]+','_',display_name)}-{lang}.html"
 
-    nonce = str(
-        body.get("nonce")
-        or request.headers.get("x-request-id")
-        or request.headers.get("x-idempotency-key")
-        or ""
-    )
-    idem_key = _sha256(json.dumps({"body": body, "user": recipient_user, "lang": lang, "nonce": nonce},
-                                  sort_keys=True, ensure_ascii=False))
+    nonce = str(body.get("nonce") or request.headers.get("x-request-id") or request.headers.get("x-idempotency-key") or "")
+    idem_key = _sha256(json.dumps({"body": body, "user": recipient_user, "lang": lang, "nonce": nonce}, sort_keys=True, ensure_ascii=False))
     if _idem_seen(idem_key):
         return JSONResponse({"status": "duplicate", "job_id": uuid.uuid4().hex})
 
@@ -525,7 +428,6 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
     for k, v in body.items():
         form_data.setdefault(k, v)
 
-    # Analyse/Report (wie gehabt)
     html_content: str
     admin_json: Dict[str, bytes] = {}
     try:
@@ -559,7 +461,6 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
     except Exception as exc:
         log.warning("PDF render failed: %s", exc)
 
-    # Admin‑Mail best effort (entspricht Deiner Logik)
     if ADMIN_NOTIFY and ADMIN_EMAIL:
         try:
             msg = EmailMessage()
@@ -579,8 +480,6 @@ async def briefing_async(body: Dict[str, Any], request: Request, user=Depends(cu
 
     return JSONResponse({"status": "ok", "job_id": uuid.uuid4().hex})
 
-# Root
 @app.get("/")
 def root() -> HTMLResponse:
-    return HTMLResponse(f"<!doctype html><meta charset='utf-8'><h1>{APP_NAME}</h1>"
-                        f"<p>OK – {_now_str()}</p>")
+    return HTMLResponse(f"<!doctype html><meta charset='utf-8'><h1>{APP_NAME}</h1><p>OK – {_now_str()}</p>")
