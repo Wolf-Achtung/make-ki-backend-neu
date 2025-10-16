@@ -8,5 +8,7 @@ pydantic[email]>=2.7.0
 pydantic-settings>=2.4.0
 python-jose==3.3.0
 python-multipart==0.0.9
+redis>=5.0.1
+rq>=1.16.1
 SQLAlchemy==2.0.34
 uvicorn[standard]==0.30.6

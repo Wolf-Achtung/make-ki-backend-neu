@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 Central configuration for KI-Status-Report (Gold-Standard+)
-- Typed, validated settings via Pydantic Settings
-- Reads from environment variables (Railway) and optional `.env`
-- Provides helper for CSV parsing
+- pydantic-settings for robust ENV parsing
+- CORS_ALLOW_ORIGINS kept as CSV string to avoid JSON parsing issues in Pydantic
+- Helper to expose parsed origins as list
 """
 from __future__ import annotations
 
 from typing import List, Optional
-from pydantic import Field, AnyHttpUrl, EmailStr, field_validator
+from pydantic import Field, AnyHttpUrl, EmailStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 def _parse_csv(value: str) -> List[str]:
@@ -18,7 +18,6 @@ def _parse_csv(value: str) -> List[str]:
     return [v.strip() for v in value.split(",") if v.strip()]
 
 class Settings(BaseSettings):
-    # pydantic-settings config
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
 
     # --- Core ---
@@ -27,14 +26,23 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "info"
 
     # --- CORS / Security ---
-    CORS_ALLOW_ORIGINS: List[str] = Field(default_factory=lambda: _parse_csv(
-        "https://ki-sicherheit.jetzt,https://www.ki-sicherheit.jetzt,https://ki-foerderung.jetzt,https://make.ki-sicherheit.jetzt,https://www.make.ki-sicherheit.jetzt"
-    ))
+    # Keep as CSV string (not List[str]) to avoid JSON decoding expectation in env provider
+    CORS_ALLOW_ORIGINS: str = ("https://ki-sicherheit.jetzt,https://www.ki-sicherheit.jetzt,"
+                               "https://ki-foerderung.jetzt,https://make.ki-sicherheit.jetzt,"
+                               "https://www.make.ki-sicherheit.jetzt")
     JWT_SECRET: str = "dev-secret"
     SECRET_KEY: str = "dev-secret"
 
     # --- Database ---
     DATABASE_URL: Optional[str] = None
+
+    # --- Redis / Queue ---
+    REDIS_URL: Optional[str] = None
+    QUEUE_NAME: str = "reports"
+
+    # --- Rate limit ---
+    API_RATE_LIMIT_PER_HOUR: int = 20
+    API_RATE_LIMIT_WINDOW_SECONDS: int = 3600
 
     # --- Mail ---
     SMTP_HOST: str = "localhost"
@@ -93,17 +101,14 @@ class Settings(BaseSettings):
     DEFAULT_TIMEZONE: str = "Europe/Berlin"
     RAILWAY_HEALTHCHECK_DISABLED: bool = True
 
-    @field_validator("CORS_ALLOW_ORIGINS", mode="before")
-    @classmethod
-    def _ensure_list(cls, v):
-        if isinstance(v, str):
-            return _parse_csv(v)
-        return v
+    # Helpers
+    def allowed_origins(self) -> List[str]:
+        return _parse_csv(self.CORS_ALLOW_ORIGINS)
 
-settings = Settings()  # load immediately
+settings = Settings()
 
 def is_dev() -> bool:
-    return settings.ENVIRONMENT.lower() in {"dev", "development", "local"}
+    return settings.ENVIRONMENT.lower() in {"dev","development","local"}
 
 def allowed_origins() -> List[str]:
-    return ["*"] if is_dev() else settings.CORS_ALLOW_ORIGINS
+    return ["*"] if is_dev() else settings.allowed_origins()
