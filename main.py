@@ -11,9 +11,9 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import httpx
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Request, Response, status
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Request, Response, status, Body
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse, HTMLResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel, EmailStr, Field
 
 from settings import settings, allowed_origins
@@ -102,18 +102,15 @@ async def prometheus_mw(request: Request, call_next):
 @app.on_event("startup")
 def on_startup():
     init_db()
-    # Include additional routes (briefing, etc.) – try both import paths
-    included = False
+    # Include briefing routes – try both import paths (repo kann /routes oder /app/routes nutzen)
     try:
         from routes import briefing as _briefing
         app.include_router(_briefing.router)
-        included = True
         logger.info("Included routes.briefing")
     except Exception as e1:
         try:
             from app.routes import briefing as _briefing
             app.include_router(_briefing.router)
-            included = True
             logger.info("Included app.routes.briefing")
         except Exception as e2:
             logger.warning("Briefing routes not included: %s / %s", e1, e2)
@@ -145,6 +142,23 @@ def _client_ip(request: Request) -> str:
         h = h.split(",", 1)[0].strip()
     return h or (request.client.host if request.client else "unknown")
 
+# ---------- Core analyze flow ----------
+def _persist_and_schedule(ip: str, payload: AnalyzePayload, background: BackgroundTasks) -> str:
+    report_id = str(uuid.uuid4())
+    # Persist initial task
+    with get_session() as s:
+        t = Task(
+            id=report_id, status="queued", company=payload.company, email=(payload.email or None),
+            lang=payload.lang, answers_json=payload.answers, ip=ip
+        )
+        s.add(t)
+    # Enqueue for async processing (Redis) or run local background task
+    if queue_enabled():
+        enqueue_report(report_id, payload.model_dump())
+    else:
+        background.add_task(_local_background_job, report_id, payload.model_dump())
+    return report_id
+
 @app.post("/analyze", response_model=AnalyzeResult)
 async def analyze(request: Request, payload: AnalyzePayload, background: BackgroundTasks):
     # Rate limiting: per email & IP
@@ -154,27 +168,43 @@ async def analyze(request: Request, payload: AnalyzePayload, background: Backgro
         rl_keys.append(f"email:{payload.email.lower()}")
     rl_keys.append(f"ip:{ip}")
     for key in rl_keys:
-        blocked, remaining = is_limited(key, settings.API_RATE_LIMIT_PER_HOUR, settings.API_RATE_LIMIT_WINDOW_SECONDS)
+        blocked, _ = is_limited(key, settings.API_RATE_LIMIT_PER_HOUR, settings.API_RATE_LIMIT_WINDOW_SECONDS)
         if blocked:
             headers = {"Retry-After": str(settings.API_RATE_LIMIT_WINDOW_SECONDS)}
             raise HTTPException(429, detail="Rate limit exceeded", headers=headers)
 
-    report_id = str(uuid.uuid4())
-    # Persist initial task
-    with get_session() as s:
-        t = Task(
-            id=report_id, status="queued", company=payload.company, email=(payload.email or None),
-            lang=payload.lang, answers_json=payload.answers, ip=ip
-        )
-        s.add(t)
-
-    # Enqueue for async processing (Redis) or run local background task
-    if queue_enabled():
-        enqueue_report(report_id, payload.model_dump())
-    else:
-        background.add_task(_local_background_job, report_id, payload.model_dump())
-
+    report_id = _persist_and_schedule(ip, payload, background)
     return AnalyzeResult(report_id=report_id, status="queued", html=None, meta={"lang": payload.lang})
+
+# Alias: supports formbuilder_de/en_SINGLE_FULL.js posting to /briefing_async
+@app.post("/briefing_async")
+async def briefing_async(request: Request, payload: Dict[str, Any] = Body(...), background: BackgroundTasks = None):
+    ip = _client_ip(request)
+    # Map incoming fields
+    company = payload.get("company") or payload.get("unternehmen") or payload.get("firma") or "Unbekannt"
+    email = payload.get("email") or payload.get("to")
+    lang = (payload.get("lang") or "DE").upper()
+    # answers: use provided or collect all remaining minus known
+    answers = payload.get("answers")
+    if not isinstance(answers, dict):
+        known = {"company","unternehmen","firma","email","to","lang","answers","options"}
+        answers = {k: v for k, v in payload.items() if k not in known}
+    options = payload.get("options") or {}
+    ap = AnalyzePayload(lang=lang, company=company, email=email, answers=answers, options=options)
+
+    # Rate limit same as /analyze
+    rl_keys = []
+    if ap.email:
+        rl_keys.append(f"email:{ap.email.lower()}")
+    rl_keys.append(f"ip:{ip}")
+    for key in rl_keys:
+        blocked, _ = is_limited(key, settings.API_RATE_LIMIT_PER_HOUR, settings.API_RATE_LIMIT_WINDOW_SECONDS)
+        if blocked:
+            headers = {"Retry-After": str(settings.API_RATE_LIMIT_WINDOW_SECONDS)}
+            raise HTTPException(429, detail="Rate limit exceeded", headers=headers)
+
+    report_id = _persist_and_schedule(ip, ap, background)
+    return {"ok": True, "status": "queued", "report_id": report_id, "lang": ap.lang}
 
 async def _local_background_job(report_id: str, payload: dict):
     try:
