@@ -1,0 +1,83 @@
+<!-- filename: templates/admin_status.html -->
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Status</title>
+    <style>
+      :root { --bg:#0b0d10; --fg:#e6eef8; --muted:#93a4b3; --card:#12151a; --accent:#2ea043; --warn:#c93; --bad:#e5534b; --line:#1e242b; }
+      html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+      .wrap{max-width:1100px;margin:2rem auto;padding:0 1rem}
+      h1{font-weight:700;margin:.2rem 0 1rem 0}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+      .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem}
+      .kpi{display:flex;gap:1rem;flex-wrap:wrap}
+      .kpi .pill{background:#161b22;border:1px solid var(--line);padding:.4rem .6rem;border-radius:999px}
+      table{width:100%;border-collapse:collapse}
+      th,td{border-bottom:1px solid var(--line);padding:.5rem .6rem;text-align:left;vertical-align:top}
+      th{color:#9fb4c9;font-weight:600}
+      .muted{color:var(--muted)}
+      .ok{color:var(--accent)} .bad{color:var(--bad)}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Admin Status</h1>
+      <div class="grid">
+        <div class="card">
+          <h3>System</h3>
+          <div class="kpi">
+            <span class="pill">Queue: {{ queue_mode }}</span>
+            <span class="pill">PDF: {{ 'on' if flags.pdf_service else 'off' }}</span>
+            <span class="pill">Idempotency: {{ 'on' if flags.idempotency else 'off' }}</span>
+            <span class="pill">Quality: {{ 'on' if flags.quality else 'off' }}</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Redis Queue</h3>
+          <p class="mono muted">{{ q | tojson(indent=2) }}</p>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:1rem">
+        <div class="card">
+          <h3>DB‑Zustand</h3>
+          <ul class="muted">
+            <li>Gesamt: {{ db.total }}</li>
+            <li>Fertig: {{ db.done }}</li>
+            <li>Laufend: {{ db.running }}</li>
+            <li>Queued: {{ db.queued }}</li>
+            <li>Fehlgeschlagen: {{ db.failed }}</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Feature‑Flags</h3>
+          <pre class="mono muted">{{ flags | tojson(indent=2) }}</pre>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1rem">
+        <h3>Letzte 20 Tasks</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Status</th><th>Firma</th><th>E‑Mail</th><th>Erstellt</th><th>Fertig</th></tr></thead>
+          <tbody>
+            {% for t in db.last %}
+            <tr>
+              <td class="mono">{{ t.id }}</td>
+              <td>{{ t.status }}</td>
+              <td>{{ t.company or '' }}</td>
+              <td>{{ t.email or '' }}</td>
+              <td>{{ t.created_at }}</td>
+              <td>{{ t.finished_at or '' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="muted">Keine Tasks</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
