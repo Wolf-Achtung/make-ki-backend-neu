@@ -1,5 +1,7 @@
 # filename: main.py
 # -*- coding: utf-8 -*-
+# FastAPI Main – mit Template-basiertem /admin/status (read-only)
+
 from __future__ import annotations
 
 import base64
@@ -13,7 +15,15 @@ from typing import Any, Dict, Optional
 import httpx
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Request, Response, status, Body
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, HTMLResponse
+try:
+    from fastapi.templating import Jinja2Templates
+    from fastapi.staticfiles import StaticFiles
+    TEMPLATES_AVAILABLE = True
+except Exception:
+    TEMPLATES_AVAILABLE = False
+    Jinja2Templates = None  # type: ignore
+
 from pydantic import BaseModel, EmailStr, Field
 
 from settings import settings, allowed_origins
@@ -21,9 +31,9 @@ from analyzer import run_analysis
 from db import init_db, get_session
 from models import Task, Feedback as FeedbackModel
 from rate_limiter import is_limited
-from queue_redis import enqueue_report, enabled as queue_enabled
+from queue_redis import enqueue_report, enabled as queue_enabled, get_stats as queue_stats
 from security import verify_password
-from sqlalchemy import text
+from sqlalchemy import text, func
 from jose import jwt, JWTError
 from mail_utils import send_email_with_attachments
 from gpt_analyze import produce_admin_attachments
@@ -33,6 +43,9 @@ logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s 
 logger = logging.getLogger("ki-backend")
 
 app = FastAPI(title="KI-Status-Report Backend", version="2025.10")
+
+if TEMPLATES_AVAILABLE:
+    templates = Jinja2Templates(directory="templates")
 
 app.add_middleware(
     CORSMiddleware,
@@ -64,7 +77,7 @@ async def security_headers(request: Request, call_next):
     return response
 
 class AnalyzePayload(BaseModel):
-    lang: str = Field(default=settings.DEFAULT_LANG, pattern="^(DE|EN)$")
+    lang: str = Field(default=settings.DEFAULT_LANG)
     company: str
     answers: Dict[str, Any] = Field(default_factory=dict)
     email: Optional[EmailStr] = None
@@ -82,7 +95,6 @@ class Feedback(BaseModel):
     message: str
     context: Dict[str, Any] = Field(default_factory=dict)
 
-# Prometheus metrics
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 REQUEST_COUNT = Counter("http_requests_total", "Total HTTP requests", ["method","endpoint","http_status"])
 REQUEST_LATENCY = Histogram("http_request_duration_seconds", "Request latency", ["endpoint"])
@@ -102,7 +114,6 @@ async def prometheus_mw(request: Request, call_next):
 @app.on_event("startup")
 def on_startup():
     init_db()
-    # Include briefing routes – try both import paths (repo kann /routes oder /app/routes nutzen)
     try:
         from routes import briefing as _briefing
         app.include_router(_briefing.router)
@@ -142,17 +153,27 @@ def _client_ip(request: Request) -> str:
         h = h.split(",", 1)[0].strip()
     return h or (request.client.host if request.client else "unknown")
 
-# ---------- Core analyze flow ----------
+def _effective_lang(code: Optional[str]) -> str:
+    c = (code or settings.DEFAULT_LANG or "DE").upper()
+    return c if c in {"DE","EN"} else "DE"
+
 def _persist_and_schedule(ip: str, payload: AnalyzePayload, background: BackgroundTasks) -> str:
+    import uuid
     report_id = str(uuid.uuid4())
-    # Persist initial task
+    from models import Task
+    from db import get_session
     with get_session() as s:
         t = Task(
-            id=report_id, status="queued", company=payload.company, email=(payload.email or None),
-            lang=payload.lang, answers_json=payload.answers, ip=ip
+            id=report_id,
+            status="queued",
+            company=payload.company,
+            email=(payload.email or None),
+            lang=_effective_lang(payload.lang),
+            answers_json=payload.answers,
+            ip=ip
         )
         s.add(t)
-    # Enqueue for async processing (Redis) or run local background task
+    # Queue oder Local Background Task
     if queue_enabled():
         enqueue_report(report_id, payload.model_dump())
     else:
@@ -161,7 +182,6 @@ def _persist_and_schedule(ip: str, payload: AnalyzePayload, background: Backgrou
 
 @app.post("/analyze", response_model=AnalyzeResult)
 async def analyze(request: Request, payload: AnalyzePayload, background: BackgroundTasks):
-    # Rate limiting: per email & IP
     ip = _client_ip(request)
     rl_keys = []
     if payload.email:
@@ -174,17 +194,14 @@ async def analyze(request: Request, payload: AnalyzePayload, background: Backgro
             raise HTTPException(429, detail="Rate limit exceeded", headers=headers)
 
     report_id = _persist_and_schedule(ip, payload, background)
-    return AnalyzeResult(report_id=report_id, status="queued", html=None, meta={"lang": payload.lang})
+    return AnalyzeResult(report_id=report_id, status="queued", html=None, meta={"lang": _effective_lang(payload.lang)})
 
-# Alias: supports formbuilder_de/en_SINGLE_FULL.js posting to /briefing_async
 @app.post("/briefing_async")
 async def briefing_async(request: Request, payload: Dict[str, Any] = Body(...), background: BackgroundTasks = None):
     ip = _client_ip(request)
-    # Map incoming fields
     company = payload.get("company") or payload.get("unternehmen") or payload.get("firma") or "Unbekannt"
     email = payload.get("email") or payload.get("to")
-    lang = (payload.get("lang") or "DE").upper()
-    # answers: use provided or collect all remaining minus known
+    lang = _effective_lang(payload.get("lang"))
     answers = payload.get("answers")
     if not isinstance(answers, dict):
         known = {"company","unternehmen","firma","email","to","lang","answers","options"}
@@ -192,7 +209,6 @@ async def briefing_async(request: Request, payload: Dict[str, Any] = Body(...), 
     options = payload.get("options") or {}
     ap = AnalyzePayload(lang=lang, company=company, email=email, answers=answers, options=options)
 
-    # Rate limit same as /analyze
     rl_keys = []
     if ap.email:
         rl_keys.append(f"email:{ap.email.lower()}")
@@ -207,8 +223,11 @@ async def briefing_async(request: Request, payload: Dict[str, Any] = Body(...), 
     return {"ok": True, "status": "queued", "report_id": report_id, "lang": ap.lang}
 
 async def _local_background_job(report_id: str, payload: dict):
+    from analyzer import run_analysis
+    from db import get_session
+    from models import Task
     try:
-        html = await run_analysis(payload)
+        html = await run_analysis(payload) if hasattr(run_analysis, "__call__") else None  # noqa
         with get_session() as s:
             t = s.get(Task, report_id)
             if t:
@@ -233,8 +252,7 @@ async def result(report_id: str):
             "created_at": str(t.created_at), "finished_at": str(t.finished_at)
         })
 
-async def _generate_pdf(html: str, filename: str = "report.pdf") -> Optional[bytes]:
-    """Return PDF bytes if service succeeds, otherwise None."""
+async def _generate_pdf(html: str, filename: str = "report.pdf"):
     if not html:
         return None
     if settings.PDF_SERVICE_URL:
@@ -244,7 +262,6 @@ async def _generate_pdf(html: str, filename: str = "report.pdf") -> Optional[byt
                 ctype = (resp.headers.get("content-type") or "").lower()
                 if "application/pdf" in ctype or "application/octet-stream" in ctype:
                     return resp.content
-                # try JSON base64
                 try:
                     data = resp.json()
                     for key in ("pdf_base64", "data", "pdf"):
@@ -252,7 +269,8 @@ async def _generate_pdf(html: str, filename: str = "report.pdf") -> Optional[byt
                             b64s = data[key]
                             if ";base64," in b64s:
                                 b64s = b64s.split(",", 1)[1]
-                            return base64.b64decode(b64s)
+                            import base64 as _b
+                            return _b.b64decode(b64s)
                 except Exception:
                     pass
         except Exception as e:
@@ -267,24 +285,22 @@ async def generate_pdf(payload: Dict[str, Any]):
         raise HTTPException(400, "missing html")
     pdf_bytes = await _generate_pdf(html, filename)
     if pdf_bytes:
+        import base64
         return {
             "mode": "service",
             "content_type": "application/pdf;base64",
             "data": base64.b64encode(pdf_bytes).decode("ascii"),
             "filename": filename
         }
-    # fallback: return HTML as base64
     b64 = base64.b64encode(html.encode("utf-8")).decode("ascii")
     return {"mode": "fallback", "content_type": "text/html;base64", "data": b64, "filename": filename}
 
 @app.post("/feedback")
 async def feedback(request: Request, item: Feedback, background: BackgroundTasks):
     ip = _client_ip(request)
-    # Save feedback to DB
     with get_session() as s:
         fb = FeedbackModel(email=item.email, name=item.name, message=item.message, meta=item.context, ip=ip)
         s.add(fb)
-    # Send feedback notification via email (async best-effort)
     background.add_task(
         _send_email,
         settings.FEEDBACK_TO,
@@ -310,13 +326,11 @@ async def _send_email(to: str, subject: str, text: str):
     except Exception as e:
         logger.warning("send email failed: %s", e)
 
-# -------------------- Auth & Admin --------------------
 class LoginPayload(BaseModel):
     email: EmailStr
     password: str
 
 def _get_user_credentials(email: str):
-    """Fetch password hash and role for given email from DB."""
     with get_session() as s:
         res = s.execute(text("SELECT password_hash, role FROM users WHERE LOWER(email)=:email"), {"email": email.lower()})
         return res.fetchone()
@@ -378,7 +392,6 @@ async def admin_regenerate(report_id: str, request: Request):
         lang = (t.lang or "DE").lower()
     filename_base = f"KI-Status-Report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
     pdf_bytes = await _generate_pdf(html_content, filename=f"{filename_base}.pdf")
-    # Prepare attachments for re-send
     user_attach = {}
     if pdf_bytes:
         user_attach[f"{filename_base}.pdf"] = pdf_bytes
@@ -389,14 +402,12 @@ async def admin_regenerate(report_id: str, request: Request):
         admin_attach[f"{filename_base}-admin.pdf"] = pdf_bytes
     else:
         admin_attach[f"{filename_base}-admin.html"] = html_content.encode("utf-8")
-    # Generate admin JSON attachments from original data
     try:
         tri = produce_admin_attachments(raw_answers, lang=lang)
         for name, content in tri.items():
             admin_attach[name] = content.encode("utf-8")
     except Exception as e:
         logger.warning("Admin attachments generation failed: %s", e)
-    # Send emails to user and admin
     if recipient_email:
         try:
             await send_email_with_attachments(
@@ -421,6 +432,65 @@ async def admin_regenerate(report_id: str, request: Request):
         logger.exception("Resend admin mail failed: %s", e)
         raise HTTPException(status_code=500, detail="Admin email failed")
     return {"ok": True, "job_id": report_id}
+
+@app.get("/admin/status")
+async def admin_status(request: Request):
+    # DB-Zahlen
+    with get_session() as s:
+        total = s.query(Task).count()
+        done = s.query(Task).filter(Task.status == "done").count()
+        running = s.query(Task).filter(Task.status == "running").count() if hasattr(Task, "status") else 0
+        queued = s.query(Task).filter(Task.status == "queued").count()
+        failed = s.query(Task).filter(Task.status == "failed").count()
+        last = s.query(Task).order_by(Task.created_at.desc()).limit(20).all()
+
+    # Queue-Zahlen (falls Redis aktiv)
+    qstats = queue_stats() if queue_enabled() else {"queued": 0, "started": 0, "finished": 0, "failed": 0, "deferred": 0, "scheduled": 0}
+    flags = {
+        "eu_host_check": settings.ENABLE_EU_HOST_CHECK,
+        "idempotency": settings.ENABLE_IDEMPOTENCY,
+        "quality": settings.QUALITY_CONTROL_AVAILABLE,
+        "pdf_service": bool(settings.PDF_SERVICE_URL),
+    }
+    # Template bevorzugen
+    if TEMPLATES_AVAILABLE:
+        try:
+            return templates.TemplateResponse("admin_status.html", {
+                "request": request,
+                "queue_mode": "Redis" if queue_enabled() else "Local",
+                "flags": flags,
+                "db": {"total": total, "done": done, "running": running, "queued": queued, "failed": failed, "last": last},
+                "q": qstats
+            })
+        except Exception:
+            pass
+
+    # Fallback: Inline HTML
+    rows = []
+    for t in last:
+        rows.append(
+            f"<tr><td>{t.id}</td><td>{t.status}</td>"
+            f"<td>{(t.company or '')}</td><td>{(t.email or '')}</td>"
+            f"<td>{getattr(t,'created_at', '')}</td><td>{getattr(t,'finished_at','')}</td></tr>"
+        )
+    html = (
+        "<!doctype html><meta charset='utf-8'>"
+        "<title>Admin Status</title>"
+        "<style>body{font:14px/1.45 system-ui,Segoe UI,Roboto,Helvetica,Arial}table{border-collapse:collapse}"
+        "th,td{border:1px solid #ddd;padding:6px 8px}th{text-align:left;background:#f6f8fa}"
+        ".muted{color:#666}</style>"
+        f"<h1>Admin Status</h1>"
+        f"<p><b>Queue:</b> {'Redis' if queue_enabled() else 'Local'}</p>"
+        f"<ul><li>Gesamt: {total}</li><li>Fertig: {done}</li><li>Laufend: {running}</li><li>Queued: {queued}</li><li>Fehlgeschlagen: {failed}</li></ul>"
+        "<h2>Feature‑Flags</h2>"
+        f"<pre class='muted'>{json.dumps(flags, ensure_ascii=False, indent=2)}</pre>"
+        "<h2>Redis Queue</h2>"
+        f"<pre class='muted'>{json.dumps(qstats, ensure_ascii=False, indent=2)}</pre>"
+        "<h2>Letzte 20 Tasks</h2>"
+        "<table><thead><tr><th>ID</th><th>Status</th><th>Firma</th><th>E‑Mail</th><th>Erstellt</th><th>Fertig</th></tr></thead>"
+        f"<tbody>{''.join(rows) if rows else '<tr><td colspan=6 class=muted>Keine Tasks</td></tr>'}</tbody></table>"
+    )
+    return HTMLResponse(html, headers={"Cache-Control": "no-store"})
 
 @app.get("/")
 def root():
