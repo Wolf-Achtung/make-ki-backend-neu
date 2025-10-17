@@ -1,4 +1,3 @@
-
 # filename: gpt_analyze.py
 # -*- coding: utf-8 -*-
 """
@@ -19,6 +18,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Dict, List, Optional
 from pathlib import Path
+from functools import lru_cache
 import json, re, os, logging, httpx
 
 # Optional hybrid search
@@ -77,6 +77,15 @@ HYBRID_LIVE = os.getenv("HYBRID_LIVE","1").strip().lower() in {"1","true","yes"}
 
 ROI_BASELINE_MONTHS = float(os.getenv("ROI_BASELINE_MONTHS","4"))
 
+__all__ = [
+    # public API used by the backend
+    "analyze_briefing", "analyze_briefing_enhanced",
+    "build_report", "build_html_report",
+    "produce_admin_attachments",
+    # helpers (kept for compatibility)
+    "normalize_briefing", "compute_scores", "business_case"
+]
+
 # ---------------- Basic helpers ----------------
 def _read_text(path: Path) -> str:
     try:
@@ -85,11 +94,33 @@ def _read_text(path: Path) -> str:
         log.warning("read failed %s: %s", path, exc)
         return ""
 
-def _template(lang: str) -> str:
-    p = TEMPLATES_DIR / (TEMPLATE_DE if lang.startswith("de") else TEMPLATE_EN)
+@lru_cache(maxsize=32)
+def _template_cached(lang_key: str) -> str:
+    if lang_key == "de":
+        p = TEMPLATES_DIR / TEMPLATE_DE
+    else:
+        p = TEMPLATES_DIR / TEMPLATE_EN
     if not p.exists():
         p = TEMPLATES_DIR / "pdf_template.html"
     return _read_text(p)
+
+def _template(lang: str) -> str:
+    return _template_cached("de" if lang.lower().startswith("de") else "en")
+
+@lru_cache(maxsize=128)
+def _load_prompt_cached(lang: str, name: str) -> str:
+    cand = [
+        PROMPTS_DIR / lang / f"{name}_{lang}.md",
+        PROMPTS_DIR / lang / f"{name}.md",
+        PROMPTS_DIR / f"{name}_{lang}.md",
+        PROMPTS_DIR / f"{name}.md",
+    ]
+    for p in cand:
+        if p.exists():
+            log.info("Loaded prompt: %s", p.relative_to(PROMPTS_DIR))
+            return _read_text(p)
+    log.info("Prompt missing for '%s' (%s) – skipping section", name, lang)
+    return ""
 
 def _as_fragment(html: str) -> str:
     if not html:
@@ -103,14 +134,16 @@ def _as_fragment(html: str) -> str:
     return s.strip()
 
 def _minify_html_soft(s: str) -> str:
-    if not s: return s
+    if not s:
+        return s
     s = re.sub(r"<!--.*?-->", "", s, flags=re.S)
     s = re.sub(r">\s+<", "><", s)
     s = re.sub(r"\s{2,}", " ", s)
     return s.strip()
 
 def _strip_llm(text: str) -> str:
-    if not text: return ""
+    if not text:
+        return ""
     text = re.sub(r"```[a-zA-Z0-9]*\s*", "", text).replace("```","")
     return text.strip()
 
@@ -352,17 +385,15 @@ def _overlay_chat(messages: List[Dict[str,str]], model_exec: Optional[str], name
         return _minify_html_soft(_as_fragment(out))
 
 def _load_prompt(lang: str, name: str) -> str:
-    cand = [PROMPTS_DIR / lang / f"{name}_{lang}.md", PROMPTS_DIR / lang / f"{name}.md", PROMPTS_DIR / f"{name}_{lang}.md", PROMPTS_DIR / f"{name}.md"]
-    for p in cand:
-        if p.exists():
-            log.info("Loaded prompt: %s", p.relative_to(PROMPTS_DIR)); return _read_text(p)
-    log.info("Prompt missing for '%s' (%s) – skipping section", name, lang); return ""
+    return _load_prompt_cached(lang, name)
 
 def render_overlay(name: str, lang: str, ctx: Dict[str,Any]) -> str:
+    """Render a named overlay section using the selected LLM provider.
+    Returns a **clean HTML fragment** (no <html>/<head>/<body>).
+    """
     prompt = _load_prompt(lang, name)
     if not prompt: return ""
-    system = "Du bist präzise und risikobewusst. Antworte als sauberes HTML-Fragment (ohne <html>/<head>/<body>)." if lang.startswith("de") \
-             else "You are precise and risk-aware. Answer as clean HTML fragment (no <html>/<head>/<body>)."
+    system = "Du bist präzise und risikobewusst. Antworte als sauberes HTML-Fragment (ohne <html>/<head>/<body>)." if lang.startswith("de")                  else "You are precise and risk-aware. Answer as clean HTML fragment (no <html>/<head>/<body>)."
     user = (prompt
         .replace("{{BRIEFING_JSON}}", json.dumps(ctx.get("briefing", {}), ensure_ascii=False))
         .replace("{{SCORING_JSON}}", json.dumps(ctx.get("scoring", {}), ensure_ascii=False))
@@ -499,8 +530,7 @@ def _tool_matrix_table(lang: str = "de") -> str:
         return ""
     th = ("<table class='tool-matrix'><thead><tr>"
           "<th>Tool</th><th>Kategorie</th><th>Self‑Hosting</th><th>EU‑Residency</th><th>Audit‑Logs</th><th>Link</th>"
-          "</tr></thead><tbody>") if lang.startswith("de") else \
-         ("<table class='tool-matrix'><thead><tr>"
+          "</tr></thead><tbody>") if lang.startswith("de") else              ("<table class='tool-matrix'><thead><tr>"
           "<th>Tool</th><th>Category</th><th>Self‑hosting</th><th>EU residency</th><th>Audit logs</th><th>Link</th>"
           "</tr></thead><tbody>")
     rows_html = []
@@ -512,7 +542,7 @@ def _tool_matrix_table(lang: str = "de") -> str:
                          f"<td>{r.get('self_hosting','')}</td>"
                          f"<td>{r.get('eu_residency','')}</td>"
                          f"<td>{r.get('audit_logs','')}</td>"
-                         f"<td>{'<a href=\"'+r.get('link','')+'\">Website</a>' if r.get('link') else ''}</td>"
+                         f"<td>{'<a href="'+r.get('link','')+'">Website</a>' if r.get('link') else ''}</td>"
                          "</tr>")
     return th + "".join(rows_html) + "</tbody></table>"
 
@@ -566,20 +596,14 @@ def build_html_report(raw: Dict[str,Any], lang: str = "de") -> Dict[str,Any]:
     # Live queries (hybrid)
     news = tools = funding = []
     if websearch_utils:
-        q_news = f"Aktuelle KI-News in der Branche {n.branche_label} (letzte {SEARCH_DAYS_NEWS} Tage). Titel, Domain, URL, Datum." if lang.startswith("de") \
-                 else f"Recent AI news in {n.branche_label} (last {SEARCH_DAYS_NEWS} days). Title, domain, URL, date."
-        q_tools = f"Relevante KI-Tools/Anbieter für {n.branche_label}, Größe {n.unternehmensgroesse_label}. Titel, Domain, URL, Datum." if lang.startswith("de") \
-                  else f"Relevant AI tools/vendors for {n.branche_label}, size {n.unternehmensgroesse_label}. Title, domain, URL, date."
-        q_fund = f"Förderprogramme in {n.bundesland_code} (Digitalisierung/KI) – offen/laufend, Fristen innerhalb {SEARCH_DAYS_FUNDING} Tagen." if lang.startswith("de") \
-                 else f"Funding programs in {n.bundesland_code} (digital/AI) – open/ongoing, deadlines within {SEARCH_DAYS_FUNDING} days."
+        q_news = f"Aktuelle KI-News in der Branche {n.branche_label} (letzte {SEARCH_DAYS_NEWS} Tage). Titel, Domain, URL, Datum." if lang.startswith("de")                      else f"Recent AI news in {n.branche_label} (last {SEARCH_DAYS_NEWS} days). Title, domain, URL, date."
+        q_tools = f"Relevante KI-Tools/Anbieter für {n.branche_label}, Größe {n.unternehmensgroesse_label}. Titel, Domain, URL, Datum." if lang.startswith("de")                       else f"Relevant AI tools/vendors for {n.branche_label}, size {n.unternehmensgroesse_label}. Title, domain, URL, date."
+        q_fund = f"Förderprogramme in {n.bundesland_code} (Digitalisierung/KI) – offen/laufend, Fristen innerhalb {SEARCH_DAYS_FUNDING} Tagen." if lang.startswith("de")                      else f"Funding programs in {n.bundesland_code} (digital/AI) – open/ongoing, deadlines within {SEARCH_DAYS_FUNDING} days."
 
         try:
-            news = websearch_utils.perplexity_search(q_news, max_results=LIVE_MAX_ITEMS) + \
-                   websearch_utils.tavily_search(q_news, max_results=LIVE_MAX_ITEMS, days=SEARCH_DAYS_NEWS)
-            tools = websearch_utils.perplexity_search(q_tools, max_results=LIVE_MAX_ITEMS) + \
-                    websearch_utils.tavily_search(q_tools, max_results=LIVE_MAX_ITEMS, days=SEARCH_DAYS_TOOLS)
-            funding = websearch_utils.perplexity_search(q_fund, max_results=max(LIVE_MAX_ITEMS, 10)) + \
-                      websearch_utils.tavily_search(q_fund, max_results=max(LIVE_MAX_ITEMS, 10), days=SEARCH_DAYS_FUNDING)
+            news = websearch_utils.perplexity_search(q_news, max_results=LIVE_MAX_ITEMS) +                        websearch_utils.tavily_search(q_news, max_results=LIVE_MAX_ITEMS, days=SEARCH_DAYS_NEWS)
+            tools = websearch_utils.perplexity_search(q_tools, max_results=LIVE_MAX_ITEMS) +                         websearch_utils.tavily_search(q_tools, max_results=LIVE_MAX_ITEMS, days=SEARCH_DAYS_TOOLS)
+            funding = websearch_utils.perplexity_search(q_fund, max_results=max(LIVE_MAX_ITEMS, 10)) +                           websearch_utils.tavily_search(q_fund, max_results=max(LIVE_MAX_ITEMS, 10), days=SEARCH_DAYS_FUNDING)
         except Exception as exc:
             log.warning("hybrid_live failed: %s", exc)
 
@@ -649,6 +673,21 @@ def analyze_briefing(raw: Dict[str,Any], lang: str = "de") -> str:
 
 def build_report(raw: Dict[str,Any], lang: str = "de") -> Dict[str,Any]:
     return build_html_report(raw, lang)
+
+def analyze_briefing_enhanced(raw: Dict[str,Any], lang: str = "de", *, as_dict: bool = False):
+    """
+    Legacy‑kompatibler Wrapper – **Option A**:
+    - Beseitigt Importfehler im alten Router, der `analyze_briefing_enhanced` erwartet.
+    - Standardmäßig wird **HTML (str)** zurückgegeben, damit bestehender Code nicht bricht.
+    - Wer zusätzliche Metadaten benötigt, kann `as_dict=True` setzen und erhält den vollen Payload.
+    """
+    try:
+        out = build_html_report(raw, lang)
+    except Exception as exc:
+        log.exception("analyze_briefing_enhanced failed, falling back to analyze_briefing: %s", exc)
+        # Graceful degradation – liefere wenigstens HTML
+        return analyze_briefing(raw, lang)
+    return out if as_dict else out.get("html","")
 
 def produce_admin_attachments(raw: Dict[str,Any], lang: str = "de") -> Dict[str,str]:
     try:
