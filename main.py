@@ -1,6 +1,6 @@
 # filename: main.py
 # -*- coding: utf-8 -*-
-# FastAPI Main – mit Template-basiertem /admin/status (read-only)
+# FastAPI Main – resilient import (queue_stats optional), Admin-Status with graceful fallback
 
 from __future__ import annotations
 
@@ -18,7 +18,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, HTMLResponse
 try:
     from fastapi.templating import Jinja2Templates
-    from fastapi.staticfiles import StaticFiles
     TEMPLATES_AVAILABLE = True
 except Exception:
     TEMPLATES_AVAILABLE = False
@@ -31,12 +30,26 @@ from analyzer import run_analysis
 from db import init_db, get_session
 from models import Task, Feedback as FeedbackModel
 from rate_limiter import is_limited
-from queue_redis import enqueue_report, enabled as queue_enabled, get_stats as queue_stats
 from security import verify_password
-from sqlalchemy import text, func
+from sqlalchemy import text
 from jose import jwt, JWTError
 from mail_utils import send_email_with_attachments
 from gpt_analyze import produce_admin_attachments
+
+# ---- queue_redis imports: get_stats optional to avoid import-time crash on older file versions
+try:
+    from queue_redis import enqueue_report, enabled as queue_enabled, get_stats as queue_stats
+except Exception:
+    try:
+        from queue_redis import enqueue_report, enabled as queue_enabled  # type: ignore
+    except Exception:
+        # minimal shims if queue_redis module itself is absent; app still works in local background mode
+        def queue_enabled() -> bool:
+            return False
+        def enqueue_report(report_id: str, payload: Dict[str, Any]) -> bool:
+            return False
+    def queue_stats() -> Dict[str, int]:
+        return {"queued": 0, "started": 0, "finished": 0, "failed": 0, "deferred": 0, "scheduled": 0}
 
 LOG_LEVEL = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -160,8 +173,6 @@ def _effective_lang(code: Optional[str]) -> str:
 def _persist_and_schedule(ip: str, payload: AnalyzePayload, background: BackgroundTasks) -> str:
     import uuid
     report_id = str(uuid.uuid4())
-    from models import Task
-    from db import get_session
     with get_session() as s:
         t = Task(
             id=report_id,
@@ -173,9 +184,11 @@ def _persist_and_schedule(ip: str, payload: AnalyzePayload, background: Backgrou
             ip=ip
         )
         s.add(t)
-    # Queue oder Local Background Task
     if queue_enabled():
-        enqueue_report(report_id, payload.model_dump())
+        ok = enqueue_report(report_id, payload.model_dump())
+        if not ok:
+            # Fallback auf lokalen BackgroundTask, damit Requests nicht „hängen bleiben“
+            background.add_task(_local_background_job, report_id, payload.model_dump())
     else:
         background.add_task(_local_background_job, report_id, payload.model_dump())
     return report_id
@@ -223,11 +236,8 @@ async def briefing_async(request: Request, payload: Dict[str, Any] = Body(...), 
     return {"ok": True, "status": "queued", "report_id": report_id, "lang": ap.lang}
 
 async def _local_background_job(report_id: str, payload: dict):
-    from analyzer import run_analysis
-    from db import get_session
-    from models import Task
     try:
-        html = await run_analysis(payload) if hasattr(run_analysis, "__call__") else None  # noqa
+        html = await run_analysis(payload) if hasattr(run_analysis, "__call__") else None  # async compat
         with get_session() as s:
             t = s.get(Task, report_id)
             if t:
@@ -452,6 +462,7 @@ async def admin_status(request: Request):
         "quality": settings.QUALITY_CONTROL_AVAILABLE,
         "pdf_service": bool(settings.PDF_SERVICE_URL),
     }
+
     # Template bevorzugen
     if TEMPLATES_AVAILABLE:
         try:
