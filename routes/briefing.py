@@ -5,7 +5,7 @@
 
 Fixes ggü. deinem aktuellen Verhalten:
 - OpenAI-404/Legacy-Fallback ist vollständig entfernt (wird in gpt_analyze.py
-  korrekt auf v1 + Auto-Fallback auf gpt-4o behandelt; siehe dein Log) :contentReference[oaicite:4]{index=4}
+  korrekt auf v1 + Auto-Fallback auf gpt-4o behandelt; siehe dein Log)
 - Admin-Mail enthält jetzt IMMER: briefing_raw.json, briefing_normalized.json,
   briefing_missing_fields.json (alte vs. neue Briefings waren Ursache für leere Felder) 
 """
@@ -37,8 +37,8 @@ router = APIRouter()
 PDF_SERVICE_URL = os.getenv("PDF_SERVICE_URL", "").strip()
 PDF_TIMEOUT = float(os.getenv("PDF_TIMEOUT", "25"))
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "").strip()
-SEND_USER_MAIL = os.getenv("SEND_USER_MAIL", "true").lower() == "true"
-SEND_ADMIN_MAIL = os.getenv("SEND_ADMIN_MAIL", "true").lower() == "true"
+SEND_USER_MAIL = (os.getenv("SEND_USER_MAIL") or os.getenv("SEND_TO_USER") or os.getenv("MAIL_TO_USER") or "true").lower() == "true"
+SEND_ADMIN_MAIL = (os.getenv("SEND_ADMIN_MAIL") or os.getenv("ADMIN_NOTIFY") or "true").lower() == "true"
 ATTACH_HTML_FALLBACK = os.getenv("ATTACH_HTML_FALLBACK", "true").lower() == "true"
 
 
