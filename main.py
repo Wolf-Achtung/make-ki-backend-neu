@@ -209,31 +209,31 @@ async def analyze(request: Request, payload: AnalyzePayload, background: Backgro
     report_id = _persist_and_schedule(ip, payload, background)
     return AnalyzeResult(report_id=report_id, status="queued", html=None, meta={"lang": _effective_lang(payload.lang)})
 
-@app.post("/briefing_async")
-async def briefing_async(request: Request, payload: Dict[str, Any] = Body(...), background: BackgroundTasks = None):
-    ip = _client_ip(request)
-    company = payload.get("company") or payload.get("unternehmen") or payload.get("firma") or "Unbekannt"
-    email = payload.get("email") or payload.get("to")
-    lang = _effective_lang(payload.get("lang"))
-    answers = payload.get("answers")
-    if not isinstance(answers, dict):
-        known = {"company","unternehmen","firma","email","to","lang","answers","options"}
-        answers = {k: v for k, v in payload.items() if k not in known}
-    options = payload.get("options") or {}
-    ap = AnalyzePayload(lang=lang, company=company, email=email, answers=answers, options=options)
-
-    rl_keys = []
-    if ap.email:
-        rl_keys.append(f"email:{ap.email.lower()}")
-    rl_keys.append(f"ip:{ip}")
-    for key in rl_keys:
-        blocked, _ = is_limited(key, settings.API_RATE_LIMIT_PER_HOUR, settings.API_RATE_LIMIT_WINDOW_SECONDS)
-        if blocked:
-            headers = {"Retry-After": str(settings.API_RATE_LIMIT_WINDOW_SECONDS)}
-            raise HTTPException(429, detail="Rate limit exceeded", headers=headers)
-
-    report_id = _persist_and_schedule(ip, ap, background)
-    return {"ok": True, "status": "queued", "report_id": report_id, "lang": ap.lang}
+# @app.post("/briefing_async")  # removed duplicate route - now handled in routes/briefing.py
+# async def briefing_async(request: Request, payload: Dict[str, Any] = Body(...), background: BackgroundTasks = None):
+#     ip = _client_ip(request)
+#     company = payload.get("company") or payload.get("unternehmen") or payload.get("firma") or "Unbekannt"
+#     email = payload.get("email") or payload.get("to")
+#     lang = _effective_lang(payload.get("lang"))
+#     answers = payload.get("answers")
+#     if not isinstance(answers, dict):
+#         known = {"company","unternehmen","firma","email","to","lang","answers","options"}
+#         answers = {k: v for k, v in payload.items() if k not in known}
+#     options = payload.get("options") or {}
+#     ap = AnalyzePayload(lang=lang, company=company, email=email, answers=answers, options=options)
+# 
+#     rl_keys = []
+#     if ap.email:
+#         rl_keys.append(f"email:{ap.email.lower()}")
+#     rl_keys.append(f"ip:{ip}")
+#     for key in rl_keys:
+#         blocked, _ = is_limited(key, settings.API_RATE_LIMIT_PER_HOUR, settings.API_RATE_LIMIT_WINDOW_SECONDS)
+#         if blocked:
+#             headers = {"Retry-After": str(settings.API_RATE_LIMIT_WINDOW_SECONDS)}
+#             raise HTTPException(429, detail="Rate limit exceeded", headers=headers)
+# 
+#     report_id = _persist_and_schedule(ip, ap, background)
+#     return {"ok": True, "status": "queued", "report_id": report_id, "lang": ap.lang}
 
 async def _local_background_job(report_id: str, payload: dict):
     try:
@@ -351,100 +351,25 @@ def get_current_user(request: Request):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     token = auth_header.split(" ", 1)[1]
     try:
-        data = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
-    except JWTError:
+        return jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
+    except JWTError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    return data
-
-@app.post("/api/login")
-async def login(payload: LoginPayload):
-    row = _get_user_credentials(payload.email)
-    if not row or not verify_password(payload.password, row[0]):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
-    token = jwt.encode({"email": payload.email, "role": row[1]}, settings.JWT_SECRET, algorithm="HS256")
-    return {"access_token": token}
-
-@app.get("/admin/submissions")
-async def admin_submissions(request: Request):
-    current = get_current_user(request)
-    if current.get("role") != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-    with get_session() as s:
-        tasks = s.query(Task).order_by(Task.created_at.desc()).all()
-        items = []
-        for t in tasks:
-            try:
-                created_ts = int(t.created_at.timestamp())
-            except Exception:
-                created_ts = None
-            items.append({
-                "job_id": t.id,
-                "user_email": t.email or "",
-                "created": created_ts,
-                "score_percent": getattr(t, "score_percent", None) or None
-            })
-    return items
-
-@app.post("/admin/submissions/{report_id}/regenerate")
-async def admin_regenerate(report_id: str, request: Request):
-    current = get_current_user(request)
-    if current.get("role") != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-    with get_session() as s:
-        t = s.get(Task, report_id)
-        if not t:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report ID not found")
-        if not t.html:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No report content to regenerate")
-        html_content = t.html
-        recipient_email = t.email
-        raw_answers = t.answers_json or {}
-        lang = (t.lang or "DE").lower()
-    filename_base = f"KI-Status-Report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-    pdf_bytes = await _generate_pdf(html_content, filename=f"{filename_base}.pdf")
-    user_attach = {}
-    if pdf_bytes:
-        user_attach[f"{filename_base}.pdf"] = pdf_bytes
-    else:
-        user_attach[f"{filename_base}.html"] = html_content.encode("utf-8")
-    admin_attach = {}
-    if pdf_bytes:
-        admin_attach[f"{filename_base}-admin.pdf"] = pdf_bytes
-    else:
-        admin_attach[f"{filename_base}-admin.html"] = html_content.encode("utf-8")
-    try:
-        tri = produce_admin_attachments(raw_answers, lang=lang)
-        for name, content in tri.items():
-            admin_attach[name] = content.encode("utf-8")
-    except Exception as e:
-        logger.warning("Admin attachments generation failed: %s", e)
-    if recipient_email:
-        try:
-            await send_email_with_attachments(
-                to_address=recipient_email,
-                subject=f"{settings.MAIL_SUBJECT_PREFIX} – KI-Status-Report (Neuversand)",
-                html_body="<p>Ihr KI-Status-Report wurde erneut erstellt. Der Report ist als PDF angehängt.</p>",
-                attachments=user_attach
-            )
-            logger.info("[mail] Resent report to user %s", recipient_email)
-        except Exception as e:
-            logger.exception("Resend user mail failed: %s", e)
-            raise HTTPException(status_code=500, detail="User email failed")
-    try:
-        await send_email_with_attachments(
-            to_address=settings.ADMIN_EMAIL,
-            subject=f"{settings.MAIL_SUBJECT_PREFIX} – Admin: Report neu generiert",
-            html_body=f"<p>Report {report_id} wurde neu generiert und gesendet.</p>",
-            attachments=admin_attach
-        )
-        logger.info("[mail] Resent report %s to admin", report_id)
-    except Exception as e:
-        logger.exception("Resend admin mail failed: %s", e)
-        raise HTTPException(status_code=500, detail="Admin email failed")
-    return {"ok": True, "job_id": report_id}
 
 @app.get("/admin/status")
 async def admin_status(request: Request):
+    from fastapi import HTTPException, status  # ensure imported for error codes
+    try:
+        user = getattr(request.state, 'user', None)
+        # Check admin auth via Authorization header
+        token = request.headers.get('Authorization', '')
+        if not token.startswith('Bearer '):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Not authenticated')
+        from jose import jwt, JWTError
+        claims = jwt.decode(token.split(' ',1)[1], settings.JWT_SECRET, algorithms=['HS256'])
+        if claims.get('role') != 'admin':
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Forbidden')
+    except JWTError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid token')
     # DB-Zahlen
     with get_session() as s:
         total = s.query(Task).count()
