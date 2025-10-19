@@ -1,39 +1,74 @@
 # -*- coding: utf-8 -*-
+"""Database utilities (async SQLAlchemy)."""
 from __future__ import annotations
-import contextlib
-from typing import Iterator
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from settings import settings
-from models import Base
 
-_engine = None
-_SessionLocal = None
+import logging
+import os
+from typing import Any, Dict, Optional
 
-def _build_engine():
-    global _engine, _SessionLocal
-    if not settings.DATABASE_URL:
-        # Allow to start without DB during tests; use in-memory SQLite
-        _engine = create_engine("sqlite+pysqlite:///:memory:", echo=False, future=True)
-    else:
-        _engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True, future=True)
-    _SessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False, future=True)
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
-def init_db() -> None:
-    if not _engine:
-        _build_engine()
-    Base.metadata.create_all(bind=_engine)
+logger = logging.getLogger("ki-backend.db")
 
-@contextlib.contextmanager
-def get_session() -> Iterator:
-    if not _SessionLocal:
-        _build_engine()
-    session = _SessionLocal()
-    try:
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+
+_engine: Optional[AsyncEngine] = None
+_sessionmaker: Optional[async_sessionmaker] = None
+
+
+def _normalize_url(url: str) -> str:
+    if not url:
+        return url
+    # Railway often provides postgres:// scheme; SQLAlchemy requires postgresql+asyncpg:// for async.
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+
+def _build_engine() -> AsyncEngine:
+    url = _normalize_url(DATABASE_URL)
+    if not url:
+        raise RuntimeError("DATABASE_URL is not set.")
+    engine = create_async_engine(
+        url,
+        echo=False,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+    )
+    return engine
+
+
+def _ensure_engine() -> None:
+    global _engine, _sessionmaker
+    if _engine is None:
+        _engine = _build_engine()
+        _sessionmaker = async_sessionmaker(bind=_engine, expire_on_commit=False)
+        logger.info("Async DB engine created.")
+
+
+async def get_session() -> AsyncSession:
+    """FastAPI dependency to provide a session and close it afterwards."""
+    _ensure_engine()
+    assert _sessionmaker is not None
+    async with _sessionmaker() as session:
         yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
+
+
+async def fetch_user_by_email(session: AsyncSession, email: str) -> Optional[Dict[str, Any]]:
+    """
+    Fetch a user row by email (case-insensitive). Works with arbitrary user schemas.
+    Assumes a table named `users` with at least a column `email` and some password column.
+    """
+    q = text("""
+        SELECT * FROM users
+        WHERE lower(email) = lower(:email)
+        ORDER BY 1
+        LIMIT 1
+    """)
+    res = await session.execute(q, {"email": email})
+    mapping = res.mappings().first()
+    return dict(mapping) if mapping else None

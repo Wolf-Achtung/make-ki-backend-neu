@@ -1,25 +1,47 @@
-# KI-Status-Report – Backend GS+ Patch (2025-10-19T13:47:07.106652Z)
+# KI-Status-Report Backend — Deploy notes (Railway)
 
-## Was ist drin?
-- **main.py**: robustes Logging, sichere CORS/Security-Header, defensive Router-Discovery, Health/Diag/Admin-Status
-- **settings.py**: tolerantes CORS-Parsing (`CORS_ALLOW_ORIGINS` akzeptiert `*`, CSV oder JSON), exportiert `allowed_origins`
-- **requirements.txt**: kompatible Pins + **SQLAlchemy** & **psycopg2-binary** (Fix für `ModuleNotFoundError: sqlalchemy`)
+## Endpoints
+- `GET /` – plain text uptime message
+- `GET /api/healthz` – health probe
+- `GET /api/diag` – diagnostics (no secrets)
+- `POST /api/login` – email/password login
+- `GET /api/admin/status` – requires header `X-Admin-Token: <ADMIN_API_TOKEN>` or `Authorization: Bearer <ADMIN_API_TOKEN>`
+- `POST /api/feedback` – store feedback if table exists
 
-## Railway-Checklist
-1) Dieses Paket entpacken, Dateien ins Backend-Repo übernehmen (Root).
-2) Railway **Start-Command** (Procfile):
-   ```
-   web: python -m uvicorn main:app --app-dir make-ki-backend-neu-main --host 0.0.0.0 --port ${PORT:-8080}
-   ```
-3) Railway **Variables**:
-   - `LOG_LEVEL = INFO` (oder beliebig; Code normalisiert Groß/Kleinschreibung und fällt bei Unsinn auf INFO zurück)
-   - `CORS_ALLOW_ORIGINS = ["*"]` (Test) **oder** `["https://deine-domain.tld"]` (Prod) – auch `a.com,b.com` ist ok
-   - `DATABASE_URL` (falls DB genutzt), `REDIS_URL` (Queue), `JWT_SECRET`, `ADMIN_API_KEY`
-4) **Deploy** → `GET /healthz` muss 200 liefern.
-5) `/admin/status`:
-   - In `DEBUG=true` ohne Token erreichbar
-   - Sonst mit `Authorization: Bearer <JWT>`
+## Required environment
+Create these variables in Railway:
 
-## Hinweise
-- Router, die optionale Abhängigkeiten brauchen (z. B. SQLAlchemy), werden geloggt, aber blockieren den Start nicht.
-- Mit diesem Patch sollte der im Log sichtbare Crash (sqlalchemy fehlt, CORS JSONDecodeError) nicht mehr auftreten.
+```
+APP_NAME=KI-Status-Report Backend
+ENV=production
+VERSION=2025.10
+LOG_LEVEL=INFO
+
+# Comma-separated; list your domains explicitly (no trailing slashes)
+CORS_ALLOW_ORIGINS=https://ki-sicherheit.jetzt,https://www.ki-sicherheit.jetzt,https://make.ki-sicherheit.jetzt,https://www.make.ki-sicherheit.jetzt
+
+# Database
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME   # Railway "Postgres" plugin exposes this; we normalize automatically.
+
+# Optional queue
+ENABLE_QUEUE=false
+REDIS_URL=redis://:PASSWORD@HOST:PORT/0
+
+# PDF service
+PDF_SERVICE_URL=https://<your-pdf-service>/api/render
+PDF_TIMEOUT=45000
+
+# Security
+SECRET_KEY=<generate 32+ chars>
+ADMIN_API_TOKEN=<choose a strong token>
+```
+
+### Notes
+- If Railway gives the DB URL as `postgres://...` we automatically convert to `postgresql+asyncpg://...` for SQLAlchemy async.
+- If `REDIS_URL` is empty, queue stays disabled (no crash).
+- GET `/api/login` returns a helpful message. Use `POST` from the frontend.
+
+## Local run
+```
+python -m uvicorn main:app --reload
+```

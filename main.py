@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-KI–Status–Report Backend — stable entrypoint (hotfix)
-----------------------------------------------------
-This file configures FastAPI, logging, CORS, health/diagnostics,
-and includes all routers. It also adds a compatibility alias for
-/api/login (see routes/login_compat.py).
+KI-Status-Report Backend - production-grade FastAPI entrypoint.
+
+- Robust logging & settings
+- Strict CORS (configurable)
+- Health & diagnostics endpoints
+- Safe router inclusion (auth login, admin status, feedback, briefing)
+- Friendly root message for uptime checks
+
+Author: Gold-Standard+ refactor
 """
 from __future__ import annotations
 
-import importlib
 import logging
 import os
 from datetime import datetime, timezone
@@ -17,13 +20,40 @@ from typing import List
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.responses import PlainTextResponse, JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
+
+# ---------------------------------------------------------------------------
+# Settings
+# ---------------------------------------------------------------------------
+
+def _get_bool(name: str, default: bool = False) -> bool:
+    val = os.getenv(name)
+    if val is None:
+        return default
+    return str(val).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+APP_NAME = os.getenv("APP_NAME", "KI-Status-Report Backend")
+ENV = os.getenv("ENV", "production")
+VERSION = os.getenv("VERSION", "2025.10")
+PDF_SERVICE_URL = os.getenv("PDF_SERVICE_URL", "").strip()
+PDF_TIMEOUT = int(os.getenv("PDF_TIMEOUT", "45000"))
+REDIS_URL = os.getenv("REDIS_URL", "").strip()
+QUEUE_ENABLED = _get_bool("ENABLE_QUEUE", False)
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+# CORS
+_raw_origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+if _raw_origins:
+    CORS_ALLOW_ORIGINS: List[str] = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+else:
+    # In production you should explicitly list your domains here.
+    # Leaving it empty defaults to a conservative "*only for dev*".
+    CORS_ALLOW_ORIGINS = []
 
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
-LOG_LEVEL_NAME = os.getenv("LOG_LEVEL", "INFO").upper()
-LOG_LEVEL = getattr(logging, LOG_LEVEL_NAME, logging.INFO)
 logging.basicConfig(
     level=LOG_LEVEL,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -31,107 +61,81 @@ logging.basicConfig(
 logger = logging.getLogger("ki-backend")
 
 # ---------------------------------------------------------------------------
-# Settings
-# ---------------------------------------------------------------------------
-APP_NAME = os.getenv("APP_NAME", "KI-Status-Report Backend")
-ENV = os.getenv("ENV", "production").lower()
-VERSION = os.getenv("VERSION", "2025.10")
-API_PREFIX = os.getenv("API_PREFIX", "/api").rstrip("/")
-
-# CORS
-def _parse_csv(value: str) -> List[str]:
-    if not value:
-        return []
-    return [v.strip() for v in value.split(",") if v.strip()]
-
-ALLOW_ORIGINS = _parse_csv(os.getenv("CORS_ALLOW_ORIGINS", ""))
-if not ALLOW_ORIGINS and ENV != "production":
-    # in dev, allow localhost by default
-    ALLOW_ORIGINS = [
-        "http://localhost",
-        "http://127.0.0.1",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ]
-
-# ---------------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------------
-app = FastAPI(
-    title=APP_NAME,
-    version=VERSION,
-    docs_url=None if ENV == "production" else f"{API_PREFIX}/docs",
-    redoc_url=None,
-    openapi_url=None if ENV == "production" else f"{API_PREFIX}/openapi.json",
-)
+app = FastAPI(title=APP_NAME, version=VERSION)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOW_ORIGINS or ["*"] if ENV != "production" else ALLOW_ORIGINS,
+    allow_origins=CORS_ALLOW_ORIGINS or ["*"] if ENV != "production" else CORS_ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
 )
 
 # ---------------------------------------------------------------------------
-# Utility: safe include of routers
-# ---------------------------------------------------------------------------
-def include_router_safe(module_name: str, router_name: str = "router") -> None:
-    try:
-        module = importlib.import_module(module_name)
-        router = getattr(module, router_name, None)
-        if router is None:
-            raise AttributeError(f"Module '{module_name}' has no '{router_name}'")
-        app.include_router(router, prefix=API_PREFIX)
-        logger.info("Included %s as %s/*", module_name, API_PREFIX)
-    except Exception as exc:
-        logger.warning("Could not include %s: %s", module_name, exc)
-
-# Include project routers (only those that actually exist will be mounted)
-for module in [
-    "routes.auth_login",       # canonical login (/api/auth/login)
-    "routes.briefing",         # domain routes, if present
-    "routes.admin_status",     # /api/admin/status (protected)
-    "routes.feedback",         # optional; may not exist
-    "routes.login_compat",     # NEW: provides /api/login -> /api/auth/login
-]:
-    include_router_safe(module)
-
-# ---------------------------------------------------------------------------
-# Basic system routes
+# Root / Health / Diagnostics
 # ---------------------------------------------------------------------------
 @app.get("/", response_class=PlainTextResponse)
 async def root() -> str:
-    return "KI–Status–Report backend is running."
+    return "KI–Status–Report backend is running.\n"
 
-@app.get(f"{API_PREFIX}/healthz")
-async def healthz() -> dict:
+@app.get("/api/healthz", response_class=JSONResponse)
+async def healthz():
     return {
         "ok": True,
         "time": datetime.now(timezone.utc).isoformat(),
         "env": ENV,
         "version": VERSION,
-        "queue_enabled": bool(os.getenv("QUEUE_ENABLED", "")),
-        "pdf_service": bool(os.getenv("PDF_SERVICE_URL", "")),
+        "queue_enabled": bool(QUEUE_ENABLED and REDIS_URL),
+        "pdf_service": bool(PDF_SERVICE_URL),
         "status": "ok",
     }
 
-@app.get(f"{API_PREFIX}/diag")
-async def diag() -> dict:
+@app.get("/api/diag", response_class=JSONResponse)
+async def diag():
     return {
         "ok": True,
         "settings": {
             "APP_NAME": APP_NAME,
             "ENV": ENV,
             "VERSION": VERSION,
-            "QUEUE_ENABLED": bool(os.getenv("QUEUE_ENABLED", "")),
-            "REDIS_URL_SET": bool(os.getenv("REDIS_URL", "")),
-            "PDF_SERVICE_URL_SET": bool(os.getenv("PDF_SERVICE_URL", "")),
-            "PDF_TIMEOUT": int(os.getenv("PDF_TIMEOUT", "45000")),
-            "DEBUG": ENV != "production",
+            "QUEUE_ENABLED": bool(QUEUE_ENABLED),
+            "REDIS_URL_SET": bool(bool(REDIS_URL)),
+            "PDF_SERVICE_URL_SET": bool(PDF_SERVICE_URL),
+            "PDF_TIMEOUT": PDF_TIMEOUT,
+            "DEBUG": LOG_LEVEL in {"DEBUG", "TRACE"},
         },
         "time": datetime.now(timezone.utc).isoformat(),
     }
+
+# ---------------------------------------------------------------------------
+# Router inclusion helpers
+# ---------------------------------------------------------------------------
+def _include_router(module_name: str, prefix: str = "/api") -> None:
+    """
+    Try to import a router module and include it. Log a clear message otherwise.
+    """
+    try:
+        module = __import__(module_name, fromlist=["router"])
+        router = getattr(module, "router", None)
+        if router is None:
+            logger.warning("Module %s found but no 'router' attribute.", module_name)
+            return
+        app.include_router(router, prefix=prefix)
+        logger.info("Included %s as %s/*", module_name, prefix)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not include %s: %s", module_name, exc)
+
+# Register core routes
+_include_router("routes.auth_login", prefix="/api")
+_include_router("routes.admin_status", prefix="/api")
+_include_router("routes.feedback", prefix="/api")
+_include_router("routes.briefing", prefix="/api")
+
+# Optional: a small guidance for GET /api/login
+from fastapi import HTTPException, status
+
+@app.get("/api/login")
+async def login_get_hint():
+    raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Use POST /api/login")
