@@ -1,21 +1,23 @@
-# filename: worker.py
 # -*- coding: utf-8 -*-
-"""RQ worker entry point.
-Railway: start with `python worker.py` in a separate service or proc.
-"""
 from __future__ import annotations
+import os, sys, time
+try:
+    import redis
+    from rq import Worker, Queue, Connection
+except Exception as e:
+    print("RQ/Redis not installed:", e, file=sys.stderr)
+    sys.exit(1)
 
-from rq import Worker, Queue, Connection
-from redis import Redis
-from settings import settings
+redis_url = os.environ.get("REDIS_URL")
+if not redis_url:
+    print("REDIS_URL not set; worker cannot start.", file=sys.stderr)
+    sys.exit(2)
 
-def main():
-    if not settings.REDIS_URL:
-        raise SystemExit("REDIS_URL not configured")
-    redis_conn = Redis.from_url(settings.REDIS_URL)
-    with Connection(redis_conn):
-        worker = Worker([Queue(settings.QUEUE_NAME)])
-        worker.work(with_scheduler=False)
+conn = redis.from_url(redis_url, decode_responses=False)
+listen = ["reports"]
 
 if __name__ == "__main__":
-    main()
+    with Connection(conn):
+        worker = Worker(map(Queue, listen))
+        print("RQ worker connected. Queues:", listen, "Redis:", redis_url)
+        worker.work(with_scheduler=True)

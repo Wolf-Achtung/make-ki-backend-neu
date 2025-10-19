@@ -1,134 +1,91 @@
-# filename: worker_tasks.py
 # -*- coding: utf-8 -*-
-# RQ-Worker-Job zum Verarbeiten von Reports.
-# - Läuft im separaten Prozess (rq worker)
-# - Ruft die Analyse-Engine auf
-# - Persistiert Ergebnis, erzeugt PDF (optional) und versendet E-Mails (User + Admin)
-
 from __future__ import annotations
-import asyncio
-import base64
-import logging
-from typing import Any, Dict, Optional
-
+from typing import Dict, Any, Optional
+from datetime import datetime
 import httpx
 
-from settings import settings
 from db import get_session
 from models import Task
-from analyzer import run_analysis
-from gpt_analyze import produce_admin_attachments
-from mail_utils import send_email_with_attachments
+from mail_utils import send_email_with_attachments_sync
+from settings import settings
+from pdf_client import render_pdf
 
-log = logging.getLogger("worker_tasks")
+# Analyzer is expected to be available in project
+from analyzer import run_analysis  # type: ignore
+from gpt_analyze import produce_admin_attachments  # type: ignore
 
-async def _generate_pdf_async(html: str, filename: str = "report.pdf") -> Optional[bytes]:
-    if not html:
-        return None
-    if settings.PDF_SERVICE_URL:
-        try:
-            async with httpx.AsyncClient(timeout=settings.PDF_TIMEOUT/1000) as client:
-                resp = await client.post(str(settings.PDF_SERVICE_URL), json={"html": html, "filename": filename})
-                ctype = (resp.headers.get("content-type") or "").lower()
-                if "application/pdf" in ctype or "application/octet-stream" in ctype:
-                    return resp.content
-                # try JSON base64 format
-                try:
-                    data = resp.json()
-                    for key in ("pdf_base64", "data", "pdf"):
-                        if isinstance(data.get(key), str):
-                            b64s = data[key]
-                            if ";base64," in b64s:
-                                b64s = b64s.split(",", 1)[1]
-                            return base64.b64decode(b64s)
-                except Exception:
-                    pass
-        except Exception as e:
-            log.warning("[worker] PDF service failed: %s", e)
-    return None
+def _subject(prefix: str, lang: str) -> str:
+    today = datetime.now().strftime("%Y-%m-%d")
+    return f"{prefix} – KI-Status-Report ({today})" if lang.upper().startswith("DE") else f"{prefix} – AI Status Report ({today})"
 
-def _update_task(report_id: str, **fields: Any) -> None:
-    with get_session() as s:
-        t = s.get(Task, report_id)
-        if not t:
-            return
-        for k, v in fields.items():
-            setattr(t, k, v)
-
-def process_report(report_id: str, payload: Dict[str, Any]) -> bool:
-    """
-    Entry point für RQ.
-    """
-    log.info("[worker] start report_id=%s", report_id)
-
-    # mark running
-    _update_task(report_id, status="running")
-
-    # 1) Analyse ausführen (run_analysis kann async sein)
+def process_report(report_id: str, payload: Dict[str, Any]) -> None:
+    """RQ worker entry point: generates report, pdf, sends mails, and updates DB."""
+    lang = (payload.get("lang") or settings.DEFAULT_LANG or "DE").upper()
+    company = payload.get("company") or payload.get("unternehmen") or payload.get("firma") or "Unbekannt"
+    email = payload.get("email") or payload.get("to")
+    # 1) Generate HTML report
     try:
-        if asyncio.iscoroutinefunction(run_analysis):
-            html = asyncio.run(run_analysis(payload))
-        else:
-            html = run_analysis(payload)
-    except Exception as e:
-        log.exception("[worker] analysis failed: %s", e)
-        _update_task(report_id, status="failed", error=str(e))
-        return False
-
-    # 2) Ergebnis persistieren
-    _update_task(report_id, html=html)
-
-    # 3) PDF erzeugen (wenn Service aktiv)
-    try:
-        pdf_bytes = asyncio.run(_generate_pdf_async(html, filename=f"KI-Status-Report_{report_id}.pdf"))
-    except Exception as e:
-        log.warning("[worker] pdf generation failed: %s", e)
+        html = run_analysis(payload)  # sync variant expected
         pdf_bytes = None
+        try:
+            # Call async pdf via sync client (httpx can be used sync as well if needed)
+            # We'll do a direct httpx call here to avoid running event loop in worker.
+            if settings.PDF_SERVICE_URL and html:
+                with httpx.Client(timeout=settings.PDF_TIMEOUT/1000) as client:
+                    r = client.post(settings.PDF_SERVICE_URL, json={"html": html, "filename": "report.pdf"})
+                    if r.status_code == 200:
+                        pdf_bytes = r.content
+        except Exception:
+            pdf_bytes = None
 
-    # 4) Attachments zusammenstellen
-    answers = (payload or {}).get("answers") or {}
-    lang = ((payload or {}).get("lang") or settings.DEFAULT_LANG or "DE").lower()
-    filename_base = f"KI-Status-Report_{report_id}"
-    user_attach = {}
-    if pdf_bytes:
-        user_attach[f"{filename_base}.pdf"] = pdf_bytes
-    else:
-        user_attach[f"{filename_base}.html"] = (html or "").encode("utf-8")
+        # 2) Store result
+        with get_session() as s:
+            t = s.get(Task, report_id)
+            if t:
+                t.status = "done"
+                t.company = company
+                t.email = email
+                t.lang = lang
+                t.html = html
+                t.finished_at = datetime.utcnow()
 
-    admin_attach = dict(user_attach)  # gleiches PDF/HTML
-    try:
-        tri = produce_admin_attachments(answers, lang=lang)
-        for name, content in tri.items():
-            admin_attach[name] = content.encode("utf-8")
+        # 3) Send mails
+        attachments_user = {}
+        if pdf_bytes:
+            attachments_user["KI-Status-Report.pdf"] = pdf_bytes
+        elif settings.ATTACH_HTML_FALLBACK and html:
+            attachments_user["KI-Status-Report.html"] = html.encode("utf-8")
+
+        attachments_admin = dict(attachments_user)
+
+        try:
+            tri = produce_admin_attachments(payload)  # returns dict of {name: json_str}
+            for name, content in (tri or {}).items():
+                attachments_admin[name] = content.encode("utf-8")
+        except Exception:
+            pass
+
+        if settings.SEND_USER_MAIL and isinstance(email, str) and "@" in email:
+            send_email_with_attachments_sync(
+                to_address=email,
+                subject=_subject("Ihr Ergebnis", "DE" if lang.startswith("DE") else "EN"),
+                html_body="<p>Ihr KI-Status-Report ist da.</p>",
+                attachments=attachments_user or None,
+            )
+
+        if settings.SEND_ADMIN_MAIL and settings.ADMIN_EMAIL:
+            send_email_with_attachments_sync(
+                to_address=settings.ADMIN_EMAIL,
+                subject=_subject("Admin: neuer Report", "DE" if lang.startswith("DE") else "EN"),
+                html_body=f"<p>Neuer Report: <b>{company}</b> ({email or '—'})</p>",
+                attachments=attachments_admin or None,
+            )
+
     except Exception as e:
-        log.warning("[worker] admin attachments failed: %s", e)
-
-    # 5) E-Mails versenden (best-effort)
-    to_user = (payload or {}).get("email")
-    try:
-        if to_user:
-            asyncio.run(send_email_with_attachments(
-                to_address=to_user,
-                subject=f"{settings.MAIL_SUBJECT_PREFIX} – Ihr KI-Status-Report",
-                html_body="<p>Ihr KI-Status-Report ist fertiggestellt. Der Report liegt im Anhang.</p>",
-                attachments=user_attach
-            ))
-            log.info("[worker] sent user mail to %s", to_user)
-    except Exception as e:
-        log.exception("[worker] send user mail failed: %s", e)
-
-    try:
-        asyncio.run(send_email_with_attachments(
-            to_address=settings.ADMIN_EMAIL,
-            subject=f"{settings.MAIL_SUBJECT_PREFIX} – Admin: Report erstellt",
-            html_body=f"<p>Report {report_id} wurde erstellt und versendet.</p>",
-            attachments=admin_attach
-        ))
-        log.info("[worker] sent admin mail")
-    except Exception as e:
-        log.exception("[worker] send admin mail failed: %s", e)
-
-    # 6) Abschlussstatus
-    _update_task(report_id, status="done")
-    log.info("[worker] done report_id=%s", report_id)
-    return True
+        with get_session() as s:
+            t = s.get(Task, report_id)
+            if t:
+                t.status = "failed"
+                t.error = str(e)
+                t.finished_at = datetime.utcnow()
+        raise

@@ -1,7 +1,4 @@
-# filename: main.py
 # -*- coding: utf-8 -*-
-# FastAPI Main – resilient import (queue_stats optional), Admin-Status with graceful fallback
-
 from __future__ import annotations
 
 import base64
@@ -23,35 +20,26 @@ except Exception:
     TEMPLATES_AVAILABLE = False
     Jinja2Templates = None  # type: ignore
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
+from jose import jwt, JWTError
 
 from settings import settings, allowed_origins
-from analyzer import run_analysis
+from analyzer import run_analysis  # type: ignore
 from db import init_db, get_session
 from models import Task, Feedback as FeedbackModel
 from rate_limiter import is_limited
-from security import verify_password
-from sqlalchemy import text
-from jose import jwt, JWTError
 from mail_utils import send_email_with_attachments
-from gpt_analyze import produce_admin_attachments
+from pdf_client import render_pdf
 
-# ---- queue_redis imports: get_stats optional to avoid import-time crash on older file versions
+# ---- queue_redis imports
 try:
     from queue_redis import enqueue_report, enabled as queue_enabled, get_stats as queue_stats
 except Exception:
-    try:
-        from queue_redis import enqueue_report, enabled as queue_enabled  # type: ignore
-    except Exception:
-        # minimal shims if queue_redis module itself is absent; app still works in local background mode
-        def queue_enabled() -> bool:
-            return False
-        def enqueue_report(report_id: str, payload: Dict[str, Any]) -> bool:
-            return False
-    def queue_stats() -> Dict[str, int]:
-        return {"queued": 0, "started": 0, "finished": 0, "failed": 0, "deferred": 0, "scheduled": 0}
+    def queue_enabled() -> bool: return False
+    def enqueue_report(report_id: str, payload: Dict[str, Any]) -> bool: return False
+    def queue_stats() -> Dict[str, int]: return {"queued": 0, "started": 0, "finished": 0, "failed": 0, "deferred": 0, "scheduled": 0}
 
-LOG_LEVEL = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
+LOG_LEVEL = getattr(logging, (settings.LOG_LEVEL or "INFO").upper(), logging.INFO)
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("ki-backend")
 
@@ -93,7 +81,7 @@ class AnalyzePayload(BaseModel):
     lang: str = Field(default=settings.DEFAULT_LANG)
     company: str
     answers: Dict[str, Any] = Field(default_factory=dict)
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     options: Dict[str, Any] = Field(default_factory=dict)
 
 class AnalyzeResult(BaseModel):
@@ -103,7 +91,7 @@ class AnalyzeResult(BaseModel):
     meta: Dict[str, Any] = Field(default_factory=dict)
 
 class Feedback(BaseModel):
-    email: EmailStr
+    email: str
     name: Optional[str] = None
     message: str
     context: Dict[str, Any] = Field(default_factory=dict)
@@ -127,17 +115,13 @@ async def prometheus_mw(request: Request, call_next):
 @app.on_event("startup")
 def on_startup():
     init_db()
+    # include routes
     try:
         from routes import briefing as _briefing
         app.include_router(_briefing.router)
         logger.info("Included routes.briefing")
     except Exception as e1:
-        try:
-            from app.routes import briefing as _briefing
-            app.include_router(_briefing.router)
-            logger.info("Included app.routes.briefing")
-        except Exception as e2:
-            logger.warning("Briefing routes not included: %s / %s", e1, e2)
+        logger.warning("Briefing route not included: %s", e1)
 
 @app.get("/metrics")
 def metrics():
@@ -187,7 +171,6 @@ def _persist_and_schedule(ip: str, payload: AnalyzePayload, background: Backgrou
     if queue_enabled():
         ok = enqueue_report(report_id, payload.model_dump())
         if not ok:
-            # Fallback auf lokalen BackgroundTask, damit Requests nicht „hängen bleiben“
             background.add_task(_local_background_job, report_id, payload.model_dump())
     else:
         background.add_task(_local_background_job, report_id, payload.model_dump())
@@ -209,41 +192,27 @@ async def analyze(request: Request, payload: AnalyzePayload, background: Backgro
     report_id = _persist_and_schedule(ip, payload, background)
     return AnalyzeResult(report_id=report_id, status="queued", html=None, meta={"lang": _effective_lang(payload.lang)})
 
-# @app.post("/briefing_async")  # removed duplicate route - now handled in routes/briefing.py
-# async def briefing_async(request: Request, payload: Dict[str, Any] = Body(...), background: BackgroundTasks = None):
-#     ip = _client_ip(request)
-#     company = payload.get("company") or payload.get("unternehmen") or payload.get("firma") or "Unbekannt"
-#     email = payload.get("email") or payload.get("to")
-#     lang = _effective_lang(payload.get("lang"))
-#     answers = payload.get("answers")
-#     if not isinstance(answers, dict):
-#         known = {"company","unternehmen","firma","email","to","lang","answers","options"}
-#         answers = {k: v for k, v in payload.items() if k not in known}
-#     options = payload.get("options") or {}
-#     ap = AnalyzePayload(lang=lang, company=company, email=email, answers=answers, options=options)
-# 
-#     rl_keys = []
-#     if ap.email:
-#         rl_keys.append(f"email:{ap.email.lower()}")
-#     rl_keys.append(f"ip:{ip}")
-#     for key in rl_keys:
-#         blocked, _ = is_limited(key, settings.API_RATE_LIMIT_PER_HOUR, settings.API_RATE_LIMIT_WINDOW_SECONDS)
-#         if blocked:
-#             headers = {"Retry-After": str(settings.API_RATE_LIMIT_WINDOW_SECONDS)}
-#             raise HTTPException(429, detail="Rate limit exceeded", headers=headers)
-# 
-#     report_id = _persist_and_schedule(ip, ap, background)
-#     return {"ok": True, "status": "queued", "report_id": report_id, "lang": ap.lang}
-
 async def _local_background_job(report_id: str, payload: dict):
     try:
-        html = await run_analysis(payload) if hasattr(run_analysis, "__call__") else None  # async compat
+        html = await run_analysis(payload) if hasattr(run_analysis, "__call__") and getattr(run_analysis, "__code__", None) and run_analysis.__code__.co_flags & 0x80 else run_analysis(payload)  # support async/sync
         with get_session() as s:
             t = s.get(Task, report_id)
             if t:
                 t.status = "done"
                 t.html = html
                 t.finished_at = datetime.utcnow()
+
+        # OPTIONAL: send emails also in local mode if email available
+        to = (payload.get("email") or payload.get("to") or "").strip()
+        if to and settings.SEND_USER_MAIL:
+            pdf = await render_pdf(html, filename="KI-Status-Report.pdf")
+            atts = {"KI-Status-Report.pdf": pdf} if pdf else {"KI-Status-Report.html": html.encode("utf-8")}
+            await send_email_with_attachments(
+                to_address=to,
+                subject="Ihr Ergebnis – KI-Status-Report",
+                html_body="<p>Ihr KI-Status-Report ist da.</p>",
+                attachments=atts,
+            )
     except Exception as e:
         with get_session() as s:
             t = s.get(Task, report_id)
@@ -262,38 +231,13 @@ async def result(report_id: str):
             "created_at": str(t.created_at), "finished_at": str(t.finished_at)
         })
 
-async def _generate_pdf(html: str, filename: str = "report.pdf"):
-    if not html:
-        return None
-    if settings.PDF_SERVICE_URL:
-        try:
-            async with httpx.AsyncClient(timeout=settings.PDF_TIMEOUT/1000) as client:
-                resp = await client.post(str(settings.PDF_SERVICE_URL), json={"html": html, "filename": filename})
-                ctype = (resp.headers.get("content-type") or "").lower()
-                if "application/pdf" in ctype or "application/octet-stream" in ctype:
-                    return resp.content
-                try:
-                    data = resp.json()
-                    for key in ("pdf_base64", "data", "pdf"):
-                        if isinstance(data.get(key), str):
-                            b64s = data[key]
-                            if ";base64," in b64s:
-                                b64s = b64s.split(",", 1)[1]
-                            import base64 as _b
-                            return _b.b64decode(b64s)
-                except Exception:
-                    pass
-        except Exception as e:
-            logger.warning("PDF service failed: %s", e)
-    return None
-
 @app.post("/generate-pdf")
 async def generate_pdf(payload: Dict[str, Any]):
     html = str(payload.get("html", ""))
     filename = str(payload.get("filename", "report.pdf"))
     if not html:
         raise HTTPException(400, "missing html")
-    pdf_bytes = await _generate_pdf(html, filename)
+    pdf_bytes = await render_pdf(html, filename)
     if pdf_bytes:
         import base64
         return {
@@ -313,8 +257,8 @@ async def feedback(request: Request, item: Feedback, background: BackgroundTasks
         s.add(fb)
     background.add_task(
         _send_email,
-        settings.FEEDBACK_TO,
-        f"{settings.MAIL_SUBJECT_PREFIX} Feedback",
+        settings.ADMIN_EMAIL or settings.SMTP_FROM,
+        f"Feedback – KI-Status-Report",
         f"From: {item.name or '-'} <{item.email}>\n\n{item.message}"
     )
     return {"ok": True}
@@ -336,40 +280,22 @@ async def _send_email(to: str, subject: str, text: str):
     except Exception as e:
         logger.warning("send email failed: %s", e)
 
-class LoginPayload(BaseModel):
-    email: EmailStr
-    password: str
-
-def _get_user_credentials(email: str):
-    with get_session() as s:
-        res = s.execute(text("SELECT password_hash, role FROM users WHERE LOWER(email)=:email"), {"email": email.lower()})
-        return res.fetchone()
-
-def get_current_user(request: Request):
+def _require_admin(request: Request):
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     token = auth_header.split(" ", 1)[1]
     try:
-        return jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
-    except JWTError as e:
+        claims = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
+        if claims.get("role") != "admin":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+        return claims
+    except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 @app.get("/admin/status")
 async def admin_status(request: Request):
-    from fastapi import HTTPException, status  # ensure imported for error codes
-    try:
-        user = getattr(request.state, 'user', None)
-        # Check admin auth via Authorization header
-        token = request.headers.get('Authorization', '')
-        if not token.startswith('Bearer '):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Not authenticated')
-        from jose import jwt, JWTError
-        claims = jwt.decode(token.split(' ',1)[1], settings.JWT_SECRET, algorithms=['HS256'])
-        if claims.get('role') != 'admin':
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Forbidden')
-    except JWTError as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid token')
+    _require_admin(request)
     # DB-Zahlen
     with get_session() as s:
         total = s.query(Task).count()
@@ -379,7 +305,7 @@ async def admin_status(request: Request):
         failed = s.query(Task).filter(Task.status == "failed").count()
         last = s.query(Task).order_by(Task.created_at.desc()).limit(20).all()
 
-    # Queue-Zahlen (falls Redis aktiv)
+    # Queue-Zahlen
     qstats = queue_stats() if queue_enabled() else {"queued": 0, "started": 0, "finished": 0, "failed": 0, "deferred": 0, "scheduled": 0}
     flags = {
         "eu_host_check": settings.ENABLE_EU_HOST_CHECK,
@@ -388,7 +314,6 @@ async def admin_status(request: Request):
         "pdf_service": bool(settings.PDF_SERVICE_URL),
     }
 
-    # Template bevorzugen
     if TEMPLATES_AVAILABLE:
         try:
             return templates.TemplateResponse("admin_status.html", {
@@ -401,7 +326,6 @@ async def admin_status(request: Request):
         except Exception:
             pass
 
-    # Fallback: Inline HTML
     rows = []
     for t in last:
         rows.append(

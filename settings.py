@@ -1,114 +1,73 @@
-# filename: settings.py
 # -*- coding: utf-8 -*-
 """
-Central configuration for KI-Status-Report (Gold-Standard+)
-- pydantic-settings for robust ENV parsing
-- CORS_ALLOW_ORIGINS kept as CSV string to avoid JSON parsing issues in Pydantic
-- Helper to expose parsed origins as list
+Settings / Configuration for KI-Status-Report Backend (Gold-Standard+)
+- Pydantic v2 settings with safe defaults
+- All secrets via environment variables
+- Avoid EmailStr here to not hard require email-validator on import (we include it anyway)
 """
 from __future__ import annotations
 
-from typing import List, Optional
-from pydantic import Field, AnyHttpUrl, EmailStr
+import os
+from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 
-def _parse_csv(value: str) -> List[str]:
-    if not value:
+def _csv(val: str) -> List[str]:
+    if not val:
         return []
-    return [v.strip() for v in value.split(",") if v.strip()]
+    return [x.strip() for x in val.split(",") if x.strip()]
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # --- Core ---
-    ENVIRONMENT: str = "production"
-    PORT: int = 8080
-    LOG_LEVEL: str = "info"
+    ENVIRONMENT: str = Field(default="production")
+    LOG_LEVEL: str = Field(default="INFO")
 
-    # --- CORS / Security ---
-    # Keep as CSV string (not List[str]) to avoid JSON decoding expectation in env provider
-    CORS_ALLOW_ORIGINS: str = ("https://ki-sicherheit.jetzt,https://www.ki-sicherheit.jetzt,"
-                               "https://ki-foerderung.jetzt,https://make.ki-sicherheit.jetzt,"
-                               "https://www.make.ki-sicherheit.jetzt")
-    JWT_SECRET: str = "dev-secret"
-    SECRET_KEY: str = "dev-secret"
+    APP_NAME: str = Field(default="KI-Status-Report Backend")
+    DEFAULT_LANG: str = Field(default="DE")
 
-    # --- Database ---
-    DATABASE_URL: Optional[str] = None
+    # CORS
+    FRONTEND_ORIGINS: str = Field(default="")
+    CORS_ALLOW_ORIGINS: List[str] = Field(default_factory=list)
 
-    # --- Redis / Queue ---
-    REDIS_URL: Optional[str] = None
-    QUEUE_NAME: str = "reports"
+    # Database
+    DATABASE_URL: str = Field(default="")
 
-    # --- Rate limit ---
-    API_RATE_LIMIT_PER_HOUR: int = 20
-    API_RATE_LIMIT_WINDOW_SECONDS: int = 3600
+    # JWT
+    JWT_SECRET: str = Field(default="dev-secret")
 
-    # --- Mail ---
-    SMTP_HOST: str = "localhost"
-    SMTP_PORT: int = 25
-    SMTP_USER: Optional[str] = None
-    SMTP_PASS: Optional[str] = None
-    SMTP_FROM: EmailStr = "kontakt@ki-sicherheit.jetzt"
-    SMTP_FROM_NAME: str = "KI-Sicherheit"
-    ADMIN_EMAIL: EmailStr = "bewertung@ki-sicherheit.jetzt"
-    FEEDBACK_TO: EmailStr = "kontakt@ki-sicherheit.jetzt"
-    MAIL_SUBJECT_PREFIX: str = "KI-Ready"
-    MAIL_THROTTLE_PER_USER_PER_HOUR: int = 10
-    MAIL_TO_USER: bool = True
+    # PDF Service
+    PDF_SERVICE_URL: str = Field(default="")
+    PDF_TIMEOUT: int = Field(default=25000, description="Timeout in ms")
 
-    # --- LLM ---
-    LLM_MODE: str = "on"
-    LLM_PROVIDER: str = "anthropic"  # or openai
-    ANTHROPIC_API_KEY: Optional[str] = None
-    OPENAI_API_KEY: Optional[str] = None
-    CLAUDE_MODEL: str = "claude-sonnet-4-20250514"
-    GPT_MODEL_NAME: str = "gpt-4o"
-    OPENAI_MODEL_DEFAULT: str = "gpt-4o"
-    OPENAI_FALLBACK_MODEL: str = "gpt-4o-mini"
-    OPENAI_MAX_TOKENS: int = 1200
-    OPENAI_TIMEOUT: int = 45
-    EXEC_SUMMARY_MODEL: str = "gpt-4o"
-    EXEC_SUMMARY_MODEL_FALLBACK: str = "gpt-4o"
+    # SMTP
+    SMTP_HOST: str = Field(default="localhost")
+    SMTP_PORT: int = Field(default=587)
+    SMTP_USER: str = Field(default="")
+    SMTP_PASS: str = Field(default="")
+    SMTP_FROM: str = Field(default="noreply@example.com")
+    SMTP_FROM_NAME: str = Field(default="KI‑Sicherheit")
 
-    # --- PDF Service ---
-    PDF_SERVICE_URL: Optional[AnyHttpUrl] = None
-    PDF_TIMEOUT: int = 45000
-    PDF_POST_MODE: str = "json"
-    PDF_MAX_BYTES: int = 32 * 1024 * 1024
-    PDF_MINIFY_HTML: bool = True
-    PDF_STRIP_SCRIPTS: bool = True
-    TEMPLATE_DIR: str = "templates"
-    TEMPLATE_DE: str = "pdf_template.html"
-    TEMPLATE_EN: str = "pdf_template_en.html"
-    ASSETS_BASE_URL: str = "templates"
+    # Admin / Mails
+    ADMIN_EMAIL: str = Field(default="")
+    SEND_USER_MAIL: bool = Field(default=True)
+    SEND_ADMIN_MAIL: bool = Field(default=True)
+    ATTACH_HTML_FALLBACK: bool = Field(default=True)
 
-    # --- Feature Flags ---
-    ENABLE_IDEMPOTENCY: bool = True
-    ENABLE_EU_HOST_CHECK: bool = True
-    EU_THROTTLE_RPM: int = 24
-    EU_CACHE_TTL: int = 1200
-    LIVE_CACHE_ENABLED: bool = True
-    LIVE_CACHE_FILE: str = "/tmp/ki_live_cache.json"
-    LIVE_CACHE_TTL_SECONDS: int = 1800
-    LIVE_TIMEOUT_S: float = 8.0
-    HYBRID_LIVE: bool = True
-    QUALITY_CONTROL_AVAILABLE: bool = True
-    MIGRATION_ENABLED: bool = False
+    # Rate limiting
+    API_RATE_LIMIT_PER_HOUR: int = Field(default=20)
+    API_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=3600)
 
-    # --- Misc ---
-    DEFAULT_LANG: str = "DE"
-    DEFAULT_TIMEZONE: str = "Europe/Berlin"
-    RAILWAY_HEALTHCHECK_DISABLED: bool = True
-
-    # Helpers
-    def allowed_origins(self) -> List[str]:
-        return _parse_csv(self.CORS_ALLOW_ORIGINS)
-
-settings = Settings()
-
-def is_dev() -> bool:
-    return settings.ENVIRONMENT.lower() in {"dev","development","local"}
+    # Feature flags
+    ENABLE_EU_HOST_CHECK: bool = Field(default=True)
+    ENABLE_IDEMPOTENCY: bool = Field(default=True)
+    QUALITY_CONTROL_AVAILABLE: bool = Field(default=True)
 
 def allowed_origins() -> List[str]:
-    return ["*"] if is_dev() else settings.allowed_origins()
+    s = os.getenv("FRONTEND_ORIGINS", "") or settings.FRONTEND_ORIGINS
+    parsed = _csv(s)
+    # Add local dev defaults if not present
+    defaults = {"http://localhost:3000", "http://127.0.0.1:5500", "http://localhost:8000"}
+    return list(set(parsed) | defaults)
+
+settings = Settings()
