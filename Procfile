@@ -1,2 +1,2 @@
 web: uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers
-worker: python worker.py
+worker: python3 worker.py
