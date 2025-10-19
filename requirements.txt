@@ -1,4 +1,4 @@
-# requirements.txt (v2) – Railway ready
+# requirements.txt (v3) – Railway
 fastapi>=0.110,<1.0
 uvicorn[standard]>=0.30
 pydantic>=2.6
