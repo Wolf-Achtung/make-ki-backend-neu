@@ -1,52 +1,44 @@
+
 <!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Status</title>
+  <title>Admin Status – {{ app_name }}</title>
   <style>
-    :root { --bg:#0b0c10; --fg:#e8e8e8; --muted:#9aa0a6; --card:#15171c; --acc:#61dafb; }
-    body { margin:0; font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--fg); }
-    header { padding:16px 20px; background:#111317; border-bottom:1px solid #222; }
-    h1 { margin:0; font-size:18px; }
-    main { padding:20px; }
-    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; }
-    .card { background:var(--card); border:1px solid #222; border-radius:8px; padding:14px; }
-    table { width:100%; border-collapse:collapse; }
-    th, td { border-bottom:1px solid #2a2c31; padding:8px; text-align:left; font-size:13px; }
-    th { color:#c9d1d9; }
-    .muted { color:var(--muted); }
-    code { background:#0f1115; padding:2px 6px; border-radius:4px; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Helvetica, Arial, sans-serif; margin: 2rem; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .muted { color: #555; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+    code, pre { background: #f6f6f6; padding: .25rem .5rem; border-radius: 4px; }
   </style>
 </head>
 <body>
-<header><h1>Admin Status</h1></header>
-<main>
+  <h1>Admin-Status</h1>
+  <p class="muted">{{ app_name }} &middot; Env: <strong>{{ env }}</strong> &middot; Version: <strong>{{ version }}</strong> &middot; {{ time }}</p>
+
   <div class="grid">
-    <div class="card"><strong>Queue-Modus:</strong> {{ 'Redis' if queue_mode == 'Redis' else 'Local' }}</div>
-    <div class="card"><strong>PDF-Service:</strong> {{ 'aktiv' if flags.pdf_service else 'inaktiv' }}</div>
-    <div class="card"><strong>Features:</strong> <span class="muted">{{ flags }}</span></div>
+    <div class="card">
+      <h3>Queue</h3>
+      <p>Modus: <strong>{{ queue_mode }}</strong></p>
+      {% if queue_stats and queue_mode == "Redis" %}
+      <ul>
+        <li>Jobs: {{ queue_stats.count }}</li>
+        <li>Deferred: {{ queue_stats.deferred }}</li>
+        <li>Failed: {{ queue_stats.failed }}</li>
+      </ul>
+      {% else %}
+      <p class="muted">Keine Queue-Statistiken verfügbar.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3>PDF-Service</h3>
+      <p>Status: {% if pdf_enabled %}<strong>aktiv</strong>{% else %}<strong>deaktiviert</strong>{% endif %}</p>
+      <p class="muted">Konfigurierbar über <code>PDF_SERVICE_URL</code> / <code>PDF_SERVICE_ENABLED</code>.</p>
+    </div>
   </div>
-  <h2>Redis Queue</h2>
-  <pre class="muted">{{ q }}</pre>
-  <h2>Letzte 20 Tasks</h2>
-  <table>
-    <thead><tr><th>ID</th><th>Status</th><th>Firma</th><th>E‑Mail</th><th>Erstellt</th><th>Fertig</th></tr></thead>
-    <tbody>
-    {% for t in db.last %}
-      <tr>
-        <td><code>{{ t.id }}</code></td>
-        <td>{{ t.status }}</td>
-        <td>{{ t.company or '—' }}</td>
-        <td>{{ t.email or '—' }}</td>
-        <td>{{ t.created_at }}</td>
-        <td>{{ t.finished_at or '—' }}</td>
-      </tr>
-    {% else %}
-      <tr><td colspan="6" class="muted">Keine Tasks</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</main>
+
+  <p class="muted">Zugriff: Admin-JWT (role=admin) oder <code>ADMIN_API_KEY</code>. In <code>DEBUG=true</code> ohne Auth.</p>
 </body>
 </html>
