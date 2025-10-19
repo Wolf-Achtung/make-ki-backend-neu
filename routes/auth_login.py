@@ -1,53 +1,73 @@
-# filename: routes/auth_login.py
 # -*- coding: utf-8 -*-
+"""Login endpoint backed by PostgreSQL (async)."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, EmailStr
-from sqlalchemy import text
-from jose import jwt
-from typing import Optional, Dict, Any
-import bcrypt
+import logging
+from dataclasses import dataclass
 
-from settings import settings
-from db import get_session
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, EmailStr
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from db import get_session, fetch_user_by_email
+from security import create_access_token, verify_password
+
+logger = logging.getLogger("ki-backend.auth")
 
 router = APIRouter(tags=["auth"])
 
-class LoginPayload(BaseModel):
+
+class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
-def _extract_password_and_role(row: Dict[str, Any]) -> tuple[Optional[str], str, Optional[str]]:
-    # Try to find a password hash column dynamically
-    pwd_keys = [k for k in row.keys() if "pass" in k.lower()]
-    pwd_val: Optional[str] = None
-    for k in pwd_keys:
-        v = row.get(k)
-        if v and isinstance(v, (str, bytes)):
-            pwd_val = v.decode("utf-8") if isinstance(v, (bytes, bytearray)) else v
+
+class LoginResponse(BaseModel):
+    ok: bool
+    token: str
+    user: dict
+
+
+@router.get("/login")
+async def login_get_hint():
+    # Helpful message when someone tries a GET
+    raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Use POST /api/login")
+
+
+@router.post("/login", response_model=LoginResponse)
+async def login(req: LoginRequest, session: AsyncSession = Depends(get_session)):
+    """
+    Authenticate a user:
+    - Look up the row in `users` by email
+    - Verify password (bcrypt/argon2 or plaintext fallback)
+    - Return a signed token and a tiny user profile
+    """
+    user = await fetch_user_by_email(session, req.email)
+    if not user:
+        logger.info("Login failed for %s: user not found", req.email)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    # Accept several possible column names for the password
+    for candidate in ("password_hash", "hashed_password", "password", "pwd"):
+        if candidate in user and user[candidate]:
+            stored = str(user[candidate])
             break
-    role = "admin" if bool(row.get("is_admin")) else (row.get("role") or "user")
-    name = row.get("name") or row.get("fullname") or None
-    return pwd_val, str(role), name
+    else:
+        logger.warning("Login failed for %s: password column not found in users table", req.email)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-def _verify_password(plain: str, hashed: str) -> bool:
-    try:
-        hb = hashed.encode("utf-8") if isinstance(hashed, str) else hashed
-        return bcrypt.checkpw(plain.encode("utf-8"), hb)
-    except Exception:
-        return False
+    if not verify_password(req.password, stored):
+        logger.info("Login failed for %s: invalid password", req.email)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-@router.post("/api/login")
-def login(payload: LoginPayload):
-    email_norm = payload.email.lower()
-    with get_session() as s:
-        row = s.execute(text("SELECT * FROM users WHERE LOWER(email)=:email LIMIT 1"), {"email": email_norm}).mappings().first()
-    if not row:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
-    pwd_hash, role, name = _extract_password_and_role(row)
-    if not pwd_hash or not _verify_password(payload.password, pwd_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+    token = create_access_token(user.get("email", ""))
 
-    token = jwt.encode({"email": email_norm, "role": role, "name": name}, settings.JWT_SECRET, algorithm="HS256")
-    return {"access_token": token, "token_type": "Bearer", "user": {"email": email_norm, "role": role, "name": name}}
+    profile = {
+        "id": user.get("id"),
+        "email": user.get("email"),
+        "role": user.get("role") or user.get("user_role"),
+        "name": user.get("name") or user.get("full_name"),
+        "active": bool(user.get("is_active", True)),
+    }
+
+    return LoginResponse(ok=True, token=token, user=profile)
