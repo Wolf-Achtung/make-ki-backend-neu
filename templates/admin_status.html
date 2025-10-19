@@ -1,10 +1,9 @@
-
 <!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Status – {{ app_name }}</title>
+  <title>Admin Status</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Helvetica, Arial, sans-serif; margin: 2rem; }
     .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
@@ -15,7 +14,7 @@
 </head>
 <body>
   <h1>Admin-Status</h1>
-  <p class="muted">{{ app_name }} &middot; Env: <strong>{{ env }}</strong> &middot; Version: <strong>{{ version }}</strong> &middot; {{ time }}</p>
+  <p class="muted">{{ app_name }} · Env: <strong>{{ env }}</strong> · Version: <strong>{{ version }}</strong> · {{ time }}</p>
 
   <div class="grid">
     <div class="card">
@@ -35,7 +34,7 @@
     <div class="card">
       <h3>PDF-Service</h3>
       <p>Status: {% if pdf_enabled %}<strong>aktiv</strong>{% else %}<strong>deaktiviert</strong>{% endif %}</p>
-      <p class="muted">Konfigurierbar über <code>PDF_SERVICE_URL</code> / <code>PDF_SERVICE_ENABLED</code>.</p>
+      <p class="muted">Konfiguration: <code>PDF_SERVICE_URL</code>, <code>PDF_SERVICE_ENABLED</code>.</p>
     </div>
   </div>
 
