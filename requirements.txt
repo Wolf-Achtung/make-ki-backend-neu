@@ -1,20 +1,24 @@
-# Dependency Hotfix (Railway)
-# Fixes:
-# - ModuleNotFoundError: No module named 'sqlalchemy'
-# - email-validator is not installed, run `pip install 'pydantic[email]'`
-
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.6
 
-# Pydantic with email support (pulls in email-validator)
-pydantic[email]>=2.8.0
-pydantic-settings>=2.3.0
+# Pydantic incl. email validation
+pydantic[email]>=2.9.0
 
-# Database
+# Database (async)
 SQLAlchemy>=2.0.35
 asyncpg>=0.29.0
 
-# Optional helpers
+# Security
 passlib[bcrypt]>=1.7.4
-httpx>=0.27.2
+argon2-cffi>=23.1.0
 itsdangerous>=2.2.0
+
+# HTTP client
+httpx>=0.27.2
+
+# Queue
+redis>=5.0.4
+rq>=1.16.2
+
+# Retry helpers (optional)
+tenacity>=9.0.0

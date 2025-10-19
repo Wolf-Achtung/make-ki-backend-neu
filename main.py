@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-KI-Status-Report Backend - production-grade FastAPI entrypoint.
+KI-Status-Report Backend - FastAPI entrypoint (Queue-enabled).
 
 - Robust logging & settings
-- Strict CORS (configurable)
-- Health & diagnostics endpoints
-- Safe router inclusion (auth login, admin status, feedback, briefing)
-- Friendly root message for uptime checks
-
-Author: Gold-Standard+ refactor
+- CORS via env
+- Health/diag endpoints
+- Routers: login, admin, feedback, briefing, tasks_api (queue)
 """
 from __future__ import annotations
 
@@ -18,13 +15,9 @@ import os
 from datetime import datetime, timezone
 from typing import List
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
-
-# ---------------------------------------------------------------------------
-# Settings
-# ---------------------------------------------------------------------------
 
 def _get_bool(name: str, default: bool = False) -> bool:
     val = os.getenv(name)
@@ -35,47 +28,33 @@ def _get_bool(name: str, default: bool = False) -> bool:
 APP_NAME = os.getenv("APP_NAME", "KI-Status-Report Backend")
 ENV = os.getenv("ENV", "production")
 VERSION = os.getenv("VERSION", "2025.10")
-PDF_SERVICE_URL = os.getenv("PDF_SERVICE_URL", "").strip()
-PDF_TIMEOUT = int(os.getenv("PDF_TIMEOUT", "45000"))
-REDIS_URL = os.getenv("REDIS_URL", "").strip()
-QUEUE_ENABLED = _get_bool("ENABLE_QUEUE", False)
-
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 
+PDF_SERVICE_URL = os.getenv("PDF_SERVICE_URL", "").strip()
+PDF_TIMEOUT = int(os.getenv("PDF_TIMEOUT", "45000"))
+
+REDIS_URL = os.getenv("REDIS_URL", "").strip()
+ENABLE_QUEUE = _get_bool("ENABLE_QUEUE", False)
+
 # CORS
-_raw_origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
-if _raw_origins:
-    CORS_ALLOW_ORIGINS: List[str] = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+raw_origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+if raw_origins:
+    CORS_ALLOW_ORIGINS: List[str] = [o.strip() for o in raw_origins.split(",") if o.strip()]
 else:
-    # In production you should explicitly list your domains here.
-    # Leaving it empty defaults to a conservative "*only for dev*".
     CORS_ALLOW_ORIGINS = []
 
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
-logging.basicConfig(
-    level=LOG_LEVEL,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-)
+logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("ki-backend")
 
-# ---------------------------------------------------------------------------
-# App
-# ---------------------------------------------------------------------------
 app = FastAPI(title=APP_NAME, version=VERSION)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ALLOW_ORIGINS or ["*"] if ENV != "production" else CORS_ALLOW_ORIGINS,
+    allow_origins=CORS_ALLOW_ORIGINS or (["*"] if ENV != "production" else []),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
-# Root / Health / Diagnostics
-# ---------------------------------------------------------------------------
 @app.get("/", response_class=PlainTextResponse)
 async def root() -> str:
     return "KI–Status–Report backend is running.\n"
@@ -87,7 +66,7 @@ async def healthz():
         "time": datetime.now(timezone.utc).isoformat(),
         "env": ENV,
         "version": VERSION,
-        "queue_enabled": bool(QUEUE_ENABLED and REDIS_URL),
+        "queue_enabled": bool(ENABLE_QUEUE and REDIS_URL),
         "pdf_service": bool(PDF_SERVICE_URL),
         "status": "ok",
     }
@@ -100,8 +79,8 @@ async def diag():
             "APP_NAME": APP_NAME,
             "ENV": ENV,
             "VERSION": VERSION,
-            "QUEUE_ENABLED": bool(QUEUE_ENABLED),
-            "REDIS_URL_SET": bool(bool(REDIS_URL)),
+            "ENABLE_QUEUE": bool(ENABLE_QUEUE),
+            "REDIS_URL_SET": bool(REDIS_URL),
             "PDF_SERVICE_URL_SET": bool(PDF_SERVICE_URL),
             "PDF_TIMEOUT": PDF_TIMEOUT,
             "DEBUG": LOG_LEVEL in {"DEBUG", "TRACE"},
@@ -109,13 +88,7 @@ async def diag():
         "time": datetime.now(timezone.utc).isoformat(),
     }
 
-# ---------------------------------------------------------------------------
-# Router inclusion helpers
-# ---------------------------------------------------------------------------
 def _include_router(module_name: str, prefix: str = "/api") -> None:
-    """
-    Try to import a router module and include it. Log a clear message otherwise.
-    """
     try:
         module = __import__(module_name, fromlist=["router"])
         router = getattr(module, "router", None)
@@ -124,17 +97,16 @@ def _include_router(module_name: str, prefix: str = "/api") -> None:
             return
         app.include_router(router, prefix=prefix)
         logger.info("Included %s as %s/*", module_name, prefix)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("Could not include %s: %s", module_name, exc)
 
-# Register core routes
+# Core routers
 _include_router("routes.auth_login", prefix="/api")
 _include_router("routes.admin_status", prefix="/api")
 _include_router("routes.feedback", prefix="/api")
 _include_router("routes.briefing", prefix="/api")
-
-# Optional: a small guidance for GET /api/login
-from fastapi import HTTPException, status
+# NEW: tasks/queue API
+_include_router("routes.tasks_api", prefix="/api")
 
 @app.get("/api/login")
 async def login_get_hint():

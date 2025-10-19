@@ -1,23 +1,32 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""RQ worker entrypoint for Railway.
+Start with: python worker.py
+Configure with env: REDIS_URL, RQ_QUEUES (comma separated), RQ_JOB_TIMEOUT, RQ_LOG_LEVEL
+"""
 from __future__ import annotations
-import os, sys, time
-try:
-    import redis
-    from rq import Worker, Queue, Connection
-except Exception as e:
-    print("RQ/Redis not installed:", e, file=sys.stderr)
-    sys.exit(1)
 
-redis_url = os.environ.get("REDIS_URL")
-if not redis_url:
-    print("REDIS_URL not set; worker cannot start.", file=sys.stderr)
-    sys.exit(2)
+import logging
+import os
 
-conn = redis.from_url(redis_url, decode_responses=False)
-listen = ["reports"]
+from redis import Redis
+from rq import Connection, Worker, Queue
+
+from queue_utils import get_redis_connection, get_queue_names
+
+def main() -> int:
+    log_level = os.getenv("RQ_LOG_LEVEL", "INFO").upper()
+    logging.basicConfig(level=log_level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logger = logging.getLogger("rq.worker")
+
+    conn: Redis = get_redis_connection()
+    names = get_queue_names()
+    queues = [Queue(n, connection=conn) for n in names]
+    logger.info("Starting RQ worker. Queues=%s", names)
+    with Connection(conn):
+        worker = Worker(queues, connection=conn)
+        worker.work(with_scheduler=True, logging_level=log_level)
+    return 0
 
 if __name__ == "__main__":
-    with Connection(conn):
-        worker = Worker(map(Queue, listen))
-        print("RQ worker connected. Queues:", listen, "Redis:", redis_url)
-        worker.work(with_scheduler=True)
+    raise SystemExit(main())
