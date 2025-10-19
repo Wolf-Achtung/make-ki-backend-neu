@@ -1,114 +1,90 @@
-# filename: updated_backend/main.py
+
+# main.py
 # -*- coding: utf-8 -*-
+"""FastAPI-Anwendung für KI‑Status‑Report (Railway‑ready, Gold‑Standard).
+- Robustes Logging (fail-safe)
+- Tolerante CORS-Konfiguration
+- Dynamisches Laden optionaler Router (kein Crash bei Importfehlern)
+- /healthz, /diag, / (root)
+- /admin/status (HTML, mit einfachem Schutz)
 """
-Main application entry point for the KI‑Status‑Report backend.
-
-This version of ``main.py`` reflects the Gold‑Standard+ refinements:
-
-* Logging is initialised based on the ``LOG_LEVEL`` environment variable
-  (case‑insensitive) with a safe fallback to ``INFO``.  Unexpected values
-  no longer cause the logger to crash at startup.
-* CORS configuration is obtained from the central ``settings`` module.  If
-  no origins are provided, the server defaults to accepting all origins in
-  test mode.  Origins may be specified as a JSON array, a comma‑separated
-  string or the wildcard ``*``.
-* The application attempts to dynamically import and register all routers
-  located in the ``routes`` package.  Import errors in individual routers
-  are logged but do not prevent the server from starting.
-* Basic health and diagnostic endpoints are provided.  ``/healthz`` returns
-  a JSON payload suitable for Railway health checks.  ``/diag`` provides
-  a minimal information dump useful during development.
-"""
-
 from __future__ import annotations
 
+import asyncio
 import importlib
+import json
 import logging
 import os
-import pkgutil
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Dict, Optional
 
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse, PlainTextResponse
-from starlette.middleware.cors import CORSMiddleware
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, PlainTextResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 
-try:
-    # attempt to import the project settings and computed allowed origins
-    from settings import settings, allowed_origins  # type: ignore
-except Exception as exc:
-    # If the settings cannot be imported, fall back to safe defaults.  The
-    # health check will still return useful information and the server
-    # continues to boot instead of crashing with an obscure error.
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    logging.getLogger("ki-backend").exception(
-        "Failed to import settings at startup.  Using fallback defaults.  Error: %s", exc
-    )
+# ---------- Logging fail-safe ----------
+def _coerce_level(value: str, default: int = logging.INFO) -> int:
+    mapping = {
+        "CRITICAL": logging.CRITICAL,
+        "ERROR": logging.ERROR,
+        "WARNING": logging.WARNING,
+        "INFO": logging.INFO,
+        "DEBUG": logging.DEBUG,
+    }
+    if not value:
+        return default
+    return mapping.get(str(value).upper(), default)
 
-    class _FallbackSettings:
-        APP_NAME: str = os.getenv("APP_NAME", "KI‑Status‑Report Backend")
-        APP_VERSION: str = os.getenv("APP_VERSION", "0.0.0")
-        ENV: str = os.getenv("ENV", "production")
-        LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-        QUEUE_ENABLED: bool = False
-        PDF_SERVICE_URL: Optional[str] = None
-        PDF_SERVICE_ENABLED: bool = False
-
-        @property
-        def CORS_ALLOW_ORIGINS(self) -> list[str]:
-            # fallback to wildcard
-            return ["*"]
-
-    settings = _FallbackSettings()  # type: ignore
-    allowed_origins = settings.CORS_ALLOW_ORIGINS  # type: ignore
-
-else:
-    # initialise logging using the configured log level.  ``LOG_LEVEL`` may
-    # be set in the environment (any case), in the settings file or in the
-    # default fallback above.  Unknown values map to ``INFO``.
-    level_name = (os.getenv("LOG_LEVEL", settings.LOG_LEVEL) or "INFO").upper()
-    level = getattr(logging, level_name, logging.INFO)
-    logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-
+logging.basicConfig(
+    level=_coerce_level(os.getenv("LOG_LEVEL", "INFO")),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 logger = logging.getLogger("ki-backend")
 
-# ---------------------------------------------------------------------------
-# FastAPI application configuration
-# ---------------------------------------------------------------------------
-app = FastAPI(
-    title=getattr(settings, "APP_NAME", "KI‑Status‑Report Backend"),
-    version=getattr(settings, "APP_VERSION", "2025.10"),
-    description="Backend for KI‑Sicherheit / KI‑Status‑Report",
-    contact={"name": "KI‑Sicherheit.jetzt", "url": "https://ki-sicherheit.jetzt"},
-)
+# ---------- Settings mit Fallback ----------
+try:
+    from settings import settings, allowed_origins  # type: ignore
+except Exception as exc:  # pragma: no cover
+    logger.exception("Failed to import settings, using minimal fallbacks: %s", exc)
+    class _Fallback:
+        APP_NAME = "KI‑Status‑Report Backend"
+        VERSION = os.getenv("APP_VERSION", "2025.10")
+        ENV = os.getenv("ENV", "production")
+        DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+        JWT_SECRET = os.getenv("JWT_SECRET")
+        ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")
+        QUEUE_ENABLED = os.getenv("QUEUE_ENABLED", "false").lower() == "true"
+        REDIS_URL = os.getenv("REDIS_URL")
+        PDF_SERVICE_URL = os.getenv("PDF_SERVICE_URL")
+        PDF_SERVICE_ENABLED = os.getenv("PDF_SERVICE_ENABLED", "true").lower() == "true"
+        PDF_TIMEOUT = int(os.getenv("PDF_TIMEOUT", "15000"))
+    settings = _Fallback()  # type: ignore
+    allowed_origins = ["*"]
 
-_origins = allowed_origins if isinstance(allowed_origins, (list, tuple)) and allowed_origins else ["*"]
+app = FastAPI(title=getattr(settings, "APP_NAME", "KI‑Status‑Report Backend"),
+              version=getattr(settings, "VERSION", "2025.10"))
+
+# ---------- CORS ----------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_origins if _origins != ["*"] else ["*"],
-    allow_credentials=bool(getattr(settings, "CORS_ALLOW_CREDENTIALS", False)),
-    allow_methods=list(getattr(settings, "CORS_ALLOW_METHODS", ["*"])) or ["*"],
-    allow_headers=list(getattr(settings, "CORS_ALLOW_HEADERS", ["*"])) or ["*"],
-    max_age=86400,
+    allow_origins=allowed_origins or ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
-# Basic system endpoints
-# ---------------------------------------------------------------------------
-@app.get("/", response_class=PlainTextResponse, include_in_schema=False)
+# ---------- Templates ----------
+templates = Jinja2Templates(directory="templates")
+
+# ---------- Root ----------
+@app.get("/", response_class=PlainTextResponse)
 async def root() -> str:
-    """Return a simple message indicating that the backend is running."""
-    return "KI‑Status‑Report backend is running."
+    return "KI–Status–Report backend is running."
 
-
+# ---------- Health ----------
 @app.get("/healthz", response_class=JSONResponse)
-async def healthz():
-    """
-    Health check endpoint used by Railway.  Returns a minimal JSON payload
-    containing version, environment and enabled features.  The ``status`` field
-    indicates whether at least one router was successfully imported.
-    """
-    status = "ok" if getattr(app.state, "routes_loaded", 0) > 0 else "degraded"
+async def healthz() -> Dict[str, Any]:
     features = {
         "eu_host_check": True,
         "idempotency": True,
@@ -117,87 +93,103 @@ async def healthz():
     return {
         "ok": True,
         "time": datetime.now(timezone.utc).isoformat(),
-        "env": getattr(settings, "ENV", os.getenv("ENV", "production")),
-        "version": getattr(settings, "APP_VERSION", "2025.10"),
+        "env": getattr(settings, "ENV", "production"),
+        "version": getattr(settings, "VERSION", "2025.10"),
         "features": features,
         "queue_enabled": bool(getattr(settings, "QUEUE_ENABLED", False)),
-        "pdf_service": bool(getattr(settings, "PDF_SERVICE_URL", None) or getattr(settings, "PDF_SERVICE_ENABLED", False)),
-        "status": status,
+        "pdf_service": bool(getattr(settings, "PDF_SERVICE_URL", None)),
+        "status": "ok",
     }
 
-
+# ---------- Diag ----------
 @app.get("/diag", response_class=JSONResponse)
-async def diag():
-    """
-    Diagnostic endpoint for development and testing.  This endpoint should
-    not expose sensitive information in production.  Returns environment and
-    settings keys useful for troubleshooting.
-    """
-    return {
-        "env": getattr(settings, "ENV", "unknown"),
-        "version": getattr(settings, "APP_VERSION", "unknown"),
-        "queue_enabled": bool(getattr(settings, "QUEUE_ENABLED", False)),
-        "pdf_service_url": getattr(settings, "PDF_SERVICE_URL", None),
-        "allow_origins": _origins,
+async def diag() -> Dict[str, Any]:
+    safe_settings = {
+        "APP_NAME": getattr(settings, "APP_NAME", None),
+        "ENV": getattr(settings, "ENV", None),
+        "VERSION": getattr(settings, "VERSION", None),
+        "QUEUE_ENABLED": getattr(settings, "QUEUE_ENABLED", False),
+        "REDIS_URL_SET": bool(getattr(settings, "REDIS_URL", None)),
+        "PDF_SERVICE_URL_SET": bool(getattr(settings, "PDF_SERVICE_URL", None)),
+        "PDF_TIMEOUT": getattr(settings, "PDF_TIMEOUT", None),
+        "DEBUG": getattr(settings, "DEBUG", False),
     }
+    return {"ok": True, "settings": safe_settings, "time": datetime.now(timezone.utc).isoformat()}
 
-# ---------------------------------------------------------------------------
-# Dynamic router inclusion
-# ---------------------------------------------------------------------------
-def include_all_routers() -> int:
-    """
-    Import and include all APIRouter objects from Python modules located in
-    the ``routes`` package.  Each module that defines a global ``router``
-    attribute will be added to the application.  Errors during import of
-    individual modules are logged but do not stop the server from loading.
-    Returns the number of routers successfully included.
-    """
-    included = 0
-    pkg_name = "routes"
-    try:
-        pkg = importlib.import_module(pkg_name)
-        search_path = list(getattr(pkg, "__path__", []))
-        if not search_path:
-            logger.warning("Package '%s' has no __path__; router discovery skipped.", pkg_name)
-            return 0
-    except Exception as exc:
-        logger.warning("Package '%s' could not be imported: %s", pkg_name, exc)
-        return 0
-
-    for finder, name, ispkg in pkgutil.iter_modules(search_path, f"{pkg_name}."):
-        base = name.split(".")[-1]
-        if base.startswith("_"):
-            continue  # skip private modules
+# ---------- Simple Admin Guard ----------
+async def _is_admin(request: Request, x_admin_key: Optional[str] = Header(default=None)) -> None:
+    # DEBUG erlaubt Zugriff
+    if getattr(settings, "DEBUG", False):
+        return
+    # Admin-API-Key
+    configured = getattr(settings, "ADMIN_API_KEY", None)
+    if configured and (x_admin_key == configured or request.query_params.get("key") == configured):
+        return
+    # JWT (optional)
+    auth = request.headers.get("Authorization", "")
+    if auth.lower().startswith("bearer ") and getattr(settings, "JWT_SECRET", None):
+        token = auth.split(" ", 1)[1].strip()
         try:
-            module = importlib.import_module(name)
-            router = getattr(module, "router", None)
-            if router is not None:
-                app.include_router(router)
-                included += 1
-                logger.info("Included router from %s", name)
-            else:
-                logger.debug("Module %s has no 'router' attribute", name)
+            from jose import jwt  # type: ignore
+            data = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])  # type: ignore
+            if str(data.get("role", "")).lower() == "admin":  # simple check
+                return
         except Exception:
-            logger.exception("Failed to include router from %s", name)
-    if included == 0:
-        logger.warning("No route modules were successfully included from '%s'.", pkg_name)
-    return included
+            pass
+    raise HTTPException(status_code=401, detail="Unauthorized")
 
+# ---------- Admin Status (HTML) ----------
+@app.get("/admin/status", response_class=HTMLResponse, dependencies=[Depends(_is_admin)])
+async def admin_status(request: Request) -> HTMLResponse:
+    # Queue-Infos
+    queue_mode = "Local"
+    queue_stats: dict[str, Any] = {}
+    if getattr(settings, "QUEUE_ENABLED", False) and getattr(settings, "REDIS_URL", None):
+        try:
+            import redis  # type: ignore
+            from rq import Queue  # type: ignore
+            r = redis.from_url(settings.REDIS_URL)  # type: ignore
+            q = Queue("reports", connection=r)  # type: ignore
+            queue_mode = "Redis"
+            queue_stats = {
+                "count": len(q.jobs),  # type: ignore
+                "deferred": len(q.deferred_job_registry),  # type: ignore
+                "failed": len(q.failed_job_registry),  # type: ignore
+            }
+        except Exception as exc:
+            logger.warning("Queue stats not available: %s", exc)
 
-@app.on_event("startup")
-async def on_startup() -> None:
-    """Executed during application startup to load all routers."""
-    count = include_all_routers()
-    app.state.routes_loaded = count
-    logger.info("Startup complete.  Included %d routers. ENV=%s", count, getattr(settings, "ENV", "n/a"))
+    pdf_enabled = bool(getattr(settings, "PDF_SERVICE_URL", None)) and bool(getattr(settings, "PDF_SERVICE_ENABLED", True))
 
+    ctx = {
+        "request": request,
+        "app_name": getattr(settings, "APP_NAME", "KI‑Status‑Report Backend"),
+        "env": getattr(settings, "ENV", "production"),
+        "version": getattr(settings, "VERSION", "2025.10"),
+        "queue_mode": queue_mode,
+        "queue_stats": queue_stats,
+        "pdf_enabled": pdf_enabled,
+        "time": datetime.now(timezone.utc).isoformat(),
+    }
+    return templates.TemplateResponse("admin_status.html", ctx)
 
-# For running directly via ``python main.py``
-if __name__ == "__main__":  # pragma: no cover
-    import uvicorn
-    uvicorn.run(
-        "updated_backend.main:app",
-        host="0.0.0.0",
-        port=int(os.getenv("PORT", "8080")),
-        reload=True,
-    )
+# ---------- Dynamisches Laden optionaler Router ----------
+def _include(router_path: str) -> None:
+    try:
+        module = importlib.import_module(router_path)
+        router = getattr(module, "router", None)
+        if router is None:
+            logger.warning("%s found but has no 'router' attribute", router_path)
+            return
+        app.include_router(router)
+        logger.info("Included %s", router_path)
+    except Exception as exc:
+        logger.warning("Could not include %s: %s", router_path, exc)
+
+for mod in [
+    "routes.briefing",
+    "routes.auth_login",
+    "routes.feedback",
+    "routes.admin_submissions",
+]:
+    _include(mod)
