@@ -58,9 +58,10 @@ except Exception:  # pragma: no cover - falls jose fehlt
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+_level_name = (os.getenv("LOG_LEVEL", "INFO") or "INFO").upper()
+_level = getattr(logging, _level_name, logging.INFO)
 logging.basicConfig(
-    level=LOG_LEVEL,
+    level=_level,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
 logger = logging.getLogger("ki-backend")
