@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Status</title>
+  <title>Admin Status – KI‑Status‑Report</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Helvetica, Arial, sans-serif; margin: 2rem; }
     .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
@@ -14,7 +14,7 @@
 </head>
 <body>
   <h1>Admin-Status</h1>
-  <p class="muted">{{ app_name }} · Env: <strong>{{ env }}</strong> · Version: <strong>{{ version }}</strong> · {{ time }}</p>
+  <p class="muted">Env: <strong>{{ env }}</strong> · Version: <strong>{{ version }}</strong> · {{ time }}</p>
 
   <div class="grid">
     <div class="card">
@@ -34,10 +34,10 @@
     <div class="card">
       <h3>PDF-Service</h3>
       <p>Status: {% if pdf_enabled %}<strong>aktiv</strong>{% else %}<strong>deaktiviert</strong>{% endif %}</p>
-      <p class="muted">Konfiguration: <code>PDF_SERVICE_URL</code>, <code>PDF_SERVICE_ENABLED</code>.</p>
+      <p class="muted">Konfiguration: <code>PDF_SERVICE_URL</code>, <code>PDF_SERVICE_ENABLED</code>, <code>PDF_TIMEOUT</code> (ms).</p>
     </div>
   </div>
 
-  <p class="muted">Zugriff: Admin-JWT (role=admin) oder <code>ADMIN_API_KEY</code>. In <code>DEBUG=true</code> ohne Auth.</p>
+  <p class="muted">Zugriff: Nur JWT (role=admin).</p>
 </body>
 </html>
