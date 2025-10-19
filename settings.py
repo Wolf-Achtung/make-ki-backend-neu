@@ -1,73 +1,63 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
-Settings / Configuration for KI-Status-Report Backend (Gold-Standard+)
-- Pydantic v2 settings with safe defaults
-- All secrets via environment variables
-- Avoid EmailStr here to not hard require email-validator on import (we include it anyway)
+Robust settings for KI-Status-Report (pydantic-settings v2)
+- Tolerant gegenüber leeren/ungültigen JSON-Werten in CORS_ALLOW_ORIGINS
+- Akzeptiert CSV, JSON-Array oder '*' als Wildcard
+- Exportiert `settings` (Instanz) und `allowed_origins` (Liste) als Kompatibilität
 """
 from __future__ import annotations
 
+import json
 import os
-from typing import List
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
+from typing import List, Optional
 
-def _csv(val: str) -> List[str]:
-    if not val:
-        return []
-    return [x.strip() for x in val.split(",") if x.strip()]
+from pydantic import BaseModel, Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", env_ignore_empty=True, extra="ignore")
 
-    ENVIRONMENT: str = Field(default="production")
-    LOG_LEVEL: str = Field(default="INFO")
+    PROJECT_NAME: str = Field(default="ki-backend")
+    ENV: str = Field(default=os.getenv("ENV", "prod"))
+    DEBUG: bool = Field(default=(os.getenv("DEBUG", "0") or "0").lower() in {"1","true","yes","on"})
+    APP_VERSION: str = Field(default=os.getenv("APP_VERSION", "2025.10"))
 
-    APP_NAME: str = Field(default="KI-Status-Report Backend")
-    DEFAULT_LANG: str = Field(default="DE")
+    # Security / Auth
+    JWT_SECRET: str = Field(default=os.getenv("JWT_SECRET", "change-me"))
+    JWT_ALGORITHM: str = Field(default=os.getenv("JWT_ALGORITHM", "HS256"))
+    ADMIN_API_KEY: Optional[str] = Field(default=os.getenv("ADMIN_API_KEY"))
+
+    # Connectivity
+    REDIS_URL: Optional[str] = Field(default=os.getenv("REDIS_URL"))
+    DATABASE_URL: Optional[str] = Field(default=os.getenv("DATABASE_URL"))
+    PDF_SERVICE_URL: Optional[str] = Field(default=os.getenv("PDF_SERVICE_URL"))
 
     # CORS
-    FRONTEND_ORIGINS: str = Field(default="")
-    CORS_ALLOW_ORIGINS: List[str] = Field(default_factory=list)
+    CORS_ALLOW_ORIGINS: List[str] = Field(default_factory=lambda: ["*"])
 
-    # Database
-    DATABASE_URL: str = Field(default="")
-
-    # JWT
-    JWT_SECRET: str = Field(default="dev-secret")
-
-    # PDF Service
-    PDF_SERVICE_URL: str = Field(default="")
-    PDF_TIMEOUT: int = Field(default=25000, description="Timeout in ms")
-
-    # SMTP
-    SMTP_HOST: str = Field(default="localhost")
-    SMTP_PORT: int = Field(default=587)
-    SMTP_USER: str = Field(default="")
-    SMTP_PASS: str = Field(default="")
-    SMTP_FROM: str = Field(default="noreply@example.com")
-    SMTP_FROM_NAME: str = Field(default="KI‑Sicherheit")
-
-    # Admin / Mails
-    ADMIN_EMAIL: str = Field(default="")
-    SEND_USER_MAIL: bool = Field(default=True)
-    SEND_ADMIN_MAIL: bool = Field(default=True)
-    ATTACH_HTML_FALLBACK: bool = Field(default=True)
-
-    # Rate limiting
-    API_RATE_LIMIT_PER_HOUR: int = Field(default=20)
-    API_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=3600)
-
-    # Feature flags
-    ENABLE_EU_HOST_CHECK: bool = Field(default=True)
-    ENABLE_IDEMPOTENCY: bool = Field(default=True)
-    QUALITY_CONTROL_AVAILABLE: bool = Field(default=True)
-
-def allowed_origins() -> List[str]:
-    s = os.getenv("FRONTEND_ORIGINS", "") or settings.FRONTEND_ORIGINS
-    parsed = _csv(s)
-    # Add local dev defaults if not present
-    defaults = {"http://localhost:3000", "http://127.0.0.1:5500", "http://localhost:8000"}
-    return list(set(parsed) | defaults)
+    @field_validator("CORS_ALLOW_ORIGINS", mode="before")
+    @classmethod
+    def _parse_cors(cls, v):
+        # Already a Python list
+        if isinstance(v, list):
+            return v or ["*"]
+        # None or empty --> default "*"
+        if v is None:
+            return ["*"]
+        s = str(v).strip()
+        if not s:
+            return ["*"]
+        if s == "*":
+            return ["*"]
+        # JSON array?
+        try:
+            parsed = json.loads(s)
+            if isinstance(parsed, list) and all(isinstance(x, str) for x in parsed):
+                return parsed or ["*"]
+        except Exception:
+            pass
+        # CSV fallback
+        return [p.strip() for p in s.split(",") if p.strip()] or ["*"]
 
 settings = Settings()
+allowed_origins: List[str] = settings.CORS_ALLOW_ORIGINS
