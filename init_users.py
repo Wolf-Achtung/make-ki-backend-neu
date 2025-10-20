@@ -10,26 +10,26 @@ if not DATABASE_URL:
     sys.exit(1)
 
 users = [
-    ("j.hohl@freenet.de", "passjhohl!", "user"),
-    ("kerstin.geffert@gmail.com", "passkerstin!", "user"),
-    ("post@zero2.de", "passzero2!", "user"),
-    ("giselapeter@peter-partner.de", "passgisela!", "user"),
-    ("stephan@meyer-brehm.de", "passstephan!", "user"),
-    ("wolf.hohl@web.de", "passwolfi!", "user"),
-    ("geffertj@mac.com", "passjens!", "user"),
-    ("geffertkilian@gmail.com", "passkili!", "user"),
-    ("levent.graef@posteo.de", "passlevgr!", "user"),
-    ("birgit.cook@ulitzka-partner.de", "passbirg!", "user"),
-    ("alexander.luckow@icloud.com", "passbirg!", "user"),
-    ("frank.beer@kabelmail.de", "passfrab!", "user"),
-    ("patrick@silk-relations.com", "passpat!", "user"),
-    ("marc@trailerhaus-onair.de", "passmarct!", "user"),
-    ("norbert@trailerhaus.de", "passgis2r!", "user"),
-    ("sonia-souto@mac.com", "pass-son!", "user"),
-    ("christian.ulitzka@ulitzka-partner.de", "pass2rigz!", "user"),
-    ("srack@gmx.net", "pass2rack!", "user"),
-    ("buss@maria-hilft.de", "pass2mar!", "user"),
-    ("bewertung@ki-sicherheit.jetzt", "passadmin1!", "admin")
+    ("j.hohl@freenet.de", "passjhohl11!", "user"),
+    ("kerstin.geffert@gmail.com", "passkerstin11!", "user"),
+    ("post@zero2.de", "passzero11!", "user"),
+    ("giselapeter@peter-partner.de", "passgisela11!", "user"),
+    ("stephan@meyer-brehm.de", "passstephan11!", "user"),
+    ("wolf.hohl@web.de", "passwolf11!", "user"),
+    ("geffertj@mac.com", "passjens11!", "user"),
+    ("geffertkilian@gmail.com", "passkili11!", "user"),
+    ("levent.graef@posteo.de", "passlevgr11!", "user"),
+    ("birgit.cook@ulitzka-partner.de", "passbirg111!", "user"),
+    ("alexander.luckow@icloud.com", "passbirg11!", "user"),
+    ("frank.beer@kabelmail.de", "passfrab11!", "user"),
+    ("patrick@silk-relations.com", "passpat11!", "user"),
+    ("marc@trailerhaus-onair.de", "passmarct11!", "user"),
+    ("norbert@trailerhaus.de", "passgis2r11!", "user"),
+    ("sonia-souto@mac.com", "pass-son11!", "user"),
+    ("christian.ulitzka@ulitzka-partner.de", "pass2rigz11!", "user"),
+    ("srack@gmx.net", "pass2rack11!", "user"),
+    ("buss@maria-hilft.de", "pass2mar11!", "user"),
+    ("bewertung@ki-sicherheit.jetzt", "passadmin11!", "admin")
 ]
 
 conn = psycopg2.connect(DATABASE_URL)
