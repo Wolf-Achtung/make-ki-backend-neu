@@ -7,6 +7,7 @@ KI-Status-Report Backend - FastAPI entrypoint (Queue-enabled).
 - CORS via env
 - Health/diag endpoints
 - Routers: login, admin, feedback, briefing, tasks_api (queue)
+- Admin user update endpoint (TEMPORARY - remove after setup!)
 """
 from __future__ import annotations
 
@@ -36,12 +37,24 @@ PDF_TIMEOUT = int(os.getenv("PDF_TIMEOUT", "45000"))
 REDIS_URL = os.getenv("REDIS_URL", "").strip()
 ENABLE_QUEUE = _get_bool("ENABLE_QUEUE", False)
 
+# Admin feature toggle (set ENABLE_ADMIN_UPLOAD=false after initial setup!)
+ENABLE_ADMIN_UPLOAD = _get_bool("ENABLE_ADMIN_UPLOAD", True)
+
 # CORS
 raw_origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
 if raw_origins:
     CORS_ALLOW_ORIGINS: List[str] = [o.strip() for o in raw_origins.split(",") if o.strip()]
 else:
     CORS_ALLOW_ORIGINS = []
+
+# Add common frontend URLs to CORS if not in production
+if ENV != "production" or ENABLE_ADMIN_UPLOAD:
+    CORS_ALLOW_ORIGINS.extend([
+        "http://localhost:3000",
+        "http://localhost:8888",
+        "https://make.ki-sicherheit.jetzt",
+        "https://*.netlify.app"
+    ])
 
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("ki-backend")
@@ -68,6 +81,7 @@ async def healthz():
         "version": VERSION,
         "queue_enabled": bool(ENABLE_QUEUE and REDIS_URL),
         "pdf_service": bool(PDF_SERVICE_URL),
+        "admin_upload_enabled": ENABLE_ADMIN_UPLOAD,  # Added for monitoring
         "status": "ok",
     }
 
@@ -84,6 +98,7 @@ async def diag():
             "PDF_SERVICE_URL_SET": bool(PDF_SERVICE_URL),
             "PDF_TIMEOUT": PDF_TIMEOUT,
             "DEBUG": LOG_LEVEL in {"DEBUG", "TRACE"},
+            "ADMIN_UPLOAD_ENABLED": ENABLE_ADMIN_UPLOAD,  # Added for monitoring
         },
         "time": datetime.now(timezone.utc).isoformat(),
     }
@@ -107,6 +122,22 @@ _include_router("routes.feedback", prefix="/api")
 _include_router("routes.briefing", prefix="/api")
 # NEW: tasks/queue API
 _include_router("routes.tasks_api", prefix="/api")
+
+# TEMPORARY: Admin user update router
+# SECURITY WARNING: Disable this after initial user setup!
+# Set ENABLE_ADMIN_UPLOAD=false in environment variables
+if ENABLE_ADMIN_UPLOAD:
+    try:
+        from admin_user_update import router as admin_router
+        app.include_router(admin_router)
+        logger.warning("⚠️ ADMIN USER UPDATE ENDPOINT IS ENABLED - DISABLE AFTER SETUP!")
+        logger.warning("Set ENABLE_ADMIN_UPLOAD=false to disable admin endpoints")
+    except ImportError as e:
+        logger.info("Admin user update module not found (this is normal if not needed): %s", e)
+    except Exception as e:
+        logger.error("Failed to load admin user update router: %s", e)
+else:
+    logger.info("Admin user upload disabled (ENABLE_ADMIN_UPLOAD=false)")
 
 @app.get("/api/login")
 async def login_get_hint():
