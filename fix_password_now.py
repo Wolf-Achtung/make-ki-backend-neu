@@ -40,10 +40,3 @@ try:
 except Exception as e:
     print(f"FEHLER: {e}")
     sys.exit(1)
-```
-
-### In Railway:
-1. Diese Datei zum Backend hinzufügen
-2. Settings → Deploy → Railway Run Command:
-```
-   python fix_password_now.py && python -m uvicorn main:app --host 0.0.0.0 --port 8080
