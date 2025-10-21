@@ -1,49 +1,42 @@
-# filename: fix_password_now.py
 #!/usr/bin/env python3
-"""
-Minimal robustes Passwort-Reset-Script für Postgres.
-Voraussetzungen:
-  - pip install psycopg2-binary==2.9.9
-  - DATABASE_URL muss gesetzt sein (postgresql://user:pass@host:port/dbname)
-Optional:
-  - TARGET_EMAIL und NEW_PASSWORD als ENV/Args.
+# -*- coding: utf-8 -*-
+"""Minimal robustes Passwort-Reset-Script für Postgres.
+
 Nutzung:
   python fix_password_now.py [EMAIL] [PASSWORT]
+
+ENV-Variablen:
+  - DATABASE_URL  (postgresql://user:pass@host:port/db)
+  - TARGET_EMAIL  (optional, wenn kein CLI-Arg)
+  - NEW_PASSWORD  (optional, wenn kein CLI-Arg)
+
+Abhängigkeiten:
+  pip install psycopg2-binary==2.9.9
 """
+from __future__ import annotations
+
 import os
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 
 try:
     import psycopg2
 except ModuleNotFoundError:
-    print("FEHLER: 'psycopg2' fehlt. Bitte installieren: pip install psycopg2-binary==2.9.9", file=sys.stderr)
+    print("FEHLER: 'psycopg2' fehlt. Installiere: pip install psycopg2-binary==2.9.9", file=sys.stderr)
     sys.exit(1)
 
-
-def get_args_or_env() -> tuple[str, str, str]:
+def _get_params() -> Tuple[str, str, str]:
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
         print("FEHLER: DATABASE_URL ist nicht gesetzt.", file=sys.stderr)
         sys.exit(2)
 
-    email: Optional[str] = None
-    password: Optional[str] = None
-
-    # Priorität: CLI-Args > ENV > Defaults
-    if len(sys.argv) >= 2:
-        email = sys.argv[1]
-    if len(sys.argv) >= 3:
-        password = sys.argv[2]
-
-    email = email or os.getenv("TARGET_EMAIL") or "wolf.hohl@web.de"
-    password = password or os.getenv("NEW_PASSWORD") or "test123"
-
+    email = (sys.argv[1] if len(sys.argv) > 1 else os.getenv("TARGET_EMAIL") or "wolf.hohl@web.de").strip()
+    password = (sys.argv[2] if len(sys.argv) > 2 else os.getenv("NEW_PASSWORD") or "test123")
     return db_url, email, password
 
-
 def main() -> int:
-    db_url, email, new_pw = get_args_or_env()
+    db_url, email, new_pw = _get_params()
 
     conn = None
     cur = None
@@ -52,13 +45,13 @@ def main() -> int:
         conn.autocommit = False
         cur = conn.cursor()
 
-        # pgcrypto bereitstellen (falls Rechte vorhanden)
+        # pgcrypto versuchen (falls Rechte vorhanden)
         try:
             cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
         except Exception as e:
             print(f"Hinweis: 'pgcrypto' konnte nicht installiert werden (evtl. fehlende Rechte): {e}")
 
-        # Passwort aktualisieren (bcrypt via pgcrypto)
+        # Passwort setzen/aktualisieren
         cur.execute(
             """
             UPDATE users
@@ -68,7 +61,7 @@ def main() -> int:
             (new_pw, email),
         )
         if cur.rowcount == 0:
-            print(f"Hinweis: User {email} existiert nicht – lege ihn an …")
+            print(f"❌ User {email} existiert nicht – lege ihn an …")
             cur.execute(
                 """
                 INSERT INTO users (email, password_hash, role)
@@ -78,7 +71,7 @@ def main() -> int:
             )
             print(f"✅ User angelegt: {email}")
         else:
-            print(f"✅ Passwort aktualisiert für: {email}")
+            print("✅ Passwort aktualisiert")
 
         conn.commit()
         print(f"FERTIG! Login mit: {email} / {new_pw}")
@@ -95,6 +88,5 @@ def main() -> int:
         if conn:
             conn.close()
 
-
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
