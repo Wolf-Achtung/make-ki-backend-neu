@@ -1,20 +1,23 @@
 # syntax=docker/dockerfile:1.7
-FROM python:3.12-slim AS base
+FROM python:3.12-slim
 
+# Init and basic OS deps
 RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
 
-ENV PYTHONDONTWRITEBYTECODE=1     PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Dependencies first (for build cache)
+# Install app dependencies first for layer caching
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir psycopg2-binary==2.9.9
 
-# App code
+# Copy application code
 COPY . .
 
-# Include maintenance scripts in image
+# Maintenance scripts baked into the image
 COPY scripts/ ./scripts/
 RUN chmod +x scripts/*.py || true
 
