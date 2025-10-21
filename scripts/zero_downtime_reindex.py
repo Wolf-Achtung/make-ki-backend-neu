@@ -1,30 +1,39 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Zero-Downtime Reindex (per Index, parallel) + REFRESH COLLATION VERSION
+"""Zero-Downtime Reindex (per Index, parallel) + REFRESH COLLATION VERSION
 
-Zweck
------
-- Behebt Collation-Warnungen ohne "REINDEX DATABASE"-Global-Lock
-- Reindiziert alle *benutzerdefinierten* Indizes (Schema != pg_catalog, pg_toast)
-- Nutzt REINDEX INDEX CONCURRENTLY (ab PG12) für minimale Locks
-- Parallelisiert pro Index (konfigurierbar über WORKERS)
-- Führt am Ende: ALTER DATABASE <dbname> REFRESH COLLATION VERSION
+Beschreibung
+------------
+- Reindiziert *benutzerdefinierte* Indizes parallel mit minimalen Locks via
+  `REINDEX INDEX CONCURRENTLY`
+- Aktualisiert anschließend die Collation-Version der Datenbank:
+  `ALTER DATABASE <dbname> REFRESH COLLATION VERSION`
+- Nutzt ENV-Variablen zur Steuerung (siehe unten)
 
 Voraussetzungen
 ---------------
 - ENV: DATABASE_URL (postgresql://user:pass@host:port/dbname)
 - Paket: psycopg2-binary
+- PostgreSQL >= 12 (für CONCURRENTLY)
+
+ENV-Variablen (optional)
+------------------------
+- WORKERS=4              Anzahl paralleler Reindex-Jobs
+- INCLUDE=regex          Nur Indizes, deren Name auf den Regex passt
+- EXCLUDE=regex          Indizes ausschließen (Regex)
+- DRY_RUN=1              Nur anzeigen, nicht ausführen
 
 Nutzung
 -------
   WORKERS=4 python scripts/zero_downtime_reindex.py
 """
 from __future__ import annotations
+
 import os
+import re
 import sys
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Iterable, List, Tuple
 
 try:
     import psycopg2
@@ -39,7 +48,7 @@ def get_connection(dsn: str, autocommit: bool = True):
     return conn
 
 
-def list_user_indexes(dsn: str) -> list[str]:
+def list_user_indexes(dsn: str) -> List[str]:
     sql = """
     SELECT i.relname AS index_name
     FROM pg_class i
@@ -58,7 +67,22 @@ def list_user_indexes(dsn: str) -> list[str]:
             return [row[0] for row in cur.fetchall()]
 
 
-def reindex_index_concurrently(dsn: str, index_name: str) -> tuple[str, bool, str]:
+def filter_indexes(indexes: Iterable[str], include: str | None, exclude: str | None) -> List[str]:
+    out: List[str] = []
+    inc = re.compile(include) if include else None
+    exc = re.compile(exclude) if exclude else None
+    for idx in indexes:
+        if inc and not inc.search(idx):
+            continue
+        if exc and exc.search(idx):
+            continue
+        out.append(idx)
+    return out
+
+
+def reindex_index_concurrently(dsn: str, index_name: str, dry_run: bool = False) -> Tuple[str, bool, str]:
+    if dry_run:
+        return (index_name, True, "DRY_RUN")
     try:
         with get_connection(dsn) as conn:
             with conn.cursor() as cur:
@@ -68,16 +92,21 @@ def reindex_index_concurrently(dsn: str, index_name: str) -> tuple[str, bool, st
         return (index_name, False, f"{type(e).__name__}: {e}")
 
 
-def refresh_collation_version(dsn: str) -> None:
+def refresh_collation_version(dsn: str, dry_run: bool = False) -> Tuple[bool, str]:
     with get_connection(dsn) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT current_database()")
             (dbname,) = cur.fetchone()
-
+    if dry_run:
+        return True, "DRY_RUN"
     # ALTER DATABASE darf nicht in einer Transaktion laufen
-    with get_connection(dsn, autocommit=True) as conn2:
-        with conn2.cursor() as cur2:
-            cur2.execute(f'ALTER DATABASE "{dbname}" REFRESH COLLATION VERSION;')
+    try:
+        with get_connection(dsn, autocommit=True) as conn2:
+            with conn2.cursor() as cur2:
+                cur2.execute(f'ALTER DATABASE "{dbname}" REFRESH COLLATION VERSION;')
+        return True, ""
+    except Exception as e:
+        return False, f"{type(e).__name__}: {e}"
 
 
 def main() -> int:
@@ -87,43 +116,51 @@ def main() -> int:
         return 2
 
     workers = int(os.getenv("WORKERS", "4"))
-    print(f"[zero-downtime] Hole Indexliste …")
-    indexes = list_user_indexes(dsn)
-    print(f"[zero-downtime] {len(indexes)} benutzerdef. Indexe gefunden. Parallel: {workers}")
+    include = os.getenv("INCLUDE")
+    exclude = os.getenv("EXCLUDE")
+    dry_run = os.getenv("DRY_RUN", "0") == "1"
 
+    print("[zd-reindex] Indexliste abrufen …")
+    all_indexes = list_user_indexes(dsn)
+    indexes = filter_indexes(all_indexes, include, exclude)
+    print(f"[zd-reindex] Gesamt: {len(all_indexes)} | Nach Filter: {len(indexes)} | Parallel: {workers}")
+    if include:
+        print(f"[zd-reindex] INCLUDE: {include}")
+    if exclude:
+        print(f"[zd-reindex] EXCLUDE: {exclude}")
     if not indexes:
-        print("[zero-downtime] Keine Indexe gefunden – breche ab.")
-        return 0
-
-    ok, failed = 0, 0
-
-    with ThreadPoolExecutor(max_workers=workers) as ex:
-        fut_map = {ex.submit(reindex_index_concurrently, dsn, idx): idx for idx in indexes}
-        for fut in as_completed(fut_map):
-            idx = fut_map[fut]
-            try:
-                name, success, msg = fut.result()
-                if success:
-                    ok += 1
-                    print(f"  ✅ {name}")
-                else:
+        print("[zd-reindex] Keine passenden Indizes – Ende.")
+        ok, failed = 0, 0
+    else:
+        ok = failed = 0
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            fut_map = {ex.submit(reindex_index_concurrently, dsn, idx, dry_run): idx for idx in indexes}
+            for fut in as_completed(fut_map):
+                idx = fut_map[fut]
+                try:
+                    name, success, msg = fut.result()
+                    if success:
+                        ok += 1
+                        suffix = f" ({msg})" if msg else ""
+                        print(f"  ✅ {name}{suffix}")
+                    else:
+                        failed += 1
+                        print(f"  ❌ {name}: {msg}", file=sys.stderr)
+                except Exception as e:
                     failed += 1
-                    print(f"  ❌ {name}: {msg}", file=sys.stderr)
-            except Exception as e:
-                failed += 1
-                print(f"  ❌ {idx}: {type(e).__name__}: {e}", file=sys.stderr)
+                    print(f"  ❌ {idx}: {type(e).__name__}: {e}", file=sys.stderr)
 
-    print(f"[zero-downtime] Reindex abgeschlossen: OK={ok}, FAIL={failed}")
+    print(f"[zd-reindex] Ergebnis: OK={ok} | FAIL={failed}")
 
-    print("[zero-downtime] Aktualisiere Collation-Version …")
-    try:
-        refresh_collation_version(dsn)
-        print("  ✅ ALTER DATABASE … REFRESH COLLATION VERSION")
-    except Exception as e:
-        print(f"  ❌ REFRESH COLLATION VERSION fehlgeschlagen: {type(e).__name__}: {e}", file=sys.stderr)
+    print("[zd-reindex] Collation-Version aktualisieren …")
+    success, msg = refresh_collation_version(dsn, dry_run=dry_run)
+    if success:
+        suffix = f" ({msg})" if msg else ""
+        print(f"  ✅ REFRESH COLLATION VERSION{suffix}")
+        return 0 if failed == 0 else 1
+    else:
+        print(f"  ❌ REFRESH COLLATION VERSION fehlgeschlagen: {msg}", file=sys.stderr)
         return 1
-
-    return 0
 
 
 if __name__ == "__main__":
